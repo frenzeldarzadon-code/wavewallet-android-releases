@@ -468,6 +468,9 @@ export function commissionBreakdown(e: CreditEntry): string | null {
   if (bonus <= 0) return null;
   const base = Number(e.base_amount ?? e.amount);
   const pct = Number(e.commission_percent ?? 0);
+  if (e.entry_kind === "sale_commission") {
+    return `Credit-back on a customer voucher purchase of ${peso(base)} at ${pct}% = ${peso(bonus)}`;
+  }
   if (e.direction === "debit") {
     return `Released ${peso(base)} · ${pct}% commission granted (${peso(bonus)}) — you were debited ${peso(base)} only`;
   }
