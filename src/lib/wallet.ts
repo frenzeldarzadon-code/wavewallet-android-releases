@@ -727,6 +727,8 @@ export async function fetchMyCreditBack(recipientId: string, limit = 50): Promis
     id: String(r["id"]),
     sale_id: String(r["sale_id"]),
     recipient_id: String(r["recipient_id"]),
+    kind: String(r["kind"] ?? "sale_cashback"),
+
     credits_consumed: Number(r["credits_consumed"]),
     commission_percent: Number(r["commission_percent"]),
     commission_amount: Number(r["commission_amount"]),
