@@ -185,9 +185,14 @@ function AdminSettings() {
                 {savingRule ? "Saving…" : "Save points rule"}
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground sm:col-span-2">
+              Changing this ratio affects <span className="font-medium text-foreground">future qualifying purchases only</span>.
+              Points already earned keep the ratio that was active at the time of the purchase and are never recalculated.
+            </p>
           </CardContent>
         </Card>
       </PageSection>
+
 
       <div className="space-y-2">
         <Button onClick={save} disabled={saving}>
