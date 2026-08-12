@@ -234,6 +234,84 @@ export async function setEcosystemSaleCommission(
   if (error) throw new Error(friendlyWalletError(error.message));
 }
 
+/* ------------------------------------------------------------------ */
+/* Final rate model: sale cashback, upline commission, wholesale       */
+/* discounts. Credit transfers themselves carry no commission.         */
+/* ------------------------------------------------------------------ */
+
+export interface EcosystemRates {
+  /** Cashback for a reseller whose credits funded a customer purchase. */
+  resellerSale: number;
+  /** Cashback for a subreseller whose credits funded a customer purchase. */
+  subresellerSale: number;
+  /** Commission for the parent reseller of a selling/buying subreseller. */
+  upline: number;
+  /** Wholesale voucher discount for resellers. */
+  resellerDiscount: number;
+  /** Wholesale voucher discount for subresellers. */
+  subresellerDiscount: number;
+}
+
+const RATE_COLUMNS =
+  "default_sale_commission_percent, default_subreseller_sale_commission_percent, default_upline_commission_percent, default_reseller_discount_percent, default_subreseller_discount_percent";
+
+export async function fetchEcosystemRates(ecosystemId: string): Promise<EcosystemRates> {
+  const { data, error } = await supabase
+    .from("ecosystems")
+    .select(RATE_COLUMNS)
+    .eq("id", ecosystemId)
+    .maybeSingle();
+  if (error || !data) {
+    return {
+      resellerSale: 0,
+      subresellerSale: 0,
+      upline: 0,
+      resellerDiscount: 0,
+      subresellerDiscount: 0,
+    };
+  }
+  return {
+    resellerSale: Number(data.default_sale_commission_percent ?? 0),
+    subresellerSale: Number(data.default_subreseller_sale_commission_percent ?? 0),
+    upline: Number(data.default_upline_commission_percent ?? 0),
+    resellerDiscount: Number(data.default_reseller_discount_percent ?? 0),
+    subresellerDiscount: Number(data.default_subreseller_discount_percent ?? 0),
+  };
+}
+
+/**
+ * Saves every rate in one audited call. Validation and authorization live in
+ * the database; changes apply to future transactions only.
+ */
+export async function setEcosystemRates(
+  ecosystemId: string,
+  rates: EcosystemRates,
+): Promise<void> {
+  const { error } = await supabase.rpc("set_ecosystem_rates", {
+    _ecosystem_id: ecosystemId,
+    _reseller_sale_percent: Math.trunc(rates.resellerSale),
+    _subreseller_sale_percent: Math.trunc(rates.subresellerSale),
+    _upline_percent: Math.trunc(rates.upline),
+    _reseller_discount_percent: Math.trunc(rates.resellerDiscount),
+    _subreseller_discount_percent: Math.trunc(rates.subresellerDiscount),
+  });
+  if (error) throw new Error(friendlyWalletError(error.message));
+}
+
+/**
+ * Effective wholesale voucher discount for a member: their personal rate when
+ * set, otherwise the shop default for their role. Resolved server-side so the
+ * price shown before checkout matches the price charged.
+ */
+export async function fetchMyVoucherDiscount(userId: string): Promise<number> {
+  const { data, error } = await supabase.rpc("voucher_discount_percent_for", {
+    _user_id: userId,
+  });
+  if (error) return 0;
+  return Number(data ?? 0);
+}
+
+
 /** Per-member credit-back override. `null` follows the shop default. */
 export async function setSaleCommission(userId: string, percent: number | null): Promise<void> {
   const { error } = await supabase.rpc("set_sale_commission", {
