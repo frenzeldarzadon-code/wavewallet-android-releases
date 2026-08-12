@@ -41,7 +41,7 @@ export const Route = createFileRoute("/super/subscriptions")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: SuperSubscriptions;
+  component: SuperSubscriptions,
 });
 
 function SuperSubscriptions() {
