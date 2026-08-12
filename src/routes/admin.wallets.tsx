@@ -20,7 +20,6 @@ import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
   adminAdjustCredits,
   commissionBreakdown,
-  fetchCommissionRate,
   LEDGER_COLUMNS,
   normalizeEntry,
   type CreditEntry,
@@ -74,21 +73,6 @@ function AdminWallets() {
   const [busy, setBusy] = useState(false);
   const [ledger, setLedger] = useState<CreditEntry[]>([]);
   const [mode, setMode] = useState<"credits" | "points">("credits");
-  // Rate is read from the database; the server recomputes it on submit.
-  const [rate, setRate] = useState(0);
-
-  useEffect(() => {
-    if (!target || mode !== "credits") {
-      setRate(0);
-      return;
-    }
-    let alive = true;
-    void fetchCommissionRate(target.id).then((r) => alive && setRate(r));
-    return () => {
-      alive = false;
-    };
-  }, [target, mode]);
-
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
     setLoading(true);
