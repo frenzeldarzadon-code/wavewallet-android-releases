@@ -110,8 +110,8 @@ function ResellerDashboard() {
       </PageSection>
 
       <EarningsSummaryCards
-        title="Earnings (separate from your wallet balance)"
-        description="Ledger-backed earnings for the current periods. Credit transfers are face value and never counted as earnings."
+        title="Total benefit (separate from your wallet balance)"
+        description="Cash earnings plus wholesale discounts saved, ledger-backed for the current periods. Credit transfers are face value and never counted."
         types={["sale_cashback", "upline_commission", "wholesale_discount"]}
         recipientId={account.id}
         linkTo="/reseller/earnings"

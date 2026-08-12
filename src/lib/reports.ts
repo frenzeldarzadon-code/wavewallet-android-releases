@@ -245,6 +245,163 @@ export function summariseCredits(entries: CreditEntry[]): CreditSummary {
 }
 
 /* ------------------------------------------------------------------ */
+/* Current-model credit flow                                           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Current business model view of the credit ledger.
+ *
+ * Newly generated credits (a credit entry with no opposing debit in the same
+ * transaction) are shop-owner earnings. Wallet-to-wallet transfers move
+ * existing credits at face value and are never earnings. Cashback and upline
+ * commission are only ever paid on voucher sales.
+ */
+export interface CreditFlowSummary {
+  /** New credits minted into wallets — counts as admin earnings. */
+  generated: number;
+  generatedCount: number;
+  /** Credits removed from wallets by an admin correction. */
+  revoked: number;
+  /** Existing credits moved between wallets at face value (no earnings). */
+  transferred: number;
+  transferCount: number;
+  /** Credits spent on vouchers. */
+  spentOnVouchers: number;
+  /** Sale cashback credited to sellers. */
+  cashbackPaid: number;
+  /** Upline commission credited to parent resellers. */
+  uplinePaid: number;
+  /** Cashback/upline removed again by refunds. */
+  commissionReversed: number;
+}
+
+/**
+ * Both legs of a transfer share a transaction id; the receiving leg carries a
+ * `-R` suffix. Normalising it lets us pair debit and credit sides.
+ */
+const txKey = (e: CreditEntry) =>
+  e.tx_id ? e.tx_id.replace(/-R$/, "") : `id:${e.id}`;
+
+export function summariseCreditFlow(entries: CreditEntry[]): CreditFlowSummary {
+  const byTx = new Map<string, CreditEntry[]>();
+  for (const e of entries) {
+    const key = txKey(e);
+    const list = byTx.get(key);
+    if (list) list.push(e);
+    else byTx.set(key, [e]);
+  }
+  const out: CreditFlowSummary = {
+    generated: 0,
+    generatedCount: 0,
+    revoked: 0,
+    transferred: 0,
+    transferCount: 0,
+    spentOnVouchers: 0,
+    cashbackPaid: 0,
+    uplinePaid: 0,
+    commissionReversed: 0,
+  };
+  for (const e of entries) {
+    const kind = e.entry_kind ?? "general";
+    if (kind === "purchase") {
+      if (e.direction === "debit") out.spentOnVouchers += e.amount;
+      continue;
+    }
+    if (kind === "sale_commission" || kind === "upline_commission") {
+      if (e.direction === "credit") {
+        if (kind === "upline_commission") out.uplinePaid += e.amount;
+        else out.cashbackPaid += e.amount;
+      } else {
+        out.commissionReversed += e.amount;
+      }
+      continue;
+    }
+    if (kind === "sale_commission_reversal" || kind === "upline_commission_reversal") {
+      out.commissionReversed += e.amount;
+      continue;
+    }
+    const siblings = byTx.get(txKey(e)) ?? [];
+    const paired = siblings.some((s) => s.id !== e.id && s.direction !== e.direction);
+    if (paired) {
+      if (e.direction === "debit") {
+        out.transferred += e.amount;
+        out.transferCount += 1;
+      }
+      continue;
+    }
+    if (e.direction === "credit") {
+      out.generated += e.amount;
+      out.generatedCount += 1;
+    } else {
+      out.revoked += e.amount;
+    }
+  }
+  return out;
+}
+
+/* ------------------------------------------------------------------ */
+/* Sale commissions (cashback + upline) paid inside an ecosystem       */
+/* ------------------------------------------------------------------ */
+
+export interface SaleCommissionReportRow {
+  id: string;
+  ecosystem_id: string;
+  sale_id: string;
+  recipient_id: string;
+  kind: string;
+  commission_percent: number;
+  commission_amount: number;
+  reversed_at: string | null;
+  created_at: string;
+}
+
+export async function fetchSaleCommissionsReport(q: {
+  range: ResolvedRange;
+  ecosystemId?: string | null;
+  recipientId?: string | null;
+  limit?: number;
+}): Promise<SaleCommissionReportRow[]> {
+  let query = supabase
+    .from("sale_commissions")
+    .select(
+      "id, ecosystem_id, sale_id, recipient_id, kind, commission_percent, commission_amount, reversed_at, created_at",
+    )
+    .gte("created_at", iso(q.range.start))
+    .lte("created_at", iso(q.range.end))
+    .order("created_at", { ascending: false })
+    .limit(q.limit ?? 1000);
+  if (q.ecosystemId) query = query.eq("ecosystem_id", q.ecosystemId);
+  if (q.recipientId) query = query.eq("recipient_id", q.recipientId);
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as unknown as SaleCommissionReportRow[]).map((r) => ({
+    ...r,
+    commission_percent: Number(r.commission_percent),
+    commission_amount: Number(r.commission_amount),
+  }));
+}
+
+export interface CommissionSplit {
+  cashback: number;
+  upline: number;
+  reversed: number;
+}
+
+/** Settled cashback vs upline totals; reversed rows are excluded from both. */
+export function summariseSaleCommissions(rows: SaleCommissionReportRow[]): CommissionSplit {
+  const out: CommissionSplit = { cashback: 0, upline: 0, reversed: 0 };
+  for (const r of rows) {
+    if (r.reversed_at) {
+      out.reversed += r.commission_amount;
+      continue;
+    }
+    if (r.kind === "upline") out.upline += r.commission_amount;
+    else out.cashback += r.commission_amount;
+  }
+  return out;
+}
+
+/* ------------------------------------------------------------------ */
 /* Points                                                              */
 /* ------------------------------------------------------------------ */
 

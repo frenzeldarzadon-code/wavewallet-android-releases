@@ -156,12 +156,19 @@ export interface EarningsTotals {
   count: number;
   reversedCount: number;
   gross: number;
-  /** Settled earnings only. */
+  /** Settled earnings only (cash earnings + discounts saved). */
   net: number;
+  /** Actual money earned — excludes wholesale discounts saved. */
+  cash: number;
+  /** Value saved through wholesale discounts. Not cash earnings. */
+  discountSaved: number;
   /** Value removed by refunds/reversals. */
   reversed: number;
   byType: Record<EarningType, number>;
 }
+
+/** Discounts are a benefit, never cash earnings. */
+export const DISCOUNT_EARNING_TYPES: EarningType[] = ["wholesale_discount"];
 
 export function summariseEarnings(rows: EarningRow[]): EarningsTotals {
   const totals: EarningsTotals = {
@@ -169,6 +176,8 @@ export function summariseEarnings(rows: EarningRow[]): EarningsTotals {
     reversedCount: 0,
     gross: 0,
     net: 0,
+    cash: 0,
+    discountSaved: 0,
     reversed: 0,
     byType: {
       sale_cashback: 0,
@@ -186,6 +195,8 @@ export function summariseEarnings(rows: EarningRow[]): EarningsTotals {
     }
     totals.gross += r.gross_amount;
     totals.net += r.earning_amount;
+    if (DISCOUNT_EARNING_TYPES.includes(r.earning_type)) totals.discountSaved += r.earning_amount;
+    else totals.cash += r.earning_amount;
     totals.byType[r.earning_type] = (totals.byType[r.earning_type] ?? 0) + r.earning_amount;
   }
   return totals;

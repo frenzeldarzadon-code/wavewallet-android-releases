@@ -25,14 +25,18 @@ import {
   fetchCreditsReport,
   fetchNameMap,
   fetchPointsReport,
+  fetchSaleCommissionsReport,
   fetchSalesReport,
   refundSale,
   resolveRange,
-  summariseCredits,
+  summariseCreditFlow,
+
   summarisePoints,
+  summariseSaleCommissions,
   summariseSales,
   toCsv,
   type PointsEntryRow,
+  type SaleCommissionReportRow,
   type SaleReportRow,
 } from "@/lib/reports";
 import type { CreditEntry } from "@/lib/wallet";
@@ -69,6 +73,7 @@ function AdminReports() {
   const [sales, setSales] = useState<SaleReportRow[]>([]);
   const [credits, setCredits] = useState<CreditEntry[]>([]);
   const [points, setPoints] = useState<PointsEntryRow[]>([]);
+  const [commissions, setCommissions] = useState<SaleCommissionReportRow[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [refunding, setRefunding] = useState<SaleReportRow | null>(null);
@@ -82,16 +87,18 @@ function AdminReports() {
     if (!ecosystemDbId) return;
     setLoading(true);
     try {
-      const [s, c, p, n] = await Promise.all([
+      const [s, c, p, n, sc] = await Promise.all([
         fetchSalesReport({ range: resolved, ecosystemId: ecosystemDbId }),
         fetchCreditsReport({ range: resolved, ecosystemId: ecosystemDbId }),
         fetchPointsReport({ range: resolved, ecosystemId: ecosystemDbId }),
         fetchNameMap(ecosystemDbId),
+        fetchSaleCommissionsReport({ range: resolved, ecosystemId: ecosystemDbId }),
       ]);
       setSales(s);
       setCredits(c);
       setPoints(p);
       setNames(n);
+      setCommissions(sc);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -104,7 +111,9 @@ function AdminReports() {
   }, [load]);
 
   const salesTotals = useMemo(() => summariseSales(sales), [sales]);
-  const creditTotals = useMemo(() => summariseCredits(credits), [credits]);
+  
+  const creditFlow = useMemo(() => summariseCreditFlow(credits), [credits]);
+  const commissionSplit = useMemo(() => summariseSaleCommissions(commissions), [commissions]);
   const pointTotals = useMemo(() => summarisePoints(points), [points]);
 
   /** Reseller rows use each sale's snapshotted discount, never today's rate. */
@@ -117,11 +126,11 @@ function AdminReports() {
         net: number;
         margin: number;
         commission: number;
-        base: number;
+        upline: number;
         role: string;
       }
     >();
-    const blank = () => ({ sales: 0, gross: 0, net: 0, margin: 0, commission: 0, base: 0, role: "reseller" });
+    const blank = () => ({ sales: 0, gross: 0, net: 0, margin: 0, commission: 0, upline: 0, role: "reseller" });
     for (const s of sales) {
       if (s.payment_method === "points") continue;
       const isChannel = s.buyer_role === "reseller" || s.buyer_role === "subreseller";
@@ -135,16 +144,17 @@ function AdminReports() {
       row.margin += s.list_price - s.sale_price;
       map.set(id, row);
     }
-    for (const e of credits) {
-      const bonus = Number(e.commission_amount ?? 0);
-      if (e.direction !== "credit" || bonus <= 0) continue;
-      const row = map.get(e.user_id) ?? blank();
-      row.commission += bonus;
-      row.base += Number(e.base_amount ?? e.amount - bonus);
-      map.set(e.user_id, row);
+    for (const c of commissions) {
+      if (c.reversed_at) continue;
+      const row = map.get(c.recipient_id) ?? blank();
+      if (c.kind === "upline") row.upline += c.commission_amount;
+      else row.commission += c.commission_amount;
+      map.set(c.recipient_id, row);
     }
-    return [...map.entries()].sort((a, b) => b[1].margin + b[1].commission - (a[1].margin + a[1].commission));
-  }, [sales, credits]);
+    return [...map.entries()].sort(
+      (a, b) => b[1].margin + b[1].commission + b[1].upline - (a[1].margin + a[1].commission + a[1].upline),
+    );
+  }, [sales, commissions]);
 
   const nameOf = (id: string) => names[id] ?? `${id.slice(0, 8)}…`;
 
@@ -158,8 +168,8 @@ function AdminReports() {
         "Detail",
         "Gross",
         "Net / Amount",
-        "Reseller margin",
-        "Commission",
+        "Wholesale discount",
+        "Cashback / upline",
         "Points",
       ],
       [
@@ -184,7 +194,7 @@ function AdminReports() {
           "",
           c.direction === "debit" ? -c.amount : c.amount,
           "",
-          Number(c.commission_amount ?? 0),
+          c.entry_kind === "sale_commission" || c.entry_kind === "upline_commission" ? c.amount : 0,
           "",
         ]),
       ],
@@ -238,20 +248,61 @@ function AdminReports() {
         </div>
       </PageSection>
 
-      <PageSection title="Credit & commission activity">
+      <PageSection
+        title="Credit activity & earnings"
+        description="Only newly generated credits are shop earnings. Moving existing credits between wallets is face value and pays nothing."
+      >
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard label="Credits issued" value={peso(creditTotals.issued)} tone="positive" />
-          <StatCard label="Credits spent" value={peso(creditTotals.spent)} tone="negative" />
           <StatCard
-            label="Base released to resellers"
-            value={peso(creditTotals.commissionBase)}
-            hint={`${creditTotals.commissionCount} qualifying releases`}
+            label="Credits generated"
+            value={peso(creditFlow.generated)}
+            tone="positive"
+            hint={`${creditFlow.generatedCount} issuances · shop earnings`}
           />
           <StatCard
-            label="Commission granted"
-            value={peso(creditTotals.commissionBonus)}
+            label="Existing credits transferred"
+            value={peso(creditFlow.transferred)}
+            hint={`${creditFlow.transferCount} transfers · no earnings`}
+          />
+          <StatCard
+            label="Credits spent on vouchers"
+            value={peso(creditFlow.spentOnVouchers)}
+            tone="negative"
+          />
+          <StatCard
+            label="Credits revoked"
+            value={peso(creditFlow.revoked)}
+            tone="negative"
+            hint="Admin corrections"
+          />
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatCard
+            label="Seller cashback paid"
+            value={peso(commissionSplit.cashback)}
+            tone="negative"
+          />
+          <StatCard
+            label="Upline commission paid"
+            value={peso(commissionSplit.upline)}
+            tone="negative"
+          />
+          <StatCard
+            label="Discounts given"
+            value={peso(salesTotals.resellerMargin)}
+            tone="negative"
+            hint="Wholesale benefit to channel"
+          />
+          <StatCard
+            label="Net shop earnings"
+            value={peso(
+              creditFlow.generated -
+                creditFlow.revoked -
+                commissionSplit.cashback -
+                commissionSplit.upline,
+            )}
             tone="brand"
-            hint="Snapshot rate per transfer"
+            hint="Credits generated less cashback and upline"
           />
         </div>
       </PageSection>
@@ -281,8 +332,9 @@ function AdminReports() {
                       <TableHead>Channel partner</TableHead>
                       <TableHead>Vouchers</TableHead>
                       <TableHead className="hidden sm:table-cell">Gross</TableHead>
-                      <TableHead>Their margin</TableHead>
-                      <TableHead className="text-right">Commission</TableHead>
+                      <TableHead>Discount saved</TableHead>
+                      <TableHead className="text-right">Sale cashback</TableHead>
+                      <TableHead className="text-right">Upline</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -298,11 +350,10 @@ function AdminReports() {
                         <TableCell className="hidden sm:table-cell">{peso(r.gross)}</TableCell>
                         <TableCell className="text-destructive">{peso(r.margin)}</TableCell>
                         <TableCell className="text-right text-success">
-                          {r.role === "subreseller" ? (
-                            <span className="text-muted-foreground">—</span>
-                          ) : (
-                            `+${peso(r.commission)}`
-                          )}
+                          {r.commission > 0 ? `+${peso(r.commission)}` : "—"}
+                        </TableCell>
+                        <TableCell className="text-right text-success">
+                          {r.upline > 0 ? `+${peso(r.upline)}` : "—"}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -398,7 +449,7 @@ function AdminReports() {
                       <TableHead>Movement</TableHead>
                       <TableHead className="hidden sm:table-cell">Account</TableHead>
                       <TableHead>Amount</TableHead>
-                      <TableHead className="hidden lg:table-cell">Commission</TableHead>
+                      <TableHead className="hidden lg:table-cell">Legacy commission</TableHead>
                       <TableHead className="hidden md:table-cell text-right">Date</TableHead>
                     </TableRow>
                   </TableHeader>

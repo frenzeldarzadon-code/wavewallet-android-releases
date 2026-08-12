@@ -14,7 +14,7 @@ import {
   fetchCreditsReport,
   fetchSalesReport,
   resolveRange,
-  summariseCredits,
+  summariseCreditFlow,
   summariseSales,
   toCsv,
   type CreditReportEntry,
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/super/reports")({
       {
         name: "description",
         content:
-          "Platform-wide voucher revenue, credits issued and reseller commission broken down per ecosystem, across daily to yearly and custom ranges.",
+          "Platform subscription revenue plus per-ecosystem voucher sales, credits generated and channel earnings, across daily to yearly and custom ranges.",
       },
       { property: "og:title", content: "Cross-Tenant Reports — WaveWallet Super Admin" },
       {
@@ -48,8 +48,8 @@ interface EcoRow {
   gross: number;
   net: number;
   discounts: number;
-  issued: number;
-  commission: number;
+  generated: number;
+  transferred: number;
   pointsSales: number;
 }
 
@@ -88,7 +88,7 @@ function SuperReports() {
   }, [load]);
 
   const salesTotals = useMemo(() => summariseSales(sales), [sales]);
-  const creditTotals = useMemo(() => summariseCredits(credits), [credits]);
+  const creditFlow = useMemo(() => summariseCreditFlow(credits), [credits]);
 
   const perEcosystem = useMemo(() => {
     const map = new Map<string, EcoRow>();
@@ -97,8 +97,8 @@ function SuperReports() {
       gross: 0,
       net: 0,
       discounts: 0,
-      issued: 0,
-      commission: 0,
+      generated: 0,
+      transferred: 0,
       pointsSales: 0,
     });
     for (const s of sales) {
@@ -113,12 +113,18 @@ function SuperReports() {
       }
       map.set(s.ecosystem_id, row);
     }
+    const byEco = new Map<string, CreditReportEntry[]>();
     for (const c of credits) {
-      const ecoId = c.ecosystem_id;
-      if (!ecoId) continue;
+      if (!c.ecosystem_id) continue;
+      const list = byEco.get(c.ecosystem_id);
+      if (list) list.push(c);
+      else byEco.set(c.ecosystem_id, [c]);
+    }
+    for (const [ecoId, entries] of byEco) {
+      const flow = summariseCreditFlow(entries);
       const row = map.get(ecoId) ?? blank();
-      if (c.direction === "credit") row.issued += c.amount;
-      row.commission += Number(c.commission_amount ?? 0);
+      row.generated += flow.generated;
+      row.transferred += flow.transferred;
       map.set(ecoId, row);
     }
     return [...map.entries()].sort((a, b) => b[1].net - a[1].net);
@@ -134,9 +140,9 @@ function SuperReports() {
         "Points-funded",
         "Gross",
         "Net collected",
-        "Reseller discounts",
-        "Credits issued",
-        "Commission granted",
+        "Wholesale discounts",
+        "Credits generated",
+        "Existing credits transferred",
       ],
       perEcosystem.map(([id, r]) => [
         ecoName(id),
@@ -145,8 +151,8 @@ function SuperReports() {
         r.gross,
         r.net,
         r.discounts,
-        r.issued,
-        r.commission,
+        r.generated,
+        r.transferred,
       ]),
     );
     downloadCsv(`wavewallet-platform-report-${csvStamp()}.csv`, csv);
@@ -163,12 +169,13 @@ function SuperReports() {
         highlightTypes={["platform_subscription", "credit_generation", "sale_cashback"]}
         netTypes={["platform_subscription"]}
         netLabel="Platform revenue"
+        showBenefit={false}
       />
 
 
       <PageSection
         title="Cross-tenant reports"
-        description={`${resolved.label}. Figures come from immutable ledger records; each ecosystem's snapshotted discounts, commission rates and points ratios are preserved.`}
+        description={`${resolved.label}. Figures come from immutable ledger records; each ecosystem's snapshotted discounts, cashback rates and points ratios are preserved.`}
       >
         <ReportRangePicker
           range={range}
@@ -191,12 +198,20 @@ function SuperReports() {
             value={String(salesTotals.count)}
             hint={`${salesTotals.pointsCount} points-funded`}
           />
-          <StatCard label="Credits issued" value={peso(creditTotals.issued)} />
+          <StatCard label="Credits generated" value={peso(creditFlow.generated)} />
         </div>
         <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard label="Reseller discounts" value={peso(salesTotals.resellerMargin)} tone="negative" />
-          <StatCard label="Commission granted" value={peso(creditTotals.commissionBonus)} tone="positive" />
-          <StatCard label="Base released" value={peso(creditTotals.commissionBase)} />
+          <StatCard label="Wholesale discounts given" value={peso(salesTotals.resellerMargin)} tone="negative" />
+          <StatCard
+            label="Seller cashback & upline"
+            value={peso(creditFlow.cashbackPaid + creditFlow.uplinePaid)}
+            hint="Paid by tenant shops, not the platform"
+          />
+          <StatCard
+            label="Existing credits transferred"
+            value={peso(creditFlow.transferred)}
+            hint="Face value · no earnings"
+          />
           <StatCard label="Ecosystems with activity" value={String(perEcosystem.length)} />
         </div>
       </PageSection>
@@ -215,8 +230,8 @@ function SuperReports() {
                       <TableHead>Vouchers</TableHead>
                       <TableHead className="hidden sm:table-cell">Gross</TableHead>
                       <TableHead>Net</TableHead>
-                      <TableHead className="hidden lg:table-cell">Credits issued</TableHead>
-                      <TableHead className="text-right">Commission</TableHead>
+                      <TableHead className="hidden lg:table-cell">Credits generated</TableHead>
+                      <TableHead className="text-right">Credits transferred</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -231,8 +246,8 @@ function SuperReports() {
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">{peso(r.gross)}</TableCell>
                         <TableCell className="text-success">{peso(r.net)}</TableCell>
-                        <TableCell className="hidden lg:table-cell">{peso(r.issued)}</TableCell>
-                        <TableCell className="text-right text-success">+{peso(r.commission)}</TableCell>
+                        <TableCell className="hidden lg:table-cell">{peso(r.generated)}</TableCell>
+                        <TableCell className="text-right">{peso(r.transferred)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

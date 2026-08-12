@@ -50,6 +50,7 @@ export function EarningsHistory({
   highlightTypes = SELLER_EARNING_TYPES,
   netTypes,
   netLabel = "Net earnings",
+  showBenefit = true,
 }: {
   recipientId?: string | null;
   ecosystemId?: string | null;
@@ -60,6 +61,8 @@ export function EarningsHistory({
   /** Restrict the headline net figure to these types (e.g. platform revenue only). */
   netTypes?: EarningType[];
   netLabel?: string;
+  /** Show "Discounts saved" and "Total benefit" alongside cash earnings. */
+  showBenefit?: boolean;
 }) {
   const [period, setPeriod] = useState<PeriodId>("monthly");
   const [quick, setQuick] = useState<QuickRangeId>("custom");
@@ -281,11 +284,27 @@ export function EarningsHistory({
           <StatCard
             label={netLabel}
             value={peso(
-              netTypes ? netTypes.reduce((s, t) => s + totals.byType[t], 0) : totals.net,
+              netTypes ? netTypes.reduce((s, t) => s + totals.byType[t], 0) : totals.cash,
             )}
             tone="positive"
             hint={`${totals.count} records · ${totals.reversedCount} reversed`}
           />
+          {showBenefit ? (
+            <>
+              <StatCard
+                label="Discounts saved"
+                value={peso(totals.discountSaved)}
+                tone="brand"
+                hint="Wholesale benefit, not cash"
+              />
+              <StatCard
+                label="Total benefit"
+                value={peso(totals.cash + totals.discountSaved)}
+                tone="brand"
+                hint="Earnings + discounts saved"
+              />
+            </>
+          ) : null}
           {highlightTypes.map((t) => (
             <StatCard
               key={t}
@@ -314,7 +333,13 @@ export function EarningsHistory({
                     <TableHead>Period</TableHead>
                     <TableHead className="text-right">Records</TableHead>
                     <TableHead className="text-right">Gross sales</TableHead>
-                    <TableHead className="text-right">Net earnings</TableHead>
+                    <TableHead className="text-right">Earnings</TableHead>
+                    {showBenefit ? (
+                      <>
+                        <TableHead className="text-right">Discounts saved</TableHead>
+                        <TableHead className="text-right">Total benefit</TableHead>
+                      </>
+                    ) : null}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -324,8 +349,16 @@ export function EarningsHistory({
                       <TableCell className="text-right">{b.totals.count}</TableCell>
                       <TableCell className="text-right">{peso(b.totals.gross)}</TableCell>
                       <TableCell className="text-right font-semibold text-success">
-                        {peso(b.totals.net)}
+                        {peso(b.totals.cash)}
                       </TableCell>
+                      {showBenefit ? (
+                        <>
+                          <TableCell className="text-right">{peso(b.totals.discountSaved)}</TableCell>
+                          <TableCell className="text-right font-semibold">
+                            {peso(b.totals.cash + b.totals.discountSaved)}
+                          </TableCell>
+                        </>
+                      ) : null}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -337,7 +370,9 @@ export function EarningsHistory({
 
       <PageSection
         title="Earning transactions"
-        description={`${filtered.length} records · net ${peso(totals.net)}`}
+        description={`${filtered.length} records · earnings ${peso(totals.cash)}${
+          showBenefit ? ` · discounts saved ${peso(totals.discountSaved)}` : ""
+        }`}
       >
         {filtered.length === 0 ? (
           <EmptyState title="Nothing to show" description="Try widening the date range or filters." />
