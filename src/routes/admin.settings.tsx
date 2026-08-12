@@ -95,6 +95,11 @@ function AdminSettings() {
 
   if (!ecosystem) return null;
 
+  // Read-only here: the platform owner configures it per ecosystem.
+  const rawFacebook = (ecosystem.facebookPageUrl ?? "").trim();
+  const facebookUrl = isFacebookUrl(rawFacebook) ? rawFacebook : "";
+
+
   const save = async () => {
     if (!ecosystemDbId) return;
     if (!form.name.trim()) {
