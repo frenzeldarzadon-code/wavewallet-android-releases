@@ -110,16 +110,50 @@ export async function fetchCreditBalance(userId: string): Promise<number> {
 export async function fetchCreditLedger(userId: string, limit = 100): Promise<CreditEntry[]> {
   const { data } = await supabase
     .from("credit_ledger")
-    .select("id, direction, amount, balance_after, reason, reference, tx_id, created_at, user_id")
+    .select(LEDGER_COLUMNS)
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(limit);
-  return ((data ?? []) as unknown as CreditEntry[]).map((e) => ({
-    ...e,
-    amount: Number(e.amount),
-    balance_after: Number(e.balance_after),
-  }));
+  return ((data ?? []) as unknown as CreditEntry[]).map(normalizeEntry);
 }
+
+/** Ecosystem-wide credit movements (admin/super-admin views; RLS still applies). */
+export async function fetchEcosystemLedger(
+  ecosystemId: string,
+  limit = 200,
+): Promise<CreditEntry[]> {
+  const { data } = await supabase
+    .from("credit_ledger")
+    .select(LEDGER_COLUMNS)
+    .eq("ecosystem_id", ecosystemId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return ((data ?? []) as unknown as CreditEntry[]).map(normalizeEntry);
+}
+
+/**
+ * Resolves the commission rate the database would apply if the signed-in
+ * admin released credits to this member. The client can only read it —
+ * the rate used on a transfer is always recomputed server-side.
+ */
+export async function fetchCommissionRate(recipientId: string): Promise<number> {
+  const { data, error } = await supabase.rpc("commission_rate_for", {
+    _sender: (await supabase.auth.getUser()).data.user?.id ?? recipientId,
+    _recipient: recipientId,
+  });
+  if (error) return 0;
+  return Number(data ?? 0);
+}
+
+/** Admin/super-admin sets a reseller's commission — future transfers only. */
+export async function setResellerCommission(userId: string, percent: number): Promise<void> {
+  const { error } = await supabase.rpc("set_reseller_commission", {
+    _user_id: userId,
+    _percent: Math.trunc(percent),
+  });
+  if (error) throw new Error(friendlyWalletError(error.message));
+}
+
 
 export async function fetchShopProducts(): Promise<ShopProduct[]> {
   const { data, error } = await supabase.rpc("list_shop_products");
