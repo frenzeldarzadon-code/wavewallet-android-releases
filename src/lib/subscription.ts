@@ -10,6 +10,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { peso } from "@/lib/wavewallet";
 
 export type PlatformSettings = Database["public"]["Tables"]["platform_settings"]["Row"];
 export type SubscriptionRequest = Database["public"]["Tables"]["subscription_requests"]["Row"];
@@ -115,3 +116,58 @@ export async function reviewSubscriptionRequest(
 
 export const requestTone = (status: string) =>
   status === "approved" ? "success" : status === "rejected" ? "danger" : "warning";
+
+/* ------------------------------------------------------------------ *
+ * Per-ecosystem monthly duration rule
+ *
+ * Each shop has its own monthly rate. The number of months a payment buys
+ * is derived from the amount — no manual month picker:
+ *   months = amount / monthly rate  (150 => 1, 300 => 2, 450 => 3 …)
+ * Amounts that are not an exact multiple are rejected, never rounded down
+ * into a partial month. Mirrors public.months_for_payment in the database.
+ * ------------------------------------------------------------------ */
+
+export type DurationQuote =
+  | { ok: true; months: number; amount: number; rate: number }
+  | { ok: false; months: null; amount: number; rate: number; error: string };
+
+export function monthsForPayment(amount: number, rate: number): DurationQuote {
+  const fail = (error: string): DurationQuote => ({ ok: false, months: null, amount, rate, error });
+  if (!Number.isFinite(rate) || rate <= 0)
+    return fail("This shop has no monthly rate set yet — contact the platform owner.");
+  if (!Number.isFinite(amount) || amount <= 0) return fail("Enter the amount you paid.");
+  if (amount < rate) return fail(`Insufficient amount — one month costs ${peso(rate)}.`);
+  // Work in centavos so 0.1-style float error can never create a fake remainder.
+  const cents = Math.round(amount * 100);
+  const rateCents = Math.round(rate * 100);
+  if (cents % rateCents !== 0)
+    return fail(
+      `Non-standard amount — ${peso(amount)} is not a whole number of months at ${peso(rate)}/month. ` +
+        `Pay ${peso(rate)}, ${peso(rate * 2)}, ${peso(rate * 3)} and so on.`,
+    );
+  return { ok: true, months: cents / rateCents, amount, rate };
+}
+
+/**
+ * New valid-until date: extends from the current expiry while the shop is
+ * still active, otherwise starts from now.
+ */
+export function projectedExpiry(
+  currentPeriodEnd: string | Date | null | undefined,
+  months: number,
+  now: Date = new Date(),
+): Date {
+  const current = currentPeriodEnd ? new Date(currentPeriodEnd) : null;
+  const start = current && current.getTime() > now.getTime() ? current : now;
+  const end = new Date(start.getTime());
+  end.setMonth(end.getMonth() + months);
+  return end;
+}
+
+/** Months a request covers, falling back to legacy quarterly/yearly rows. */
+export function requestMonths(r: Pick<SubscriptionRequest, "months_purchased" | "billing_period">) {
+  if (r.months_purchased != null) return r.months_purchased;
+  return r.billing_period === "yearly" ? 12 : r.billing_period === "quarterly" ? 3 : 1;
+}
+
+export const monthsLabel = (months: number) => `${months} month${months === 1 ? "" : "s"}`;
