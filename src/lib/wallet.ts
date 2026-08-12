@@ -193,7 +193,7 @@ export async function adminAdjustCredits(input: {
       _user_id: input.userId,
       _amount: input.amount,
       _reason: input.reason,
-      _reference: input.reference ?? undefined,
+      ...(input.reference ? { _reference: input.reference } : {}),
     }),
   ) as unknown as string;
 }
