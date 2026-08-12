@@ -146,13 +146,49 @@ export async function fetchCommissionRate(recipientId: string): Promise<number> 
   return Number(data ?? 0);
 }
 
-/** Admin/super-admin sets a reseller's commission — future transfers only. */
-export async function setResellerCommission(userId: string, percent: number): Promise<void> {
+/**
+ * Admin/super-admin sets a reseller's personal commission — future transfers only.
+ * Pass `null` to clear the override so the reseller follows the shop default.
+ */
+export async function setResellerCommission(
+  userId: string,
+  percent: number | null,
+): Promise<void> {
   const { error } = await supabase.rpc("set_reseller_commission", {
     _user_id: userId,
+    // `null` clears the override; the RPC accepts it even though the generated
+    // type narrows the argument to a number.
+    _percent: (percent === null ? null : Math.trunc(percent)) as unknown as number,
+  });
+  if (error) throw new Error(friendlyWalletError(error.message));
+}
+
+/** Shop-wide default commission applied to resellers without a personal override. */
+export async function fetchEcosystemCommission(ecosystemId: string): Promise<number> {
+  const { data, error } = await supabase
+    .from("ecosystems")
+    .select("default_commission_percent")
+    .eq("id", ecosystemId)
+    .maybeSingle();
+  if (error || !data) return 0;
+  return Number(data.default_commission_percent ?? 0);
+}
+
+/**
+ * Admin (own shop) or super admin (any shop) sets the default commission.
+ * Validation and authorization are enforced in the database; the change is
+ * audit-logged and only affects future credit releases.
+ */
+export async function setEcosystemCommission(
+  ecosystemId: string,
+  percent: number,
+): Promise<number> {
+  const { data, error } = await supabase.rpc("set_ecosystem_commission", {
+    _ecosystem_id: ecosystemId,
     _percent: Math.trunc(percent),
   });
   if (error) throw new Error(friendlyWalletError(error.message));
+  return Number(data ?? percent);
 }
 
 

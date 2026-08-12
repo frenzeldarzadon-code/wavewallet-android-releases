@@ -213,6 +213,7 @@ export type Database = {
           created_at: string
           credits_per_point: number
           current_period_end: string | null
+          default_commission_percent: number
           description: string | null
           grace_period_days: number
           id: string
@@ -237,6 +238,7 @@ export type Database = {
           created_at?: string
           credits_per_point?: number
           current_period_end?: string | null
+          default_commission_percent?: number
           description?: string | null
           grace_period_days?: number
           id?: string
@@ -261,6 +263,7 @@ export type Database = {
           created_at?: string
           credits_per_point?: number
           current_period_end?: string | null
+          default_commission_percent?: number
           description?: string | null
           grace_period_days?: number
           id?: string
@@ -460,7 +463,7 @@ export type Database = {
           id: string
           joined_at: string
           phone: string
-          reseller_commission_percent: number
+          reseller_commission_percent: number | null
           reseller_discount_percent: number
           reseller_id: string | null
           status: Database["public"]["Enums"]["account_status"]
@@ -474,7 +477,7 @@ export type Database = {
           id: string
           joined_at?: string
           phone?: string
-          reseller_commission_percent?: number
+          reseller_commission_percent?: number | null
           reseller_discount_percent?: number
           reseller_id?: string | null
           status?: Database["public"]["Enums"]["account_status"]
@@ -488,7 +491,7 @@ export type Database = {
           id?: string
           joined_at?: string
           phone?: string
-          reseller_commission_percent?: number
+          reseller_commission_percent?: number | null
           reseller_discount_percent?: number
           reseller_id?: string | null
           status?: Database["public"]["Enums"]["account_status"]
@@ -1085,6 +1088,7 @@ export type Database = {
           created_at: string
           credits_per_point: number
           current_period_end: string | null
+          default_commission_percent: number
           description: string | null
           grace_period_days: number
           id: string
@@ -1391,6 +1395,10 @@ export type Database = {
         }
       }
       revoke_admin_invitation: { Args: { _id: string }; Returns: undefined }
+      set_ecosystem_commission: {
+        Args: { _ecosystem_id: string; _percent: number }
+        Returns: number
+      }
       set_member_status: {
         Args: {
           _status: Database["public"]["Enums"]["account_status"]
@@ -1468,6 +1476,7 @@ export type Database = {
           created_at: string
           credits_per_point: number
           current_period_end: string | null
+          default_commission_percent: number
           description: string | null
           grace_period_days: number
           id: string
@@ -1506,6 +1515,7 @@ export type Database = {
           created_at: string
           credits_per_point: number
           current_period_end: string | null
+          default_commission_percent: number
           description: string | null
           grace_period_days: number
           id: string

@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Building2, Copy, Plus, Search, Settings2, Trash2, UserPlus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { fetchEcosystemCommission, setEcosystemCommission } from "@/lib/wallet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -583,9 +584,16 @@ function ManageDialog({
     planName: row.plan_name,
     planPrice: String(row.plan_price),
     gracePeriodDays: String(row.grace_period_days),
+    commission: "0",
   });
   const [saving, setSaving] = useState(false);
   const url = `${origin()}/join/${row.slug}`;
+
+  useEffect(() => {
+    void fetchEcosystemCommission(row.id).then((v) =>
+      setState((s) => ({ ...s, commission: String(v) })),
+    );
+  }, [row.id]);
 
   const save = async () => {
     setSaving(true);
@@ -608,15 +616,29 @@ function ManageDialog({
       _plan_price: Number(state.planPrice) || 0,
       _grace_period_days: Number(state.gracePeriodDays) || 0,
     });
+    let commissionErr: string | null = null;
+    const pct = Number(state.commission);
+    if (Number.isNaN(pct) || pct < 0 || pct > 100) {
+      commissionErr = "Commission must be between 0 and 100";
+    } else {
+      try {
+        await setEcosystemCommission(row.id, pct);
+      } catch (e) {
+        commissionErr = (e as Error).message;
+      }
+    }
     setSaving(false);
     if (planErr) {
       toast.error("Settings saved, plan update failed", { description: planErr.message });
+    } else if (commissionErr) {
+      toast.error("Settings saved, commission update failed", { description: commissionErr });
     } else {
       toast.success("Ecosystem updated");
     }
     await onSaved();
     onClose();
   };
+
 
   const rotate = async () => {
     const { error } = await supabase.rpc("regenerate_signup_token", { _ecosystem_id: row.id });
@@ -712,6 +734,22 @@ function ManageDialog({
               onChange={(e) => setState({ ...state, gracePeriodDays: e.target.value })}
             />
           </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="mCommission">Default reseller commission (%)</Label>
+            <Input
+              id="mCommission"
+              type="number"
+              min={0}
+              max={100}
+              value={state.commission}
+              onChange={(e) => setState({ ...state, commission: e.target.value })}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Applied when you or this shop's admin release credits to a reseller who has no
+              personal rate. Future releases only — past transactions keep their snapshot.
+            </p>
+          </div>
+
           <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2 sm:col-span-2">
             <div>
               <p className="text-sm font-medium">Customer signups</p>
