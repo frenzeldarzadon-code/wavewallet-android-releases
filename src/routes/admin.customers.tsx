@@ -121,6 +121,12 @@ function AdminCustomers() {
   const [editingOwner, setEditingOwner] = useState<Member | null>(null);
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState<Member | null>(null);
+  // Organization restructuring (reseller <-> subreseller).
+  const [restructuring, setRestructuring] = useState<Member | null>(null);
+  const [restructureCheck, setRestructureCheck] = useState<RestructureCheck | null>(null);
+  const [restructureParent, setRestructureParent] = useState("");
+  const [childParents, setChildParents] = useState<Record<string, string>>({});
+  const [restructureReason, setRestructureReason] = useState("");
 
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
