@@ -81,6 +81,14 @@ function AdminSettings() {
       setSavingFb(false);
     }
   };
+  // Session data arrives asynchronously; mirror it into the editable fields once.
+  useEffect(() => {
+    setFb({
+      url: ecosystem?.facebookPageUrl ?? "",
+      name: ecosystem?.facebookPageName ?? "",
+    });
+  }, [ecosystem?.facebookPageUrl, ecosystem?.facebookPageName]);
+
   useEffect(() => {
     if (!ecosystemDbId) return;
     void fetchPointsRule(ecosystemDbId).then((v) => setRule(String(v)));
