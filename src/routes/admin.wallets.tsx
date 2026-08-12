@@ -80,6 +80,8 @@ function AdminWallets() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [target, setTarget] = useState<Member | null>(null);
+  const [editingMember, setEditingMember] = useState<EditableMember | null>(null);
+
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
   const [reference, setReference] = useState("");
