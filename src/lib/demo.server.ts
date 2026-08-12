@@ -135,10 +135,12 @@ async function ensureUser(role: DemoRole, ecosystemId: string): Promise<string> 
       .upsert({ user_id: data.user.id, role, ecosystem_id: ecosystemId });
     await supabaseAdmin
       .from("profiles")
-      // Subresellers never earn commission — discount is their only margin.
+      // Credit-LOADING commission is reseller-only. Customer-purchase credit-back
+      // applies to both roles and inherits the shop default (sale_commission_percent = null).
       .update({
         reseller_discount_percent: role === "reseller" ? 15 : 8,
         reseller_commission_percent: role === "reseller" ? 20 : 0,
+        sale_commission_percent: null,
       })
       .eq("id", data.user.id);
   }

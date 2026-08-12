@@ -848,7 +848,7 @@ function AdminCustomers() {
                   {detail.role === "reseller"
                     ? `Reseller · ${detail.reseller_discount_percent}% discount · ${detail.reseller_commission_percent ?? defaultCommission}% commission${detail.reseller_commission_percent === null ? " (shop default)" : ""}`
                     : detail.role === "subreseller"
-                      ? `Subreseller · ${detail.reseller_discount_percent}% discount · no commission`
+                      ? `Subreseller · ${detail.reseller_discount_percent}% discount · ${detail.sale_commission_percent ?? saleDefaults.subreseller}% credit-back${detail.sale_commission_percent === null ? " (shop default)" : ""} · no credit-loading commission`
                       : "Customer"}
                 </StatusBadge>
                 <StatusBadge tone={detail.status === "active" ? "success" : "danger"}>
