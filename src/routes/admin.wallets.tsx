@@ -227,7 +227,7 @@ function AdminWallets() {
                     <p className="truncate text-[11px] text-muted-foreground">
                       {m.email} · {m.phone || "no mobile"}
                     </p>
-                    <div className="mt-1 flex gap-1.5">
+                    <div className="mt-1 flex flex-wrap gap-1.5">
                       <StatusBadge
                         tone={
                           m.role === "reseller" ? "brand" : m.role === "subreseller" ? "success" : "muted"
@@ -247,7 +247,7 @@ function AdminWallets() {
                   <div className="shrink-0 text-right">
                     <p className="text-lg font-semibold text-success">{peso(m.balance)}</p>
                     <p className="text-[11px] text-points">{m.points} pts</p>
-                    <div className="mt-1 flex gap-1.5">
+                    <div className="mt-1 flex flex-wrap gap-1.5">
                       <Button
                         size="sm"
                         variant="outline"

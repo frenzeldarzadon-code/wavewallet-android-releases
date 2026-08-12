@@ -166,7 +166,7 @@ function AdminResellers() {
                         {r.email} · joined {shortDate(r.joined_at)}
                       </p>
                     </div>
-                    <div className="flex shrink-0 flex-col items-end gap-1">
+                    <div className="flex shrink-0 flex-col items-end gap-1 text-right">
                       <StatusBadge tone={r.status === "active" ? "success" : "danger"}>
                         {r.status}
                       </StatusBadge>
