@@ -42,6 +42,33 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [shops, setShops] = useState<SignupEcosystem[]>([]);
+  const [preview, setPreview] = useState(false);
+  const [demoBusy, setDemoBusy] = useState<string | null>(null);
+
+  useEffect(() => setPreview(isPreviewEnvironment()), []);
+
+  /**
+   * Demo sign-in is a real password sign-in: the server provisions a sandbox
+   * account in the isolated demo ecosystem and hands back a freshly rotated
+   * one-time password. No auth bypass, no shared master credential.
+   */
+  const startDemo = async (role: "customer" | "reseller" | "admin" | "super_admin") => {
+    if (demoBusy || busy) return;
+    setDemoBusy(role);
+    try {
+      const creds = await startDemoSession({ data: { role } });
+      const ctx = await signInWithPassword(creds.email, creds.password);
+      if (!ctx) throw new Error("The demo profile could not be loaded.");
+      toast.success(`Signed in to the DEMO shop as ${creds.label}.`);
+      navigate({ to: homeFor(ctx.role) });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not start the demo session.");
+    } finally {
+      setDemoBusy(null);
+    }
+  };
+
+
 
   // Already signed in? Send straight to the right dashboard.
   useEffect(() => {
