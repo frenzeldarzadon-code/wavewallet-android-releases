@@ -65,7 +65,9 @@ function AdminSubscription() {
   const notice = stateNotice(sub.status);
   const detailsMissing = Boolean(settings && !settings.gcash_number.trim());
   const pending = requests.find((r) => r.status === "pending") ?? null;
-  const lastRejected = requests.find((r) => r.status === "rejected") ?? null;
+  // Only surface a rejection while it is still the outcome the operator must act on.
+  const lastRejected =
+    requests[0]?.status === "rejected" && sub.status !== "active" ? requests[0] : null;
   const per = settings ? periodLabel(settings.billing_period) : "month";
 
   const submit = async () => {
