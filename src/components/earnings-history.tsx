@@ -22,15 +22,19 @@ import {
   EARNINGS_TZ,
   EARNING_TYPE_LABEL,
   PERIOD_OPTIONS,
+  QUICK_RANGES,
+  SELLER_EARNING_TYPES,
   bucketEarnings,
   defaultRangeFor,
   earningsCsvRows,
   fetchEarnings,
   filterEarnings,
+  quickRangeDates,
   summariseEarnings,
   type EarningRow,
   type EarningType,
   type PeriodId,
+  type QuickRangeId,
 } from "@/lib/earnings";
 
 /**
@@ -43,13 +47,22 @@ export function EarningsHistory({
   ecosystemId,
   title = "Earnings history",
   description,
+  highlightTypes = SELLER_EARNING_TYPES,
+  netTypes,
+  netLabel = "Net earnings",
 }: {
   recipientId?: string | null;
   ecosystemId?: string | null;
   title?: string;
   description?: string;
+  /** Earning types shown as summary cards for this audience. */
+  highlightTypes?: EarningType[];
+  /** Restrict the headline net figure to these types (e.g. platform revenue only). */
+  netTypes?: EarningType[];
+  netLabel?: string;
 }) {
   const [period, setPeriod] = useState<PeriodId>("monthly");
+  const [quick, setQuick] = useState<QuickRangeId>("custom");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [rows, setRows] = useState<EarningRow[]>([]);
@@ -59,6 +72,20 @@ export function EarningsHistory({
   const [product, setProduct] = useState<string>("all");
   const [party, setParty] = useState<string>("all");
   const [search, setSearch] = useState("");
+
+  const applyQuick = (id: QuickRangeId) => {
+    setQuick(id);
+    const dates = quickRangeDates(id);
+    if (!dates) {
+      setFrom("");
+      setTo("");
+      return;
+    }
+    setFrom(dates.from);
+    setTo(dates.to);
+    const preset = QUICK_RANGES.find((q) => q.id === id);
+    if (preset) setPeriod(preset.period);
+  };
 
   const range = useMemo(() => {
     const base = defaultRangeFor(period);
@@ -103,6 +130,12 @@ export function EarningsHistory({
     }
     return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1]));
   }, [rows]);
+  const typeOptions = useMemo(() => {
+    const present = new Set<EarningType>(rows.map((r) => r.earning_type));
+    for (const t of highlightTypes) present.add(t);
+    return (Object.keys(EARNING_TYPE_LABEL) as EarningType[]).filter((t) => present.has(t));
+  }, [rows, highlightTypes]);
+
 
   const filtered = useMemo(
     () => filterEarnings(rows, { type, status, product, counterparty: party, search }),
@@ -129,6 +162,18 @@ export function EarningsHistory({
         }
       >
         <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {QUICK_RANGES.map((q) => (
+              <Button
+                key={q.id}
+                size="sm"
+                variant={quick === q.id ? "default" : "outline"}
+                onClick={() => applyQuick(q.id)}
+              >
+                {q.label}
+              </Button>
+            ))}
+          </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <Tabs value={period} onValueChange={(v) => setPeriod(v as PeriodId)} className="min-w-0">
               <TabsList className="flex w-full flex-wrap justify-start">
@@ -148,11 +193,27 @@ export function EarningsHistory({
             <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <div className="space-y-1.5">
                 <Label htmlFor="earnFrom">From</Label>
-                <Input id="earnFrom" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+                <Input
+                  id="earnFrom"
+                  type="date"
+                  value={from}
+                  onChange={(e) => {
+                    setQuick("custom");
+                    setFrom(e.target.value);
+                  }}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="earnTo">To</Label>
-                <Input id="earnTo" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+                <Input
+                  id="earnTo"
+                  type="date"
+                  value={to}
+                  onChange={(e) => {
+                    setQuick("custom");
+                    setTo(e.target.value);
+                  }}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label>Earning type</Label>
@@ -160,9 +221,9 @@ export function EarningsHistory({
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All types</SelectItem>
-                    <SelectItem value="sale_cashback">Sales cashback</SelectItem>
-                    <SelectItem value="upline_commission">Upline commission</SelectItem>
-                    <SelectItem value="wholesale_discount">Wholesale margin</SelectItem>
+                    {typeOptions.map((t) => (
+                      <SelectItem key={t} value={t}>{EARNING_TYPE_LABEL[t]}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -217,14 +278,22 @@ export function EarningsHistory({
 
       <PageSection>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard label="Net earnings" value={peso(totals.net)} tone="positive" hint="Filtered selection" />
-          <StatCard label="Sales cashback" value={peso(totals.byType.sale_cashback)} tone="positive" />
-          <StatCard label="Upline commission" value={peso(totals.byType.upline_commission)} tone="brand" />
           <StatCard
-            label="Wholesale margin"
-            value={peso(totals.byType.wholesale_discount)}
+            label={netLabel}
+            value={peso(
+              netTypes ? netTypes.reduce((s, t) => s + totals.byType[t], 0) : totals.net,
+            )}
+            tone="positive"
             hint={`${totals.count} records · ${totals.reversedCount} reversed`}
           />
+          {highlightTypes.map((t) => (
+            <StatCard
+              key={t}
+              label={EARNING_TYPE_LABEL[t]}
+              value={peso(totals.byType[t])}
+              tone={t === "upline_commission" || t === "credit_generation" ? "brand" : "positive"}
+            />
+          ))}
         </div>
         {totals.reversed > 0 ? (
           <p className="mt-2 text-xs text-destructive">

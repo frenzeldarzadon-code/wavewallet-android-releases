@@ -15,13 +15,26 @@ import { supabase } from "@/integrations/supabase/client";
 /** One shared reporting timezone so every ecosystem buckets days identically. */
 export const EARNINGS_TZ = "Asia/Manila";
 
-export type EarningType = "sale_cashback" | "upline_commission" | "wholesale_discount";
+export type EarningType =
+  | "sale_cashback"
+  | "upline_commission"
+  | "wholesale_discount"
+  | "credit_generation"
+  | "platform_subscription";
 
 export const EARNING_TYPE_LABEL: Record<EarningType, string> = {
   sale_cashback: "Sales cashback",
   upline_commission: "Upline commission",
   wholesale_discount: "Wholesale margin",
+  credit_generation: "Credits generated",
+  platform_subscription: "Subscription revenue",
 };
+
+export const SELLER_EARNING_TYPES: EarningType[] = [
+  "sale_cashback",
+  "upline_commission",
+  "wholesale_discount",
+];
 
 export interface EarningRow {
   id: string;
@@ -157,7 +170,13 @@ export function summariseEarnings(rows: EarningRow[]): EarningsTotals {
     gross: 0,
     net: 0,
     reversed: 0,
-    byType: { sale_cashback: 0, upline_commission: 0, wholesale_discount: 0 },
+    byType: {
+      sale_cashback: 0,
+      upline_commission: 0,
+      wholesale_discount: 0,
+      credit_generation: 0,
+      platform_subscription: 0,
+    },
   };
   for (const r of rows) {
     if (r.status === "reversed") {
@@ -238,6 +257,34 @@ export function defaultRangeFor(period: PeriodId): { from: Date; to: Date } {
   return { from, to };
 }
 
+/* ------------------------------------------------------------------ */
+/* Quick ranges                                                        */
+/* ------------------------------------------------------------------ */
+
+export type QuickRangeId = "today" | "month" | "quarter" | "year" | "custom";
+
+export const QUICK_RANGES: { id: QuickRangeId; label: string; period: PeriodId }[] = [
+  { id: "today", label: "Today", period: "daily" },
+  { id: "month", label: "This month", period: "daily" },
+  { id: "quarter", label: "This quarter", period: "monthly" },
+  { id: "year", label: "This year", period: "monthly" },
+  { id: "custom", label: "Custom range", period: "monthly" },
+];
+
+/** ISO yyyy-mm-dd bounds for a quick range, using reporting-timezone dates. */
+export function quickRangeDates(id: QuickRangeId): { from: string; to: string } | null {
+  if (id === "custom") return null;
+  const { year, month, day } = zonedParts(new Date());
+  const to = `${year}-${pad(month)}-${pad(day)}`;
+  let from = to;
+  if (id === "month") from = `${year}-${pad(month)}-01`;
+  else if (id === "quarter") from = `${year}-${pad(Math.floor((month - 1) / 3) * 3 + 1)}-01`;
+  else if (id === "year") from = `${year}-01-01`;
+  return { from, to };
+}
+
+
+
 export const EARNINGS_CSV_HEADERS = [
   "Date/time",
   "Earning type",
@@ -266,4 +313,39 @@ export function earningsCsvRows(rows: EarningRow[]): (string | number | null)[][
     r.status,
     r.tx_id ?? "",
   ]);
+}
+
+/* ------------------------------------------------------------------ */
+/* Dashboard rollups                                                   */
+/* ------------------------------------------------------------------ */
+
+export interface PeriodTotals {
+  today: number;
+  month: number;
+  quarter: number;
+  year: number;
+}
+
+/**
+ * Today / this month / this quarter / this year net totals for the given
+ * earning types, using reporting-timezone calendar boundaries. Reversed rows
+ * are excluded, so these cards reconcile with the ledger-backed history.
+ */
+export function periodTotals(rows: EarningRow[], types?: EarningType[]): PeriodTotals {
+  const now = zonedParts(new Date());
+  const q = Math.floor((now.month - 1) / 3);
+  const out: PeriodTotals = { today: 0, month: 0, quarter: 0, year: 0 };
+  for (const r of rows) {
+    if (r.status === "reversed") continue;
+    if (types && !types.includes(r.earning_type)) continue;
+    const p = zonedParts(r.occurred_at);
+    if (p.year !== now.year) continue;
+    out.year += r.earning_amount;
+    if (Math.floor((p.month - 1) / 3) === q) out.quarter += r.earning_amount;
+    if (p.month === now.month) {
+      out.month += r.earning_amount;
+      if (p.day === now.day) out.today += r.earning_amount;
+    }
+  }
+  return out;
 }

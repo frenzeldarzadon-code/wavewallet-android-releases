@@ -158,9 +158,14 @@ function SuperReports() {
   return (
     <>
       <EarningsHistory
-        title="Cross-ecosystem earnings"
-        description="Reseller and subreseller earnings across every shop, derived from finalized sales."
+        title="Platform revenue & cross-ecosystem earnings"
+        description="Platform subscription revenue belongs to the platform; shop, reseller and subreseller earnings are listed separately per ecosystem and never counted as platform revenue."
+        highlightTypes={["platform_subscription", "credit_generation", "sale_cashback"]}
+        netTypes={["platform_subscription"]}
+        netLabel="Platform revenue"
       />
+
+
       <PageSection
         title="Cross-tenant reports"
         description={`${resolved.label}. Figures come from immutable ledger records; each ecosystem's snapshotted discounts, commission rates and points ratios are preserved.`}
