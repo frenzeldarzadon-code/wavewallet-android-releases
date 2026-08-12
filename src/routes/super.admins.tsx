@@ -637,6 +637,17 @@ function ManageDialog({
         commissionErr = (e as Error).message;
       }
     }
+    const saleR = Number(state.saleReseller);
+    const saleS = Number(state.saleSub);
+    if ([saleR, saleS].some((v) => Number.isNaN(v) || v < 0 || v > 100)) {
+      commissionErr = commissionErr ?? "Credit-back must be between 0 and 100";
+    } else {
+      try {
+        await setEcosystemSaleCommission(row.id, { reseller: saleR, subreseller: saleS });
+      } catch (e) {
+        commissionErr = commissionErr ?? (e as Error).message;
+      }
+    }
     setSaving(false);
     if (planErr) {
       toast.error("Settings saved, plan update failed", { description: planErr.message });
