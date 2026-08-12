@@ -4,6 +4,7 @@ import {
   CreditCard,
   Gift,
   LayoutDashboard,
+  Link2,
   Package,
   Settings,
   Ticket,
@@ -24,10 +25,12 @@ const nav: NavItem[] = [
   { to: "/admin/rewards", label: "Rewards", icon: Gift },
   { to: "/admin/resellers", label: "Resellers", icon: Users },
   { to: "/admin/customers", label: "Customers", icon: UserSquare2 },
+  { to: "/admin/signup-link", label: "Customer signup link", icon: Link2 },
   { to: "/admin/reports", label: "Reports", icon: BarChart3 },
   { to: "/admin/subscription", label: "Subscription", icon: CreditCard },
   { to: "/admin/settings", label: "Ecosystem", icon: Settings },
 ];
+
 
 const bottomNav: NavItem[] = [
   { to: "/admin", label: "Home", icon: LayoutDashboard },
