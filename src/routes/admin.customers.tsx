@@ -25,7 +25,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
 import { supabase } from "@/integrations/supabase/client";
-import { peso, shortDate, shortDateTime } from "@/lib/wavewallet";
+import { peso, roleLabel, shortDate, shortDateTime, type Role } from "@/lib/wavewallet";
 import { setResellerCommission } from "@/lib/wallet";
 
 export const Route = createFileRoute("/admin/customers")({
@@ -55,7 +55,7 @@ interface Member {
   status: "active" | "suspended";
   reseller_discount_percent: number;
   reseller_commission_percent: number;
-  role: "customer" | "reseller" | "admin" | "super_admin";
+  role: Role;
   credits: number;
   points: number;
 }
@@ -76,9 +76,10 @@ function AdminCustomers() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
-  const [roleFilter, setRoleFilter] = useState<"all" | "customer" | "reseller">("all");
+  const [roleFilter, setRoleFilter] = useState<"all" | "customer" | "reseller" | "subreseller">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "suspended">("all");
   const [promoting, setPromoting] = useState<Member | null>(null);
+  const [promoteTo, setPromoteTo] = useState<"reseller" | "subreseller">("reseller");
   const [editing, setEditing] = useState<Member | null>(null);
   const [detail, setDetail] = useState<Member | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
@@ -107,7 +108,8 @@ function AdminCustomers() {
     const roleOf = new Map<string, Member["role"]>();
     for (const r of roles ?? []) {
       const current = roleOf.get(r.user_id);
-      if (!current || r.role === "reseller") roleOf.set(r.user_id, r.role as Member["role"]);
+      const rank = (x: string) => (x === "reseller" ? 0 : x === "subreseller" ? 1 : 2);
+      if (!current || rank(r.role) < rank(current)) roleOf.set(r.user_id, r.role as Member["role"]);
     }
     const creditOf = new Map((credits ?? []).map((c) => [c.user_id, Number(c.balance)]));
     const pointOf = new Map((points ?? []).map((p) => [p.user_id, Number(p.balance)]));
@@ -142,7 +144,10 @@ function AdminCustomers() {
   };
 
   const customers = useMemo(
-    () => members.filter((m) => m.role === "customer" || m.role === "reseller"),
+    () =>
+      members.filter(
+        (m) => m.role === "customer" || m.role === "reseller" || m.role === "subreseller",
+      ),
     [members],
   );
   const filtered = useMemo(() => {
@@ -159,6 +164,7 @@ function AdminCustomers() {
     });
   }, [customers, q, roleFilter, statusFilter]);
   const resellers = customers.filter((c) => c.role === "reseller");
+  const subresellers = customers.filter((c) => c.role === "subreseller");
 
   if (!ecosystem) return null;
 
@@ -170,24 +176,29 @@ function AdminCustomers() {
       return;
     }
     setBusy(true);
-    const { error } = await supabase.rpc("promote_to_reseller", {
-      _user_id: promoting.id,
-      _discount: value,
-    });
+    const { error } = await supabase.rpc(
+      promoteTo === "subreseller" ? "promote_to_subreseller" : "promote_to_reseller",
+      { _user_id: promoting.id, _discount: value },
+    );
     setBusy(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    const bonus = Number(commission);
-    if (!Number.isNaN(bonus) && bonus > 0) {
-      try {
-        await setResellerCommission(promoting.id, bonus);
-      } catch (err) {
-        toast.error((err as Error).message);
+    // Commission is a reseller-only mechanic — subresellers are always 0%.
+    if (promoteTo === "reseller") {
+      const bonus = Number(commission);
+      if (!Number.isNaN(bonus) && bonus > 0) {
+        try {
+          await setResellerCommission(promoting.id, bonus);
+        } catch (err) {
+          toast.error((err as Error).message);
+        }
       }
     }
-    toast.success(`${promoting.full_name} is now a reseller — history preserved.`);
+    toast.success(
+      `${promoting.full_name} is now a ${roleLabel(promoteTo).toLowerCase()} — history preserved.`,
+    );
     setPromoting(null);
     void load();
   };
@@ -209,7 +220,7 @@ function AdminCustomers() {
       toast.error(error.message);
       return;
     }
-    toast.success("Reseller discount updated.");
+    toast.success("Discount updated — applies to future voucher purchases only.");
     setEditing(null);
     void load();
   };
@@ -255,7 +266,7 @@ function AdminCustomers() {
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="Members" value={String(customers.length)} tone="brand" />
           <StatCard label="Resellers" value={String(resellers.length)} tone="positive" />
-          <StatCard label="Customers" value={String(customers.length - resellers.length)} />
+          <StatCard label="Subresellers" value={String(subresellers.length)} tone="brand" />
           <StatCard
             label="Suspended"
             value={String(customers.filter((c) => c.status !== "active").length)}
@@ -305,6 +316,7 @@ function AdminCustomers() {
               <SelectItem value="all">All roles</SelectItem>
               <SelectItem value="customer">Customers</SelectItem>
               <SelectItem value="reseller">Resellers</SelectItem>
+              <SelectItem value="subreseller">Subresellers</SelectItem>
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
@@ -354,14 +366,18 @@ function AdminCustomers() {
                           ) : null}
                         </TableCell>
                         <TableCell>
-                          {c.role === "reseller" ? (
+                          {c.role === "reseller" || c.role === "subreseller" ? (
                             <div className="flex flex-wrap gap-1">
                               <StatusBadge tone="success">
-                                Reseller · {c.reseller_discount_percent}%
+                                {roleLabel(c.role)} · {c.reseller_discount_percent}% off
                               </StatusBadge>
-                              <StatusBadge tone="brand">
-                                {c.reseller_commission_percent}% commission
-                              </StatusBadge>
+                              {c.role === "reseller" ? (
+                                <StatusBadge tone="brand">
+                                  {c.reseller_commission_percent}% commission
+                                </StatusBadge>
+                              ) : (
+                                <StatusBadge tone="muted">No commission</StatusBadge>
+                              )}
                             </div>
                           ) : (
                             <StatusBadge tone="muted">Customer</StatusBadge>
@@ -379,7 +395,7 @@ function AdminCustomers() {
                             <Button size="sm" variant="ghost" onClick={() => void openDetail(c)}>
                               <UserCog className="size-4" /> Details
                             </Button>
-                            {c.role === "reseller" ? (
+                            {c.role === "reseller" || c.role === "subreseller" ? (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -402,18 +418,19 @@ function AdminCustomers() {
                               >
                                 <Percent className="size-4" /> Commission
                               </Button>
-                            ) : (
+                            ) : c.role === "customer" ? (
                               <Button
                                 size="sm"
                                 onClick={() => {
                                   setPromoting(c);
+                                  setPromoteTo("reseller");
                                   setDiscount("10");
                                   setCommission("20");
                                 }}
                               >
-                                <ShieldCheck className="size-4" /> Make reseller
+                                <ShieldCheck className="size-4" /> Promote
                               </Button>
-                            )}
+                            ) : null}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -429,7 +446,7 @@ function AdminCustomers() {
       <Dialog open={!!promoting} onOpenChange={(o) => !o && setPromoting(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Promote to reseller</DialogTitle>
+            <DialogTitle>Promote member</DialogTitle>
             <DialogDescription>
               {promoting?.full_name || promoting?.email} keeps every credit, point, purchase and
               ledger entry. The change is written to the audit trail.
@@ -437,7 +454,22 @@ function AdminCustomers() {
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="promoteDiscount">Reseller discount (%)</Label>
+              <Label htmlFor="promoteRole">New role</Label>
+              <Select
+                value={promoteTo}
+                onValueChange={(v) => setPromoteTo(v as "reseller" | "subreseller")}
+              >
+                <SelectTrigger id="promoteRole">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="reseller">Reseller — discount + credit commission</SelectItem>
+                  <SelectItem value="subreseller">Subreseller — discount only, no commission</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="promoteDiscount">Voucher discount (%)</Label>
               <Input
                 id="promoteDiscount"
                 type="number"
@@ -447,7 +479,11 @@ function AdminCustomers() {
                 onChange={(e) => setDiscount(e.target.value)}
               />
             </div>
-            <div className="space-y-1.5">
+            <p className="text-[11px] text-muted-foreground">
+              They buy vouchers at {100 - (Number(discount) || 0)}% of the customer price and sell
+              at the normal customer price — the discount is their margin.
+            </p>
+            <div className={promoteTo === "reseller" ? "space-y-1.5" : "hidden"}>
               <Label htmlFor="promoteCommission">Credit commission bonus (%)</Label>
               <Input
                 id="promoteCommission"
@@ -478,9 +514,10 @@ function AdminCustomers() {
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Reseller discount</DialogTitle>
+            <DialogTitle>{roleLabel(editing?.role ?? "reseller")} discount</DialogTitle>
             <DialogDescription>
-              Applies to future voucher purchases by {editing?.full_name || editing?.email}.
+              Applies to future voucher purchases by {editing?.full_name || editing?.email} only.
+              Past purchases keep the price and discount they were made with.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">
@@ -560,10 +597,16 @@ function AdminCustomers() {
                 <StatCard label="Points balance" value={`${detail.points} pts`} tone="brand" />
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge tone={detail.role === "reseller" ? "success" : "muted"}>
+                <StatusBadge
+                  tone={
+                    detail.role === "reseller" || detail.role === "subreseller" ? "success" : "muted"
+                  }
+                >
                   {detail.role === "reseller"
                     ? `Reseller · ${detail.reseller_discount_percent}% discount · ${detail.reseller_commission_percent}% commission`
-                    : "Customer"}
+                    : detail.role === "subreseller"
+                      ? `Subreseller · ${detail.reseller_discount_percent}% discount · no commission`
+                      : "Customer"}
                 </StatusBadge>
                 <StatusBadge tone={detail.status === "active" ? "success" : "danger"}>
                   {detail.status}
