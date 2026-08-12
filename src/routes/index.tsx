@@ -179,7 +179,7 @@ function LoginPage() {
                     </span>
                   </span>
                   <span className="shrink-0 text-[11px] text-muted-foreground">
-                    {a.ecosystemId ? getEcosystem(a.ecosystemId).name : "Platform"}
+                    {a.ecosystemId ? (getEcosystem(a.ecosystemId)?.name ?? "Ecosystem") : "Platform"}
                   </span>
                 </button>
               ))}
