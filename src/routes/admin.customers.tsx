@@ -37,6 +37,15 @@ import {
   setSubresellerParent,
   type SaleCommissionDefaults,
 } from "@/lib/wallet";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  evaluateRestructure,
+  fetchRestructureCheck,
+  oppositeRole,
+  restructureMemberRole,
+  type RestructurableRole,
+  type RestructureCheck,
+} from "@/lib/role-restructure";
 
 export const Route = createFileRoute("/admin/customers")({
   head: () => ({
