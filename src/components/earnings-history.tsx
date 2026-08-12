@@ -50,6 +50,7 @@ export function EarningsHistory({
   highlightTypes = SELLER_EARNING_TYPES,
   netTypes,
   netLabel = "Net earnings",
+  showBenefit = true,
 }: {
   recipientId?: string | null;
   ecosystemId?: string | null;
@@ -60,6 +61,8 @@ export function EarningsHistory({
   /** Restrict the headline net figure to these types (e.g. platform revenue only). */
   netTypes?: EarningType[];
   netLabel?: string;
+  /** Show "Discounts saved" and "Total benefit" alongside cash earnings. */
+  showBenefit?: boolean;
 }) {
   const [period, setPeriod] = useState<PeriodId>("monthly");
   const [quick, setQuick] = useState<QuickRangeId>("custom");
