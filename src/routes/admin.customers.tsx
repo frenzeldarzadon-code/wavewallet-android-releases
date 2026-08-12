@@ -1131,6 +1131,12 @@ function AdminCustomers() {
           ) : null}
         </DialogContent>
       </Dialog>
+
+      <EditMemberDialog
+        member={editingProfile}
+        onClose={() => setEditingProfile(null)}
+        onSaved={() => void load()}
+      />
     </>
   );
 }
