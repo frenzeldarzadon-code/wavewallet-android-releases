@@ -160,13 +160,13 @@ export async function restructureMemberRole(
     .filter(([, parent]) => !!parent)
     .map(([child_id, new_parent_id]) => ({ child_id, new_parent_id }));
 
+  const parent = plan.newRole === "subreseller" ? (plan.parentResellerId ?? "") : "";
   const { data, error } = await supabase.rpc("restructure_member_role", {
     _user_id: userId,
     _new_role: plan.newRole,
     _reason: plan.reason.trim(),
-    _parent_reseller_id:
-      plan.newRole === "subreseller" ? (plan.parentResellerId ?? undefined) : undefined,
     _child_reassignments: reassignments as unknown as never,
+    ...(parent ? { _parent_reseller_id: parent } : {}),
   });
   if (error) throw new Error(error.message);
   return data as unknown as RestructureResult;
