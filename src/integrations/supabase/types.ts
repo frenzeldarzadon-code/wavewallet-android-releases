@@ -1356,6 +1356,7 @@ export type Database = {
           unused: number
         }[]
       }
+      assert_actor_active: { Args: never; Returns: undefined }
       can_load_credits: {
         Args: { _actor: string; _target: string }
         Returns: boolean
@@ -1537,6 +1538,15 @@ export type Database = {
           points_price: number
           promo_note: string
           promo_price: number
+        }[]
+      }
+      list_signup_ecosystems: {
+        Args: never
+        Returns: {
+          description: string
+          id: string
+          name: string
+          slug: string
         }[]
       }
       lookup_redemption: {

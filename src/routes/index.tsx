@@ -78,18 +78,17 @@ function LoginPage() {
     loadAuthContext().then((ctx) => {
       if (active && ctx) navigate({ to: homeFor(ctx.role), replace: true });
     });
-    supabase
-      .from("ecosystems")
-      .select("id, name, slug, description")
-      .eq("signup_enabled", true)
-      .then(({ data }) => {
-        if (!active) return;
-        const list = (data as SignupEcosystem[]) ?? [];
-        // The sandbox shop is only advertised inside the preview environment.
-        setShops(
-          isPreviewEnvironment() ? list : list.filter((e) => e.slug !== DEMO_ECOSYSTEM_SLUG),
-        );
-      });
+    // Signed-out visitors cannot read the shops table directly (row-level
+    // security), so the open-signup list comes from a safe public function
+    // that exposes name/slug/description only.
+    supabase.rpc("list_signup_ecosystems").then(({ data }) => {
+      if (!active) return;
+      const list = (data as SignupEcosystem[] | null) ?? [];
+      // The sandbox shop is only advertised inside the preview environment.
+      setShops(
+        isPreviewEnvironment() ? list : list.filter((e) => e.slug !== DEMO_ECOSYSTEM_SLUG),
+      );
+    });
     return () => {
       active = false;
     };

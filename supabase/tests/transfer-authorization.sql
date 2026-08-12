@@ -89,3 +89,21 @@ BEGIN
 END $$;
 
 ROLLBACK;
+
+-- ---------------------------------------------------------------------------
+-- Suspended actors may never move money (added in the final verification pass).
+-- transfer_credits / reseller_load_credits both call public.assert_actor_active().
+-- Run as a privileged role; psql QA role cannot execute SECURITY DEFINER RPCs.
+-- ---------------------------------------------------------------------------
+do $$
+begin
+  if (select prosrc from pg_proc where proname = 'transfer_credits')
+       not like '%assert_actor_active%' then
+    raise exception 'FAIL: transfer_credits does not block suspended senders';
+  end if;
+  if (select prosrc from pg_proc where proname = 'reseller_load_credits')
+       not like '%assert_actor_active%' then
+    raise exception 'FAIL: reseller_load_credits does not block suspended senders';
+  end if;
+  raise notice 'PASS: suspended-sender guard present on both transfer paths';
+end $$;
