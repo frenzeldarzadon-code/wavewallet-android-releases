@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Ticket } from "lucide-react";
+import { Sparkles, Ticket } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,6 +21,12 @@ import {
   purchaseVoucher,
   type ShopProduct,
 } from "@/lib/wallet";
+import {
+  fetchPointsAccount,
+  fetchPointsRule,
+  purchaseVoucherWithPoints,
+  type PointsAccount,
+} from "@/lib/rewards";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/shop")({
@@ -30,12 +36,12 @@ export const Route = createFileRoute("/app/shop")({
       {
         name: "description",
         content:
-          "Buy WiFi vouchers with your shop credits. One unused code is issued per purchase and marked sold instantly.",
+          "Buy WiFi vouchers with your shop credits or points. One unused code is issued per purchase and marked sold instantly.",
       },
       { property: "og:title", content: "Voucher Shop — WaveWallet" },
       {
         property: "og:description",
-        content: "Buy WiFi vouchers with credits — codes are issued atomically and never reused.",
+        content: "Buy WiFi vouchers with credits or points — codes are issued atomically and never reused.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -44,6 +50,8 @@ export const Route = createFileRoute("/app/shop")({
   component: CustomerShop,
 });
 
+type Method = "credits" | "points";
+
 export function VoucherShopView({
   role,
   discountPercent = 0,
@@ -51,30 +59,43 @@ export function VoucherShopView({
   role: "customer" | "reseller";
   discountPercent?: number;
 }) {
-  const { account } = useSession(role);
+  const { account, ecosystemDbId } = useSession(role);
   const [products, setProducts] = useState<ShopProduct[]>([]);
   const [balance, setBalance] = useState(0);
+  const [points, setPoints] = useState<PointsAccount>({ balance: 0, held: 0, available: 0 });
+  const [ratio, setRatio] = useState(10);
   const [loading, setLoading] = useState(true);
-  const [buying, setBuying] = useState<ShopProduct | null>(null);
+  const [buying, setBuying] = useState<{ product: ShopProduct; method: Method } | null>(null);
   const [busy, setBusy] = useState(false);
-  const [issued, setIssued] = useState<{ code: string; tx: string; name: string; price: number } | null>(
-    null,
-  );
+  const [issued, setIssued] = useState<{
+    code: string;
+    tx: string;
+    name: string;
+    price: string;
+    earned: number;
+  } | null>(null);
   const userId = account?.id ?? null;
 
   const load = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
     try {
-      const [p, b] = await Promise.all([fetchShopProducts(), fetchCreditBalance(userId)]);
+      const [p, b, pts, r] = await Promise.all([
+        fetchShopProducts(),
+        fetchCreditBalance(userId),
+        fetchPointsAccount(userId),
+        ecosystemDbId ? fetchPointsRule(ecosystemDbId) : Promise.resolve(10),
+      ]);
       setProducts(p);
       setBalance(b);
+      setPoints(pts);
+      setRatio(r);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, ecosystemDbId]);
 
   useEffect(() => {
     void load();
@@ -82,15 +103,31 @@ export function VoucherShopView({
 
   if (!account) return null;
 
-  const priceFor = (p: ShopProduct) =>
-    Math.round(listPrice(p) * (100 - discountPercent)) / 100;
+  const priceFor = (p: ShopProduct) => Math.round(listPrice(p) * (100 - discountPercent)) / 100;
 
   const confirm = async () => {
     if (!buying) return;
     setBusy(true);
     try {
-      const res = await purchaseVoucher(buying.id);
-      setIssued({ code: res.code, tx: res.tx_id, name: res.product_name, price: res.sale_price });
+      if (buying.method === "points") {
+        const res = await purchaseVoucherWithPoints(buying.product.id);
+        setIssued({
+          code: res.code,
+          tx: res.tx_id,
+          name: res.product_name,
+          price: `${res.points_spent} pts`,
+          earned: 0,
+        });
+      } else {
+        const res = await purchaseVoucher(buying.product.id);
+        setIssued({
+          code: res.code,
+          tx: res.tx_id,
+          name: res.product_name,
+          price: peso(res.sale_price),
+          earned: Number(res.points_earned ?? 0),
+        });
+      }
       setBuying(null);
       await load();
     } catch (e) {
@@ -104,7 +141,9 @@ export function VoucherShopView({
     <>
       <PageSection
         title="Voucher shop"
-        description={`Balance: ${peso(balance)}${discountPercent > 0 ? ` · ${discountPercent}% reseller discount applied` : ""}`}
+        description={`Balance: ${peso(balance)} · ${points.available} pts available${
+          discountPercent > 0 ? ` · ${discountPercent}% reseller discount applied` : ""
+        }`}
       >
         {loading ? (
           <EmptyState title="Loading products…" />
@@ -119,6 +158,8 @@ export function VoucherShopView({
               const price = priceFor(p);
               const soldOut = p.available === 0;
               const affordable = balance >= price;
+              const pointsPrice = p.points_price ?? 0;
+              const pointsOk = pointsPrice > 0 && points.available >= pointsPrice;
               return (
                 <Card key={p.id} className="shadow-[var(--shadow-card)]">
                   <CardContent className="space-y-3">
@@ -138,15 +179,37 @@ export function VoucherShopView({
                           {peso(Number(p.credit_price))}
                         </p>
                       ) : null}
+                      {pointsPrice > 0 ? (
+                        <StatusBadge tone="points" className="mb-1 ml-auto">
+                          or {pointsPrice} pts
+                        </StatusBadge>
+                      ) : null}
                     </div>
-                    <Button
-                      className="w-full"
-                      disabled={soldOut || !affordable}
-                      onClick={() => setBuying(p)}
-                    >
-                      <Ticket className="size-4" />
-                      {soldOut ? "Out of stock" : affordable ? "Buy with credits" : "Not enough credits"}
-                    </Button>
+                    <div className="grid gap-2">
+                      <Button
+                        className="w-full"
+                        disabled={soldOut || !affordable}
+                        onClick={() => setBuying({ product: p, method: "credits" })}
+                      >
+                        <Ticket className="size-4" />
+                        {soldOut ? "Out of stock" : affordable ? "Buy with credits" : "Not enough credits"}
+                      </Button>
+                      {pointsPrice > 0 ? (
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          disabled={soldOut || !pointsOk}
+                          onClick={() => setBuying({ product: p, method: "points" })}
+                        >
+                          <Sparkles className="size-4" />
+                          {soldOut
+                            ? "Out of stock"
+                            : pointsOk
+                              ? `Buy with ${pointsPrice} points`
+                              : "Not enough points"}
+                        </Button>
+                      ) : null}
+                    </div>
                   </CardContent>
                 </Card>
               );
@@ -167,16 +230,46 @@ export function VoucherShopView({
             <div className="space-y-1 rounded-xl border border-border px-3 py-3 text-sm">
               <p className="flex justify-between">
                 <span className="text-muted-foreground">Voucher</span>
-                <span className="font-medium">{buying.name}</span>
+                <span className="font-medium">{buying.product.name}</span>
               </p>
-              <p className="flex justify-between">
-                <span className="text-muted-foreground">Price</span>
-                <span className="font-semibold text-destructive">−{peso(priceFor(buying))}</span>
-              </p>
-              <p className="flex justify-between">
-                <span className="text-muted-foreground">Balance after</span>
-                <span className="font-medium">{peso(balance - priceFor(buying))}</span>
-              </p>
+              {buying.method === "credits" ? (
+                <>
+                  <p className="flex justify-between">
+                    <span className="text-muted-foreground">Price</span>
+                    <span className="font-semibold text-destructive">
+                      −{peso(priceFor(buying.product))}
+                    </span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="text-muted-foreground">Balance after</span>
+                    <span className="font-medium">{peso(balance - priceFor(buying.product))}</span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="text-muted-foreground">Points earned</span>
+                    <span className="font-medium text-points">
+                      +{ratio > 0 ? Math.floor(priceFor(buying.product) / ratio) : 0}
+                    </span>
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="flex justify-between">
+                    <span className="text-muted-foreground">Points</span>
+                    <span className="font-semibold text-destructive">
+                      −{buying.product.points_price} pts
+                    </span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="text-muted-foreground">Points after</span>
+                    <span className="font-medium">
+                      {points.available - (buying.product.points_price ?? 0)} pts
+                    </span>
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Points-funded purchases do not earn new points.
+                  </p>
+                </>
+              )}
             </div>
           ) : null}
           <DialogFooter>
@@ -195,7 +288,7 @@ export function VoucherShopView({
           <DialogHeader>
             <DialogTitle>Voucher issued</DialogTitle>
             <DialogDescription>
-              {issued?.name} · {peso(issued?.price ?? 0)} · {issued?.tx}
+              {issued?.name} · {issued?.price} · {issued?.tx}
             </DialogDescription>
           </DialogHeader>
           <div className="rounded-xl border border-success/40 bg-success-soft px-4 py-5 text-center">
@@ -204,6 +297,9 @@ export function VoucherShopView({
               {issued?.code}
             </p>
           </div>
+          {issued && issued.earned > 0 ? (
+            <p className="text-center text-xs text-points">+{issued.earned} points earned</p>
+          ) : null}
           <DialogFooter>
             <Button
               variant="outline"
