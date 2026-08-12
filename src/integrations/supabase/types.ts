@@ -2569,6 +2569,21 @@ export type Database = {
         Args: { _user_id: string }
         Returns: number
       }
+      wallet_integrity_check: {
+        Args: never
+        Returns: {
+          account_id: string
+          balance: number
+          difference: number
+          ecosystem_id: string
+          kind: string
+          ledger_sum: number
+          member_name: string
+          oldest_entry: string
+          purge_explained: boolean
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       account_status: "active" | "suspended"
