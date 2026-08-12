@@ -257,12 +257,13 @@ export async function adjustExpiration(input: {
   note?: string | null;
   confirmShorten?: boolean;
 }) {
+  const note = input.note?.trim();
   const { data, error } = await supabase.rpc("adjust_ecosystem_expiration", {
     _ecosystem_id: input.ecosystemId,
     _new_period_end: new Date(input.newPeriodEnd).toISOString(),
     _reason: input.reason,
-    _note: input.note ?? undefined,
     _confirm_shorten: input.confirmShorten ?? false,
+    ...(note ? { _note: note } : {}),
   });
   if (error) throw error;
   return data as unknown as SubscriptionAdjustment;
