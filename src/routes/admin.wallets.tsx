@@ -637,6 +637,12 @@ function AdminWallets() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <EditMemberDialog
+        member={editingMember}
+        onClose={() => setEditingMember(null)}
+        onSaved={() => void load()}
+      />
     </>
   );
 }
