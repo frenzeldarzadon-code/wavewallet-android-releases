@@ -135,10 +135,11 @@ function ResellerReports() {
         title={`My earnings${account?.role ? ` · ${roleLabel(account.role)}` : ""}`}
         description={
           isSubreseller
-            ? `${resolved.label}. Your earning is the voucher discount captured at purchase time — subresellers do not receive credit commission.`
-            : `${resolved.label}. Margins use the discount captured at sale time and commission uses the rate snapshotted on each credit release.`
+            ? `${resolved.label}. Your earnings are the voucher discount captured at purchase time plus per-purchase credit-back from your customers' voucher purchases.`
+            : `${resolved.label}. Margins use the discount captured at sale time; commission and credit-back use the rate snapshotted on each transaction.`
         }
       >
+
         <ReportRangePicker
           range={range}
           onRangeChange={setRange}
