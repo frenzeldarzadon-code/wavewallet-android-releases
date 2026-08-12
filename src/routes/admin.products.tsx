@@ -136,14 +136,20 @@ function AdminProducts() {
       .from("voucher_products")
       .update({ archived: !p.archived, active: p.archived ? p.active : false })
       .eq("id", p.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success(p.archived ? "Product restored" : "Product archived");
     await load();
   };
 
   const toggleActive = async (p: VoucherProductRow, active: boolean) => {
     const { error } = await supabase.from("voucher_products").update({ active }).eq("id", p.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     await load();
   };
 
