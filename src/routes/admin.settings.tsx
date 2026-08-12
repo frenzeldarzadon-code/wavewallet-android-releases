@@ -2,12 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Facebook } from "lucide-react";
 import { useEffect, useState } from "react";
 import { fetchPointsRule, setPointsRule } from "@/lib/rewards";
-import {
-  fetchEcosystemCommission,
-  fetchEcosystemSaleCommission,
-  setEcosystemCommission,
-  setEcosystemSaleCommission,
-} from "@/lib/wallet";
+import { fetchEcosystemRates, setEcosystemRates } from "@/lib/wallet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,6 +26,15 @@ export const Route = createFileRoute("/admin/settings")({
   component: AdminSettings,
 });
 
+/** Percentage fields are held as strings so the inputs stay controlled. */
+type RateForm = {
+  resellerSale: string;
+  subresellerSale: string;
+  upline: string;
+  resellerDiscount: string;
+  subresellerDiscount: string;
+};
+
 function AdminSettings() {
   const { ecosystem, ecosystemDbId, reload } = useSession("admin");
   const [form, setForm] = useState({
@@ -42,20 +46,52 @@ function AdminSettings() {
   const [saving, setSaving] = useState(false);
   const [rule, setRule] = useState("10");
   const [savingRule, setSavingRule] = useState(false);
-  const [commission, setCommission] = useState("0");
-  const [savingCommission, setSavingCommission] = useState(false);
-  const [saleReseller, setSaleReseller] = useState("0");
-  const [saleSub, setSaleSub] = useState("0");
-  const [savingSale, setSavingSale] = useState(false);
+  const [rates, setRates] = useState<RateForm>({
+    resellerSale: "0",
+    subresellerSale: "0",
+    upline: "0",
+    resellerDiscount: "0",
+    subresellerDiscount: "0",
+  });
+  const [savingRates, setSavingRates] = useState(false);
   useEffect(() => {
     if (!ecosystemDbId) return;
     void fetchPointsRule(ecosystemDbId).then((v) => setRule(String(v)));
-    void fetchEcosystemCommission(ecosystemDbId).then((v) => setCommission(String(v)));
-    void fetchEcosystemSaleCommission(ecosystemDbId).then((v) => {
-      setSaleReseller(String(v.reseller));
-      setSaleSub(String(v.subreseller));
-    });
+    void fetchEcosystemRates(ecosystemDbId).then((r) =>
+      setRates({
+        resellerSale: String(r.resellerSale),
+        subresellerSale: String(r.subresellerSale),
+        upline: String(r.upline),
+        resellerDiscount: String(r.resellerDiscount),
+        subresellerDiscount: String(r.subresellerDiscount),
+      }),
+    );
   }, [ecosystemDbId]);
+
+  const saveRates = async () => {
+    if (!ecosystemDbId) return;
+    const parsed = {
+      resellerSale: Number(rates.resellerSale),
+      subresellerSale: Number(rates.subresellerSale),
+      upline: Number(rates.upline),
+      resellerDiscount: Number(rates.resellerDiscount),
+      subresellerDiscount: Number(rates.subresellerDiscount),
+    };
+    if (Object.values(parsed).some((v) => Number.isNaN(v) || v < 0 || v > 100)) {
+      toast.error("Every percentage must be between 0% and 100%.");
+      return;
+    }
+    setSavingRates(true);
+    try {
+      await setEcosystemRates(ecosystemDbId, parsed);
+      toast.success("Rates and discounts saved — future transactions only.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSavingRates(false);
+    }
+  };
+
   if (!ecosystem) return null;
 
   const save = async () => {
