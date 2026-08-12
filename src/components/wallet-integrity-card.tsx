@@ -54,7 +54,7 @@ export function WalletIntegrityCard() {
           ) : (
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge tone={summary.ok ? "positive" : "negative"}>
+                <StatusBadge tone={summary.ok ? "success" : "danger"}>
                   {summary.ok ? "Reconciled" : "Attention needed"}
                 </StatusBadge>
                 <span className="text-sm text-muted-foreground">
