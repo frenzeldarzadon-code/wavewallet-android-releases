@@ -35,9 +35,12 @@ function AdminSettings() {
   const [saving, setSaving] = useState(false);
   const [rule, setRule] = useState("10");
   const [savingRule, setSavingRule] = useState(false);
+  const [commission, setCommission] = useState("0");
+  const [savingCommission, setSavingCommission] = useState(false);
   useEffect(() => {
     if (!ecosystemDbId) return;
     void fetchPointsRule(ecosystemDbId).then((v) => setRule(String(v)));
+    void fetchEcosystemCommission(ecosystemDbId).then((v) => setCommission(String(v)));
   }, [ecosystemDbId]);
   if (!ecosystem) return null;
 
