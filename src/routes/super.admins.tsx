@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Building2, Copy, Play, Plus, Search, Settings2, Snowflake, Trash2, UserPlus } from "lucide-react";
+import { Building2, Copy, Play, Plus, Search, Settings2, ShieldAlert, Snowflake, Trash2, UserPlus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { fetchEcosystemRates, setEcosystemRates } from "@/lib/wallet";
