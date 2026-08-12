@@ -1,12 +1,15 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, ShieldCheck, Store, Users, Wallet } from "lucide-react";
+import { ArrowRight, LogIn } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/ui-kit";
 import { homeFor, writeSession } from "@/lib/session";
-import { accounts, platformSettings, type Role } from "@/lib/wavewallet";
+import { findAccountByLogin } from "@/lib/wavewallet-actions";
+import { accounts, ecosystems, getEcosystem, platformSettings } from "@/lib/wavewallet";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,54 +26,30 @@ export const Route = createFileRoute("/")({
         content:
           "Run your hotspot shop: credit wallets, voucher inventory, reseller network, points and rewards — all in one mobile-first console.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: LoginPage,
 });
 
-const demoRoles: {
-  role: Role;
-  accountId: string;
-  label: string;
-  blurb: string;
-  icon: typeof ShieldCheck;
-}[] = [
-  {
-    role: "super_admin",
-    accountId: "acc_super",
-    label: "Super Admin",
-    blurb: "Platform owner — all tenants, plans and approvals",
-    icon: ShieldCheck,
-  },
-  {
-    role: "admin",
-    accountId: "acc_admin_sagada",
-    label: "Admin",
-    blurb: "Owns one ecosystem: vouchers, resellers, reports",
-    icon: Store,
-  },
-  {
-    role: "reseller",
-    accountId: "acc_res_1",
-    label: "Reseller",
-    blurb: "Credit wallet, discounts, loads and redemptions",
-    icon: Users,
-  },
-  {
-    role: "customer",
-    accountId: "acc_cus_1",
-    label: "Customer",
-    blurb: "Buy vouchers, transfer credits, redeem rewards",
-    icon: Wallet,
-  },
-];
-
 function LoginPage() {
   const navigate = useNavigate();
+  const [identifier, setIdentifier] = useState("");
 
-  const signIn = (accountId: string, role: Role) => {
-    writeSession({ accountId });
-    navigate({ to: homeFor(role) });
+  const signIn = () => {
+    const account = findAccountByLogin(identifier);
+    if (!account) {
+      toast.error("No account found for that email or mobile number.");
+      return;
+    }
+    if (account.status !== "active") {
+      toast.error("This account is suspended. Contact your operator.");
+      return;
+    }
+    writeSession({ accountId: account.id });
+    // Role is resolved after authentication — never chosen by the visitor.
+    navigate({ to: homeFor(account.role) });
   };
 
   return (
@@ -117,60 +96,95 @@ function LoginPage() {
         <div className="w-full max-w-md">
           <h2 className="text-xl font-semibold tracking-tight">Sign in</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Choose a demo role to explore the console. Real authentication connects next.
+            One sign-in for everyone — we take you to the right dashboard automatically.
           </p>
 
           <Card className="mt-5 shadow-[var(--shadow-card)]">
             <CardContent className="space-y-3">
               <div className="space-y-1.5">
                 <Label htmlFor="email">Email or mobile number</Label>
-                <Input id="email" placeholder="you@example.com" autoComplete="username" />
+                <Input
+                  id="email"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && signIn()}
+                  placeholder="you@example.com"
+                  autoComplete="username"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" placeholder="••••••••" autoComplete="current-password" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  onKeyDown={(e) => e.key === "Enter" && signIn()}
+                />
               </div>
-              <Button className="w-full" onClick={() => signIn("acc_cus_1", "customer")}>
+              <Button className="w-full" onClick={signIn}>
+                <LogIn className="size-4" />
                 Continue
               </Button>
               <p className="text-center text-[11px] text-muted-foreground">
-                Demo build — credentials are not verified yet.
+                Demo build — passwords are not verified yet.
               </p>
             </CardContent>
           </Card>
 
-          <div className="mt-6">
+          <div className="mt-6 rounded-xl border border-border bg-card p-4">
             <div className="mb-2 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Demo accounts
+                New customer?
               </p>
-              <StatusBadge tone="brand">Sample data</StatusBadge>
+              <StatusBadge tone="brand">Invite only</StatusBadge>
             </div>
-            <div className="grid gap-2">
-              {demoRoles.map((r) => {
-                const acct = accounts.find((a) => a.id === r.accountId);
-                return (
-                  <button
-                    key={r.role}
-                    onClick={() => signIn(r.accountId, r.role)}
-                    className="flex w-full items-center gap-3 rounded-xl border border-border bg-card px-3 py-3 text-left transition-colors hover:border-primary/40 hover:bg-accent"
-                  >
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-accent-foreground">
-                      <r.icon className="size-4.5" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-medium">{r.label}</span>
-                      <span className="block truncate text-xs text-muted-foreground">{r.blurb}</span>
-                    </span>
-                    <span className="hidden shrink-0 text-right text-[11px] text-muted-foreground sm:block">
-                      {acct?.name}
-                    </span>
-                    <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
-                  </button>
-                );
-              })}
+            <p className="text-xs text-muted-foreground">
+              Customer accounts are created through your hotspot operator's signup link
+              (<span className="font-mono">/join/your-shop</span>). Ask your operator for theirs, or
+              open a demo shop below.
+            </p>
+            <div className="mt-3 grid gap-2">
+              {ecosystems.map((e) => (
+                <a
+                  key={e.id}
+                  href={`/join/${e.slug}`}
+                  className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm transition-colors hover:border-primary/40 hover:bg-accent"
+                >
+                  <span className="truncate">{e.name}</span>
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    /join/{e.slug}
+                    <ArrowRight className="size-3.5" />
+                  </span>
+                </a>
+              ))}
             </div>
           </div>
+
+          <details className="mt-4 rounded-xl border border-border bg-card p-4">
+            <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Demo sign-in emails
+            </summary>
+            <div className="mt-3 grid gap-1.5">
+              {accounts.slice(0, 6).map((a) => (
+                <button
+                  key={a.id}
+                  onClick={() => setIdentifier(a.email)}
+                  className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-colors hover:bg-accent"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">{a.name}</span>
+                    <span className="block truncate font-mono text-[11px] text-muted-foreground">
+                      {a.email}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-[11px] text-muted-foreground">
+                    {a.ecosystemId ? getEcosystem(a.ecosystemId).name : "Platform"}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </details>
         </div>
       </div>
     </div>

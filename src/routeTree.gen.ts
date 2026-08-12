@@ -28,6 +28,7 @@ import { Route as AppHistoryRouteImport } from './routes/app.history'
 import { Route as AppRewardsRouteImport } from './routes/app.rewards'
 import { Route as AppShopRouteImport } from './routes/app.shop'
 import { Route as AppTransferRouteImport } from './routes/app.transfer'
+import { Route as JoinSlugRouteImport } from './routes/join.$slug'
 import { Route as ResellerIndexRouteImport } from './routes/reseller.index'
 import { Route as ResellerCustomersRouteImport } from './routes/reseller.customers'
 import { Route as ResellerRedemptionsRouteImport } from './routes/reseller.redemptions'
@@ -134,6 +135,11 @@ const AppTransferRoute = AppTransferRouteImport.update({
   path: '/transfer',
   getParentRoute: () => AppRoute,
 } as any)
+const JoinSlugRoute = JoinSlugRouteImport.update({
+  id: '/join/$slug',
+  path: '/join/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResellerIndexRoute = ResellerIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -203,6 +209,7 @@ export interface FileRoutesByFullPath {
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
   '/app/transfer': typeof AppTransferRoute
+  '/join/$slug': typeof JoinSlugRoute
   '/reseller/customers': typeof ResellerCustomersRoute
   '/reseller/redemptions': typeof ResellerRedemptionsRoute
   '/reseller/reports': typeof ResellerReportsRoute
@@ -230,6 +237,7 @@ export interface FileRoutesByTo {
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
   '/app/transfer': typeof AppTransferRoute
+  '/join/$slug': typeof JoinSlugRoute
   '/reseller/customers': typeof ResellerCustomersRoute
   '/reseller/redemptions': typeof ResellerRedemptionsRoute
   '/reseller/reports': typeof ResellerReportsRoute
@@ -262,6 +270,7 @@ export interface FileRoutesById {
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
   '/app/transfer': typeof AppTransferRoute
+  '/join/$slug': typeof JoinSlugRoute
   '/reseller/customers': typeof ResellerCustomersRoute
   '/reseller/redemptions': typeof ResellerRedemptionsRoute
   '/reseller/reports': typeof ResellerReportsRoute
@@ -295,6 +304,7 @@ export interface FileRouteTypes {
     | '/app/rewards'
     | '/app/shop'
     | '/app/transfer'
+    | '/join/$slug'
     | '/reseller/customers'
     | '/reseller/redemptions'
     | '/reseller/reports'
@@ -322,6 +332,7 @@ export interface FileRouteTypes {
     | '/app/rewards'
     | '/app/shop'
     | '/app/transfer'
+    | '/join/$slug'
     | '/reseller/customers'
     | '/reseller/redemptions'
     | '/reseller/reports'
@@ -353,6 +364,7 @@ export interface FileRouteTypes {
     | '/app/rewards'
     | '/app/shop'
     | '/app/transfer'
+    | '/join/$slug'
     | '/reseller/customers'
     | '/reseller/redemptions'
     | '/reseller/reports'
@@ -373,6 +385,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   ResellerRoute: typeof ResellerRouteWithChildren
   SuperRoute: typeof SuperRouteWithChildren
+  JoinSlugRoute: typeof JoinSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -509,6 +522,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/transfer'
       preLoaderRoute: typeof AppTransferRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/join/$slug': {
+      id: '/join/$slug'
+      path: '/join/$slug'
+      fullPath: '/join/$slug'
+      preLoaderRoute: typeof JoinSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/reseller/': {
       id: '/reseller/'
@@ -671,17 +691,8 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   ResellerRoute: ResellerRouteWithChildren,
   SuperRoute: SuperRouteWithChildren,
+  JoinSlugRoute: JoinSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
