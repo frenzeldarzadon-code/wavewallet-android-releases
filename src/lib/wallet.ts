@@ -156,7 +156,9 @@ export async function setResellerCommission(
 ): Promise<void> {
   const { error } = await supabase.rpc("set_reseller_commission", {
     _user_id: userId,
-    _percent: percent === null ? null : Math.trunc(percent),
+    // `null` clears the override; the RPC accepts it even though the generated
+    // type narrows the argument to a number.
+    _percent: (percent === null ? null : Math.trunc(percent)) as unknown as number,
   });
   if (error) throw new Error(friendlyWalletError(error.message));
 }
