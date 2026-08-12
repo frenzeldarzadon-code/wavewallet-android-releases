@@ -14,6 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Role } from "@/lib/wavewallet";
 
 export type RestructurableRole = "reseller" | "subreseller";
+/** Roles a restructure can move a member to — includes stepping down to a plain customer. */
+export type RestructureTargetRole = RestructurableRole | "customer";
 
 export const MIN_REASON_LENGTH = 5;
 
@@ -43,7 +45,7 @@ export interface RestructureCheck {
 
 export interface RestructurePlan {
   /** Role the member should end up with. */
-  newRole: RestructurableRole;
+  newRole: RestructureTargetRole;
   /** Required when demoting to subreseller: the parent reseller. */
   parentResellerId?: string | null;
   /** child id -> new parent reseller id, required for every child on demotion. */
@@ -65,6 +67,11 @@ export function isRestructurable(role: Role | null | undefined): role is Restruc
 
 export function oppositeRole(role: RestructurableRole): RestructurableRole {
   return role === "reseller" ? "subreseller" : "reseller";
+}
+
+/** Roles a member currently holding `role` may be moved to. */
+export function targetRolesFor(role: RestructurableRole): RestructureTargetRole[] {
+  return [oppositeRole(role), "customer"];
 }
 
 /** Pure validation used by the confirmation screen before anything is sent. */
@@ -91,14 +98,9 @@ export function evaluateRestructure(
     blockers.push(`Write a reason of at least ${MIN_REASON_LENGTH} characters.`);
   }
 
-  if (plan.newRole === "subreseller") {
-    const parent = plan.parentResellerId ?? "";
-    if (!parent) {
-      blockers.push("Choose the parent reseller who will own this subreseller.");
-    } else if (parent === check.user_id) {
-      blockers.push("A member cannot be their own parent reseller.");
-    }
-
+  // Stepping down (to subreseller or customer) requires every owned subreseller
+  // to be handed over to another reseller first.
+  if (plan.newRole === "subreseller" || plan.newRole === "customer") {
     for (const child of check.children) {
       const next = plan.childReassignments?.[child.id] ?? "";
       if (!next) {
@@ -107,6 +109,16 @@ export function evaluateRestructure(
         blockers.push(`Choose a different reseller for ${child.name}.`);
       }
     }
+  }
+
+  if (plan.newRole === "subreseller") {
+    const parent = plan.parentResellerId ?? "";
+    if (!parent) {
+      blockers.push("Choose the parent reseller who will own this subreseller.");
+    } else if (parent === check.user_id) {
+      blockers.push("A member cannot be their own parent reseller.");
+    }
+
     if (check.children.length > 0 && blockers.length === 0) {
       notes.push(
         check.children.length === 1
@@ -115,6 +127,20 @@ export function evaluateRestructure(
       );
     }
     notes.push("The member stops earning upline commission on future sales.");
+  } else if (plan.newRole === "customer") {
+    if (check.children.length > 0 && blockers.length === 0) {
+      notes.push(
+        check.children.length === 1
+          ? "1 subreseller will be moved to the reseller you selected."
+          : `${check.children.length} subresellers will be moved to the resellers you selected.`,
+      );
+    }
+    notes.push(
+      "They keep the same login and can buy vouchers straight away as a normal customer.",
+    );
+    notes.push(
+      "Wholesale discount, sales commission and every reseller-only action are removed from now on.",
+    );
   } else {
     if (check.parent_reseller_name) {
       notes.push(
@@ -146,7 +172,7 @@ export async function fetchRestructureCheck(userId: string): Promise<Restructure
 export interface RestructureResult {
   user_id: string;
   previous_role: RestructurableRole;
-  new_role: RestructurableRole;
+  new_role: RestructureTargetRole;
   new_parent_id: string | null;
   reassigned_children: Array<{ child_id: string; child_name: string; new_parent_id: string }>;
 }
