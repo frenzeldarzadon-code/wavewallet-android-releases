@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Search, Wallet } from "lucide-react";
+import { AlertTriangle, RotateCcw, Search, Wallet } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,6 +25,16 @@ import {
   type CreditEntry,
 } from "@/lib/wallet";
 import { adminAdjustPoints } from "@/lib/rewards";
+import {
+  fetchReversalHistory,
+  fetchReversalInfo,
+  isReversibleTransferEntry,
+  reverseCreditTransfer,
+  REVERSAL_REASONS,
+  validateReversalAmount,
+  type ReversalInfo,
+  type ReversalRecord,
+} from "@/lib/transfer-reversal";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/wallets")({
@@ -73,6 +83,12 @@ function AdminWallets() {
   const [busy, setBusy] = useState(false);
   const [ledger, setLedger] = useState<CreditEntry[]>([]);
   const [mode, setMode] = useState<"credits" | "points">("credits");
+  const [reversal, setReversal] = useState<ReversalInfo | null>(null);
+  const [reversalAmount, setReversalAmount] = useState("");
+  const [reversalReason, setReversalReason] = useState<string>(REVERSAL_REASONS[0]);
+  const [reversalNote, setReversalNote] = useState("");
+  const [reversals, setReversals] = useState<ReversalRecord[]>([]);
+  const [reversing, setReversing] = useState(false);
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
     setLoading(true);
@@ -112,6 +128,7 @@ function AdminWallets() {
     setLedger(
       ((entries ?? []) as unknown as CreditEntry[]).map(normalizeEntry),
     );
+    setReversals(await fetchReversalHistory(ecosystemDbId));
     setLoading(false);
   }, [ecosystemDbId]);
 
@@ -176,6 +193,62 @@ function AdminWallets() {
       setBusy(false);
     }
   };
+
+  const openReversal = async (e: CreditEntry) => {
+    if (!e.tx_id) return;
+    try {
+      const info = await fetchReversalInfo(e.tx_id);
+      if (!info.eligible) {
+        toast.error(info.message ?? "This transfer cannot be reversed");
+        if (info.code !== "ok") return;
+      }
+      setReversal(info);
+      setReversalAmount(String(Math.min(info.amount ?? 0, info.available ?? 0)));
+      setReversalReason(REVERSAL_REASONS[0]);
+      setReversalNote("");
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+
+  const submitReversal = async () => {
+    if (!reversal?.tx_id) return;
+    const check = validateReversalAmount({
+      amount: Number(reversalAmount),
+      original: reversal.amount ?? 0,
+      available: reversal.available ?? 0,
+    });
+    if (!check.ok) {
+      toast.error(check.error ?? "Invalid amount");
+      return;
+    }
+    setReversing(true);
+    try {
+      const res = await reverseCreditTransfer({
+        txId: reversal.tx_id,
+        amount: Number(reversalAmount),
+        reason: reversalReason,
+        ...(reversalNote.trim() ? { note: reversalNote.trim() } : {}),
+      });
+      toast.success(res.kind === "full" ? "Transfer reversed" : "Transfer partially reversed", {
+        description: `${peso(res.amount)} returned to ${reversal.sender_name} · ${res.reversal_tx_id}`,
+      });
+      setReversal(null);
+      await load();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setReversing(false);
+    }
+  };
+
+  const amountCheck = reversal
+    ? validateReversalAmount({
+        amount: Number(reversalAmount),
+        original: reversal.amount ?? 0,
+        available: reversal.available ?? 0,
+      })
+    : null;
 
   return (
     <>
@@ -324,6 +397,16 @@ function AdminWallets() {
                       {peso(e.amount)}
                     </p>
                     <p className="text-[11px] text-muted-foreground">Bal {peso(e.balance_after)}</p>
+                    {isReversibleTransferEntry(e) ? (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="mt-1 h-7 px-2 text-[11px]"
+                        onClick={() => void openReversal(e)}
+                      >
+                        <RotateCcw className="size-3.5" /> Reverse
+                      </Button>
+                    ) : null}
                   </div>
                 </div>
               ))}
@@ -331,6 +414,165 @@ function AdminWallets() {
           </Card>
         )}
       </PageSection>
+
+      <PageSection
+        title="Transfer reversals"
+        description="Dispute corrections. Original transfers are never edited — each reversal is a linked ledger entry."
+      >
+        {reversals.length === 0 ? (
+          <EmptyState title="No reversals recorded" />
+        ) : (
+          <Card className="min-w-0 shadow-[var(--shadow-card)]">
+            <CardContent className="divide-y divide-border px-0 py-0">
+              {reversals.map((r) => (
+                <div key={r.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {nameFor(r.recipient_id)} → {nameFor(r.sender_id)}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {r.reason}
+                      {r.note ? ` · ${r.note}` : ""} · by {r.actor_name}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {shortDateTime(r.created_at)} · original {r.original_tx_id} · reversal{" "}
+                      {r.reversal_tx_id}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <StatusBadge tone={r.kind === "full" ? "danger" : "brand"}>
+                      {r.kind === "full" ? "Full reversal" : "Partial reversal"}
+                    </StatusBadge>
+                    <p className="mt-1 text-sm font-semibold text-destructive">
+                      −{peso(r.reversed_amount)}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      of {peso(r.original_amount)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+      </PageSection>
+
+      <Dialog open={!!reversal} onOpenChange={(o) => !o && setReversal(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reverse credit transfer</DialogTitle>
+            <DialogDescription>
+              This creates a linked correction entry. The original transaction stays in the ledger
+              exactly as it is.
+            </DialogDescription>
+          </DialogHeader>
+          {reversal ? (
+            <div className="space-y-3">
+              <div className="space-y-1 rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs">
+                <p>
+                  <span className="text-muted-foreground">Transaction</span> {reversal.tx_id}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Sender</span> {reversal.sender_name}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Recipient</span> {reversal.recipient_name}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Amount</span> {peso(reversal.amount ?? 0)}{" "}
+                  · {shortDateTime(reversal.created_at ?? new Date().toISOString())}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Recipient balance</span>{" "}
+                  {peso(reversal.recipient_balance ?? 0)}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Reversible now</span>{" "}
+                  {peso(reversal.available ?? 0)}
+                </p>
+              </div>
+
+              {(reversal.available ?? 0) < (reversal.amount ?? 0) ? (
+                <div className="flex gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+                  <span>
+                    Cannot reverse automatically because some credits have already been spent or
+                    transferred. Only {peso(reversal.available ?? 0)} can be reversed as a partial
+                    reversal. Voucher sales, points and commissions are never clawed back here — use
+                    the sale refund workflow for a purchase dispute.
+                  </span>
+                </div>
+              ) : null}
+
+              <div className="space-y-1.5">
+                <Label htmlFor="revamt">Amount to reverse</Label>
+                <Input
+                  id="revamt"
+                  type="number"
+                  inputMode="decimal"
+                  value={reversalAmount}
+                  onChange={(e) => setReversalAmount(e.target.value)}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  {amountCheck?.ok
+                    ? amountCheck.kind === "full"
+                      ? "Full reversal of the original transfer."
+                      : "Partial reversal — the rest stays with the recipient."
+                    : (amountCheck?.error ?? "")}
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="revreason">Dispute reason</Label>
+                <select
+                  id="revreason"
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  value={reversalReason}
+                  onChange={(e) => setReversalReason(e.target.value)}
+                >
+                  {REVERSAL_REASONS.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="revnote">Note (optional)</Label>
+                <Input
+                  id="revnote"
+                  value={reversalNote}
+                  onChange={(e) => setReversalNote(e.target.value)}
+                  placeholder="Ticket or case reference"
+                />
+              </div>
+
+              <div className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs">
+                This cannot be undone automatically. To correct a mistaken reversal you must send a
+                new credit transfer. A transfer can only be reversed once. No commission, cashback,
+                points or earnings are generated.
+              </div>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReversal(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={reversing || !amountCheck?.ok}
+              onClick={() => void submitReversal()}
+            >
+              {reversing
+                ? "Reversing…"
+                : amountCheck?.kind === "partial"
+                  ? "Confirm partial reversal"
+                  : "Confirm full reversal"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!target} onOpenChange={(o) => !o && setTarget(null)}>
         <DialogContent className="sm:max-w-sm">
