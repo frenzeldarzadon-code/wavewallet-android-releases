@@ -118,7 +118,8 @@ function AdminWallets() {
           role: roleBy.get(p.id) ?? "customer",
           balance: balBy.get(p.id) ?? 0,
           points: ptsBy.get(p.id) ?? 0,
-          commission: Number(p.reseller_commission_percent ?? 0),
+          // null = no personal override; the shop default is resolved server-side.
+          commission: Number(p.reseller_commission_percent ?? ecoCommission),
           discount: Number(p.reseller_discount_percent ?? 0),
         }))
         .filter((m) => m.role !== "admin" && m.role !== "super_admin")
