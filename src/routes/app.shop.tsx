@@ -304,7 +304,8 @@ export function VoucherShopView({
                   </p>
                   {role === "customer" ? (
                     <p className="text-[11px] text-muted-foreground">
-                      Your reseller earns credit-back on every voucher in this purchase.
+                      Whoever funded the credits you are spending earns their sales commission on
+                      this purchase — your price is unaffected.
                     </p>
                   ) : null}
                 </>
