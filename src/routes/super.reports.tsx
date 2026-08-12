@@ -191,12 +191,20 @@ function SuperReports() {
             value={String(salesTotals.count)}
             hint={`${salesTotals.pointsCount} points-funded`}
           />
-          <StatCard label="Credits issued" value={peso(creditTotals.issued)} />
+          <StatCard label="Credits generated" value={peso(creditFlow.generated)} />
         </div>
         <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard label="Reseller discounts" value={peso(salesTotals.resellerMargin)} tone="negative" />
-          <StatCard label="Commission granted" value={peso(creditTotals.commissionBonus)} tone="positive" />
-          <StatCard label="Base released" value={peso(creditTotals.commissionBase)} />
+          <StatCard label="Wholesale discounts given" value={peso(salesTotals.resellerMargin)} tone="negative" />
+          <StatCard
+            label="Seller cashback & upline"
+            value={peso(creditFlow.cashbackPaid + creditFlow.uplinePaid)}
+            hint="Paid by tenant shops, not the platform"
+          />
+          <StatCard
+            label="Existing credits transferred"
+            value={peso(creditFlow.transferred)}
+            hint="Face value · no earnings"
+          />
           <StatCard label="Ecosystems with activity" value={String(perEcosystem.length)} />
         </div>
       </PageSection>
