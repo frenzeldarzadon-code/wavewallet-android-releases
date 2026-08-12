@@ -211,8 +211,6 @@ function SuperSettings() {
         {saving ? "Saving…" : "Save changes"}
       </Button>
 
-      <EcosystemFacebookSection />
-
       <RetentionPolicyCard canRun />
     </>
   );
