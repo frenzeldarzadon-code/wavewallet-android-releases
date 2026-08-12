@@ -281,6 +281,60 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_settings: {
+        Row: {
+          billing_period: string
+          created_at: string
+          currency: string
+          gcash_account_name: string
+          gcash_number: string
+          grace_period_days: number
+          id: number
+          payment_instructions: string
+          plan_name: string
+          plan_price: number
+          support_message: string
+          support_page_name: string
+          support_page_url: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          billing_period?: string
+          created_at?: string
+          currency?: string
+          gcash_account_name?: string
+          gcash_number?: string
+          grace_period_days?: number
+          id?: number
+          payment_instructions?: string
+          plan_name?: string
+          plan_price?: number
+          support_message?: string
+          support_page_name?: string
+          support_page_url?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          billing_period?: string
+          created_at?: string
+          currency?: string
+          gcash_account_name?: string
+          gcash_number?: string
+          grace_period_days?: number
+          id?: number
+          payment_instructions?: string
+          plan_name?: string
+          plan_price?: number
+          support_message?: string
+          support_page_name?: string
+          support_page_url?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       points_accounts: {
         Row: {
           balance: number
@@ -581,6 +635,86 @@ export type Database = {
             columns: ["reward_id"]
             isOneToOne: false
             referencedRelation: "reward_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_requests: {
+        Row: {
+          amount_due: number
+          amount_paid: number | null
+          billing_period: string
+          created_at: string
+          currency: string
+          decision_reason: string | null
+          ecosystem_id: string
+          id: string
+          payment_reference: string
+          period_end: string | null
+          period_start: string | null
+          plan_name: string
+          plan_price: number
+          proof_path: string | null
+          requested_by: string | null
+          requested_by_name: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewed_by_name: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_due: number
+          amount_paid?: number | null
+          billing_period: string
+          created_at?: string
+          currency?: string
+          decision_reason?: string | null
+          ecosystem_id: string
+          id?: string
+          payment_reference: string
+          period_end?: string | null
+          period_start?: string | null
+          plan_name: string
+          plan_price: number
+          proof_path?: string | null
+          requested_by?: string | null
+          requested_by_name?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewed_by_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_due?: number
+          amount_paid?: number | null
+          billing_period?: string
+          created_at?: string
+          currency?: string
+          decision_reason?: string | null
+          ecosystem_id?: string
+          id?: string
+          payment_reference?: string
+          period_end?: string | null
+          period_start?: string | null
+          plan_name?: string
+          plan_price?: number
+          proof_path?: string | null
+          requested_by?: string | null
+          requested_by_name?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewed_by_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_requests_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
         ]
@@ -1222,6 +1356,38 @@ export type Database = {
         }
         Returns: undefined
       }
+      review_subscription_request: {
+        Args: { _decision: string; _reason?: string; _request_id: string }
+        Returns: {
+          amount_due: number
+          amount_paid: number | null
+          billing_period: string
+          created_at: string
+          currency: string
+          decision_reason: string | null
+          ecosystem_id: string
+          id: string
+          payment_reference: string
+          period_end: string | null
+          period_start: string | null
+          plan_name: string
+          plan_price: number
+          proof_path: string | null
+          requested_by: string | null
+          requested_by_name: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewed_by_name: string | null
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "subscription_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       revoke_admin_invitation: { Args: { _id: string }; Returns: undefined }
       set_member_status: {
         Args: {
@@ -1246,6 +1412,43 @@ export type Database = {
       submit_subscription_payment: {
         Args: { _ecosystem_id: string; _reference: string }
         Returns: undefined
+      }
+      submit_subscription_request: {
+        Args: {
+          _amount_paid?: number
+          _ecosystem_id: string
+          _proof_path?: string
+          _reference: string
+        }
+        Returns: {
+          amount_due: number
+          amount_paid: number | null
+          billing_period: string
+          created_at: string
+          currency: string
+          decision_reason: string | null
+          ecosystem_id: string
+          id: string
+          payment_reference: string
+          period_end: string | null
+          period_start: string | null
+          plan_name: string
+          plan_price: number
+          proof_path: string | null
+          requested_by: string | null
+          requested_by_name: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewed_by_name: string | null
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "subscription_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       subscription_ok: { Args: { _ecosystem_id: string }; Returns: boolean }
       transfer_credits: {
@@ -1326,6 +1529,44 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "ecosystems"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      update_platform_settings: {
+        Args: {
+          _billing_period: string
+          _currency: string
+          _gcash_account_name: string
+          _gcash_number: string
+          _grace_period_days: number
+          _payment_instructions: string
+          _plan_name: string
+          _plan_price: number
+          _support_message: string
+          _support_page_name: string
+          _support_page_url: string
+        }
+        Returns: {
+          billing_period: string
+          created_at: string
+          currency: string
+          gcash_account_name: string
+          gcash_number: string
+          grace_period_days: number
+          id: number
+          payment_instructions: string
+          plan_name: string
+          plan_price: number
+          support_message: string
+          support_page_name: string
+          support_page_url: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "platform_settings"
           isOneToOne: true
           isSetofReturn: false
         }
