@@ -266,6 +266,7 @@ export interface PurchaseResult {
   sale_price: number;
   product_name: string;
   sale_id: string;
+  points_earned: number;
 }
 
 export async function purchaseVoucher(productId: string): Promise<PurchaseResult> {
