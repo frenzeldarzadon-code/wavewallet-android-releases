@@ -13,6 +13,7 @@ import {
   fetchRequestsForEcosystem,
   monthsForPayment,
   monthsLabel,
+  prepaidRemaining,
   periodLabel,
   projectedExpiry,
   proofUrl,
@@ -177,14 +178,19 @@ function AdminSubscription() {
               <Row label="Billing period" value={`Every ${per}`} />
               <Row label="Monthly rate (this shop)" value={`${peso(monthlyRate)} / month`} />
               <Row
+                label="Current expiration"
+                value={sub.currentPeriodEnd ? shortDate(sub.currentPeriodEnd) : "—"}
+              />
+              <Row label="Prepaid time remaining" value={prepaidRemaining(sub.currentPeriodEnd).label} />
+              <Row
                 label="Amount due"
                 value={quote.ok ? `${peso(quote.amount)} · ${monthsLabel(quote.months)}` : peso(monthlyRate)}
                 highlight
               />
               <p className="text-[11px] text-muted-foreground">
-                Pay any whole multiple of {peso(monthlyRate)} — {peso(monthlyRate)} = 1 month,{" "}
-                {peso(monthlyRate * 2)} = 2 months, {peso(monthlyRate * 3)} = 3 months. Partial
-                amounts are not accepted.
+                Months are counted from the amount paid — {peso(monthlyRate)} = 1 month,{" "}
+                {peso(monthlyRate * 2)} = 2 months, {peso(monthlyRate * 3)} = 3 months. Anything
+                left over that does not complete a month is recorded as unapplied, never absorbed.
               </p>
               {detailsMissing ? (
                 <p className="flex items-start gap-2 rounded-lg bg-warning/15 px-3 py-2 text-xs text-warning-foreground">
@@ -227,11 +233,19 @@ function AdminSubscription() {
                   disabled={Boolean(pending)}
                 />
                 {quote.ok ? (
-                  <p className="text-[11px] text-success">
-                    {monthsLabel(quote.months)} × {peso(quote.rate)} — active until{" "}
-                    {newExpiry ? shortDate(newExpiry.toISOString()) : "—"}
-                    {sub.status === "active" ? " (extends your current period)" : ""}
-                  </p>
+                  <>
+                    <p className="text-[11px] text-success">
+                      {monthsLabel(quote.months)} × {peso(quote.rate)} = {peso(quote.applied)} —
+                      active until {newExpiry ? shortDate(newExpiry.toISOString()) : "—"}
+                      {sub.status === "active" ? " (extends your current period)" : ""}
+                    </p>
+                    {quote.remainder > 0 ? (
+                      <p className="text-[11px] text-warning-foreground">
+                        {peso(quote.remainder)} left over — not enough for another month. It is
+                        recorded as unapplied on this payment, not lost.
+                      </p>
+                    ) : null}
+                  </>
                 ) : (
                   <p className="text-[11px] text-destructive">{quote.error}</p>
                 )}
@@ -318,6 +332,9 @@ function HistoryRow({ request }: { request: SubscriptionRequest }) {
             {monthsLabel(requestMonths(request))}
             {request.monthly_rate ? ` × ${peso(Number(request.monthly_rate))}/month` : ""} ·{" "}
             {peso(Number(request.amount_paid ?? request.amount_due))} paid
+            {Number(request.remainder_amount ?? 0) > 0
+              ? ` · ${peso(Number(request.remainder_amount))} unapplied`
+              : ""}
           </p>
           {request.period_end ? (
             <p className="text-xs text-success">Active until {shortDate(request.period_end)}</p>

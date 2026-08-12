@@ -968,6 +968,53 @@ export type Database = {
           },
         ]
       }
+      subscription_adjustments: {
+        Row: {
+          actor_id: string | null
+          actor_name: string
+          created_at: string
+          direction: string
+          ecosystem_id: string
+          id: string
+          new_period_end: string
+          note: string | null
+          previous_period_end: string | null
+          reason: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_name: string
+          created_at?: string
+          direction: string
+          ecosystem_id: string
+          id?: string
+          new_period_end: string
+          note?: string | null
+          previous_period_end?: string | null
+          reason: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_name?: string
+          created_at?: string
+          direction?: string
+          ecosystem_id?: string
+          id?: string
+          new_period_end?: string
+          note?: string | null
+          previous_period_end?: string | null
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_adjustments_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_requests: {
         Row: {
           amount_due: number
@@ -985,7 +1032,9 @@ export type Database = {
           period_start: string | null
           plan_name: string
           plan_price: number
+          previous_period_end: string | null
           proof_path: string | null
+          remainder_amount: number
           requested_by: string | null
           requested_by_name: string
           reviewed_at: string | null
@@ -1010,7 +1059,9 @@ export type Database = {
           period_start?: string | null
           plan_name: string
           plan_price: number
+          previous_period_end?: string | null
           proof_path?: string | null
+          remainder_amount?: number
           requested_by?: string | null
           requested_by_name?: string
           reviewed_at?: string | null
@@ -1035,7 +1086,9 @@ export type Database = {
           period_start?: string | null
           plan_name?: string
           plan_price?: number
+          previous_period_end?: string | null
           proof_path?: string | null
+          remainder_amount?: number
           requested_by?: string | null
           requested_by_name?: string
           reviewed_at?: string | null
@@ -1407,6 +1460,33 @@ export type Database = {
       }
     }
     Functions: {
+      adjust_ecosystem_expiration: {
+        Args: {
+          _confirm_shorten?: boolean
+          _ecosystem_id: string
+          _new_period_end: string
+          _note?: string
+          _reason: string
+        }
+        Returns: {
+          actor_id: string | null
+          actor_name: string
+          created_at: string
+          direction: string
+          ecosystem_id: string
+          id: string
+          new_period_end: string
+          note: string | null
+          previous_period_end: string | null
+          reason: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "subscription_adjustments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       admin_adjust_credits: {
         Args: {
           _amount: number
@@ -1891,7 +1971,9 @@ export type Database = {
           period_start: string | null
           plan_name: string
           plan_price: number
+          previous_period_end: string | null
           proof_path: string | null
+          remainder_amount: number
           requested_by: string | null
           requested_by_name: string
           reviewed_at: string | null
@@ -2099,7 +2181,9 @@ export type Database = {
           period_start: string | null
           plan_name: string
           plan_price: number
+          previous_period_end: string | null
           proof_path: string | null
+          remainder_amount: number
           requested_by: string | null
           requested_by_name: string
           reviewed_at: string | null
