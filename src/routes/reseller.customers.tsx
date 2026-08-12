@@ -131,8 +131,8 @@ function ResellerCustomers() {
               </div>
               {matches?.length === 0 ? (
                 <p className="text-xs text-destructive">
-                  No active member you own matches that. You can only load your own customers and
-                  your own subresellers — another reseller's downline is blocked by the server.
+                  No active member matches that. You can load any customer in this shop and the
+                  subresellers you own — another reseller's subresellers are blocked by the server.
                 </p>
               ) : null}
             </div>
