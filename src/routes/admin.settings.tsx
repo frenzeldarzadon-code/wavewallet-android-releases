@@ -174,7 +174,7 @@ function AdminSettings() {
                   setSavingRule(true);
                   try {
                     await setPointsRule(ecosystemDbId, v);
-                    toast.success(`Every ₱${v} of qualifying spend now earns 1 point.`);
+                    toast.success(`From now on, every ₱${v} of qualifying spend earns 1 point. Past purchases are unchanged.`);
                   } catch (e) {
                     toast.error((e as Error).message);
                   } finally {
