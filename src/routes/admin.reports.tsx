@@ -73,6 +73,7 @@ function AdminReports() {
   const [sales, setSales] = useState<SaleReportRow[]>([]);
   const [credits, setCredits] = useState<CreditEntry[]>([]);
   const [points, setPoints] = useState<PointsEntryRow[]>([]);
+  const [commissions, setCommissions] = useState<SaleCommissionReportRow[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [refunding, setRefunding] = useState<SaleReportRow | null>(null);
@@ -86,16 +87,18 @@ function AdminReports() {
     if (!ecosystemDbId) return;
     setLoading(true);
     try {
-      const [s, c, p, n] = await Promise.all([
+      const [s, c, p, n, sc] = await Promise.all([
         fetchSalesReport({ range: resolved, ecosystemId: ecosystemDbId }),
         fetchCreditsReport({ range: resolved, ecosystemId: ecosystemDbId }),
         fetchPointsReport({ range: resolved, ecosystemId: ecosystemDbId }),
         fetchNameMap(ecosystemDbId),
+        fetchSaleCommissionsReport({ range: resolved, ecosystemId: ecosystemDbId }),
       ]);
       setSales(s);
       setCredits(c);
       setPoints(p);
       setNames(n);
+      setCommissions(sc);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
