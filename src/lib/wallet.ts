@@ -221,7 +221,7 @@ export async function transferCredits(input: {
     await supabase.rpc("transfer_credits", {
       _recipient_id: input.recipientId,
       _amount: input.amount,
-      _note: input.note ?? undefined,
+      ...(input.note ? { _note: input.note } : {}),
     }),
   ) as unknown as string;
 }
