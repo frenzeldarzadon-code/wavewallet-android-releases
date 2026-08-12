@@ -1411,10 +1411,6 @@ export type Database = {
         Returns: undefined
       }
       slugify: { Args: { _value: string }; Returns: string }
-      submit_subscription_payment: {
-        Args: { _ecosystem_id: string; _reference: string }
-        Returns: undefined
-      }
       submit_subscription_request: {
         Args: {
           _amount_paid?: number
