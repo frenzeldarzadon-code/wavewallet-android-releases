@@ -17,10 +17,20 @@ export interface DbEcosystem {
   contact_phone: string | null;
   signup_enabled: boolean;
   signup_token: string;
-  subscription_status: string;
   plan_name: string;
   plan_price: number;
-  subscription_active_until: string | null;
+  subscription_state:
+    | "pending"
+    | "awaiting_approval"
+    | "active"
+    | "rejected"
+    | "expired"
+    | "suspended";
+  grace_period_days: number;
+  current_period_end: string | null;
+  payment_reference: string | null;
+  submitted_at: string | null;
+  reviewed_at: string | null;
 }
 
 export interface DbProfile {
@@ -35,11 +45,29 @@ export interface DbProfile {
   joined_at: string;
 }
 
+export interface Wallets {
+  credits: number;
+  points: number;
+  pointsHeld: number;
+}
+
 export interface AuthContext {
   userId: string;
   role: Role;
   profile: DbProfile;
   ecosystem: DbEcosystem | null;
+  wallets: Wallets;
+  /** True when the ecosystem may run normal operations (subscription within grace). */
+  subscriptionOk: boolean;
+}
+
+/** Mirrors the database `subscription_ok()` rule so the UI can gate without a round trip. */
+export function isSubscriptionOk(eco: DbEcosystem | null): boolean {
+  if (!eco) return false;
+  if (eco.subscription_state !== "active") return false;
+  if (!eco.current_period_end) return true;
+  const end = new Date(eco.current_period_end).getTime();
+  return end + eco.grace_period_days * 86_400_000 > Date.now();
 }
 
 /** Loads profile + role + ecosystem for the currently signed-in user. */
@@ -70,7 +98,23 @@ export async function loadAuthContext(): Promise<AuthContext | null> {
     ecosystem = (data as DbEcosystem | null) ?? null;
   }
 
-  return { userId: user.id, role, profile: profile as DbProfile, ecosystem };
+  const [{ data: credit }, { data: points }] = await Promise.all([
+    supabase.from("credit_accounts").select("balance").eq("user_id", user.id).maybeSingle(),
+    supabase.from("points_accounts").select("balance, held").eq("user_id", user.id).maybeSingle(),
+  ]);
+
+  return {
+    userId: user.id,
+    role,
+    profile: profile as DbProfile,
+    ecosystem,
+    wallets: {
+      credits: Number(credit?.balance ?? 0),
+      points: points?.balance ?? 0,
+      pointsHeld: points?.held ?? 0,
+    },
+    subscriptionOk: role === "super_admin" ? true : isSubscriptionOk(ecosystem),
+  };
 }
 
 export async function signInWithPassword(email: string, password: string) {
