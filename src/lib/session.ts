@@ -154,7 +154,32 @@ export function useSession(requiredRole?: Role): ResolvedSession {
     };
   }, [version]);
 
-  const ecosystem = ctx?.ecosystem ? toEcosystem(ctx.ecosystem) : null;
+  // Super Admin Mode: a platform owner may work inside any tenant. The impersonated
+  // ecosystem is loaded from the database (RLS lets super admins read every row);
+  // it never widens permissions — the database still authorizes each statement.
+  const [impersonated, setImpersonated] = useState<DbEcosystem | null>(null);
+  const targetEcoId = local?.ecosystemId ?? null;
+  useEffect(() => {
+    let active = true;
+    if (!ctx || ctx.role !== "super_admin" || !targetEcoId) {
+      setImpersonated(null);
+      return;
+    }
+    supabase
+      .from("ecosystems")
+      .select("*")
+      .eq("id", targetEcoId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (active) setImpersonated((data as DbEcosystem | null) ?? null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [ctx, targetEcoId]);
+
+  const activeEco = impersonated ?? ctx?.ecosystem ?? null;
+  const ecosystem = activeEco ? toEcosystem(activeEco) : null;
   const account = ctx ? toAccount(ctx, ecosystem) : null;
 
   useEffect(() => {
@@ -176,12 +201,12 @@ export function useSession(requiredRole?: Role): ResolvedSession {
 
   return {
     ready,
-    subscriptionOk: ctx?.subscriptionOk ?? false,
+    subscriptionOk: ctx?.role === "super_admin" ? true : (ctx?.subscriptionOk ?? false),
     reload: () => setVersion((n) => n + 1),
     session: account ? { accountId: account.id, ...(local ?? {}) } : null,
     account,
     ecosystem,
-    ecosystemDbId: ctx?.ecosystem?.id ?? null,
+    ecosystemDbId: activeEco?.id ?? null,
     signOut,
   };
 }
