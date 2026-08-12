@@ -773,6 +773,35 @@ function AdminCustomers() {
       </Dialog>
 
 
+      <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete customer account?</DialogTitle>
+            <DialogDescription>
+              {deleting?.full_name || deleting?.email} is eligible for cleanup:
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+            {(deleting ? verdictFor(deleting).reasons : []).map((r) => (
+              <li key={r}>{r}</li>
+            ))}
+          </ul>
+          <p className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
+            The login is disabled and the identity is anonymised. Voucher sales, credit and points
+            history, commissions, discounts and redemptions stay intact under the normal one-year
+            retention policy. The action is written to the audit trail.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleting(null)} disabled={busy}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={() => void confirmDelete()} disabled={busy}>
+              Delete account
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
           <DialogHeader>
