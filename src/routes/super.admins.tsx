@@ -735,7 +735,7 @@ function ManageDialog({
             />
           </div>
           <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="mCommission">Default reseller commission (%)</Label>
+            <Label htmlFor="mCommission">Default credit-loading commission (%)</Label>
             <Input
               id="mCommission"
               type="number"
@@ -746,9 +746,36 @@ function ManageDialog({
             />
             <p className="text-[11px] text-muted-foreground">
               Applied when you or this shop's admin release credits to a reseller who has no
-              personal rate. Future releases only — past transactions keep their snapshot.
+              personal rate. Subresellers never earn it. Future releases only — past transactions
+              keep their snapshot.
             </p>
           </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="mSaleReseller">Reseller credit-back (%)</Label>
+            <Input
+              id="mSaleReseller"
+              type="number"
+              min={0}
+              max={100}
+              value={state.saleReseller}
+              onChange={(e) => setState({ ...state, saleReseller: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="mSaleSub">Subreseller credit-back (%)</Label>
+            <Input
+              id="mSaleSub"
+              type="number"
+              min={0}
+              max={100}
+              value={state.saleSub}
+              onChange={(e) => setState({ ...state, saleSub: e.target.value })}
+            />
+            <p className="text-[11px] text-muted-foreground sm:col-span-2">
+              Paid on customer purchases to whoever funded the credits spent.
+            </p>
+          </div>
+
 
           <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2 sm:col-span-2">
             <div>
