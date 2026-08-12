@@ -26,7 +26,7 @@ import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-
 import { useSession } from "@/lib/session";
 import { supabase } from "@/integrations/supabase/client";
 import { peso, roleLabel, shortDate, shortDateTime, type Role } from "@/lib/wavewallet";
-import { setResellerCommission } from "@/lib/wallet";
+import { fetchEcosystemCommission, setResellerCommission } from "@/lib/wallet";
 
 export const Route = createFileRoute("/admin/customers")({
   head: () => ({
@@ -129,6 +129,15 @@ function AdminCustomers() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // The shop-wide default applies to any reseller without a personal rate.
+  useEffect(() => {
+    if (!ecosystemDbId) return;
+    void fetchEcosystemCommission(ecosystemDbId).then((v) => {
+      setDefaultCommission(v);
+      setCommission(String(v));
+    });
+  }, [ecosystemDbId]);
 
   const openDetail = async (m: Member) => {
     setDetail(m);
