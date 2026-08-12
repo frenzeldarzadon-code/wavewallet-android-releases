@@ -111,12 +111,12 @@ function ResellerCustomers() {
     <>
       <PageSection
         title="Load customer credits"
-        description={`Available in your wallet: ${peso(balance)} · ${ecosystem.name} members only.`}
+        description={`Available in your wallet: ${peso(balance)} · only members you own in ${ecosystem.name} — your own customers and your own subresellers.`}
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="cq">Customer email or mobile</Label>
+              <Label htmlFor="cq">Customer or subreseller email / mobile</Label>
               <div className="flex gap-2">
                 <Input
                   id="cq"
@@ -130,7 +130,10 @@ function ResellerCustomers() {
                 </Button>
               </div>
               {matches?.length === 0 ? (
-                <p className="text-xs text-destructive">No active member of your shop matches that.</p>
+                <p className="text-xs text-destructive">
+                  No active member you own matches that. You can only load your own customers and
+                  your own subresellers — another reseller's downline is blocked by the server.
+                </p>
               ) : null}
             </div>
 
