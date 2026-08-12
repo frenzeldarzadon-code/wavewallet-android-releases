@@ -72,10 +72,11 @@ function AdminSubscription() {
   if (!ecosystem) return null;
   const sub = ecosystem.subscription;
   const notice = stateNotice(sub.status);
-  // Configured per ecosystem by the platform owner; hidden entirely when unset.
-  const rawFacebook = (ecosystem.facebookPageUrl ?? "").trim();
+  // Platform-level support page (Super Admin → Platform Settings). Operators contact
+  // the platform here about billing — never their own shop page.
+  const rawFacebook = (settings?.support_page_url ?? "").trim();
   const facebookUrl = isFacebookUrl(rawFacebook) ? rawFacebook : "";
-  const facebookName = facebookUrl ? facebookLabel(facebookUrl, ecosystem.facebookPageName) : "";
+  const facebookName = facebookUrl ? facebookLabel(facebookUrl, settings?.support_page_name) : "";
   const detailsMissing = Boolean(settings && !settings.gcash_number.trim());
   const pending = requests.find((r) => r.status === "pending") ?? null;
   // Only surface a rejection while it is still the outcome the operator must act on.
