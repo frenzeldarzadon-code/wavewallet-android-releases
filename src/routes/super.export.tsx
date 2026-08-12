@@ -108,11 +108,13 @@ function SuperExport() {
   };
 
   return (
-    <>
-      <PageSection
-        title="Data export & backup"
-        description="Read-only CSV copies of operational records for recovery and audit. Nothing here changes or deletes production data."
-      />
+    <PageSection
+      title="Data export & backup"
+      description="Read-only CSV copies of operational records for recovery and audit. Nothing here changes or deletes production data."
+      className="space-y-4"
+    >
+
+
 
       <Card className="border-primary/30 bg-primary/5">
         <CardContent className="flex gap-3 p-4 text-sm">
