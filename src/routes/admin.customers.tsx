@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Link2, Search, ShieldCheck, TrendingUp, UserCog } from "lucide-react";
+import { Link2, Percent, Search, ShieldCheck, TrendingUp, UserCog } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-
 import { useSession } from "@/lib/session";
 import { supabase } from "@/integrations/supabase/client";
 import { peso, shortDate, shortDateTime } from "@/lib/wavewallet";
+import { setResellerCommission } from "@/lib/wallet";
 
 export const Route = createFileRoute("/admin/customers")({
   head: () => ({
@@ -53,6 +54,7 @@ interface Member {
   joined_at: string;
   status: "active" | "suspended";
   reseller_discount_percent: number;
+  reseller_commission_percent: number;
   role: "customer" | "reseller" | "admin" | "super_admin";
   credits: number;
   points: number;
@@ -67,6 +69,7 @@ interface ActivityRow {
 }
 
 const MAX_DISCOUNT = 50;
+const MAX_COMMISSION = 100;
 
 function AdminCustomers() {
   const { ecosystem, ecosystemDbId } = useSession("admin");
@@ -80,6 +83,8 @@ function AdminCustomers() {
   const [detail, setDetail] = useState<Member | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
   const [discount, setDiscount] = useState("10");
+  const [commission, setCommission] = useState("20");
+  const [editingCommission, setEditingCommission] = useState<Member | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -89,7 +94,9 @@ function AdminCustomers() {
       await Promise.all([
         supabase
           .from("profiles")
-          .select("id, full_name, email, phone, joined_at, status, reseller_discount_percent")
+          .select(
+            "id, full_name, email, phone, joined_at, status, reseller_discount_percent, reseller_commission_percent",
+          )
           .eq("ecosystem_id", ecosystemDbId)
           .order("joined_at", { ascending: false }),
         supabase.from("user_roles").select("user_id, role").eq("ecosystem_id", ecosystemDbId),
@@ -172,6 +179,14 @@ function AdminCustomers() {
       toast.error(error.message);
       return;
     }
+    const bonus = Number(commission);
+    if (!Number.isNaN(bonus) && bonus > 0) {
+      try {
+        await setResellerCommission(promoting.id, bonus);
+      } catch (err) {
+        toast.error((err as Error).message);
+      }
+    }
     toast.success(`${promoting.full_name} is now a reseller — history preserved.`);
     setPromoting(null);
     void load();
@@ -197,6 +212,26 @@ function AdminCustomers() {
     toast.success("Reseller discount updated.");
     setEditing(null);
     void load();
+  };
+
+  const confirmCommission = async () => {
+    if (!editingCommission) return;
+    const value = Number(commission);
+    if (Number.isNaN(value) || value < 0 || value > MAX_COMMISSION) {
+      toast.error(`Commission must be between 0% and ${MAX_COMMISSION}%.`);
+      return;
+    }
+    setBusy(true);
+    try {
+      await setResellerCommission(editingCommission.id, value);
+      toast.success("Commission updated — applies to future credit releases only.");
+      setEditingCommission(null);
+      void load();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const toggleStatus = async (m: Member) => {
@@ -320,9 +355,14 @@ function AdminCustomers() {
                         </TableCell>
                         <TableCell>
                           {c.role === "reseller" ? (
-                            <StatusBadge tone="success">
-                              Reseller · {c.reseller_discount_percent}%
-                            </StatusBadge>
+                            <div className="flex flex-wrap gap-1">
+                              <StatusBadge tone="success">
+                                Reseller · {c.reseller_discount_percent}%
+                              </StatusBadge>
+                              <StatusBadge tone="brand">
+                                {c.reseller_commission_percent}% commission
+                              </StatusBadge>
+                            </div>
                           ) : (
                             <StatusBadge tone="muted">Customer</StatusBadge>
                           )}
@@ -349,6 +389,18 @@ function AdminCustomers() {
                                 }}
                               >
                                 <TrendingUp className="size-4" /> Discount
+                              </Button>
+                            ) : null}
+                            {c.role === "reseller" ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingCommission(c);
+                                  setCommission(String(c.reseller_commission_percent));
+                                }}
+                              >
+                                <Percent className="size-4" /> Commission
                               </Button>
                             ) : (
                               <Button
@@ -382,16 +434,34 @@ function AdminCustomers() {
               ledger entry. The change is written to the audit trail.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-1.5">
-            <Label htmlFor="promoteDiscount">Reseller discount (%)</Label>
-            <Input
-              id="promoteDiscount"
-              type="number"
-              min={0}
-              max={MAX_DISCOUNT}
-              value={discount}
-              onChange={(e) => setDiscount(e.target.value)}
-            />
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="promoteDiscount">Reseller discount (%)</Label>
+              <Input
+                id="promoteDiscount"
+                type="number"
+                min={0}
+                max={MAX_DISCOUNT}
+                value={discount}
+                onChange={(e) => setDiscount(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="promoteCommission">Credit commission bonus (%)</Label>
+              <Input
+                id="promoteCommission"
+                type="number"
+                min={0}
+                max={MAX_COMMISSION}
+                value={commission}
+                onChange={(e) => setCommission(e.target.value)}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                When you release {peso(1000)} to this reseller they receive{" "}
+                {peso(1000 * (1 + (Number(commission) || 0) / 100))} — you are debited{" "}
+                {peso(1000)} only.
+              </p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setPromoting(null)}>
@@ -434,6 +504,43 @@ function AdminCustomers() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={!!editingCommission} onOpenChange={(o) => !o && setEditingCommission(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Credit commission bonus</DialogTitle>
+            <DialogDescription>
+              Extra credits granted to {editingCommission?.full_name || editingCommission?.email}{" "}
+              whenever you or the platform owner release credits to them. Applies to future
+              transfers only — past transactions keep the rate they were made with.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor="editCommission">Commission (%)</Label>
+            <Input
+              id="editCommission"
+              type="number"
+              min={0}
+              max={MAX_COMMISSION}
+              value={commission}
+              onChange={(e) => setCommission(e.target.value)}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Send {peso(1000)} → reseller receives{" "}
+              {peso(1000 * (1 + (Number(commission) || 0) / 100))} (
+              {Number(commission) || 0}% bonus). Your wallet is debited {peso(1000)}.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditingCommission(null)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmCommission} disabled={busy}>
+              Save commission
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
           <DialogHeader>
@@ -454,7 +561,7 @@ function AdminCustomers() {
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge tone={detail.role === "reseller" ? "success" : "muted"}>
                   {detail.role === "reseller"
-                    ? `Reseller · ${detail.reseller_discount_percent}% discount`
+                    ? `Reseller · ${detail.reseller_discount_percent}% discount · ${detail.reseller_commission_percent}% commission`
                     : "Customer"}
                 </StatusBadge>
                 <StatusBadge tone={detail.status === "active" ? "success" : "danger"}>
