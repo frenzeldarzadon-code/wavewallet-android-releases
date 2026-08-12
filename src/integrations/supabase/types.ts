@@ -533,6 +533,27 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      list_admin_invitations: {
+        Args: never
+        Returns: {
+          accepted_at: string | null
+          created_at: string
+          ecosystem_id: string | null
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          invited_by_name: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          status: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "admin_invitations"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       promote_to_reseller: {
         Args: { _discount: number; _user_id: string }
         Returns: undefined
