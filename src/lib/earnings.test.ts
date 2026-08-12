@@ -3,6 +3,7 @@ import {
   bucketEarnings,
   filterEarnings,
   periodBucket,
+  periodTotals,
   summariseEarnings,
   type EarningRow,
 } from "@/lib/earnings";
@@ -120,5 +121,57 @@ describe("filters", () => {
   it("totals match the filtered selection", () => {
     const filtered = filterEarnings(rows, { product: "1-Day Wifi", status: "settled" });
     expect(summariseEarnings(filtered).net).toBe(10);
+  });
+});
+
+describe("admin & platform earning types", () => {
+  it("counts credit generation and subscription revenue separately, never transfers", () => {
+    const rows = [
+      row({ earning_type: "credit_generation", earning_amount: 1000, rate_percent: null }),
+      row({ earning_type: "platform_subscription", earning_amount: 499, rate_percent: null }),
+      row({ earning_type: "sale_cashback", earning_amount: 10 }),
+    ];
+    const t = summariseEarnings(rows);
+    expect(t.byType.credit_generation).toBe(1000);
+    expect(t.byType.platform_subscription).toBe(499);
+    expect(t.net).toBe(1509);
+    // Platform-only headline reconciles to subscription revenue alone.
+    expect(t.byType.platform_subscription).toBe(499);
+  });
+
+  it("reverses credit generation instead of editing history", () => {
+    const rows = [
+      row({ earning_type: "credit_generation", earning_amount: 1000 }),
+      row({ earning_type: "credit_generation", earning_amount: 1000, status: "reversed" }),
+    ];
+    const t = summariseEarnings(rows);
+    expect(t.count).toBe(2);
+    expect(t.byType.credit_generation).toBe(1000);
+  });
+});
+
+describe("dashboard period rollups", () => {
+  it("rolls today / month / quarter / year from the same records", () => {
+    const now = new Date();
+    const rows = [
+      row({ occurred_at: now.toISOString(), earning_type: "credit_generation", earning_amount: 100 }),
+      row({
+        occurred_at: new Date(now.getFullYear(), 0, 2, 12).toISOString(),
+        earning_type: "credit_generation",
+        earning_amount: 50,
+      }),
+      row({
+        occurred_at: new Date(now.getFullYear() - 1, 5, 2, 12).toISOString(),
+        earning_type: "credit_generation",
+        earning_amount: 999,
+      }),
+      row({ occurred_at: now.toISOString(), earning_type: "sale_cashback", earning_amount: 7 }),
+    ];
+    const t = periodTotals(rows, ["credit_generation"]);
+    expect(t.today).toBe(100);
+    expect(t.year).toBe(150);
+    expect(t.year).toBeGreaterThanOrEqual(t.quarter);
+    expect(t.quarter).toBeGreaterThanOrEqual(t.month);
+    expect(t.month).toBeGreaterThanOrEqual(t.today);
   });
 });
