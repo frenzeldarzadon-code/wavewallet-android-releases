@@ -39,15 +39,24 @@ function CustomerWallet() {
   const { account, ecosystem } = useSession("customer");
   const [balance, setBalance] = useState(0);
   const [entries, setEntries] = useState<CreditEntry[]>([]);
+  const [points, setPoints] = useState<PointsAccount>({ balance: 0, held: 0, available: 0 });
+  const [pointsEntries, setPointsEntries] = useState<PointsEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const userId = account?.id ?? null;
 
   const load = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
-    const [b, l] = await Promise.all([fetchCreditBalance(userId), fetchCreditLedger(userId, 25)]);
+    const [b, l, pa, pl] = await Promise.all([
+      fetchCreditBalance(userId),
+      fetchCreditLedger(userId, 25),
+      fetchPointsAccount(userId),
+      fetchPointsLedger(userId, 10),
+    ]);
     setBalance(b);
     setEntries(l);
+    setPoints(pa);
+    setPointsEntries(pl);
     setLoading(false);
   }, [userId]);
 
