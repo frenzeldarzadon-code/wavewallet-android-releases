@@ -200,7 +200,7 @@ function PromoteDialog({
   onClose,
 }: {
   customer: Account | null;
-  actorId?: string;
+  actorId: string | undefined;
   onClose: () => void;
 }) {
   const [discount, setDiscount] = useState("10");
@@ -273,7 +273,7 @@ function DiscountDialog({
   onClose,
 }: {
   reseller: Account | null;
-  actorId?: string;
+  actorId: string | undefined;
   onClose: () => void;
 }) {
   const [value, setValue] = useState("");
