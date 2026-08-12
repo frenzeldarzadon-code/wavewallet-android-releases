@@ -1,19 +1,19 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Building2, Coins, CreditCard, TrendingUp, Users } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageSection, StatCard, StatusBadge, subscriptionTone } from "@/components/ui-kit";
+import { supabase } from "@/integrations/supabase/client";
 import { writeSession } from "@/lib/session";
 import {
-  accounts,
-  auditEvents,
-  ecosystems,
-  ledger,
-  peso,
-  platformSettings,
-  shortDateTime,
-  statusLabel,
-} from "@/lib/wavewallet";
+  ecosystemCounts,
+  platformMrr,
+  totalAccounts,
+  type EcosystemOverviewRow,
+} from "@/lib/platform-overview";
+import { peso, shortDateTime, statusLabel } from "@/lib/wavewallet";
 
 export const Route = createFileRoute("/super/")({
   head: () => ({
@@ -27,78 +27,163 @@ export const Route = createFileRoute("/super/")({
   component: SuperOverview,
 });
 
+interface AuditRow {
+  id: string;
+  action: string;
+  target: string;
+  actor_name: string;
+  created_at: string;
+}
+
+interface Settings {
+  plan_name: string;
+  plan_price: number;
+  grace_period_days: number;
+}
+
 function SuperOverview() {
   const navigate = useNavigate();
-  const activeSubs = ecosystems.filter((e) => e.subscription.status === "active");
-  const mrr = activeSubs.reduce((s, e) => s + e.subscription.priceMonthly, 0);
-  const grossSales = ledger
-    .filter((l) => l.kind === "voucher_purchase" && l.method === "credits")
-    .reduce((s, l) => s + (l.grossPrice ?? 0), 0);
+  const [rows, setRows] = useState<EcosystemOverviewRow[]>([]);
+  const [audit, setAudit] = useState<AuditRow[]>([]);
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const [{ data: overview, error }, { data: a }, { data: s }] = await Promise.all([
+        supabase.rpc("platform_overview"),
+        supabase
+          .from("audit_logs")
+          .select("id, action, target, actor_name, created_at")
+          .order("created_at", { ascending: false })
+          .limit(6),
+        supabase.from("platform_settings").select("plan_name, plan_price, grace_period_days").maybeSingle(),
+      ]);
+      if (!active) return;
+      if (error) toast.error("Could not load ecosystems", { description: error.message });
+      setRows((overview as EcosystemOverviewRow[] | null) ?? []);
+      setAudit((a as AuditRow[] | null) ?? []);
+      setSettings((s as Settings | null) ?? null);
+      setLoading(false);
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const live = useMemo(() => rows.filter((r) => !r.archived_at), [rows]);
+  const activeSubs = live.filter((e) => e.subscription_state === "active");
+  const mrr = platformMrr(rows);
+  const accounts = totalAccounts(live);
 
   const accessEcosystem = (ecosystemId: string) => {
-    writeSession({ accountId: "acc_super", superAdminMode: true, ecosystemId });
+    writeSession({ accountId: "db", superAdminMode: true, ecosystemId });
     navigate({ to: "/admin" });
   };
+
+  const dash = (v: string) => (loading ? "—" : v);
 
   return (
     <>
       <PageSection>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard label="Ecosystems" value={String(ecosystems.length)} icon={Building2} tone="brand" hint={`${activeSubs.length} active`} />
-          <StatCard label="Platform MRR" value={peso(mrr)} icon={TrendingUp} tone="positive" hint="Active subscriptions only" />
-          <StatCard label="Accounts" value={String(accounts.length - 1)} icon={Users} hint="Admins, resellers, customers" />
-          <StatCard label="Tenant gross sales" value={peso(grossSales)} icon={Coins} hint="All ecosystems, credit sales" />
+          <StatCard
+            label="Ecosystems"
+            value={dash(String(live.length))}
+            icon={Building2}
+            tone="brand"
+            hint={`${activeSubs.length} active`}
+          />
+          <StatCard
+            label="Platform MRR"
+            value={dash(peso(mrr))}
+            icon={TrendingUp}
+            tone="positive"
+            hint="Active subscriptions only"
+          />
+          <StatCard
+            label="Accounts"
+            value={dash(String(accounts))}
+            icon={Users}
+            hint="Admins, resellers, subresellers, customers"
+          />
+          <StatCard
+            label="Archived shops"
+            value={dash(String(rows.length - live.length))}
+            icon={Coins}
+            hint="History retained"
+          />
         </div>
       </PageSection>
 
       <PageSection title="Ecosystems" description="Each Admin owns exactly one isolated tenant.">
-        <div className="grid gap-3 md:grid-cols-2">
-          {ecosystems.map((eco) => {
-            const admins = accounts.filter((a) => a.ecosystemId === eco.id && a.role === "admin");
-            return (
-              <Card key={eco.id} className="shadow-[var(--shadow-card)]">
-                <CardHeader className="gap-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-base">{eco.name}</CardTitle>
-                    <StatusBadge tone={subscriptionTone(eco.subscription.status)}>
-                      {statusLabel[eco.subscription.status]}
-                    </StatusBadge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{eco.description}</p>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <dl className="grid grid-cols-2 gap-y-2 text-xs">
-                    <div>
-                      <dt className="text-muted-foreground">Admins</dt>
-                      <dd className="font-medium">{admins.map((a) => a.name).join(", ") || "—"}</dd>
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Loading live counters…</p>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {live.map((eco) => {
+              const c = ecosystemCounts(eco);
+              return (
+                <Card key={eco.id} className="shadow-[var(--shadow-card)]">
+                  <CardHeader className="gap-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="text-base">{eco.name}</CardTitle>
+                      <StatusBadge tone={subscriptionTone(eco.subscription_state)}>
+                        {statusLabel[eco.subscription_state] ?? eco.subscription_state}
+                      </StatusBadge>
                     </div>
-                    <div>
-                      <dt className="text-muted-foreground">Plan</dt>
-                      <dd className="font-medium">
-                        {eco.subscription.planName} · {peso(eco.subscription.priceMonthly)}/mo
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-muted-foreground">Customers</dt>
-                      <dd className="font-medium">
-                        {accounts.filter((a) => a.ecosystemId === eco.id && a.role === "customer").length}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-muted-foreground">Resellers</dt>
-                      <dd className="font-medium">
-                        {accounts.filter((a) => a.ecosystemId === eco.id && a.role === "reseller").length}
-                      </dd>
-                    </div>
-                  </dl>
-                  <Button size="sm" className="w-full" onClick={() => accessEcosystem(eco.id)}>
-                    Access ecosystem
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                    <p className="text-xs text-muted-foreground">{eco.description ?? "—"}</p>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <dl className="grid grid-cols-2 gap-y-2 text-xs">
+                      <div>
+                        <dt className="text-muted-foreground">Admins</dt>
+                        <dd className="font-medium">{c.admins}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">Plan</dt>
+                        <dd className="font-medium">
+                          {eco.plan_name} · {peso(Number(eco.plan_price))}/mo
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">Resellers</dt>
+                        <dd className="font-medium">{c.resellers}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">Subresellers</dt>
+                        <dd className="font-medium">{c.subresellers}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">Customers</dt>
+                        <dd className="font-medium">
+                          {c.customers}
+                          {c.suspendedCustomers > 0 ? (
+                            <span className="text-muted-foreground">
+                              {" "}
+                              ({c.activeCustomers} active · {c.suspendedCustomers} suspended)
+                            </span>
+                          ) : null}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">Members</dt>
+                        <dd className="font-medium">{c.members}</dd>
+                      </div>
+                    </dl>
+                    <Button size="sm" className="w-full" onClick={() => accessEcosystem(eco.id)}>
+                      Access ecosystem
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+            {live.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No ecosystems yet.</p>
+            ) : null}
+          </div>
+        )}
       </PageSection>
 
       <PageSection
@@ -107,19 +192,26 @@ function SuperOverview() {
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="divide-y divide-border px-0 py-0">
-            {auditEvents.slice(0, 4).map((e) => (
-              <div key={e.id} className="flex items-start justify-between gap-3 px-4 py-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{e.action}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {e.actor} · {e.target}
-                  </p>
+            {audit.length === 0 ? (
+              <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+                No recorded activity yet.
+              </p>
+            ) : (
+              audit.map((e) => (
+                <div key={e.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{e.action}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {e.actor_name}
+                      {e.target ? ` · ${e.target}` : ""}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-[11px] text-muted-foreground">
+                    {shortDateTime(e.created_at)}
+                  </span>
                 </div>
-                <span className="shrink-0 text-[11px] text-muted-foreground">
-                  {shortDateTime(e.at)}
-                </span>
-              </div>
-            ))}
+              ))
+            )}
           </CardContent>
         </Card>
       </PageSection>
@@ -129,17 +221,19 @@ function SuperOverview() {
           <CardContent className="grid gap-3 sm:grid-cols-3">
             <div>
               <p className="text-xs text-muted-foreground">Default plan</p>
-              <p className="text-sm font-medium">{platformSettings.defaultPlanName}</p>
+              <p className="text-sm font-medium">{settings?.plan_name ?? "—"}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Default price</p>
               <p className="text-sm font-medium text-success">
-                {peso(platformSettings.defaultPlanPrice)} / month
+                {settings ? `${peso(Number(settings.plan_price))} / month` : "—"}
               </p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Grace period</p>
-              <p className="text-sm font-medium">{platformSettings.defaultGraceDays} days</p>
+              <p className="text-sm font-medium">
+                {settings ? `${settings.grace_period_days} days` : "—"}
+              </p>
             </div>
           </CardContent>
         </Card>
