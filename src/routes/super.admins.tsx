@@ -24,6 +24,12 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { writeSession } from "@/lib/session";
 import { peso, shortDate, statusLabel } from "@/lib/wavewallet";
+import {
+  archiveEcosystem,
+  cleanupStatusLabel,
+  cleanupStatusTone,
+  type CleanupStatus,
+} from "@/lib/ecosystem-cleanup";
 
 type Overview = Database["public"]["Functions"]["platform_overview"]["Returns"][number];
 type Invitation = Database["public"]["Tables"]["admin_invitations"]["Row"];
@@ -80,6 +86,9 @@ function SuperAdmins() {
   const [detail, setDetail] = useState<Overview | null>(null);
   const [inviteFor, setInviteFor] = useState<Overview | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [archiveFor, setArchiveFor] = useState<Overview | null>(null);
+  const [archiveReason, setArchiveReason] = useState("");
+  const [archiving, setArchiving] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
