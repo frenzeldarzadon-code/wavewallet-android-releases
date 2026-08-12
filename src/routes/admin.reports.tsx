@@ -449,7 +449,7 @@ function AdminReports() {
                       <TableHead>Movement</TableHead>
                       <TableHead className="hidden sm:table-cell">Account</TableHead>
                       <TableHead>Amount</TableHead>
-                      <TableHead className="hidden lg:table-cell">Commission</TableHead>
+                      <TableHead className="hidden lg:table-cell">Legacy commission</TableHead>
                       <TableHead className="hidden md:table-cell text-right">Date</TableHead>
                     </TableRow>
                   </TableHeader>
