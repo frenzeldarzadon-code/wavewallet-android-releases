@@ -92,6 +92,7 @@ function AdminWallets() {
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
     setLoading(true);
+    const ecoCommission = await fetchEcosystemCommission(ecosystemDbId);
     const [{ data: profiles }, { data: roles }, { data: accounts }, { data: pointAccounts }, { data: entries }] =
       await Promise.all([
         supabase
