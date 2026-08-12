@@ -24,6 +24,10 @@ import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminSubscriptionRouteImport } from './routes/admin.subscription'
 import { Route as AdminVouchersRouteImport } from './routes/admin.vouchers'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppHistoryRouteImport } from './routes/app.history'
+import { Route as AppRewardsRouteImport } from './routes/app.rewards'
+import { Route as AppShopRouteImport } from './routes/app.shop'
+import { Route as AppTransferRouteImport } from './routes/app.transfer'
 import { Route as ResellerIndexRouteImport } from './routes/reseller.index'
 import { Route as ResellerCustomersRouteImport } from './routes/reseller.customers'
 import { Route as ResellerRedemptionsRouteImport } from './routes/reseller.redemptions'
@@ -110,6 +114,26 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppHistoryRoute = AppHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRewardsRoute = AppRewardsRouteImport.update({
+  id: '/rewards',
+  path: '/rewards',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppShopRoute = AppShopRouteImport.update({
+  id: '/shop',
+  path: '/shop',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTransferRoute = AppTransferRouteImport.update({
+  id: '/transfer',
+  path: '/transfer',
+  getParentRoute: () => AppRoute,
+} as any)
 const ResellerIndexRoute = ResellerIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -175,6 +199,10 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/subscription': typeof AdminSubscriptionRoute
   '/admin/vouchers': typeof AdminVouchersRoute
+  '/app/history': typeof AppHistoryRoute
+  '/app/rewards': typeof AppRewardsRoute
+  '/app/shop': typeof AppShopRoute
+  '/app/transfer': typeof AppTransferRoute
   '/reseller/customers': typeof ResellerCustomersRoute
   '/reseller/redemptions': typeof ResellerRedemptionsRoute
   '/reseller/reports': typeof ResellerReportsRoute
@@ -198,6 +226,10 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/subscription': typeof AdminSubscriptionRoute
   '/admin/vouchers': typeof AdminVouchersRoute
+  '/app/history': typeof AppHistoryRoute
+  '/app/rewards': typeof AppRewardsRoute
+  '/app/shop': typeof AppShopRoute
+  '/app/transfer': typeof AppTransferRoute
   '/reseller/customers': typeof ResellerCustomersRoute
   '/reseller/redemptions': typeof ResellerRedemptionsRoute
   '/reseller/reports': typeof ResellerReportsRoute
@@ -226,6 +258,10 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/subscription': typeof AdminSubscriptionRoute
   '/admin/vouchers': typeof AdminVouchersRoute
+  '/app/history': typeof AppHistoryRoute
+  '/app/rewards': typeof AppRewardsRoute
+  '/app/shop': typeof AppShopRoute
+  '/app/transfer': typeof AppTransferRoute
   '/reseller/customers': typeof ResellerCustomersRoute
   '/reseller/redemptions': typeof ResellerRedemptionsRoute
   '/reseller/reports': typeof ResellerReportsRoute
@@ -255,6 +291,10 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/subscription'
     | '/admin/vouchers'
+    | '/app/history'
+    | '/app/rewards'
+    | '/app/shop'
+    | '/app/transfer'
     | '/reseller/customers'
     | '/reseller/redemptions'
     | '/reseller/reports'
@@ -278,6 +318,10 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/subscription'
     | '/admin/vouchers'
+    | '/app/history'
+    | '/app/rewards'
+    | '/app/shop'
+    | '/app/transfer'
     | '/reseller/customers'
     | '/reseller/redemptions'
     | '/reseller/reports'
@@ -305,6 +349,10 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/subscription'
     | '/admin/vouchers'
+    | '/app/history'
+    | '/app/rewards'
+    | '/app/shop'
+    | '/app/transfer'
     | '/reseller/customers'
     | '/reseller/redemptions'
     | '/reseller/reports'
@@ -434,6 +482,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/history': {
+      id: '/app/history'
+      path: '/history'
+      fullPath: '/app/history'
+      preLoaderRoute: typeof AppHistoryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/rewards': {
+      id: '/app/rewards'
+      path: '/rewards'
+      fullPath: '/app/rewards'
+      preLoaderRoute: typeof AppRewardsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/shop': {
+      id: '/app/shop'
+      path: '/shop'
+      fullPath: '/app/shop'
+      preLoaderRoute: typeof AppShopRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/transfer': {
+      id: '/app/transfer'
+      path: '/transfer'
+      fullPath: '/app/transfer'
+      preLoaderRoute: typeof AppTransferRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/reseller/': {
       id: '/reseller/'
       path: '/'
@@ -534,10 +610,18 @@ const AdminRouteChildren: AdminRouteChildren = {
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface AppRouteChildren {
+  AppHistoryRoute: typeof AppHistoryRoute
+  AppRewardsRoute: typeof AppRewardsRoute
+  AppShopRoute: typeof AppShopRoute
+  AppTransferRoute: typeof AppTransferRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppHistoryRoute: AppHistoryRoute,
+  AppRewardsRoute: AppRewardsRoute,
+  AppShopRoute: AppShopRoute,
+  AppTransferRoute: AppTransferRoute,
   AppIndexRoute: AppIndexRoute,
 }
 
