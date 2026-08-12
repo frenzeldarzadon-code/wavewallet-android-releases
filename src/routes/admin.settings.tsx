@@ -39,10 +39,17 @@ function AdminSettings() {
   const [savingRule, setSavingRule] = useState(false);
   const [commission, setCommission] = useState("0");
   const [savingCommission, setSavingCommission] = useState(false);
+  const [saleReseller, setSaleReseller] = useState("0");
+  const [saleSub, setSaleSub] = useState("0");
+  const [savingSale, setSavingSale] = useState(false);
   useEffect(() => {
     if (!ecosystemDbId) return;
     void fetchPointsRule(ecosystemDbId).then((v) => setRule(String(v)));
     void fetchEcosystemCommission(ecosystemDbId).then((v) => setCommission(String(v)));
+    void fetchEcosystemSaleCommission(ecosystemDbId).then((v) => {
+      setSaleReseller(String(v.reseller));
+      setSaleSub(String(v.subreseller));
+    });
   }, [ecosystemDbId]);
   if (!ecosystem) return null;
 
