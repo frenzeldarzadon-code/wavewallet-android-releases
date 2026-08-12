@@ -2,7 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Building2, Copy, Plus, Search, Settings2, Trash2, UserPlus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { fetchEcosystemCommission, setEcosystemCommission } from "@/lib/wallet";
+import {
+  fetchEcosystemCommission,
+  fetchEcosystemSaleCommission,
+  setEcosystemCommission,
+  setEcosystemSaleCommission,
+} from "@/lib/wallet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -585,6 +590,8 @@ function ManageDialog({
     planPrice: String(row.plan_price),
     gracePeriodDays: String(row.grace_period_days),
     commission: "0",
+    saleReseller: "0",
+    saleSub: "0",
   });
   const [saving, setSaving] = useState(false);
   const url = `${origin()}/join/${row.slug}`;
@@ -592,6 +599,9 @@ function ManageDialog({
   useEffect(() => {
     void fetchEcosystemCommission(row.id).then((v) =>
       setState((s) => ({ ...s, commission: String(v) })),
+    );
+    void fetchEcosystemSaleCommission(row.id).then((v) =>
+      setState((s) => ({ ...s, saleReseller: String(v.reseller), saleSub: String(v.subreseller) })),
     );
   }, [row.id]);
 
@@ -625,6 +635,17 @@ function ManageDialog({
         await setEcosystemCommission(row.id, pct);
       } catch (e) {
         commissionErr = (e as Error).message;
+      }
+    }
+    const saleR = Number(state.saleReseller);
+    const saleS = Number(state.saleSub);
+    if ([saleR, saleS].some((v) => Number.isNaN(v) || v < 0 || v > 100)) {
+      commissionErr = commissionErr ?? "Credit-back must be between 0 and 100";
+    } else {
+      try {
+        await setEcosystemSaleCommission(row.id, { reseller: saleR, subreseller: saleS });
+      } catch (e) {
+        commissionErr = commissionErr ?? (e as Error).message;
       }
     }
     setSaving(false);
@@ -735,7 +756,7 @@ function ManageDialog({
             />
           </div>
           <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="mCommission">Default reseller commission (%)</Label>
+            <Label htmlFor="mCommission">Default credit-loading commission (%)</Label>
             <Input
               id="mCommission"
               type="number"
@@ -746,9 +767,36 @@ function ManageDialog({
             />
             <p className="text-[11px] text-muted-foreground">
               Applied when you or this shop's admin release credits to a reseller who has no
-              personal rate. Future releases only — past transactions keep their snapshot.
+              personal rate. Subresellers never earn it. Future releases only — past transactions
+              keep their snapshot.
             </p>
           </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="mSaleReseller">Reseller credit-back (%)</Label>
+            <Input
+              id="mSaleReseller"
+              type="number"
+              min={0}
+              max={100}
+              value={state.saleReseller}
+              onChange={(e) => setState({ ...state, saleReseller: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="mSaleSub">Subreseller credit-back (%)</Label>
+            <Input
+              id="mSaleSub"
+              type="number"
+              min={0}
+              max={100}
+              value={state.saleSub}
+              onChange={(e) => setState({ ...state, saleSub: e.target.value })}
+            />
+            <p className="text-[11px] text-muted-foreground sm:col-span-2">
+              Paid on customer purchases to whoever funded the credits spent.
+            </p>
+          </div>
+
 
           <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2 sm:col-span-2">
             <div>

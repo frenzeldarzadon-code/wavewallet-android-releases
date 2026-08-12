@@ -26,7 +26,14 @@ import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-
 import { useSession } from "@/lib/session";
 import { supabase } from "@/integrations/supabase/client";
 import { peso, roleLabel, shortDate, shortDateTime, type Role } from "@/lib/wavewallet";
-import { fetchEcosystemCommission, setResellerCommission } from "@/lib/wallet";
+import {
+  fetchEcosystemCommission,
+  fetchEcosystemSaleCommission,
+  setResellerCommission,
+  setSaleCommission,
+  setSubresellerParent,
+  type SaleCommissionDefaults,
+} from "@/lib/wallet";
 
 export const Route = createFileRoute("/admin/customers")({
   head: () => ({
@@ -54,7 +61,12 @@ interface Member {
   joined_at: string;
   status: "active" | "suspended";
   reseller_discount_percent: number;
+  /** Credit-LOADING commission override (resellers only). */
   reseller_commission_percent: number | null;
+  /** Customer-purchase credit-back override (reseller or subreseller). */
+  sale_commission_percent: number | null;
+  /** Parent reseller — mandatory owner of a subreseller. */
+  reseller_id: string | null;
   role: Role;
   credits: number;
   points: number;
@@ -80,13 +92,21 @@ function AdminCustomers() {
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "suspended">("all");
   const [promoting, setPromoting] = useState<Member | null>(null);
   const [promoteTo, setPromoteTo] = useState<"reseller" | "subreseller">("reseller");
+  const [parentId, setParentId] = useState<string>("");
   const [editing, setEditing] = useState<Member | null>(null);
   const [detail, setDetail] = useState<Member | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
   const [discount, setDiscount] = useState("10");
   const [commission, setCommission] = useState("20");
+  const [creditBack, setCreditBack] = useState("10");
   const [defaultCommission, setDefaultCommission] = useState(0);
+  const [saleDefaults, setSaleDefaults] = useState<SaleCommissionDefaults>({
+    reseller: 0,
+    subreseller: 0,
+  });
   const [editingCommission, setEditingCommission] = useState<Member | null>(null);
+  const [editingCreditBack, setEditingCreditBack] = useState<Member | null>(null);
+  const [editingOwner, setEditingOwner] = useState<Member | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -97,7 +117,7 @@ function AdminCustomers() {
         supabase
           .from("profiles")
           .select(
-            "id, full_name, email, phone, joined_at, status, reseller_discount_percent, reseller_commission_percent",
+            "id, full_name, email, phone, joined_at, status, reseller_discount_percent, reseller_commission_percent, sale_commission_percent, reseller_id",
           )
           .eq("ecosystem_id", ecosystemDbId)
           .order("joined_at", { ascending: false }),
@@ -130,13 +150,15 @@ function AdminCustomers() {
     void load();
   }, [load]);
 
-  // The shop-wide default applies to any reseller without a personal rate.
+  // Shop-wide defaults: credit-loading commission and sales credit-back are
+  // configured separately, so changing one never moves the other.
   useEffect(() => {
     if (!ecosystemDbId) return;
     void fetchEcosystemCommission(ecosystemDbId).then((v) => {
       setDefaultCommission(v);
       setCommission(String(v));
     });
+    void fetchEcosystemSaleCommission(ecosystemDbId).then(setSaleDefaults);
   }, [ecosystemDbId]);
 
   const openDetail = async (m: Member) => {
@@ -178,6 +200,9 @@ function AdminCustomers() {
 
   if (!ecosystem) return null;
 
+  const nameOf = (id: string | null) =>
+    id ? (members.find((m) => m.id === id)?.full_name ?? "—") : "—";
+
   const confirmPromote = async () => {
     if (!promoting) return;
     const value = Number(discount);
@@ -185,17 +210,24 @@ function AdminCustomers() {
       toast.error(`Discount must be between 0% and ${MAX_DISCOUNT}%.`);
       return;
     }
+    // A subreseller must always belong to exactly one parent reseller.
+    if (promoteTo === "subreseller" && !parentId) {
+      toast.error("Choose the parent reseller this subreseller belongs to.");
+      return;
+    }
     setBusy(true);
     const { error } = await supabase.rpc(
       promoteTo === "subreseller" ? "promote_to_subreseller" : "promote_to_reseller",
-      { _user_id: promoting.id, _discount: value },
+      promoteTo === "subreseller"
+        ? { _user_id: promoting.id, _discount: value, _parent_reseller_id: parentId }
+        : { _user_id: promoting.id, _discount: value },
     );
     setBusy(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    // Commission is a reseller-only mechanic — subresellers are always 0%.
+    // Credit-LOADING commission is reseller-only; subresellers never earn it.
     if (promoteTo === "reseller") {
       const bonus = Number(commission);
       if (!Number.isNaN(bonus) && bonus > 0) {
@@ -210,8 +242,10 @@ function AdminCustomers() {
       `${promoting.full_name} is now a ${roleLabel(promoteTo).toLowerCase()} — history preserved.`,
     );
     setPromoting(null);
+    setParentId("");
     void load();
   };
+
 
   const confirmDiscount = async () => {
     if (!editing) return;
@@ -254,6 +288,44 @@ function AdminCustomers() {
       setBusy(false);
     }
   };
+
+  const confirmCreditBack = async () => {
+    if (!editingCreditBack) return;
+    const value = Number(creditBack);
+    if (Number.isNaN(value) || value < 0 || value > MAX_COMMISSION) {
+      toast.error(`Credit-back must be between 0% and ${MAX_COMMISSION}%.`);
+      return;
+    }
+    setBusy(true);
+    try {
+      await setSaleCommission(editingCreditBack.id, value);
+      toast.success("Credit-back updated — applies to future customer purchases only.");
+      setEditingCreditBack(null);
+      void load();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirmOwner = async () => {
+    if (!editingOwner || !parentId) return;
+    setBusy(true);
+    try {
+      await setSubresellerParent(editingOwner.id, parentId);
+      toast.success("Parent reseller updated.");
+      setEditingOwner(null);
+      setParentId("");
+      void load();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+
 
   const toggleStatus = async (m: Member) => {
     const next = m.status === "active" ? "suspended" : "active";
@@ -383,12 +455,25 @@ function AdminCustomers() {
                               </StatusBadge>
                               {c.role === "reseller" ? (
                                 <StatusBadge tone="brand">
-                                  {c.reseller_commission_percent ?? defaultCommission}% commission
-                                  {c.reseller_commission_percent === null ? " (shop default)" : ""}
+                                  {c.reseller_commission_percent ?? defaultCommission}% loading
+                                  {c.reseller_commission_percent === null ? " (default)" : ""}
                                 </StatusBadge>
                               ) : (
-                                <StatusBadge tone="muted">No commission</StatusBadge>
+                                <StatusBadge tone="muted">No loading commission</StatusBadge>
                               )}
+                              <StatusBadge tone="brand">
+                                {c.sale_commission_percent ??
+                                  (c.role === "reseller"
+                                    ? saleDefaults.reseller
+                                    : saleDefaults.subreseller)}
+                                % credit-back
+                                {c.sale_commission_percent === null ? " (default)" : ""}
+                              </StatusBadge>
+                              {c.role === "subreseller" ? (
+                                <StatusBadge tone="muted">
+                                  Parent: {nameOf(c.reseller_id)}
+                                </StatusBadge>
+                              ) : null}
                             </div>
                           ) : (
                             <StatusBadge tone="muted">Customer</StatusBadge>
@@ -429,14 +514,47 @@ function AdminCustomers() {
                                   );
                                 }}
                               >
-                                <Percent className="size-4" /> Commission
+                                <Percent className="size-4" /> Loading %
                               </Button>
-                            ) : c.role === "customer" ? (
+                            ) : null}
+                            {c.role === "reseller" || c.role === "subreseller" ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingCreditBack(c);
+                                  setCreditBack(
+                                    String(
+                                      c.sale_commission_percent ??
+                                        (c.role === "reseller"
+                                          ? saleDefaults.reseller
+                                          : saleDefaults.subreseller),
+                                    ),
+                                  );
+                                }}
+                              >
+                                <Percent className="size-4" /> Credit-back %
+                              </Button>
+                            ) : null}
+                            {c.role === "subreseller" ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingOwner(c);
+                                  setParentId(c.reseller_id ?? "");
+                                }}
+                              >
+                                <UserCog className="size-4" /> Parent
+                              </Button>
+                            ) : null}
+                            {c.role === "customer" ? (
                               <Button
                                 size="sm"
                                 onClick={() => {
                                   setPromoting(c);
                                   setPromoteTo("reseller");
+                                  setParentId("");
                                   setDiscount("10");
                                   setCommission("20");
                                 }}
@@ -476,11 +594,36 @@ function AdminCustomers() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="reseller">Reseller — discount + credit commission</SelectItem>
-                  <SelectItem value="subreseller">Subreseller — discount only, no commission</SelectItem>
+                  <SelectItem value="reseller">
+                    Reseller — discount + loading commission + credit-back
+                  </SelectItem>
+                  <SelectItem value="subreseller">
+                    Subreseller — discount + credit-back, no loading commission
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            {promoteTo === "subreseller" ? (
+              <div className="space-y-1.5">
+                <Label htmlFor="promoteParent">Parent reseller</Label>
+                <Select value={parentId} onValueChange={setParentId}>
+                  <SelectTrigger id="promoteParent">
+                    <SelectValue placeholder="Choose the owning reseller" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {resellers.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.full_name || r.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">
+                  A subreseller belongs to exactly one reseller and can only be loaded by that
+                  reseller or by you.
+                </p>
+              </div>
+            ) : null}
             <div className="space-y-1.5">
               <Label htmlFor="promoteDiscount">Voucher discount (%)</Label>
               <Input
@@ -558,15 +701,15 @@ function AdminCustomers() {
       <Dialog open={!!editingCommission} onOpenChange={(o) => !o && setEditingCommission(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Credit commission bonus</DialogTitle>
+            <DialogTitle>Credit-loading commission</DialogTitle>
             <DialogDescription>
               Extra credits granted to {editingCommission?.full_name || editingCommission?.email}{" "}
-              whenever you or the platform owner release credits to them. Applies to future
-              transfers only — past transactions keep the rate they were made with.
+              whenever you or the platform owner release credits to them. Resellers only — this is
+              separate from customer-purchase credit-back. Applies to future transfers only.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">
-            <Label htmlFor="editCommission">Commission (%)</Label>
+            <Label htmlFor="editCommission">Loading commission (%)</Label>
             <Input
               id="editCommission"
               type="number"
@@ -591,6 +734,93 @@ function AdminCustomers() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!editingCreditBack} onOpenChange={(o) => !o && setEditingCreditBack(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Customer-purchase credit-back</DialogTitle>
+            <DialogDescription>
+              Paid to {editingCreditBack?.full_name || editingCreditBack?.email} when a customer
+              spends credits this member funded. Separate from the credit-loading commission, and
+              snapshotted on every sale — past sales never change.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor="editCreditBack">Credit-back (%)</Label>
+            <Input
+              id="editCreditBack"
+              type="number"
+              min={0}
+              max={MAX_COMMISSION}
+              value={creditBack}
+              onChange={(e) => setCreditBack(e.target.value)}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Shop defaults: {saleDefaults.reseller}% for resellers, {saleDefaults.subreseller}% for
+              subresellers.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditingCreditBack(null)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmCreditBack} disabled={busy}>
+              Save credit-back
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!editingOwner}
+        onOpenChange={(o) => {
+          if (!o) {
+            setEditingOwner(null);
+            setParentId("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Parent reseller</DialogTitle>
+            <DialogDescription>
+              {editingOwner?.full_name || editingOwner?.email} can only be loaded by their parent
+              reseller or by you. Moving them is audit-logged; past transactions keep their original
+              attribution.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor="editParent">Owning reseller</Label>
+            <Select value={parentId} onValueChange={setParentId}>
+              <SelectTrigger id="editParent">
+                <SelectValue placeholder="Choose a reseller" />
+              </SelectTrigger>
+              <SelectContent>
+                {resellers.map((r) => (
+                  <SelectItem key={r.id} value={r.id}>
+                    {r.full_name || r.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setEditingOwner(null);
+                setParentId("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={confirmOwner} disabled={busy || !parentId}>
+              Save parent
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">

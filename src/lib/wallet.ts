@@ -196,6 +196,64 @@ export async function setEcosystemCommission(
   return Number(data ?? percent);
 }
 
+/* ------------------------------------------------------------------ */
+/* Sales credit-back — a SEPARATE commission from credit loading       */
+/* ------------------------------------------------------------------ */
+
+export interface SaleCommissionDefaults {
+  reseller: number;
+  subreseller: number;
+}
+
+/** Shop-wide credit-back defaults paid when a customer spends funded credits. */
+export async function fetchEcosystemSaleCommission(
+  ecosystemId: string,
+): Promise<SaleCommissionDefaults> {
+  const { data, error } = await supabase
+    .from("ecosystems")
+    .select("default_sale_commission_percent, default_subreseller_sale_commission_percent")
+    .eq("id", ecosystemId)
+    .maybeSingle();
+  if (error || !data) return { reseller: 0, subreseller: 0 };
+  return {
+    reseller: Number(data.default_sale_commission_percent ?? 0),
+    subreseller: Number(data.default_subreseller_sale_commission_percent ?? 0),
+  };
+}
+
+/** Admin (own shop) or super admin sets both shop-wide credit-back defaults. */
+export async function setEcosystemSaleCommission(
+  ecosystemId: string,
+  percents: SaleCommissionDefaults,
+): Promise<void> {
+  const { error } = await supabase.rpc("set_ecosystem_sale_commission", {
+    _ecosystem_id: ecosystemId,
+    _reseller_percent: Math.trunc(percents.reseller),
+    _subreseller_percent: Math.trunc(percents.subreseller),
+  });
+  if (error) throw new Error(friendlyWalletError(error.message));
+}
+
+/** Per-member credit-back override. `null` follows the shop default. */
+export async function setSaleCommission(userId: string, percent: number | null): Promise<void> {
+  const { error } = await supabase.rpc("set_sale_commission", {
+    _user_id: userId,
+    _percent: (percent === null ? null : Math.trunc(percent)) as unknown as number,
+  });
+  if (error) throw new Error(friendlyWalletError(error.message));
+}
+
+/** Moves a subreseller under a different parent reseller in the same shop. */
+export async function setSubresellerParent(userId: string, resellerId: string): Promise<void> {
+  const { error } = await supabase.rpc("set_subreseller_parent", {
+    _user_id: userId,
+    _reseller_id: resellerId,
+  });
+  if (error) throw new Error(friendlyWalletError(error.message));
+}
+
+
+
 
 export async function fetchShopProducts(): Promise<ShopProduct[]> {
   const { data, error } = await supabase.rpc("list_shop_products");

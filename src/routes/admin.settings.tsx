@@ -2,7 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Facebook } from "lucide-react";
 import { useEffect, useState } from "react";
 import { fetchPointsRule, setPointsRule } from "@/lib/rewards";
-import { fetchEcosystemCommission, setEcosystemCommission } from "@/lib/wallet";
+import {
+  fetchEcosystemCommission,
+  fetchEcosystemSaleCommission,
+  setEcosystemCommission,
+  setEcosystemSaleCommission,
+} from "@/lib/wallet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -39,10 +44,17 @@ function AdminSettings() {
   const [savingRule, setSavingRule] = useState(false);
   const [commission, setCommission] = useState("0");
   const [savingCommission, setSavingCommission] = useState(false);
+  const [saleReseller, setSaleReseller] = useState("0");
+  const [saleSub, setSaleSub] = useState("0");
+  const [savingSale, setSavingSale] = useState(false);
   useEffect(() => {
     if (!ecosystemDbId) return;
     void fetchPointsRule(ecosystemDbId).then((v) => setRule(String(v)));
     void fetchEcosystemCommission(ecosystemDbId).then((v) => setCommission(String(v)));
+    void fetchEcosystemSaleCommission(ecosystemDbId).then((v) => {
+      setSaleReseller(String(v.reseller));
+      setSaleSub(String(v.subreseller));
+    });
   }, [ecosystemDbId]);
   if (!ecosystem) return null;
 
@@ -154,8 +166,8 @@ function AdminSettings() {
       </PageSection>
 
       <PageSection
-        title="Reseller commission"
-        description="Bonus credits your resellers receive whenever you or the platform owner release credits to them."
+        title="Credit-loading commission"
+        description="Bonus credits your resellers receive whenever you or the platform owner release credits to them. Resellers only — subresellers never earn this."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">
@@ -206,6 +218,75 @@ function AdminSettings() {
           </CardContent>
         </Card>
       </PageSection>
+
+      <PageSection
+        title="Customer-purchase credit-back"
+        description="Paid to the reseller or subreseller who funded the credits a customer spends. Configured separately from the credit-loading commission."
+      >
+        <Card className="shadow-[var(--shadow-card)]">
+          <CardContent className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="saleReseller">Reseller credit-back (%)</Label>
+              <Input
+                id="saleReseller"
+                type="number"
+                min={0}
+                max={100}
+                value={saleReseller}
+                onChange={(e) => setSaleReseller(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="saleSub">Subreseller credit-back (%)</Label>
+              <Input
+                id="saleSub"
+                type="number"
+                min={0}
+                max={100}
+                value={saleSub}
+                onChange={(e) => setSaleSub(e.target.value)}
+              />
+            </div>
+            <div className="flex items-end gap-2">
+              <Button
+                variant="outline"
+                disabled={savingSale}
+                onClick={async () => {
+                  if (!ecosystemDbId) return;
+                  const r = Number(saleReseller);
+                  const s = Number(saleSub);
+                  if ([r, s].some((v) => Number.isNaN(v) || v < 0 || v > 100)) {
+                    toast.error("Credit-back must be between 0% and 100%.");
+                    return;
+                  }
+                  setSavingSale(true);
+                  try {
+                    await setEcosystemSaleCommission(ecosystemDbId, {
+                      reseller: r,
+                      subreseller: s,
+                    });
+                    toast.success("Credit-back defaults saved — future purchases only.");
+                  } catch (e) {
+                    toast.error((e as Error).message);
+                  } finally {
+                    setSavingSale(false);
+                  }
+                }}
+              >
+                {savingSale ? "Saving…" : "Save credit-back"}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground sm:col-span-2">
+              When a customer buys vouchers, the credits are consumed oldest-first and each funder
+              earns their own rate on the portion they supplied. Admin-funded credits never produce
+              credit-back. Personal rates set in Customers override these defaults, and every sale
+              stores the rate it used.
+            </p>
+          </CardContent>
+        </Card>
+      </PageSection>
+
+
 
       <PageSection title="Points rule" description="Points are earned on credit-funded voucher purchases only — never on credit loads or transfers.">
 
