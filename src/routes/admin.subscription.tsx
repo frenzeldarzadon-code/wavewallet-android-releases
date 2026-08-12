@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CheckCircle2, Info } from "lucide-react";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,8 +24,9 @@ export const Route = createFileRoute("/admin/subscription")({
 });
 
 function AdminSubscription() {
-  const { ecosystem } = useSession("admin");
+  const { ecosystem, ecosystemDbId, reload } = useSession("admin");
   const [reference, setReference] = useState("");
+  const [saving, setSaving] = useState(false);
   if (!ecosystem) return null;
   const sub = ecosystem.subscription;
 
@@ -102,12 +104,25 @@ function AdminSubscription() {
               </div>
               <Button
                 className="w-full"
-                disabled={!reference.trim()}
-                onClick={() =>
+                disabled={!reference.trim() || saving || !ecosystemDbId}
+                onClick={async () => {
+                  if (!ecosystemDbId) return;
+                  setSaving(true);
+                  const { error } = await supabase.rpc("submit_subscription_payment", {
+                    _ecosystem_id: ecosystemDbId,
+                    _reference: reference.trim(),
+                  });
+                  setSaving(false);
+                  if (error) {
+                    toast.error("Could not submit payment", { description: error.message });
+                    return;
+                  }
+                  setReference("");
+                  reload();
                   toast.success("Submitted — awaiting approval", {
                     description: "The platform will review your payment reference.",
-                  })
-                }
+                  });
+                }}
               >
                 <CheckCircle2 className="size-4" /> I have paid — proceed
               </Button>

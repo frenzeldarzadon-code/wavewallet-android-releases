@@ -1,4 +1,4 @@
-import { Outlet, createFileRoute } from "@tanstack/react-router";
+import { Navigate, Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 import {
   BarChart3,
   CreditCard,
@@ -42,12 +42,21 @@ const bottomNav: NavItem[] = [
 
 function AdminLayout() {
   const session = useSession("admin");
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   if (!session.account || !session.ecosystem) return null;
+
+  // Subscription gate: an inactive tenant may only reach the subscription screen.
+  // The database enforces the same rule through subscription_ok(); this is UX only.
+  const gated = !session.subscriptionOk && session.account.role !== "super_admin";
+  if (gated && pathname !== "/admin/subscription") {
+    return <Navigate to="/admin/subscription" replace />;
+  }
+
   return (
     <AppShell
       session={session}
-      nav={nav}
-      bottomNav={bottomNav}
+      nav={gated ? nav.filter((i) => i.to === "/admin/subscription") : nav}
+      bottomNav={gated ? [] : bottomNav}
       title={session.ecosystem.name}
       subtitle="Admin console"
     >

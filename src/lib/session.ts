@@ -40,6 +40,9 @@ export interface ResolvedSession {
   ecosystem: Ecosystem | null;
   /** Real database id of the ecosystem — use this for every Cloud query. */
   ecosystemDbId: string | null;
+  /** Subscription is active (or inside its grace period). */
+  subscriptionOk: boolean;
+  reload: () => void;
   signOut: () => void;
 }
 
@@ -66,10 +69,9 @@ function toEcosystem(row: DbEcosystem): Ecosystem {
         ecosystemId: row.id,
         planName: row.plan_name,
         priceMonthly: Number(row.plan_price),
-        status: "active",
-        currentPeriodEnd: row.subscription_active_until ?? new Date().toISOString(),
-        graceDays: 5,
-        history: [],
+        status: row.subscription_state,
+        currentPeriodEnd: row.current_period_end ?? new Date().toISOString(),
+        gracePeriodDays: row.grace_period_days,
       },
     } as unknown as Ecosystem);
 
@@ -84,7 +86,12 @@ function toEcosystem(row: DbEcosystem): Ecosystem {
       ...base.subscription,
       planName: row.plan_name,
       priceMonthly: Number(row.plan_price),
-      currentPeriodEnd: row.subscription_active_until ?? base.subscription.currentPeriodEnd,
+      status: row.subscription_state,
+      gracePeriodDays: row.grace_period_days,
+      currentPeriodEnd: row.current_period_end ?? base.subscription.currentPeriodEnd,
+      ...(row.payment_reference ? { paymentReference: row.payment_reference } : {}),
+      ...(row.submitted_at ? { submittedAt: row.submitted_at } : {}),
+      ...(row.reviewed_at ? { reviewedAt: row.reviewed_at } : {}),
     },
   };
 }
@@ -99,9 +106,9 @@ function toAccount(ctx: AuthContext, ecosystem: Ecosystem | null): Account {
     phone: ctx.profile.phone,
     resellerId: ctx.profile.reseller_id,
     discountPercent: ctx.profile.reseller_discount_percent,
-    creditBalance: 0,
-    pointsBalance: 0,
-    pointsHeld: 0,
+    creditBalance: ctx.wallets.credits,
+    pointsBalance: ctx.wallets.points,
+    pointsHeld: ctx.wallets.pointsHeld,
     status: ctx.profile.status,
     joinedAt: ctx.profile.joined_at,
   };
@@ -116,6 +123,7 @@ export function useSession(requiredRole?: Role): ResolvedSession {
   const [local, setLocal] = useState<Session | null>(null);
   const [ctx, setCtx] = useState<AuthContext | null>(null);
   const [ready, setReady] = useState(false);
+  const [version, setVersion] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -144,9 +152,34 @@ export function useSession(requiredRole?: Role): ResolvedSession {
       window.removeEventListener("wavewallet:session", sync);
       window.removeEventListener("storage", sync);
     };
-  }, []);
+  }, [version]);
 
-  const ecosystem = ctx?.ecosystem ? toEcosystem(ctx.ecosystem) : null;
+  // Super Admin Mode: a platform owner may work inside any tenant. The impersonated
+  // ecosystem is loaded from the database (RLS lets super admins read every row);
+  // it never widens permissions — the database still authorizes each statement.
+  const [impersonated, setImpersonated] = useState<DbEcosystem | null>(null);
+  const targetEcoId = local?.ecosystemId ?? null;
+  useEffect(() => {
+    let active = true;
+    if (!ctx || ctx.role !== "super_admin" || !targetEcoId) {
+      setImpersonated(null);
+      return;
+    }
+    supabase
+      .from("ecosystems")
+      .select("*")
+      .eq("id", targetEcoId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (active) setImpersonated((data as DbEcosystem | null) ?? null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [ctx, targetEcoId]);
+
+  const activeEco = impersonated ?? ctx?.ecosystem ?? null;
+  const ecosystem = activeEco ? toEcosystem(activeEco) : null;
   const account = ctx ? toAccount(ctx, ecosystem) : null;
 
   useEffect(() => {
@@ -168,10 +201,12 @@ export function useSession(requiredRole?: Role): ResolvedSession {
 
   return {
     ready,
+    subscriptionOk: ctx?.role === "super_admin" ? true : (ctx?.subscriptionOk ?? false),
+    reload: () => setVersion((n) => n + 1),
     session: account ? { accountId: account.id, ...(local ?? {}) } : null,
     account,
     ecosystem,
-    ecosystemDbId: ctx?.ecosystem?.id ?? null,
+    ecosystemDbId: activeEco?.id ?? null,
     signOut,
   };
 }
