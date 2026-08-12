@@ -196,7 +196,7 @@ function ResellerReports() {
 
       <PageSection
         title="Credit-back & commission"
-        description="Credit-back is granted per voucher on every purchase your customers make, at the rate snapshotted at sale time."
+        description="Credit-back is paid on the credits you personally funded, at the rate snapshotted when your customer spent them."
       >
         {commissionEntries.length === 0 ? (
           <EmptyState title="No credit-back or commission in this range" />
@@ -220,6 +220,57 @@ function ResellerReports() {
           </Card>
         )}
       </PageSection>
+
+      <PageSection
+        title="Credit-back by customer purchase"
+        description="Each line shows whose purchase paid you, how much of your funded credits it consumed, and the rate used."
+      >
+        {creditBackRows.length === 0 ? (
+          <EmptyState title="No credit-back yet" description="You earn when customers spend credits you loaded." />
+        ) : (
+          <Card className="overflow-hidden py-0 shadow-[var(--shadow-card)]">
+            <CardContent className="px-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Customer purchase</TableHead>
+                      <TableHead>Your credits used</TableHead>
+                      <TableHead>Rate</TableHead>
+                      <TableHead className="text-right">Credit-back</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {creditBackRows.map((r) => (
+                      <TableRow key={r.id}>
+                        <TableCell className="min-w-0">
+                          <p className="text-sm font-medium">
+                            {r.buyer_name ?? "Customer"} · {r.product_name ?? "Voucher"}
+                            {r.quantity && r.quantity > 1 ? ` ×${r.quantity}` : ""}
+                          </p>
+                          <p className="font-mono text-[11px] text-muted-foreground">
+                            {r.tx_id ?? "—"} · {shortDateTime(r.created_at)}
+                          </p>
+                        </TableCell>
+                        <TableCell className="text-sm">{peso(r.credits_consumed)}</TableCell>
+                        <TableCell className="text-sm">{r.commission_percent}%</TableCell>
+                        <TableCell className="text-right text-sm font-semibold">
+                          {r.reversed_at ? (
+                            <StatusBadge tone="danger">Reversed</StatusBadge>
+                          ) : (
+                            <span className="text-success">+{peso(r.commission_amount)}</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </PageSection>
+
 
       <PageSection title="My voucher purchases">
         {sales.length === 0 ? (
