@@ -215,8 +215,8 @@ function SuperReports() {
                       <TableHead>Vouchers</TableHead>
                       <TableHead className="hidden sm:table-cell">Gross</TableHead>
                       <TableHead>Net</TableHead>
-                      <TableHead className="hidden lg:table-cell">Credits issued</TableHead>
-                      <TableHead className="text-right">Commission</TableHead>
+                      <TableHead className="hidden lg:table-cell">Credits generated</TableHead>
+                      <TableHead className="text-right">Credits transferred</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
