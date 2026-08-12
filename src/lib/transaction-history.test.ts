@@ -66,7 +66,7 @@ describe("transferState", () => {
   });
 
   it("marks a fully reversed transfer as reversed with nothing remaining", () => {
-    const s = transferState(entry({}), new Map([["TX-1", reversal({})]]));
+    const s = transferState(entry({}), new Map([["TX-1", [reversal({})]]]));
     expect(s.status).toBe("reversed");
     expect(s.remaining).toBe(0);
   });
@@ -74,10 +74,43 @@ describe("transferState", () => {
   it("reports the remaining amount on a partial reversal", () => {
     const s = transferState(
       entry({}),
-      new Map([["TX-1", reversal({ kind: "partial", reversed_amount: 400 })]]),
+      new Map([["TX-1", [reversal({ kind: "partial", reversed_amount: 400 })]]]),
     );
     expect(s.status).toBe("partially_reversed");
     expect(s.remaining).toBe(600);
+  });
+
+  it("accumulates several partial reversals and closes the transfer at the total", () => {
+    const s = transferState(
+      entry({}),
+      new Map([
+        [
+          "TX-1",
+          [
+            reversal({ id: "r1", kind: "partial", reversed_amount: 400 }),
+            reversal({ id: "r2", kind: "partial", reversed_amount: 250 }),
+          ],
+        ],
+      ]),
+    );
+    expect(s.reversedAmount).toBe(650);
+    expect(s.remaining).toBe(350);
+    expect(s.status).toBe("partially_reversed");
+
+    const done = transferState(
+      entry({}),
+      new Map([
+        [
+          "TX-1",
+          [
+            reversal({ id: "r1", kind: "partial", reversed_amount: 400 }),
+            reversal({ id: "r2", kind: "full", reversed_amount: 600 }),
+          ],
+        ],
+      ]),
+    );
+    expect(done.status).toBe("reversed");
+    expect(done.remaining).toBe(0);
   });
 });
 
@@ -132,6 +165,66 @@ describe("buildTransactionFeed", () => {
     expect(rows[0]!.transfer?.remaining).toBe(1000);
   });
 
+  it("offers Reverse on the production credit-load wording written by transfer_credits", () => {
+    const rows = buildTransactionFeed({
+      ledger: [
+        entry({ id: "p1", reason: "Credit load to customer", entry_kind: "general" }),
+        entry({
+          id: "p2",
+          reason: "Credit load from reseller",
+          direction: "credit",
+          entry_kind: "general",
+          tx_id: "TX-1-R",
+          user_id: "recipient",
+        }),
+      ],
+      sales: [],
+      reversals: [],
+    });
+    const out = rows.find((r) => r.entry?.id === "p1")!;
+    const incoming = rows.find((r) => r.entry?.id === "p2")!;
+    expect(out.kind).toBe("transfer");
+    expect(canReverse(out)).toBe(true);
+    expect(incoming.kind).toBe("transfer");
+    expect(canReverse(incoming)).toBe(false);
+  });
+
+  it("recognises a transfer from its paired receive leg even with unknown wording", () => {
+    const rows = buildTransactionFeed({
+      ledger: [
+        entry({ id: "u1", reason: "Float release", entry_kind: "general" }),
+        entry({
+          id: "u2",
+          reason: "Float received",
+          direction: "credit",
+          tx_id: "TX-1-R",
+          user_id: "recipient",
+        }),
+      ],
+      sales: [],
+      reversals: [],
+    });
+    expect(canReverse(rows.find((r) => r.entry?.id === "u1")!)).toBe(true);
+  });
+
+  it("never offers Reverse on adjustments or reversal entries", () => {
+    const rows = buildTransactionFeed({
+      ledger: [
+        entry({ id: "a1", reason: "Admin credit adjustment", tx_id: "TX-A" }),
+        entry({
+          id: "a2",
+          reason: "Credit transfer reversed — Wrong recipient",
+          entry_kind: "transfer_reversal",
+          tx_id: "TX-R9",
+        }),
+      ],
+      sales: [],
+      reversals: [],
+    });
+    expect(rows.map((r) => r.kind)).toEqual(["adjustment", "reversal"]);
+    for (const r of rows) expect(canReverse(r)).toBe(false);
+  });
+
   it("keeps offering Reverse for the remainder of a partial reversal", () => {
     const rows = buildTransactionFeed({
       ledger: [entry({})],
@@ -142,7 +235,22 @@ describe("buildTransactionFeed", () => {
     expect(canReverse(transfer)).toBe(true);
     expect(transfer.transfer?.remaining).toBe(750);
   });
+
+  it("stops offering Reverse once stacked partials cover the whole transfer", () => {
+    const rows = buildTransactionFeed({
+      ledger: [entry({})],
+      sales: [],
+      reversals: [
+        reversal({ id: "r1", kind: "partial", reversed_amount: 250 }),
+        reversal({ id: "r2", kind: "full", reversed_amount: 750 }),
+      ],
+    });
+    const transfer = rows.find((r) => r.kind === "transfer")!;
+    expect(canReverse(transfer)).toBe(false);
+    expect(transfer.transfer?.status).toBe("reversed");
+  });
 });
+
 
 describe("filterFeed", () => {
   const rows = buildTransactionFeed({ ledger: [entry({})], sales: [sale], reversals: [] });
