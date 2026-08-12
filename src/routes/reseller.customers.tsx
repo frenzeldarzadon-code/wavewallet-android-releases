@@ -111,7 +111,7 @@ function ResellerCustomers() {
     <>
       <PageSection
         title="Load customer credits"
-        description={`Available in your wallet: ${peso(balance)} · only members you own in ${ecosystem.name} — your own customers and your own subresellers.`}
+        description={`Available in your wallet: ${peso(balance)} · any customer in ${ecosystem.name}, plus the subresellers you own.`}
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-3">
