@@ -605,13 +605,19 @@ export function commissionBreakdown(e: CreditEntry): string | null {
   const base = Number(e.base_amount ?? e.amount);
   const pct = Number(e.commission_percent ?? 0);
   if (e.entry_kind === "sale_commission") {
-    return `Credit-back on ${peso(base)} of credits you funded, spent at ${pct}% = ${peso(bonus)}`;
+    return `Sales cashback on ${peso(base)} of credits you supplied, spent at ${pct}% = ${peso(bonus)}`;
   }
+  if (e.entry_kind === "upline_commission") {
+    return `Upline commission — ${pct}% of ${peso(base)} from your downline's sale = ${peso(bonus)}`;
+  }
+  // Anything left is a pre-migration credit-loading commission. Transfers no
+  // longer create these; the snapshot is kept exactly as it was recorded.
   if (e.direction === "debit") {
-    return `Released ${peso(base)} · ${pct}% commission granted (${peso(bonus)}) — you were debited ${peso(base)} only`;
+    return `Historical loading commission — released ${peso(base)} at ${pct}% (${peso(bonus)}); you were debited ${peso(base)} only`;
   }
-  return `${peso(base)} + ${peso(bonus)} commission (${pct}%) = ${peso(base + bonus)}`;
+  return `Historical loading commission — ${peso(base)} + ${peso(bonus)} (${pct}%) = ${peso(base + bonus)}`;
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Credit provenance (FIFO lots)                                       */
