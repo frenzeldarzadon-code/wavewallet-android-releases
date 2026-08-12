@@ -1,78 +1,245 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Card, CardContent } from "@/components/ui/card";
+import { Search, Wallet } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { EmptyState, PageSection } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
-import { accounts, ledger, peso, shortDate } from "@/lib/wavewallet";
+import { peso, shortDateTime } from "@/lib/wavewallet";
+import {
+  fetchCreditBalance,
+  fetchCreditLedger,
+  lookupRecipient,
+  resellerLoadCredits,
+  type CreditEntry,
+  type RecipientMatch,
+} from "@/lib/wallet";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/reseller/customers")({
   head: () => ({
     meta: [
-      { title: "My Customers — WaveWallet Reseller" },
-      { name: "description", content: "Customers assigned to you, their wallet balances, points and purchase counts." },
-      { property: "og:title", content: "My Customers — WaveWallet Reseller" },
-      { property: "og:description", content: "Customers assigned to you, their wallet balances, points and purchase counts." },
+      { title: "Load Customer Credits — WaveWallet Reseller" },
+      {
+        name: "description",
+        content:
+          "Find a customer in your shop and load credits from your reseller wallet with a confirmed transaction ID.",
+      },
+      { property: "og:title", content: "Load Customer Credits — WaveWallet Reseller" },
+      {
+        property: "og:description",
+        content: "Load credits to customers of your shop from your reseller wallet.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ResellerCustomers,
 });
 
 function ResellerCustomers() {
-  const { account } = useSession("reseller");
-  if (!account) return null;
-  const mine = accounts.filter((a) => a.resellerId === account.id);
+  const { account, ecosystem } = useSession("reseller");
+  const [query, setQuery] = useState("");
+  const [matches, setMatches] = useState<RecipientMatch[] | null>(null);
+  const [selected, setSelected] = useState<RecipientMatch | null>(null);
+  const [amount, setAmount] = useState("");
+  const [reference, setReference] = useState("");
+  const [balance, setBalance] = useState(0);
+  const [history, setHistory] = useState<CreditEntry[]>([]);
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const userId = account?.id ?? null;
+
+  const load = useCallback(async () => {
+    if (!userId) return;
+    const [b, l] = await Promise.all([fetchCreditBalance(userId), fetchCreditLedger(userId, 50)]);
+    setBalance(b);
+    setHistory(l.filter((e) => e.reason === "Credit load to customer"));
+  }, [userId]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  if (!account || !ecosystem) return null;
+
+  const value = Number(amount) || 0;
+  const invalid = !selected || value <= 0 || value > balance;
+
+  const search = async () => {
+    try {
+      const res = await lookupRecipient(query);
+      setMatches(res);
+      setSelected(res[0] ?? null);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  const submit = async () => {
+    if (!selected) return;
+    setBusy(true);
+    try {
+      const tx = await resellerLoadCredits({
+        customerId: selected.id,
+        amount: value,
+        reference,
+      });
+      toast.success("Credits loaded", { description: `${peso(value)} to ${selected.full_name} · ${tx}` });
+      setConfirming(false);
+      setAmount("");
+      setReference("");
+      await load();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
-    <PageSection title="Assigned customers" description="Customers linked to your reseller account.">
-      {mine.length === 0 ? (
-        <EmptyState title="No customers yet" description="Customers appear here once they are linked to you." />
-      ) : (
-        <Card className="overflow-hidden py-0 shadow-[var(--shadow-card)]">
-          <CardContent className="px-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Credits</TableHead>
-                    <TableHead className="hidden sm:table-cell">Points</TableHead>
-                    <TableHead className="hidden md:table-cell">Purchases</TableHead>
-                    <TableHead className="hidden lg:table-cell">Joined</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mine.map((c) => (
-                    <TableRow key={c.id}>
-                      <TableCell>
-                        <p className="font-medium">{c.name}</p>
-                        <p className="text-xs text-muted-foreground">{c.phone}</p>
-                      </TableCell>
-                      <TableCell className="font-medium text-success">{peso(c.creditBalance)}</TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        <StatusBadge tone="points">{c.pointsBalance} pts</StatusBadge>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-sm">
-                        {ledger.filter((l) => l.accountId === c.id && l.kind === "voucher_purchase").length}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
-                        {shortDate(c.joinedAt)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button size="sm" variant="outline" onClick={() => toast(`Load credits to ${c.name} (demo)`)}>
-                          Load credits
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+    <>
+      <PageSection
+        title="Load customer credits"
+        description={`Available in your wallet: ${peso(balance)} · ${ecosystem.name} members only.`}
+      >
+        <Card className="shadow-[var(--shadow-card)]">
+          <CardContent className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="cq">Customer email or mobile</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="cq"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="customer@email.com or 09xx xxx xxxx"
+                  onKeyDown={(e) => e.key === "Enter" && void search()}
+                />
+                <Button variant="outline" onClick={() => void search()} disabled={query.trim().length < 4}>
+                  <Search className="size-4" /> Find
+                </Button>
+              </div>
+              {matches?.length === 0 ? (
+                <p className="text-xs text-destructive">No active member of your shop matches that.</p>
+              ) : null}
             </div>
+
+            {matches && matches.length > 0
+              ? matches.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setSelected(m)}
+                    className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm ${
+                      selected?.id === m.id ? "border-primary bg-brand-soft" : "border-border"
+                    }`}
+                  >
+                    <span className="font-medium">{m.full_name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {m.masked_email} · {m.phone}
+                    </span>
+                  </button>
+                ))
+              : null}
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="amt">Amount</Label>
+                <Input
+                  id="amt"
+                  type="number"
+                  inputMode="decimal"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ref">Reference (optional)</Label>
+                <Input
+                  id="ref"
+                  value={reference}
+                  onChange={(e) => setReference(e.target.value)}
+                  placeholder="Cash received, GCash ref…"
+                />
+              </div>
+            </div>
+            {value > balance ? (
+              <p className="text-xs text-destructive">Amount exceeds your reseller balance.</p>
+            ) : null}
+
+            <Button className="w-full" disabled={invalid} onClick={() => setConfirming(true)}>
+              <Wallet className="size-4" /> Review load
+            </Button>
           </CardContent>
         </Card>
-      )}
-    </PageSection>
+      </PageSection>
+
+      <PageSection title="Load history">
+        {history.length === 0 ? (
+          <EmptyState title="No loads yet" />
+        ) : (
+          <Card className="shadow-[var(--shadow-card)]">
+            <CardContent className="divide-y divide-border px-0 py-0">
+              {history.map((e) => (
+                <div key={e.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{e.reason}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {shortDateTime(e.created_at)} · {e.tx_id ?? "—"}
+                      {e.reference ? ` · ${e.reference}` : ""}
+                    </p>
+                  </div>
+                  <p className="text-sm font-semibold text-destructive">−{peso(e.amount)}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+      </PageSection>
+
+      <Dialog open={confirming} onOpenChange={setConfirming}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Confirm credit load</DialogTitle>
+            <DialogDescription>
+              This moves credits out of your reseller wallet into the customer's wallet.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1 rounded-xl border border-border px-3 py-3 text-sm">
+            <p className="flex justify-between">
+              <span className="text-muted-foreground">Customer</span>
+              <span className="font-medium">{selected?.full_name}</span>
+            </p>
+            <p className="flex justify-between">
+              <span className="text-muted-foreground">Amount</span>
+              <span className="font-semibold text-destructive">−{peso(value)}</span>
+            </p>
+            <p className="flex justify-between">
+              <span className="text-muted-foreground">Your balance after</span>
+              <span className="font-medium">{peso(balance - value)}</span>
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirming(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => void submit()} disabled={busy}>
+              {busy ? "Loading…" : "Load credits"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
