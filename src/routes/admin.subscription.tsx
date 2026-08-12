@@ -1,23 +1,36 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, Info } from "lucide-react";
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { CheckCircle2, Clock, Info, Upload, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageSection, StatusBadge, subscriptionTone } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
-import { peso, platformSettings, shortDate, statusLabel } from "@/lib/wavewallet";
+import { peso, shortDate, statusLabel } from "@/lib/wavewallet";
+import {
+  fetchPlatformSettings,
+  fetchRequestsForEcosystem,
+  periodLabel,
+  proofUrl,
+  requestTone,
+  submitSubscriptionRequest,
+  uploadProof,
+  validateProof,
+  type PlatformSettings,
+  type SubscriptionRequest,
+} from "@/lib/subscription";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/subscription")({
   head: () => ({
     meta: [
       { title: "Subscription — WaveWallet Admin" },
-      { name: "description", content: "View your plan, submit a GCash payment reference and track approval status." },
+      { name: "description", content: "View your plan, send the GCash payment and track manual approval status." },
       { property: "og:title", content: "Subscription — WaveWallet Admin" },
-      { property: "og:description", content: "View your plan, submit a GCash payment reference and track approval status." },
+      { property: "og:description", content: "View your plan, send the GCash payment and track manual approval status." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AdminSubscription,
@@ -25,10 +38,59 @@ export const Route = createFileRoute("/admin/subscription")({
 
 function AdminSubscription() {
   const { ecosystem, ecosystemDbId, reload } = useSession("admin");
+  const [settings, setSettings] = useState<PlatformSettings | null>(null);
+  const [requests, setRequests] = useState<SubscriptionRequest[]>([]);
   const [reference, setReference] = useState("");
+  const [amountPaid, setAmountPaid] = useState("");
+  const [proof, setProof] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    const [s, r] = await Promise.all([
+      fetchPlatformSettings(),
+      ecosystemDbId ? fetchRequestsForEcosystem(ecosystemDbId) : Promise.resolve([]),
+    ]);
+    setSettings(s);
+    setRequests(r);
+    if (s && !amountPaid) setAmountPaid(String(Number(s.plan_price)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ecosystemDbId]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
   if (!ecosystem) return null;
   const sub = ecosystem.subscription;
+  const pending = requests.find((r) => r.status === "pending") ?? null;
+  const lastRejected = requests.find((r) => r.status === "rejected") ?? null;
+  const per = settings ? periodLabel(settings.billing_period) : "month";
+
+  const submit = async () => {
+    if (!ecosystemDbId) return;
+    setSaving(true);
+    try {
+      let proofPath: string | null = null;
+      if (proof) proofPath = await uploadProof(ecosystemDbId, proof);
+      await submitSubscriptionRequest({
+        ecosystemId: ecosystemDbId,
+        reference: reference.trim(),
+        amountPaid: amountPaid ? Number(amountPaid) : null,
+        proofPath,
+      });
+      setReference("");
+      setProof(null);
+      await load();
+      reload();
+      toast.success("Submitted — awaiting approval", {
+        description: "The platform owner will review your payment.",
+      });
+    } catch (e) {
+      toast.error("Could not submit payment", { description: (e as Error).message });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <>
@@ -37,10 +99,10 @@ function AdminSubscription() {
           <CardContent className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <p className="text-sm text-muted-foreground">{sub.planName}</p>
+                <p className="text-sm text-muted-foreground">{settings?.plan_name ?? sub.planName}</p>
                 <p className="text-2xl font-semibold tracking-tight">
-                  {peso(sub.priceMonthly)}
-                  <span className="text-sm font-normal text-muted-foreground"> / month</span>
+                  {peso(Number(settings?.plan_price ?? sub.priceMonthly))}
+                  <span className="text-sm font-normal text-muted-foreground"> / {per}</span>
                 </p>
               </div>
               <StatusBadge tone={subscriptionTone(sub.status)}>{statusLabel[sub.status]}</StatusBadge>
@@ -48,7 +110,7 @@ function AdminSubscription() {
             <dl className="grid grid-cols-2 gap-y-3 border-t border-border pt-4 text-sm sm:grid-cols-4">
               <div>
                 <dt className="text-xs text-muted-foreground">Period ends</dt>
-                <dd className="font-medium">{shortDate(sub.currentPeriodEnd)}</dd>
+                <dd className="font-medium">{sub.currentPeriodEnd ? shortDate(sub.currentPeriodEnd) : "—"}</dd>
               </div>
               <div>
                 <dt className="text-xs text-muted-foreground">Grace period</dt>
@@ -56,31 +118,50 @@ function AdminSubscription() {
               </div>
               <div>
                 <dt className="text-xs text-muted-foreground">Last reference</dt>
-                <dd className="font-medium">{sub.paymentReference ?? "—"}</dd>
+                <dd className="font-medium">{requests[0]?.payment_reference ?? "—"}</dd>
               </div>
               <div>
                 <dt className="text-xs text-muted-foreground">Submitted</dt>
-                <dd className="font-medium">{sub.submittedAt ? shortDate(sub.submittedAt) : "—"}</dd>
+                <dd className="font-medium">{requests[0] ? shortDate(requests[0].created_at) : "—"}</dd>
               </div>
             </dl>
+            {pending ? (
+              <p className="flex items-start gap-2 rounded-lg bg-warning-soft px-3 py-2 text-xs text-warning-foreground">
+                <Clock className="mt-0.5 size-3.5 shrink-0" />
+                Payment {pending.payment_reference} is awaiting approval. Restricted operator tools stay
+                locked until it is approved.
+              </p>
+            ) : null}
+            {!pending && lastRejected?.decision_reason ? (
+              <p className="flex items-start gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                <X className="mt-0.5 size-3.5 shrink-0" />
+                Last payment was rejected: {lastRejected.decision_reason}. You can submit again below.
+              </p>
+            ) : null}
           </CardContent>
         </Card>
       </PageSection>
 
-      <PageSection title="Pay via GCash" description="Send the exact amount, then submit your reference number for approval.">
+      <PageSection
+        title="Pay via GCash"
+        description="Send the exact amount, then submit your reference number and receipt for manual approval."
+      >
         <div className="grid gap-3 lg:grid-cols-2">
           <Card className="shadow-[var(--shadow-card)]">
             <CardHeader>
               <CardTitle className="text-sm">Payment details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <Row label="GCash number" value={platformSettings.gcashNumber} />
-              <Row label="Account name" value={platformSettings.gcashAccountName} />
-              <Row label="Amount due" value={peso(sub.priceMonthly)} highlight />
-              <p className="flex items-start gap-2 rounded-lg bg-brand-soft px-3 py-2 text-xs text-accent-foreground">
-                <Info className="mt-0.5 size-3.5 shrink-0" />
-                These collection details are configured by the platform and may change.
-              </p>
+              <Row label="GCash number" value={settings?.gcash_number || "—"} />
+              <Row label="Account name" value={settings?.gcash_account_name || "—"} />
+              <Row label="Billing period" value={`Every ${per}`} />
+              <Row label="Amount due" value={peso(Number(settings?.plan_price ?? 0))} highlight />
+              {settings?.payment_instructions ? (
+                <p className="flex items-start gap-2 rounded-lg bg-brand-soft px-3 py-2 text-xs text-accent-foreground">
+                  <Info className="mt-0.5 size-3.5 shrink-0" />
+                  {settings.payment_instructions}
+                </p>
+              ) : null}
             </CardContent>
           </Card>
 
@@ -96,45 +177,110 @@ function AdminSubscription() {
                   value={reference}
                   onChange={(e) => setReference(e.target.value)}
                   placeholder="e.g. GC-1234-5678"
+                  disabled={Boolean(pending)}
                 />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="paid">Amount paid</Label>
-                <Input id="paid" type="number" defaultValue={sub.priceMonthly} />
+                <Input
+                  id="paid"
+                  type="number"
+                  value={amountPaid}
+                  onChange={(e) => setAmountPaid(e.target.value)}
+                  disabled={Boolean(pending)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="proof">Proof of payment (optional)</Label>
+                <Input
+                  id="proof"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  disabled={Boolean(pending)}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    if (file) {
+                      const problem = validateProof(file);
+                      if (problem) {
+                        toast.error(problem);
+                        e.target.value = "";
+                        return;
+                      }
+                    }
+                    setProof(file);
+                  }}
+                />
+                {proof ? (
+                  <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <Upload className="size-3" /> {proof.name}
+                  </p>
+                ) : null}
               </div>
               <Button
                 className="w-full"
-                disabled={!reference.trim() || saving || !ecosystemDbId}
-                onClick={async () => {
-                  if (!ecosystemDbId) return;
-                  setSaving(true);
-                  const { error } = await supabase.rpc("submit_subscription_payment", {
-                    _ecosystem_id: ecosystemDbId,
-                    _reference: reference.trim(),
-                  });
-                  setSaving(false);
-                  if (error) {
-                    toast.error("Could not submit payment", { description: error.message });
-                    return;
-                  }
-                  setReference("");
-                  reload();
-                  toast.success("Submitted — awaiting approval", {
-                    description: "The platform will review your payment reference.",
-                  });
-                }}
+                disabled={!reference.trim() || saving || !ecosystemDbId || Boolean(pending)}
+                onClick={() => void submit()}
               >
-                <CheckCircle2 className="size-4" /> I have paid — proceed
+                <CheckCircle2 className="size-4" />
+                {pending ? "Awaiting approval" : "I have paid — submit for approval"}
               </Button>
               <p className="text-[11px] text-muted-foreground">
-                Your ecosystem stays read-only until the platform marks the subscription active. No
-                tenant data is deleted on expiry.
+                Approval is manual — payments are never verified automatically. Your shop stays
+                read-only until the platform marks the subscription active. No tenant data is deleted
+                on expiry.
               </p>
             </CardContent>
           </Card>
         </div>
       </PageSection>
+
+      <PageSection title="Payment history" description="Every request keeps the price and period that applied when it was submitted.">
+        {requests.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No payment requests submitted yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {requests.map((r) => (
+              <HistoryRow key={r.id} request={r} />
+            ))}
+          </div>
+        )}
+      </PageSection>
     </>
+  );
+}
+
+function HistoryRow({ request }: { request: SubscriptionRequest }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    void proofUrl(request.proof_path).then(setUrl);
+  }, [request.proof_path]);
+
+  return (
+    <Card className="shadow-[var(--shadow-card)]">
+      <CardContent className="flex flex-wrap items-start justify-between gap-3 py-4">
+        <div className="space-y-1">
+          <p className="text-sm font-medium">
+            {request.plan_name} · {peso(Number(request.amount_due))} / {periodLabel(request.billing_period)}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Ref {request.payment_reference} · submitted {shortDate(request.created_at)}
+            {request.reviewed_at ? ` · reviewed ${shortDate(request.reviewed_at)}` : ""}
+          </p>
+          {request.period_end ? (
+            <p className="text-xs text-success">Active until {shortDate(request.period_end)}</p>
+          ) : null}
+          {request.decision_reason ? (
+            <p className="text-xs text-destructive">Reason: {request.decision_reason}</p>
+          ) : null}
+          {url ? (
+            <a href={url} target="_blank" rel="noreferrer" className="text-xs text-primary underline">
+              View receipt
+            </a>
+          ) : null}
+        </div>
+        <StatusBadge tone={requestTone(request.status)}>{request.status}</StatusBadge>
+      </CardContent>
+    </Card>
   );
 }
 
