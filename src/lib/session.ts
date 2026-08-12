@@ -89,9 +89,9 @@ function toEcosystem(row: DbEcosystem): Ecosystem {
       status: row.subscription_state,
       gracePeriodDays: row.grace_period_days,
       currentPeriodEnd: row.current_period_end ?? base.subscription.currentPeriodEnd,
-      paymentReference: row.payment_reference ?? undefined,
-      submittedAt: row.submitted_at ?? undefined,
-      reviewedAt: row.reviewed_at ?? undefined,
+      ...(row.payment_reference ? { paymentReference: row.payment_reference } : {}),
+      ...(row.submitted_at ? { submittedAt: row.submitted_at } : {}),
+      ...(row.reviewed_at ? { reviewedAt: row.reviewed_at } : {}),
     },
   };
 }
