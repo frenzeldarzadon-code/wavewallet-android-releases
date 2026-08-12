@@ -196,6 +196,41 @@ function SuperAdmins() {
     }
   };
 
+  /**
+   * Emergency administrative purge — separate from the archive path above and
+   * from the 1-year retention policy. Two explicit confirmations in the UI; the
+   * database re-checks platform ownership and the exact shop name.
+   */
+  const openPurge = (e: Overview) => {
+    setPurgeFor(e);
+    setPurgeStep("warning");
+    setPurgeTyped("");
+    setPurgeReason("");
+  };
+
+  const closePurge = () => {
+    setPurgeFor(null);
+    setPurgeStep("warning");
+    setPurgeTyped("");
+    setPurgeReason("");
+  };
+
+  const confirmPurge = async () => {
+    if (!purgeFor) return;
+    setPurging(true);
+    try {
+      const result = await purgeEcosystem(purgeFor.id, purgeTyped, purgeReason.trim());
+      toast.success("Ecosystem permanently deleted", { description: summarizePurge(result) });
+      closePurge();
+      await load();
+    } catch (err) {
+      toast.error("Could not delete this ecosystem", {
+        description: err instanceof Error ? err.message : "Unexpected error",
+      });
+    } finally {
+      setPurging(false);
+    }
+  };
 
 
 
