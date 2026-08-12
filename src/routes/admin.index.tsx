@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PageSection, StatCard, StatusBadge, subscriptionTone } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
 import { supabase } from "@/integrations/supabase/client";
+import { EarningsSummaryCards } from "@/components/earnings-summary-cards";
 import { peso, shortDate, shortDateTime, statusLabel } from "@/lib/wavewallet";
 
 export const Route = createFileRoute("/admin/")({
@@ -133,6 +134,17 @@ function AdminDashboard() {
           />
         </div>
       </PageSection>
+
+      <EarningsSummaryCards
+        title="Credits generated / shop earnings"
+        description="Newly issued credits recorded as shop earnings. Moving existing credits between wallets is a transfer and is never counted here."
+        types={["credit_generation"]}
+        ecosystemId={ecosystemDbId}
+        linkTo="/admin/reports"
+        linkLabel="Open earnings & financial reports"
+      />
+
+
 
       <div className="grid gap-5 lg:grid-cols-2">
         <PageSection title="Subscription">

@@ -3,6 +3,7 @@ import { ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, PageSection, StatCard } from "@/components/ui-kit";
+import { EarningsSummaryCards } from "@/components/earnings-summary-cards";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
@@ -108,6 +109,13 @@ function ResellerDashboard() {
         </p>
       </PageSection>
 
+      <EarningsSummaryCards
+        title="Earnings (separate from your wallet balance)"
+        description="Ledger-backed earnings for the current periods. Credit transfers are face value and never counted as earnings."
+        types={["sale_cashback", "upline_commission", "wholesale_discount"]}
+        recipientId={account.id}
+        linkTo="/reseller/earnings"
+      />
 
       <PageSection title="Wallet activity">
         {loading ? (
