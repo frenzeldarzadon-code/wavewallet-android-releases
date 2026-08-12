@@ -804,24 +804,8 @@ function ManageDialog({
               onChange={(e) => setState({ ...state, gracePeriodDays: e.target.value })}
             />
           </div>
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="mCommission">Default credit-loading commission (%)</Label>
-            <Input
-              id="mCommission"
-              type="number"
-              min={0}
-              max={100}
-              value={state.commission}
-              onChange={(e) => setState({ ...state, commission: e.target.value })}
-            />
-            <p className="text-[11px] text-muted-foreground">
-              Applied when you or this shop's admin release credits to a reseller who has no
-              personal rate. Subresellers never earn it. Future releases only — past transactions
-              keep their snapshot.
-            </p>
-          </div>
           <div className="space-y-1.5">
-            <Label htmlFor="mSaleReseller">Reseller credit-back (%)</Label>
+            <Label htmlFor="mSaleReseller">Reseller sale commission (%)</Label>
             <Input
               id="mSaleReseller"
               type="number"
@@ -832,7 +816,7 @@ function ManageDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="mSaleSub">Subreseller credit-back (%)</Label>
+            <Label htmlFor="mSaleSub">Subreseller sale cashback (%)</Label>
             <Input
               id="mSaleSub"
               type="number"
@@ -841,10 +825,49 @@ function ManageDialog({
               value={state.saleSub}
               onChange={(e) => setState({ ...state, saleSub: e.target.value })}
             />
-            <p className="text-[11px] text-muted-foreground sm:col-span-2">
-              Paid on customer purchases to whoever funded the credits spent.
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="mUpline">Parent reseller (upline) commission (%)</Label>
+            <Input
+              id="mUpline"
+              type="number"
+              min={0}
+              max={100}
+              value={state.upline}
+              onChange={(e) => setState({ ...state, upline: e.target.value })}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Earnings happen on voucher sales only — credit transfers now deliver the exact
+              amount sent. Upline goes to a subreseller's parent reseller, including on the
+              subreseller's own purchases.
             </p>
           </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="mResDisc">Reseller voucher discount (%)</Label>
+            <Input
+              id="mResDisc"
+              type="number"
+              min={0}
+              max={100}
+              value={state.resDiscount}
+              onChange={(e) => setState({ ...state, resDiscount: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="mSubDisc">Subreseller voucher discount (%)</Label>
+            <Input
+              id="mSubDisc"
+              type="number"
+              min={0}
+              max={100}
+              value={state.subDiscount}
+              onChange={(e) => setState({ ...state, subDiscount: e.target.value })}
+            />
+            <p className="text-[11px] text-muted-foreground sm:col-span-2">
+              Wholesale purchase price, separate from commissions. Snapshotted per sale.
+            </p>
+          </div>
+
 
 
           <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2 sm:col-span-2">
