@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
+import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
@@ -267,7 +267,40 @@ function AdminWallets() {
         )}
       </PageSection>
 
-      <PageSection title="Ecosystem credit ledger" description="Latest 60 movements across all wallets.">
+      <PageSection
+        title="Ecosystem credit ledger"
+        description="Latest 60 movements across all wallets. Commission bonuses are listed separately."
+      >
+        <div className="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <StatCard
+            label="Base credits released"
+            value={peso(
+              ledger
+                .filter((e) => e.direction === "debit" && Number(e.commission_amount ?? 0) > 0)
+                .reduce((s, e) => s + Number(e.base_amount ?? e.amount), 0),
+            )}
+            hint="Debited from admin wallets"
+          />
+          <StatCard
+            label="Commission granted"
+            value={peso(
+              ledger
+                .filter((e) => e.direction === "credit")
+                .reduce((s, e) => s + Number(e.commission_amount ?? 0), 0),
+            )}
+            tone="positive"
+            hint="Bonus credits to resellers"
+          />
+          <StatCard
+            label="Total received by resellers"
+            value={peso(
+              ledger
+                .filter((e) => e.direction === "credit" && Number(e.commission_amount ?? 0) > 0)
+                .reduce((s, e) => s + e.amount, 0),
+            )}
+            tone="brand"
+          />
+        </div>
         {ledger.length === 0 ? (
           <EmptyState title="No credit movements yet" />
         ) : (
