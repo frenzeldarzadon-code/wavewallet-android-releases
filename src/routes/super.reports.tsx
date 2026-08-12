@@ -29,7 +29,7 @@ export const Route = createFileRoute("/super/reports")({
       {
         name: "description",
         content:
-          "Platform-wide voucher revenue, credits issued and reseller commission broken down per ecosystem, across daily to yearly and custom ranges.",
+          "Platform subscription revenue plus per-ecosystem voucher sales, credits generated and channel earnings, across daily to yearly and custom ranges.",
       },
       { property: "og:title", content: "Cross-Tenant Reports — WaveWallet Super Admin" },
       {
@@ -175,7 +175,7 @@ function SuperReports() {
 
       <PageSection
         title="Cross-tenant reports"
-        description={`${resolved.label}. Figures come from immutable ledger records; each ecosystem's snapshotted discounts, commission rates and points ratios are preserved.`}
+        description={`${resolved.label}. Figures come from immutable ledger records; each ecosystem's snapshotted discounts, cashback rates and points ratios are preserved.`}
       >
         <ReportRangePicker
           range={range}
