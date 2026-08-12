@@ -254,7 +254,7 @@ function SuperSubscriptions() {
                       {a.note ? ` · Note: ${a.note}` : ""}
                     </p>
                   </div>
-                  <StatusBadge tone={a.direction === "shortened" ? "negative" : "warning"}>
+                  <StatusBadge tone={a.direction === "shortened" ? "danger" : "warning"}>
                     {a.direction === "shortened" ? "Shortened" : "Courtesy"}{" "}
                     {adjustmentTimeFrame(a.previous_period_end, a.new_period_end)}
                   </StatusBadge>
