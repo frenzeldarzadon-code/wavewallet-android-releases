@@ -24,6 +24,7 @@ import {
   LEDGER_COLUMNS,
   normalizeEntry,
   type CreditEntry,
+  fetchEcosystemCommission,
 } from "@/lib/wallet";
 import { adminAdjustPoints } from "@/lib/rewards";
 import { toast } from "sonner";
