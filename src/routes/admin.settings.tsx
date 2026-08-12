@@ -185,7 +185,7 @@ function AdminSettings() {
 
       <PageSection
         title="Facebook support"
-        description="Set by the platform owner for this shop. It appears on your payment screen so you can message support after paying."
+        description="Your own shop's support page. Your resellers and subresellers see this link on their dashboard. Leave it empty to remove the link."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardHeader>
@@ -193,28 +193,52 @@ function AdminSettings() {
               <Facebook className="size-4 text-primary" /> Support page
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            {facebookUrl ? (
-              <>
-                <p className="text-sm font-medium">{facebookLabel(facebookUrl, ecosystem.facebookPageName)}</p>
+          <CardContent className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="fbName">Page name (optional)</Label>
+              <Input
+                id="fbName"
+                value={fb.name}
+                placeholder="Sagada Wave Support"
+                onChange={(e) => setFb({ ...fb, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="fbUrl">Facebook page URL</Label>
+              <Input
+                id="fbUrl"
+                value={fb.url}
+                placeholder="https://facebook.com/yourpage"
+                onChange={(e) => setFb({ ...fb, url: e.target.value })}
+              />
+              {fbProblem ? <p className="text-[11px] text-destructive">{fbProblem}</p> : null}
+            </div>
+            <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={savingFb || Boolean(fbProblem)}
+                onClick={() => void saveFacebook()}
+              >
+                {savingFb ? "Saving…" : "Save Facebook page"}
+              </Button>
+              {facebookUrl ? (
                 <a
                   href={facebookUrl}
                   target="_blank"
                   rel="noreferrer noopener"
                   className="break-all text-xs text-primary underline"
                 >
-                  {facebookUrl}
+                  {facebookLabel(facebookUrl, ecosystem.facebookPageName)}
                 </a>
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No Facebook page has been configured for this shop yet. Ask the platform owner to add
-                one.
-              </p>
-            )}
+              ) : (
+                <span className="text-xs text-muted-foreground">No link configured yet</span>
+              )}
+            </div>
           </CardContent>
         </Card>
       </PageSection>
+
 
       <PageSection
         title="Voucher sale earnings"
