@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { writeSession, type ResolvedSession } from "@/lib/session";
+import { DEMO_ECOSYSTEM_SLUG } from "@/lib/demo";
 import { platformSettings } from "@/lib/wavewallet";
 
 export interface NavItem {
