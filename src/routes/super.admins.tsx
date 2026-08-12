@@ -304,6 +304,7 @@ function SuperAdmins() {
                       <TableHead>Subscription</TableHead>
                       <TableHead>People</TableHead>
                       <TableHead>Signup</TableHead>
+                      <TableHead>Lifecycle</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -346,6 +347,22 @@ function SuperAdmins() {
                             </p>
                           ) : null}
                         </TableCell>
+                        <TableCell>
+                          <StatusBadge tone={cleanupStatusTone(e.cleanup_status ?? "active")}>
+                            {cleanupStatusLabel[(e.cleanup_status ?? "active") as CleanupStatus] ??
+                              e.cleanup_status}
+                          </StatusBadge>
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            Last activity{" "}
+                            {e.last_activity_at ? shortDate(e.last_activity_at) : "—"}
+                          </p>
+                          {e.archived_at ? (
+                            <p className="text-[11px] text-destructive">
+                              Archived {shortDate(e.archived_at)}
+                              {e.archived_reason ? ` — ${e.archived_reason}` : ""}
+                            </p>
+                          ) : null}
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex flex-wrap justify-end gap-2">
                             <Button size="sm" variant="outline" onClick={() => setDetail(e)}>
@@ -369,7 +386,21 @@ function SuperAdmins() {
                             <Button size="sm" variant="ghost" onClick={() => enter(e.id)}>
                               <Building2 className="size-4" /> Enter
                             </Button>
+                            {e.archived_at ? null : (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => {
+                                  setArchiveFor(e);
+                                  setArchiveReason("");
+                                }}
+                              >
+                                <Trash2 className="size-4" /> Delete
+                              </Button>
+                            )}
                           </div>
+
                         </TableCell>
 
                       </TableRow>
