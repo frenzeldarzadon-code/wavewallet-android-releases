@@ -10,7 +10,7 @@ import { StatusBadge } from "@/components/ui-kit";
 import { homeFor } from "@/lib/session";
 import { loadAuthContext, signInWithPassword, type SignupEcosystem } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { DEMO_ROLES, isPreviewEnvironment } from "@/lib/demo";
+import { DEMO_ECOSYSTEM_SLUG, DEMO_ROLES, isPreviewEnvironment } from "@/lib/demo";
 import { startDemoSession } from "@/lib/demo.functions";
 import { platformSettings } from "@/lib/wavewallet";
 
