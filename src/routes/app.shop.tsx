@@ -67,9 +67,10 @@ export function VoucherShopView({
   const [ratio, setRatio] = useState(10);
   const [loading, setLoading] = useState(true);
   const [buying, setBuying] = useState<{ product: ShopProduct; method: Method } | null>(null);
+  const [qty, setQty] = useState(1);
   const [busy, setBusy] = useState(false);
   const [issued, setIssued] = useState<{
-    code: string;
+    codes: string[];
     tx: string;
     name: string;
     price: string;
@@ -106,6 +107,15 @@ export function VoucherShopView({
 
   const priceFor = (p: ShopProduct) => Math.round(listPrice(p) * (100 - discountPercent)) / 100;
 
+  const openBuy = (product: ShopProduct, method: Method) => {
+    setQty(1);
+    setBuying({ product, method });
+  };
+
+  const maxQty = buying ? Math.min(50, Math.max(1, buying.product.available)) : 1;
+  const unit = buying ? priceFor(buying.product) : 0;
+  const total = Math.round(unit * qty * 100) / 100;
+
   const confirm = async () => {
     if (!buying) return;
     setBusy(true);
@@ -113,18 +123,18 @@ export function VoucherShopView({
       if (buying.method === "points") {
         const res = await purchaseVoucherWithPoints(buying.product.id);
         setIssued({
-          code: res.code,
+          codes: [res.code],
           tx: res.tx_id,
           name: res.product_name,
           price: `${res.points_spent} pts`,
           earned: 0,
         });
       } else {
-        const res = await purchaseVoucher(buying.product.id);
+        const res = await purchaseVoucher(buying.product.id, qty);
         setIssued({
-          code: res.code,
+          codes: res.codes,
           tx: res.tx_id,
-          name: res.product_name,
+          name: `${res.product_name}${res.quantity > 1 ? ` ×${res.quantity}` : ""}`,
           price: peso(res.sale_price),
           earned: Number(res.points_earned ?? 0),
         });
@@ -137,6 +147,7 @@ export function VoucherShopView({
       setBusy(false);
     }
   };
+
 
   return (
     <>
@@ -198,7 +209,7 @@ export function VoucherShopView({
                       <Button
                         className="w-full"
                         disabled={soldOut || !affordable}
-                        onClick={() => setBuying({ product: p, method: "credits" })}
+                        onClick={() => openBuy(p, "credits")}
                       >
                         <Ticket className="size-4" />
                         {soldOut ? "Out of stock" : affordable ? "Buy with credits" : "Not enough credits"}
@@ -208,7 +219,7 @@ export function VoucherShopView({
                           variant="outline"
                           className="w-full"
                           disabled={soldOut || !pointsOk}
-                          onClick={() => setBuying({ product: p, method: "points" })}
+                          onClick={() => openBuy(p, "points")}
                         >
                           <Sparkles className="size-4" />
                           {soldOut
@@ -232,7 +243,9 @@ export function VoucherShopView({
           <DialogHeader>
             <DialogTitle>Confirm purchase</DialogTitle>
             <DialogDescription>
-              One unused code will be assigned to you and marked sold immediately.
+              {buying?.method === "credits"
+                ? "Unused codes are assigned to you and marked sold immediately."
+                : "One unused code will be assigned to you and marked sold immediately."}
             </DialogDescription>
           </DialogHeader>
           {buying ? (
@@ -243,22 +256,57 @@ export function VoucherShopView({
               </p>
               {buying.method === "credits" ? (
                 <>
+                  <div className="flex items-center justify-between gap-2 py-1">
+                    <span className="text-muted-foreground">Quantity</span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        className="size-8"
+                        disabled={qty <= 1}
+                        onClick={() => setQty((q) => Math.max(1, q - 1))}
+                        aria-label="Decrease quantity"
+                      >
+                        −
+                      </Button>
+                      <span className="w-8 text-center font-semibold tabular-nums">{qty}</span>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        className="size-8"
+                        disabled={qty >= maxQty}
+                        onClick={() => setQty((q) => Math.min(maxQty, q + 1))}
+                        aria-label="Increase quantity"
+                      >
+                        +
+                      </Button>
+                    </div>
+                  </div>
                   <p className="flex justify-between">
-                    <span className="text-muted-foreground">Price</span>
-                    <span className="font-semibold text-destructive">
-                      −{peso(priceFor(buying.product))}
-                    </span>
+                    <span className="text-muted-foreground">Unit price</span>
+                    <span className="font-medium">{peso(unit)}</span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="text-muted-foreground">Total</span>
+                    <span className="font-semibold text-destructive">−{peso(total)}</span>
                   </p>
                   <p className="flex justify-between">
                     <span className="text-muted-foreground">Balance after</span>
-                    <span className="font-medium">{peso(balance - priceFor(buying.product))}</span>
+                    <span className="font-medium">{peso(balance - total)}</span>
                   </p>
                   <p className="flex justify-between">
                     <span className="text-muted-foreground">Points earned</span>
                     <span className="font-medium text-points">
-                      +{ratio > 0 ? Math.floor(priceFor(buying.product) / ratio) : 0}
+                      +{ratio > 0 ? Math.floor(total / ratio) : 0}
                     </span>
                   </p>
+                  {role === "customer" ? (
+                    <p className="text-[11px] text-muted-foreground">
+                      Your reseller earns credit-back on every voucher in this purchase.
+                    </p>
+                  ) : null}
                 </>
               ) : (
                 <>
@@ -285,7 +333,10 @@ export function VoucherShopView({
             <Button variant="outline" onClick={() => setBuying(null)}>
               Cancel
             </Button>
-            <Button onClick={() => void confirm()} disabled={busy}>
+            <Button
+              onClick={() => void confirm()}
+              disabled={busy || (buying?.method === "credits" && (total > balance || qty > maxQty))}
+            >
               {busy ? "Issuing…" : "Confirm purchase"}
             </Button>
           </DialogFooter>
@@ -295,16 +346,20 @@ export function VoucherShopView({
       <Dialog open={!!issued} onOpenChange={(o) => !o && setIssued(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Voucher issued</DialogTitle>
+            <DialogTitle>{(issued?.codes.length ?? 0) > 1 ? "Vouchers issued" : "Voucher issued"}</DialogTitle>
             <DialogDescription>
               {issued?.name} · {issued?.price} · {issued?.tx}
             </DialogDescription>
           </DialogHeader>
-          <div className="rounded-xl border border-success/40 bg-success-soft px-4 py-5 text-center">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-success">Your code</p>
-            <p className="mt-1 font-mono text-xl font-semibold tracking-widest text-success">
-              {issued?.code}
+          <div className="max-h-64 space-y-2 overflow-y-auto rounded-xl border border-success/40 bg-success-soft px-4 py-4 text-center">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-success">
+              {(issued?.codes.length ?? 0) > 1 ? "Your codes" : "Your code"}
             </p>
+            {issued?.codes.map((c) => (
+              <p key={c} className="font-mono text-lg font-semibold tracking-widest text-success">
+                {c}
+              </p>
+            ))}
           </div>
           {issued && issued.earned > 0 ? (
             <p className="text-center text-xs text-points">+{issued.earned} points earned</p>
@@ -313,16 +368,17 @@ export function VoucherShopView({
             <Button
               variant="outline"
               onClick={() => {
-                if (issued) void navigator.clipboard?.writeText(issued.code);
-                toast.success("Code copied");
+                if (issued) void navigator.clipboard?.writeText(issued.codes.join("\n"));
+                toast.success(issued && issued.codes.length > 1 ? "Codes copied" : "Code copied");
               }}
             >
-              Copy code
+              {issued && issued.codes.length > 1 ? "Copy codes" : "Copy code"}
             </Button>
             <Button onClick={() => setIssued(null)}>Done</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
     </>
   );
 }

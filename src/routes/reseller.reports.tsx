@@ -85,8 +85,15 @@ function ResellerReports() {
     [credits],
   );
   const loadTotal = customerLoads.reduce((s, c) => s + c.amount, 0);
-  // Subresellers never earn commission — their entire earning is the voucher discount margin.
+  // Subresellers get no bonus on credit releases, but they do earn per-purchase
+  // credit-back on their customers' voucher purchases, just like resellers.
   const isSubreseller = account?.role === "subreseller";
+  const creditBack = useMemo(
+    () => commissionEntries.filter((c) => c.entry_kind === "sale_commission"),
+    [commissionEntries],
+  );
+  const creditBackTotal = creditBack.reduce((s, c) => s + c.amount, 0);
+
 
   const exportCsv = () => {
     const csv = toCsv(
@@ -128,10 +135,11 @@ function ResellerReports() {
         title={`My earnings${account?.role ? ` · ${roleLabel(account.role)}` : ""}`}
         description={
           isSubreseller
-            ? `${resolved.label}. Your earning is the voucher discount captured at purchase time — subresellers do not receive credit commission.`
-            : `${resolved.label}. Margins use the discount captured at sale time and commission uses the rate snapshotted on each credit release.`
+            ? `${resolved.label}. Your earnings are the voucher discount captured at purchase time plus per-purchase credit-back from your customers' voucher purchases.`
+            : `${resolved.label}. Margins use the discount captured at sale time; commission and credit-back use the rate snapshotted on each transaction.`
         }
       >
+
         <ReportRangePicker
           range={range}
           onRangeChange={setRange}
@@ -153,19 +161,24 @@ function ResellerReports() {
             value={String(salesTotals.count)}
             hint={`${salesTotals.creditCount} credits · ${salesTotals.pointsCount} points`}
           />
-          {isSubreseller ? (
-            <StatCard label="Commission credits" value="—" hint="Subresellers earn discount only" />
-          ) : (
-            <StatCard
-              label="Commission credits"
-              value={peso(creditTotals.commissionBonus)}
-              tone="positive"
-              hint={`${creditTotals.commissionCount} releases`}
-            />
-          )}
+          <StatCard
+            label="Credit-back earned"
+            value={peso(creditBackTotal)}
+            tone="positive"
+            hint={`${creditBack.length} customer purchases`}
+          />
         </div>
         <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard label="Credits received (base)" value={peso(creditTotals.commissionBase)} />
+          {isSubreseller ? (
+            <StatCard label="Release bonus" value="—" hint="Subresellers earn discount only" />
+          ) : (
+            <StatCard
+              label="Release bonus"
+              value={peso(creditTotals.commissionBonus - creditBackTotal)}
+              tone="positive"
+              hint={`${creditTotals.commissionCount} entries`}
+            />
+          )}
           <StatCard
             label="Total credited to me"
             value={peso(creditTotals.commissionBase + creditTotals.commissionBonus)}
@@ -182,19 +195,12 @@ function ResellerReports() {
       </PageSection>
 
       <PageSection
-        title={isSubreseller ? "Commission" : "Commission received"}
-        description={
-          isSubreseller
-            ? "Subresellers do not receive credit commission — your margin comes from the voucher discount."
-            : "Bonus credits granted by your shop admin on qualifying credit releases."
-        }
+        title="Credit-back & commission"
+        description="Credit-back is granted per voucher on every purchase your customers make, at the rate snapshotted at sale time."
       >
-        {isSubreseller || commissionEntries.length === 0 ? (
-          <EmptyState
-            title={
-              isSubreseller ? "Commission does not apply to subresellers" : "No commission credits in this range"
-            }
-          />
+        {commissionEntries.length === 0 ? (
+          <EmptyState title="No credit-back or commission in this range" />
+
         ) : (
           <Card className="shadow-[var(--shadow-card)]">
             <CardContent className="divide-y divide-border px-0 py-0">
