@@ -36,7 +36,7 @@ function JoinPage() {
   const navigate = useNavigate();
   const [eco, setEco] = useState<SignupEcosystem | null>(null);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirm: "" });
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -91,6 +91,10 @@ function JoinPage() {
     }
     if (form.password.length < 8) {
       toast.error("Use a password with at least 8 characters.");
+      return;
+    }
+    if (form.password !== form.confirm) {
+      toast.error("Passwords do not match.");
       return;
     }
     setBusy(true);
