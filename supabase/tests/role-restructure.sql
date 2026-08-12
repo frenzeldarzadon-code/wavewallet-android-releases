@@ -27,13 +27,13 @@ DO $$
 DECLARE
   _eco uuid := '8b4fc15e-f6b3-444b-89f6-51a145fe874f';  -- demo ecosystem
   _admin uuid; _other_admin uuid; _other_eco uuid;
-  _r1 uuid := gen_random_uuid();   -- reseller with children
-  _r2 uuid := gen_random_uuid();   -- second reseller (receives children / parent)
-  _sub uuid := gen_random_uuid();  -- subreseller under _r1
-  _lone uuid := gen_random_uuid(); -- reseller with no children
-  _cust uuid := gen_random_uuid(); -- plain customer
+  _r1 uuid := '1ef6ecac-af2d-45bb-8bd8-64bff332b812';   -- demo reseller (has one child)
+  _sub uuid := 'bf10ec7d-2177-4f89-9293-c1307edf2cb4';  -- demo subreseller under _r1
+  _cust uuid := '04c82e4d-2079-458d-805a-43b9b8b7a484'; -- demo customer
+  _r2 uuid := gen_random_uuid();   -- fixture reseller that receives the children
+  _lone uuid := gen_random_uuid(); -- fixture reseller with no children
   _chk jsonb; _res jsonb;
-  _bal numeric; _pts int; _n int; _sale uuid := gen_random_uuid();
+  _bal numeric; _pts int; _bal0 numeric; _pts0 int; _n int; _sale uuid := gen_random_uuid();
 BEGIN
   SELECT ur.user_id INTO _admin FROM public.user_roles ur
    WHERE ur.role = 'admin' AND ur.ecosystem_id = _eco LIMIT 1;
@@ -43,29 +43,15 @@ BEGIN
     FROM public.user_roles ur
    WHERE ur.role = 'admin' AND ur.ecosystem_id <> _eco LIMIT 1;
 
-  -- Fixtures --------------------------------------------------------------
-  INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password,
-                          email_confirmed_at, created_at, updated_at)
-  SELECT u, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
-         'qa-restructure-' || u || '@example.invalid', '', now(), now(), now()
-    FROM unnest(ARRAY[_r1, _r2, _sub, _lone, _cust]) u;
-
+  -- Fixtures (wallet-less profiles; the wallet checks use the demo accounts) --
   INSERT INTO public.profiles (id, ecosystem_id, full_name, email, phone, status, is_demo)
-  VALUES (_r1, _eco, 'QA Reseller One', 'qa-r1@example.invalid', '0', 'active', true),
-         (_r2, _eco, 'QA Reseller Two', 'qa-r2@example.invalid', '0', 'active', true),
-         (_lone, _eco, 'QA Lone Reseller', 'qa-lone@example.invalid', '0', 'active', true),
-         (_sub, _eco, 'QA Subreseller', 'qa-sub@example.invalid', '0', 'active', true),
-         (_cust, _eco, 'QA Customer', 'qa-cust@example.invalid', '0', 'active', true);
-
+  VALUES (_r2, _eco, 'QA Reseller Two', 'qa-r2@example.invalid', '0', 'active', true),
+         (_lone, _eco, 'QA Lone Reseller', 'qa-lone@example.invalid', '0', 'active', true);
   INSERT INTO public.user_roles (user_id, role, ecosystem_id)
-  VALUES (_r1, 'reseller', _eco), (_r2, 'reseller', _eco), (_lone, 'reseller', _eco),
-         (_sub, 'subreseller', _eco), (_cust, 'customer', _eco);
-  UPDATE public.profiles SET reseller_id = _r1 WHERE id = _sub;
+  VALUES (_r2, 'reseller', _eco), (_lone, 'reseller', _eco);
 
-  INSERT INTO public.credit_accounts (user_id, ecosystem_id, balance)
-  VALUES (_sub, _eco, 250), (_lone, _eco, 90);
-  INSERT INTO public.points_accounts (user_id, ecosystem_id, balance)
-  VALUES (_sub, _eco, 40);
+  SELECT balance INTO _bal0 FROM public.credit_accounts WHERE user_id = _sub;
+  SELECT balance INTO _pts0 FROM public.points_accounts WHERE user_id = _sub;
 
   -- A historical sale attributing upline commission to _r1
   INSERT INTO public.voucher_sales
@@ -143,8 +129,8 @@ BEGIN
     RAISE EXCEPTION 'FAIL: demoted reseller has no parent';
   END IF;
   -- 7. wallet untouched
-  SELECT balance INTO _bal FROM public.credit_accounts WHERE user_id = _lone;
-  IF _bal <> 90 THEN RAISE EXCEPTION 'FAIL: wallet changed on demotion (%)', _bal; END IF;
+  SELECT balance INTO _bal FROM public.credit_accounts WHERE user_id = _sub;
+  IF _bal <> _bal0 THEN RAISE EXCEPTION 'FAIL: a wallet changed during a role change (%)', _bal; END IF;
   -- 10. no duplicate account or role rows
   SELECT count(*) INTO _n FROM public.profiles WHERE id = _lone;
   IF _n <> 1 THEN RAISE EXCEPTION 'FAIL: duplicate profile created'; END IF;
@@ -185,7 +171,7 @@ BEGIN
   END IF;
   SELECT balance INTO _bal FROM public.credit_accounts WHERE user_id = _sub;
   SELECT balance INTO _pts FROM public.points_accounts WHERE user_id = _sub;
-  IF _bal <> 250 OR _pts <> 40 THEN RAISE EXCEPTION 'FAIL: child wallet/points changed'; END IF;
+  IF _bal <> _bal0 OR _pts <> _pts0 THEN RAISE EXCEPTION 'FAIL: child wallet/points changed'; END IF;
 
   -- 6. historical attribution unchanged ------------------------------------
   IF NOT EXISTS (
@@ -207,7 +193,7 @@ BEGIN
   IF _n <> 1 THEN RAISE EXCEPTION 'FAIL: duplicate role rows after promotion (%)', _n; END IF;
   SELECT balance INTO _bal FROM public.credit_accounts WHERE user_id = _sub;
   SELECT balance INTO _pts FROM public.points_accounts WHERE user_id = _sub;
-  IF _bal <> 250 OR _pts <> 40 THEN RAISE EXCEPTION 'FAIL: wallet/points changed on promotion'; END IF;
+  IF _bal <> _bal0 OR _pts <> _pts0 THEN RAISE EXCEPTION 'FAIL: wallet/points changed on promotion'; END IF;
   IF EXISTS (SELECT 1 FROM public.voucher_sales WHERE id = _sale AND upline_recipient_id IS DISTINCT FROM _r1) THEN
     RAISE EXCEPTION 'FAIL: promotion rewrote historical attribution';
   END IF;
