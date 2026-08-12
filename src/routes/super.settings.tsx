@@ -1,12 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Facebook } from "lucide-react";
 import { useEffect, useState } from "react";
-import {
-  fetchEcosystemFacebookPages,
-  setEcosystemFacebook,
-  validateFacebookUrl,
-  type EcosystemFacebook,
-} from "@/lib/facebook";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
