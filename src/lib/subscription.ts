@@ -94,8 +94,8 @@ export async function submitSubscriptionRequest(input: {
   const { error } = await supabase.rpc("submit_subscription_request", {
     _ecosystem_id: input.ecosystemId,
     _reference: input.reference,
-    _amount_paid: input.amountPaid ?? null,
-    _proof_path: input.proofPath ?? null,
+    _amount_paid: input.amountPaid ?? undefined,
+    _proof_path: input.proofPath ?? undefined,
   });
   if (error) throw new Error(error.message);
 }
@@ -108,7 +108,7 @@ export async function reviewSubscriptionRequest(
   const { error } = await supabase.rpc("review_subscription_request", {
     _request_id: requestId,
     _decision: decision,
-    _reason: reason?.trim() ? reason.trim() : null,
+    _reason: reason?.trim() ? reason.trim() : undefined,
   });
   if (error) throw new Error(error.message);
 }
