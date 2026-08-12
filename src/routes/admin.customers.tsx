@@ -54,7 +54,7 @@ interface Member {
   joined_at: string;
   status: "active" | "suspended";
   reseller_discount_percent: number;
-  reseller_commission_percent: number;
+  reseller_commission_percent: number | null;
   role: Role;
   credits: number;
   points: number;
@@ -85,6 +85,7 @@ function AdminCustomers() {
   const [activity, setActivity] = useState<ActivityRow[]>([]);
   const [discount, setDiscount] = useState("10");
   const [commission, setCommission] = useState("20");
+  const [defaultCommission, setDefaultCommission] = useState(0);
   const [editingCommission, setEditingCommission] = useState<Member | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -373,7 +374,8 @@ function AdminCustomers() {
                               </StatusBadge>
                               {c.role === "reseller" ? (
                                 <StatusBadge tone="brand">
-                                  {c.reseller_commission_percent}% commission
+                                  {c.reseller_commission_percent ?? defaultCommission}% commission
+                                  {c.reseller_commission_percent === null ? " (shop default)" : ""}
                                 </StatusBadge>
                               ) : (
                                 <StatusBadge tone="muted">No commission</StatusBadge>
@@ -413,7 +415,9 @@ function AdminCustomers() {
                                 variant="outline"
                                 onClick={() => {
                                   setEditingCommission(c);
-                                  setCommission(String(c.reseller_commission_percent));
+                                  setCommission(
+                                    String(c.reseller_commission_percent ?? defaultCommission),
+                                  );
                                 }}
                               >
                                 <Percent className="size-4" /> Commission
@@ -603,7 +607,7 @@ function AdminCustomers() {
                   }
                 >
                   {detail.role === "reseller"
-                    ? `Reseller · ${detail.reseller_discount_percent}% discount · ${detail.reseller_commission_percent}% commission`
+                    ? `Reseller · ${detail.reseller_discount_percent}% discount · ${detail.reseller_commission_percent ?? defaultCommission}% commission${detail.reseller_commission_percent === null ? " (shop default)" : ""}`
                     : detail.role === "subreseller"
                       ? `Subreseller · ${detail.reseller_discount_percent}% discount · no commission`
                       : "Customer"}
