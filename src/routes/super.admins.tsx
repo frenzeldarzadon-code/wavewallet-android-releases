@@ -68,7 +68,7 @@ function SuperAdmins() {
   }, [load]);
 
   const access = (ecosystemId: string) => {
-    writeSession({ ecosystemId, superAdminMode: true });
+    writeSession({ accountId: "db", ecosystemId, superAdminMode: true });
     navigate({ to: "/admin" });
   };
 
@@ -269,7 +269,7 @@ function SuperAdmins() {
                       <TableCell>
                         <StatusBadge
                           tone={
-                            inv.status === "accepted" ? "positive" : inv.status === "pending" ? "brand" : "negative"
+                            inv.status === "accepted" ? "success" : inv.status === "pending" ? "brand" : "danger"
                           }
                         >
                           {inv.status}
