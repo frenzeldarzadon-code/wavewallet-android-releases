@@ -134,9 +134,9 @@ function SuperReports() {
         "Points-funded",
         "Gross",
         "Net collected",
-        "Reseller discounts",
-        "Credits issued",
-        "Commission granted",
+        "Wholesale discounts",
+        "Credits generated",
+        "Existing credits transferred",
       ],
       perEcosystem.map(([id, r]) => [
         ecoName(id),
@@ -145,8 +145,8 @@ function SuperReports() {
         r.gross,
         r.net,
         r.discounts,
-        r.issued,
-        r.commission,
+        r.generated,
+        r.transferred,
       ]),
     );
     downloadCsv(`wavewallet-platform-report-${csvStamp()}.csv`, csv);
@@ -163,6 +163,7 @@ function SuperReports() {
         highlightTypes={["platform_subscription", "credit_generation", "sale_cashback"]}
         netTypes={["platform_subscription"]}
         netLabel="Platform revenue"
+        showBenefit={false}
       />
 
 
