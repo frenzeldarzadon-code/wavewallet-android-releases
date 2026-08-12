@@ -10,7 +10,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { peso } from "@/lib/wavewallet";
+import { peso, shortDate } from "@/lib/wavewallet";
 
 export type PlatformSettings = Database["public"]["Tables"]["platform_settings"]["Row"];
 export type SubscriptionRequest = Database["public"]["Tables"]["subscription_requests"]["Row"];
@@ -128,7 +128,16 @@ export const requestTone = (status: string) =>
  * ------------------------------------------------------------------ */
 
 export type DurationQuote =
-  | { ok: true; months: number; amount: number; rate: number }
+  | {
+      ok: true;
+      months: number;
+      amount: number;
+      rate: number;
+      /** Part of the payment that bought whole months. */
+      applied: number;
+      /** Leftover that buys no month — surfaced, never silently absorbed. */
+      remainder: number;
+    }
   | { ok: false; months: null; amount: number; rate: number; error: string };
 
 export function monthsForPayment(amount: number, rate: number): DurationQuote {
@@ -137,15 +146,12 @@ export function monthsForPayment(amount: number, rate: number): DurationQuote {
     return fail("This shop has no monthly rate set yet — contact the platform owner.");
   if (!Number.isFinite(amount) || amount <= 0) return fail("Enter the amount you paid.");
   if (amount < rate) return fail(`Insufficient amount — one month costs ${peso(rate)}.`);
-  // Work in centavos so 0.1-style float error can never create a fake remainder.
+  // Work in centavos so 0.1-style float error can never invent a remainder.
   const cents = Math.round(amount * 100);
   const rateCents = Math.round(rate * 100);
-  if (cents % rateCents !== 0)
-    return fail(
-      `Non-standard amount — ${peso(amount)} is not a whole number of months at ${peso(rate)}/month. ` +
-        `Pay ${peso(rate)}, ${peso(rate * 2)}, ${peso(rate * 3)} and so on.`,
-    );
-  return { ok: true, months: cents / rateCents, amount, rate };
+  const months = Math.floor(cents / rateCents);
+  const remainder = (cents - months * rateCents) / 100;
+  return { ok: true, months, amount, rate, applied: (months * rateCents) / 100, remainder };
 }
 
 /**
@@ -171,3 +177,93 @@ export function requestMonths(r: Pick<SubscriptionRequest, "months_purchased" | 
 }
 
 export const monthsLabel = (months: number) => `${months} month${months === 1 ? "" : "s"}`;
+
+/** Whole months of prepaid time left before the expiry date. */
+export function prepaidRemaining(currentPeriodEnd: string | Date | null | undefined, now: Date = new Date()) {
+  const end = currentPeriodEnd ? new Date(currentPeriodEnd) : null;
+  if (!end || end.getTime() <= now.getTime()) return { expired: true, days: 0, label: "Expired" };
+  const days = Math.ceil((end.getTime() - now.getTime()) / 86_400_000);
+  const months = Math.floor(days / 30);
+  const label =
+    months >= 1
+      ? `${months} month${months === 1 ? "" : "s"} ${days - months * 30} day${days - months * 30 === 1 ? "" : "s"} left`
+      : `${days} day${days === 1 ? "" : "s"} left`;
+  return { expired: false, days, label };
+}
+
+/* ------------------------------------------------------------------ *
+ * Platform-owner expiration adjustments (courtesy / dispute)
+ * Separate auditable events — payment records are never rewritten.
+ * ------------------------------------------------------------------ */
+
+export type SubscriptionAdjustment =
+  Database["public"]["Tables"]["subscription_adjustments"]["Row"];
+
+export const ADJUSTMENT_REASONS = [
+  "Courtesy adjustment due to dispute",
+  "Payment received outside the app",
+  "Service downtime compensation",
+  "Correcting a data entry error",
+  "Other (see note)",
+] as const;
+
+/** "+7 days" / "-2 days" style summary of how far the expiry moved. */
+export function adjustmentTimeFrame(
+  previous: string | Date | null | undefined,
+  next: string | Date,
+): string {
+  if (!previous) return "new expiry set";
+  const diffMs = new Date(next).getTime() - new Date(previous).getTime();
+  const days = Math.round(diffMs / 86_400_000);
+  if (days === 0) return "no change";
+  const sign = days > 0 ? "+" : "-";
+  const abs = Math.abs(days);
+  if (abs % 30 === 0) return `${sign}${abs / 30} month${abs / 30 === 1 ? "" : "s"}`;
+  return `${sign}${abs} day${abs === 1 ? "" : "s"}`;
+}
+
+export const adjustmentIsShortening = (
+  previous: string | Date | null | undefined,
+  next: string | Date,
+) => Boolean(previous) && new Date(next).getTime() < new Date(previous as string).getTime();
+
+/** One-line audit sentence shown in history. */
+export function adjustmentSummary(a: SubscriptionAdjustment): string {
+  const frame = adjustmentTimeFrame(a.previous_period_end, a.new_period_end);
+  const verb = a.direction === "shortened" ? "shortened" : "adjusted";
+  return (
+    `Expiration ${verb} by ${a.actor_name} (${frame}) — ` +
+    `Original: ${a.previous_period_end ? shortDate(a.previous_period_end) : "none"} → ` +
+    `New: ${shortDate(a.new_period_end)} — Reason: ${a.reason}`
+  );
+}
+
+export async function fetchAdjustments(ecosystemId?: string) {
+  let q = supabase
+    .from("subscription_adjustments")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (ecosystemId) q = q.eq("ecosystem_id", ecosystemId);
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data ?? []) as SubscriptionAdjustment[];
+}
+
+export async function adjustExpiration(input: {
+  ecosystemId: string;
+  newPeriodEnd: Date | string;
+  reason: string;
+  note?: string | null;
+  confirmShorten?: boolean;
+}) {
+  const { data, error } = await supabase.rpc("adjust_ecosystem_expiration", {
+    _ecosystem_id: input.ecosystemId,
+    _new_period_end: new Date(input.newPeriodEnd).toISOString(),
+    _reason: input.reason,
+    _note: input.note ?? null,
+    _confirm_shorten: input.confirmShorten ?? false,
+  });
+  if (error) throw error;
+  return data as unknown as SubscriptionAdjustment;
+}
