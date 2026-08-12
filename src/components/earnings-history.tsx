@@ -281,11 +281,27 @@ export function EarningsHistory({
           <StatCard
             label={netLabel}
             value={peso(
-              netTypes ? netTypes.reduce((s, t) => s + totals.byType[t], 0) : totals.net,
+              netTypes ? netTypes.reduce((s, t) => s + totals.byType[t], 0) : totals.cash,
             )}
             tone="positive"
             hint={`${totals.count} records · ${totals.reversedCount} reversed`}
           />
+          {showBenefit ? (
+            <>
+              <StatCard
+                label="Discounts saved"
+                value={peso(totals.discountSaved)}
+                tone="brand"
+                hint="Wholesale benefit, not cash"
+              />
+              <StatCard
+                label="Total benefit"
+                value={peso(totals.cash + totals.discountSaved)}
+                tone="brand"
+                hint="Earnings + discounts saved"
+              />
+            </>
+          ) : null}
           {highlightTypes.map((t) => (
             <StatCard
               key={t}
