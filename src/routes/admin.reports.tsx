@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { ReportRangePicker } from "@/components/report-range";
 import { useSession } from "@/lib/session";
-import { peso, shortDateTime } from "@/lib/wavewallet";
+import { peso, roleLabel, shortDateTime, type Role } from "@/lib/wavewallet";
 import {
   csvStamp,
   downloadCsv,
