@@ -71,6 +71,10 @@ function AdminSubscription() {
   if (!ecosystem) return null;
   const sub = ecosystem.subscription;
   const notice = stateNotice(sub.status);
+  // Configured per ecosystem by the platform owner; hidden entirely when unset.
+  const rawFacebook = (ecosystem.facebookPageUrl ?? "").trim();
+  const facebookUrl = isFacebookUrl(rawFacebook) ? rawFacebook : "";
+  const facebookName = facebookUrl ? facebookLabel(facebookUrl, ecosystem.facebookPageName) : "";
   const detailsMissing = Boolean(settings && !settings.gcash_number.trim());
   const pending = requests.find((r) => r.status === "pending") ?? null;
   // Only surface a rejection while it is still the outcome the operator must act on.
