@@ -43,15 +43,21 @@ function CustomerHistory() {
   const [filter, setFilter] = useState("all");
   const [entries, setEntries] = useState<CreditEntry[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [lots, setLots] = useState<CreditLot[]>([]);
   const [loading, setLoading] = useState(true);
   const userId = account?.id ?? null;
 
   const load = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
-    const [l, p] = await Promise.all([fetchCreditLedger(userId, 100), fetchMyPurchases(userId)]);
+    const [l, p, k] = await Promise.all([
+      fetchCreditLedger(userId, 100),
+      fetchMyPurchases(userId),
+      fetchCreditLots(userId),
+    ]);
     setEntries(l);
     setPurchases(p);
+    setLots(k);
     setLoading(false);
   }, [userId]);
 
@@ -67,12 +73,48 @@ function CustomerHistory() {
         <TabsList className="flex w-full flex-wrap justify-start">
           <TabsTrigger value="all">Credits</TabsTrigger>
           <TabsTrigger value="vouchers">Vouchers</TabsTrigger>
+          <TabsTrigger value="sources">Sources</TabsTrigger>
         </TabsList>
       </Tabs>
 
       {loading ? (
         <EmptyState title="Loading history…" />
+      ) : filter === "sources" ? (
+        lots.length === 0 ? (
+          <EmptyState
+            title="No credits received yet"
+            description="Credits you receive are tracked by source and spent oldest-first."
+          />
+        ) : (
+          <Card className="shadow-[var(--shadow-card)]">
+            <CardContent className="divide-y divide-border px-0 py-0">
+              {lots.map((lot) => (
+                <div key={lot.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{creditSourceLabel(lot)}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {shortDateTime(lot.created_at)} · received {peso(lot.amount)}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p
+                      className={
+                        lot.remaining > 0
+                          ? "text-sm font-semibold text-success"
+                          : "text-sm font-semibold text-muted-foreground"
+                      }
+                    >
+                      {peso(lot.remaining)}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">{lot.remaining > 0 ? "left" : "fully spent"}</p>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )
       ) : filter === "vouchers" ? (
+
         purchases.length === 0 ? (
           <EmptyState title="No voucher purchases yet" description="Buy a voucher from the shop to see it here." />
         ) : (
