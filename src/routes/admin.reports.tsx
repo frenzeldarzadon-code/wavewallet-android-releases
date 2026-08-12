@@ -1,291 +1,379 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Download } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
+import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
+import { ReportRangePicker } from "@/components/report-range";
 import { useSession } from "@/lib/session";
-import { accountsIn, ledgerIn, peso, shortDateTime } from "@/lib/wavewallet";
+import { peso, shortDateTime } from "@/lib/wavewallet";
+import {
+  csvStamp,
+  downloadCsv,
+  fetchCreditsReport,
+  fetchNameMap,
+  fetchPointsReport,
+  fetchSalesReport,
+  resolveRange,
+  summariseCredits,
+  summarisePoints,
+  summariseSales,
+  toCsv,
+  type PointsEntryRow,
+  type SaleReportRow,
+} from "@/lib/reports";
+import type { CreditEntry } from "@/lib/wallet";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { fetchEcosystemLedger, type CreditEntry } from "@/lib/wallet";
 
 export const Route = createFileRoute("/admin/reports")({
   head: () => ({
     meta: [
       { title: "Earnings & Reports — WaveWallet Admin" },
-      { name: "description", content: "Daily, monthly, quarterly, yearly and custom-range reporting on gross sales, reseller earnings and net revenue." },
+      {
+        name: "description",
+        content:
+          "Daily, monthly, quarterly, yearly and custom-range reporting on voucher sales, credits issued, reseller commission and points activity.",
+      },
       { property: "og:title", content: "Earnings & Reports — WaveWallet Admin" },
-      { property: "og:description", content: "Daily, monthly, quarterly, yearly and custom-range reporting on gross sales, reseller earnings and net revenue." },
+      {
+        property: "og:description",
+        content:
+          "Ecosystem revenue, reseller commission and credit activity built from immutable ledger records.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AdminReports,
 });
 
-const ranges = [
-  { id: "today", label: "Today", days: 1 },
-  { id: "daily", label: "7 days", days: 7 },
-  { id: "monthly", label: "Monthly", days: 30 },
-  { id: "quarterly", label: "Quarterly", days: 90 },
-  { id: "yearly", label: "Yearly", days: 365 },
-  { id: "custom", label: "Custom", days: 0 },
-];
-
 function AdminReports() {
   const { ecosystem, ecosystemDbId } = useSession("admin");
   const [range, setRange] = useState("monthly");
-  const [creditEntries, setCreditEntries] = useState<CreditEntry[]>([]);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [sales, setSales] = useState<SaleReportRow[]>([]);
+  const [credits, setCredits] = useState<CreditEntry[]>([]);
+  const [points, setPoints] = useState<PointsEntryRow[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
 
-  const loadCredits = useCallback(async () => {
+  const resolved = useMemo(() => resolveRange(range, from, to), [range, from, to]);
+
+  const load = useCallback(async () => {
     if (!ecosystemDbId) return;
-    const [entries, { data: profiles }] = await Promise.all([
-      fetchEcosystemLedger(ecosystemDbId, 500),
-      supabase.from("profiles").select("id, full_name").eq("ecosystem_id", ecosystemDbId),
-    ]);
-    setCreditEntries(entries);
-    setNames(Object.fromEntries((profiles ?? []).map((p) => [p.id, p.full_name])));
-  }, [ecosystemDbId]);
+    setLoading(true);
+    try {
+      const [s, c, p, n] = await Promise.all([
+        fetchSalesReport({ range: resolved, ecosystemId: ecosystemDbId }),
+        fetchCreditsReport({ range: resolved, ecosystemId: ecosystemDbId }),
+        fetchPointsReport({ range: resolved, ecosystemId: ecosystemDbId }),
+        fetchNameMap(ecosystemDbId),
+      ]);
+      setSales(s);
+      setCredits(c);
+      setPoints(p);
+      setNames(n);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, [ecosystemDbId, resolved]);
 
   useEffect(() => {
-    void loadCredits();
-  }, [loadCredits]);
+    void load();
+  }, [load]);
 
-  const rangeDays = ranges.find((r) => r.id === range)?.days ?? 30;
-  const creditCutoff = Date.now() - (rangeDays || 3650) * 86400000;
+  const salesTotals = useMemo(() => summariseSales(sales), [sales]);
+  const creditTotals = useMemo(() => summariseCredits(credits), [credits]);
+  const pointTotals = useMemo(() => summarisePoints(points), [points]);
 
-  const commissionRows = useMemo(() => {
-    const byUser = new Map<
+  /** Reseller rows use each sale's snapshotted discount, never today's rate. */
+  const resellerRows = useMemo(() => {
+    const map = new Map<
       string,
-      { base: number; bonus: number; total: number; count: number; lastPercent: number }
+      { sales: number; gross: number; net: number; margin: number; commission: number; base: number }
     >();
-    for (const e of creditEntries) {
-      if (e.direction !== "credit") continue;
-      const bonus = Number(e.commission_amount ?? 0);
-      if (bonus <= 0) continue;
-      if (new Date(e.created_at).getTime() < creditCutoff) continue;
-      const base = Number(e.base_amount ?? e.amount - bonus);
-      const row = byUser.get(e.user_id) ?? { base: 0, bonus: 0, total: 0, count: 0, lastPercent: 0 };
-      row.base += base;
-      row.bonus += bonus;
-      row.total += e.amount;
-      row.count += 1;
-      row.lastPercent = Number(e.commission_percent ?? row.lastPercent);
-      byUser.set(e.user_id, row);
+    const blank = () => ({ sales: 0, gross: 0, net: 0, margin: 0, commission: 0, base: 0 });
+    for (const s of sales) {
+      if (s.payment_method === "points") continue;
+      const id = s.reseller_id ?? (s.buyer_role === "reseller" ? s.buyer_id : null);
+      if (!id) continue;
+      const row = map.get(id) ?? blank();
+      row.sales += 1;
+      row.gross += s.list_price;
+      row.net += s.sale_price;
+      row.margin += s.list_price - s.sale_price;
+      map.set(id, row);
     }
-    return [...byUser.entries()].sort((a, b) => b[1].bonus - a[1].bonus);
-  }, [creditEntries, creditCutoff]);
+    for (const e of credits) {
+      const bonus = Number(e.commission_amount ?? 0);
+      if (e.direction !== "credit" || bonus <= 0) continue;
+      const row = map.get(e.user_id) ?? blank();
+      row.commission += bonus;
+      row.base += Number(e.base_amount ?? e.amount - bonus);
+      map.set(e.user_id, row);
+    }
+    return [...map.entries()].sort((a, b) => b[1].margin + b[1].commission - (a[1].margin + a[1].commission));
+  }, [sales, credits]);
 
-  const commissionTotals = commissionRows.reduce(
-    (acc, [, r]) => ({ base: acc.base + r.base, bonus: acc.bonus + r.bonus, total: acc.total + r.total }),
-    { base: 0, bonus: 0, total: 0 },
-  );
+  const nameOf = (id: string) => names[id] ?? `${id.slice(0, 8)}…`;
+
+  const exportCsv = () => {
+    const csv = toCsv(
+      [
+        "Type",
+        "Date",
+        "Reference",
+        "Account",
+        "Detail",
+        "Gross",
+        "Net / Amount",
+        "Reseller margin",
+        "Commission",
+        "Points",
+      ],
+      [
+        ...sales.map((s) => [
+          s.payment_method === "points" ? "Voucher sale (points)" : "Voucher sale (credits)",
+          s.created_at,
+          s.tx_id,
+          nameOf(s.buyer_id),
+          s.product_name,
+          s.payment_method === "points" ? "" : s.list_price,
+          s.payment_method === "points" ? "" : s.sale_price,
+          s.payment_method === "points" ? "" : s.list_price - s.sale_price,
+          "",
+          s.payment_method === "points" ? -s.points_spent : s.points_earned,
+        ]),
+        ...credits.map((c) => [
+          `Credit ${c.direction}`,
+          c.created_at,
+          c.tx_id ?? "",
+          nameOf(c.user_id),
+          c.reason,
+          "",
+          c.direction === "debit" ? -c.amount : c.amount,
+          "",
+          Number(c.commission_amount ?? 0),
+          "",
+        ]),
+      ],
+    );
+    downloadCsv(`wavewallet-admin-report-${csvStamp()}.csv`, csv);
+    toast.success("Report exported");
+  };
 
   if (!ecosystem) return null;
 
-  const days = ranges.find((r) => r.id === range)?.days ?? 30;
-  const cutoff = Date.now() - (days || 3650) * 86400000;
-  const entries = ledgerIn(ecosystem.id).filter((l) => new Date(l.createdAt).getTime() >= cutoff);
-  const sales = entries.filter((l) => l.kind === "voucher_purchase");
-  const creditSales = sales.filter((l) => l.method === "credits");
-  const gross = creditSales.reduce((s, l) => s + (l.grossPrice ?? 0), 0);
-  const resellerEarnings = creditSales.reduce((s, l) => s + (l.resellerEarning ?? 0), 0);
-  const directSales = creditSales.filter((l) => !l.resellerId);
-  const resellerSales = creditSales.filter((l) => l.resellerId);
-  const creditActivity = entries
-    .filter((l) => l.kind === "credit_load" || l.kind.startsWith("credit_transfer"))
-    .reduce((s, l) => s + Math.abs(l.amount), 0);
-
-  const resellers = accountsIn(ecosystem.id, "reseller");
-
   return (
     <>
-      <PageSection title="Earnings & reports" description="Reseller earnings use the discount captured at sale time.">
-        <Tabs value={range} onValueChange={setRange}>
-          <TabsList className="flex w-full flex-wrap justify-start">
-            {ranges.map((r) => (
-              <TabsTrigger key={r.id} value={r.id}>
-                {r.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-        {range === "custom" ? (
-          <Card className="mt-3 shadow-[var(--shadow-card)]">
-            <CardContent className="grid gap-3 sm:grid-cols-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="from">From</Label>
-                <Input id="from" type="date" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="to">To</Label>
-                <Input id="to" type="date" />
-              </div>
-              <div className="flex items-end">
-                <Button className="w-full" onClick={() => toast("Custom range applied (demo)")}>
-                  Apply range
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : null}
+      <PageSection
+        title="Earnings & reports"
+        description={`${ecosystem.name} · ${resolved.label}. Every figure comes from immutable ledger records — historical discounts, commission rates and points ratios are never recalculated.`}
+      >
+        <ReportRangePicker
+          range={range}
+          onRangeChange={setRange}
+          from={from}
+          to={to}
+          onFromChange={setFrom}
+          onToChange={setTo}
+          onExport={exportCsv}
+          busy={loading}
+        />
       </PageSection>
 
-      <PageSection>
+      <PageSection title="Revenue">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard label="Gross sales" value={peso(gross)} tone="positive" />
-          <StatCard label="Reseller discount" value={peso(resellerEarnings)} tone="negative" hint="Cost to admin" />
-          <StatCard label="Net revenue" value={peso(gross - resellerEarnings)} tone="brand" />
-          <StatCard label="Vouchers sold" value={String(sales.length)} hint={`${sales.length - creditSales.length} paid with points`} />
+          <StatCard label="Gross sales" value={peso(salesTotals.gross)} tone="brand" />
+          <StatCard
+            label="Net collected"
+            value={peso(salesTotals.net)}
+            tone="positive"
+            hint="After reseller discounts"
+          />
+          <StatCard label="Reseller discounts" value={peso(salesTotals.resellerMargin)} tone="negative" />
+          <StatCard
+            label="Vouchers sold"
+            value={String(salesTotals.count)}
+            hint={`${salesTotals.creditCount} credits · ${salesTotals.pointsCount} points`}
+          />
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard label="Direct sales" value={String(directSales.length)} hint={peso(directSales.reduce((s, l) => s + (l.grossPrice ?? 0), 0))} />
-          <StatCard label="Reseller sales" value={String(resellerSales.length)} hint={peso(resellerSales.reduce((s, l) => s + (l.grossPrice ?? 0), 0))} />
-          <StatCard label="Credit activity" value={peso(creditActivity)} hint="Loads and transfers" />
-          <StatCard label="Points issued" value={String(entries.filter((l) => l.kind === "points_earned").reduce((s, l) => s + l.amount, 0))} />
+      </PageSection>
+
+      <PageSection title="Credit & commission activity">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatCard label="Credits issued" value={peso(creditTotals.issued)} tone="positive" />
+          <StatCard label="Credits spent" value={peso(creditTotals.spent)} tone="negative" />
+          <StatCard
+            label="Base released to resellers"
+            value={peso(creditTotals.commissionBase)}
+            hint={`${creditTotals.commissionCount} qualifying releases`}
+          />
+          <StatCard
+            label="Commission granted"
+            value={peso(creditTotals.commissionBonus)}
+            tone="brand"
+            hint="Snapshot rate per transfer"
+          />
+        </div>
+      </PageSection>
+
+      <PageSection title="Points activity">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatCard label="Points earned" value={String(pointTotals.earned)} tone="positive" />
+          <StatCard label="Points spent" value={String(pointTotals.spent)} tone="negative" />
+          <StatCard label="Adjustments" value={String(pointTotals.adjusted)} />
+          <StatCard label="Points-funded vouchers" value={String(salesTotals.pointsCount)} />
         </div>
       </PageSection>
 
       <PageSection
         title="Reseller performance"
-        action={
-          <Button variant="outline" size="sm" onClick={() => toast("CSV export coming with the data layer")}>
-            <Download className="size-4" /> Export CSV
-          </Button>
-        }
+        description="Margins use the discount captured at sale time; commission uses the rate snapshotted on each credit release."
       >
-        <Card className="overflow-hidden py-0 shadow-[var(--shadow-card)]">
-          <CardContent className="px-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Reseller</TableHead>
-                    <TableHead>Discount</TableHead>
-                    <TableHead>Vouchers</TableHead>
-                    <TableHead>Gross</TableHead>
-                    <TableHead className="text-right">Their earnings</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {resellers.map((r) => {
-                    const rs = creditSales.filter((l) => l.resellerId === r.id);
-                    return (
-                      <TableRow key={r.id}>
-                        <TableCell className="font-medium">{r.name}</TableCell>
-                        <TableCell>
-                          <StatusBadge tone="brand">{r.discountPercent}%</StatusBadge>
-                        </TableCell>
-                        <TableCell>{rs.length}</TableCell>
-                        <TableCell className="text-success">
-                          {peso(rs.reduce((s, l) => s + (l.grossPrice ?? 0), 0))}
-                        </TableCell>
-                        <TableCell className="text-right text-destructive">
-                          {peso(rs.reduce((s, l) => s + (l.resellerEarning ?? 0), 0))}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      </PageSection>
-
-      <PageSection
-        title="Reseller credit commission"
-        description="Base credits released by admins versus bonus credits granted, using the rate snapshotted on each transfer."
-      >
-        <div className="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-3">
-          <StatCard label="Base credits released" value={peso(commissionTotals.base)} tone="brand" />
-          <StatCard label="Commission granted" value={peso(commissionTotals.bonus)} tone="positive" />
-          <StatCard label="Total reseller credit" value={peso(commissionTotals.total)} />
-        </div>
-        <Card className="overflow-hidden py-0 shadow-[var(--shadow-card)]">
-          <CardContent className="px-0">
-            {commissionRows.length === 0 ? (
-              <p className="px-5 py-8 text-center text-sm text-muted-foreground">
-                No commission-bearing credit releases in this range.
-              </p>
-            ) : (
+        {resellerRows.length === 0 ? (
+          <EmptyState title="No reseller activity in this range" />
+        ) : (
+          <Card className="overflow-hidden py-0 shadow-[var(--shadow-card)]">
+            <CardContent className="px-0">
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Reseller</TableHead>
-                      <TableHead>Releases</TableHead>
-                      <TableHead>Base</TableHead>
-                      <TableHead>Commission</TableHead>
-                      <TableHead className="text-right">Total received</TableHead>
+                      <TableHead>Vouchers</TableHead>
+                      <TableHead className="hidden sm:table-cell">Gross</TableHead>
+                      <TableHead>Their margin</TableHead>
+                      <TableHead className="text-right">Commission</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {commissionRows.map(([userId, r]) => (
-                      <TableRow key={userId}>
-                        <TableCell className="font-medium">
-                          {names[userId] ?? userId.slice(0, 8)}
-                          <StatusBadge tone="brand" className="ml-2">
-                            {r.lastPercent}%
-                          </StatusBadge>
-                        </TableCell>
-                        <TableCell>{r.count}</TableCell>
-                        <TableCell>{peso(r.base)}</TableCell>
-                        <TableCell className="text-success">+{peso(r.bonus)}</TableCell>
-                        <TableCell className="text-right font-medium">{peso(r.total)}</TableCell>
+                    {resellerRows.map(([id, r]) => (
+                      <TableRow key={id}>
+                        <TableCell className="font-medium">{nameOf(id)}</TableCell>
+                        <TableCell>{r.sales}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{peso(r.gross)}</TableCell>
+                        <TableCell className="text-destructive">{peso(r.margin)}</TableCell>
+                        <TableCell className="text-right text-success">+{peso(r.commission)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </PageSection>
 
-      <PageSection title="Transactions in range">
-        <Card className="overflow-hidden py-0 shadow-[var(--shadow-card)]">
-          <CardContent className="px-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Transaction</TableHead>
-                    <TableHead className="hidden sm:table-cell">Account</TableHead>
-                    <TableHead className="hidden lg:table-cell">Code</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead className="hidden md:table-cell text-right">Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {entries.map((t) => (
-                    <TableRow key={t.id}>
-                      <TableCell>
-                        <p className="text-sm font-medium">{t.productName ?? t.kind.replaceAll("_", " ")}</p>
-                        <p className="font-mono text-[11px] text-muted-foreground">{t.id}</p>
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell text-sm">{t.accountName}</TableCell>
-                      <TableCell className="hidden lg:table-cell font-mono text-xs text-muted-foreground">
-                        {t.voucherCode ?? "—"}
-                      </TableCell>
-                      <TableCell className={t.amount < 0 ? "text-destructive" : "text-success"}>
-                        {t.amount < 0 ? "−" : "+"}
-                        {t.method === "points" ? `${Math.abs(t.amount)} pts` : peso(t.amount)}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-right text-xs text-muted-foreground">
-                        {shortDateTime(t.createdAt)}
-                      </TableCell>
+      <PageSection title="Voucher sales in range">
+        {sales.length === 0 ? (
+          <EmptyState title="No sales in this range" description="Try a wider time window." />
+        ) : (
+          <Card className="overflow-hidden py-0 shadow-[var(--shadow-card)]">
+            <CardContent className="px-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Transaction</TableHead>
+                      <TableHead className="hidden sm:table-cell">Buyer</TableHead>
+                      <TableHead>Paid</TableHead>
+                      <TableHead className="hidden lg:table-cell">Points</TableHead>
+                      <TableHead className="hidden md:table-cell text-right">Date</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {sales.slice(0, 100).map((s) => (
+                      <TableRow key={s.id}>
+                        <TableCell>
+                          <p className="text-sm font-medium">{s.product_name}</p>
+                          <p className="font-mono text-[11px] text-muted-foreground">{s.tx_id}</p>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell text-sm">{nameOf(s.buyer_id)}</TableCell>
+                        <TableCell className="text-sm">
+                          {s.payment_method === "points" ? (
+                            <StatusBadge tone="brand">{s.points_spent} pts</StatusBadge>
+                          ) : (
+                            <span>
+                              {peso(s.sale_price)}
+                              {s.discount_percent > 0 ? (
+                                <span className="ml-1 text-[11px] text-muted-foreground">
+                                  −{s.discount_percent}%
+                                </span>
+                              ) : null}
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-sm text-success">
+                          {s.points_earned > 0 ? `+${s.points_earned}` : "—"}
+                          {s.credits_per_point_used ? (
+                            <span className="ml-1 text-[11px] text-muted-foreground">
+                              @{s.credits_per_point_used}:1
+                            </span>
+                          ) : null}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-right text-xs text-muted-foreground">
+                          {shortDateTime(s.created_at)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </PageSection>
+
+      <PageSection title="Credit movements in range">
+        {credits.length === 0 ? (
+          <EmptyState title="No credit movements in this range" />
+        ) : (
+          <Card className="overflow-hidden py-0 shadow-[var(--shadow-card)]">
+            <CardContent className="px-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Movement</TableHead>
+                      <TableHead className="hidden sm:table-cell">Account</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead className="hidden lg:table-cell">Commission</TableHead>
+                      <TableHead className="hidden md:table-cell text-right">Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {credits.slice(0, 100).map((c) => (
+                      <TableRow key={c.id}>
+                        <TableCell>
+                          <p className="text-sm font-medium">{c.reason}</p>
+                          <p className="font-mono text-[11px] text-muted-foreground">{c.tx_id ?? "—"}</p>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell text-sm">{nameOf(c.user_id)}</TableCell>
+                        <TableCell
+                          className={`text-sm ${c.direction === "debit" ? "text-destructive" : "text-success"}`}
+                        >
+                          {c.direction === "debit" ? "−" : "+"}
+                          {peso(c.amount)}
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-sm">
+                          {Number(c.commission_amount ?? 0) > 0
+                            ? `+${peso(Number(c.commission_amount))} @ ${c.commission_percent}%`
+                            : "—"}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-right text-xs text-muted-foreground">
+                          {shortDateTime(c.created_at)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </PageSection>
     </>
   );
