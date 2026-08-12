@@ -21,6 +21,7 @@ import {
   type SaleReportRow,
 } from "@/lib/reports";
 import { toast } from "sonner";
+import { WalletIntegrityCard } from "@/components/wallet-integrity-card";
 
 export const Route = createFileRoute("/super/reports")({
   head: () => ({
@@ -301,6 +302,8 @@ function SuperReports() {
           </Card>
         )}
       </PageSection>
+
+      <WalletIntegrityCard />
     </>
   );
 }
