@@ -17,11 +17,12 @@ export const deleteCustomerAccount = createServerFn({ method: "POST" })
     return { userId: input.userId, reason: (input.reason ?? "").trim() || undefined };
   })
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.rpc("delete_customer_account", {
-      _user_id: data.userId,
-      _reason: data.reason ?? undefined,
-    });
+    const args = data.reason
+      ? { _user_id: data.userId, _reason: data.reason }
+      : { _user_id: data.userId };
+    const { error } = await context.supabase.rpc("delete_customer_account", args);
     if (error) throw new Error(error.message);
+
 
     // Identity is already anonymised and roles revoked; now block the login.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
