@@ -193,7 +193,7 @@ export async function adminAdjustCredits(input: {
       _user_id: input.userId,
       _amount: input.amount,
       _reason: input.reason,
-      _reference: input.reference ?? null,
+      _reference: input.reference ?? undefined,
     }),
   ) as unknown as string;
 }
@@ -207,7 +207,7 @@ export async function resellerLoadCredits(input: {
     await supabase.rpc("reseller_load_credits", {
       _customer_id: input.customerId,
       _amount: input.amount,
-      _reference: input.reference ?? null,
+      _reference: input.reference ?? undefined,
     }),
   ) as unknown as string;
 }
@@ -221,7 +221,7 @@ export async function transferCredits(input: {
     await supabase.rpc("transfer_credits", {
       _recipient_id: input.recipientId,
       _amount: input.amount,
-      _note: input.note ?? null,
+      _note: input.note ?? undefined,
     }),
   ) as unknown as string;
 }
