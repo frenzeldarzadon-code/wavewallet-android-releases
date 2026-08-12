@@ -47,7 +47,7 @@ function AdminLayout() {
 
   // Subscription gate: an inactive tenant may only reach the subscription screen.
   // The database enforces the same rule through subscription_ok(); this is UX only.
-  const gated = !session.subscriptionOk && !session.superAdminMode;
+  const gated = !session.subscriptionOk && session.account.role !== "super_admin";
   if (gated && pathname !== "/admin/subscription") {
     return <Navigate to="/admin/subscription" replace />;
   }
