@@ -1,5 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Link2, Percent, Search, ShieldCheck, Trash2, TrendingUp, UserCog } from "lucide-react";
+import {
+  Link2,
+  Percent,
+  Repeat,
+  Search,
+  ShieldCheck,
+  Trash2,
+  TrendingUp,
+  UserCog,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -37,6 +46,15 @@ import {
   setSubresellerParent,
   type SaleCommissionDefaults,
 } from "@/lib/wallet";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  evaluateRestructure,
+  fetchRestructureCheck,
+  oppositeRole,
+  restructureMemberRole,
+  type RestructurableRole,
+  type RestructureCheck,
+} from "@/lib/role-restructure";
 
 export const Route = createFileRoute("/admin/customers")({
   head: () => ({
@@ -112,6 +130,12 @@ function AdminCustomers() {
   const [editingOwner, setEditingOwner] = useState<Member | null>(null);
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState<Member | null>(null);
+  // Organization restructuring (reseller <-> subreseller).
+  const [restructuring, setRestructuring] = useState<Member | null>(null);
+  const [restructureCheck, setRestructureCheck] = useState<RestructureCheck | null>(null);
+  const [restructureParent, setRestructureParent] = useState("");
+  const [childParents, setChildParents] = useState<Record<string, string>>({});
+  const [restructureReason, setRestructureReason] = useState("");
 
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
@@ -317,6 +341,64 @@ function AdminCustomers() {
     }
   };
 
+  const openRestructure = async (m: Member) => {
+    setRestructuring(m);
+    setRestructureCheck(null);
+    setRestructureParent("");
+    setChildParents({});
+    setRestructureReason("");
+    try {
+      setRestructureCheck(await fetchRestructureCheck(m.id));
+    } catch (e) {
+      toast.error((e as Error).message);
+      setRestructuring(null);
+    }
+  };
+
+  const restructureTarget: RestructurableRole | null =
+    restructuring && (restructuring.role === "reseller" || restructuring.role === "subreseller")
+      ? oppositeRole(restructuring.role)
+      : null;
+
+  const restructureVerdict =
+    restructureCheck && restructureTarget
+      ? evaluateRestructure(restructureCheck, {
+          newRole: restructureTarget,
+          parentResellerId: restructureParent,
+          childReassignments: childParents,
+          reason: restructureReason,
+        })
+      : null;
+
+  const closeRestructure = () => {
+    setRestructuring(null);
+    setRestructureCheck(null);
+    setRestructureParent("");
+    setChildParents({});
+    setRestructureReason("");
+  };
+
+  const confirmRestructure = async () => {
+    if (!restructuring || !restructureTarget || !restructureVerdict?.ok) return;
+    setBusy(true);
+    try {
+      await restructureMemberRole(restructuring.id, {
+        newRole: restructureTarget,
+        parentResellerId: restructureParent,
+        childReassignments: childParents,
+        reason: restructureReason,
+      });
+      toast.success(
+        `${restructuring.full_name || restructuring.email} is now a ${roleLabel(restructureTarget).toLowerCase()} — wallet, history and earnings untouched.`,
+      );
+      closeRestructure();
+      void load();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
 
 
   const verdictFor = (m: Member): DeletionVerdict =>
@@ -544,6 +626,15 @@ function AdminCustomers() {
                                 <UserCog className="size-4" /> Parent
                               </Button>
                             ) : null}
+                            {c.role === "reseller" || c.role === "subreseller" ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => void openRestructure(c)}
+                              >
+                                <Repeat className="size-4" /> Change role
+                              </Button>
+                            ) : null}
                             {c.role === "customer" ? (
                               <Button
                                 size="sm"
@@ -767,6 +858,142 @@ function AdminCustomers() {
             </Button>
             <Button onClick={confirmOwner} disabled={busy || !parentId}>
               Save parent
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!restructuring} onOpenChange={(o) => !o && closeRestructure()}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Change organisation role</DialogTitle>
+            <DialogDescription>
+              {restructuring?.full_name || restructuring?.email} keeps the same account, ecosystem,
+              wallet, points, purchases and earnings. Only the role and hierarchy change, from now
+              on.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!restructureCheck ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">Checking hierarchy…</p>
+          ) : (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="rounded-md border p-3">
+                  <p className="text-xs text-muted-foreground">Current role</p>
+                  <p className="font-medium">{roleLabel(restructuring!.role)}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Parent: {restructureCheck.parent_reseller_name ?? "—"}
+                  </p>
+                </div>
+                <div className="rounded-md border border-primary/40 bg-primary/5 p-3">
+                  <p className="text-xs text-muted-foreground">Proposed role</p>
+                  <p className="font-medium text-primary">
+                    {restructureTarget ? roleLabel(restructureTarget) : "—"}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Wallet: {peso(restructureCheck.credits)} · {restructureCheck.points} pts
+                    (unchanged)
+                  </p>
+                </div>
+              </div>
+
+              {restructureTarget === "subreseller" ? (
+                <div className="space-y-1.5">
+                  <Label htmlFor="restructureParent">New parent reseller</Label>
+                  <Select value={restructureParent} onValueChange={setRestructureParent}>
+                    <SelectTrigger id="restructureParent">
+                      <SelectValue placeholder="Choose a reseller" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {resellers
+                        .filter((r) => r.id !== restructuring?.id)
+                        .map((r) => (
+                          <SelectItem key={r.id} value={r.id}>
+                            {r.full_name || r.email}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
+
+              {restructureTarget === "subreseller" && restructureCheck.children.length > 0 ? (
+                <div className="space-y-2 rounded-md border border-destructive/40 bg-destructive/5 p-3">
+                  <p className="text-sm font-medium text-destructive">
+                    {restructureCheck.children.length} subreseller
+                    {restructureCheck.children.length === 1 ? "" : "s"} must be reassigned
+                  </p>
+                  {restructureCheck.children.map((child) => (
+                    <div key={child.id} className="space-y-1">
+                      <Label className="text-xs" htmlFor={`child-${child.id}`}>
+                        {child.name || child.email}
+                      </Label>
+                      <Select
+                        value={childParents[child.id] ?? ""}
+                        onValueChange={(v) =>
+                          setChildParents((prev) => ({ ...prev, [child.id]: v }))
+                        }
+                      >
+                        <SelectTrigger id={`child-${child.id}`}>
+                          <SelectValue placeholder="Choose a new reseller" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {resellers
+                            .filter((r) => r.id !== restructuring?.id && r.id !== child.id)
+                            .map((r) => (
+                              <SelectItem key={r.id} value={r.id}>
+                                {r.full_name || r.email}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              <div className="space-y-1.5">
+                <Label htmlFor="restructureReason">Reason (required, audit-logged)</Label>
+                <Textarea
+                  id="restructureReason"
+                  rows={2}
+                  value={restructureReason}
+                  onChange={(e) => setRestructureReason(e.target.value)}
+                  placeholder="e.g. Territory realignment agreed with the operator"
+                />
+              </div>
+
+              <ul className="list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+                {(restructureVerdict?.notes ?? []).map((n) => (
+                  <li key={n}>{n}</li>
+                ))}
+              </ul>
+
+              {restructureVerdict && !restructureVerdict.ok ? (
+                <ul className="list-disc space-y-1 rounded-md bg-destructive/10 p-3 pl-6 text-xs text-destructive">
+                  {restructureVerdict.blockers.map((b) => (
+                    <li key={b}>{b}</li>
+                  ))}
+                </ul>
+              ) : null}
+
+              <p className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
+                This cannot be undone automatically — reverting requires another explicit role
+                change. Historical commissions, upline attribution and earnings are never rewritten.
+              </p>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={closeRestructure} disabled={busy}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => void confirmRestructure()}
+              disabled={busy || !restructureVerdict?.ok}
+            >
+              Confirm role change
             </Button>
           </DialogFooter>
         </DialogContent>

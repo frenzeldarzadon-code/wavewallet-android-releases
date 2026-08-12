@@ -2059,6 +2059,16 @@ export type Database = {
         Args: { _amount: number; _customer_id: string; _reference?: string }
         Returns: string
       }
+      restructure_member_role: {
+        Args: {
+          _child_reassignments?: Json
+          _new_role: Database["public"]["Enums"]["app_role"]
+          _parent_reseller_id?: string
+          _reason: string
+          _user_id: string
+        }
+        Returns: Json
+      }
       reverse_credit_transfer: {
         Args: {
           _amount: number
@@ -2125,6 +2135,7 @@ export type Database = {
         }
       }
       revoke_admin_invitation: { Args: { _id: string }; Returns: undefined }
+      role_restructure_check: { Args: { _user_id: string }; Returns: Json }
       run_ecosystem_cleanup: { Args: { _dry_run?: boolean }; Returns: Json }
       run_retention_purge: {
         Args: { _dry_run?: boolean }
