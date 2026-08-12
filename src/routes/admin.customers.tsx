@@ -332,6 +332,64 @@ function AdminCustomers() {
     }
   };
 
+  const openRestructure = async (m: Member) => {
+    setRestructuring(m);
+    setRestructureCheck(null);
+    setRestructureParent("");
+    setChildParents({});
+    setRestructureReason("");
+    try {
+      setRestructureCheck(await fetchRestructureCheck(m.id));
+    } catch (e) {
+      toast.error((e as Error).message);
+      setRestructuring(null);
+    }
+  };
+
+  const restructureTarget: RestructurableRole | null =
+    restructuring && (restructuring.role === "reseller" || restructuring.role === "subreseller")
+      ? oppositeRole(restructuring.role)
+      : null;
+
+  const restructureVerdict =
+    restructureCheck && restructureTarget
+      ? evaluateRestructure(restructureCheck, {
+          newRole: restructureTarget,
+          parentResellerId: restructureParent,
+          childReassignments: childParents,
+          reason: restructureReason,
+        })
+      : null;
+
+  const closeRestructure = () => {
+    setRestructuring(null);
+    setRestructureCheck(null);
+    setRestructureParent("");
+    setChildParents({});
+    setRestructureReason("");
+  };
+
+  const confirmRestructure = async () => {
+    if (!restructuring || !restructureTarget || !restructureVerdict?.ok) return;
+    setBusy(true);
+    try {
+      await restructureMemberRole(restructuring.id, {
+        newRole: restructureTarget,
+        parentResellerId: restructureParent,
+        childReassignments: childParents,
+        reason: restructureReason,
+      });
+      toast.success(
+        `${restructuring.full_name || restructuring.email} is now a ${roleLabel(restructureTarget).toLowerCase()} — wallet, history and earnings untouched.`,
+      );
+      closeRestructure();
+      void load();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
 
 
   const verdictFor = (m: Member): DeletionVerdict =>
