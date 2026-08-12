@@ -438,6 +438,7 @@ export type Database = {
           description: string
           ecosystem_id: string
           id: string
+          image_path: string | null
           name: string
           points_price: number
           reserved: number
@@ -451,6 +452,7 @@ export type Database = {
           description?: string
           ecosystem_id: string
           id?: string
+          image_path?: string | null
           name: string
           points_price: number
           reserved?: number
@@ -464,6 +466,7 @@ export type Database = {
           description?: string
           ecosystem_id?: string
           id?: string
+          image_path?: string | null
           name?: string
           points_price?: number
           reserved?: number
@@ -492,6 +495,7 @@ export type Database = {
           note: string | null
           points_price: number
           reward_id: string
+          reward_image_path: string | null
           reward_name: string
           status: string
           tx_id: string | null
@@ -510,6 +514,7 @@ export type Database = {
           note?: string | null
           points_price: number
           reward_id: string
+          reward_image_path?: string | null
           reward_name: string
           status?: string
           tx_id?: string | null
@@ -528,6 +533,7 @@ export type Database = {
           note?: string | null
           points_price?: number
           reward_id?: string
+          reward_image_path?: string | null
           reward_name?: string
           status?: string
           tx_id?: string | null
@@ -1013,6 +1019,7 @@ export type Database = {
           note: string | null
           points_price: number
           reward_id: string
+          reward_image_path: string | null
           reward_name: string
           status: string
           tx_id: string | null
@@ -1033,6 +1040,7 @@ export type Database = {
           available: number
           description: string
           id: string
+          image_path: string
           name: string
           points_price: number
         }[]

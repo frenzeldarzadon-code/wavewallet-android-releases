@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Archive, Check, Gift, Pencil, Plus, X } from "lucide-react";
+import { Archive, Check, Gift, ImagePlus, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +16,12 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
+import { RewardImage } from "@/components/reward-image";
+import {
+  deleteRewardImage,
+  uploadRewardImage,
+  validateRewardImage,
+} from "@/lib/reward-images";
 import { useSession } from "@/lib/session";
 import { shortDateTime } from "@/lib/wavewallet";
 import {
@@ -52,7 +58,15 @@ export const Route = createFileRoute("/admin/rewards")({
   component: AdminRewards,
 });
 
-const emptyForm = { id: "", name: "", description: "", pointsPrice: "", stock: "", active: true };
+const emptyForm = {
+  id: "",
+  name: "",
+  description: "",
+  pointsPrice: "",
+  stock: "",
+  active: true,
+  imagePath: null as string | null,
+};
 
 function AdminRewards() {
   const { ecosystemDbId } = useSession("admin");
@@ -64,6 +78,33 @@ function AdminRewards() {
   const [busy, setBusy] = useState(false);
   const [verify, setVerify] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageCleared, setImageCleared] = useState(false);
+
+  const resetImageState = () => {
+    setImageFile(null);
+    setImagePreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setImageCleared(false);
+  };
+
+  const pickImage = (file: File | null) => {
+    if (!file) return;
+    const problem = validateRewardImage(file);
+    if (problem) {
+      toast.error(problem);
+      return;
+    }
+    setImagePreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
+    setImageFile(file);
+    setImageCleared(false);
+  };
 
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
@@ -89,6 +130,7 @@ function AdminRewards() {
   if (!ecosystemDbId) return null;
 
   const openNew = () => {
+    resetImageState();
     setForm(emptyForm);
     setOpen(true);
   };
@@ -101,7 +143,9 @@ function AdminRewards() {
       pointsPrice: String(r.points_price),
       stock: String(r.stock),
       active: r.active,
+      imagePath: r.image_path,
     });
+    resetImageState();
     setOpen(true);
   };
 
@@ -117,6 +161,12 @@ function AdminRewards() {
     }
     setBusy(true);
     try {
+      let imagePath: string | null | undefined = undefined;
+      if (imageFile) {
+        imagePath = await uploadRewardImage(ecosystemDbId, imageFile);
+      } else if (imageCleared) {
+        imagePath = null;
+      }
       await saveRewardProduct({
         ...(form.id ? { id: form.id } : {}),
         ecosystemId: ecosystemDbId,
@@ -125,8 +175,14 @@ function AdminRewards() {
         pointsPrice: pts,
         stock: Number(form.stock) || 0,
         active: form.active,
+        ...(imagePath === undefined ? {} : { imagePath }),
       });
+      // Avoid orphaned files once the new path is safely persisted.
+      if (imagePath !== undefined && form.imagePath && form.imagePath !== imagePath) {
+        await deleteRewardImage(form.imagePath);
+      }
       toast.success(form.id ? "Reward updated" : "Reward created");
+      resetImageState();
       setOpen(false);
       await load();
     } catch (e) {
@@ -170,7 +226,7 @@ function AdminRewards() {
       <TabsContent value="catalog">
         <PageSection
           title="Physical rewards"
-          description="Name, description, points price and stock only — no images."
+          description="Name, description, points price, stock and an optional image."
           action={
             <Button size="sm" onClick={openNew}>
               <Plus className="size-4" /> New reward
@@ -186,6 +242,7 @@ function AdminRewards() {
               {rewards.map((r) => (
                 <Card key={r.id} className="shadow-[var(--shadow-card)]">
                   <CardContent className="space-y-3">
+                    <RewardImage path={r.image_path} alt={r.name} />
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="font-medium">{r.name}</p>
@@ -297,6 +354,9 @@ function AdminRewards() {
               {shown.map((r) => (
                 <Card key={r.id} className="shadow-[var(--shadow-card)]">
                   <CardContent className="space-y-3">
+                    {r.reward_image_path ? (
+                      <RewardImage path={r.reward_image_path} alt={r.reward_name} />
+                    ) : null}
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="truncate font-medium">{r.reward_name}</p>
@@ -384,6 +444,58 @@ function AdminRewards() {
                   placeholder="0"
                 />
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Image (optional)</Label>
+              {imagePreview ? (
+                <div className="relative flex aspect-[16/10] w-full items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
+                  <img src={imagePreview} alt="Selected reward" className="size-full object-cover" />
+                </div>
+              ) : (
+                <RewardImage
+                  path={imageCleared ? null : form.imagePath}
+                  alt={form.name || "Reward"}
+                />
+              )}
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => document.getElementById("rimage")?.click()}
+                >
+                  <ImagePlus className="size-4" />
+                  {imagePreview || (form.imagePath && !imageCleared) ? "Replace" : "Upload"}
+                </Button>
+                {imagePreview || (form.imagePath && !imageCleared) ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="flex-1 text-destructive"
+                    onClick={() => {
+                      resetImageState();
+                      setImageCleared(true);
+                    }}
+                  >
+                    <Trash2 className="size-4" /> Remove
+                  </Button>
+                ) : null}
+              </div>
+              <input
+                id="rimage"
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="hidden"
+                onChange={(e) => {
+                  pickImage(e.target.files?.[0] ?? null);
+                  e.target.value = "";
+                }}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                JPG, PNG, WEBP or GIF · up to 3 MB. Rewards work fine without an image.
+              </p>
             </div>
             <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
               <Label htmlFor="ractive" className="text-sm font-normal">
