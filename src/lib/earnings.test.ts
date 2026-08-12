@@ -127,8 +127,8 @@ describe("filters", () => {
 describe("admin & platform earning types", () => {
   it("counts credit generation and subscription revenue separately, never transfers", () => {
     const rows = [
-      row({ earning_type: "credit_generation", earning_amount: 1000, rate_percent: null }),
-      row({ earning_type: "platform_subscription", earning_amount: 499, rate_percent: null }),
+      row({ earning_type: "credit_generation", earning_amount: 1000 }),
+      row({ earning_type: "platform_subscription", earning_amount: 499 }),
       row({ earning_type: "sale_cashback", earning_amount: 10 }),
     ];
     const t = summariseEarnings(rows);
