@@ -682,11 +682,13 @@ export function creditSourceLabel(lot: Pick<CreditLot, "source_kind" | "source_n
   }
 }
 
-/** One credit-back component of a voucher sale, tied to the funding lot. */
+/** One earning component of a voucher sale: seller cashback or upline commission. */
 export interface SaleCommissionRow {
   id: string;
   sale_id: string;
   recipient_id: string;
+  /** 'sale_cashback' (you supplied the credits) or 'upline' (your downline sold). */
+  kind: string;
   credits_consumed: number;
   commission_percent: number;
   commission_amount: number;
@@ -698,17 +700,18 @@ export interface SaleCommissionRow {
   tx_id: string | null;
 }
 
-/** Credit-back rows earned by a reseller/subreseller, newest first. */
+/** Sale earnings for a reseller/subreseller, newest first. */
 export async function fetchMyCreditBack(recipientId: string, limit = 50): Promise<SaleCommissionRow[]> {
   const { data, error } = await supabase
     .from("sale_commissions")
     .select(
-      "id, sale_id, recipient_id, credits_consumed, commission_percent, commission_amount, reversed_at, created_at, voucher_sales(product_name, quantity, tx_id, buyer_id)",
+      "id, sale_id, recipient_id, kind, credits_consumed, commission_percent, commission_amount, reversed_at, created_at, voucher_sales(product_name, quantity, tx_id, buyer_id)",
     )
     .eq("recipient_id", recipientId)
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error) throw error;
+
   const rows = (data ?? []) as unknown as Array<
     Record<string, unknown> & {
       voucher_sales: { product_name: string; quantity: number | null; tx_id: string; buyer_id: string } | null;
