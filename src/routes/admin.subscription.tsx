@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageSection, StatusBadge, subscriptionTone } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
+import { facebookLabel, isFacebookUrl } from "@/lib/facebook";
 import { peso, shortDate, statusLabel } from "@/lib/wavewallet";
 import {
   fetchPlatformSettings,
