@@ -27,7 +27,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "Run your hotspot shop: credit wallets, voucher inventory, reseller network, points and rewards — all in one mobile-first console.",
+          "WaveWallet is a multi-tenant credit wallet, voucher marketplace and rewards platform for Omada hotspot operators, resellers and their customers.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
