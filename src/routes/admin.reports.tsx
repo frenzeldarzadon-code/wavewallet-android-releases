@@ -238,20 +238,61 @@ function AdminReports() {
         </div>
       </PageSection>
 
-      <PageSection title="Credit & commission activity">
+      <PageSection
+        title="Credit activity & earnings"
+        description="Only newly generated credits are shop earnings. Moving existing credits between wallets is face value and pays nothing."
+      >
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard label="Credits issued" value={peso(creditTotals.issued)} tone="positive" />
-          <StatCard label="Credits spent" value={peso(creditTotals.spent)} tone="negative" />
           <StatCard
-            label="Base released to resellers"
-            value={peso(creditTotals.commissionBase)}
-            hint={`${creditTotals.commissionCount} qualifying releases`}
+            label="Credits generated"
+            value={peso(creditFlow.generated)}
+            tone="positive"
+            hint={`${creditFlow.generatedCount} issuances · shop earnings`}
           />
           <StatCard
-            label="Commission granted"
-            value={peso(creditTotals.commissionBonus)}
+            label="Existing credits transferred"
+            value={peso(creditFlow.transferred)}
+            hint={`${creditFlow.transferCount} transfers · no earnings`}
+          />
+          <StatCard
+            label="Credits spent on vouchers"
+            value={peso(creditFlow.spentOnVouchers)}
+            tone="negative"
+          />
+          <StatCard
+            label="Credits revoked"
+            value={peso(creditFlow.revoked)}
+            tone="negative"
+            hint="Admin corrections"
+          />
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatCard
+            label="Seller cashback paid"
+            value={peso(commissionSplit.cashback)}
+            tone="negative"
+          />
+          <StatCard
+            label="Upline commission paid"
+            value={peso(commissionSplit.upline)}
+            tone="negative"
+          />
+          <StatCard
+            label="Discounts given"
+            value={peso(salesTotals.resellerMargin)}
+            tone="negative"
+            hint="Wholesale benefit to channel"
+          />
+          <StatCard
+            label="Net shop earnings"
+            value={peso(
+              creditFlow.generated -
+                creditFlow.revoked -
+                commissionSplit.cashback -
+                commissionSplit.upline,
+            )}
             tone="brand"
-            hint="Snapshot rate per transfer"
+            hint="Credits generated less cashback and upline"
           />
         </div>
       </PageSection>
