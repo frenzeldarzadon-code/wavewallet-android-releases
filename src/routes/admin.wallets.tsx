@@ -319,6 +319,10 @@ function AdminWallets() {
                       >
                         Points
                       </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setEditingMember(m)}>
+                        <UserCog className="size-4" /> Details
+                      </Button>
+
                     </div>
                   </div>
 
