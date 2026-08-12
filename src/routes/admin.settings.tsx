@@ -148,7 +148,62 @@ function AdminSettings() {
         </Card>
       </PageSection>
 
+      <PageSection
+        title="Reseller commission"
+        description="Bonus credits your resellers receive whenever you or the platform owner release credits to them."
+      >
+        <Card className="shadow-[var(--shadow-card)]">
+          <CardContent className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="commission">Default commission (%)</Label>
+              <Input
+                id="commission"
+                type="number"
+                min={0}
+                max={100}
+                value={commission}
+                onChange={(e) => setCommission(e.target.value)}
+              />
+            </div>
+            <div className="flex items-end gap-2">
+              <Button
+                variant="outline"
+                disabled={savingCommission}
+                onClick={async () => {
+                  if (!ecosystemDbId) return;
+                  const v = Number(commission);
+                  if (Number.isNaN(v) || v < 0 || v > 100) {
+                    toast.error("Commission must be between 0% and 100%.");
+                    return;
+                  }
+                  setSavingCommission(true);
+                  try {
+                    await setEcosystemCommission(ecosystemDbId, v);
+                    toast.success(
+                      `Default reseller commission set to ${v}% — future credit releases only.`,
+                    );
+                  } catch (e) {
+                    toast.error((e as Error).message);
+                  } finally {
+                    setSavingCommission(false);
+                  }
+                }}
+              >
+                {savingCommission ? "Saving…" : "Save commission"}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground sm:col-span-2">
+              Release ₱1,000 to a reseller on {Number(commission) || 0}% and they receive{" "}
+              ₱{(1000 * (1 + (Number(commission) || 0) / 100)).toLocaleString()} while your wallet is
+              debited ₱1,000 only. A reseller with a personal rate set in Customers overrides this
+              default. Past transactions keep the rate they were made with.
+            </p>
+          </CardContent>
+        </Card>
+      </PageSection>
+
       <PageSection title="Points rule" description="Points are earned on credit-funded voucher purchases only — never on credit loads or transfers.">
+
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
