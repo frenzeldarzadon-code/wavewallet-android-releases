@@ -1,0 +1,31 @@
+import { Outlet, createFileRoute } from "@tanstack/react-router";
+import { Gift, History, Send, ShoppingBag, Wallet } from "lucide-react";
+import { AppShell, type NavItem } from "@/components/app-shell";
+import { useSession } from "@/lib/session";
+
+export const Route = createFileRoute("/app")({
+  component: CustomerLayout,
+});
+
+const nav: NavItem[] = [
+  { to: "/app", label: "Wallet", icon: Wallet },
+  { to: "/app/shop", label: "Voucher shop", icon: ShoppingBag },
+  { to: "/app/rewards", label: "Rewards", icon: Gift },
+  { to: "/app/transfer", label: "Transfer", icon: Send },
+  { to: "/app/history", label: "History", icon: History },
+];
+
+function CustomerLayout() {
+  const session = useSession("customer");
+  if (!session.account || !session.ecosystem) return null;
+  return (
+    <AppShell
+      session={session}
+      nav={nav}
+      title={session.ecosystem.name}
+      subtitle={`Hi, ${session.account.name.split(" ")[0]}`}
+    >
+      <Outlet />
+    </AppShell>
+  );
+}

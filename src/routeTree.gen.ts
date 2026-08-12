@@ -10,33 +10,369 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as ResellerRouteImport } from './routes/reseller'
+import { Route as SuperRouteImport } from './routes/super'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
+import { Route as AdminProductsRouteImport } from './routes/admin.products'
+import { Route as AdminReportsRouteImport } from './routes/admin.reports'
+import { Route as AdminResellersRouteImport } from './routes/admin.resellers'
+import { Route as AdminRewardsRouteImport } from './routes/admin.rewards'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminSubscriptionRouteImport } from './routes/admin.subscription'
+import { Route as AdminVouchersRouteImport } from './routes/admin.vouchers'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppHistoryRouteImport } from './routes/app.history'
+import { Route as AppRewardsRouteImport } from './routes/app.rewards'
+import { Route as AppShopRouteImport } from './routes/app.shop'
+import { Route as AppTransferRouteImport } from './routes/app.transfer'
+import { Route as ResellerIndexRouteImport } from './routes/reseller.index'
+import { Route as ResellerCustomersRouteImport } from './routes/reseller.customers'
+import { Route as ResellerRedemptionsRouteImport } from './routes/reseller.redemptions'
+import { Route as ResellerReportsRouteImport } from './routes/reseller.reports'
+import { Route as ResellerShopRouteImport } from './routes/reseller.shop'
+import { Route as SuperIndexRouteImport } from './routes/super.index'
+import { Route as SuperAdminsRouteImport } from './routes/super.admins'
+import { Route as SuperAuditRouteImport } from './routes/super.audit'
+import { Route as SuperSettingsRouteImport } from './routes/super.settings'
+import { Route as SuperSubscriptionsRouteImport } from './routes/super.subscriptions'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResellerRoute = ResellerRouteImport.update({
+  id: '/reseller',
+  path: '/reseller',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuperRoute = SuperRouteImport.update({
+  id: '/super',
+  path: '/super',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCustomersRoute = AdminCustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProductsRoute = AdminProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminReportsRoute = AdminReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminResellersRoute = AdminResellersRouteImport.update({
+  id: '/resellers',
+  path: '/resellers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRewardsRoute = AdminRewardsRouteImport.update({
+  id: '/rewards',
+  path: '/rewards',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSubscriptionRoute = AdminSubscriptionRouteImport.update({
+  id: '/subscription',
+  path: '/subscription',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminVouchersRoute = AdminVouchersRouteImport.update({
+  id: '/vouchers',
+  path: '/vouchers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHistoryRoute = AppHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRewardsRoute = AppRewardsRouteImport.update({
+  id: '/rewards',
+  path: '/rewards',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppShopRoute = AppShopRouteImport.update({
+  id: '/shop',
+  path: '/shop',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTransferRoute = AppTransferRouteImport.update({
+  id: '/transfer',
+  path: '/transfer',
+  getParentRoute: () => AppRoute,
+} as any)
+const ResellerIndexRoute = ResellerIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ResellerRoute,
+} as any)
+const ResellerCustomersRoute = ResellerCustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
+  getParentRoute: () => ResellerRoute,
+} as any)
+const ResellerRedemptionsRoute = ResellerRedemptionsRouteImport.update({
+  id: '/redemptions',
+  path: '/redemptions',
+  getParentRoute: () => ResellerRoute,
+} as any)
+const ResellerReportsRoute = ResellerReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => ResellerRoute,
+} as any)
+const ResellerShopRoute = ResellerShopRouteImport.update({
+  id: '/shop',
+  path: '/shop',
+  getParentRoute: () => ResellerRoute,
+} as any)
+const SuperIndexRoute = SuperIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SuperRoute,
+} as any)
+const SuperAdminsRoute = SuperAdminsRouteImport.update({
+  id: '/admins',
+  path: '/admins',
+  getParentRoute: () => SuperRoute,
+} as any)
+const SuperAuditRoute = SuperAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => SuperRoute,
+} as any)
+const SuperSettingsRoute = SuperSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => SuperRoute,
+} as any)
+const SuperSubscriptionsRoute = SuperSubscriptionsRouteImport.update({
+  id: '/subscriptions',
+  path: '/subscriptions',
+  getParentRoute: () => SuperRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/app': typeof AppRouteWithChildren
+  '/reseller': typeof ResellerRouteWithChildren
+  '/super': typeof SuperRouteWithChildren
+  '/admin/customers': typeof AdminCustomersRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/resellers': typeof AdminResellersRoute
+  '/admin/rewards': typeof AdminRewardsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/subscription': typeof AdminSubscriptionRoute
+  '/admin/vouchers': typeof AdminVouchersRoute
+  '/app/history': typeof AppHistoryRoute
+  '/app/rewards': typeof AppRewardsRoute
+  '/app/shop': typeof AppShopRoute
+  '/app/transfer': typeof AppTransferRoute
+  '/reseller/customers': typeof ResellerCustomersRoute
+  '/reseller/redemptions': typeof ResellerRedemptionsRoute
+  '/reseller/reports': typeof ResellerReportsRoute
+  '/reseller/shop': typeof ResellerShopRoute
+  '/super/admins': typeof SuperAdminsRoute
+  '/super/audit': typeof SuperAuditRoute
+  '/super/settings': typeof SuperSettingsRoute
+  '/super/subscriptions': typeof SuperSubscriptionsRoute
+  '/admin/': typeof AdminIndexRoute
+  '/app/': typeof AppIndexRoute
+  '/reseller/': typeof ResellerIndexRoute
+  '/super/': typeof SuperIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin/customers': typeof AdminCustomersRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/resellers': typeof AdminResellersRoute
+  '/admin/rewards': typeof AdminRewardsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/subscription': typeof AdminSubscriptionRoute
+  '/admin/vouchers': typeof AdminVouchersRoute
+  '/app/history': typeof AppHistoryRoute
+  '/app/rewards': typeof AppRewardsRoute
+  '/app/shop': typeof AppShopRoute
+  '/app/transfer': typeof AppTransferRoute
+  '/reseller/customers': typeof ResellerCustomersRoute
+  '/reseller/redemptions': typeof ResellerRedemptionsRoute
+  '/reseller/reports': typeof ResellerReportsRoute
+  '/reseller/shop': typeof ResellerShopRoute
+  '/super/admins': typeof SuperAdminsRoute
+  '/super/audit': typeof SuperAuditRoute
+  '/super/settings': typeof SuperSettingsRoute
+  '/super/subscriptions': typeof SuperSubscriptionsRoute
+  '/admin': typeof AdminIndexRoute
+  '/app': typeof AppIndexRoute
+  '/reseller': typeof ResellerIndexRoute
+  '/super': typeof SuperIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/app': typeof AppRouteWithChildren
+  '/reseller': typeof ResellerRouteWithChildren
+  '/super': typeof SuperRouteWithChildren
+  '/admin/customers': typeof AdminCustomersRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/resellers': typeof AdminResellersRoute
+  '/admin/rewards': typeof AdminRewardsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/subscription': typeof AdminSubscriptionRoute
+  '/admin/vouchers': typeof AdminVouchersRoute
+  '/app/history': typeof AppHistoryRoute
+  '/app/rewards': typeof AppRewardsRoute
+  '/app/shop': typeof AppShopRoute
+  '/app/transfer': typeof AppTransferRoute
+  '/reseller/customers': typeof ResellerCustomersRoute
+  '/reseller/redemptions': typeof ResellerRedemptionsRoute
+  '/reseller/reports': typeof ResellerReportsRoute
+  '/reseller/shop': typeof ResellerShopRoute
+  '/super/admins': typeof SuperAdminsRoute
+  '/super/audit': typeof SuperAuditRoute
+  '/super/settings': typeof SuperSettingsRoute
+  '/super/subscriptions': typeof SuperSubscriptionsRoute
+  '/admin/': typeof AdminIndexRoute
+  '/app/': typeof AppIndexRoute
+  '/reseller/': typeof ResellerIndexRoute
+  '/super/': typeof SuperIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/app'
+    | '/reseller'
+    | '/super'
+    | '/admin/customers'
+    | '/admin/products'
+    | '/admin/reports'
+    | '/admin/resellers'
+    | '/admin/rewards'
+    | '/admin/settings'
+    | '/admin/subscription'
+    | '/admin/vouchers'
+    | '/app/history'
+    | '/app/rewards'
+    | '/app/shop'
+    | '/app/transfer'
+    | '/reseller/customers'
+    | '/reseller/redemptions'
+    | '/reseller/reports'
+    | '/reseller/shop'
+    | '/super/admins'
+    | '/super/audit'
+    | '/super/settings'
+    | '/super/subscriptions'
+    | '/admin/'
+    | '/app/'
+    | '/reseller/'
+    | '/super/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/admin/customers'
+    | '/admin/products'
+    | '/admin/reports'
+    | '/admin/resellers'
+    | '/admin/rewards'
+    | '/admin/settings'
+    | '/admin/subscription'
+    | '/admin/vouchers'
+    | '/app/history'
+    | '/app/rewards'
+    | '/app/shop'
+    | '/app/transfer'
+    | '/reseller/customers'
+    | '/reseller/redemptions'
+    | '/reseller/reports'
+    | '/reseller/shop'
+    | '/super/admins'
+    | '/super/audit'
+    | '/super/settings'
+    | '/super/subscriptions'
+    | '/admin'
+    | '/app'
+    | '/reseller'
+    | '/super'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/app'
+    | '/reseller'
+    | '/super'
+    | '/admin/customers'
+    | '/admin/products'
+    | '/admin/reports'
+    | '/admin/resellers'
+    | '/admin/rewards'
+    | '/admin/settings'
+    | '/admin/subscription'
+    | '/admin/vouchers'
+    | '/app/history'
+    | '/app/rewards'
+    | '/app/shop'
+    | '/app/transfer'
+    | '/reseller/customers'
+    | '/reseller/redemptions'
+    | '/reseller/reports'
+    | '/reseller/shop'
+    | '/super/admins'
+    | '/super/audit'
+    | '/super/settings'
+    | '/super/subscriptions'
+    | '/admin/'
+    | '/app/'
+    | '/reseller/'
+    | '/super/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  AppRoute: typeof AppRouteWithChildren
+  ResellerRoute: typeof ResellerRouteWithChildren
+  SuperRoute: typeof SuperRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +384,293 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reseller': {
+      id: '/reseller'
+      path: '/reseller'
+      fullPath: '/reseller'
+      preLoaderRoute: typeof ResellerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/super': {
+      id: '/super'
+      path: '/super'
+      fullPath: '/super'
+      preLoaderRoute: typeof SuperRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/customers': {
+      id: '/admin/customers'
+      path: '/customers'
+      fullPath: '/admin/customers'
+      preLoaderRoute: typeof AdminCustomersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/products': {
+      id: '/admin/products'
+      path: '/products'
+      fullPath: '/admin/products'
+      preLoaderRoute: typeof AdminProductsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/reports': {
+      id: '/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AdminReportsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/resellers': {
+      id: '/admin/resellers'
+      path: '/resellers'
+      fullPath: '/admin/resellers'
+      preLoaderRoute: typeof AdminResellersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/rewards': {
+      id: '/admin/rewards'
+      path: '/rewards'
+      fullPath: '/admin/rewards'
+      preLoaderRoute: typeof AdminRewardsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/subscription': {
+      id: '/admin/subscription'
+      path: '/subscription'
+      fullPath: '/admin/subscription'
+      preLoaderRoute: typeof AdminSubscriptionRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/vouchers': {
+      id: '/admin/vouchers'
+      path: '/vouchers'
+      fullPath: '/admin/vouchers'
+      preLoaderRoute: typeof AdminVouchersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/history': {
+      id: '/app/history'
+      path: '/history'
+      fullPath: '/app/history'
+      preLoaderRoute: typeof AppHistoryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/rewards': {
+      id: '/app/rewards'
+      path: '/rewards'
+      fullPath: '/app/rewards'
+      preLoaderRoute: typeof AppRewardsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/shop': {
+      id: '/app/shop'
+      path: '/shop'
+      fullPath: '/app/shop'
+      preLoaderRoute: typeof AppShopRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/transfer': {
+      id: '/app/transfer'
+      path: '/transfer'
+      fullPath: '/app/transfer'
+      preLoaderRoute: typeof AppTransferRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/reseller/': {
+      id: '/reseller/'
+      path: '/'
+      fullPath: '/reseller/'
+      preLoaderRoute: typeof ResellerIndexRouteImport
+      parentRoute: typeof ResellerRoute
+    }
+    '/reseller/customers': {
+      id: '/reseller/customers'
+      path: '/customers'
+      fullPath: '/reseller/customers'
+      preLoaderRoute: typeof ResellerCustomersRouteImport
+      parentRoute: typeof ResellerRoute
+    }
+    '/reseller/redemptions': {
+      id: '/reseller/redemptions'
+      path: '/redemptions'
+      fullPath: '/reseller/redemptions'
+      preLoaderRoute: typeof ResellerRedemptionsRouteImport
+      parentRoute: typeof ResellerRoute
+    }
+    '/reseller/reports': {
+      id: '/reseller/reports'
+      path: '/reports'
+      fullPath: '/reseller/reports'
+      preLoaderRoute: typeof ResellerReportsRouteImport
+      parentRoute: typeof ResellerRoute
+    }
+    '/reseller/shop': {
+      id: '/reseller/shop'
+      path: '/shop'
+      fullPath: '/reseller/shop'
+      preLoaderRoute: typeof ResellerShopRouteImport
+      parentRoute: typeof ResellerRoute
+    }
+    '/super/': {
+      id: '/super/'
+      path: '/'
+      fullPath: '/super/'
+      preLoaderRoute: typeof SuperIndexRouteImport
+      parentRoute: typeof SuperRoute
+    }
+    '/super/admins': {
+      id: '/super/admins'
+      path: '/admins'
+      fullPath: '/super/admins'
+      preLoaderRoute: typeof SuperAdminsRouteImport
+      parentRoute: typeof SuperRoute
+    }
+    '/super/audit': {
+      id: '/super/audit'
+      path: '/audit'
+      fullPath: '/super/audit'
+      preLoaderRoute: typeof SuperAuditRouteImport
+      parentRoute: typeof SuperRoute
+    }
+    '/super/settings': {
+      id: '/super/settings'
+      path: '/settings'
+      fullPath: '/super/settings'
+      preLoaderRoute: typeof SuperSettingsRouteImport
+      parentRoute: typeof SuperRoute
+    }
+    '/super/subscriptions': {
+      id: '/super/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/super/subscriptions'
+      preLoaderRoute: typeof SuperSubscriptionsRouteImport
+      parentRoute: typeof SuperRoute
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminCustomersRoute: typeof AdminCustomersRoute
+  AdminProductsRoute: typeof AdminProductsRoute
+  AdminReportsRoute: typeof AdminReportsRoute
+  AdminResellersRoute: typeof AdminResellersRoute
+  AdminRewardsRoute: typeof AdminRewardsRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminSubscriptionRoute: typeof AdminSubscriptionRoute
+  AdminVouchersRoute: typeof AdminVouchersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminCustomersRoute: AdminCustomersRoute,
+  AdminProductsRoute: AdminProductsRoute,
+  AdminReportsRoute: AdminReportsRoute,
+  AdminResellersRoute: AdminResellersRoute,
+  AdminRewardsRoute: AdminRewardsRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
+  AdminSubscriptionRoute: AdminSubscriptionRoute,
+  AdminVouchersRoute: AdminVouchersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface AppRouteChildren {
+  AppHistoryRoute: typeof AppHistoryRoute
+  AppRewardsRoute: typeof AppRewardsRoute
+  AppShopRoute: typeof AppShopRoute
+  AppTransferRoute: typeof AppTransferRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppHistoryRoute: AppHistoryRoute,
+  AppRewardsRoute: AppRewardsRoute,
+  AppShopRoute: AppShopRoute,
+  AppTransferRoute: AppTransferRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
+interface ResellerRouteChildren {
+  ResellerCustomersRoute: typeof ResellerCustomersRoute
+  ResellerRedemptionsRoute: typeof ResellerRedemptionsRoute
+  ResellerReportsRoute: typeof ResellerReportsRoute
+  ResellerShopRoute: typeof ResellerShopRoute
+  ResellerIndexRoute: typeof ResellerIndexRoute
+}
+
+const ResellerRouteChildren: ResellerRouteChildren = {
+  ResellerCustomersRoute: ResellerCustomersRoute,
+  ResellerRedemptionsRoute: ResellerRedemptionsRoute,
+  ResellerReportsRoute: ResellerReportsRoute,
+  ResellerShopRoute: ResellerShopRoute,
+  ResellerIndexRoute: ResellerIndexRoute,
+}
+
+const ResellerRouteWithChildren = ResellerRoute._addFileChildren(
+  ResellerRouteChildren,
+)
+
+interface SuperRouteChildren {
+  SuperAdminsRoute: typeof SuperAdminsRoute
+  SuperAuditRoute: typeof SuperAuditRoute
+  SuperSettingsRoute: typeof SuperSettingsRoute
+  SuperSubscriptionsRoute: typeof SuperSubscriptionsRoute
+  SuperIndexRoute: typeof SuperIndexRoute
+}
+
+const SuperRouteChildren: SuperRouteChildren = {
+  SuperAdminsRoute: SuperAdminsRoute,
+  SuperAuditRoute: SuperAuditRoute,
+  SuperSettingsRoute: SuperSettingsRoute,
+  SuperSubscriptionsRoute: SuperSubscriptionsRoute,
+  SuperIndexRoute: SuperIndexRoute,
+}
+
+const SuperRouteWithChildren = SuperRoute._addFileChildren(SuperRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
+  AppRoute: AppRouteWithChildren,
+  ResellerRoute: ResellerRouteWithChildren,
+  SuperRoute: SuperRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
