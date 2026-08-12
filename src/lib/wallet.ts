@@ -6,6 +6,7 @@
  * balances are always read back from the ledger-maintained account rows.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { peso } from "@/lib/wavewallet";
 
 export interface CreditEntry {
   id: string;
@@ -390,4 +391,25 @@ export async function parseCodeFile(file: File): Promise<string[]> {
   }
   const text = await file.text();
   return parsePastedCodes(text);
+}
+
+/* ------------------------------------------------------------------ */
+/* Commission display helpers                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Human-readable breakdown of a commission-bearing credit entry, e.g.
+ * "Credit received: 1,000 + 200 commission = 1,200".
+ * Values come from the snapshot stored on the ledger row, so historical
+ * entries keep the rate that was in force when they were created.
+ */
+export function commissionBreakdown(e: CreditEntry): string | null {
+  const bonus = Number(e.commission_amount ?? 0);
+  if (bonus <= 0) return null;
+  const base = Number(e.base_amount ?? e.amount);
+  const pct = Number(e.commission_percent ?? 0);
+  if (e.direction === "debit") {
+    return `Released ${peso(base)} · ${pct}% commission granted (${peso(bonus)}) — you were debited ${peso(base)} only`;
+  }
+  return `${peso(base)} + ${peso(bonus)} commission (${pct}%) = ${peso(base + bonus)}`;
 }
