@@ -264,7 +264,7 @@ function AdminSettings() {
         </p>
       </div>
 
-          <RetentionPolicyCard />
-</>
+      <RetentionPolicyCard />
+    </>
   );
 }

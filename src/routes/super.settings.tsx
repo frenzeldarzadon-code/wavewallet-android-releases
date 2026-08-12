@@ -210,7 +210,8 @@ function SuperSettings() {
       <Button disabled={saving} onClick={() => void save()}>
         {saving ? "Saving…" : "Save changes"}
       </Button>
-          <RetentionPolicyCard canRun />
-</>
+
+      <RetentionPolicyCard canRun />
+    </>
   );
 }
