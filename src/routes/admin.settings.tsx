@@ -55,6 +55,27 @@ function AdminSettings() {
     subresellerDiscount: "0",
   });
   const [savingRates, setSavingRates] = useState(false);
+  // Own-shop Facebook support page — admins may edit their own ecosystem only.
+  const [fb, setFb] = useState({
+    url: ecosystem?.facebookPageUrl ?? "",
+    name: ecosystem?.facebookPageName ?? "",
+  });
+  const [savingFb, setSavingFb] = useState(false);
+  const fbProblem = validateFacebookUrl(fb.url);
+
+  const saveFacebook = async () => {
+    if (!ecosystemDbId) return;
+    setSavingFb(true);
+    try {
+      await setEcosystemFacebook(ecosystemDbId, fb.url, fb.name);
+      toast.success(fb.url.trim() ? "Facebook page saved." : "Facebook link removed.");
+      await reload?.();
+    } catch (e) {
+      toast.error("Could not save Facebook page", { description: (e as Error).message });
+    } finally {
+      setSavingFb(false);
+    }
+  };
   useEffect(() => {
     if (!ecosystemDbId) return;
     void fetchPointsRule(ecosystemDbId).then((v) => setRule(String(v)));
