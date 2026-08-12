@@ -175,3 +175,18 @@ describe("dashboard period rollups", () => {
     expect(t.month).toBeGreaterThanOrEqual(t.today);
   });
 });
+
+describe("benefit split", () => {
+  it("keeps wholesale discounts out of cash earnings but inside total benefit", () => {
+    const totals = summariseEarnings([
+      row({ id: "a", earning_type: "sale_cashback", earning_amount: 10 }),
+      row({ id: "b", earning_type: "wholesale_discount", earning_amount: 25 }),
+      row({ id: "c", earning_type: "upline_commission", earning_amount: 5 }),
+      row({ id: "d", earning_type: "wholesale_discount", earning_amount: 40, status: "reversed" }),
+    ]);
+    expect(totals.cash).toBe(15);
+    expect(totals.discountSaved).toBe(25);
+    expect(totals.cash + totals.discountSaved).toBe(40);
+    expect(totals.reversed).toBe(40);
+  });
+});
