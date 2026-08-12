@@ -12,7 +12,7 @@ import { platformSettings } from "@/lib/wavewallet";
 
 export const Route = createFileRoute("/invite")({
   validateSearch: (search: Record<string, unknown>) => ({
-    email: typeof search.email === "string" ? search.email : "",
+    email: typeof search["email"] === "string" ? (search["email"] as string) : "",
   }),
   head: () => ({
     meta: [
@@ -49,15 +49,31 @@ function InvitePage() {
 
   const submit = async () => {
     if (busy) return;
-    if (!form.name.trim()) return toast.error("Enter your full name.");
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email.trim()))
-      return toast.error("Enter the email address your invitation was sent to.");
-    if (form.password.length < 8) return toast.error("Use a password with at least 8 characters.");
-    if (form.password !== form.confirm) return toast.error("Passwords do not match.");
+    if (!form.name.trim()) {
+      toast.error("Enter your full name.");
+      return;
+    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email.trim())) {
+      toast.error("Enter the email address your invitation was sent to.");
+      return;
+    }
+    if (form.password.length < 8) {
+      toast.error("Use a password with at least 8 characters.");
+      return;
+    }
+    if (form.password !== form.confirm) {
+      toast.error("Passwords do not match.");
+      return;
+    }
 
     setBusy(true);
     try {
-      const { needsEmailConfirmation } = await signUpInvitedOperator(form);
+      const { needsEmailConfirmation } = await signUpInvitedOperator({
+        fullName: form.name,
+        email: form.email,
+        phone: form.phone,
+        password: form.password,
+      });
       if (needsEmailConfirmation) setSent(true);
       else {
         toast.success("Operator account created.");

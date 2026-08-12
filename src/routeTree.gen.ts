@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteImport } from './routes/app'
+import { Route as InviteRouteImport } from './routes/invite'
 import { Route as ResellerRouteImport } from './routes/reseller'
 import { Route as SuperRouteImport } from './routes/super'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -54,6 +55,11 @@ const AdminRoute = AdminRouteImport.update({
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteRoute = InviteRouteImport.update({
+  id: '/invite',
+  path: '/invite',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResellerRoute = ResellerRouteImport.update({
@@ -201,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
+  '/invite': typeof InviteRoute
   '/reseller': typeof ResellerRouteWithChildren
   '/super': typeof SuperRouteWithChildren
   '/admin/customers': typeof AdminCustomersRoute
@@ -232,6 +239,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/invite': typeof InviteRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/reports': typeof AdminReportsRoute
@@ -264,6 +272,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
+  '/invite': typeof InviteRoute
   '/reseller': typeof ResellerRouteWithChildren
   '/super': typeof SuperRouteWithChildren
   '/admin/customers': typeof AdminCustomersRoute
@@ -299,6 +308,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/app'
+    | '/invite'
     | '/reseller'
     | '/super'
     | '/admin/customers'
@@ -330,6 +340,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/invite'
     | '/admin/customers'
     | '/admin/products'
     | '/admin/reports'
@@ -361,6 +372,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/app'
+    | '/invite'
     | '/reseller'
     | '/super'
     | '/admin/customers'
@@ -395,6 +407,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   AppRoute: typeof AppRouteWithChildren
+  InviteRoute: typeof InviteRoute
   ResellerRoute: typeof ResellerRouteWithChildren
   SuperRoute: typeof SuperRouteWithChildren
   JoinSlugRoute: typeof JoinSlugRoute
@@ -421,6 +434,13 @@ declare module '@tanstack/react-router' {
       path: '/app'
       fullPath: '/app'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite': {
+      id: '/invite'
+      path: '/invite'
+      fullPath: '/invite'
+      preLoaderRoute: typeof InviteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reseller': {
@@ -710,6 +730,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AppRoute: AppRouteWithChildren,
+  InviteRoute: InviteRoute,
   ResellerRoute: ResellerRouteWithChildren,
   SuperRoute: SuperRouteWithChildren,
   JoinSlugRoute: JoinSlugRoute,
