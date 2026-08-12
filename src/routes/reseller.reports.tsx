@@ -93,14 +93,20 @@ function ResellerReports() {
     [credits],
   );
   const loadTotal = customerLoads.reduce((s, c) => s + c.amount, 0);
-  // Subresellers get no bonus on credit releases, but they do earn per-purchase
-  // credit-back on their customers' voucher purchases, just like resellers.
+  // Credit transfers no longer pay anything. Earnings come from voucher sales:
+  // cashback for whoever funded the credits, plus upline for a subreseller's
+  // parent reseller.
   const isSubreseller = account?.role === "subreseller";
   const creditBack = useMemo(
     () => commissionEntries.filter((c) => c.entry_kind === "sale_commission"),
     [commissionEntries],
   );
   const creditBackTotal = creditBack.reduce((s, c) => s + c.amount, 0);
+  const uplineEntries = useMemo(
+    () => commissionEntries.filter((c) => c.entry_kind === "upline_commission"),
+    [commissionEntries],
+  );
+  const uplineTotal = uplineEntries.reduce((s, c) => s + c.amount, 0);
 
 
   const exportCsv = () => {
@@ -143,8 +149,8 @@ function ResellerReports() {
         title={`My earnings${account?.role ? ` · ${roleLabel(account.role)}` : ""}`}
         description={
           isSubreseller
-            ? `${resolved.label}. Your earnings are the voucher discount captured at purchase time plus per-purchase credit-back from your customers' voucher purchases.`
-            : `${resolved.label}. Margins use the discount captured at sale time; commission and credit-back use the rate snapshotted on each transaction.`
+            ? `${resolved.label}. You earn your wholesale discount plus sales cashback when customers spend credits you funded. Credit transfers pay nothing.`
+            : `${resolved.label}. You earn your wholesale discount, sales cashback on credits you funded, and upline commission on your subresellers' sales. Every rate is snapshotted per transaction.`
         }
       >
 
@@ -163,28 +169,28 @@ function ResellerReports() {
       <PageSection>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="Gross value" value={peso(salesTotals.gross)} tone="brand" hint="At list price" />
-          <StatCard label="My margin" value={peso(salesTotals.resellerMargin)} tone="positive" />
+          <StatCard label="Wholesale margin" value={peso(salesTotals.resellerMargin)} tone="positive" hint="From your voucher discount" />
           <StatCard
             label="Vouchers bought"
             value={String(salesTotals.count)}
             hint={`${salesTotals.creditCount} credits · ${salesTotals.pointsCount} points`}
           />
           <StatCard
-            label="Credit-back earned"
+            label="Sales cashback"
             value={peso(creditBackTotal)}
             tone="positive"
-            hint={`${creditBack.length} customer purchases`}
+            hint={`${creditBack.length} funded purchases`}
           />
         </div>
         <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
           {isSubreseller ? (
-            <StatCard label="Release bonus" value="—" hint="Subresellers earn discount only" />
+            <StatCard label="Upline commission" value="—" hint="Only resellers earn upline" />
           ) : (
             <StatCard
-              label="Release bonus"
-              value={peso(creditTotals.commissionBonus - creditBackTotal)}
+              label="Upline commission"
+              value={peso(uplineTotal)}
               tone="positive"
-              hint={`${creditTotals.commissionCount} entries`}
+              hint={`${uplineEntries.length} downline sales`}
             />
           )}
           <StatCard
@@ -196,18 +202,18 @@ function ResellerReports() {
             label="Loaded to customers"
             value={peso(loadTotal)}
             tone="negative"
-            hint={`${customerLoads.length} loads · no commission`}
+            hint={`${customerLoads.length} loads · exact amounts, no commission`}
           />
           <StatCard label="Points earned" value={String(salesTotals.pointsEarned)} />
         </div>
       </PageSection>
 
       <PageSection
-        title="Credit-back & commission"
-        description="Credit-back is paid on the credits you personally funded, at the rate snapshotted when your customer spent them."
+        title="Sales cashback & upline commission"
+        description="Cashback is paid on credits you personally funded when they are spent on vouchers; upline is paid on your subresellers' sales. Historical credit-loading commissions stay visible but no longer occur."
       >
         {commissionEntries.length === 0 ? (
-          <EmptyState title="No credit-back or commission in this range" />
+          <EmptyState title="No sales cashback or upline commission in this range" />
 
         ) : (
           <Card className="shadow-[var(--shadow-card)]">

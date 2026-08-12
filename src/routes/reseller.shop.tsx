@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { fetchMyVoucherDiscount } from "@/lib/wallet";
 import { useSession } from "@/lib/session";
 import { VoucherShopView } from "./app.shop";
+
 
 export const Route = createFileRoute("/reseller/shop")({
   head: () => ({
@@ -25,10 +28,18 @@ export const Route = createFileRoute("/reseller/shop")({
 
 function ResellerShop() {
   const { account } = useSession("reseller");
+  // The wholesale discount is resolved server-side (personal rate, else the
+  // shop default for the role) so the preview matches what checkout charges.
+  const [discount, setDiscount] = useState(account?.discountPercent ?? 0);
+  useEffect(() => {
+    if (!account?.id) return;
+    void fetchMyVoucherDiscount(account.id).then(setDiscount);
+  }, [account?.id]);
   return (
     <VoucherShopView
       role={account?.role === "subreseller" ? "subreseller" : "reseller"}
-      discountPercent={account?.discountPercent ?? 0}
+      discountPercent={discount}
     />
   );
 }
+

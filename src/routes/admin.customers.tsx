@@ -27,9 +27,7 @@ import { useSession } from "@/lib/session";
 import { supabase } from "@/integrations/supabase/client";
 import { peso, roleLabel, shortDate, shortDateTime, type Role } from "@/lib/wavewallet";
 import {
-  fetchEcosystemCommission,
   fetchEcosystemSaleCommission,
-  setResellerCommission,
   setSaleCommission,
   setSubresellerParent,
   type SaleCommissionDefaults,
@@ -63,7 +61,7 @@ interface Member {
   reseller_discount_percent: number;
   /** Credit-LOADING commission override (resellers only). */
   reseller_commission_percent: number | null;
-  /** Customer-purchase credit-back override (reseller or subreseller). */
+  /** Sales commission override (reseller or subreseller). */
   sale_commission_percent: number | null;
   /** Parent reseller — mandatory owner of a subreseller. */
   reseller_id: string | null;
@@ -97,14 +95,11 @@ function AdminCustomers() {
   const [detail, setDetail] = useState<Member | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
   const [discount, setDiscount] = useState("10");
-  const [commission, setCommission] = useState("20");
   const [creditBack, setCreditBack] = useState("10");
-  const [defaultCommission, setDefaultCommission] = useState(0);
   const [saleDefaults, setSaleDefaults] = useState<SaleCommissionDefaults>({
     reseller: 0,
     subreseller: 0,
   });
-  const [editingCommission, setEditingCommission] = useState<Member | null>(null);
   const [editingCreditBack, setEditingCreditBack] = useState<Member | null>(null);
   const [editingOwner, setEditingOwner] = useState<Member | null>(null);
   const [busy, setBusy] = useState(false);
@@ -150,14 +145,10 @@ function AdminCustomers() {
     void load();
   }, [load]);
 
-  // Shop-wide defaults: credit-loading commission and sales credit-back are
-  // configured separately, so changing one never moves the other.
+  // Shop-wide sales commission defaults. Credit transfers pay nothing, so the
+  // old loading-commission default no longer exists.
   useEffect(() => {
     if (!ecosystemDbId) return;
-    void fetchEcosystemCommission(ecosystemDbId).then((v) => {
-      setDefaultCommission(v);
-      setCommission(String(v));
-    });
     void fetchEcosystemSaleCommission(ecosystemDbId).then(setSaleDefaults);
   }, [ecosystemDbId]);
 
@@ -227,17 +218,9 @@ function AdminCustomers() {
       toast.error(error.message);
       return;
     }
-    // Credit-LOADING commission is reseller-only; subresellers never earn it.
-    if (promoteTo === "reseller") {
-      const bonus = Number(commission);
-      if (!Number.isNaN(bonus) && bonus > 0) {
-        try {
-          await setResellerCommission(promoting.id, bonus);
-        } catch (err) {
-          toast.error((err as Error).message);
-        }
-      }
-    }
+    // New members start on the shop-wide sales commission default; set a
+    // personal rate afterwards with the "Sales %" action if needed.
+
     toast.success(
       `${promoting.full_name} is now a ${roleLabel(promoteTo).toLowerCase()} — history preserved.`,
     );
@@ -269,37 +252,17 @@ function AdminCustomers() {
     void load();
   };
 
-  const confirmCommission = async () => {
-    if (!editingCommission) return;
-    const value = Number(commission);
-    if (Number.isNaN(value) || value < 0 || value > MAX_COMMISSION) {
-      toast.error(`Commission must be between 0% and ${MAX_COMMISSION}%.`);
-      return;
-    }
-    setBusy(true);
-    try {
-      await setResellerCommission(editingCommission.id, value);
-      toast.success("Commission updated — applies to future credit releases only.");
-      setEditingCommission(null);
-      void load();
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const confirmCreditBack = async () => {
     if (!editingCreditBack) return;
     const value = Number(creditBack);
     if (Number.isNaN(value) || value < 0 || value > MAX_COMMISSION) {
-      toast.error(`Credit-back must be between 0% and ${MAX_COMMISSION}%.`);
+      toast.error(`Sales commission must be between 0% and ${MAX_COMMISSION}%.`);
       return;
     }
     setBusy(true);
     try {
       await setSaleCommission(editingCreditBack.id, value);
-      toast.success("Credit-back updated — applies to future customer purchases only.");
+      toast.success("Sales commission updated — applies to future purchases only.");
       setEditingCreditBack(null);
       void load();
     } catch (e) {
@@ -453,20 +416,12 @@ function AdminCustomers() {
                               <StatusBadge tone="success">
                                 {roleLabel(c.role)} · {c.reseller_discount_percent}% off
                               </StatusBadge>
-                              {c.role === "reseller" ? (
-                                <StatusBadge tone="brand">
-                                  {c.reseller_commission_percent ?? defaultCommission}% loading
-                                  {c.reseller_commission_percent === null ? " (default)" : ""}
-                                </StatusBadge>
-                              ) : (
-                                <StatusBadge tone="muted">No loading commission</StatusBadge>
-                              )}
                               <StatusBadge tone="brand">
                                 {c.sale_commission_percent ??
                                   (c.role === "reseller"
                                     ? saleDefaults.reseller
                                     : saleDefaults.subreseller)}
-                                % credit-back
+                                % sales commission
                                 {c.sale_commission_percent === null ? " (default)" : ""}
                               </StatusBadge>
                               {c.role === "subreseller" ? (
@@ -503,20 +458,6 @@ function AdminCustomers() {
                                 <TrendingUp className="size-4" /> Discount
                               </Button>
                             ) : null}
-                            {c.role === "reseller" ? (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setEditingCommission(c);
-                                  setCommission(
-                                    String(c.reseller_commission_percent ?? defaultCommission),
-                                  );
-                                }}
-                              >
-                                <Percent className="size-4" /> Loading %
-                              </Button>
-                            ) : null}
                             {c.role === "reseller" || c.role === "subreseller" ? (
                               <Button
                                 size="sm"
@@ -533,7 +474,7 @@ function AdminCustomers() {
                                   );
                                 }}
                               >
-                                <Percent className="size-4" /> Credit-back %
+                                <Percent className="size-4" /> Sales %
                               </Button>
                             ) : null}
                             {c.role === "subreseller" ? (
@@ -556,7 +497,6 @@ function AdminCustomers() {
                                   setPromoteTo("reseller");
                                   setParentId("");
                                   setDiscount("10");
-                                  setCommission("20");
                                 }}
                               >
                                 <ShieldCheck className="size-4" /> Promote
@@ -595,10 +535,10 @@ function AdminCustomers() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="reseller">
-                    Reseller — discount + loading commission + credit-back
+                    Reseller — wholesale discount + sales commission
                   </SelectItem>
                   <SelectItem value="subreseller">
-                    Subreseller — discount + credit-back, no loading commission
+                    Subreseller — wholesale discount + sales cashback, parent earns upline
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -639,22 +579,6 @@ function AdminCustomers() {
               They buy vouchers at {100 - (Number(discount) || 0)}% of the customer price and sell
               at the normal customer price — the discount is their margin.
             </p>
-            <div className={promoteTo === "reseller" ? "space-y-1.5" : "hidden"}>
-              <Label htmlFor="promoteCommission">Credit commission bonus (%)</Label>
-              <Input
-                id="promoteCommission"
-                type="number"
-                min={0}
-                max={MAX_COMMISSION}
-                value={commission}
-                onChange={(e) => setCommission(e.target.value)}
-              />
-              <p className="text-[11px] text-muted-foreground">
-                When you release {peso(1000)} to this reseller they receive{" "}
-                {peso(1000 * (1 + (Number(commission) || 0) / 100))} — you are debited{" "}
-                {peso(1000)} only.
-              </p>
-            </div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setPromoting(null)}>
@@ -698,55 +622,18 @@ function AdminCustomers() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!editingCommission} onOpenChange={(o) => !o && setEditingCommission(null)}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Credit-loading commission</DialogTitle>
-            <DialogDescription>
-              Extra credits granted to {editingCommission?.full_name || editingCommission?.email}{" "}
-              whenever you or the platform owner release credits to them. Resellers only — this is
-              separate from customer-purchase credit-back. Applies to future transfers only.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-1.5">
-            <Label htmlFor="editCommission">Loading commission (%)</Label>
-            <Input
-              id="editCommission"
-              type="number"
-              min={0}
-              max={MAX_COMMISSION}
-              value={commission}
-              onChange={(e) => setCommission(e.target.value)}
-            />
-            <p className="text-[11px] text-muted-foreground">
-              Send {peso(1000)} → reseller receives{" "}
-              {peso(1000 * (1 + (Number(commission) || 0) / 100))} (
-              {Number(commission) || 0}% bonus). Your wallet is debited {peso(1000)}.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setEditingCommission(null)}>
-              Cancel
-            </Button>
-            <Button onClick={confirmCommission} disabled={busy}>
-              Save commission
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       <Dialog open={!!editingCreditBack} onOpenChange={(o) => !o && setEditingCreditBack(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Customer-purchase credit-back</DialogTitle>
+            <DialogTitle>Sales commission</DialogTitle>
             <DialogDescription>
               Paid to {editingCreditBack?.full_name || editingCreditBack?.email} when a customer
-              spends credits this member funded. Separate from the credit-loading commission, and
-              snapshotted on every sale — past sales never change.
+              spends credits this member funded, and on their own voucher purchases. Separate from
+              the wholesale discount, and snapshotted on every sale — past sales never change.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">
-            <Label htmlFor="editCreditBack">Credit-back (%)</Label>
+            <Label htmlFor="editCreditBack">Sales commission (%)</Label>
             <Input
               id="editCreditBack"
               type="number"
@@ -765,7 +652,7 @@ function AdminCustomers() {
               Cancel
             </Button>
             <Button onClick={confirmCreditBack} disabled={busy}>
-              Save credit-back
+              Save commission
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -846,9 +733,9 @@ function AdminCustomers() {
                   }
                 >
                   {detail.role === "reseller"
-                    ? `Reseller · ${detail.reseller_discount_percent}% discount · ${detail.reseller_commission_percent ?? defaultCommission}% commission${detail.reseller_commission_percent === null ? " (shop default)" : ""}`
+                    ? `Reseller · ${detail.reseller_discount_percent}% wholesale discount · ${detail.sale_commission_percent ?? saleDefaults.reseller}% sales commission${detail.sale_commission_percent === null ? " (shop default)" : ""}`
                     : detail.role === "subreseller"
-                      ? `Subreseller · ${detail.reseller_discount_percent}% discount · ${detail.sale_commission_percent ?? saleDefaults.subreseller}% credit-back${detail.sale_commission_percent === null ? " (shop default)" : ""} · no credit-loading commission`
+                      ? `Subreseller · ${detail.reseller_discount_percent}% discount · ${detail.sale_commission_percent ?? saleDefaults.subreseller}% sales cashback${detail.sale_commission_percent === null ? " (shop default)" : ""} · parent reseller earns upline`
                       : "Customer"}
                 </StatusBadge>
                 <StatusBadge tone={detail.status === "active" ? "success" : "danger"}>

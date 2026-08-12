@@ -234,6 +234,84 @@ export async function setEcosystemSaleCommission(
   if (error) throw new Error(friendlyWalletError(error.message));
 }
 
+/* ------------------------------------------------------------------ */
+/* Final rate model: sale cashback, upline commission, wholesale       */
+/* discounts. Credit transfers themselves carry no commission.         */
+/* ------------------------------------------------------------------ */
+
+export interface EcosystemRates {
+  /** Cashback for a reseller whose credits funded a customer purchase. */
+  resellerSale: number;
+  /** Cashback for a subreseller whose credits funded a customer purchase. */
+  subresellerSale: number;
+  /** Commission for the parent reseller of a selling/buying subreseller. */
+  upline: number;
+  /** Wholesale voucher discount for resellers. */
+  resellerDiscount: number;
+  /** Wholesale voucher discount for subresellers. */
+  subresellerDiscount: number;
+}
+
+const RATE_COLUMNS =
+  "default_sale_commission_percent, default_subreseller_sale_commission_percent, default_upline_commission_percent, default_reseller_discount_percent, default_subreseller_discount_percent";
+
+export async function fetchEcosystemRates(ecosystemId: string): Promise<EcosystemRates> {
+  const { data, error } = await supabase
+    .from("ecosystems")
+    .select(RATE_COLUMNS)
+    .eq("id", ecosystemId)
+    .maybeSingle();
+  if (error || !data) {
+    return {
+      resellerSale: 0,
+      subresellerSale: 0,
+      upline: 0,
+      resellerDiscount: 0,
+      subresellerDiscount: 0,
+    };
+  }
+  return {
+    resellerSale: Number(data.default_sale_commission_percent ?? 0),
+    subresellerSale: Number(data.default_subreseller_sale_commission_percent ?? 0),
+    upline: Number(data.default_upline_commission_percent ?? 0),
+    resellerDiscount: Number(data.default_reseller_discount_percent ?? 0),
+    subresellerDiscount: Number(data.default_subreseller_discount_percent ?? 0),
+  };
+}
+
+/**
+ * Saves every rate in one audited call. Validation and authorization live in
+ * the database; changes apply to future transactions only.
+ */
+export async function setEcosystemRates(
+  ecosystemId: string,
+  rates: EcosystemRates,
+): Promise<void> {
+  const { error } = await supabase.rpc("set_ecosystem_rates", {
+    _ecosystem_id: ecosystemId,
+    _reseller_sale_percent: Math.trunc(rates.resellerSale),
+    _subreseller_sale_percent: Math.trunc(rates.subresellerSale),
+    _upline_percent: Math.trunc(rates.upline),
+    _reseller_discount_percent: Math.trunc(rates.resellerDiscount),
+    _subreseller_discount_percent: Math.trunc(rates.subresellerDiscount),
+  });
+  if (error) throw new Error(friendlyWalletError(error.message));
+}
+
+/**
+ * Effective wholesale voucher discount for a member: their personal rate when
+ * set, otherwise the shop default for their role. Resolved server-side so the
+ * price shown before checkout matches the price charged.
+ */
+export async function fetchMyVoucherDiscount(userId: string): Promise<number> {
+  const { data, error } = await supabase.rpc("voucher_discount_percent_for", {
+    _user_id: userId,
+  });
+  if (error) return 0;
+  return Number(data ?? 0);
+}
+
+
 /** Per-member credit-back override. `null` follows the shop default. */
 export async function setSaleCommission(userId: string, percent: number | null): Promise<void> {
   const { error } = await supabase.rpc("set_sale_commission", {
@@ -527,13 +605,19 @@ export function commissionBreakdown(e: CreditEntry): string | null {
   const base = Number(e.base_amount ?? e.amount);
   const pct = Number(e.commission_percent ?? 0);
   if (e.entry_kind === "sale_commission") {
-    return `Credit-back on ${peso(base)} of credits you funded, spent at ${pct}% = ${peso(bonus)}`;
+    return `Sales cashback on ${peso(base)} of credits you supplied, spent at ${pct}% = ${peso(bonus)}`;
   }
+  if (e.entry_kind === "upline_commission") {
+    return `Upline commission — ${pct}% of ${peso(base)} from your downline's sale = ${peso(bonus)}`;
+  }
+  // Anything left is a pre-migration credit-loading commission. Transfers no
+  // longer create these; the snapshot is kept exactly as it was recorded.
   if (e.direction === "debit") {
-    return `Released ${peso(base)} · ${pct}% commission granted (${peso(bonus)}) — you were debited ${peso(base)} only`;
+    return `Historical loading commission — released ${peso(base)} at ${pct}% (${peso(bonus)}); you were debited ${peso(base)} only`;
   }
-  return `${peso(base)} + ${peso(bonus)} commission (${pct}%) = ${peso(base + bonus)}`;
+  return `Historical loading commission — ${peso(base)} + ${peso(bonus)} (${pct}%) = ${peso(base + bonus)}`;
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Credit provenance (FIFO lots)                                       */
@@ -598,11 +682,13 @@ export function creditSourceLabel(lot: Pick<CreditLot, "source_kind" | "source_n
   }
 }
 
-/** One credit-back component of a voucher sale, tied to the funding lot. */
+/** One earning component of a voucher sale: seller cashback or upline commission. */
 export interface SaleCommissionRow {
   id: string;
   sale_id: string;
   recipient_id: string;
+  /** 'sale_cashback' (you supplied the credits) or 'upline' (your downline sold). */
+  kind: string;
   credits_consumed: number;
   commission_percent: number;
   commission_amount: number;
@@ -614,17 +700,18 @@ export interface SaleCommissionRow {
   tx_id: string | null;
 }
 
-/** Credit-back rows earned by a reseller/subreseller, newest first. */
+/** Sale earnings for a reseller/subreseller, newest first. */
 export async function fetchMyCreditBack(recipientId: string, limit = 50): Promise<SaleCommissionRow[]> {
   const { data, error } = await supabase
     .from("sale_commissions")
     .select(
-      "id, sale_id, recipient_id, credits_consumed, commission_percent, commission_amount, reversed_at, created_at, voucher_sales(product_name, quantity, tx_id, buyer_id)",
+      "id, sale_id, recipient_id, kind, credits_consumed, commission_percent, commission_amount, reversed_at, created_at, voucher_sales(product_name, quantity, tx_id, buyer_id)",
     )
     .eq("recipient_id", recipientId)
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error) throw error;
+
   const rows = (data ?? []) as unknown as Array<
     Record<string, unknown> & {
       voucher_sales: { product_name: string; quantity: number | null; tx_id: string; buyer_id: string } | null;
@@ -640,6 +727,8 @@ export async function fetchMyCreditBack(recipientId: string, limit = 50): Promis
     id: String(r["id"]),
     sale_id: String(r["sale_id"]),
     recipient_id: String(r["recipient_id"]),
+    kind: String(r["kind"] ?? "sale_cashback"),
+
     credits_consumed: Number(r["credits_consumed"]),
     commission_percent: Number(r["commission_percent"]),
     commission_amount: Number(r["commission_amount"]),

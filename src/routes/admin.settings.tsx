@@ -2,12 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Facebook } from "lucide-react";
 import { useEffect, useState } from "react";
 import { fetchPointsRule, setPointsRule } from "@/lib/rewards";
-import {
-  fetchEcosystemCommission,
-  fetchEcosystemSaleCommission,
-  setEcosystemCommission,
-  setEcosystemSaleCommission,
-} from "@/lib/wallet";
+import { fetchEcosystemRates, setEcosystemRates } from "@/lib/wallet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,6 +26,15 @@ export const Route = createFileRoute("/admin/settings")({
   component: AdminSettings,
 });
 
+/** Percentage fields are held as strings so the inputs stay controlled. */
+type RateForm = {
+  resellerSale: string;
+  subresellerSale: string;
+  upline: string;
+  resellerDiscount: string;
+  subresellerDiscount: string;
+};
+
 function AdminSettings() {
   const { ecosystem, ecosystemDbId, reload } = useSession("admin");
   const [form, setForm] = useState({
@@ -42,20 +46,52 @@ function AdminSettings() {
   const [saving, setSaving] = useState(false);
   const [rule, setRule] = useState("10");
   const [savingRule, setSavingRule] = useState(false);
-  const [commission, setCommission] = useState("0");
-  const [savingCommission, setSavingCommission] = useState(false);
-  const [saleReseller, setSaleReseller] = useState("0");
-  const [saleSub, setSaleSub] = useState("0");
-  const [savingSale, setSavingSale] = useState(false);
+  const [rates, setRates] = useState<RateForm>({
+    resellerSale: "0",
+    subresellerSale: "0",
+    upline: "0",
+    resellerDiscount: "0",
+    subresellerDiscount: "0",
+  });
+  const [savingRates, setSavingRates] = useState(false);
   useEffect(() => {
     if (!ecosystemDbId) return;
     void fetchPointsRule(ecosystemDbId).then((v) => setRule(String(v)));
-    void fetchEcosystemCommission(ecosystemDbId).then((v) => setCommission(String(v)));
-    void fetchEcosystemSaleCommission(ecosystemDbId).then((v) => {
-      setSaleReseller(String(v.reseller));
-      setSaleSub(String(v.subreseller));
-    });
+    void fetchEcosystemRates(ecosystemDbId).then((r) =>
+      setRates({
+        resellerSale: String(r.resellerSale),
+        subresellerSale: String(r.subresellerSale),
+        upline: String(r.upline),
+        resellerDiscount: String(r.resellerDiscount),
+        subresellerDiscount: String(r.subresellerDiscount),
+      }),
+    );
   }, [ecosystemDbId]);
+
+  const saveRates = async () => {
+    if (!ecosystemDbId) return;
+    const parsed = {
+      resellerSale: Number(rates.resellerSale),
+      subresellerSale: Number(rates.subresellerSale),
+      upline: Number(rates.upline),
+      resellerDiscount: Number(rates.resellerDiscount),
+      subresellerDiscount: Number(rates.subresellerDiscount),
+    };
+    if (Object.values(parsed).some((v) => Number.isNaN(v) || v < 0 || v > 100)) {
+      toast.error("Every percentage must be between 0% and 100%.");
+      return;
+    }
+    setSavingRates(true);
+    try {
+      await setEcosystemRates(ecosystemDbId, parsed);
+      toast.success("Rates and discounts saved — future transactions only.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSavingRates(false);
+    }
+  };
+
   if (!ecosystem) return null;
 
   const save = async () => {
@@ -166,125 +202,103 @@ function AdminSettings() {
       </PageSection>
 
       <PageSection
-        title="Credit-loading commission"
-        description="Bonus credits your resellers receive whenever you or the platform owner release credits to them. Resellers only — subresellers never earn this."
+        title="Voucher sale earnings"
+        description="Earnings happen when a voucher is bought — never when credits are transferred. Sending ₱1,000 always delivers exactly ₱1,000."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="commission">Default commission (%)</Label>
-              <Input
-                id="commission"
-                type="number"
-                min={0}
-                max={100}
-                value={commission}
-                onChange={(e) => setCommission(e.target.value)}
-              />
-            </div>
-            <div className="flex items-end gap-2">
-              <Button
-                variant="outline"
-                disabled={savingCommission}
-                onClick={async () => {
-                  if (!ecosystemDbId) return;
-                  const v = Number(commission);
-                  if (Number.isNaN(v) || v < 0 || v > 100) {
-                    toast.error("Commission must be between 0% and 100%.");
-                    return;
-                  }
-                  setSavingCommission(true);
-                  try {
-                    await setEcosystemCommission(ecosystemDbId, v);
-                    toast.success(
-                      `Default reseller commission set to ${v}% — future credit releases only.`,
-                    );
-                  } catch (e) {
-                    toast.error((e as Error).message);
-                  } finally {
-                    setSavingCommission(false);
-                  }
-                }}
-              >
-                {savingCommission ? "Saving…" : "Save commission"}
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground sm:col-span-2">
-              Release ₱1,000 to a reseller on {Number(commission) || 0}% and they receive{" "}
-              ₱{(1000 * (1 + (Number(commission) || 0) / 100)).toLocaleString()} while your wallet is
-              debited ₱1,000 only. A reseller with a personal rate set in Customers overrides this
-              default. Past transactions keep the rate they were made with.
-            </p>
-          </CardContent>
-        </Card>
-      </PageSection>
-
-      <PageSection
-        title="Customer-purchase credit-back"
-        description="Paid to the reseller or subreseller who funded the credits a customer spends. Configured separately from the credit-loading commission."
-      >
-        <Card className="shadow-[var(--shadow-card)]">
-          <CardContent className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="saleReseller">Reseller credit-back (%)</Label>
+              <Label htmlFor="saleReseller">Reseller sale commission (%)</Label>
               <Input
                 id="saleReseller"
                 type="number"
                 min={0}
                 max={100}
-                value={saleReseller}
-                onChange={(e) => setSaleReseller(e.target.value)}
+                value={rates.resellerSale}
+                onChange={(e) => setRates({ ...rates, resellerSale: e.target.value })}
               />
+              <p className="text-[11px] text-muted-foreground">
+                Paid to the reseller whose credits funded the customer's purchase.
+              </p>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="saleSub">Subreseller credit-back (%)</Label>
+              <Label htmlFor="saleSub">Subreseller sale cashback (%)</Label>
               <Input
                 id="saleSub"
                 type="number"
                 min={0}
                 max={100}
-                value={saleSub}
-                onChange={(e) => setSaleSub(e.target.value)}
+                value={rates.subresellerSale}
+                onChange={(e) => setRates({ ...rates, subresellerSale: e.target.value })}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Paid to the subreseller whose credits funded the customer's purchase.
+              </p>
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="upline">Parent reseller (upline) commission (%)</Label>
+              <Input
+                id="upline"
+                type="number"
+                min={0}
+                max={100}
+                value={rates.upline}
+                onChange={(e) => setRates({ ...rates, upline: e.target.value })}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Paid to a subreseller's parent reseller on that subreseller's sales and on
+                vouchers the subreseller buys for their own use. A subreseller never earns on
+                their own purchase; a reseller has no upline.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </PageSection>
+
+      <PageSection
+        title="Wholesale voucher discounts"
+        description="A discount is a lower purchase price, not an earning. Discount and sale commission are recorded separately on every sale."
+      >
+        <Card className="shadow-[var(--shadow-card)]">
+          <CardContent className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="resDisc">Reseller voucher discount (%)</Label>
+              <Input
+                id="resDisc"
+                type="number"
+                min={0}
+                max={100}
+                value={rates.resellerDiscount}
+                onChange={(e) => setRates({ ...rates, resellerDiscount: e.target.value })}
               />
             </div>
-            <div className="flex items-end gap-2">
-              <Button
-                variant="outline"
-                disabled={savingSale}
-                onClick={async () => {
-                  if (!ecosystemDbId) return;
-                  const r = Number(saleReseller);
-                  const s = Number(saleSub);
-                  if ([r, s].some((v) => Number.isNaN(v) || v < 0 || v > 100)) {
-                    toast.error("Credit-back must be between 0% and 100%.");
-                    return;
-                  }
-                  setSavingSale(true);
-                  try {
-                    await setEcosystemSaleCommission(ecosystemDbId, {
-                      reseller: r,
-                      subreseller: s,
-                    });
-                    toast.success("Credit-back defaults saved — future purchases only.");
-                  } catch (e) {
-                    toast.error((e as Error).message);
-                  } finally {
-                    setSavingSale(false);
-                  }
-                }}
-              >
-                {savingSale ? "Saving…" : "Save credit-back"}
+            <div className="space-y-1.5">
+              <Label htmlFor="subDisc">Subreseller voucher discount (%)</Label>
+              <Input
+                id="subDisc"
+                type="number"
+                min={0}
+                max={100}
+                value={rates.subresellerDiscount}
+                onChange={(e) => setRates({ ...rates, subresellerDiscount: e.target.value })}
+              />
+            </div>
+            <div className="flex items-end gap-2 sm:col-span-2">
+              <Button variant="outline" disabled={savingRates} onClick={saveRates}>
+                {savingRates ? "Saving…" : "Save rates & discounts"}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground sm:col-span-2">
-              When a customer buys vouchers, the credits are consumed oldest-first and each funder
-              earns their own rate on the portion they supplied. Admin-funded credits never produce
-              credit-back. Personal rates set in Customers override these defaults, and every sale
-              stores the rate it used.
+              A member with a personal rate set in Customers overrides the shop default. Every
+              sale stores the list price, discount percent, discount amount, amount paid and the
+              commission rates used, so changing anything here affects future transactions only.
+              Historical loading commissions from the old model stay in history exactly as
+              recorded and no longer apply to transfers.
             </p>
           </CardContent>
         </Card>
       </PageSection>
+
 
 
 
