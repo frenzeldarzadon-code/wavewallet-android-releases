@@ -105,6 +105,8 @@ function AdminReports() {
 
   const salesTotals = useMemo(() => summariseSales(sales), [sales]);
   const creditTotals = useMemo(() => summariseCredits(credits), [credits]);
+  const creditFlow = useMemo(() => summariseCreditFlow(credits), [credits]);
+  const commissionSplit = useMemo(() => summariseSaleCommissions(commissions), [commissions]);
   const pointTotals = useMemo(() => summarisePoints(points), [points]);
 
   /** Reseller rows use each sale's snapshotted discount, never today's rate. */
@@ -117,11 +119,11 @@ function AdminReports() {
         net: number;
         margin: number;
         commission: number;
-        base: number;
+        upline: number;
         role: string;
       }
     >();
-    const blank = () => ({ sales: 0, gross: 0, net: 0, margin: 0, commission: 0, base: 0, role: "reseller" });
+    const blank = () => ({ sales: 0, gross: 0, net: 0, margin: 0, commission: 0, upline: 0, role: "reseller" });
     for (const s of sales) {
       if (s.payment_method === "points") continue;
       const isChannel = s.buyer_role === "reseller" || s.buyer_role === "subreseller";
@@ -135,16 +137,17 @@ function AdminReports() {
       row.margin += s.list_price - s.sale_price;
       map.set(id, row);
     }
-    for (const e of credits) {
-      const bonus = Number(e.commission_amount ?? 0);
-      if (e.direction !== "credit" || bonus <= 0) continue;
-      const row = map.get(e.user_id) ?? blank();
-      row.commission += bonus;
-      row.base += Number(e.base_amount ?? e.amount - bonus);
-      map.set(e.user_id, row);
+    for (const c of commissions) {
+      if (c.reversed_at) continue;
+      const row = map.get(c.recipient_id) ?? blank();
+      if (c.kind === "upline") row.upline += c.commission_amount;
+      else row.commission += c.commission_amount;
+      map.set(c.recipient_id, row);
     }
-    return [...map.entries()].sort((a, b) => b[1].margin + b[1].commission - (a[1].margin + a[1].commission));
-  }, [sales, credits]);
+    return [...map.entries()].sort(
+      (a, b) => b[1].margin + b[1].commission + b[1].upline - (a[1].margin + a[1].commission + a[1].upline),
+    );
+  }, [sales, commissions]);
 
   const nameOf = (id: string) => names[id] ?? `${id.slice(0, 8)}…`;
 
