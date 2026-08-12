@@ -7,7 +7,28 @@
  * RLS scoped to ecosystem_id (and user_roles for role checks).
  */
 
-export type Role = "super_admin" | "admin" | "reseller" | "customer";
+/**
+ * Hierarchy: Super Admin → Admin → Reseller → Subreseller → Customer.
+ * A subreseller buys vouchers at a configurable discount (their margin) and
+ * never earns credit commission — commission is a reseller-only mechanic.
+ */
+export type Role = "super_admin" | "admin" | "reseller" | "subreseller" | "customer";
+
+export const roleLabels: Record<Role, string> = {
+  super_admin: "Super Admin",
+  admin: "Admin",
+  reseller: "Reseller",
+  subreseller: "Subreseller",
+  customer: "Customer",
+};
+
+export const roleLabel = (role: Role) => roleLabels[role] ?? "Customer";
+
+/** Roles that buy vouchers at a discount and resell them to customers. */
+export const isResellerRole = (role: Role) => role === "reseller" || role === "subreseller";
+
+/** Only full resellers can be granted a credit commission bonus. */
+export const canEarnCommission = (role: Role) => role === "reseller";
 
 export type SubscriptionStatus =
   | "pending"
