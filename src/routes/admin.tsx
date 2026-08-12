@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Link2,
   Package,
+  ReceiptText,
   Settings,
   Wallet,
   Ticket,
