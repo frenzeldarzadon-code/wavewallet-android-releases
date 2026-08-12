@@ -98,10 +98,14 @@ export async function loadAuthContext(): Promise<AuthContext | null> {
     ecosystem = (data as DbEcosystem | null) ?? null;
   }
 
-  const [{ data: credit }, { data: points }] = await Promise.all([
+  const [{ data: credit }, { data: points }, { data: status }] = await Promise.all([
     supabase.from("credit_accounts").select("balance").eq("user_id", user.id).maybeSingle(),
     supabase.from("points_accounts").select("balance, held").eq("user_id", user.id).maybeSingle(),
+    // Authoritative operational check (subscription state + period end + grace) computed
+    // in the database. Used for route UX only — data access is still authorized by RLS.
+    supabase.rpc("my_operational_status"),
   ]);
+  const operational = Array.isArray(status) ? status[0]?.operational : undefined;
 
   return {
     userId: user.id,
@@ -113,7 +117,8 @@ export async function loadAuthContext(): Promise<AuthContext | null> {
       points: points?.balance ?? 0,
       pointsHeld: points?.held ?? 0,
     },
-    subscriptionOk: role === "super_admin" ? true : isSubscriptionOk(ecosystem),
+    subscriptionOk:
+      role === "super_admin" ? true : (operational ?? isSubscriptionOk(ecosystem)),
   };
 }
 
