@@ -40,6 +40,7 @@ export interface DbProfile {
   email: string;
   phone: string;
   status: "active" | "suspended";
+  deleted_at?: string | null;
   reseller_discount_percent: number;
   reseller_id: string | null;
   joined_at: string;
@@ -81,6 +82,12 @@ export async function loadAuthContext(): Promise<AuthContext | null> {
     supabase.from("user_roles").select("role, ecosystem_id").eq("user_id", user.id),
   ]);
   if (!profile) return null;
+  // A deleted (anonymised) customer keeps no access: their roles are revoked and
+  // their login is banned server-side. Sign the stale session out immediately.
+  if ((profile as { deleted_at?: string | null }).deleted_at) {
+    await supabase.auth.signOut();
+    return null;
+  }
 
   const order: Role[] = ["super_admin", "admin", "reseller", "subreseller", "customer"];
   const role =
