@@ -31,6 +31,8 @@ export interface DbEcosystem {
   payment_reference: string | null;
   submitted_at: string | null;
   reviewed_at: string | null;
+  facebook_page_url?: string | null;
+  facebook_page_name?: string | null;
 }
 
 export interface DbProfile {
