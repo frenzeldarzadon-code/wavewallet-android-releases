@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, type LinkProps } from "@tanstack/react-router";
 import { Menu, ShieldCheck, LogOut, ArrowLeft } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 import { useState } from "react";
@@ -9,7 +9,7 @@ import { writeSession, type ResolvedSession } from "@/lib/session";
 import { platformSettings } from "@/lib/wavewallet";
 
 export interface NavItem {
-  to: string;
+  to: LinkProps["to"];
   label: string;
   icon: ComponentType<{ className?: string }>;
 }
@@ -41,7 +41,7 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
           onClick={onNavigate}
           className={cn(
             "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-            isActive(item.to)
+            isActive(String(item.to))
               ? "bg-accent text-accent-foreground"
               : "text-muted-foreground hover:bg-muted hover:text-foreground",
           )}
@@ -128,7 +128,7 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
               to={item.to}
               className={cn(
                 "flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium",
-                isActive(item.to) ? "text-primary" : "text-muted-foreground",
+                isActive(String(item.to)) ? "text-primary" : "text-muted-foreground",
               )}
             >
               <item.icon className="size-5" />
@@ -141,7 +141,7 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
   );
 }
 
-function Brand({ ecosystem }: { ecosystem?: string }) {
+function Brand({ ecosystem }: { ecosystem?: string | undefined }) {
   return (
     <div className="flex items-center gap-3">
       <div className="surface-gradient flex size-9 items-center justify-center rounded-xl text-sm font-bold text-primary-foreground">
