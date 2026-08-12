@@ -148,6 +148,32 @@ function SuperAdmins() {
     await load();
   };
 
+  /**
+   * Lifecycle cleanup: archives a shop that has had no business activity for a
+   * year and holds nothing of value. History is preserved for retention.
+   */
+  const confirmArchive = async () => {
+    if (!archiveFor) return;
+    setArchiving(true);
+    try {
+      await archiveEcosystem(archiveFor.id, archiveReason.trim());
+      toast.success(`${archiveFor.name} archived`, {
+        description: "Signup is closed, members are suspended and history is preserved.",
+      });
+      setArchiveFor(null);
+      setArchiveReason("");
+      await load();
+    } catch (err) {
+      toast.error("Could not delete this shop", {
+        description: err instanceof Error ? err.message : "Unexpected error",
+      });
+    } finally {
+      setArchiving(false);
+    }
+  };
+
+
+
 
   const create = async () => {
     const name = form.name.trim();
