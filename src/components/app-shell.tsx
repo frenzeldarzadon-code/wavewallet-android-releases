@@ -29,6 +29,9 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const bottom = (bottomNav ?? nav).slice(0, 5);
   const superMode = session.session?.superAdminMode && session.account?.role === "super_admin";
+  const isDemo =
+    session.ecosystem?.slug === DEMO_ECOSYSTEM_SLUG ||
+    (session.account?.email ?? "").endsWith("@wavewallet.demo");
 
   const isActive = (to: string) => pathname === to || (to !== "/" && pathname.startsWith(to + "/"));
 
