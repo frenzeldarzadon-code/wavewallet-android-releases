@@ -195,11 +195,13 @@ export const platformSettings = {
   defaultPlanPrice: 150,
   defaultGraceDays: 5,
   currency: "PHP",
-  gcashNumber: "0917 555 0142",
-  gcashAccountName: "WaveWallet Platform",
-  supportPageName: "WaveWallet Support",
-  supportPageUrl: "https://facebook.com/wavewallet.support",
-  supportMessage: "Message us on Facebook and include your operator ID.",
+  // Collection/support details are configured by the platform owner in
+  // Platform settings. Never ship invented payment details as defaults.
+  gcashNumber: "",
+  gcashAccountName: "",
+  supportPageName: "",
+  supportPageUrl: "",
+  supportMessage: "",
 };
 
 export const ecosystems: Ecosystem[] = [

@@ -47,17 +47,19 @@ function AdminLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   if (!session.account || !session.ecosystem) return null;
 
-  // Subscription gate: an inactive tenant may only reach the subscription screen.
-  // The database enforces the same rule through subscription_ok(); this is UX only.
+  // Subscription gate: a lapsed tenant keeps read-only access (dashboard, reports)
+  // and the subscription screen. Every write is refused by the database through
+  // require_operational(); this is UX only and never the security boundary.
   const gated = !session.subscriptionOk && session.account.role !== "super_admin";
-  if (gated && pathname !== "/admin/subscription") {
+  const readOnlyPaths = ["/admin", "/admin/reports", "/admin/subscription"];
+  if (gated && !readOnlyPaths.includes(pathname)) {
     return <Navigate to="/admin/subscription" replace />;
   }
 
   return (
     <AppShell
       session={session}
-      nav={gated ? nav.filter((i) => i.to === "/admin/subscription") : nav}
+      nav={gated ? nav.filter((i) => readOnlyPaths.includes(i.to)) : nav}
       bottomNav={gated ? [] : bottomNav}
       title={session.ecosystem.name}
       subtitle="Admin console"

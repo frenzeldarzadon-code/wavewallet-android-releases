@@ -52,6 +52,8 @@ function SuperSubscriptions() {
   const [reasons, setReasons] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
+    // Flip lapsed tenants to "expired" before reading — retention is unaffected.
+    await supabase.rpc("expire_stale_subscriptions");
     const [{ data, error }, reqs] = await Promise.all([
       supabase.from("ecosystems").select("*").order("created_at", { ascending: false }),
       fetchAllRequests().catch(() => [] as SubscriptionRequest[]),

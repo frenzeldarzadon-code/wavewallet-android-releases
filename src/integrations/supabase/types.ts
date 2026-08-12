@@ -1123,6 +1123,7 @@ export type Database = {
         }[]
       }
       expire_stale_invitations: { Args: never; Returns: undefined }
+      expire_stale_subscriptions: { Args: never; Returns: number }
       get_signup_ecosystem: {
         Args: { _slug: string }
         Returns: {
@@ -1336,6 +1337,7 @@ export type Database = {
           tx_id: string
         }[]
       }
+      require_operational: { Args: never; Returns: undefined }
       reseller_load_credits: {
         Args: { _amount: number; _customer_id: string; _reference?: string }
         Returns: string
@@ -1409,10 +1411,6 @@ export type Database = {
         Returns: undefined
       }
       slugify: { Args: { _value: string }; Returns: string }
-      submit_subscription_payment: {
-        Args: { _ecosystem_id: string; _reference: string }
-        Returns: undefined
-      }
       submit_subscription_request: {
         Args: {
           _amount_paid?: number
