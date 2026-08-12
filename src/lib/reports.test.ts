@@ -41,6 +41,15 @@ describe("summariseCreditFlow", () => {
     expect(flow.generated).toBe(0);
   });
 
+  it("pairs the -R receiving leg of a transfer with its debit", () => {
+    const flow = summariseCreditFlow([
+      entry({ id: "1", tx_id: "TX9", direction: "debit", amount: 300, user_id: "res" }),
+      entry({ id: "2", tx_id: "TX9-R", direction: "credit", amount: 300, user_id: "cust" }),
+    ]);
+    expect(flow.transferred).toBe(300);
+    expect(flow.generated).toBe(0);
+  });
+
   it("treats an unpaired debit as revoked credits", () => {
     const flow = summariseCreditFlow([
       entry({ id: "1", tx_id: "TX3", direction: "debit", amount: 200 }),
