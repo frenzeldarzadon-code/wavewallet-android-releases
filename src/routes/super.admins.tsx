@@ -638,19 +638,25 @@ function ManageDialog({
     planName: row.plan_name,
     planPrice: String(row.plan_price),
     gracePeriodDays: String(row.grace_period_days),
-    commission: "0",
     saleReseller: "0",
     saleSub: "0",
+    upline: "0",
+    resDiscount: "0",
+    subDiscount: "0",
   });
   const [saving, setSaving] = useState(false);
   const url = `${origin()}/join/${row.slug}`;
 
   useEffect(() => {
-    void fetchEcosystemCommission(row.id).then((v) =>
-      setState((s) => ({ ...s, commission: String(v) })),
-    );
-    void fetchEcosystemSaleCommission(row.id).then((v) =>
-      setState((s) => ({ ...s, saleReseller: String(v.reseller), saleSub: String(v.subreseller) })),
+    void fetchEcosystemRates(row.id).then((v) =>
+      setState((s) => ({
+        ...s,
+        saleReseller: String(v.resellerSale),
+        saleSub: String(v.subresellerSale),
+        upline: String(v.upline),
+        resDiscount: String(v.resellerDiscount),
+        subDiscount: String(v.subresellerDiscount),
+      })),
     );
   }, [row.id]);
 
@@ -676,27 +682,23 @@ function ManageDialog({
       _grace_period_days: Number(state.gracePeriodDays) || 0,
     });
     let commissionErr: string | null = null;
-    const pct = Number(state.commission);
-    if (Number.isNaN(pct) || pct < 0 || pct > 100) {
-      commissionErr = "Commission must be between 0 and 100";
+    const nums = {
+      resellerSale: Number(state.saleReseller),
+      subresellerSale: Number(state.saleSub),
+      upline: Number(state.upline),
+      resellerDiscount: Number(state.resDiscount),
+      subresellerDiscount: Number(state.subDiscount),
+    };
+    if (Object.values(nums).some((v) => Number.isNaN(v) || v < 0 || v > 100)) {
+      commissionErr = "Every percentage must be between 0 and 100";
     } else {
       try {
-        await setEcosystemCommission(row.id, pct);
+        await setEcosystemRates(row.id, nums);
       } catch (e) {
         commissionErr = (e as Error).message;
       }
     }
-    const saleR = Number(state.saleReseller);
-    const saleS = Number(state.saleSub);
-    if ([saleR, saleS].some((v) => Number.isNaN(v) || v < 0 || v > 100)) {
-      commissionErr = commissionErr ?? "Credit-back must be between 0 and 100";
-    } else {
-      try {
-        await setEcosystemSaleCommission(row.id, { reseller: saleR, subreseller: saleS });
-      } catch (e) {
-        commissionErr = commissionErr ?? (e as Error).message;
-      }
-    }
+
     setSaving(false);
     if (planErr) {
       toast.error("Settings saved, plan update failed", { description: planErr.message });
