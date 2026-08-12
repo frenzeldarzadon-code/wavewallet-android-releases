@@ -138,15 +138,10 @@ function AdminWallets() {
 
   if (!ecosystemDbId) return null;
 
-  const q = query.trim().toLowerCase();
-  const filtered = q
-    ? members.filter(
-        (m) =>
-          m.full_name.toLowerCase().includes(q) ||
-          m.email.toLowerCase().includes(q) ||
-          m.phone.includes(q),
-      )
-    : members;
+  // Shared matcher: case-insensitive partial name/email match plus
+  // formatting-insensitive phone match.
+  const filtered = members.filter((m) => memberMatches(m, query));
+
 
   const nameFor = (id: string) => members.find((m) => m.id === id)?.full_name ?? id.slice(0, 8);
 
