@@ -147,7 +147,7 @@ function AdminDashboard() {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Plan</span>
                 <span className="font-medium">
-                  {sub.planName} · {peso(sub.planPrice)}/mo
+                  {sub.planName} · {peso(sub.priceMonthly)}/mo
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
