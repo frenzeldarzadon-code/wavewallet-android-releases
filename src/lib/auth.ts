@@ -82,7 +82,7 @@ export async function loadAuthContext(): Promise<AuthContext | null> {
   ]);
   if (!profile) return null;
 
-  const order: Role[] = ["super_admin", "admin", "reseller", "customer"];
+  const order: Role[] = ["super_admin", "admin", "reseller", "subreseller", "customer"];
   const role =
     order.find((r) => (roles ?? []).some((x) => x.role === r)) ?? ("customer" as Role);
 

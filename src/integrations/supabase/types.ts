@@ -801,6 +801,7 @@ export type Database = {
           buyer_role: Database["public"]["Enums"]["app_role"]
           created_at: string
           credits_per_point_used: number | null
+          discount_amount: number
           discount_percent: number
           ecosystem_id: string
           id: string
@@ -821,6 +822,7 @@ export type Database = {
           buyer_role: Database["public"]["Enums"]["app_role"]
           created_at?: string
           credits_per_point_used?: number | null
+          discount_amount?: number
           discount_percent?: number
           ecosystem_id: string
           id?: string
@@ -841,6 +843,7 @@ export type Database = {
           buyer_role?: Database["public"]["Enums"]["app_role"]
           created_at?: string
           credits_per_point_used?: number | null
+          discount_amount?: number
           discount_percent?: number
           ecosystem_id?: string
           id?: string
@@ -1159,6 +1162,10 @@ export type Database = {
         Args: { _discount: number; _user_id: string }
         Returns: undefined
       }
+      promote_to_subreseller: {
+        Args: { _discount: number; _user_id: string }
+        Returns: undefined
+      }
       purchase_voucher: {
         Args: { _product_id: string }
         Returns: {
@@ -1326,7 +1333,12 @@ export type Database = {
     }
     Enums: {
       account_status: "active" | "suspended"
-      app_role: "super_admin" | "admin" | "reseller" | "customer"
+      app_role:
+        | "super_admin"
+        | "admin"
+        | "reseller"
+        | "customer"
+        | "subreseller"
       subscription_state:
         | "pending"
         | "awaiting_approval"
@@ -1462,7 +1474,7 @@ export const Constants = {
   public: {
     Enums: {
       account_status: ["active", "suspended"],
-      app_role: ["super_admin", "admin", "reseller", "customer"],
+      app_role: ["super_admin", "admin", "reseller", "customer", "subreseller"],
       subscription_state: [
         "pending",
         "awaiting_approval",

@@ -2,6 +2,7 @@ import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { BarChart3, Gift, LayoutDashboard, ShoppingCart, Users } from "lucide-react";
 import { AppShell, type NavItem } from "@/components/app-shell";
 import { useSession } from "@/lib/session";
+import { roleLabel } from "@/lib/wavewallet";
 
 export const Route = createFileRoute("/reseller")({
   component: ResellerLayout,
@@ -23,7 +24,7 @@ function ResellerLayout() {
       session={session}
       nav={nav}
       title={session.ecosystem.name}
-      subtitle={`Reseller · ${session.account.name}`}
+      subtitle={`${roleLabel(session.account.role)} · ${session.account.name}`}
     >
       <Outlet />
     </AppShell>

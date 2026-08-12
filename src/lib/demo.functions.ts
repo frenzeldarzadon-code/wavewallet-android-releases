@@ -3,7 +3,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 
 const roleSchema = z.object({
-  role: z.enum(["customer", "reseller", "admin", "super_admin"]),
+  role: z.enum(["customer", "reseller", "subreseller", "admin", "super_admin"]),
 });
 
 /** Preview-only: returns one-time credentials for a seeded demo account. */

@@ -31,7 +31,19 @@ export function writeSession(s: Session | null) {
 }
 
 export const homeFor = (role: Role) =>
-  role === "super_admin" ? "/super" : role === "admin" ? "/admin" : role === "reseller" ? "/reseller" : "/app";
+  role === "super_admin"
+    ? "/super"
+    : role === "admin"
+      ? "/admin"
+      : role === "reseller" || role === "subreseller"
+        ? "/reseller"
+        : "/app";
+
+/** Subresellers share the reseller workspace — the database still authorizes every action. */
+const roleSatisfies = (role: Role, required: Role) =>
+  role === required ||
+  role === "super_admin" ||
+  (required === "reseller" && role === "subreseller");
 
 export interface ResolvedSession {
   ready: boolean;
@@ -188,7 +200,7 @@ export function useSession(requiredRole?: Role): ResolvedSession {
       navigate({ to: "/", replace: true });
       return;
     }
-    if (requiredRole && account.role !== requiredRole && account.role !== "super_admin") {
+    if (requiredRole && !roleSatisfies(account.role, requiredRole)) {
       navigate({ to: homeFor(account.role), replace: true });
     }
   }, [ready, account, requiredRole, navigate]);

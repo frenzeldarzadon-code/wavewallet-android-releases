@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { ReportRangePicker } from "@/components/report-range";
 import { useSession } from "@/lib/session";
-import { peso, shortDateTime } from "@/lib/wavewallet";
+import { peso, roleLabel, shortDateTime } from "@/lib/wavewallet";
 import { commissionBreakdown, type CreditEntry } from "@/lib/wallet";
 import {
   csvStamp,
@@ -85,6 +85,8 @@ function ResellerReports() {
     [credits],
   );
   const loadTotal = customerLoads.reduce((s, c) => s + c.amount, 0);
+  // Subresellers never earn commission — their entire earning is the voucher discount margin.
+  const isSubreseller = account?.role === "subreseller";
 
   const exportCsv = () => {
     const csv = toCsv(
@@ -123,8 +125,12 @@ function ResellerReports() {
   return (
     <>
       <PageSection
-        title="My earnings"
-        description={`${resolved.label}. Margins use the discount captured at sale time and commission uses the rate snapshotted on each credit release.`}
+        title={`My earnings${account?.role ? ` · ${roleLabel(account.role)}` : ""}`}
+        description={
+          isSubreseller
+            ? `${resolved.label}. Your earning is the voucher discount captured at purchase time — subresellers do not receive credit commission.`
+            : `${resolved.label}. Margins use the discount captured at sale time and commission uses the rate snapshotted on each credit release.`
+        }
       >
         <ReportRangePicker
           range={range}
@@ -147,12 +153,16 @@ function ResellerReports() {
             value={String(salesTotals.count)}
             hint={`${salesTotals.creditCount} credits · ${salesTotals.pointsCount} points`}
           />
-          <StatCard
-            label="Commission credits"
-            value={peso(creditTotals.commissionBonus)}
-            tone="positive"
-            hint={`${creditTotals.commissionCount} releases`}
-          />
+          {isSubreseller ? (
+            <StatCard label="Commission credits" value="—" hint="Subresellers earn discount only" />
+          ) : (
+            <StatCard
+              label="Commission credits"
+              value={peso(creditTotals.commissionBonus)}
+              tone="positive"
+              hint={`${creditTotals.commissionCount} releases`}
+            />
+          )}
         </div>
         <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="Credits received (base)" value={peso(creditTotals.commissionBase)} />
@@ -172,11 +182,19 @@ function ResellerReports() {
       </PageSection>
 
       <PageSection
-        title="Commission received"
-        description="Bonus credits granted by your shop admin on qualifying credit releases."
+        title={isSubreseller ? "Commission" : "Commission received"}
+        description={
+          isSubreseller
+            ? "Subresellers do not receive credit commission — your margin comes from the voucher discount."
+            : "Bonus credits granted by your shop admin on qualifying credit releases."
+        }
       >
-        {commissionEntries.length === 0 ? (
-          <EmptyState title="No commission credits in this range" />
+        {isSubreseller || commissionEntries.length === 0 ? (
+          <EmptyState
+            title={
+              isSubreseller ? "Commission does not apply to subresellers" : "No commission credits in this range"
+            }
+          />
         ) : (
           <Card className="shadow-[var(--shadow-card)]">
             <CardContent className="divide-y divide-border px-0 py-0">

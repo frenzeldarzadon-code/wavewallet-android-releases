@@ -59,6 +59,7 @@ interface Member {
   balance: number;
   points: number;
   commission: number;
+  discount: number;
 }
 
 function AdminWallets() {
@@ -95,7 +96,7 @@ function AdminWallets() {
       await Promise.all([
         supabase
           .from("profiles")
-          .select("id, full_name, email, phone, status, reseller_commission_percent")
+          .select("id, full_name, email, phone, status, reseller_commission_percent, reseller_discount_percent")
           .eq("ecosystem_id", ecosystemDbId),
         supabase.from("user_roles").select("user_id, role").eq("ecosystem_id", ecosystemDbId),
         supabase.from("credit_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
@@ -118,6 +119,7 @@ function AdminWallets() {
           balance: balBy.get(p.id) ?? 0,
           points: ptsBy.get(p.id) ?? 0,
           commission: Number(p.reseller_commission_percent ?? 0),
+          discount: Number(p.reseller_discount_percent ?? 0),
         }))
         .filter((m) => m.role !== "admin" && m.role !== "super_admin")
         .sort((a, b) => a.full_name.localeCompare(b.full_name)),
@@ -223,10 +225,16 @@ function AdminWallets() {
                       {m.email} · {m.phone || "no mobile"}
                     </p>
                     <div className="mt-1 flex gap-1.5">
-                      <StatusBadge tone={m.role === "reseller" ? "brand" : "muted"}>
+                      <StatusBadge
+                        tone={
+                          m.role === "reseller" ? "brand" : m.role === "subreseller" ? "success" : "muted"
+                        }
+                      >
                         {m.role === "reseller" && m.commission > 0
                           ? `reseller · ${m.commission}% bonus`
-                          : m.role}
+                          : m.role === "subreseller"
+                            ? `subreseller · ${m.discount}% off`
+                            : m.role}
                       </StatusBadge>
                       <StatusBadge tone={m.status === "active" ? "success" : "danger"}>
                         {m.status}
@@ -363,6 +371,12 @@ function AdminWallets() {
                 placeholder="0"
               />
             </div>
+            {mode === "credits" && rate === 0 && target?.role === "subreseller" ? (
+              <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                Subresellers never receive commission — they are credited exactly what you release.
+                Their earning is the {target.discount}% voucher discount.
+              </div>
+            ) : null}
             {mode === "credits" && rate > 0 ? (
               <div className="rounded-lg border border-success/40 bg-success/10 px-3 py-2 text-xs">
                 <p className="font-medium text-success">

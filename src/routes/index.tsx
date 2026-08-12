@@ -52,7 +52,9 @@ function LoginPage() {
    * account in the isolated demo ecosystem and hands back a freshly rotated
    * one-time password. No auth bypass, no shared master credential.
    */
-  const startDemo = async (role: "customer" | "reseller" | "admin" | "super_admin") => {
+  const startDemo = async (
+    role: "customer" | "reseller" | "subreseller" | "admin" | "super_admin",
+  ) => {
     if (demoBusy || busy) return;
     setDemoBusy(role);
     try {
