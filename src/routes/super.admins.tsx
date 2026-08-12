@@ -24,6 +24,12 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { writeSession } from "@/lib/session";
 import { peso, shortDate, statusLabel } from "@/lib/wavewallet";
+import {
+  archiveEcosystem,
+  cleanupStatusLabel,
+  cleanupStatusTone,
+  type CleanupStatus,
+} from "@/lib/ecosystem-cleanup";
 
 type Overview = Database["public"]["Functions"]["platform_overview"]["Returns"][number];
 type Invitation = Database["public"]["Tables"]["admin_invitations"]["Row"];
@@ -80,6 +86,9 @@ function SuperAdmins() {
   const [detail, setDetail] = useState<Overview | null>(null);
   const [inviteFor, setInviteFor] = useState<Overview | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [archiveFor, setArchiveFor] = useState<Overview | null>(null);
+  const [archiveReason, setArchiveReason] = useState("");
+  const [archiving, setArchiving] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -147,6 +156,32 @@ function SuperAdmins() {
     else toast.success(frozen ? "Shop unfrozen" : "Shop frozen — all transactions blocked");
     await load();
   };
+
+  /**
+   * Lifecycle cleanup: archives a shop that has had no business activity for a
+   * year and holds nothing of value. History is preserved for retention.
+   */
+  const confirmArchive = async () => {
+    if (!archiveFor) return;
+    setArchiving(true);
+    try {
+      await archiveEcosystem(archiveFor.id, archiveReason.trim());
+      toast.success(`${archiveFor.name} archived`, {
+        description: "Signup is closed, members are suspended and history is preserved.",
+      });
+      setArchiveFor(null);
+      setArchiveReason("");
+      await load();
+    } catch (err) {
+      toast.error("Could not delete this shop", {
+        description: err instanceof Error ? err.message : "Unexpected error",
+      });
+    } finally {
+      setArchiving(false);
+    }
+  };
+
+
 
 
   const create = async () => {
@@ -269,6 +304,7 @@ function SuperAdmins() {
                       <TableHead>Subscription</TableHead>
                       <TableHead>People</TableHead>
                       <TableHead>Signup</TableHead>
+                      <TableHead>Lifecycle</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -311,6 +347,22 @@ function SuperAdmins() {
                             </p>
                           ) : null}
                         </TableCell>
+                        <TableCell>
+                          <StatusBadge tone={cleanupStatusTone(e.cleanup_status ?? "active")}>
+                            {cleanupStatusLabel[(e.cleanup_status ?? "active") as CleanupStatus] ??
+                              e.cleanup_status}
+                          </StatusBadge>
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            Last activity{" "}
+                            {e.last_activity_at ? shortDate(e.last_activity_at) : "—"}
+                          </p>
+                          {e.archived_at ? (
+                            <p className="text-[11px] text-destructive">
+                              Archived {shortDate(e.archived_at)}
+                              {e.archived_reason ? ` — ${e.archived_reason}` : ""}
+                            </p>
+                          ) : null}
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex flex-wrap justify-end gap-2">
                             <Button size="sm" variant="outline" onClick={() => setDetail(e)}>
@@ -334,7 +386,21 @@ function SuperAdmins() {
                             <Button size="sm" variant="ghost" onClick={() => enter(e.id)}>
                               <Building2 className="size-4" /> Enter
                             </Button>
+                            {e.archived_at ? null : (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => {
+                                  setArchiveFor(e);
+                                  setArchiveReason("");
+                                }}
+                              >
+                                <Trash2 className="size-4" /> Delete
+                              </Button>
+                            )}
                           </div>
+
                         </TableCell>
 
                       </TableRow>
@@ -476,7 +542,60 @@ function SuperAdmins() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!archiveFor} onOpenChange={(o) => !o && setArchiveFor(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete {archiveFor?.name}</DialogTitle>
+            <DialogDescription>
+              The shop is archived, not erased: signup closes, transactions freeze and every
+              member is suspended. Financial and audit history stays under the 1-year retention
+              policy.
+            </DialogDescription>
+          </DialogHeader>
+          {archiveFor && !archiveFor.cleanup_blockers?.length ? (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                No activity since{" "}
+                {archiveFor.last_activity_at ? shortDate(archiveFor.last_activity_at) : "—"} and
+                nothing of value is left in this shop.
+              </p>
+              <div className="space-y-1">
+                <Label htmlFor="archive-reason">Reason (optional)</Label>
+                <Textarea
+                  id="archive-reason"
+                  value={archiveReason}
+                  onChange={(ev) => setArchiveReason(ev.target.value)}
+                  placeholder="Why is this shop being closed?"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+              <p className="text-sm font-medium text-destructive">This shop cannot be deleted yet</p>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                {(archiveFor?.cleanup_blockers ?? []).map((b) => (
+                  <li key={b}>{b}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setArchiveFor(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={archiving || !archiveFor || (archiveFor.cleanup_blockers?.length ?? 0) > 0}
+              onClick={() => void confirmArchive()}
+            >
+              {archiving ? "Deleting…" : "Delete shop"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
+
   );
 }
 
