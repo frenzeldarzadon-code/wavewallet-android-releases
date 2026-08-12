@@ -15,8 +15,11 @@ import { Route as SuperRouteImport } from './routes/super'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
+import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminResellersRouteImport } from './routes/admin.resellers'
 import { Route as AdminRewardsRouteImport } from './routes/admin.rewards'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminSubscriptionRouteImport } from './routes/admin.subscription'
 import { Route as AdminVouchersRouteImport } from './routes/admin.vouchers'
 import { Route as SuperIndexRouteImport } from './routes/super.index'
 import { Route as SuperAdminsRouteImport } from './routes/super.admins'
@@ -54,6 +57,11 @@ const AdminProductsRoute = AdminProductsRouteImport.update({
   path: '/products',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminReportsRoute = AdminReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminResellersRoute = AdminResellersRouteImport.update({
   id: '/resellers',
   path: '/resellers',
@@ -62,6 +70,16 @@ const AdminResellersRoute = AdminResellersRouteImport.update({
 const AdminRewardsRoute = AdminRewardsRouteImport.update({
   id: '/rewards',
   path: '/rewards',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSubscriptionRoute = AdminSubscriptionRouteImport.update({
+  id: '/subscription',
+  path: '/subscription',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminVouchersRoute = AdminVouchersRouteImport.update({
@@ -101,8 +119,11 @@ export interface FileRoutesByFullPath {
   '/super': typeof SuperRouteWithChildren
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/reports': typeof AdminReportsRoute
   '/admin/resellers': typeof AdminResellersRoute
   '/admin/rewards': typeof AdminRewardsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/subscription': typeof AdminSubscriptionRoute
   '/admin/vouchers': typeof AdminVouchersRoute
   '/super/admins': typeof SuperAdminsRoute
   '/super/audit': typeof SuperAuditRoute
@@ -115,8 +136,11 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/reports': typeof AdminReportsRoute
   '/admin/resellers': typeof AdminResellersRoute
   '/admin/rewards': typeof AdminRewardsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/subscription': typeof AdminSubscriptionRoute
   '/admin/vouchers': typeof AdminVouchersRoute
   '/super/admins': typeof SuperAdminsRoute
   '/super/audit': typeof SuperAuditRoute
@@ -132,8 +156,11 @@ export interface FileRoutesById {
   '/super': typeof SuperRouteWithChildren
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/reports': typeof AdminReportsRoute
   '/admin/resellers': typeof AdminResellersRoute
   '/admin/rewards': typeof AdminRewardsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/subscription': typeof AdminSubscriptionRoute
   '/admin/vouchers': typeof AdminVouchersRoute
   '/super/admins': typeof SuperAdminsRoute
   '/super/audit': typeof SuperAuditRoute
@@ -150,8 +177,11 @@ export interface FileRouteTypes {
     | '/super'
     | '/admin/customers'
     | '/admin/products'
+    | '/admin/reports'
     | '/admin/resellers'
     | '/admin/rewards'
+    | '/admin/settings'
+    | '/admin/subscription'
     | '/admin/vouchers'
     | '/super/admins'
     | '/super/audit'
@@ -164,8 +194,11 @@ export interface FileRouteTypes {
     | '/'
     | '/admin/customers'
     | '/admin/products'
+    | '/admin/reports'
     | '/admin/resellers'
     | '/admin/rewards'
+    | '/admin/settings'
+    | '/admin/subscription'
     | '/admin/vouchers'
     | '/super/admins'
     | '/super/audit'
@@ -180,8 +213,11 @@ export interface FileRouteTypes {
     | '/super'
     | '/admin/customers'
     | '/admin/products'
+    | '/admin/reports'
     | '/admin/resellers'
     | '/admin/rewards'
+    | '/admin/settings'
+    | '/admin/subscription'
     | '/admin/vouchers'
     | '/super/admins'
     | '/super/audit'
@@ -241,6 +277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProductsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/reports': {
+      id: '/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AdminReportsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/resellers': {
       id: '/admin/resellers'
       path: '/resellers'
@@ -253,6 +296,20 @@ declare module '@tanstack/react-router' {
       path: '/rewards'
       fullPath: '/admin/rewards'
       preLoaderRoute: typeof AdminRewardsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/subscription': {
+      id: '/admin/subscription'
+      path: '/subscription'
+      fullPath: '/admin/subscription'
+      preLoaderRoute: typeof AdminSubscriptionRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/vouchers': {
@@ -303,8 +360,11 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminCustomersRoute: typeof AdminCustomersRoute
   AdminProductsRoute: typeof AdminProductsRoute
+  AdminReportsRoute: typeof AdminReportsRoute
   AdminResellersRoute: typeof AdminResellersRoute
   AdminRewardsRoute: typeof AdminRewardsRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminSubscriptionRoute: typeof AdminSubscriptionRoute
   AdminVouchersRoute: typeof AdminVouchersRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -312,8 +372,11 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminCustomersRoute: AdminCustomersRoute,
   AdminProductsRoute: AdminProductsRoute,
+  AdminReportsRoute: AdminReportsRoute,
   AdminResellersRoute: AdminResellersRoute,
   AdminRewardsRoute: AdminRewardsRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
+  AdminSubscriptionRoute: AdminSubscriptionRoute,
   AdminVouchersRoute: AdminVouchersRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
