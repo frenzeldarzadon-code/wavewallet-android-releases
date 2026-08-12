@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import { adminAdjustCredits, type CreditEntry } from "@/lib/wallet";
+import { adminAdjustPoints } from "@/lib/rewards";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/wallets")({
