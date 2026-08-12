@@ -275,10 +275,17 @@ export interface CreditFlowSummary {
   commissionReversed: number;
 }
 
+/**
+ * Both legs of a transfer share a transaction id; the receiving leg carries a
+ * `-R` suffix. Normalising it lets us pair debit and credit sides.
+ */
+const txKey = (e: CreditEntry) =>
+  e.tx_id ? e.tx_id.replace(/-R$/, "") : `id:${e.id}`;
+
 export function summariseCreditFlow(entries: CreditEntry[]): CreditFlowSummary {
   const byTx = new Map<string, CreditEntry[]>();
   for (const e of entries) {
-    const key = e.tx_id ?? `id:${e.id}`;
+    const key = txKey(e);
     const list = byTx.get(key);
     if (list) list.push(e);
     else byTx.set(key, [e]);
@@ -313,7 +320,7 @@ export function summariseCreditFlow(entries: CreditEntry[]): CreditFlowSummary {
       out.commissionReversed += e.amount;
       continue;
     }
-    const siblings = byTx.get(e.tx_id ?? `id:${e.id}`) ?? [];
+    const siblings = byTx.get(txKey(e)) ?? [];
     const paired = siblings.some((s) => s.id !== e.id && s.direction !== e.direction);
     if (paired) {
       if (e.direction === "debit") {
