@@ -1703,12 +1703,25 @@ export type Database = {
           unused: number
         }[]
       }
+      admin_update_member_profile: {
+        Args: {
+          _email?: string
+          _full_name?: string
+          _phone?: string
+          _user_id: string
+        }
+        Returns: Json
+      }
       archive_ecosystem: {
         Args: { _ecosystem_id: string; _reason?: string }
         Returns: string
       }
       assert_actor_active: { Args: never; Returns: undefined }
       can_load_credits: {
+        Args: { _actor: string; _target: string }
+        Returns: boolean
+      }
+      can_manage_member_profile: {
         Args: { _actor: string; _target: string }
         Returns: boolean
       }
@@ -2018,6 +2031,10 @@ export type Database = {
           phone: string
         }[]
       }
+      member_email_taken: {
+        Args: { _email: string; _exclude?: string }
+        Returns: boolean
+      }
       months_for_payment: {
         Args: { _amount: number; _rate: number }
         Returns: number
@@ -2252,6 +2269,21 @@ export type Database = {
       sale_commission_rate_for: {
         Args: { _recipient: string }
         Returns: number
+      }
+      search_members: {
+        Args: { _ecosystem_id?: string; _query: string }
+        Returns: {
+          credit_balance: number
+          ecosystem_id: string
+          ecosystem_name: string
+          email: string
+          full_name: string
+          id: string
+          phone: string
+          points_balance: number
+          role: string
+          status: string
+        }[]
       }
       set_ecosystem_commission: {
         Args: { _ecosystem_id: string; _percent: number }
