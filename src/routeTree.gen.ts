@@ -11,6 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SuperRouteImport } from './routes/super'
+import { Route as SuperIndexRouteImport } from './routes/super.index'
+import { Route as SuperAdminsRouteImport } from './routes/super.admins'
+import { Route as SuperAuditRouteImport } from './routes/super.audit'
+import { Route as SuperSettingsRouteImport } from './routes/super.settings'
+import { Route as SuperSubscriptionsRouteImport } from './routes/super.subscriptions'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +27,91 @@ const SuperRoute = SuperRouteImport.update({
   path: '/super',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SuperIndexRoute = SuperIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SuperRoute,
+} as any)
+const SuperAdminsRoute = SuperAdminsRouteImport.update({
+  id: '/admins',
+  path: '/admins',
+  getParentRoute: () => SuperRoute,
+} as any)
+const SuperAuditRoute = SuperAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => SuperRoute,
+} as any)
+const SuperSettingsRoute = SuperSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => SuperRoute,
+} as any)
+const SuperSubscriptionsRoute = SuperSubscriptionsRouteImport.update({
+  id: '/subscriptions',
+  path: '/subscriptions',
+  getParentRoute: () => SuperRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/super': typeof SuperRoute
+  '/super': typeof SuperRouteWithChildren
+  '/super/admins': typeof SuperAdminsRoute
+  '/super/audit': typeof SuperAuditRoute
+  '/super/settings': typeof SuperSettingsRoute
+  '/super/subscriptions': typeof SuperSubscriptionsRoute
+  '/super/': typeof SuperIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/super': typeof SuperRoute
+  '/super/admins': typeof SuperAdminsRoute
+  '/super/audit': typeof SuperAuditRoute
+  '/super/settings': typeof SuperSettingsRoute
+  '/super/subscriptions': typeof SuperSubscriptionsRoute
+  '/super': typeof SuperIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/super': typeof SuperRoute
+  '/super': typeof SuperRouteWithChildren
+  '/super/admins': typeof SuperAdminsRoute
+  '/super/audit': typeof SuperAuditRoute
+  '/super/settings': typeof SuperSettingsRoute
+  '/super/subscriptions': typeof SuperSubscriptionsRoute
+  '/super/': typeof SuperIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/super'
+  fullPaths:
+    | '/'
+    | '/super'
+    | '/super/admins'
+    | '/super/audit'
+    | '/super/settings'
+    | '/super/subscriptions'
+    | '/super/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/super'
-  id: '__root__' | '/' | '/super'
+  to:
+    | '/'
+    | '/super/admins'
+    | '/super/audit'
+    | '/super/settings'
+    | '/super/subscriptions'
+    | '/super'
+  id:
+    | '__root__'
+    | '/'
+    | '/super'
+    | '/super/admins'
+    | '/super/audit'
+    | '/super/settings'
+    | '/super/subscriptions'
+    | '/super/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  SuperRoute: typeof SuperRoute
+  SuperRoute: typeof SuperRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +130,65 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/super/': {
+      id: '/super/'
+      path: '/'
+      fullPath: '/super/'
+      preLoaderRoute: typeof SuperIndexRouteImport
+      parentRoute: typeof SuperRoute
+    }
+    '/super/admins': {
+      id: '/super/admins'
+      path: '/admins'
+      fullPath: '/super/admins'
+      preLoaderRoute: typeof SuperAdminsRouteImport
+      parentRoute: typeof SuperRoute
+    }
+    '/super/audit': {
+      id: '/super/audit'
+      path: '/audit'
+      fullPath: '/super/audit'
+      preLoaderRoute: typeof SuperAuditRouteImport
+      parentRoute: typeof SuperRoute
+    }
+    '/super/settings': {
+      id: '/super/settings'
+      path: '/settings'
+      fullPath: '/super/settings'
+      preLoaderRoute: typeof SuperSettingsRouteImport
+      parentRoute: typeof SuperRoute
+    }
+    '/super/subscriptions': {
+      id: '/super/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/super/subscriptions'
+      preLoaderRoute: typeof SuperSubscriptionsRouteImport
+      parentRoute: typeof SuperRoute
+    }
   }
 }
 
+interface SuperRouteChildren {
+  SuperAdminsRoute: typeof SuperAdminsRoute
+  SuperAuditRoute: typeof SuperAuditRoute
+  SuperSettingsRoute: typeof SuperSettingsRoute
+  SuperSubscriptionsRoute: typeof SuperSubscriptionsRoute
+  SuperIndexRoute: typeof SuperIndexRoute
+}
+
+const SuperRouteChildren: SuperRouteChildren = {
+  SuperAdminsRoute: SuperAdminsRoute,
+  SuperAuditRoute: SuperAuditRoute,
+  SuperSettingsRoute: SuperSettingsRoute,
+  SuperSubscriptionsRoute: SuperSubscriptionsRoute,
+  SuperIndexRoute: SuperIndexRoute,
+}
+
+const SuperRouteWithChildren = SuperRoute._addFileChildren(SuperRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  SuperRoute: SuperRoute,
+  SuperRoute: SuperRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
