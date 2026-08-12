@@ -408,6 +408,7 @@ function AdminCustomers() {
                                 onClick={() => {
                                   setPromoting(c);
                                   setDiscount("10");
+                                  setCommission("20");
                                 }}
                               >
                                 <ShieldCheck className="size-4" /> Make reseller
