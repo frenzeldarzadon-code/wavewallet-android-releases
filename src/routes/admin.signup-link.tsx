@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, Copy, ExternalLink, Link2, QrCode, Share2 } from "lucide-react";
-import { useState } from "react";
+import { Check, Copy, ExternalLink, Link2, Power, RefreshCw, Share2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PageSection, StatusBadge } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
-import { signupPath, signupUrl } from "@/lib/wavewallet-actions";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/admin/signup-link")({
   head: () => ({
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/admin/signup-link")({
       { property: "og:title", content: "Customer Signup Link — WaveWallet Admin" },
       {
         property: "og:description",
-        content: "Copy or share the tenant-specific signup URL for your hotspot shop.",
+        content: "Copy, share, disable or rotate the tenant-specific signup URL for your hotspot shop.",
       },
     ],
   }),
@@ -29,12 +29,33 @@ export const Route = createFileRoute("/admin/signup-link")({
 });
 
 function AdminSignupLink() {
-  const { ecosystem } = useSession("admin");
+  const { ecosystem, ecosystemDbId } = useSession("admin");
   const [copied, setCopied] = useState(false);
+  const [enabled, setEnabled] = useState(true);
+  const [token, setToken] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const refresh = useCallback(async () => {
+    if (!ecosystemDbId) return;
+    const { data } = await supabase
+      .from("ecosystems")
+      .select("signup_enabled, signup_token")
+      .eq("id", ecosystemDbId)
+      .maybeSingle();
+    if (data) {
+      setEnabled(data.signup_enabled);
+      setToken(data.signup_token);
+    }
+  }, [ecosystemDbId]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
   if (!ecosystem) return null;
 
-  const url = signupUrl(ecosystem.slug);
-  const path = signupPath(ecosystem.slug);
+  const path = `/join/${ecosystem.slug}`;
+  const url = `${typeof window === "undefined" ? "https://wavewallet.app" : window.location.origin}${path}`;
 
   const copy = async () => {
     try {
@@ -65,6 +86,38 @@ function AdminSignupLink() {
     }
   };
 
+  const toggle = async () => {
+    if (!ecosystemDbId) return;
+    setBusy(true);
+    const next = !enabled;
+    const { error } = await supabase
+      .from("ecosystems")
+      .update({ signup_enabled: next })
+      .eq("id", ecosystemDbId);
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setEnabled(next);
+    toast.success(next ? "Signup link enabled" : "Signup link disabled");
+  };
+
+  const regenerate = async () => {
+    if (!ecosystemDbId) return;
+    setBusy(true);
+    const { data, error } = await supabase.rpc("regenerate_signup_token", {
+      _ecosystem_id: ecosystemDbId,
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setToken(data ?? "");
+    toast.success("Link key rotated and audit-logged");
+  };
+
   return (
     <>
       <PageSection
@@ -78,7 +131,9 @@ function AdminSignupLink() {
                 <Link2 className="size-4 text-primary" />
                 {ecosystem.name}
               </span>
-              <StatusBadge tone="brand">{path}</StatusBadge>
+              <StatusBadge tone={enabled ? "success" : "danger"}>
+                {enabled ? "Accepting signups" : "Disabled"}
+              </StatusBadge>
             </div>
             <Input readOnly value={url} onFocus={(e) => e.currentTarget.select()} className="font-mono text-xs" />
             <div className="flex flex-wrap gap-2">
@@ -97,9 +152,20 @@ function AdminSignupLink() {
                 </a>
               </Button>
             </div>
+            <div className="flex flex-wrap gap-2 border-t border-border pt-3">
+              <Button variant={enabled ? "destructive" : "default"} size="sm" onClick={toggle} disabled={busy}>
+                <Power className="size-4" />
+                {enabled ? "Disable signups" : "Enable signups"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={regenerate} disabled={busy}>
+                <RefreshCw className="size-4" />
+                Rotate link key
+              </Button>
+            </div>
             <p className="text-xs text-muted-foreground">
-              Post it on {ecosystem.facebookPageName || "your Facebook page"}, print it on receipts,
-              or send it in chat. New signups appear instantly under Customers.
+              Disabling is enforced in the database — a disabled link stops resolving to your shop
+              immediately, and the ecosystem itself stays intact. Current key:{" "}
+              <span className="font-mono">{token.slice(0, 8) || "—"}…</span>
             </p>
           </CardContent>
         </Card>
@@ -114,7 +180,7 @@ function AdminSignupLink() {
               <p className="mt-1 text-xs opacity-90 line-clamp-2">{ecosystem.description}</p>
             </div>
             <div className="space-y-2.5 p-5">
-              {["Full name", "Email", "Mobile number"].map((f) => (
+              {["Full name", "Email", "Mobile number", "Password"].map((f) => (
                 <div key={f} className="space-y-1">
                   <p className="text-[11px] font-medium text-muted-foreground">{f}</p>
                   <div className="h-9 rounded-md border border-border bg-muted/40" />
@@ -125,18 +191,6 @@ function AdminSignupLink() {
                 Creates a customer account in {ecosystem.name}
               </p>
             </div>
-          </CardContent>
-        </Card>
-      </PageSection>
-
-      <PageSection title="Later" description="Planned once Cloud is enabled.">
-        <Card className="shadow-[var(--shadow-card)]">
-          <CardContent className="flex items-start gap-3">
-            <QrCode className="mt-0.5 size-5 text-primary" />
-            <p className="text-sm text-muted-foreground">
-              Printable QR poster, per-reseller referral links and signup analytics will attach to
-              this same tenant-scoped URL.
-            </p>
           </CardContent>
         </Card>
       </PageSection>
