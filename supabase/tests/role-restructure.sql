@@ -4,7 +4,10 @@
 -- touches the demo-preview ecosystem. No production membership, wallet, ledger,
 -- sale or audit row is created or modified by this script.
 --
---   BEGIN; \i supabase/tests/role-restructure.sql ROLLBACK;
+-- The whole scenario runs inside a PL/pgSQL sub-block that is always aborted at
+-- the end, so every change it makes is discarded automatically:
+--
+--   \i supabase/tests/role-restructure.sql
 --
 -- Expectations:
 --   1. reseller with no children demotes successfully (parent required)
@@ -21,8 +24,6 @@
 --  12. admin and super_admin roles are protected, customers are out of scope
 --  13. a reason is mandatory
 
-BEGIN;
-
 DO $$
 DECLARE
   _eco uuid := '8b4fc15e-f6b3-444b-89f6-51a145fe874f';  -- demo ecosystem
@@ -34,6 +35,7 @@ DECLARE
   _bal numeric; _pts int; _sub_bal numeric; _sub_pts int; _r2_bal numeric;
   _n int; _sale uuid := gen_random_uuid();
 BEGIN
+ BEGIN  -- everything below is rolled back when this sub-block aborts
   SELECT ur.user_id INTO _admin FROM public.user_roles ur
    WHERE ur.role = 'admin' AND ur.ecosystem_id = _eco LIMIT 1;
   IF _admin IS NULL THEN RAISE EXCEPTION 'FAIL: demo ecosystem has no admin'; END IF;
@@ -218,7 +220,12 @@ BEGIN
        AND jsonb_array_length(metadata->'reassigned_children') = 1)
   THEN RAISE EXCEPTION 'FAIL: audit metadata incomplete'; END IF;
 
-  RAISE NOTICE 'ALL ROLE RESTRUCTURE TESTS PASSED';
+  RAISE EXCEPTION 'ROLE_RESTRUCTURE_TESTS_OK';
+ EXCEPTION WHEN others THEN
+   IF SQLERRM = 'ROLE_RESTRUCTURE_TESTS_OK' THEN
+     RAISE NOTICE 'ALL ROLE RESTRUCTURE TESTS PASSED (all fixture changes rolled back)';
+   ELSE
+     RAISE;
+   END IF;
+ END;
 END $$;
-
-ROLLBACK;
