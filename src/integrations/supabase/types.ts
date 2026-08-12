@@ -1540,6 +1540,15 @@ export type Database = {
           promo_price: number
         }[]
       }
+      list_signup_ecosystems: {
+        Args: never
+        Returns: {
+          description: string
+          id: string
+          name: string
+          slug: string
+        }[]
+      }
       lookup_redemption: {
         Args: { _code: string }
         Returns: {
