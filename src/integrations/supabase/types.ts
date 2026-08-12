@@ -1326,7 +1326,12 @@ export type Database = {
     }
     Enums: {
       account_status: "active" | "suspended"
-      app_role: "super_admin" | "admin" | "reseller" | "customer"
+      app_role:
+        | "super_admin"
+        | "admin"
+        | "reseller"
+        | "customer"
+        | "subreseller"
       subscription_state:
         | "pending"
         | "awaiting_approval"
@@ -1462,7 +1467,7 @@ export const Constants = {
   public: {
     Enums: {
       account_status: ["active", "suspended"],
-      app_role: ["super_admin", "admin", "reseller", "customer"],
+      app_role: ["super_admin", "admin", "reseller", "customer", "subreseller"],
       subscription_state: [
         "pending",
         "awaiting_approval",
