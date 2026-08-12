@@ -24,12 +24,9 @@ describe("per-ecosystem monthly duration rule", () => {
   });
 
   it("rejects short, zero and unusable amounts", () => {
-    expect(monthsForPayment(100, 150).ok === false && monthsForPayment(100, 150)).toMatchObject({
-      ok: false,
-    });
-    expect(monthsForPayment(100, 150).ok === false ? monthsForPayment(100, 150).error : "").toMatch(
-      /Insufficient/,
-    );
+    const short = monthsForPayment(100, 150);
+    expect(short.ok).toBe(false);
+    expect(short.ok === false && short.error).toMatch(/Insufficient/);
     expect(monthsForPayment(0, 150).ok).toBe(false);
     expect(monthsForPayment(-150, 150).ok).toBe(false);
     expect(monthsForPayment(150, 0).ok).toBe(false);
