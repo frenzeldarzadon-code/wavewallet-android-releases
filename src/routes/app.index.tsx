@@ -1,160 +1,151 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Facebook, Gift, Send, ShoppingBag, Sparkles, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, History, Send, ShoppingBag, Wallet } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { PageSection, StatusBadge } from "@/components/ui-kit";
+import { EmptyState, PageSection, StatCard } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
-import { getAccount, ledgerFor, peso, redemptionsIn, shortDateTime } from "@/lib/wavewallet";
+import { peso, shortDateTime } from "@/lib/wavewallet";
+import { fetchCreditBalance, fetchCreditLedger, type CreditEntry } from "@/lib/wallet";
 
 export const Route = createFileRoute("/app/")({
   head: () => ({
     meta: [
       { title: "My Wallet — WaveWallet" },
-      { name: "description", content: "Your credit wallet, points balance, recent transactions and quick actions." },
+      {
+        name: "description",
+        content:
+          "Your closed-loop credit wallet: live balance, credit loads, transfers and voucher purchases with transaction IDs.",
+      },
       { property: "og:title", content: "My Wallet — WaveWallet" },
-      { property: "og:description", content: "Your credit wallet, points balance, recent transactions and quick actions." },
+      {
+        property: "og:description",
+        content: "Live credit balance, loads, transfers and voucher purchases in one place.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: CustomerHome,
+  component: CustomerWallet,
 });
 
-function CustomerHome() {
+function CustomerWallet() {
   const { account, ecosystem } = useSession("customer");
+  const [balance, setBalance] = useState(0);
+  const [entries, setEntries] = useState<CreditEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const userId = account?.id ?? null;
+
+  const load = useCallback(async () => {
+    if (!userId) return;
+    setLoading(true);
+    const [b, l] = await Promise.all([fetchCreditBalance(userId), fetchCreditLedger(userId, 25)]);
+    setBalance(b);
+    setEntries(l);
+    setLoading(false);
+  }, [userId]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
   if (!account || !ecosystem) return null;
 
-  const entries = ledgerFor(account.id);
-  const pending = redemptionsIn(ecosystem.id).filter(
-    (r) => r.accountId === account.id && r.status === "pending",
-  );
-  const reseller = account.resellerId ? getAccount(account.resellerId) : null;
+  const loadsIn = entries.filter((e) => e.direction === "credit");
 
   return (
     <>
-      <div className="mb-5 grid gap-3 sm:grid-cols-2">
-        <Card className="credit-gradient border-0 text-primary-foreground shadow-[var(--shadow-float)]">
-          <CardContent className="space-y-1">
-            <div className="flex items-center justify-between">
-              <p className="text-xs opacity-85">Credit wallet</p>
-              <Wallet className="size-4 opacity-80" />
-            </div>
-            <p className="text-3xl font-semibold tracking-tight">{peso(account.creditBalance)}</p>
-            <p className="text-[11px] opacity-80">
-              Usable inside {ecosystem.name} only · not withdrawable
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="surface-gradient border-0 text-primary-foreground shadow-[var(--shadow-float)]">
-          <CardContent className="space-y-1">
-            <div className="flex items-center justify-between">
-              <p className="text-xs opacity-85">Points</p>
-              <Sparkles className="size-4 opacity-80" />
-            </div>
-            <p className="text-3xl font-semibold tracking-tight">{account.pointsBalance}</p>
-            <p className="text-[11px] opacity-80">
-              {account.pointsHeld ? `${account.pointsHeld} pts on hold · ` : ""}₱{ecosystem.pointsPerPeso} spend = 1 point
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <PageSection>
-        <div className="grid grid-cols-3 gap-3">
-          <QuickAction to="/app/shop" label="Buy voucher" icon={ShoppingBag} />
-          <QuickAction to="/app/transfer" label="Send credits" icon={Send} />
-          <QuickAction to="/app/rewards" label="Rewards" icon={Gift} />
+      <PageSection title="My wallet" description={`Closed-loop credits inside ${ecosystem.name}.`}>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <StatCard
+            label="Credit balance"
+            value={peso(balance)}
+            hint="Validated against your ledger"
+            icon={Wallet}
+            tone="positive"
+          />
+          <StatCard
+            label="Credits received"
+            value={peso(loadsIn.reduce((s, e) => s + e.amount, 0))}
+            hint={`${loadsIn.length} incoming entries`}
+            icon={ArrowDownLeft}
+            tone="brand"
+          />
+          <StatCard
+            label="Recent movements"
+            value={String(entries.length)}
+            hint="Latest 25 ledger rows"
+            icon={History}
+          />
         </div>
       </PageSection>
 
-      {pending.length ? (
-        <PageSection title="Pending redemption" description="Show this code to a reseller or the admin.">
-          {pending.map((r) => (
-            <Card key={r.id} className="shadow-[var(--shadow-card)]">
-              <CardContent className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="font-medium">{r.rewardName}</p>
-                  <p className="font-mono text-xs text-muted-foreground">{r.code}</p>
-                </div>
-                <StatusBadge tone="warning">{r.pointsHeld} pts on hold</StatusBadge>
-              </CardContent>
-            </Card>
-          ))}
-        </PageSection>
-      ) : null}
-
-      <PageSection
-        title="Recent transactions"
-        action={
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/app/history">See all</Link>
+      <PageSection>
+        <div className="grid gap-2 sm:grid-cols-3">
+          <Button asChild>
+            <Link to="/app/shop">
+              <ShoppingBag className="size-4" /> Buy a voucher
+            </Link>
           </Button>
-        }
-      >
-        <Card className="shadow-[var(--shadow-card)]">
-          <CardContent className="divide-y divide-border px-0 py-0">
-            {entries.slice(0, 6).map((t) => (
-              <div key={t.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
-                    {t.productName ?? t.kind.replaceAll("_", " ")}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {t.counterpartyName ? `${t.counterpartyName} · ` : ""}
-                    {shortDateTime(t.createdAt)}
-                  </p>
-                </div>
-                <p className={t.amount < 0 ? "text-sm font-medium text-destructive" : "text-sm font-medium text-success"}>
-                  {t.amount < 0 ? "−" : "+"}
-                  {t.method === "points" ? `${Math.abs(t.amount)} pts` : peso(t.amount)}
-                </p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+          <Button asChild variant="outline">
+            <Link to="/app/transfer">
+              <Send className="size-4" /> Send credits
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/app/history">
+              <History className="size-4" /> Full history
+            </Link>
+          </Button>
+        </div>
       </PageSection>
 
-      <Card className="shadow-[var(--shadow-card)]">
-        <CardContent className="space-y-3">
-          <div className="flex items-start gap-2">
-            <Facebook className="mt-0.5 size-4 text-primary" />
-            <div>
-              <p className="text-sm font-medium">{ecosystem.facebookPageName}</p>
-              <p className="text-xs text-muted-foreground">{ecosystem.facebookSupportMessage}</p>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs text-muted-foreground">
-              {reseller ? `Your reseller: ${reseller.name}` : "You buy directly from the admin"}
-            </p>
-            <Button asChild variant="outline" size="sm">
-              <a href={ecosystem.facebookPageUrl} target="_blank" rel="noreferrer">
-                Get help
-              </a>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </>
-  );
-}
+      <PageSection title="Recent credit activity" description="Every entry carries a transaction ID.">
+        {loading ? (
+          <EmptyState title="Loading your wallet…" />
+        ) : entries.length === 0 ? (
+          <EmptyState
+            title="No credit movements yet"
+            description="Ask your shop admin or reseller to load credits into your wallet."
+          />
+        ) : (
+          <Card className="shadow-[var(--shadow-card)]">
+            <CardContent className="divide-y divide-border px-0 py-0">
+              {entries.map((e) => (
+                <div key={e.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{e.reason}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {shortDateTime(e.created_at)} · {e.tx_id ?? "—"}
+                      {e.reference ? ` · ${e.reference}` : ""}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p
+                      className={
+                        e.direction === "credit"
+                          ? "text-sm font-semibold text-success"
+                          : "text-sm font-semibold text-destructive"
+                      }
+                    >
+                      {e.direction === "credit" ? "+" : "−"}
+                      {peso(e.amount)}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Bal {peso(e.balance_after)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+      </PageSection>
 
-function QuickAction({
-  to,
-  label,
-  icon: Icon,
-}: {
-  to: "/app/shop" | "/app/transfer" | "/app/rewards";
-  label: string;
-  icon: typeof Gift;
-}) {
-  return (
-    <Link
-      to={to}
-      className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card px-2 py-4 text-center transition-colors hover:border-primary/40 hover:bg-accent"
-    >
-      <span className="flex size-9 items-center justify-center rounded-lg bg-brand-soft text-accent-foreground">
-        <Icon className="size-4.5" />
-      </span>
-      <span className="text-xs font-medium">{label}</span>
-    </Link>
+      <p className="flex items-center gap-2 text-[11px] text-muted-foreground">
+        <ArrowUpRight className="size-3.5" />
+        Credits are shop credits only — they cannot be cashed out or transferred to another shop.
+      </p>
+    </>
   );
 }
