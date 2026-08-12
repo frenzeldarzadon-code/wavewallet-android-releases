@@ -27,9 +27,7 @@ import { useSession } from "@/lib/session";
 import { supabase } from "@/integrations/supabase/client";
 import { peso, roleLabel, shortDate, shortDateTime, type Role } from "@/lib/wavewallet";
 import {
-  fetchEcosystemCommission,
   fetchEcosystemSaleCommission,
-  setResellerCommission,
   setSaleCommission,
   setSubresellerParent,
   type SaleCommissionDefaults,
@@ -97,14 +95,11 @@ function AdminCustomers() {
   const [detail, setDetail] = useState<Member | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
   const [discount, setDiscount] = useState("10");
-  const [commission, setCommission] = useState("20");
   const [creditBack, setCreditBack] = useState("10");
-  const [defaultCommission, setDefaultCommission] = useState(0);
   const [saleDefaults, setSaleDefaults] = useState<SaleCommissionDefaults>({
     reseller: 0,
     subreseller: 0,
   });
-  const [editingCommission, setEditingCommission] = useState<Member | null>(null);
   const [editingCreditBack, setEditingCreditBack] = useState<Member | null>(null);
   const [editingOwner, setEditingOwner] = useState<Member | null>(null);
   const [busy, setBusy] = useState(false);
@@ -150,14 +145,10 @@ function AdminCustomers() {
     void load();
   }, [load]);
 
-  // Shop-wide defaults: credit-loading commission and sales credit-back are
-  // configured separately, so changing one never moves the other.
+  // Shop-wide sales commission defaults. Credit transfers pay nothing, so the
+  // old loading-commission default no longer exists.
   useEffect(() => {
     if (!ecosystemDbId) return;
-    void fetchEcosystemCommission(ecosystemDbId).then((v) => {
-      setDefaultCommission(v);
-      setCommission(String(v));
-    });
     void fetchEcosystemSaleCommission(ecosystemDbId).then(setSaleDefaults);
   }, [ecosystemDbId]);
 
@@ -267,26 +258,6 @@ function AdminCustomers() {
     toast.success("Discount updated — applies to future voucher purchases only.");
     setEditing(null);
     void load();
-  };
-
-  const confirmCommission = async () => {
-    if (!editingCommission) return;
-    const value = Number(commission);
-    if (Number.isNaN(value) || value < 0 || value > MAX_COMMISSION) {
-      toast.error(`Commission must be between 0% and ${MAX_COMMISSION}%.`);
-      return;
-    }
-    setBusy(true);
-    try {
-      await setResellerCommission(editingCommission.id, value);
-      toast.success("Commission updated — applies to future credit releases only.");
-      setEditingCommission(null);
-      void load();
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
   };
 
   const confirmCreditBack = async () => {
@@ -534,7 +505,6 @@ function AdminCustomers() {
                                   setPromoteTo("reseller");
                                   setParentId("");
                                   setDiscount("10");
-                                  setCommission("20");
                                 }}
                               >
                                 <ShieldCheck className="size-4" /> Promote
