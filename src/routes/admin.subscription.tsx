@@ -126,7 +126,7 @@ function AdminSubscription() {
               </div>
             </dl>
             {pending ? (
-              <p className="flex items-start gap-2 rounded-lg bg-warning-soft px-3 py-2 text-xs text-warning-foreground">
+              <p className="flex items-start gap-2 rounded-lg bg-warning/15 px-3 py-2 text-xs text-warning-foreground">
                 <Clock className="mt-0.5 size-3.5 shrink-0" />
                 Payment {pending.payment_reference} is awaiting approval. Restricted operator tools stay
                 locked until it is approved.
