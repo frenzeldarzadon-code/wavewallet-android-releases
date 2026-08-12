@@ -1222,6 +1222,44 @@ export type Database = {
           },
         ]
       }
+      test_data_resets: {
+        Row: {
+          actor_id: string | null
+          actor_name: string
+          counts: Json
+          created_at: string
+          ecosystem_id: string
+          id: string
+          reason: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_name: string
+          counts?: Json
+          created_at?: string
+          ecosystem_id: string
+          id?: string
+          reason: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_name?: string
+          counts?: Json
+          created_at?: string
+          ecosystem_id?: string
+          id?: string
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_data_resets_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -2066,6 +2104,10 @@ export type Database = {
       reseller_load_credits: {
         Args: { _amount: number; _customer_id: string; _reference?: string }
         Returns: string
+      }
+      reset_ecosystem_test_data: {
+        Args: { _dry_run?: boolean; _ecosystem_id: string; _reason: string }
+        Returns: Json
       }
       restructure_member_role: {
         Args: {
