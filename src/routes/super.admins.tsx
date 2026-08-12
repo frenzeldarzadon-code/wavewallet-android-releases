@@ -293,7 +293,12 @@ function SuperAdmins() {
                         <TableCell className="text-sm">
                           <p>{e.admin_count} admin{Number(e.admin_count) === 1 ? "" : "s"}</p>
                           <p className="text-xs text-muted-foreground">
-                            {e.member_count} members · {e.reseller_count} resellers
+                            {e.member_count} members · {e.reseller_count} resellers ·{" "}
+                            {e.subreseller_count} subresellers · {e.customer_count} customers
+                            {Number(e.suspended_customer_count) > 0
+                              ? ` (${e.suspended_customer_count} suspended)`
+                              : ""}
+
                           </p>
                         </TableCell>
                         <TableCell>

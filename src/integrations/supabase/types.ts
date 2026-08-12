@@ -630,6 +630,9 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
           ecosystem_id: string | null
           email: string
           full_name: string
@@ -646,6 +649,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           ecosystem_id?: string | null
           email?: string
           full_name?: string
@@ -662,6 +668,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           ecosystem_id?: string | null
           email?: string
           full_name?: string
@@ -1420,6 +1429,14 @@ export type Database = {
         Args: { _recipient: string; _sender: string }
         Returns: number
       }
+      countable_members: {
+        Args: { _ecosystem_id: string }
+        Returns: {
+          role: Database["public"]["Enums"]["app_role"]
+          status: Database["public"]["Enums"]["account_status"]
+          user_id: string
+        }[]
+      }
       create_ecosystem: {
         Args: {
           _contact_email?: string
@@ -1474,6 +1491,17 @@ export type Database = {
         }
       }
       current_ecosystem: { Args: { _user_id: string }; Returns: string }
+      customer_deletion_check: {
+        Args: { _user_id: string }
+        Returns: {
+          blockers: string[]
+          eligible: boolean
+        }[]
+      }
+      delete_customer_account: {
+        Args: { _reason?: string; _user_id: string }
+        Returns: undefined
+      }
       earnings_history: {
         Args: {
           _ecosystem?: string
@@ -1504,12 +1532,15 @@ export type Database = {
       ecosystem_dashboard: {
         Args: { _ecosystem_id: string }
         Returns: {
+          admin_count: number
           credits_outstanding: number
           customer_count: number
           member_count: number
           points_outstanding: number
           reseller_count: number
+          subreseller_count: number
           suspended_count: number
+          suspended_customer_count: number
         }[]
       }
       expire_stale_invitations: { Args: never; Returns: undefined }
@@ -1675,6 +1706,7 @@ export type Database = {
           contact_phone: string
           created_at: string
           current_period_end: string
+          customer_count: number
           description: string
           frozen_reason: string
           grace_period_days: number
@@ -1691,7 +1723,9 @@ export type Database = {
           signup_token: string
           slug: string
           submitted_at: string
+          subreseller_count: number
           subscription_state: Database["public"]["Enums"]["subscription_state"]
+          suspended_customer_count: number
         }[]
       }
       promote_to_reseller: {
