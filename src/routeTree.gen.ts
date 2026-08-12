@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as ResellerRouteImport } from './routes/reseller'
 import { Route as SuperRouteImport } from './routes/super'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -22,8 +23,11 @@ import { Route as AdminRewardsRouteImport } from './routes/admin.rewards'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminSubscriptionRouteImport } from './routes/admin.subscription'
 import { Route as AdminVouchersRouteImport } from './routes/admin.vouchers'
+import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as ResellerIndexRouteImport } from './routes/reseller.index'
 import { Route as ResellerCustomersRouteImport } from './routes/reseller.customers'
+import { Route as ResellerRedemptionsRouteImport } from './routes/reseller.redemptions'
+import { Route as ResellerReportsRouteImport } from './routes/reseller.reports'
 import { Route as ResellerShopRouteImport } from './routes/reseller.shop'
 import { Route as SuperIndexRouteImport } from './routes/super.index'
 import { Route as SuperAdminsRouteImport } from './routes/super.admins'
@@ -39,6 +43,11 @@ const IndexRoute = IndexRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResellerRoute = ResellerRouteImport.update({
@@ -96,6 +105,11 @@ const AdminVouchersRoute = AdminVouchersRouteImport.update({
   path: '/vouchers',
   getParentRoute: () => AdminRoute,
 } as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
 const ResellerIndexRoute = ResellerIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -104,6 +118,16 @@ const ResellerIndexRoute = ResellerIndexRouteImport.update({
 const ResellerCustomersRoute = ResellerCustomersRouteImport.update({
   id: '/customers',
   path: '/customers',
+  getParentRoute: () => ResellerRoute,
+} as any)
+const ResellerRedemptionsRoute = ResellerRedemptionsRouteImport.update({
+  id: '/redemptions',
+  path: '/redemptions',
+  getParentRoute: () => ResellerRoute,
+} as any)
+const ResellerReportsRoute = ResellerReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => ResellerRoute,
 } as any)
 const ResellerShopRoute = ResellerShopRouteImport.update({
@@ -140,6 +164,7 @@ const SuperSubscriptionsRoute = SuperSubscriptionsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/app': typeof AppRouteWithChildren
   '/reseller': typeof ResellerRouteWithChildren
   '/super': typeof SuperRouteWithChildren
   '/admin/customers': typeof AdminCustomersRoute
@@ -151,12 +176,15 @@ export interface FileRoutesByFullPath {
   '/admin/subscription': typeof AdminSubscriptionRoute
   '/admin/vouchers': typeof AdminVouchersRoute
   '/reseller/customers': typeof ResellerCustomersRoute
+  '/reseller/redemptions': typeof ResellerRedemptionsRoute
+  '/reseller/reports': typeof ResellerReportsRoute
   '/reseller/shop': typeof ResellerShopRoute
   '/super/admins': typeof SuperAdminsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
   '/admin/': typeof AdminIndexRoute
+  '/app/': typeof AppIndexRoute
   '/reseller/': typeof ResellerIndexRoute
   '/super/': typeof SuperIndexRoute
 }
@@ -171,12 +199,15 @@ export interface FileRoutesByTo {
   '/admin/subscription': typeof AdminSubscriptionRoute
   '/admin/vouchers': typeof AdminVouchersRoute
   '/reseller/customers': typeof ResellerCustomersRoute
+  '/reseller/redemptions': typeof ResellerRedemptionsRoute
+  '/reseller/reports': typeof ResellerReportsRoute
   '/reseller/shop': typeof ResellerShopRoute
   '/super/admins': typeof SuperAdminsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
   '/admin': typeof AdminIndexRoute
+  '/app': typeof AppIndexRoute
   '/reseller': typeof ResellerIndexRoute
   '/super': typeof SuperIndexRoute
 }
@@ -184,6 +215,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/app': typeof AppRouteWithChildren
   '/reseller': typeof ResellerRouteWithChildren
   '/super': typeof SuperRouteWithChildren
   '/admin/customers': typeof AdminCustomersRoute
@@ -195,12 +227,15 @@ export interface FileRoutesById {
   '/admin/subscription': typeof AdminSubscriptionRoute
   '/admin/vouchers': typeof AdminVouchersRoute
   '/reseller/customers': typeof ResellerCustomersRoute
+  '/reseller/redemptions': typeof ResellerRedemptionsRoute
+  '/reseller/reports': typeof ResellerReportsRoute
   '/reseller/shop': typeof ResellerShopRoute
   '/super/admins': typeof SuperAdminsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
   '/admin/': typeof AdminIndexRoute
+  '/app/': typeof AppIndexRoute
   '/reseller/': typeof ResellerIndexRoute
   '/super/': typeof SuperIndexRoute
 }
@@ -209,6 +244,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/app'
     | '/reseller'
     | '/super'
     | '/admin/customers'
@@ -220,12 +256,15 @@ export interface FileRouteTypes {
     | '/admin/subscription'
     | '/admin/vouchers'
     | '/reseller/customers'
+    | '/reseller/redemptions'
+    | '/reseller/reports'
     | '/reseller/shop'
     | '/super/admins'
     | '/super/audit'
     | '/super/settings'
     | '/super/subscriptions'
     | '/admin/'
+    | '/app/'
     | '/reseller/'
     | '/super/'
   fileRoutesByTo: FileRoutesByTo
@@ -240,18 +279,22 @@ export interface FileRouteTypes {
     | '/admin/subscription'
     | '/admin/vouchers'
     | '/reseller/customers'
+    | '/reseller/redemptions'
+    | '/reseller/reports'
     | '/reseller/shop'
     | '/super/admins'
     | '/super/audit'
     | '/super/settings'
     | '/super/subscriptions'
     | '/admin'
+    | '/app'
     | '/reseller'
     | '/super'
   id:
     | '__root__'
     | '/'
     | '/admin'
+    | '/app'
     | '/reseller'
     | '/super'
     | '/admin/customers'
@@ -263,12 +306,15 @@ export interface FileRouteTypes {
     | '/admin/subscription'
     | '/admin/vouchers'
     | '/reseller/customers'
+    | '/reseller/redemptions'
+    | '/reseller/reports'
     | '/reseller/shop'
     | '/super/admins'
     | '/super/audit'
     | '/super/settings'
     | '/super/subscriptions'
     | '/admin/'
+    | '/app/'
     | '/reseller/'
     | '/super/'
   fileRoutesById: FileRoutesById
@@ -276,6 +322,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
+  AppRoute: typeof AppRouteWithChildren
   ResellerRoute: typeof ResellerRouteWithChildren
   SuperRoute: typeof SuperRouteWithChildren
 }
@@ -294,6 +341,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reseller': {
@@ -373,6 +427,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminVouchersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/reseller/': {
       id: '/reseller/'
       path: '/'
@@ -385,6 +446,20 @@ declare module '@tanstack/react-router' {
       path: '/customers'
       fullPath: '/reseller/customers'
       preLoaderRoute: typeof ResellerCustomersRouteImport
+      parentRoute: typeof ResellerRoute
+    }
+    '/reseller/redemptions': {
+      id: '/reseller/redemptions'
+      path: '/redemptions'
+      fullPath: '/reseller/redemptions'
+      preLoaderRoute: typeof ResellerRedemptionsRouteImport
+      parentRoute: typeof ResellerRoute
+    }
+    '/reseller/reports': {
+      id: '/reseller/reports'
+      path: '/reports'
+      fullPath: '/reseller/reports'
+      preLoaderRoute: typeof ResellerReportsRouteImport
       parentRoute: typeof ResellerRoute
     }
     '/reseller/shop': {
@@ -458,14 +533,28 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface AppRouteChildren {
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 interface ResellerRouteChildren {
   ResellerCustomersRoute: typeof ResellerCustomersRoute
+  ResellerRedemptionsRoute: typeof ResellerRedemptionsRoute
+  ResellerReportsRoute: typeof ResellerReportsRoute
   ResellerShopRoute: typeof ResellerShopRoute
   ResellerIndexRoute: typeof ResellerIndexRoute
 }
 
 const ResellerRouteChildren: ResellerRouteChildren = {
   ResellerCustomersRoute: ResellerCustomersRoute,
+  ResellerRedemptionsRoute: ResellerRedemptionsRoute,
+  ResellerReportsRoute: ResellerReportsRoute,
   ResellerShopRoute: ResellerShopRoute,
   ResellerIndexRoute: ResellerIndexRoute,
 }
@@ -495,6 +584,7 @@ const SuperRouteWithChildren = SuperRoute._addFileChildren(SuperRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
+  AppRoute: AppRouteWithChildren,
   ResellerRoute: ResellerRouteWithChildren,
   SuperRoute: SuperRouteWithChildren,
 }
