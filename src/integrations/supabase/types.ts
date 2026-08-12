@@ -333,6 +333,8 @@ export type Database = {
           credits_per_point: number
           current_period_end: string | null
           default_commission_percent: number
+          default_sale_commission_percent: number
+          default_subreseller_sale_commission_percent: number
           description: string | null
           grace_period_days: number
           id: string
@@ -358,6 +360,8 @@ export type Database = {
           credits_per_point?: number
           current_period_end?: string | null
           default_commission_percent?: number
+          default_sale_commission_percent?: number
+          default_subreseller_sale_commission_percent?: number
           description?: string | null
           grace_period_days?: number
           id?: string
@@ -383,6 +387,8 @@ export type Database = {
           credits_per_point?: number
           current_period_end?: string | null
           default_commission_percent?: number
+          default_sale_commission_percent?: number
+          default_subreseller_sale_commission_percent?: number
           description?: string | null
           grace_period_days?: number
           id?: string
@@ -585,6 +591,7 @@ export type Database = {
           reseller_commission_percent: number | null
           reseller_discount_percent: number
           reseller_id: string | null
+          sale_commission_percent: number | null
           status: Database["public"]["Enums"]["account_status"]
           updated_at: string
         }
@@ -599,6 +606,7 @@ export type Database = {
           reseller_commission_percent?: number | null
           reseller_discount_percent?: number
           reseller_id?: string | null
+          sale_commission_percent?: number | null
           status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
         }
@@ -613,6 +621,7 @@ export type Database = {
           reseller_commission_percent?: number | null
           reseller_discount_percent?: number
           reseller_id?: string | null
+          sale_commission_percent?: number | null
           status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
         }
@@ -1188,6 +1197,7 @@ export type Database = {
           ecosystem_id: string
           id: string
           list_price: number
+          parent_reseller_id: string | null
           payment_method: string
           points_earned: number
           points_price: number | null
@@ -1214,6 +1224,7 @@ export type Database = {
           ecosystem_id: string
           id?: string
           list_price: number
+          parent_reseller_id?: string | null
           payment_method?: string
           points_earned?: number
           points_price?: number | null
@@ -1240,6 +1251,7 @@ export type Database = {
           ecosystem_id?: string
           id?: string
           list_price?: number
+          parent_reseller_id?: string | null
           payment_method?: string
           points_earned?: number
           points_price?: number | null
@@ -1323,6 +1335,10 @@ export type Database = {
           unused: number
         }[]
       }
+      can_load_credits: {
+        Args: { _actor: string; _target: string }
+        Returns: boolean
+      }
       commission_rate_for: {
         Args: { _recipient: string; _sender: string }
         Returns: number
@@ -1346,6 +1362,8 @@ export type Database = {
           credits_per_point: number
           current_period_end: string | null
           default_commission_percent: number
+          default_sale_commission_percent: number
+          default_subreseller_sale_commission_percent: number
           description: string | null
           grace_period_days: number
           id: string
@@ -1559,7 +1577,11 @@ export type Database = {
         Returns: undefined
       }
       promote_to_subreseller: {
-        Args: { _discount: number; _user_id: string }
+        Args: {
+          _discount: number
+          _parent_reseller_id?: string
+          _user_id: string
+        }
         Returns: undefined
       }
       purchase_voucher: {
@@ -1690,6 +1712,14 @@ export type Database = {
         Args: { _ecosystem_id: string; _percent: number }
         Returns: number
       }
+      set_ecosystem_sale_commission: {
+        Args: {
+          _ecosystem_id: string
+          _reseller_percent: number
+          _subreseller_percent: number
+        }
+        Returns: undefined
+      }
       set_member_status: {
         Args: {
           _status: Database["public"]["Enums"]["account_status"]
@@ -1707,6 +1737,14 @@ export type Database = {
       }
       set_reseller_discount: {
         Args: { _discount: number; _user_id: string }
+        Returns: undefined
+      }
+      set_sale_commission: {
+        Args: { _percent: number; _user_id: string }
+        Returns: undefined
+      }
+      set_subreseller_parent: {
+        Args: { _reseller_id: string; _user_id: string }
         Returns: undefined
       }
       slugify: { Args: { _value: string }; Returns: string }
@@ -1768,6 +1806,8 @@ export type Database = {
           credits_per_point: number
           current_period_end: string | null
           default_commission_percent: number
+          default_sale_commission_percent: number
+          default_subreseller_sale_commission_percent: number
           description: string | null
           grace_period_days: number
           id: string
@@ -1807,6 +1847,8 @@ export type Database = {
           credits_per_point: number
           current_period_end: string | null
           default_commission_percent: number
+          default_sale_commission_percent: number
+          default_subreseller_sale_commission_percent: number
           description: string | null
           grace_period_days: number
           id: string
