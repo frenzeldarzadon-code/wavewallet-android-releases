@@ -10,7 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as SuperRouteImport } from './routes/super'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminProductsRouteImport } from './routes/admin.products'
+import { Route as AdminVouchersRouteImport } from './routes/admin.vouchers'
 import { Route as SuperIndexRouteImport } from './routes/super.index'
 import { Route as SuperAdminsRouteImport } from './routes/super.admins'
 import { Route as SuperAuditRouteImport } from './routes/super.audit'
@@ -22,10 +26,30 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SuperRoute = SuperRouteImport.update({
   id: '/super',
   path: '/super',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProductsRoute = AdminProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminVouchersRoute = AdminVouchersRouteImport.update({
+  id: '/vouchers',
+  path: '/vouchers',
+  getParentRoute: () => AdminRoute,
 } as any)
 const SuperIndexRoute = SuperIndexRouteImport.update({
   id: '/',
@@ -55,62 +79,85 @@ const SuperSubscriptionsRoute = SuperSubscriptionsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/super': typeof SuperRouteWithChildren
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/vouchers': typeof AdminVouchersRoute
   '/super/admins': typeof SuperAdminsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
+  '/admin/': typeof AdminIndexRoute
   '/super/': typeof SuperIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/vouchers': typeof AdminVouchersRoute
   '/super/admins': typeof SuperAdminsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
+  '/admin': typeof AdminIndexRoute
   '/super': typeof SuperIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/super': typeof SuperRouteWithChildren
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/vouchers': typeof AdminVouchersRoute
   '/super/admins': typeof SuperAdminsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
+  '/admin/': typeof AdminIndexRoute
   '/super/': typeof SuperIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/super'
+    | '/admin/products'
+    | '/admin/vouchers'
     | '/super/admins'
     | '/super/audit'
     | '/super/settings'
     | '/super/subscriptions'
+    | '/admin/'
     | '/super/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin/products'
+    | '/admin/vouchers'
     | '/super/admins'
     | '/super/audit'
     | '/super/settings'
     | '/super/subscriptions'
+    | '/admin'
     | '/super'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/super'
+    | '/admin/products'
+    | '/admin/vouchers'
     | '/super/admins'
     | '/super/audit'
     | '/super/settings'
     | '/super/subscriptions'
+    | '/admin/'
     | '/super/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   SuperRoute: typeof SuperRouteWithChildren
 }
 
@@ -123,12 +170,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/super': {
       id: '/super'
       path: '/super'
       fullPath: '/super'
       preLoaderRoute: typeof SuperRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/products': {
+      id: '/admin/products'
+      path: '/products'
+      fullPath: '/admin/products'
+      preLoaderRoute: typeof AdminProductsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/vouchers': {
+      id: '/admin/vouchers'
+      path: '/vouchers'
+      fullPath: '/admin/vouchers'
+      preLoaderRoute: typeof AdminVouchersRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/super/': {
       id: '/super/'
@@ -168,6 +243,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminProductsRoute: typeof AdminProductsRoute
+  AdminVouchersRoute: typeof AdminVouchersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminProductsRoute: AdminProductsRoute,
+  AdminVouchersRoute: AdminVouchersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 interface SuperRouteChildren {
   SuperAdminsRoute: typeof SuperAdminsRoute
   SuperAuditRoute: typeof SuperAuditRoute
@@ -188,6 +277,7 @@ const SuperRouteWithChildren = SuperRoute._addFileChildren(SuperRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   SuperRoute: SuperRouteWithChildren,
 }
 export const routeTree = rootRouteImport
