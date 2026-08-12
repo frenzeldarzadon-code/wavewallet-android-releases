@@ -84,3 +84,31 @@ export async function setEcosystemFacebook(
   });
   if (error) throw new Error(error.message);
 }
+
+/**
+ * Resolves the Contact-us link a downstream member (reseller, subreseller or
+ * customer) should see: always their OWN ecosystem's admin page, never the
+ * platform/super-admin page and never another tenant's page.
+ */
+export interface SupportLink {
+  available: boolean;
+  href: string;
+  label: string;
+}
+
+export function resolveEcosystemSupportLink(
+  eco: Pick<EcosystemFacebook, "facebook_page_url" | "facebook_page_name"> | null | undefined,
+): SupportLink {
+  const raw = (eco?.facebook_page_url ?? "").trim();
+  if (!isFacebookUrl(raw)) return { available: false, href: "", label: "" };
+  return { available: true, href: raw, label: facebookLabel(raw, eco?.facebook_page_name ?? null) };
+}
+
+/** Downstream members resolve support from their own ecosystem only. */
+export function supportLinkForMember(
+  memberEcosystemId: string | null | undefined,
+  ecosystems: EcosystemFacebook[],
+): SupportLink {
+  const own = ecosystems.find((e) => e.id === memberEcosystemId);
+  return resolveEcosystemSupportLink(own ?? null);
+}

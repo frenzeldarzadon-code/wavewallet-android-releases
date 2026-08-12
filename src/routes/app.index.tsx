@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, PageSection, StatCard } from "@/components/ui-kit";
+import { FacebookSupportCard } from "@/components/facebook-support-card";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import { fetchCreditBalance, fetchCreditLedger, type CreditEntry } from "@/lib/wallet";
@@ -205,6 +206,16 @@ function CustomerWallet() {
             </CardContent>
           </Card>
         )}
+      </PageSection>
+
+      <PageSection title="Contact us / Support">
+        <FacebookSupportCard
+          url={ecosystem.facebookPageUrl}
+          pageName={ecosystem.facebookPageName}
+          title={`${ecosystem.name} support`}
+          message="Message your shop's Facebook page for help with credits, vouchers and rewards."
+          emptyHint="Your shop has not added a Facebook support page yet. Contact them directly for now."
+        />
       </PageSection>
 
       <p className="flex items-center gap-2 text-[11px] text-muted-foreground">
