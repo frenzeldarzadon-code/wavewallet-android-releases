@@ -284,9 +284,12 @@ function AdminWallets() {
       <Dialog open={!!target} onOpenChange={(o) => !o && setTarget(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Adjust credits</DialogTitle>
+            <DialogTitle>{mode === "points" ? "Adjust points" : "Adjust credits"}</DialogTitle>
             <DialogDescription>
-              {target?.full_name} · current balance {peso(target?.balance ?? 0)}
+              {target?.full_name} ·{" "}
+              {mode === "points"
+                ? `${target?.points ?? 0} pts`
+                : `current balance ${peso(target?.balance ?? 0)}`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
