@@ -109,20 +109,27 @@ function AdminDashboard() {
         title={ecosystem.name}
         description="Live figures from your ecosystem — nothing here is shared with other shops."
       >
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           <StatCard
-            label="Members"
-            value={loading ? "—" : String(dash?.member_count ?? 0)}
+            label="Customers"
+            value={loading ? "—" : String(dash?.customer_count ?? 0)}
             icon={Users}
             tone="brand"
-            hint={`${dash?.customer_count ?? 0} customers`}
+            hint={`${dash?.suspended_customer_count ?? 0} suspended`}
           />
           <StatCard
             label="Resellers"
             value={loading ? "—" : String(dash?.reseller_count ?? 0)}
             icon={Users}
-            hint={`${dash?.suspended_count ?? 0} suspended`}
+            hint={`${dash?.member_count ?? 0} members in total`}
           />
+          <StatCard
+            label="Subresellers"
+            value={loading ? "—" : String(dash?.subreseller_count ?? 0)}
+            icon={Users}
+            hint="Owned by a parent reseller"
+          />
+
           <StatCard
             label="Credits outstanding"
             value={loading ? "—" : peso(Number(dash?.credits_outstanding ?? 0))}
