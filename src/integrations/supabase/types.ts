@@ -430,6 +430,33 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_bootstrap: {
+        Row: {
+          claimed_at: string
+          claimed_email: string
+          completed_at: string | null
+          id: boolean
+          source: string | null
+          super_admin_id: string | null
+        }
+        Insert: {
+          claimed_at?: string
+          claimed_email: string
+          completed_at?: string | null
+          id?: boolean
+          source?: string | null
+          super_admin_id?: string | null
+        }
+        Update: {
+          claimed_at?: string
+          claimed_email?: string
+          completed_at?: string | null
+          id?: boolean
+          source?: string | null
+          super_admin_id?: string | null
+        }
+        Relationships: []
+      }
       platform_settings: {
         Row: {
           billing_period: string
@@ -607,6 +634,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          is_demo: boolean
           joined_at: string
           phone: string
           reseller_commission_percent: number | null
@@ -622,6 +650,7 @@ export type Database = {
           email?: string
           full_name?: string
           id: string
+          is_demo?: boolean
           joined_at?: string
           phone?: string
           reseller_commission_percent?: number | null
@@ -637,6 +666,7 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          is_demo?: boolean
           joined_at?: string
           phone?: string
           reseller_commission_percent?: number | null
@@ -1382,6 +1412,10 @@ export type Database = {
         Args: { _actor: string; _target: string }
         Returns: boolean
       }
+      claim_super_admin_bootstrap: {
+        Args: { _email: string; _source: string }
+        Returns: string
+      }
       commission_rate_for: {
         Args: { _recipient: string; _sender: string }
         Returns: number
@@ -1697,6 +1731,7 @@ export type Database = {
           tx_id: string
         }[]
       }
+      real_super_admin_exists: { Args: never; Returns: boolean }
       refund_voucher_sale: {
         Args: { _reason: string; _sale_id: string }
         Returns: {
@@ -1711,6 +1746,10 @@ export type Database = {
       regenerate_signup_token: {
         Args: { _ecosystem_id: string }
         Returns: string
+      }
+      release_super_admin_bootstrap: {
+        Args: { _email: string }
+        Returns: undefined
       }
       request_redemption: {
         Args: { _reward_id: string }
@@ -1978,6 +2017,7 @@ export type Database = {
         }
       }
       subscription_ok: { Args: { _ecosystem_id: string }; Returns: boolean }
+      super_admin_bootstrap_available: { Args: never; Returns: boolean }
       transfer_credits: {
         Args: { _amount: number; _note?: string; _recipient_id: string }
         Returns: string
