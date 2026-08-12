@@ -362,46 +362,71 @@ function AdminVouchers() {
         </TabsContent>
 
         <TabsContent value="imports">
-          {imports.length === 0 ? (
-            <EmptyState title="No imports yet" />
+          {batches.length === 0 ? (
+            <EmptyState title="No uploads yet" />
           ) : (
             <Card className="shadow-[var(--shadow-card)]">
               <CardContent className="px-0 py-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>When</TableHead>
+                      <TableHead>Batch ID</TableHead>
+                      <TableHead>Uploaded</TableHead>
                       <TableHead>Product</TableHead>
-                      <TableHead>By</TableHead>
-                      <TableHead className="text-right">Imported</TableHead>
-                      <TableHead className="text-right">Duplicates</TableHead>
-                      <TableHead className="text-right">Invalid</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead className="text-right">Unused</TableHead>
+                      <TableHead className="text-right">Sold/used</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {imports.map((i) => (
-                      <TableRow key={i.id}>
-                        <TableCell className="text-xs">{shortDateTime(i.created_at)}</TableCell>
-                        <TableCell className="text-xs">
-                          {products.find((p) => p.id === i.product_id)?.name ?? "—"}
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {i.actor_name} · {i.source}
-                        </TableCell>
-                        <TableCell className="text-right text-xs text-success">{i.imported_count}</TableCell>
-                        <TableCell className="text-right text-xs text-warning-foreground">
-                          {i.duplicate_count}
-                        </TableCell>
-                        <TableCell className="text-right text-xs text-destructive">
-                          {i.invalid_count}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {batches.map((b) => {
+                      const blocked = batchDeleteBlockReason(b);
+                      return (
+                        <TableRow key={b.batch_id}>
+                          <TableCell className="font-mono text-[11px]">
+                            {b.batch_id.slice(0, 8)}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {shortDateTime(b.created_at)}
+                            <span className="ml-1 text-muted-foreground">· {b.actor_name}</span>
+                          </TableCell>
+                          <TableCell className="text-xs">{b.product_name || "—"}</TableCell>
+                          <TableCell className="text-right text-xs">{b.total_codes}</TableCell>
+                          <TableCell className="text-right text-xs text-success">
+                            {b.unused_count}
+                          </TableCell>
+                          <TableCell className="text-right text-xs text-destructive">
+                            {b.sold_count}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {blocked ? (
+                              <span
+                                className="text-[11px] text-muted-foreground"
+                                title={blocked}
+                              >
+                                {b.sold_count > 0 ? "Has sold codes" : "Nothing to delete"}
+                              </span>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-destructive"
+                                onClick={() => setPendingDelete({ kind: "batch", batch: b })}
+                              >
+                                <Trash2 className="size-4" /> Delete batch
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </CardContent>
             </Card>
           )}
+
         </TabsContent>
       </Tabs>
 
