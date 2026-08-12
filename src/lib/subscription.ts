@@ -261,7 +261,7 @@ export async function adjustExpiration(input: {
     _ecosystem_id: input.ecosystemId,
     _new_period_end: new Date(input.newPeriodEnd).toISOString(),
     _reason: input.reason,
-    _note: input.note ?? null,
+    _note: input.note ?? undefined,
     _confirm_shorten: input.confirmShorten ?? false,
   });
   if (error) throw error;
