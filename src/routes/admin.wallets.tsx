@@ -24,7 +24,6 @@ import {
   LEDGER_COLUMNS,
   normalizeEntry,
   type CreditEntry,
-  fetchEcosystemCommission,
 } from "@/lib/wallet";
 import { adminAdjustPoints } from "@/lib/rewards";
 import { toast } from "sonner";
@@ -93,7 +92,6 @@ function AdminWallets() {
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
     setLoading(true);
-    const ecoCommission = await fetchEcosystemCommission(ecosystemDbId);
     const [{ data: profiles }, { data: roles }, { data: accounts }, { data: pointAccounts }, { data: entries }] =
       await Promise.all([
         supabase
@@ -121,7 +119,7 @@ function AdminWallets() {
           balance: balBy.get(p.id) ?? 0,
           points: ptsBy.get(p.id) ?? 0,
           // null = no personal override; the shop default is resolved server-side.
-          commission: Number(p.reseller_commission_percent ?? ecoCommission),
+          commission: Number(p.reseller_commission_percent ?? 0),
           discount: Number(p.reseller_discount_percent ?? 0),
         }))
         .filter((m) => m.role !== "admin" && m.role !== "super_admin")
@@ -233,11 +231,9 @@ function AdminWallets() {
                           m.role === "reseller" ? "brand" : m.role === "subreseller" ? "success" : "muted"
                         }
                       >
-                        {m.role === "reseller" && m.commission > 0
-                          ? `reseller · ${m.commission}% bonus`
-                          : m.role === "subreseller"
-                            ? `subreseller · ${m.discount}% off`
-                            : m.role}
+                        {m.role === "reseller" || m.role === "subreseller"
+                          ? `${m.role} · ${m.discount}% off`
+                          : m.role}
                       </StatusBadge>
                       <StatusBadge tone={m.status === "active" ? "success" : "danger"}>
                         {m.status}
@@ -280,34 +276,35 @@ function AdminWallets() {
 
       <PageSection
         title="Ecosystem credit ledger"
-        description="Latest 60 movements across all wallets. Commission bonuses are listed separately."
+        description="Latest 60 movements across all wallets. Transfers move exact amounts; sale earnings appear as their own entries."
       >
         <div className="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-3">
           <StatCard
-            label="Base credits released"
+            label="Credits released"
             value={peso(
               ledger
-                .filter((e) => e.direction === "debit" && Number(e.commission_amount ?? 0) > 0)
+                .filter((e) => e.direction === "debit")
                 .reduce((s, e) => s + Number(e.base_amount ?? e.amount), 0),
             )}
             hint="Debited from admin wallets"
           />
           <StatCard
-            label="Commission granted"
+            label="Sale earnings paid"
             value={peso(
               ledger
-                .filter((e) => e.direction === "credit")
-                .reduce((s, e) => s + Number(e.commission_amount ?? 0), 0),
+                .filter(
+                  (e) =>
+                    e.entry_kind === "sale_commission" || e.entry_kind === "upline_commission",
+                )
+                .reduce((s, e) => s + Number(e.amount ?? 0), 0),
             )}
             tone="positive"
-            hint="Bonus credits to resellers"
+            hint="Cashback and upline on voucher sales"
           />
           <StatCard
-            label="Total received by resellers"
+            label="Total received by members"
             value={peso(
-              ledger
-                .filter((e) => e.direction === "credit" && Number(e.commission_amount ?? 0) > 0)
-                .reduce((s, e) => s + e.amount, 0),
+              ledger.filter((e) => e.direction === "credit").reduce((s, e) => s + e.amount, 0),
             )}
             tone="brand"
           />
@@ -374,22 +371,11 @@ function AdminWallets() {
                 placeholder="0"
               />
             </div>
-            {mode === "credits" && rate === 0 && target?.role === "subreseller" ? (
+            {mode === "credits" ? (
               <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                Subresellers never receive commission — they are credited exactly what you release.
-                Their earning is the {target.discount}% voucher discount.
-              </div>
-            ) : null}
-            {mode === "credits" && rate > 0 ? (
-              <div className="rounded-lg border border-success/40 bg-success/10 px-3 py-2 text-xs">
-                <p className="font-medium text-success">
-                  Reseller commission {rate}% applies to this release.
-                </p>
-                <p className="mt-0.5 text-muted-foreground">
-                  Send {peso(Math.max(Number(amount) || 0, 0))} → {target?.full_name} receives{" "}
-                  {peso(Math.max(Number(amount) || 0, 0) * (1 + rate / 100))} ({rate}% bonus). You
-                  release only {peso(Math.max(Number(amount) || 0, 0))}.
-                </p>
+                Transfers carry no commission: {target?.full_name} receives exactly{" "}
+                {peso(Math.max(Number(amount) || 0, 0))}. Members earn from their wholesale voucher
+                discount and from sales commission when their credits are spent.
               </div>
             ) : null}
             <div className="space-y-1.5">

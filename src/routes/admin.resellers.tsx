@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
-import { fetchEcosystemCommission } from "@/lib/wallet";
 import { peso, roleLabel, shortDate, type Role } from "@/lib/wavewallet";
 
 export const Route = createFileRoute("/admin/resellers")({
@@ -46,7 +45,6 @@ interface ResellerRow {
 function AdminResellers() {
   const { ecosystem, ecosystemDbId } = useSession("admin");
   const [rows, setRows] = useState<ResellerRow[]>([]);
-  const [defaultCommission, setDefaultCommission] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -112,11 +110,6 @@ function AdminResellers() {
     void load();
   }, [load]);
 
-  useEffect(() => {
-    if (!ecosystemDbId) return;
-    void fetchEcosystemCommission(ecosystemDbId).then(setDefaultCommission);
-  }, [ecosystemDbId]);
-
   if (!ecosystem) return null;
 
   const float = rows.reduce((s, r) => s + r.credits, 0);
@@ -138,7 +131,7 @@ function AdminResellers() {
 
       <PageSection
         title="Reseller network"
-        description={`Discounts and commission are captured at transaction time. Shop default commission: ${defaultCommission}%.`}
+        description="Wholesale discounts and sales commissions are captured at transaction time. Credit transfers move exact amounts.
         action={
           <Button size="sm" asChild>
             <Link to="/admin/customers">
@@ -183,23 +176,17 @@ function AdminResellers() {
                       <p className="text-sm font-semibold">{r.discount}%</p>
                     </div>
                     <div>
-                      <p className="text-[11px] text-muted-foreground">Commission</p>
-                      <p className="text-sm font-semibold">
-                        {r.role === "subreseller"
-                          ? "0%"
-                          : `${r.commission ?? defaultCommission}%`}
-                      </p>
+                      <p className="text-[11px] text-muted-foreground">Discount margin</p>
+                      <p className="text-sm font-semibold">{r.discount}%</p>
                     </div>
                     <div>
                       <p className="text-[11px] text-muted-foreground">Sales</p>
                       <p className="text-sm font-semibold">{peso(r.revenue)}</p>
                     </div>
                   </div>
-                  {r.role === "reseller" && r.commission === null ? (
-                    <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                      <Percent className="size-3" /> Using the shop default commission.
-                    </p>
-                  ) : null}
+                  <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <Percent className="size-3" /> Earnings come from voucher sales, not transfers.
+                  </p>
                   <div className="flex gap-2">
                     <Button size="sm" className="flex-1" asChild>
                       <Link to="/admin/wallets">
