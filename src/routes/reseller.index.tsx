@@ -55,11 +55,15 @@ function ResellerDashboard() {
 
   if (!account || !ecosystem) return null;
 
+  const isSubreseller = account.role === "subreseller";
   const loadsOut = entries.filter((e) => e.reason === "Credit load to customer");
   const topUps = entries.filter((e) => e.direction === "credit");
-  const commissionEarned = entries
-    .filter((e) => e.direction === "credit")
+  const loadingCommission = entries
+    .filter((e) => e.direction === "credit" && e.entry_kind !== "sale_commission")
     .reduce((s, e) => s + Number(e.commission_amount ?? 0), 0);
+  const saleCreditBack = entries
+    .filter((e) => e.direction === "credit" && e.entry_kind === "sale_commission")
+    .reduce((s, e) => s + Number(e.amount ?? 0), 0);
 
   return (
     <>
@@ -80,16 +84,27 @@ function ResellerDashboard() {
             icon={ArrowDownLeft}
           />
           <StatCard
-            label="Commission bonus"
-            value={peso(commissionEarned)}
-            hint="Extra credits granted on admin releases"
+            label="Sale credit-back"
+            value={peso(saleCreditBack)}
+            hint="Earned when customers spend the credits you funded"
             tone="positive"
+          />
+          <StatCard
+            label="Credit-loading bonus"
+            value={peso(loadingCommission)}
+            hint={
+              isSubreseller
+                ? "Resellers only — subresellers earn sale credit-back instead"
+                : "Extra credits granted on admin releases"
+            }
+            tone={isSubreseller ? "default" : "positive"}
           />
         </div>
         <p className="mt-2 text-[11px] text-muted-foreground">
           Your discount ({account.discountPercent ?? 0}%) is applied automatically at voucher checkout.
         </p>
       </PageSection>
+
 
       <PageSection title="Wallet activity">
         {loading ? (
