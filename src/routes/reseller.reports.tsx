@@ -18,7 +18,6 @@ import {
   fetchCreditsReport,
   fetchSalesReport,
   resolveRange,
-  summariseCredits,
   summariseSales,
   toCsv,
   type SaleReportRow,
@@ -83,7 +82,6 @@ function ResellerReports() {
   }, [load]);
 
   const salesTotals = useMemo(() => summariseSales(sales), [sales]);
-  const creditTotals = useMemo(() => summariseCredits(credits), [credits]);
   const commissionEntries = useMemo(
     () => credits.filter((c) => c.direction === "credit" && Number(c.commission_amount ?? 0) > 0),
     [credits],
