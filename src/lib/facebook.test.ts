@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { facebookLabel, isFacebookUrl, validateFacebookUrl } from "@/lib/facebook";
+import { facebookLabel, isFacebookUrl, resolveEcosystemSupportLink, supportLinkForMember, validateFacebookUrl } from "@/lib/facebook";
 
 describe("validateFacebookUrl", () => {
   it("accepts real Facebook page addresses", () => {
