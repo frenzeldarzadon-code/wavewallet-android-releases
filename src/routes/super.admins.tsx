@@ -2,7 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Building2, Copy, Plus, Search, Settings2, Trash2, UserPlus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { fetchEcosystemCommission, setEcosystemCommission } from "@/lib/wallet";
+import {
+  fetchEcosystemCommission,
+  fetchEcosystemSaleCommission,
+  setEcosystemCommission,
+  setEcosystemSaleCommission,
+} from "@/lib/wallet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
