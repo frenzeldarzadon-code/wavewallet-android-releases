@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Link2, Percent, Search, ShieldCheck, TrendingUp, UserCog } from "lucide-react";
+import { Link2, Percent, Search, ShieldCheck, Trash2, TrendingUp, UserCog } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,11 @@ import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-
 import { useSession } from "@/lib/session";
 import { supabase } from "@/integrations/supabase/client";
 import { peso, roleLabel, shortDate, shortDateTime, type Role } from "@/lib/wavewallet";
+import {
+  evaluateCustomerDeletion,
+  type DeletionVerdict,
+} from "@/lib/customer-cleanup";
+import { deleteCustomerAccount } from "@/lib/customer-cleanup.functions";
 import {
   fetchEcosystemSaleCommission,
   setSaleCommission,
@@ -68,6 +73,9 @@ interface Member {
   role: Role;
   credits: number;
   points: number;
+  pointsHeld: number;
+  pendingRedemptions: number;
+  deleted_at: string | null;
 }
 
 interface ActivityRow {
@@ -103,22 +111,36 @@ function AdminCustomers() {
   const [editingCreditBack, setEditingCreditBack] = useState<Member | null>(null);
   const [editingOwner, setEditingOwner] = useState<Member | null>(null);
   const [busy, setBusy] = useState(false);
+  const [deleting, setDeleting] = useState<Member | null>(null);
 
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
     setLoading(true);
-    const [{ data: profiles }, { data: roles }, { data: credits }, { data: points }] =
-      await Promise.all([
+    const [
+      { data: profiles },
+      { data: roles },
+      { data: credits },
+      { data: points },
+      { data: pending },
+    ] = await Promise.all([
         supabase
           .from("profiles")
           .select(
-            "id, full_name, email, phone, joined_at, status, reseller_discount_percent, reseller_commission_percent, sale_commission_percent, reseller_id",
+            "id, full_name, email, phone, joined_at, status, reseller_discount_percent, reseller_commission_percent, sale_commission_percent, reseller_id, deleted_at",
           )
           .eq("ecosystem_id", ecosystemDbId)
           .order("joined_at", { ascending: false }),
         supabase.from("user_roles").select("user_id, role").eq("ecosystem_id", ecosystemDbId),
         supabase.from("credit_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
-        supabase.from("points_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
+        supabase
+          .from("points_accounts")
+          .select("user_id, balance, held")
+          .eq("ecosystem_id", ecosystemDbId),
+        supabase
+          .from("reward_redemptions")
+          .select("user_id, status")
+          .eq("ecosystem_id", ecosystemDbId)
+          .in("status", ["pending", "approved"]),
       ]);
 
     const roleOf = new Map<string, Member["role"]>();
@@ -129,14 +151,21 @@ function AdminCustomers() {
     }
     const creditOf = new Map((credits ?? []).map((c) => [c.user_id, Number(c.balance)]));
     const pointOf = new Map((points ?? []).map((p) => [p.user_id, Number(p.balance)]));
+    const heldOf = new Map((points ?? []).map((p) => [p.user_id, Number(p.held)]));
+    const pendingOf = new Map<string, number>();
+    for (const r of pending ?? []) pendingOf.set(r.user_id, (pendingOf.get(r.user_id) ?? 0) + 1);
 
     setMembers(
-      (profiles ?? []).map((p) => ({
-        ...p,
-        role: roleOf.get(p.id) ?? "customer",
-        credits: creditOf.get(p.id) ?? 0,
-        points: pointOf.get(p.id) ?? 0,
-      }) as Member),
+      (profiles ?? [])
+        .filter((p) => !p.deleted_at)
+        .map((p) => ({
+          ...p,
+          role: roleOf.get(p.id) ?? "customer",
+          credits: creditOf.get(p.id) ?? 0,
+          points: pointOf.get(p.id) ?? 0,
+          pointsHeld: heldOf.get(p.id) ?? 0,
+          pendingRedemptions: pendingOf.get(p.id) ?? 0,
+        }) as Member),
     );
     setLoading(false);
   }, [ecosystemDbId]);
@@ -289,6 +318,32 @@ function AdminCustomers() {
   };
 
 
+
+  const verdictFor = (m: Member): DeletionVerdict =>
+    evaluateCustomerDeletion({
+      role: m.role,
+      joinedAt: m.joined_at,
+      credits: m.credits,
+      points: m.points,
+      pointsHeld: m.pointsHeld,
+      pendingRedemptions: m.pendingRedemptions,
+      deletedAt: m.deleted_at,
+    });
+
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    setBusy(true);
+    try {
+      await deleteCustomerAccount({ data: { userId: deleting.id } });
+      toast.success("Customer account deleted and anonymised — financial history is preserved.");
+      setDeleting(null);
+      void load();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const toggleStatus = async (m: Member) => {
     const next = m.status === "active" ? "suspended" : "active";
@@ -500,6 +555,15 @@ function AdminCustomers() {
                                 }}
                               >
                                 <ShieldCheck className="size-4" /> Promote
+                              </Button>
+                            ) : null}
+                            {c.role === "customer" && verdictFor(c).eligible ? (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => setDeleting(c)}
+                              >
+                                <Trash2 className="size-4" /> Delete
                               </Button>
                             ) : null}
                           </div>
