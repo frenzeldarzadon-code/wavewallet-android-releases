@@ -98,6 +98,12 @@ function SuperAdmins() {
   const [archiveFor, setArchiveFor] = useState<Overview | null>(null);
   const [archiveReason, setArchiveReason] = useState("");
   const [archiving, setArchiving] = useState(false);
+  const [purgeFor, setPurgeFor] = useState<Overview | null>(null);
+  const [purgeStep, setPurgeStep] = useState<PurgeStep>("warning");
+  const [purgeTyped, setPurgeTyped] = useState("");
+  const [purgeReason, setPurgeReason] = useState("");
+  const [purging, setPurging] = useState(false);
+
 
   const load = useCallback(async () => {
     setLoading(true);
