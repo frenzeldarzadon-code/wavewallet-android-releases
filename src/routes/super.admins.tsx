@@ -41,7 +41,7 @@ export const Route = createFileRoute("/super/admins")({
       },
     ],
   }),
-  component: SuperAdmins;
+  component: SuperAdmins,
 });
 
 function slugify(value: string) {
