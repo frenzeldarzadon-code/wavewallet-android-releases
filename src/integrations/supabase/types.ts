@@ -102,38 +102,6 @@ export type Database = {
           },
         ]
       }
-      bootstrap_roles: {
-        Row: {
-          consumed_at: string | null
-          created_at: string
-          ecosystem_id: string | null
-          email: string
-          role: Database["public"]["Enums"]["app_role"]
-        }
-        Insert: {
-          consumed_at?: string | null
-          created_at?: string
-          ecosystem_id?: string | null
-          email: string
-          role: Database["public"]["Enums"]["app_role"]
-        }
-        Update: {
-          consumed_at?: string | null
-          created_at?: string
-          ecosystem_id?: string | null
-          email?: string
-          role?: Database["public"]["Enums"]["app_role"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bootstrap_roles_ecosystem_id_fkey"
-            columns: ["ecosystem_id"]
-            isOneToOne: false
-            referencedRelation: "ecosystems"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       credit_accounts: {
         Row: {
           balance: number
@@ -553,6 +521,16 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      my_operational_status: {
+        Args: never
+        Returns: {
+          current_period_end: string
+          ecosystem_id: string
+          grace_period_days: number
+          operational: boolean
+          subscription_state: Database["public"]["Enums"]["subscription_state"]
+        }[]
       }
       promote_to_reseller: {
         Args: { _discount: number; _user_id: string }
