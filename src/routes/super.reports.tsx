@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { ReportRangePicker } from "@/components/report-range";
 import { supabase } from "@/integrations/supabase/client";
+import { EarningsHistory } from "@/components/earnings-history";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
@@ -156,6 +157,10 @@ function SuperReports() {
 
   return (
     <>
+      <EarningsHistory
+        title="Cross-ecosystem earnings"
+        description="Reseller and subreseller earnings across every shop, derived from finalized sales."
+      />
       <PageSection
         title="Cross-tenant reports"
         description={`${resolved.label}. Figures come from immutable ledger records; each ecosystem's snapshotted discounts, commission rates and points ratios are preserved.`}

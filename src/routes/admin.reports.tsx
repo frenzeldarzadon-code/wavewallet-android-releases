@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { ReportRangePicker } from "@/components/report-range";
+import { EarningsHistory } from "@/components/earnings-history";
 import { useSession } from "@/lib/session";
 import { peso, roleLabel, shortDateTime, type Role } from "@/lib/wavewallet";
 import {
@@ -196,6 +197,11 @@ function AdminReports() {
 
   return (
     <>
+      <EarningsHistory
+        ecosystemId={ecosystemDbId}
+        title="Reseller & subreseller earnings"
+        description="Every earning record in this shop, derived from finalized sales. Filter by type, product, status or member."
+      />
       <PageSection
         title="Earnings & reports"
         description={`${ecosystem.name} · ${resolved.label}. Every figure comes from immutable ledger records — historical discounts, commission rates and points ratios are never recalculated.`}
