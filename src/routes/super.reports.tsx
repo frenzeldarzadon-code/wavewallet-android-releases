@@ -14,7 +14,7 @@ import {
   fetchCreditsReport,
   fetchSalesReport,
   resolveRange,
-  summariseCredits,
+  summariseCreditFlow,
   summariseSales,
   toCsv,
   type CreditReportEntry,
@@ -48,8 +48,8 @@ interface EcoRow {
   gross: number;
   net: number;
   discounts: number;
-  issued: number;
-  commission: number;
+  generated: number;
+  transferred: number;
   pointsSales: number;
 }
 
