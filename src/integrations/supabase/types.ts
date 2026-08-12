@@ -153,6 +153,7 @@ export type Database = {
           id: string
           reason: string
           reference: string | null
+          reverses_ledger_id: string | null
           sale_id: string | null
           tx_id: string | null
           user_id: string
@@ -172,6 +173,7 @@ export type Database = {
           id?: string
           reason: string
           reference?: string | null
+          reverses_ledger_id?: string | null
           sale_id?: string | null
           tx_id?: string | null
           user_id: string
@@ -191,6 +193,7 @@ export type Database = {
           id?: string
           reason?: string
           reference?: string | null
+          reverses_ledger_id?: string | null
           sale_id?: string | null
           tx_id?: string | null
           user_id?: string
@@ -208,6 +211,13 @@ export type Database = {
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_ledger_reverses_ledger_id_fkey"
+            columns: ["reverses_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
             referencedColumns: ["id"]
           },
           {
@@ -320,6 +330,105 @@ export type Database = {
             foreignKeyName: "credit_lots_ledger_id_fkey"
             columns: ["ledger_id"]
             isOneToOne: true
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_transfer_reversals: {
+        Row: {
+          actor_id: string | null
+          actor_name: string
+          created_at: string
+          ecosystem_id: string
+          id: string
+          kind: string
+          note: string | null
+          original_amount: number
+          original_recipient_ledger_id: string
+          original_sender_ledger_id: string
+          original_tx_id: string
+          reason: string
+          recipient_id: string
+          reversal_credit_ledger_id: string | null
+          reversal_debit_ledger_id: string | null
+          reversal_tx_id: string
+          reversed_amount: number
+          sender_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_name: string
+          created_at?: string
+          ecosystem_id: string
+          id?: string
+          kind: string
+          note?: string | null
+          original_amount: number
+          original_recipient_ledger_id: string
+          original_sender_ledger_id: string
+          original_tx_id: string
+          reason: string
+          recipient_id: string
+          reversal_credit_ledger_id?: string | null
+          reversal_debit_ledger_id?: string | null
+          reversal_tx_id: string
+          reversed_amount: number
+          sender_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_name?: string
+          created_at?: string
+          ecosystem_id?: string
+          id?: string
+          kind?: string
+          note?: string | null
+          original_amount?: number
+          original_recipient_ledger_id?: string
+          original_sender_ledger_id?: string
+          original_tx_id?: string
+          reason?: string
+          recipient_id?: string
+          reversal_credit_ledger_id?: string | null
+          reversal_debit_ledger_id?: string | null
+          reversal_tx_id?: string
+          reversed_amount?: number
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_transfer_reversals_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_transfer_reversals_original_recipient_ledger_id_fkey"
+            columns: ["original_recipient_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_transfer_reversals_original_sender_ledger_id_fkey"
+            columns: ["original_sender_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_transfer_reversals_reversal_credit_ledger_id_fkey"
+            columns: ["reversal_credit_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_transfer_reversals_reversal_debit_ledger_id_fkey"
+            columns: ["reversal_debit_ledger_id"]
+            isOneToOne: false
             referencedRelation: "credit_ledger"
             referencedColumns: ["id"]
           },
@@ -1950,6 +2059,15 @@ export type Database = {
         Args: { _amount: number; _customer_id: string; _reference?: string }
         Returns: string
       }
+      reverse_credit_transfer: {
+        Args: {
+          _amount: number
+          _note?: string
+          _reason: string
+          _tx_id: string
+        }
+        Returns: Json
+      }
       reverse_sale_commission: {
         Args: { _reason?: string; _sale_id: string }
         Returns: number
@@ -2222,6 +2340,7 @@ export type Database = {
         Args: { _amount: number; _note?: string; _recipient_id: string }
         Returns: string
       }
+      transfer_reversal_info: { Args: { _tx_id: string }; Returns: Json }
       update_ecosystem: {
         Args: {
           _contact_email?: string
