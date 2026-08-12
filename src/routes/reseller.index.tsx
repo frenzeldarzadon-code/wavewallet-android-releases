@@ -1,32 +1,28 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Facebook, Percent, Ticket, Users, Wallet } from "lucide-react";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { createFileRoute } from "@tanstack/react-router";
+import { ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
+import { EmptyState, PageSection, StatCard } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
-import { accounts, ledgerIn, peso, shortDateTime } from "@/lib/wavewallet";
-import { toast } from "sonner";
+import { peso, shortDateTime } from "@/lib/wavewallet";
+import { fetchCreditBalance, fetchCreditLedger, type CreditEntry } from "@/lib/wallet";
 
 export const Route = createFileRoute("/reseller/")({
   head: () => ({
     meta: [
-      { title: "Reseller Dashboard — WaveWallet" },
-      { name: "description", content: "Reseller wallet, discount, customer loads and recent activity in one place." },
-      { property: "og:title", content: "Reseller Dashboard — WaveWallet" },
-      { property: "og:description", content: "Reseller wallet, discount, customer loads and recent activity in one place." },
+      { title: "Reseller Wallet — WaveWallet" },
+      {
+        name: "description",
+        content:
+          "Reseller credit wallet: live balance, credits loaded to customers and discounted voucher purchases.",
+      },
+      { property: "og:title", content: "Reseller Wallet — WaveWallet" },
+      {
+        property: "og:description",
+        content: "Track your reseller credit balance and every load you make to customers.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ResellerDashboard,
@@ -34,144 +30,92 @@ export const Route = createFileRoute("/reseller/")({
 
 function ResellerDashboard() {
   const { account, ecosystem } = useSession("reseller");
-  const [open, setOpen] = useState(false);
-  const [target, setTarget] = useState("");
+  const [balance, setBalance] = useState(0);
+  const [entries, setEntries] = useState<CreditEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const userId = account?.id ?? null;
+
+  const load = useCallback(async () => {
+    if (!userId) return;
+    setLoading(true);
+    const [b, l] = await Promise.all([fetchCreditBalance(userId), fetchCreditLedger(userId, 50)]);
+    setBalance(b);
+    setEntries(l);
+    setLoading(false);
+  }, [userId]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
   if (!account || !ecosystem) return null;
 
-  const entries = ledgerIn(ecosystem.id).filter(
-    (l) => l.resellerId === account.id || l.accountId === account.id,
-  );
-  const sales = entries.filter((l) => l.kind === "voucher_purchase" && l.resellerId === account.id);
-  const earnings = sales.reduce((s, l) => s + (l.resellerEarning ?? 0), 0);
-  const myCustomers = accounts.filter((a) => a.resellerId === account.id);
+  const loadsOut = entries.filter((e) => e.reason === "Credit load to customer");
+  const topUps = entries.filter((e) => e.direction === "credit");
 
   return (
     <>
-      <Card className="credit-gradient mb-5 border-0 text-primary-foreground shadow-[var(--shadow-float)]">
-        <CardContent className="space-y-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs opacity-85">Reseller credit wallet</p>
-              <p className="text-3xl font-semibold tracking-tight">{peso(account.creditBalance)}</p>
-            </div>
-            <Wallet className="size-5 opacity-80" />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button asChild size="sm" variant="secondary">
-              <Link to="/reseller/shop">Buy vouchers</Link>
-            </Button>
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" variant="secondary">
-                  Load a customer
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-sm">
-                <DialogHeader>
-                  <DialogTitle>Load credits to a customer</DialogTitle>
-                  <DialogDescription>
-                    Deducted from your wallet and recorded in both ledgers.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-3">
-                  <div className="space-y-1.5">
-                    <Label>Customer</Label>
-                    <Select value={target} onValueChange={setTarget}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select customer" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {myCustomers.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.name} · {c.phone}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="amount">Amount</Label>
-                    <Input id="amount" type="number" placeholder="0" />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    disabled={!target}
-                    onClick={() => {
-                      setOpen(false);
-                      toast.success("Credits loaded (demo)");
-                    }}
-                  >
-                    Confirm load
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardContent>
-      </Card>
-
-      <PageSection>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard label="My discount" value={`${account.discountPercent}%`} icon={Percent} tone="brand" />
-          <StatCard label="Earnings" value={peso(earnings)} tone="positive" hint="Captured at sale time" />
-          <StatCard label="Vouchers sold" value={String(sales.length)} icon={Ticket} />
-          <StatCard label="My customers" value={String(myCustomers.length)} icon={Users} />
+      <PageSection title="Reseller wallet" description={`Closed-loop credits inside ${ecosystem.name}.`}>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <StatCard label="Credit balance" value={peso(balance)} icon={Wallet} tone="positive" />
+          <StatCard
+            label="Loaded to customers"
+            value={peso(loadsOut.reduce((s, e) => s + e.amount, 0))}
+            hint={`${loadsOut.length} loads`}
+            icon={ArrowUpRight}
+            tone="brand"
+          />
+          <StatCard
+            label="Credits received"
+            value={peso(topUps.reduce((s, e) => s + e.amount, 0))}
+            hint="Top-ups from your admin"
+            icon={ArrowDownLeft}
+          />
         </div>
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          Your discount ({account.discountPercent ?? 0}%) is applied automatically at voucher checkout.
+        </p>
       </PageSection>
 
-      <PageSection
-        title="Recent activity"
-        action={
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/reseller/reports">
-              All reports <ArrowRight className="size-3.5" />
-            </Link>
-          </Button>
-        }
-      >
-        <Card className="shadow-[var(--shadow-card)]">
-          <CardContent className="divide-y divide-border px-0 py-0">
-            {entries.slice(0, 6).map((t) => (
-              <div key={t.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
-                    {t.productName ?? t.kind.replaceAll("_", " ")}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {t.accountName} · {shortDateTime(t.createdAt)}
-                  </p>
+      <PageSection title="Wallet activity">
+        {loading ? (
+          <EmptyState title="Loading wallet…" />
+        ) : entries.length === 0 ? (
+          <EmptyState
+            title="No credit movements yet"
+            description="Ask your shop admin to load credits into your reseller wallet."
+          />
+        ) : (
+          <Card className="shadow-[var(--shadow-card)]">
+            <CardContent className="divide-y divide-border px-0 py-0">
+              {entries.map((e) => (
+                <div key={e.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{e.reason}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {shortDateTime(e.created_at)} · {e.tx_id ?? "—"}
+                      {e.reference ? ` · ${e.reference}` : ""}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p
+                      className={
+                        e.direction === "credit"
+                          ? "text-sm font-semibold text-success"
+                          : "text-sm font-semibold text-destructive"
+                      }
+                    >
+                      {e.direction === "credit" ? "+" : "−"}
+                      {peso(e.amount)}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">Bal {peso(e.balance_after)}</p>
+                  </div>
                 </div>
-                {t.resellerEarning ? (
-                  <StatusBadge tone="success">+{peso(t.resellerEarning)}</StatusBadge>
-                ) : (
-                  <span className={t.amount < 0 ? "text-sm text-destructive" : "text-sm text-success"}>
-                    {t.amount < 0 ? "−" : "+"}
-                    {peso(t.amount)}
-                  </span>
-                )}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+              ))}
+            </CardContent>
+          </Card>
+        )}
       </PageSection>
-
-      <Card className="shadow-[var(--shadow-card)]">
-        <CardContent className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-start gap-2">
-            <Facebook className="mt-0.5 size-4 text-primary" />
-            <div>
-              <p className="text-sm font-medium">{ecosystem.facebookPageName}</p>
-              <p className="text-xs text-muted-foreground">{ecosystem.facebookSupportMessage}</p>
-            </div>
-          </div>
-          <Button asChild variant="outline" size="sm">
-            <a href={ecosystem.facebookPageUrl} target="_blank" rel="noreferrer">
-              Message support
-            </a>
-          </Button>
-        </CardContent>
-      </Card>
     </>
   );
 }
