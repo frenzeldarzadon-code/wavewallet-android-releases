@@ -157,9 +157,48 @@ export async function signUpCustomerAccount(input: CustomerSignupInput) {
       },
     },
   });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyAuthError(error.message));
   return { needsEmailConfirmation: !data.session };
 }
+
+/**
+ * Invited operator onboarding. No ecosystem slug is sent: the database trigger
+ * grants the admin role only when the signup email matches a pending, unexpired
+ * invitation. A non-invited email simply cannot complete this flow.
+ */
+export async function signUpInvitedOperator(input: {
+  fullName: string;
+  email: string;
+  phone?: string;
+  password: string;
+}) {
+  const { data, error } = await supabase.auth.signUp({
+    email: input.email.trim().toLowerCase(),
+    password: input.password,
+    options: {
+      emailRedirectTo: `${window.location.origin}/`,
+      data: { full_name: input.fullName.trim(), phone: (input.phone ?? "").trim() },
+    },
+  });
+  if (error) throw new Error(friendlyAuthError(error.message));
+  return { needsEmailConfirmation: !data.session };
+}
+
+/** Turns raw auth/database errors into wording a shop customer can act on. */
+export function friendlyAuthError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("already registered") || m.includes("already been registered") || m.includes("duplicate"))
+    return "That email already has an account. Sign in instead, or use another email.";
+  if (m.includes("valid ecosystem invite link"))
+    return "This signup link is no longer active. Ask your operator for their current link.";
+  if (m.includes("password"))
+    return "Please choose a stronger password (at least 8 characters).";
+  if (m.includes("rate limit") || m.includes("too many"))
+    return "Too many attempts. Please wait a minute and try again.";
+  if (m.includes("invalid login credentials")) return "Wrong email or password.";
+  return message;
+}
+
 
 export interface SignupEcosystem {
   id: string;
