@@ -633,6 +633,48 @@ export type Database = {
           },
         ]
       }
+      retention_runs: {
+        Row: {
+          created_at: string
+          cutoff: string
+          deleted: Json
+          dry_run: boolean
+          error: string | null
+          finished_at: string | null
+          flagged: Json
+          id: string
+          started_at: string
+          status: string
+          triggered_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          cutoff: string
+          deleted?: Json
+          dry_run?: boolean
+          error?: string | null
+          finished_at?: string | null
+          flagged?: Json
+          id?: string
+          started_at?: string
+          status?: string
+          triggered_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          cutoff?: string
+          deleted?: Json
+          dry_run?: boolean
+          error?: string | null
+          finished_at?: string | null
+          flagged?: Json
+          id?: string
+          started_at?: string
+          status?: string
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       reward_products: {
         Row: {
           active: boolean
@@ -1618,6 +1660,28 @@ export type Database = {
         }
       }
       revoke_admin_invitation: { Args: { _id: string }; Returns: undefined }
+      run_retention_purge: {
+        Args: { _dry_run?: boolean }
+        Returns: {
+          created_at: string
+          cutoff: string
+          deleted: Json
+          dry_run: boolean
+          error: string | null
+          finished_at: string | null
+          flagged: Json
+          id: string
+          started_at: string
+          status: string
+          triggered_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "retention_runs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       sale_commission_rate_for: {
         Args: { _recipient: string }
         Returns: number
