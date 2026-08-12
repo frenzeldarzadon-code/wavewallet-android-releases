@@ -164,7 +164,8 @@ export async function restructureMemberRole(
     _user_id: userId,
     _new_role: plan.newRole,
     _reason: plan.reason.trim(),
-    _parent_reseller_id: plan.newRole === "subreseller" ? (plan.parentResellerId ?? null) : null,
+    _parent_reseller_id:
+      plan.newRole === "subreseller" ? (plan.parentResellerId ?? undefined) : undefined,
     _child_reassignments: reassignments as unknown as never,
   });
   if (error) throw new Error(error.message);
