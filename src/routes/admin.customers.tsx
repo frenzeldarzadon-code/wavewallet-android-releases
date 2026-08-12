@@ -53,10 +53,11 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   evaluateRestructure,
   fetchRestructureCheck,
-  oppositeRole,
+  isRestructurable,
   restructureMemberRole,
-  type RestructurableRole,
+  targetRolesFor,
   type RestructureCheck,
+  type RestructureTargetRole,
 } from "@/lib/role-restructure";
 
 export const Route = createFileRoute("/admin/customers")({
@@ -133,9 +134,10 @@ function AdminCustomers() {
   const [editingOwner, setEditingOwner] = useState<Member | null>(null);
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState<Member | null>(null);
-  // Organization restructuring (reseller <-> subreseller).
+  // Organization restructuring (reseller <-> subreseller, or step down to customer).
   const [restructuring, setRestructuring] = useState<Member | null>(null);
   const [restructureCheck, setRestructureCheck] = useState<RestructureCheck | null>(null);
+  const [restructureRole, setRestructureRole] = useState<RestructureTargetRole | "">("");
   const [restructureParent, setRestructureParent] = useState("");
   const [childParents, setChildParents] = useState<Record<string, string>>({});
   const [restructureReason, setRestructureReason] = useState("");
@@ -343,6 +345,7 @@ function AdminCustomers() {
   const openRestructure = async (m: Member) => {
     setRestructuring(m);
     setRestructureCheck(null);
+    setRestructureRole(isRestructurable(m.role) ? targetRolesFor(m.role)[0]! : "");
     setRestructureParent("");
     setChildParents({});
     setRestructureReason("");
@@ -354,10 +357,11 @@ function AdminCustomers() {
     }
   };
 
-  const restructureTarget: RestructurableRole | null =
-    restructuring && (restructuring.role === "reseller" || restructuring.role === "subreseller")
-      ? oppositeRole(restructuring.role)
-      : null;
+  const restructureOptions: RestructureTargetRole[] =
+    restructuring && isRestructurable(restructuring.role) ? targetRolesFor(restructuring.role) : [];
+
+  const restructureTarget: RestructureTargetRole | null =
+    restructureRole && restructureOptions.includes(restructureRole) ? restructureRole : null;
 
   const restructureVerdict =
     restructureCheck && restructureTarget
@@ -372,6 +376,7 @@ function AdminCustomers() {
   const closeRestructure = () => {
     setRestructuring(null);
     setRestructureCheck(null);
+    setRestructureRole("");
     setRestructureParent("");
     setChildParents({});
     setRestructureReason("");
@@ -900,6 +905,29 @@ function AdminCustomers() {
                 </div>
               </div>
 
+              <div className="space-y-1.5">
+                <Label htmlFor="restructureRole">New role</Label>
+                <Select
+                  value={restructureRole}
+                  onValueChange={(v) => setRestructureRole(v as RestructureTargetRole)}
+                >
+                  <SelectTrigger id="restructureRole">
+                    <SelectValue placeholder="Choose the new role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {restructureOptions.map((r) => (
+                      <SelectItem key={r} value={r}>
+                        {r === "customer"
+                          ? "Customer — stops reselling, keeps the same login"
+                          : r === "reseller"
+                            ? "Reseller — top level, no upline"
+                            : "Subreseller — belongs to a reseller"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {restructureTarget === "subreseller" ? (
                 <div className="space-y-1.5">
                   <Label htmlFor="restructureParent">New parent reseller</Label>
@@ -920,7 +948,8 @@ function AdminCustomers() {
                 </div>
               ) : null}
 
-              {restructureTarget === "subreseller" && restructureCheck.children.length > 0 ? (
+              {(restructureTarget === "subreseller" || restructureTarget === "customer") &&
+              restructureCheck.children.length > 0 ? (
                 <div className="space-y-2 rounded-md border border-destructive/40 bg-destructive/5 p-3">
                   <p className="text-sm font-medium text-destructive">
                     {restructureCheck.children.length} subreseller

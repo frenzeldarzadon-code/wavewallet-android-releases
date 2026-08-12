@@ -3,6 +3,7 @@ import {
   evaluateRestructure,
   isRestructurable,
   oppositeRole,
+  targetRolesFor,
   type RestructureCheck,
 } from "@/lib/role-restructure";
 
@@ -115,5 +116,60 @@ describe("role restructuring rules", () => {
     expect(isRestructurable("reseller")).toBe(true);
     expect(oppositeRole("reseller")).toBe("subreseller");
     expect(oppositeRole("subreseller")).toBe("reseller");
+  });
+});
+
+describe("demotion to customer", () => {
+  it("offers customer as a target for both selling roles", () => {
+    expect(targetRolesFor("reseller")).toEqual(["subreseller", "customer"]);
+    expect(targetRolesFor("subreseller")).toEqual(["reseller", "customer"]);
+  });
+
+  it("demotes a reseller with no subresellers to customer without a parent", () => {
+    const v = evaluateRestructure(base(), { newRole: "customer", reason });
+    expect(v.ok).toBe(true);
+    expect(v.blockers).toEqual([]);
+    expect(v.notes.join(" ")).toContain("buy vouchers straight away as a normal customer");
+    expect(v.notes.join(" ")).toContain("Wholesale discount, sales commission");
+    expect(v.notes.join(" ")).toContain("financial impact: zero");
+  });
+
+  it("demotes a subreseller to customer", () => {
+    const v = evaluateRestructure(
+      base({ current_role: "subreseller", parent_reseller_name: "Ana Reseller" }),
+      { newRole: "customer", reason },
+    );
+    expect(v.ok).toBe(true);
+  });
+
+  it("blocks a reseller with subresellers until every child is reassigned", () => {
+    const check = base({
+      children: [
+        { id: "c1", name: "Child One", email: "c1@x.io" },
+        { id: "c2", name: "Child Two", email: "c2@x.io" },
+      ],
+    });
+    const blocked = evaluateRestructure(check, { newRole: "customer", reason });
+    expect(blocked.ok).toBe(false);
+    expect(blocked.blockers.join(" ")).toContain("Child One");
+    expect(blocked.blockers.join(" ")).toContain("Child Two");
+
+    const okPlan = evaluateRestructure(check, {
+      newRole: "customer",
+      childReassignments: { c1: "r2", c2: "r3" },
+      reason,
+    });
+    expect(okPlan.ok).toBe(true);
+    expect(okPlan.notes.join(" ")).toContain("2 subresellers will be moved");
+  });
+
+  it("still requires a reason and refuses non-selling roles", () => {
+    expect(evaluateRestructure(base(), { newRole: "customer", reason: " " }).ok).toBe(false);
+    const admin = evaluateRestructure(base({ current_role: "admin" }), {
+      newRole: "customer",
+      reason,
+    });
+    expect(admin.ok).toBe(false);
+    expect(admin.blockers[0]).toContain("Only resellers and subresellers");
   });
 });
