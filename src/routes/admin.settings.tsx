@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PageSection } from "@/components/ui-kit";
+import { RetentionPolicyCard } from "@/components/retention-policy-card";
 import { useSession } from "@/lib/session";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -263,6 +264,7 @@ function AdminSettings() {
         </p>
       </div>
 
-    </>
+          <RetentionPolicyCard />
+</>
   );
 }
