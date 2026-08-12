@@ -1,11 +1,12 @@
 import { Link, useRouterState, type LinkProps } from "@tanstack/react-router";
-import { Menu, ShieldCheck, LogOut, ArrowLeft } from "lucide-react";
+import { Menu, ShieldCheck, LogOut, ArrowLeft, FlaskConical } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { writeSession, type ResolvedSession } from "@/lib/session";
+import { DEMO_ECOSYSTEM_SLUG } from "@/lib/demo";
 import { platformSettings } from "@/lib/wavewallet";
 
 export interface NavItem {
@@ -29,6 +30,9 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const bottom = (bottomNav ?? nav).slice(0, 5);
   const superMode = session.session?.superAdminMode && session.account?.role === "super_admin";
+  const isDemo =
+    session.ecosystem?.slug === DEMO_ECOSYSTEM_SLUG ||
+    (session.account?.email ?? "").endsWith("@wavewallet.demo");
 
   const isActive = (to: string) => pathname === to || (to !== "/" && pathname.startsWith(to + "/"));
 
@@ -55,7 +59,14 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
 
   return (
     <div className="min-h-screen bg-background">
+      {isDemo ? (
+        <div className="flex items-center justify-center gap-2 bg-warning px-4 py-1.5 text-center text-[11px] font-semibold uppercase tracking-wide text-warning-foreground sm:text-xs">
+          <FlaskConical className="size-3.5 shrink-0" />
+          Demo / preview environment — sample data only, not live customer data
+        </div>
+      ) : null}
       {superMode ? (
+
         <div className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-2 bg-destructive px-4 py-2 text-destructive-foreground">
           <div className="flex items-center gap-2 text-xs font-semibold sm:text-sm">
             <ShieldCheck className="size-4" />

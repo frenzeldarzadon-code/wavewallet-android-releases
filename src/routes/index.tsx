@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, LogIn } from "lucide-react";
+import { ArrowRight, FlaskConical, LogIn } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { StatusBadge } from "@/components/ui-kit";
 import { homeFor } from "@/lib/session";
 import { loadAuthContext, signInWithPassword, type SignupEcosystem } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { DEMO_ECOSYSTEM_SLUG, DEMO_ROLES, isPreviewEnvironment } from "@/lib/demo";
+import { startDemoSession } from "@/lib/demo.functions";
 import { platformSettings } from "@/lib/wavewallet";
 
 export const Route = createFileRoute("/")({
@@ -40,6 +42,33 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [shops, setShops] = useState<SignupEcosystem[]>([]);
+  const [preview, setPreview] = useState(false);
+  const [demoBusy, setDemoBusy] = useState<string | null>(null);
+
+  useEffect(() => setPreview(isPreviewEnvironment()), []);
+
+  /**
+   * Demo sign-in is a real password sign-in: the server provisions a sandbox
+   * account in the isolated demo ecosystem and hands back a freshly rotated
+   * one-time password. No auth bypass, no shared master credential.
+   */
+  const startDemo = async (role: "customer" | "reseller" | "admin" | "super_admin") => {
+    if (demoBusy || busy) return;
+    setDemoBusy(role);
+    try {
+      const creds = await startDemoSession({ data: { role } });
+      const ctx = await signInWithPassword(creds.email, creds.password);
+      if (!ctx) throw new Error("The demo profile could not be loaded.");
+      toast.success(`Signed in to the DEMO shop as ${creds.label}.`);
+      navigate({ to: homeFor(ctx.role) });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not start the demo session.");
+    } finally {
+      setDemoBusy(null);
+    }
+  };
+
+
 
   // Already signed in? Send straight to the right dashboard.
   useEffect(() => {
@@ -51,7 +80,14 @@ function LoginPage() {
       .from("ecosystems")
       .select("id, name, slug, description")
       .eq("signup_enabled", true)
-      .then(({ data }) => active && setShops((data as SignupEcosystem[]) ?? []));
+      .then(({ data }) => {
+        if (!active) return;
+        const list = (data as SignupEcosystem[]) ?? [];
+        // The sandbox shop is only advertised inside the preview environment.
+        setShops(
+          isPreviewEnvironment() ? list : list.filter((e) => e.slug !== DEMO_ECOSYSTEM_SLUG),
+        );
+      });
     return () => {
       active = false;
     };
@@ -162,6 +198,40 @@ function LoginPage() {
               </p>
             </CardContent>
           </Card>
+
+          {preview ? (
+            <div className="mt-6 rounded-xl border-2 border-dashed border-destructive/50 bg-destructive/5 p-4">
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-destructive">
+                  <FlaskConical className="size-3.5" /> Demo / preview access
+                </p>
+                <StatusBadge tone="danger">Not live data</StatusBadge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                One-tap sign-in to a sandbox shop filled with clearly fake sample data. Only shown in
+                the Lovable preview — never on a published site. Real shops, codes, credits and
+                payments are untouched.
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {DEMO_ROLES.map((d) => (
+                  <Button
+                    key={d.role}
+                    variant="outline"
+                    className="h-auto flex-col items-start gap-0.5 py-2.5 text-left"
+                    disabled={demoBusy !== null || busy}
+                    onClick={() => startDemo(d.role)}
+                  >
+                    <span className="text-sm font-semibold">
+                      {demoBusy === d.role ? "Preparing…" : `Demo ${d.label}`}
+                    </span>
+                    <span className="text-[11px] font-normal text-muted-foreground">{d.hint}</span>
+                  </Button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+
 
           <div className="mt-6 rounded-xl border border-border bg-card p-4">
             <div className="mb-2 flex items-center justify-between">
