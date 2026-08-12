@@ -23,11 +23,16 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 export const DEMO_SLUG = "demo-preview";
 export const DEMO_ECOSYSTEM_NAME = "DEMO — Preview Shop";
 
-export type DemoRole = "customer" | "reseller" | "admin" | "super_admin";
+export type DemoRole = "customer" | "reseller" | "subreseller" | "admin" | "super_admin";
 
 const DEMO_USERS: Record<DemoRole, { email: string; name: string; phone: string }> = {
   customer: { email: "demo.customer@wavewallet.demo", name: "Demo Customer", phone: "0900 000 0001" },
   reseller: { email: "demo.reseller@wavewallet.demo", name: "Demo Reseller", phone: "0900 000 0002" },
+  subreseller: {
+    email: "demo.subreseller@wavewallet.demo",
+    name: "Demo Subreseller",
+    phone: "0900 000 0005",
+  },
   admin: { email: "demo.admin@wavewallet.demo", name: "Demo Operator", phone: "0900 000 0003" },
   super_admin: { email: "demo.super@wavewallet.demo", name: "Demo Platform Owner", phone: "0900 000 0004" },
 };
@@ -116,18 +121,25 @@ async function ensureUser(role: DemoRole, ecosystemId: string): Promise<string> 
       full_name: spec.name,
       phone: spec.phone,
       demo: true,
-      ...(role === "customer" || role === "reseller" ? { ecosystem_slug: DEMO_SLUG } : {}),
+      ...(role === "customer" || role === "reseller" || role === "subreseller"
+        ? { ecosystem_slug: DEMO_SLUG }
+        : {}),
     },
   });
   if (error || !data.user) throw new Error(error?.message ?? "Could not create the demo account");
 
-  if (role === "reseller") {
+  if (role === "reseller" || role === "subreseller") {
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user.id).eq("role", "customer");
     await supabaseAdmin
       .from("user_roles")
-      .upsert({ user_id: data.user.id, role: "reseller", ecosystem_id: ecosystemId });
+      .upsert({ user_id: data.user.id, role, ecosystem_id: ecosystemId });
     await supabaseAdmin
       .from("profiles")
-      .update({ reseller_discount_percent: 15 })
+      // Subresellers never earn commission — discount is their only margin.
+      .update({
+        reseller_discount_percent: role === "reseller" ? 15 : 8,
+        reseller_commission_percent: role === "reseller" ? 20 : 0,
+      })
       .eq("id", data.user.id);
   }
   return data.user.id;
@@ -168,6 +180,7 @@ async function seedSampleData(ecosystemId: string, ids: Record<DemoRole, string>
   };
   await seedCredit(ids.customer, 850, "DEMO — sample credit load");
   await seedCredit(ids.reseller, 5000, "DEMO — sample reseller float");
+  await seedCredit(ids.subreseller, 1500, "DEMO — sample subreseller float");
 
   const { data: pAcct } = await supabaseAdmin
     .from("points_accounts")
@@ -278,7 +291,7 @@ export async function provisionDemo(role: DemoRole, host: string | null): Promis
   const ecosystemId = await ensureEcosystem();
 
   const ids = {} as Record<DemoRole, string>;
-  for (const r of ["admin", "reseller", "customer", "super_admin"] as DemoRole[]) {
+  for (const r of ["admin", "reseller", "subreseller", "customer", "super_admin"] as DemoRole[]) {
     ids[r] = await ensureUser(r, ecosystemId);
   }
   await seedSampleData(ecosystemId, ids);
