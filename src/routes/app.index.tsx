@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowDownLeft, ArrowUpRight, History, Send, ShoppingBag, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Gift, History, Send, ShoppingBag, Sparkles, Wallet } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +7,12 @@ import { EmptyState, PageSection, StatCard } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import { fetchCreditBalance, fetchCreditLedger, type CreditEntry } from "@/lib/wallet";
+import {
+  fetchPointsAccount,
+  fetchPointsLedger,
+  type PointsAccount,
+  type PointsEntry,
+} from "@/lib/rewards";
 
 export const Route = createFileRoute("/app/")({
   head: () => ({
