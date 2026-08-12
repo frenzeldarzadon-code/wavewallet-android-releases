@@ -35,6 +35,7 @@ export interface RewardListing {
   description: string;
   points_price: number;
   available: number;
+  image_path: string | null;
 }
 
 export interface RewardProductRow {
@@ -47,6 +48,7 @@ export interface RewardProductRow {
   reserved: number;
   active: boolean;
   archived: boolean;
+  image_path: string | null;
   created_at: string;
 }
 
@@ -64,6 +66,7 @@ export interface RedemptionRow {
   note: string | null;
   handled_by_name: string | null;
   handled_at: string | null;
+  reward_image_path: string | null;
   created_at: string;
 }
 
@@ -229,6 +232,7 @@ export async function saveRewardProduct(input: {
   pointsPrice: number;
   stock: number;
   active: boolean;
+  imagePath?: string | null;
 }): Promise<void> {
   const payload = {
     ecosystem_id: input.ecosystemId,
@@ -237,6 +241,7 @@ export async function saveRewardProduct(input: {
     points_price: Math.trunc(input.pointsPrice),
     stock: Math.trunc(input.stock),
     active: input.active,
+    ...(input.imagePath === undefined ? {} : { image_path: input.imagePath }),
   };
   const res = input.id
     ? await supabase.from("reward_products").update(payload).eq("id", input.id)
