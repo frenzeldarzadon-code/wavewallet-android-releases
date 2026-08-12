@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Building2, Copy, Play, Plus, Search, Settings2, Snowflake, Trash2, UserPlus } from "lucide-react";
+import { Building2, Copy, Play, Plus, Search, Settings2, ShieldAlert, Snowflake, Trash2, UserPlus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { fetchEcosystemRates, setEcosystemRates } from "@/lib/wallet";
@@ -30,6 +30,15 @@ import {
   cleanupStatusTone,
   type CleanupStatus,
 } from "@/lib/ecosystem-cleanup";
+import {
+  PURGE_DELETION_ITEMS,
+  PURGE_WARNING,
+  canSubmitPurge,
+  purgeEcosystem,
+  summarizePurge,
+  type PurgeStep,
+} from "@/lib/ecosystem-purge";
+
 
 type Overview = Database["public"]["Functions"]["platform_overview"]["Returns"][number];
 type Invitation = Database["public"]["Tables"]["admin_invitations"]["Row"];
@@ -89,6 +98,12 @@ function SuperAdmins() {
   const [archiveFor, setArchiveFor] = useState<Overview | null>(null);
   const [archiveReason, setArchiveReason] = useState("");
   const [archiving, setArchiving] = useState(false);
+  const [purgeFor, setPurgeFor] = useState<Overview | null>(null);
+  const [purgeStep, setPurgeStep] = useState<PurgeStep>("warning");
+  const [purgeTyped, setPurgeTyped] = useState("");
+  const [purgeReason, setPurgeReason] = useState("");
+  const [purging, setPurging] = useState(false);
+
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -181,6 +196,41 @@ function SuperAdmins() {
     }
   };
 
+  /**
+   * Emergency administrative purge — separate from the archive path above and
+   * from the 1-year retention policy. Two explicit confirmations in the UI; the
+   * database re-checks platform ownership and the exact shop name.
+   */
+  const openPurge = (e: Overview) => {
+    setPurgeFor(e);
+    setPurgeStep("warning");
+    setPurgeTyped("");
+    setPurgeReason("");
+  };
+
+  const closePurge = () => {
+    setPurgeFor(null);
+    setPurgeStep("warning");
+    setPurgeTyped("");
+    setPurgeReason("");
+  };
+
+  const confirmPurge = async () => {
+    if (!purgeFor) return;
+    setPurging(true);
+    try {
+      const result = await purgeEcosystem(purgeFor.id, purgeTyped, purgeReason.trim());
+      toast.success("Ecosystem permanently deleted", { description: summarizePurge(result) });
+      closePurge();
+      await load();
+    } catch (err) {
+      toast.error("Could not delete this ecosystem", {
+        description: err instanceof Error ? err.message : "Unexpected error",
+      });
+    } finally {
+      setPurging(false);
+    }
+  };
 
 
 
@@ -399,7 +449,16 @@ function SuperAdmins() {
                                 <Trash2 className="size-4" /> Delete
                               </Button>
                             )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => openPurge(e)}
+                            >
+                              <ShieldAlert className="size-4" /> Purge
+                            </Button>
                           </div>
+
 
                         </TableCell>
 
@@ -594,7 +653,93 @@ function SuperAdmins() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!purgeFor} onOpenChange={(o) => !o && closePurge()}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">
+              {purgeStep === "warning" ? "Permanently delete" : "Final confirmation —"}{" "}
+              {purgeFor?.name}
+            </DialogTitle>
+            <DialogDescription>{PURGE_WARNING}</DialogDescription>
+          </DialogHeader>
+
+          {purgeStep === "warning" ? (
+            <div className="space-y-3">
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+                <p className="text-sm font-medium text-destructive">
+                  Everything below is deleted, regardless of transaction or activity history:
+                </p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                  {PURGE_DELETION_ITEMS.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                A platform-level deletion record (who, which shop, when and why) is kept outside
+                this ecosystem so the audit trail survives. Other ecosystems and platform-owner
+                accounts are never touched. This is separate from the 1-year inactivity cleanup —
+                normal retention and reversal rules are unchanged.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="purge-name">
+                  Type <span className="font-mono font-medium">{purgeFor?.name}</span> to confirm
+                </Label>
+                <Input
+                  id="purge-name"
+                  value={purgeTyped}
+                  onChange={(ev) => setPurgeTyped(ev.target.value)}
+                  placeholder={purgeFor?.name ?? ""}
+                  autoComplete="off"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="purge-reason">Reason (required)</Label>
+                <Textarea
+                  id="purge-reason"
+                  value={purgeReason}
+                  onChange={(ev) => setPurgeReason(ev.target.value)}
+                  placeholder="Why is this ecosystem being permanently deleted?"
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={closePurge}>
+              Cancel
+            </Button>
+            {purgeStep === "warning" ? (
+              <Button variant="destructive" onClick={() => setPurgeStep("confirm")}>
+                I understand — continue
+              </Button>
+            ) : (
+              <Button
+                variant="destructive"
+                disabled={
+                  !purgeFor ||
+                  !canSubmitPurge({
+                    step: purgeStep,
+                    ecosystemName: purgeFor.name,
+                    typed: purgeTyped,
+                    reason: purgeReason,
+                    busy: purging,
+                  })
+                }
+                onClick={() => void confirmPurge()}
+              >
+                {purging ? "Deleting…" : "Permanently Delete Ecosystem"}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
+
 
   );
 }

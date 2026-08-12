@@ -584,6 +584,42 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_deletion_log: {
+        Row: {
+          actor_id: string | null
+          actor_name: string
+          counts: Json
+          created_at: string
+          ecosystem_id: string
+          ecosystem_name: string
+          ecosystem_slug: string
+          id: string
+          reason: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_name: string
+          counts?: Json
+          created_at?: string
+          ecosystem_id: string
+          ecosystem_name: string
+          ecosystem_slug: string
+          id?: string
+          reason: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_name?: string
+          counts?: Json
+          created_at?: string
+          ecosystem_id?: string
+          ecosystem_name?: string
+          ecosystem_slug?: string
+          id?: string
+          reason?: string
+        }
+        Relationships: []
+      }
       platform_settings: {
         Row: {
           billing_period: string
@@ -2068,6 +2104,10 @@ export type Database = {
           sale_id: string
           tx_id: string
         }[]
+      }
+      purge_ecosystem: {
+        Args: { _confirm_name: string; _ecosystem_id: string; _reason: string }
+        Returns: Json
       }
       real_super_admin_exists: { Args: never; Returns: boolean }
       refund_voucher_sale: {
