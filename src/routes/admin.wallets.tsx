@@ -140,14 +140,24 @@ function AdminWallets() {
     }
     setBusy(true);
     try {
-      const tx = await adminAdjustCredits({
-        userId: target.id,
-        amount: value,
-        reason,
-        reference,
-      });
-      toast.success("Wallet updated", {
-        description: `${value > 0 ? "+" : "−"}${peso(value)} · ${target.full_name} · ${tx}`,
+      const tx =
+        mode === "points"
+          ? await adminAdjustPoints({
+              userId: target.id,
+              amount: Math.trunc(value),
+              reason,
+              ...(reference ? { reference } : {}),
+            })
+          : await adminAdjustCredits({
+              userId: target.id,
+              amount: value,
+              reason,
+              reference,
+            });
+      toast.success(mode === "points" ? "Points updated" : "Wallet updated", {
+        description: `${value > 0 ? "+" : "−"}${
+          mode === "points" ? `${Math.abs(Math.trunc(value))} pts` : peso(Math.abs(value))
+        } · ${target.full_name} · ${tx}`,
       });
       setTarget(null);
       setAmount("");
