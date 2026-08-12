@@ -149,9 +149,11 @@ export type Database = {
           created_at: string
           direction: string
           ecosystem_id: string
+          entry_kind: string
           id: string
           reason: string
           reference: string | null
+          sale_id: string | null
           tx_id: string | null
           user_id: string
         }
@@ -166,9 +168,11 @@ export type Database = {
           created_at?: string
           direction: string
           ecosystem_id: string
+          entry_kind?: string
           id?: string
           reason: string
           reference?: string | null
+          sale_id?: string | null
           tx_id?: string | null
           user_id: string
         }
@@ -183,9 +187,11 @@ export type Database = {
           created_at?: string
           direction?: string
           ecosystem_id?: string
+          entry_kind?: string
           id?: string
           reason?: string
           reference?: string | null
+          sale_id?: string | null
           tx_id?: string | null
           user_id?: string
         }
@@ -202,6 +208,13 @@ export type Database = {
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_ledger_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_sales"
             referencedColumns: ["id"]
           },
         ]
@@ -936,6 +949,9 @@ export type Database = {
         Row: {
           buyer_id: string
           buyer_role: Database["public"]["Enums"]["app_role"]
+          commission_amount: number
+          commission_percent: number
+          commission_recipient_id: string | null
           created_at: string
           credits_per_point_used: number | null
           discount_amount: number
@@ -950,13 +966,18 @@ export type Database = {
           points_spent: number
           product_id: string
           product_name: string
+          quantity: number
           reseller_id: string | null
           sale_price: number
           tx_id: string
+          unit_price: number | null
         }
         Insert: {
           buyer_id: string
           buyer_role: Database["public"]["Enums"]["app_role"]
+          commission_amount?: number
+          commission_percent?: number
+          commission_recipient_id?: string | null
           created_at?: string
           credits_per_point_used?: number | null
           discount_amount?: number
@@ -971,13 +992,18 @@ export type Database = {
           points_spent?: number
           product_id: string
           product_name: string
+          quantity?: number
           reseller_id?: string | null
           sale_price: number
           tx_id: string
+          unit_price?: number | null
         }
         Update: {
           buyer_id?: string
           buyer_role?: Database["public"]["Enums"]["app_role"]
+          commission_amount?: number
+          commission_percent?: number
+          commission_recipient_id?: string | null
           created_at?: string
           credits_per_point_used?: number | null
           discount_amount?: number
@@ -992,9 +1018,11 @@ export type Database = {
           points_spent?: number
           product_id?: string
           product_name?: string
+          quantity?: number
           reseller_id?: string | null
           sale_price?: number
           tx_id?: string
+          unit_price?: number | null
         }
         Relationships: [
           {
@@ -1306,14 +1334,18 @@ export type Database = {
         Returns: undefined
       }
       purchase_voucher: {
-        Args: { _product_id: string }
+        Args: { _product_id: string; _quantity?: number }
         Returns: {
-          code: string
+          codes: string[]
+          commission_amount: number
+          commission_percent: number
           points_earned: number
           product_name: string
+          quantity: number
           sale_id: string
           sale_price: number
           tx_id: string
+          unit_price: number
         }[]
       }
       purchase_voucher_with_points: {
@@ -1395,6 +1427,10 @@ export type Database = {
         }
       }
       revoke_admin_invitation: { Args: { _id: string }; Returns: undefined }
+      sale_commission_rate_for: {
+        Args: { _recipient: string }
+        Returns: number
+      }
       set_ecosystem_commission: {
         Args: { _ecosystem_id: string; _percent: number }
         Returns: number
