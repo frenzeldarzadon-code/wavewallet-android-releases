@@ -109,7 +109,7 @@ function ResellerReports() {
 
   const exportCsv = () => {
     const csv = toCsv(
-      ["Type", "Date", "Reference", "Detail", "List price", "I paid", "My margin", "Commission", "Points"],
+      ["Type", "Date", "Reference", "Detail", "List price", "I paid", "My margin", "Cashback / upline", "Points"],
       [
         ...sales.map((s) => [
           s.payment_method === "points" ? "Voucher purchase (points)" : "Voucher purchase (credits)",
@@ -130,7 +130,7 @@ function ResellerReports() {
           "",
           c.direction === "debit" ? -c.amount : c.amount,
           "",
-          Number(c.commission_amount ?? 0),
+          c.entry_kind === "sale_commission" || c.entry_kind === "upline_commission" ? c.amount : 0,
           "",
         ]),
       ],

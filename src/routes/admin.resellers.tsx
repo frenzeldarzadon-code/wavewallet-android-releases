@@ -15,13 +15,13 @@ export const Route = createFileRoute("/admin/resellers")({
       {
         name: "description",
         content:
-          "Reseller and subreseller network inside your ecosystem: wallets, discounts, commission rates and sales.",
+          "Reseller and subreseller network inside your ecosystem: wallets, wholesale discounts, sale cashback and sales.",
       },
       { property: "og:title", content: "Resellers — WaveWallet Admin" },
       {
         property: "og:description",
         content:
-          "Reseller and subreseller network inside your ecosystem: wallets, discounts, commission rates and sales.",
+          "Reseller and subreseller network inside your ecosystem: wallets, wholesale discounts, sale cashback and sales.",
       },
     ],
   }),
@@ -35,7 +35,6 @@ interface ResellerRow {
   joined_at: string;
   status: "active" | "suspended";
   discount: number;
-  commission: number | null;
   role: Extract<Role, "reseller" | "subreseller">;
   credits: number;
   sales: number;
@@ -60,7 +59,7 @@ function AdminResellers() {
         supabase
           .from("profiles")
           .select(
-            "id, full_name, email, joined_at, status, reseller_discount_percent, reseller_commission_percent",
+            "id, full_name, email, joined_at, status, reseller_discount_percent",
           )
           .eq("ecosystem_id", ecosystemDbId),
         supabase.from("credit_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
@@ -95,7 +94,6 @@ function AdminResellers() {
           joined_at: p.joined_at,
           status: p.status as ResellerRow["status"],
           discount: p.reseller_discount_percent ?? 0,
-          commission: p.reseller_commission_percent,
           role: roleOf.get(p.id)!,
           credits: creditOf.get(p.id) ?? 0,
           sales: saleCount.get(p.id) ?? 0,
