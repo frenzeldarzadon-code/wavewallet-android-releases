@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Link2,
+  Pencil,
   Percent,
   Repeat,
   Search,
@@ -35,6 +36,8 @@ import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-
 import { useSession } from "@/lib/session";
 import { supabase } from "@/integrations/supabase/client";
 import { peso, roleLabel, shortDate, shortDateTime, type Role } from "@/lib/wavewallet";
+import { EditMemberDialog, type EditableMember } from "@/components/edit-member-dialog";
+import { memberMatches } from "@/lib/member-admin";
 import {
   evaluateCustomerDeletion,
   type DeletionVerdict,
@@ -136,6 +139,7 @@ function AdminCustomers() {
   const [restructureParent, setRestructureParent] = useState("");
   const [childParents, setChildParents] = useState<Record<string, string>>({});
   const [restructureReason, setRestructureReason] = useState("");
+  const [editingProfile, setEditingProfile] = useState<EditableMember | null>(null);
 
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
@@ -231,12 +235,7 @@ function AdminCustomers() {
     return customers.filter((c) => {
       if (roleFilter !== "all" && c.role !== roleFilter) return false;
       if (statusFilter !== "all" && c.status !== statusFilter) return false;
-      if (!needle) return true;
-      return (
-        c.full_name.toLowerCase().includes(needle) ||
-        c.email.toLowerCase().includes(needle) ||
-        c.phone.includes(needle)
-      );
+      return memberMatches(c, needle);
     });
   }, [customers, q, roleFilter, statusFilter]);
   const resellers = customers.filter((c) => c.role === "reseller");
@@ -582,6 +581,9 @@ function AdminCustomers() {
                           <div className="flex flex-wrap justify-end gap-2">
                             <Button size="sm" variant="ghost" onClick={() => void openDetail(c)}>
                               <UserCog className="size-4" /> Details
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => setEditingProfile(c)}>
+                              <Pencil className="size-4" /> Edit
                             </Button>
                             {c.role === "reseller" || c.role === "subreseller" ? (
                               <Button
@@ -1129,6 +1131,12 @@ function AdminCustomers() {
           ) : null}
         </DialogContent>
       </Dialog>
+
+      <EditMemberDialog
+        member={editingProfile}
+        onClose={() => setEditingProfile(null)}
+        onSaved={() => void load()}
+      />
     </>
   );
 }

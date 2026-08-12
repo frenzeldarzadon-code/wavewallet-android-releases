@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AlertTriangle, RotateCcw, Search, Wallet } from "lucide-react";
+import { AlertTriangle, RotateCcw, Search, UserCog, Wallet } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { EditMemberDialog, type EditableMember } from "@/components/edit-member-dialog";
+import { memberMatches } from "@/lib/member-admin";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -77,6 +80,8 @@ function AdminWallets() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [target, setTarget] = useState<Member | null>(null);
+  const [editingMember, setEditingMember] = useState<EditableMember | null>(null);
+
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
   const [reference, setReference] = useState("");
@@ -138,15 +143,10 @@ function AdminWallets() {
 
   if (!ecosystemDbId) return null;
 
-  const q = query.trim().toLowerCase();
-  const filtered = q
-    ? members.filter(
-        (m) =>
-          m.full_name.toLowerCase().includes(q) ||
-          m.email.toLowerCase().includes(q) ||
-          m.phone.includes(q),
-      )
-    : members;
+  // Shared matcher: case-insensitive partial name/email match plus
+  // formatting-insensitive phone match.
+  const filtered = members.filter((m) => memberMatches(m, query));
+
 
   const nameFor = (id: string) => members.find((m) => m.id === id)?.full_name ?? id.slice(0, 8);
 
@@ -321,6 +321,10 @@ function AdminWallets() {
                       >
                         Points
                       </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setEditingMember(m)}>
+                        <UserCog className="size-4" /> Details
+                      </Button>
+
                     </div>
                   </div>
 
@@ -633,6 +637,12 @@ function AdminWallets() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <EditMemberDialog
+        member={editingMember}
+        onClose={() => setEditingMember(null)}
+        onSaved={() => void load()}
+      />
     </>
   );
 }
