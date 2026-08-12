@@ -77,7 +77,9 @@ export function integrityHeadline(summary: IntegritySummary): string {
       : "All wallets reconcile with their transaction history.";
   }
   const n = summary.unexplained.length;
-  return `${n} wallet${n === 1 ? "" : "s"} do not match their transaction history.`;
+  return n === 1
+    ? "1 wallet does not match their transaction history."
+    : `${n} wallets do not match their transaction history.`;
 }
 
 export async function fetchWalletIntegrity(): Promise<WalletIntegrityRow[]> {
