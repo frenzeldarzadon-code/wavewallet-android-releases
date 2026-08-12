@@ -47,6 +47,8 @@ function SuperOverview() {
   const navigate = useNavigate();
   const [rows, setRows] = useState<EcosystemOverviewRow[]>([]);
   const [audit, setAudit] = useState<AuditRow[]>([]);
+  const [editingMember, setEditingMember] = useState<EditableMember | null>(null);
+
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
 
