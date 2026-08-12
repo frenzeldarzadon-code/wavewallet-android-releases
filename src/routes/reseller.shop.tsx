@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { fetchMyVoucherDiscount } from "@/lib/wallet";
 import { useSession } from "@/lib/session";
 import { VoucherShopView } from "./app.shop";
+
 
 export const Route = createFileRoute("/reseller/shop")({
   head: () => ({
