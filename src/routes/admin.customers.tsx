@@ -701,15 +701,15 @@ function AdminCustomers() {
       <Dialog open={!!editingCommission} onOpenChange={(o) => !o && setEditingCommission(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Credit commission bonus</DialogTitle>
+            <DialogTitle>Credit-loading commission</DialogTitle>
             <DialogDescription>
               Extra credits granted to {editingCommission?.full_name || editingCommission?.email}{" "}
-              whenever you or the platform owner release credits to them. Applies to future
-              transfers only — past transactions keep the rate they were made with.
+              whenever you or the platform owner release credits to them. Resellers only — this is
+              separate from customer-purchase credit-back. Applies to future transfers only.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">
-            <Label htmlFor="editCommission">Commission (%)</Label>
+            <Label htmlFor="editCommission">Loading commission (%)</Label>
             <Input
               id="editCommission"
               type="number"
@@ -734,6 +734,93 @@ function AdminCustomers() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!editingCreditBack} onOpenChange={(o) => !o && setEditingCreditBack(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Customer-purchase credit-back</DialogTitle>
+            <DialogDescription>
+              Paid to {editingCreditBack?.full_name || editingCreditBack?.email} when a customer
+              spends credits this member funded. Separate from the credit-loading commission, and
+              snapshotted on every sale — past sales never change.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor="editCreditBack">Credit-back (%)</Label>
+            <Input
+              id="editCreditBack"
+              type="number"
+              min={0}
+              max={MAX_COMMISSION}
+              value={creditBack}
+              onChange={(e) => setCreditBack(e.target.value)}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Shop defaults: {saleDefaults.reseller}% for resellers, {saleDefaults.subreseller}% for
+              subresellers.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditingCreditBack(null)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmCreditBack} disabled={busy}>
+              Save credit-back
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!editingOwner}
+        onOpenChange={(o) => {
+          if (!o) {
+            setEditingOwner(null);
+            setParentId("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Parent reseller</DialogTitle>
+            <DialogDescription>
+              {editingOwner?.full_name || editingOwner?.email} can only be loaded by their parent
+              reseller or by you. Moving them is audit-logged; past transactions keep their original
+              attribution.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor="editParent">Owning reseller</Label>
+            <Select value={parentId} onValueChange={setParentId}>
+              <SelectTrigger id="editParent">
+                <SelectValue placeholder="Choose a reseller" />
+              </SelectTrigger>
+              <SelectContent>
+                {resellers.map((r) => (
+                  <SelectItem key={r.id} value={r.id}>
+                    {r.full_name || r.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setEditingOwner(null);
+                setParentId("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={confirmOwner} disabled={busy || !parentId}>
+              Save parent
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
