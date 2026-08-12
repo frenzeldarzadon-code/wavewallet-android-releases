@@ -92,14 +92,24 @@ function AdminReports() {
   const resellerRows = useMemo(() => {
     const map = new Map<
       string,
-      { sales: number; gross: number; net: number; margin: number; commission: number; base: number }
+      {
+        sales: number;
+        gross: number;
+        net: number;
+        margin: number;
+        commission: number;
+        base: number;
+        role: string;
+      }
     >();
-    const blank = () => ({ sales: 0, gross: 0, net: 0, margin: 0, commission: 0, base: 0 });
+    const blank = () => ({ sales: 0, gross: 0, net: 0, margin: 0, commission: 0, base: 0, role: "reseller" });
     for (const s of sales) {
       if (s.payment_method === "points") continue;
-      const id = s.reseller_id ?? (s.buyer_role === "reseller" ? s.buyer_id : null);
+      const isChannel = s.buyer_role === "reseller" || s.buyer_role === "subreseller";
+      const id = s.reseller_id ?? (isChannel ? s.buyer_id : null);
       if (!id) continue;
       const row = map.get(id) ?? blank();
+      if (isChannel && s.buyer_id === id) row.role = s.buyer_role;
       row.sales += 1;
       row.gross += s.list_price;
       row.net += s.sale_price;
@@ -230,11 +240,11 @@ function AdminReports() {
       </PageSection>
 
       <PageSection
-        title="Reseller performance"
+        title="Reseller & subreseller performance"
         description="Margins use the discount captured at sale time; commission uses the rate snapshotted on each credit release."
       >
         {resellerRows.length === 0 ? (
-          <EmptyState title="No reseller activity in this range" />
+          <EmptyState title="No reseller or subreseller activity in this range" />
         ) : (
           <Card className="overflow-hidden py-0 shadow-[var(--shadow-card)]">
             <CardContent className="px-0">
@@ -242,7 +252,7 @@ function AdminReports() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Reseller</TableHead>
+                      <TableHead>Channel partner</TableHead>
                       <TableHead>Vouchers</TableHead>
                       <TableHead className="hidden sm:table-cell">Gross</TableHead>
                       <TableHead>Their margin</TableHead>
@@ -252,11 +262,22 @@ function AdminReports() {
                   <TableBody>
                     {resellerRows.map(([id, r]) => (
                       <TableRow key={id}>
-                        <TableCell className="font-medium">{nameOf(id)}</TableCell>
+                        <TableCell className="font-medium">
+                          {nameOf(id)}
+                          <span className="ml-2 text-[11px] font-normal text-muted-foreground">
+                            {roleLabel(r.role as Role)}
+                          </span>
+                        </TableCell>
                         <TableCell>{r.sales}</TableCell>
                         <TableCell className="hidden sm:table-cell">{peso(r.gross)}</TableCell>
                         <TableCell className="text-destructive">{peso(r.margin)}</TableCell>
-                        <TableCell className="text-right text-success">+{peso(r.commission)}</TableCell>
+                        <TableCell className="text-right text-success">
+                          {r.role === "subreseller" ? (
+                            <span className="text-muted-foreground">—</span>
+                          ) : (
+                            `+${peso(r.commission)}`
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
