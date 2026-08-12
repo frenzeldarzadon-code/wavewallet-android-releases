@@ -19,7 +19,7 @@ export const deleteCustomerAccount = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.rpc("delete_customer_account", {
       _user_id: data.userId,
-      _reason: data.reason ?? null,
+      _reason: data.reason ?? undefined,
     });
     if (error) throw new Error(error.message);
 
