@@ -470,7 +470,58 @@ export type Database = {
       }
     }
     Functions: {
+      create_ecosystem: {
+        Args: {
+          _contact_email?: string
+          _contact_phone?: string
+          _description?: string
+          _grace_period_days?: number
+          _name: string
+          _plan_name?: string
+          _plan_price?: number
+          _signup_enabled?: boolean
+          _slug?: string
+        }
+        Returns: {
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          current_period_end: string | null
+          description: string | null
+          grace_period_days: number
+          id: string
+          name: string
+          payment_reference: string | null
+          plan_name: string
+          plan_price: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          signup_enabled: boolean
+          signup_token: string
+          slug: string
+          submitted_at: string | null
+          subscription_state: Database["public"]["Enums"]["subscription_state"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ecosystems"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       current_ecosystem: { Args: { _user_id: string }; Returns: string }
+      ecosystem_dashboard: {
+        Args: { _ecosystem_id: string }
+        Returns: {
+          credits_outstanding: number
+          customer_count: number
+          member_count: number
+          points_outstanding: number
+          reseller_count: number
+          suspended_count: number
+        }[]
+      }
       expire_stale_invitations: { Args: never; Returns: undefined }
       get_signup_ecosystem: {
         Args: { _slug: string }
@@ -532,6 +583,31 @@ export type Database = {
           subscription_state: Database["public"]["Enums"]["subscription_state"]
         }[]
       }
+      platform_overview: {
+        Args: never
+        Returns: {
+          admin_count: number
+          contact_email: string
+          contact_phone: string
+          created_at: string
+          current_period_end: string
+          description: string
+          grace_period_days: number
+          id: string
+          member_count: number
+          name: string
+          payment_reference: string
+          plan_name: string
+          plan_price: number
+          reseller_count: number
+          reviewed_at: string
+          signup_enabled: boolean
+          signup_token: string
+          slug: string
+          submitted_at: string
+          subscription_state: Database["public"]["Enums"]["subscription_state"]
+        }[]
+      }
       promote_to_reseller: {
         Args: { _discount: number; _user_id: string }
         Returns: undefined
@@ -549,15 +625,95 @@ export type Database = {
         Returns: undefined
       }
       revoke_admin_invitation: { Args: { _id: string }; Returns: undefined }
+      set_member_status: {
+        Args: {
+          _status: Database["public"]["Enums"]["account_status"]
+          _user_id: string
+        }
+        Returns: undefined
+      }
       set_reseller_discount: {
         Args: { _discount: number; _user_id: string }
         Returns: undefined
       }
+      slugify: { Args: { _value: string }; Returns: string }
       submit_subscription_payment: {
         Args: { _ecosystem_id: string; _reference: string }
         Returns: undefined
       }
       subscription_ok: { Args: { _ecosystem_id: string }; Returns: boolean }
+      update_ecosystem: {
+        Args: {
+          _contact_email?: string
+          _contact_phone?: string
+          _description?: string
+          _ecosystem_id: string
+          _name: string
+          _signup_enabled?: boolean
+        }
+        Returns: {
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          current_period_end: string | null
+          description: string | null
+          grace_period_days: number
+          id: string
+          name: string
+          payment_reference: string | null
+          plan_name: string
+          plan_price: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          signup_enabled: boolean
+          signup_token: string
+          slug: string
+          submitted_at: string | null
+          subscription_state: Database["public"]["Enums"]["subscription_state"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ecosystems"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      update_ecosystem_plan: {
+        Args: {
+          _ecosystem_id: string
+          _grace_period_days: number
+          _plan_name: string
+          _plan_price: number
+        }
+        Returns: {
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          current_period_end: string | null
+          description: string | null
+          grace_period_days: number
+          id: string
+          name: string
+          payment_reference: string | null
+          plan_name: string
+          plan_price: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          signup_enabled: boolean
+          signup_token: string
+          slug: string
+          submitted_at: string | null
+          subscription_state: Database["public"]["Enums"]["subscription_state"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ecosystems"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       account_status: "active" | "suspended"
