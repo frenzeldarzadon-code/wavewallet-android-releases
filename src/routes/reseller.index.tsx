@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, PageSection, StatCard } from "@/components/ui-kit";
 import { EarningsSummaryCards } from "@/components/earnings-summary-cards";
+import { FacebookSupportCard } from "@/components/facebook-support-card";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
@@ -158,6 +159,19 @@ function ResellerDashboard() {
             </CardContent>
           </Card>
         )}
+      </PageSection>
+
+      <PageSection
+        title="Support"
+        description={`Questions about credits, vouchers or payouts go to ${ecosystem.name}.`}
+      >
+        <FacebookSupportCard
+          url={ecosystem.facebookPageUrl}
+          pageName={ecosystem.facebookPageName}
+          title={`${ecosystem.name} support`}
+          message="Message your shop admin's Facebook page for help with loads, vouchers and earnings."
+          emptyHint="Your shop admin has not added a Facebook support page yet. Contact them directly for now."
+        />
       </PageSection>
     </>
   );
