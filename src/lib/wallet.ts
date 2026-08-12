@@ -366,20 +366,39 @@ export async function importVoucherCodes(
 
 export interface PurchaseResult {
   tx_id: string;
-  code: string;
+  /** One code per purchased voucher. */
+  codes: string[];
+  /** Total charged for the whole purchase. */
   sale_price: number;
+  unit_price: number;
+  quantity: number;
   product_name: string;
   sale_id: string;
   points_earned: number;
+  /** Credit-back granted to the buyer's upline reseller/subreseller. */
+  commission_amount: number;
+  commission_percent: number;
 }
 
-export async function purchaseVoucher(productId: string): Promise<PurchaseResult> {
-  const { data, error } = await supabase.rpc("purchase_voucher", { _product_id: productId });
+export async function purchaseVoucher(productId: string, quantity = 1): Promise<PurchaseResult> {
+  const { data, error } = await supabase.rpc("purchase_voucher", {
+    _product_id: productId,
+    _quantity: quantity,
+  });
   if (error) throw new Error(friendlyWalletError(error.message));
   const row = (data as unknown as PurchaseResult[])[0];
   if (!row) throw new Error("Purchase could not be completed.");
-  return { ...row, sale_price: Number(row.sale_price) };
+  return {
+    ...row,
+    codes: row.codes ?? [],
+    sale_price: Number(row.sale_price),
+    unit_price: Number(row.unit_price),
+    quantity: Number(row.quantity),
+    commission_amount: Number(row.commission_amount ?? 0),
+    commission_percent: Number(row.commission_percent ?? 0),
+  };
 }
+
 
 export function friendlyWalletError(message: string): string {
   const m = message.toLowerCase();
