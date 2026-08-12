@@ -1608,6 +1608,8 @@ export type Database = {
         Args: { _reason?: string; _user_id: string }
         Returns: undefined
       }
+      delete_voucher_batch: { Args: { _import_id: string }; Returns: number }
+      delete_voucher_code: { Args: { _code_id: string }; Returns: undefined }
       earnings_history: {
         Args: {
           _ecosystem?: string
@@ -1786,6 +1788,21 @@ export type Database = {
           id: string
           name: string
           slug: string
+        }[]
+      }
+      list_voucher_batches: {
+        Args: { _ecosystem_id: string }
+        Returns: {
+          actor_name: string
+          batch_id: string
+          created_at: string
+          deletable: boolean
+          product_id: string
+          product_name: string
+          sold_count: number
+          source: string
+          total_codes: number
+          unused_count: number
         }[]
       }
       lookup_redemption: {
