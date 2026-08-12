@@ -1,5 +1,13 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
-import { BarChart3, Building2, CreditCard, LayoutDashboard, ScrollText, Settings } from "lucide-react";
+import {
+  BarChart3,
+  Building2,
+  CreditCard,
+  DatabaseBackup,
+  LayoutDashboard,
+  ScrollText,
+  Settings,
+} from "lucide-react";
 import { AppShell, type NavItem } from "@/components/app-shell";
 import { useSession } from "@/lib/session";
 
@@ -12,9 +20,11 @@ export const superNav: NavItem[] = [
   { to: "/super/admins", label: "Ecosystems", icon: Building2 },
   { to: "/super/subscriptions", label: "Subscriptions", icon: CreditCard },
   { to: "/super/reports", label: "Reports", icon: BarChart3 },
+  { to: "/super/export", label: "Data export", icon: DatabaseBackup },
   { to: "/super/audit", label: "Audit log", icon: ScrollText },
   { to: "/super/settings", label: "Platform", icon: Settings },
 ];
+
 
 function SuperLayout() {
   const session = useSession("super_admin");
