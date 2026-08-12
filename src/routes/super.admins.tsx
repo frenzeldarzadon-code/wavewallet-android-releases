@@ -712,6 +712,22 @@ function ManageDialog({
               onChange={(e) => setState({ ...state, gracePeriodDays: e.target.value })}
             />
           </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="mCommission">Default reseller commission (%)</Label>
+            <Input
+              id="mCommission"
+              type="number"
+              min={0}
+              max={100}
+              value={state.commission}
+              onChange={(e) => setState({ ...state, commission: e.target.value })}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Applied when you or this shop's admin release credits to a reseller who has no
+              personal rate. Future releases only — past transactions keep their snapshot.
+            </p>
+          </div>
+
           <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2 sm:col-span-2">
             <div>
               <p className="text-sm font-medium">Customer signups</p>
