@@ -157,7 +157,7 @@ function AdminResellers() {
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {rows.map((r) => (
-              <Card key={r.id} className="shadow-[var(--shadow-card)]">
+              <Card key={r.id} className="min-w-0 shadow-[var(--shadow-card)]">
                 <CardContent className="space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">

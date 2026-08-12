@@ -220,7 +220,7 @@ function AdminWallets() {
         ) : (
           <div className="grid gap-2 md:grid-cols-2">
             {filtered.map((m) => (
-              <Card key={m.id} className="shadow-[var(--shadow-card)]">
+              <Card key={m.id} className="min-w-0 shadow-[var(--shadow-card)]">
                 <CardContent className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{m.full_name}</p>
@@ -315,7 +315,7 @@ function AdminWallets() {
         {ledger.length === 0 ? (
           <EmptyState title="No credit movements yet" />
         ) : (
-          <Card className="shadow-[var(--shadow-card)]">
+          <Card className="min-w-0 shadow-[var(--shadow-card)]">
             <CardContent className="divide-y divide-border px-0 py-0">
               {ledger.map((e) => (
                 <div key={e.id} className="flex items-start justify-between gap-3 px-4 py-3">
