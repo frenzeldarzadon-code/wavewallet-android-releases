@@ -25,6 +25,7 @@ import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminSignupLinkRouteImport } from './routes/admin.signup-link'
 import { Route as AdminSubscriptionRouteImport } from './routes/admin.subscription'
 import { Route as AdminVouchersRouteImport } from './routes/admin.vouchers'
+import { Route as AdminWalletsRouteImport } from './routes/admin.wallets'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppHistoryRouteImport } from './routes/app.history'
 import { Route as AppRewardsRouteImport } from './routes/app.rewards'
@@ -120,6 +121,11 @@ const AdminSubscriptionRoute = AdminSubscriptionRouteImport.update({
 const AdminVouchersRoute = AdminVouchersRouteImport.update({
   id: '/vouchers',
   path: '/vouchers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminWalletsRoute = AdminWalletsRouteImport.update({
+  id: '/wallets',
+  path: '/wallets',
   getParentRoute: () => AdminRoute,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -219,6 +225,7 @@ export interface FileRoutesByFullPath {
   '/admin/signup-link': typeof AdminSignupLinkRoute
   '/admin/subscription': typeof AdminSubscriptionRoute
   '/admin/vouchers': typeof AdminVouchersRoute
+  '/admin/wallets': typeof AdminWalletsRoute
   '/app/history': typeof AppHistoryRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
@@ -249,6 +256,7 @@ export interface FileRoutesByTo {
   '/admin/signup-link': typeof AdminSignupLinkRoute
   '/admin/subscription': typeof AdminSubscriptionRoute
   '/admin/vouchers': typeof AdminVouchersRoute
+  '/admin/wallets': typeof AdminWalletsRoute
   '/app/history': typeof AppHistoryRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
@@ -284,6 +292,7 @@ export interface FileRoutesById {
   '/admin/signup-link': typeof AdminSignupLinkRoute
   '/admin/subscription': typeof AdminSubscriptionRoute
   '/admin/vouchers': typeof AdminVouchersRoute
+  '/admin/wallets': typeof AdminWalletsRoute
   '/app/history': typeof AppHistoryRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
@@ -320,6 +329,7 @@ export interface FileRouteTypes {
     | '/admin/signup-link'
     | '/admin/subscription'
     | '/admin/vouchers'
+    | '/admin/wallets'
     | '/app/history'
     | '/app/rewards'
     | '/app/shop'
@@ -350,6 +360,7 @@ export interface FileRouteTypes {
     | '/admin/signup-link'
     | '/admin/subscription'
     | '/admin/vouchers'
+    | '/admin/wallets'
     | '/app/history'
     | '/app/rewards'
     | '/app/shop'
@@ -384,6 +395,7 @@ export interface FileRouteTypes {
     | '/admin/signup-link'
     | '/admin/subscription'
     | '/admin/vouchers'
+    | '/admin/wallets'
     | '/app/history'
     | '/app/rewards'
     | '/app/shop'
@@ -527,6 +539,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminVouchersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/wallets': {
+      id: '/admin/wallets'
+      path: '/wallets'
+      fullPath: '/admin/wallets'
+      preLoaderRoute: typeof AdminWalletsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/app/': {
       id: '/app/'
       path: '/'
@@ -652,6 +671,7 @@ interface AdminRouteChildren {
   AdminSignupLinkRoute: typeof AdminSignupLinkRoute
   AdminSubscriptionRoute: typeof AdminSubscriptionRoute
   AdminVouchersRoute: typeof AdminVouchersRoute
+  AdminWalletsRoute: typeof AdminWalletsRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -665,6 +685,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSignupLinkRoute: AdminSignupLinkRoute,
   AdminSubscriptionRoute: AdminSubscriptionRoute,
   AdminVouchersRoute: AdminVouchersRoute,
+  AdminWalletsRoute: AdminWalletsRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
