@@ -53,6 +53,7 @@ function ResellerReports() {
   const [to, setTo] = useState("");
   const [sales, setSales] = useState<SaleReportRow[]>([]);
   const [credits, setCredits] = useState<CreditEntry[]>([]);
+  const [creditBackRows, setCreditBackRows] = useState<SaleCommissionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const userId = account?.id ?? null;
 
@@ -62,12 +63,14 @@ function ResellerReports() {
     if (!userId) return;
     setLoading(true);
     try {
-      const [s, c] = await Promise.all([
+      const [s, c, cb] = await Promise.all([
         fetchSalesReport({ range: resolved, buyerId: userId }),
         fetchCreditsReport({ range: resolved, userId }),
+        fetchMyCreditBack(userId),
       ]);
       setSales(s);
       setCredits(c);
+      setCreditBackRows(cb);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
