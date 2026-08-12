@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Building2, Copy, Plus, Search, Settings2, Trash2, UserPlus } from "lucide-react";
+import { Building2, Copy, Play, Plus, Search, Settings2, Snowflake, Trash2, UserPlus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -124,6 +124,34 @@ function SuperAdmins() {
       toast.error("Could not copy — select the text and copy manually.");
     }
   };
+
+  /**
+   * Emergency control: freezing blocks every money-moving action in that shop
+   * (sales, credit transfers, redemptions) at the database level. Reads stay open.
+   */
+  const toggleFreeze = async (e: Overview) => {
+    const frozen = Boolean(e.operations_frozen);
+    let reason: string | null = null;
+    if (!frozen) {
+      reason = window.prompt(`Freeze all transactions in ${e.name}? Give a reason:`, "");
+      if (reason === null) return;
+      if (!reason.trim()) {
+        toast.error("A reason is required to freeze a shop.");
+        return;
+      }
+    } else if (!window.confirm(`Unfreeze ${e.name} and allow transactions again?`)) {
+      return;
+    }
+    const { error } = await supabase.rpc("set_ecosystem_freeze", {
+      _ecosystem_id: e.id,
+      _frozen: !frozen,
+      _reason: reason ?? "",
+    });
+    if (error) toast.error("Could not update", { description: error.message });
+    else toast.success(frozen ? "Shop unfrozen" : "Shop frozen — all transactions blocked");
+    await load();
+  };
+
 
   const create = async () => {
     const name = form.name.trim();
@@ -276,17 +304,38 @@ function SuperAdmins() {
                           <StatusBadge tone={e.signup_enabled ? "success" : "danger"}>
                             {e.signup_enabled ? "Open" : "Disabled"}
                           </StatusBadge>
+                          {e.operations_frozen ? (
+                            <p className="mt-1 text-[11px] text-destructive">
+                              Frozen{e.frozen_reason ? ` — ${e.frozen_reason}` : ""}
+                            </p>
+                          ) : null}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex flex-wrap justify-end gap-2">
                             <Button size="sm" variant="outline" onClick={() => setDetail(e)}>
                               <Settings2 className="size-4" /> Manage
                             </Button>
+                            <Button
+                              size="sm"
+                              variant={e.operations_frozen ? "secondary" : "ghost"}
+                              onClick={() => void toggleFreeze(e)}
+                            >
+                              {e.operations_frozen ? (
+                                <>
+                                  <Play className="size-4" /> Unfreeze
+                                </>
+                              ) : (
+                                <>
+                                  <Snowflake className="size-4" /> Freeze
+                                </>
+                              )}
+                            </Button>
                             <Button size="sm" variant="ghost" onClick={() => enter(e.id)}>
                               <Building2 className="size-4" /> Enter
                             </Button>
                           </div>
                         </TableCell>
+
                       </TableRow>
                     ))}
                   </TableBody>

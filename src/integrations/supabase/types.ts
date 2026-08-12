@@ -336,9 +336,13 @@ export type Database = {
           default_sale_commission_percent: number
           default_subreseller_sale_commission_percent: number
           description: string | null
+          frozen_at: string | null
+          frozen_by: string | null
+          frozen_reason: string | null
           grace_period_days: number
           id: string
           name: string
+          operations_frozen: boolean
           payment_reference: string | null
           plan_name: string
           plan_price: number
@@ -363,9 +367,13 @@ export type Database = {
           default_sale_commission_percent?: number
           default_subreseller_sale_commission_percent?: number
           description?: string | null
+          frozen_at?: string | null
+          frozen_by?: string | null
+          frozen_reason?: string | null
           grace_period_days?: number
           id?: string
           name: string
+          operations_frozen?: boolean
           payment_reference?: string | null
           plan_name?: string
           plan_price?: number
@@ -390,9 +398,13 @@ export type Database = {
           default_sale_commission_percent?: number
           default_subreseller_sale_commission_percent?: number
           description?: string | null
+          frozen_at?: string | null
+          frozen_by?: string | null
+          frozen_reason?: string | null
           grace_period_days?: number
           id?: string
           name?: string
+          operations_frozen?: boolean
           payment_reference?: string | null
           plan_name?: string
           plan_price?: number
@@ -1206,6 +1218,9 @@ export type Database = {
           product_id: string
           product_name: string
           quantity: number
+          refund_reason: string | null
+          refund_tx: string | null
+          refunded_at: string | null
           reseller_id: string | null
           sale_price: number
           tx_id: string
@@ -1233,6 +1248,9 @@ export type Database = {
           product_id: string
           product_name: string
           quantity?: number
+          refund_reason?: string | null
+          refund_tx?: string | null
+          refunded_at?: string | null
           reseller_id?: string | null
           sale_price: number
           tx_id: string
@@ -1260,6 +1278,9 @@ export type Database = {
           product_id?: string
           product_name?: string
           quantity?: number
+          refund_reason?: string | null
+          refund_tx?: string | null
+          refunded_at?: string | null
           reseller_id?: string | null
           sale_price?: number
           tx_id?: string
@@ -1365,9 +1386,13 @@ export type Database = {
           default_sale_commission_percent: number
           default_subreseller_sale_commission_percent: number
           description: string | null
+          frozen_at: string | null
+          frozen_by: string | null
+          frozen_reason: string | null
           grace_period_days: number
           id: string
           name: string
+          operations_frozen: boolean
           payment_reference: string | null
           plan_name: string
           plan_price: number
@@ -1556,10 +1581,12 @@ export type Database = {
           created_at: string
           current_period_end: string
           description: string
+          frozen_reason: string
           grace_period_days: number
           id: string
           member_count: number
           name: string
+          operations_frozen: boolean
           payment_reference: string
           plan_name: string
           plan_price: number
@@ -1606,6 +1633,17 @@ export type Database = {
           points_spent: number
           product_name: string
           sale_id: string
+          tx_id: string
+        }[]
+      }
+      refund_voucher_sale: {
+        Args: { _reason: string; _sale_id: string }
+        Returns: {
+          codes_voided: number
+          commission_reversed: number
+          credits_refunded: number
+          points_refunded: number
+          points_reversed: number
           tx_id: string
         }[]
       }
@@ -1712,6 +1750,46 @@ export type Database = {
         Args: { _ecosystem_id: string; _percent: number }
         Returns: number
       }
+      set_ecosystem_freeze: {
+        Args: { _ecosystem_id: string; _frozen: boolean; _reason?: string }
+        Returns: {
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          credits_per_point: number
+          current_period_end: string | null
+          default_commission_percent: number
+          default_sale_commission_percent: number
+          default_subreseller_sale_commission_percent: number
+          description: string | null
+          frozen_at: string | null
+          frozen_by: string | null
+          frozen_reason: string | null
+          grace_period_days: number
+          id: string
+          name: string
+          operations_frozen: boolean
+          payment_reference: string | null
+          plan_name: string
+          plan_price: number
+          points_rule_updated_at: string
+          points_rule_version: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          signup_enabled: boolean
+          signup_token: string
+          slug: string
+          submitted_at: string | null
+          subscription_state: Database["public"]["Enums"]["subscription_state"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ecosystems"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       set_ecosystem_sale_commission: {
         Args: {
           _ecosystem_id: string
@@ -1809,9 +1887,13 @@ export type Database = {
           default_sale_commission_percent: number
           default_subreseller_sale_commission_percent: number
           description: string | null
+          frozen_at: string | null
+          frozen_by: string | null
+          frozen_reason: string | null
           grace_period_days: number
           id: string
           name: string
+          operations_frozen: boolean
           payment_reference: string | null
           plan_name: string
           plan_price: number
@@ -1850,9 +1932,13 @@ export type Database = {
           default_sale_commission_percent: number
           default_subreseller_sale_commission_percent: number
           description: string | null
+          frozen_at: string | null
+          frozen_by: string | null
+          frozen_reason: string | null
           grace_period_days: number
           id: string
           name: string
+          operations_frozen: boolean
           payment_reference: string | null
           plan_name: string
           plan_price: number

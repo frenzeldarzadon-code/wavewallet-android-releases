@@ -1,6 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Undo2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { ReportRangePicker } from "@/components/report-range";
@@ -13,6 +25,7 @@ import {
   fetchNameMap,
   fetchPointsReport,
   fetchSalesReport,
+  refundSale,
   resolveRange,
   summariseCredits,
   summarisePoints,
@@ -23,6 +36,7 @@ import {
 } from "@/lib/reports";
 import type { CreditEntry } from "@/lib/wallet";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/admin/reports")({
   head: () => ({
@@ -56,6 +70,10 @@ function AdminReports() {
   const [points, setPoints] = useState<PointsEntryRow[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [refunding, setRefunding] = useState<SaleReportRow | null>(null);
+  const [refundReason, setRefundReason] = useState("");
+  const [refundBusy, setRefundBusy] = useState(false);
+
 
   const resolved = useMemo(() => resolveRange(range, from, to), [range, from, to]);
 
@@ -302,7 +320,8 @@ function AdminReports() {
                       <TableHead className="hidden sm:table-cell">Buyer</TableHead>
                       <TableHead>Paid</TableHead>
                       <TableHead className="hidden lg:table-cell">Points</TableHead>
-                      <TableHead className="hidden md:table-cell text-right">Date</TableHead>
+                      <TableHead className="hidden md:table-cell">Date</TableHead>
+                      <TableHead className="text-right">Refund</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -335,12 +354,22 @@ function AdminReports() {
                             </span>
                           ) : null}
                         </TableCell>
-                        <TableCell className="hidden md:table-cell text-right text-xs text-muted-foreground">
+                        <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
                           {shortDateTime(s.created_at)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {s.refunded_at ? (
+                            <StatusBadge tone="danger">Refunded</StatusBadge>
+                          ) : (
+                            <Button size="sm" variant="outline" onClick={() => setRefunding(s)}>
+                              <Undo2 className="size-4" /> Refund
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
+
                 </Table>
               </div>
             </CardContent>
@@ -396,6 +425,80 @@ function AdminReports() {
           </Card>
         )}
       </PageSection>
+
+      <Dialog
+        open={refunding !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            setRefunding(null);
+            setRefundReason("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Refund this sale</DialogTitle>
+            <DialogDescription>
+              The original sale is never edited. We return what the buyer paid, reverse any credit-back
+              and points earned, and void the released codes so they cannot be resold.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1 rounded-xl border border-border px-3 py-3 text-sm">
+            <p className="flex justify-between">
+              <span className="text-muted-foreground">Voucher</span>
+              <span className="font-medium">{refunding?.product_name}</span>
+            </p>
+            <p className="flex justify-between">
+              <span className="text-muted-foreground">Buyer</span>
+              <span className="font-medium">{refunding ? nameOf(refunding.buyer_id) : ""}</span>
+            </p>
+            <p className="flex justify-between">
+              <span className="text-muted-foreground">Returned</span>
+              <span className="font-semibold text-success">
+                {refunding?.payment_method === "points"
+                  ? `${refunding?.points_spent} pts`
+                  : peso(refunding?.sale_price ?? 0)}
+              </span>
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="refundReason">Reason</Label>
+            <Input
+              id="refundReason"
+              value={refundReason}
+              onChange={(e) => setRefundReason(e.target.value)}
+              placeholder="Codes did not work, duplicate purchase…"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRefunding(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={refundBusy || refundReason.trim().length < 3 || !refunding}
+              onClick={() => {
+                if (!refunding) return;
+                setRefundBusy(true);
+                void refundSale(refunding.id, refundReason.trim())
+                  .then(async (r) => {
+                    toast.success("Sale refunded", {
+                      description: `${r.tx_id} · ${peso(r.credits_refunded)} returned · ${r.codes_voided} code(s) voided`,
+                    });
+                    setRefunding(null);
+                    setRefundReason("");
+                    await load();
+                  })
+                  .catch((e: Error) => toast.error(e.message))
+                  .finally(() => setRefundBusy(false));
+              }}
+            >
+              {refundBusy ? "Refunding…" : "Refund sale"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
+
   );
 }

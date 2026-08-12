@@ -81,10 +81,41 @@ export interface SaleReportRow {
   points_earned: number;
   credits_per_point_used: number | null;
   points_rule_version: number | null;
+  refunded_at: string | null;
+  refund_reason: string | null;
 }
 
 const SALE_COLUMNS =
-  "id, ecosystem_id, product_name, buyer_id, buyer_role, reseller_id, list_price, discount_percent, sale_price, payment_method, tx_id, created_at, points_spent, points_earned, credits_per_point_used, points_rule_version";
+  "id, ecosystem_id, product_name, buyer_id, buyer_role, reseller_id, list_price, discount_percent, sale_price, payment_method, tx_id, created_at, points_spent, points_earned, credits_per_point_used, points_rule_version, refunded_at, refund_reason";
+
+export interface RefundResult {
+  tx_id: string;
+  credits_refunded: number;
+  points_refunded: number;
+  points_reversed: number;
+  commission_reversed: number;
+  codes_voided: number;
+}
+
+/**
+ * Refunds a voucher sale. The original sale row is never edited — the server
+ * writes reversal entries for credits, credit-back and points, and voids the
+ * released codes. Refunding twice is refused by the database.
+ */
+export async function refundSale(saleId: string, reason: string): Promise<RefundResult> {
+  const { data, error } = await supabase.rpc("refund_voucher_sale", {
+    _sale_id: saleId,
+    _reason: reason,
+  });
+  if (error) throw new Error(error.message);
+  const row = (data as RefundResult[] | null)?.[0];
+  if (!row) throw new Error("Refund did not return a result.");
+  return {
+    ...row,
+    credits_refunded: Number(row.credits_refunded),
+    commission_reversed: Number(row.commission_reversed),
+  };
+}
 
 export interface SaleQuery {
   range: ResolvedRange;
