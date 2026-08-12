@@ -56,10 +56,11 @@ export function VoucherShopView({
   role,
   discountPercent = 0,
 }: {
-  role: "customer" | "reseller";
+  role: "customer" | "reseller" | "subreseller";
   discountPercent?: number;
 }) {
-  const { account, ecosystemDbId } = useSession(role);
+  // Subresellers share the reseller workspace; the database still authorizes each purchase.
+  const { account, ecosystemDbId } = useSession(role === "subreseller" ? "reseller" : role);
   const [products, setProducts] = useState<ShopProduct[]>([]);
   const [balance, setBalance] = useState(0);
   const [points, setPoints] = useState<PointsAccount>({ balance: 0, held: 0, available: 0 });
@@ -142,7 +143,9 @@ export function VoucherShopView({
       <PageSection
         title="Voucher shop"
         description={`Balance: ${peso(balance)} · ${points.available} pts available${
-          discountPercent > 0 ? ` · ${discountPercent}% reseller discount applied` : ""
+          discountPercent > 0
+            ? ` · ${discountPercent}% ${role === "subreseller" ? "subreseller" : "reseller"} discount applied`
+            : ""
         }`}
       >
         {loading ? (
@@ -185,6 +188,12 @@ export function VoucherShopView({
                         </StatusBadge>
                       ) : null}
                     </div>
+                    {discountPercent > 0 ? (
+                      <p className="rounded-lg bg-success/10 px-2.5 py-1.5 text-[11px] font-medium text-success">
+                        Your cost {peso(price)} · sell at {peso(listPrice(p))} · margin{" "}
+                        {peso(listPrice(p) - price)} ({discountPercent}%)
+                      </p>
+                    ) : null}
                     <div className="grid gap-2">
                       <Button
                         className="w-full"

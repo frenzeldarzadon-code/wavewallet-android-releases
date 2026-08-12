@@ -25,5 +25,10 @@ export const Route = createFileRoute("/reseller/shop")({
 
 function ResellerShop() {
   const { account } = useSession("reseller");
-  return <VoucherShopView role="reseller" discountPercent={account?.discountPercent ?? 0} />;
+  return (
+    <VoucherShopView
+      role={account?.role === "subreseller" ? "subreseller" : "reseller"}
+      discountPercent={account?.discountPercent ?? 0}
+    />
+  );
 }
