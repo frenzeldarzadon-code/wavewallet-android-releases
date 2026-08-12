@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Link2, Search, ShieldCheck, TrendingUp } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { Link2, Search, ShieldCheck, TrendingUp, UserCog } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,11 +14,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
 import { supabase } from "@/integrations/supabase/client";
-import { shortDate } from "@/lib/wavewallet";
+import { peso, shortDate, shortDateTime } from "@/lib/wavewallet";
 
 export const Route = createFileRoute("/admin/customers")({
   head: () => ({
@@ -47,6 +54,16 @@ interface Member {
   status: "active" | "suspended";
   reseller_discount_percent: number;
   role: "customer" | "reseller" | "admin" | "super_admin";
+  credits: number;
+  points: number;
+}
+
+interface ActivityRow {
+  id: string;
+  action: string;
+  target: string;
+  actor_name: string;
+  created_at: string;
 }
 
 const MAX_DISCOUNT = 50;
@@ -56,29 +73,45 @@ function AdminCustomers() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"all" | "customer" | "reseller">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "suspended">("all");
   const [promoting, setPromoting] = useState<Member | null>(null);
   const [editing, setEditing] = useState<Member | null>(null);
+  const [detail, setDetail] = useState<Member | null>(null);
+  const [activity, setActivity] = useState<ActivityRow[]>([]);
   const [discount, setDiscount] = useState("10");
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
     setLoading(true);
-    const [{ data: profiles }, { data: roles }] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select("id, full_name, email, phone, joined_at, status, reseller_discount_percent")
-        .eq("ecosystem_id", ecosystemDbId)
-        .order("joined_at", { ascending: false }),
-      supabase.from("user_roles").select("user_id, role").eq("ecosystem_id", ecosystemDbId),
-    ]);
+    const [{ data: profiles }, { data: roles }, { data: credits }, { data: points }] =
+      await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, full_name, email, phone, joined_at, status, reseller_discount_percent")
+          .eq("ecosystem_id", ecosystemDbId)
+          .order("joined_at", { ascending: false }),
+        supabase.from("user_roles").select("user_id, role").eq("ecosystem_id", ecosystemDbId),
+        supabase.from("credit_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
+        supabase.from("points_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
+      ]);
+
     const roleOf = new Map<string, Member["role"]>();
     for (const r of roles ?? []) {
       const current = roleOf.get(r.user_id);
       if (!current || r.role === "reseller") roleOf.set(r.user_id, r.role as Member["role"]);
     }
+    const creditOf = new Map((credits ?? []).map((c) => [c.user_id, Number(c.balance)]));
+    const pointOf = new Map((points ?? []).map((p) => [p.user_id, Number(p.balance)]));
+
     setMembers(
-      (profiles ?? []).map((p) => ({ ...p, role: roleOf.get(p.id) ?? "customer" }) as Member),
+      (profiles ?? []).map((p) => ({
+        ...p,
+        role: roleOf.get(p.id) ?? "customer",
+        credits: creditOf.get(p.id) ?? 0,
+        points: pointOf.get(p.id) ?? 0,
+      }) as Member),
     );
     setLoading(false);
   }, [ecosystemDbId]);
@@ -87,16 +120,40 @@ function AdminCustomers() {
     void load();
   }, [load]);
 
-  if (!ecosystem) return null;
+  const openDetail = async (m: Member) => {
+    setDetail(m);
+    setActivity([]);
+    if (!ecosystemDbId) return;
+    const { data } = await supabase
+      .from("audit_logs")
+      .select("id, action, target, actor_name, created_at")
+      .eq("ecosystem_id", ecosystemDbId)
+      .or(`actor_id.eq.${m.id},target.ilike.%${m.email}%`)
+      .order("created_at", { ascending: false })
+      .limit(8);
+    setActivity((data as ActivityRow[] | null) ?? []);
+  };
 
-  const customers = members.filter((m) => m.role === "customer" || m.role === "reseller");
-  const filtered = customers.filter(
-    (c) =>
-      c.full_name.toLowerCase().includes(q.toLowerCase()) ||
-      c.phone.includes(q) ||
-      c.email.toLowerCase().includes(q.toLowerCase()),
+  const customers = useMemo(
+    () => members.filter((m) => m.role === "customer" || m.role === "reseller"),
+    [members],
   );
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return customers.filter((c) => {
+      if (roleFilter !== "all" && c.role !== roleFilter) return false;
+      if (statusFilter !== "all" && c.status !== statusFilter) return false;
+      if (!needle) return true;
+      return (
+        c.full_name.toLowerCase().includes(needle) ||
+        c.email.toLowerCase().includes(needle) ||
+        c.phone.includes(needle)
+      );
+    });
+  }, [customers, q, roleFilter, statusFilter]);
   const resellers = customers.filter((c) => c.role === "reseller");
+
+  if (!ecosystem) return null;
 
   const confirmPromote = async () => {
     if (!promoting) return;
@@ -142,19 +199,32 @@ function AdminCustomers() {
     void load();
   };
 
+  const toggleStatus = async (m: Member) => {
+    const next = m.status === "active" ? "suspended" : "active";
+    const { error } = await supabase.rpc("set_member_status", {
+      _user_id: m.id,
+      _status: next,
+    });
+    if (error) {
+      toast.error("Could not update status", { description: error.message });
+      return;
+    }
+    toast.success(`${m.full_name || m.email} is now ${next}.`);
+    setDetail(null);
+    void load();
+  };
+
   return (
     <>
       <PageSection>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="Members" value={String(customers.length)} tone="brand" />
           <StatCard label="Resellers" value={String(resellers.length)} tone="positive" />
-          <StatCard
-            label="Customers"
-            value={String(customers.length - resellers.length)}
-          />
+          <StatCard label="Customers" value={String(customers.length - resellers.length)} />
           <StatCard
             label="Suspended"
             value={String(customers.filter((c) => c.status !== "active").length)}
+            tone="negative"
           />
         </div>
       </PageSection>
@@ -182,8 +252,8 @@ function AdminCustomers() {
         title="Customer directory"
         description="Scoped strictly to this ecosystem by database row-level security."
       >
-        <div className="mb-3 flex items-center gap-2">
-          <div className="relative flex-1">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <div className="relative min-w-0 flex-1">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={q}
@@ -192,6 +262,26 @@ function AdminCustomers() {
               className="pl-9"
             />
           </div>
+          <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as typeof roleFilter)}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All roles</SelectItem>
+              <SelectItem value="customer">Customers</SelectItem>
+              <SelectItem value="reseller">Resellers</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="suspended">Suspended</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <Card className="overflow-hidden shadow-[var(--shadow-card)]">
@@ -200,7 +290,7 @@ function AdminCustomers() {
               <p className="px-5 py-8 text-center text-sm text-muted-foreground">Loading members…</p>
             ) : filtered.length === 0 ? (
               <EmptyState
-                title="No members yet"
+                title="No members match"
                 description="Share your signup link — new customers appear here the moment they confirm their account."
               />
             ) : (
@@ -210,8 +300,9 @@ function AdminCustomers() {
                     <TableRow>
                       <TableHead>Member</TableHead>
                       <TableHead>Role</TableHead>
+                      <TableHead>Wallets</TableHead>
                       <TableHead>Joined</TableHead>
-                      <TableHead className="text-right">Action</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -220,8 +311,11 @@ function AdminCustomers() {
                         <TableCell>
                           <p className="font-medium">{c.full_name || c.email}</p>
                           <p className="text-xs text-muted-foreground">{c.email}</p>
-                          {c.phone ? (
-                            <p className="text-xs text-muted-foreground">{c.phone}</p>
+                          {c.phone ? <p className="text-xs text-muted-foreground">{c.phone}</p> : null}
+                          {c.status !== "active" ? (
+                            <StatusBadge tone="danger" className="mt-1">
+                              Suspended
+                            </StatusBadge>
                           ) : null}
                         </TableCell>
                         <TableCell>
@@ -233,34 +327,41 @@ function AdminCustomers() {
                             <StatusBadge tone="muted">Customer</StatusBadge>
                           )}
                         </TableCell>
+                        <TableCell className="text-sm">
+                          <p className="text-success">{peso(c.credits)}</p>
+                          <p className="text-xs text-muted-foreground">{c.points} pts</p>
+                        </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {shortDate(c.joined_at)}
                         </TableCell>
                         <TableCell className="text-right">
-                          {c.role === "reseller" ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setEditing(c);
-                                setDiscount(String(c.reseller_discount_percent));
-                              }}
-                            >
-                              <TrendingUp className="size-4" />
-                              Discount
+                          <div className="flex flex-wrap justify-end gap-2">
+                            <Button size="sm" variant="ghost" onClick={() => void openDetail(c)}>
+                              <UserCog className="size-4" /> Details
                             </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              onClick={() => {
-                                setPromoting(c);
-                                setDiscount("10");
-                              }}
-                            >
-                              <ShieldCheck className="size-4" />
-                              Make reseller
-                            </Button>
-                          )}
+                            {c.role === "reseller" ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setEditing(c);
+                                  setDiscount(String(c.reseller_discount_percent));
+                                }}
+                              >
+                                <TrendingUp className="size-4" /> Discount
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setPromoting(c);
+                                  setDiscount("10");
+                                }}
+                              >
+                                <ShieldCheck className="size-4" /> Make reseller
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -273,27 +374,27 @@ function AdminCustomers() {
       </PageSection>
 
       <Dialog open={!!promoting} onOpenChange={(o) => !o && setPromoting(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Promote to reseller</DialogTitle>
             <DialogDescription>
-              {promoting?.full_name || promoting?.email} keeps the same account — profile, wallets,
-              purchases and future transaction identity are preserved. The change is recorded in the
-              audit log with your name.
+              {promoting?.full_name || promoting?.email} keeps every credit, point, purchase and
+              ledger entry. The change is written to the audit trail.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">
-            <Label htmlFor="promo-discount">Reseller discount (%)</Label>
+            <Label htmlFor="promoteDiscount">Reseller discount (%)</Label>
             <Input
-              id="promo-discount"
-              inputMode="numeric"
+              id="promoteDiscount"
+              type="number"
+              min={0}
+              max={MAX_DISCOUNT}
               value={discount}
               onChange={(e) => setDiscount(e.target.value)}
             />
-            <p className="text-xs text-muted-foreground">Between 0% and {MAX_DISCOUNT}%.</p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPromoting(null)}>
+            <Button variant="ghost" onClick={() => setPromoting(null)}>
               Cancel
             </Button>
             <Button onClick={confirmPromote} disabled={busy}>
@@ -304,30 +405,94 @@ function AdminCustomers() {
       </Dialog>
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Reseller discount</DialogTitle>
             <DialogDescription>
-              Update the discount for {editing?.full_name || editing?.email}. Changes are audit-logged.
+              Applies to future voucher purchases by {editing?.full_name || editing?.email}.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">
-            <Label htmlFor="edit-discount">Discount (%)</Label>
+            <Label htmlFor="editDiscount">Discount (%)</Label>
             <Input
-              id="edit-discount"
-              inputMode="numeric"
+              id="editDiscount"
+              type="number"
+              min={0}
+              max={MAX_DISCOUNT}
               value={discount}
               onChange={(e) => setDiscount(e.target.value)}
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(null)}>
+            <Button variant="ghost" onClick={() => setEditing(null)}>
               Cancel
             </Button>
             <Button onClick={confirmDiscount} disabled={busy}>
               Save discount
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{detail?.full_name || detail?.email}</DialogTitle>
+            <DialogDescription>
+              {detail?.email}
+              {detail?.phone ? ` · ${detail.phone}` : ""} · joined{" "}
+              {detail ? shortDate(detail.joined_at) : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          {detail ? (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <StatCard label="Credit balance" value={peso(detail.credits)} tone="positive" />
+                <StatCard label="Points balance" value={`${detail.points} pts`} tone="brand" />
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusBadge tone={detail.role === "reseller" ? "success" : "muted"}>
+                  {detail.role === "reseller"
+                    ? `Reseller · ${detail.reseller_discount_percent}% discount`
+                    : "Customer"}
+                </StatusBadge>
+                <StatusBadge tone={detail.status === "active" ? "success" : "danger"}>
+                  {detail.status}
+                </StatusBadge>
+              </div>
+
+              <div>
+                <p className="mb-2 text-sm font-medium">Recent activity</p>
+                {activity.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No audit entries yet.</p>
+                ) : (
+                  <ul className="divide-y divide-border rounded-lg border border-border">
+                    {activity.map((a) => (
+                      <li key={a.id} className="px-3 py-2">
+                        <p className="text-sm">{a.action}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {a.actor_name} · {shortDateTime(a.created_at)}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setDetail(null)}>
+                  Close
+                </Button>
+                <Button
+                  variant={detail.status === "active" ? "destructive" : "default"}
+                  onClick={() => toggleStatus(detail)}
+                >
+                  {detail.status === "active" ? "Suspend account" : "Reactivate account"}
+                </Button>
+              </DialogFooter>
+            </>
+          ) : null}
         </DialogContent>
       </Dialog>
     </>

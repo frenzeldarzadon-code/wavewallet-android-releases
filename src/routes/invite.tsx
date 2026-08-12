@@ -1,83 +1,51 @@
-import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
-import { ArrowRight, MailCheck, ShieldCheck, Wallet } from "lucide-react";
-import { useEffect, useState } from "react";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { ArrowRight, MailCheck, ShieldCheck } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/ui-kit";
-import { fetchSignupEcosystem, signUpCustomerAccount, type SignupEcosystem } from "@/lib/auth";
+import { signUpInvitedOperator } from "@/lib/auth";
 import { platformSettings } from "@/lib/wavewallet";
 
-export const Route = createFileRoute("/join/$slug")({
+export const Route = createFileRoute("/invite")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    email: typeof search["email"] === "string" ? (search["email"] as string) : "",
+  }),
   head: () => ({
     meta: [
-      { title: "Create your customer account — WaveWallet" },
+      { title: "Operator onboarding — WaveWallet" },
       {
         name: "description",
         content:
-          "Join your hotspot operator's WaveWallet shop to buy vouchers, hold credits, earn points and redeem rewards.",
+          "Accept your WaveWallet operator invitation and set up the account for your assigned hotspot ecosystem.",
       },
-      { property: "og:title", content: "Create your customer account — WaveWallet" },
+      { property: "og:title", content: "Operator onboarding — WaveWallet" },
       {
         property: "og:description",
-        content: "Sign up with your operator's link and start buying vouchers with credits or points.",
+        content: "Invitation-only onboarding for hotspot operators running a WaveWallet ecosystem.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: JoinPage,
+  component: InvitePage,
 });
 
-function JoinPage() {
-  const { slug } = useParams({ from: "/join/$slug" });
+function InvitePage() {
+  const { email: invitedEmail } = useSearch({ from: "/invite" });
   const navigate = useNavigate();
-  const [eco, setEco] = useState<SignupEcosystem | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirm: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: invitedEmail,
+    phone: "",
+    password: "",
+    confirm: "",
+  });
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    fetchSignupEcosystem(slug).then((e) => {
-      if (!active) return;
-      setEco(e);
-      setLoading(false);
-    });
-    return () => {
-      active = false;
-    };
-  }, [slug]);
-
-  if (loading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center px-4">
-        <p className="text-sm text-muted-foreground">Loading shop…</p>
-      </main>
-    );
-  }
-
-  if (!eco) {
-    return (
-      <main className="flex min-h-screen items-center justify-center px-4">
-        <Card className="w-full max-w-md shadow-[var(--shadow-card)]">
-          <CardContent className="space-y-3 py-8 text-center">
-            <h1 className="text-lg font-semibold">Signup link not found</h1>
-            <p className="text-sm text-muted-foreground">
-              This shop link is invalid or no longer active. Ask your hotspot operator for their
-              current signup link.
-            </p>
-            <Button asChild variant="outline" className="w-full">
-              <Link to="/">Back to sign in</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </main>
-    );
-  }
 
   const submit = async () => {
     if (busy) return;
@@ -86,7 +54,7 @@ function JoinPage() {
       return;
     }
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email.trim())) {
-      toast.error("Enter a valid email address.");
+      toast.error("Enter the email address your invitation was sent to.");
       return;
     }
     if (form.password.length < 8) {
@@ -97,23 +65,27 @@ function JoinPage() {
       toast.error("Passwords do not match.");
       return;
     }
+
     setBusy(true);
     try {
-      const { needsEmailConfirmation } = await signUpCustomerAccount({
-        ecosystemSlug: slug,
+      const { needsEmailConfirmation } = await signUpInvitedOperator({
         fullName: form.name,
         email: form.email,
         phone: form.phone,
         password: form.password,
       });
-      if (needsEmailConfirmation) {
-        setSent(true);
-      } else {
-        toast.success(`Welcome to ${eco.name}!`);
-        navigate({ to: "/app" });
+      if (needsEmailConfirmation) setSent(true);
+      else {
+        toast.success("Operator account created.");
+        navigate({ to: "/admin" });
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not create your account.");
+      const message = e instanceof Error ? e.message : "Could not create the account.";
+      toast.error(
+        message.includes("invite link")
+          ? "No pending invitation matches this email address."
+          : message,
+      );
     } finally {
       setBusy(false);
     }
@@ -124,10 +96,13 @@ function JoinPage() {
       <div className="surface-gradient px-6 py-10 text-primary-foreground">
         <div className="mx-auto max-w-md">
           <p className="text-xs uppercase tracking-wide opacity-80">
-            {platformSettings.productName} · Customer signup
+            {platformSettings.productName} · Operator onboarding
           </p>
-          <h1 className="mt-2 text-2xl font-semibold leading-tight">Join {eco.name}</h1>
-          <p className="mt-2 text-sm opacity-90">{eco.description}</p>
+          <h1 className="mt-2 text-2xl font-semibold leading-tight">Accept your invitation</h1>
+          <p className="mt-2 text-sm opacity-90">
+            Use the exact email address the platform owner invited. Your ecosystem and operator role
+            are assigned by the database — they can never be chosen here.
+          </p>
         </div>
       </div>
 
@@ -139,7 +114,7 @@ function JoinPage() {
               <h2 className="text-lg font-semibold">Check your email</h2>
               <p className="text-sm text-muted-foreground">
                 We sent a confirmation link to <span className="font-medium">{form.email}</span>.
-                Confirm it, then sign in to open your {eco.name} wallet.
+                Confirm it, then sign in to open your ecosystem console.
               </p>
               <Button asChild variant="outline" className="w-full">
                 <Link to="/">Back to sign in</Link>
@@ -150,33 +125,33 @@ function JoinPage() {
           <Card className="shadow-[var(--shadow-card)]">
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">You are joining</span>
-                <StatusBadge tone="brand">{eco.name}</StatusBadge>
+                <span className="text-sm font-medium">Invitation required</span>
+                <StatusBadge tone="brand">Operators only</StatusBadge>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="name">Full name</Label>
+                <Label htmlFor="iname">Full name</Label>
                 <Input
-                  id="name"
+                  id="iname"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Juan Dela Cruz"
+                  placeholder="Your name"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="iemail">Invited email</Label>
                 <Input
-                  id="email"
+                  id="iemail"
                   type="email"
                   autoComplete="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="you@example.com"
+                  placeholder="operator@example.com"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="phone">Mobile number</Label>
+                <Label htmlFor="iphone">Mobile number</Label>
                 <Input
-                  id="phone"
+                  id="iphone"
                   inputMode="tel"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -184,9 +159,9 @@ function JoinPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="ipass">Password</Label>
                 <Input
-                  id="password"
+                  id="ipass"
                   type="password"
                   autoComplete="new-password"
                   value={form.password}
@@ -195,46 +170,32 @@ function JoinPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="confirm">Confirm password</Label>
+                <Label htmlFor="iconfirm">Confirm password</Label>
                 <Input
-                  id="confirm"
+                  id="iconfirm"
                   type="password"
                   autoComplete="new-password"
                   value={form.confirm}
                   onChange={(e) => setForm({ ...form, confirm: e.target.value })}
-                  placeholder="Repeat your password"
                   onKeyDown={(e) => e.key === "Enter" && submit()}
+                  placeholder="Repeat your password"
                 />
               </div>
-
               <Button className="w-full" disabled={busy} onClick={submit}>
-                {busy ? "Creating account…" : "Create customer account"}
+                {busy ? "Creating account…" : "Create operator account"}
                 <ArrowRight className="size-4" />
               </Button>
               <p className="flex items-start gap-2 text-[11px] text-muted-foreground">
                 <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
-                Public signup always creates a customer account inside {eco.name}. The role and
-                ecosystem are assigned by the database — operator and platform accounts are never
-                created here.
+                If the email does not match a pending invitation, no operator role is granted — the
+                signup is rejected by the database.
               </p>
             </CardContent>
           </Card>
         )}
 
-        <div className="mt-4 rounded-xl border border-border bg-card p-4">
-          <p className="flex items-center gap-2 text-xs font-semibold">
-            <Wallet className="size-4 text-primary" />
-            What you get
-          </p>
-          <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-            <li>Credit wallet for buying vouchers instantly</li>
-            <li>Points on qualifying spend, redeemable for rewards</li>
-            <li>Full transaction history for every purchase and transfer</li>
-          </ul>
-        </div>
-
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          Already have an account?{" "}
+          Already onboarded?{" "}
           <Link to="/" className="font-medium text-primary underline-offset-2 hover:underline">
             Sign in
           </Link>
