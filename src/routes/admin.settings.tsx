@@ -129,7 +129,7 @@ function AdminSettings() {
 
   if (!ecosystem) return null;
 
-  // Read-only here: the platform owner configures it per ecosystem.
+  // Live preview of the link this admin owns and edits below.
   const rawFacebook = (ecosystem.facebookPageUrl ?? "").trim();
   const facebookUrl = isFacebookUrl(rawFacebook) ? rawFacebook : "";
 
@@ -428,7 +428,7 @@ function AdminSettings() {
         </Button>
         <p className="text-xs text-muted-foreground">
           Shop name, description and contact details are stored in the database and audit-logged.
-          Facebook support details are presentation placeholders.
+          Your Facebook support page is stored per ecosystem and audit-logged on every change.
         </p>
       </div>
 
