@@ -79,8 +79,8 @@ export async function setEcosystemFacebook(
   if (problem) throw new Error(problem);
   const { error } = await supabase.rpc("set_ecosystem_facebook", {
     _ecosystem_id: ecosystemId,
-    _url: url.trim() || undefined,
-    _page_name: pageName.trim() || undefined,
+    ...(url.trim() ? { _url: url.trim() } : {}),
+    ...(pageName.trim() ? { _page_name: pageName.trim() } : {}),
   });
   if (error) throw new Error(error.message);
 }
