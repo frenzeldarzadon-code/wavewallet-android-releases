@@ -143,6 +143,9 @@ export type Database = {
           actor_id: string | null
           amount: number
           balance_after: number
+          base_amount: number | null
+          commission_amount: number | null
+          commission_percent: number | null
           created_at: string
           direction: string
           ecosystem_id: string
@@ -157,6 +160,9 @@ export type Database = {
           actor_id?: string | null
           amount: number
           balance_after: number
+          base_amount?: number | null
+          commission_amount?: number | null
+          commission_percent?: number | null
           created_at?: string
           direction: string
           ecosystem_id: string
@@ -171,6 +177,9 @@ export type Database = {
           actor_id?: string | null
           amount?: number
           balance_after?: number
+          base_amount?: number | null
+          commission_amount?: number | null
+          commission_percent?: number | null
           created_at?: string
           direction?: string
           ecosystem_id?: string
@@ -397,6 +406,7 @@ export type Database = {
           id: string
           joined_at: string
           phone: string
+          reseller_commission_percent: number
           reseller_discount_percent: number
           reseller_id: string | null
           status: Database["public"]["Enums"]["account_status"]
@@ -410,6 +420,7 @@ export type Database = {
           id: string
           joined_at?: string
           phone?: string
+          reseller_commission_percent?: number
           reseller_discount_percent?: number
           reseller_id?: string | null
           status?: Database["public"]["Enums"]["account_status"]
@@ -423,6 +434,7 @@ export type Database = {
           id?: string
           joined_at?: string
           phone?: string
+          reseller_commission_percent?: number
           reseller_discount_percent?: number
           reseller_id?: string | null
           status?: Database["public"]["Enums"]["account_status"]
@@ -914,6 +926,10 @@ export type Database = {
           unused: number
         }[]
       }
+      commission_rate_for: {
+        Args: { _recipient: string; _sender: string }
+        Returns: number
+      }
       create_ecosystem: {
         Args: {
           _contact_email?: string
@@ -1210,6 +1226,10 @@ export type Database = {
       set_points_rule: {
         Args: { _credits_per_point: number; _ecosystem_id: string }
         Returns: number
+      }
+      set_reseller_commission: {
+        Args: { _percent: number; _user_id: string }
+        Returns: undefined
       }
       set_reseller_discount: {
         Args: { _discount: number; _user_id: string }

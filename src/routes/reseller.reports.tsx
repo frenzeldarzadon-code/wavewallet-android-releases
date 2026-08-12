@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Download } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { PageSection, StatCard } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
 import { ledgerIn, peso, shortDateTime } from "@/lib/wavewallet";
 import { toast } from "sonner";
+import { commissionBreakdown, fetchCreditLedger, type CreditEntry } from "@/lib/wallet";
 
 export const Route = createFileRoute("/reseller/reports")({
   head: () => ({
@@ -36,6 +37,18 @@ const ranges = [
 function ResellerReports() {
   const { account, ecosystem } = useSession("reseller");
   const [range, setRange] = useState("monthly");
+  const [credits, setCredits] = useState<CreditEntry[]>([]);
+  const userId = account?.id ?? null;
+
+  const loadCredits = useCallback(async () => {
+    if (!userId) return;
+    setCredits(await fetchCreditLedger(userId, 200));
+  }, [userId]);
+
+  useEffect(() => {
+    void loadCredits();
+  }, [loadCredits]);
+
   if (!account || !ecosystem) return null;
 
   const days = ranges.find((r) => r.id === range)?.days ?? 30;
@@ -47,6 +60,20 @@ function ResellerReports() {
   const gross = sales.reduce((s, l) => s + (l.grossPrice ?? 0), 0);
   const earnings = sales.reduce((s, l) => s + (l.resellerEarning ?? 0), 0);
   const loads = mine.filter((l) => l.kind === "credit_load");
+  const commissionEntries = credits.filter(
+    (e) =>
+      e.direction === "credit" &&
+      Number(e.commission_amount ?? 0) > 0 &&
+      new Date(e.created_at).getTime() >= cutoff,
+  );
+  const commissionTotal = commissionEntries.reduce(
+    (s, e) => s + Number(e.commission_amount ?? 0),
+    0,
+  );
+  const baseReceived = commissionEntries.reduce(
+    (s, e) => s + Number(e.base_amount ?? e.amount),
+    0,
+  );
 
   return (
     <>
@@ -88,6 +115,46 @@ function ResellerReports() {
           <StatCard label="Vouchers sold" value={String(sales.length)} />
           <StatCard label="Credit loads" value={peso(loads.reduce((s, l) => s + Math.abs(l.amount), 0))} hint={`${loads.length} loads`} />
         </div>
+        <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatCard label="Credits received (base)" value={peso(baseReceived)} />
+          <StatCard
+            label="Commission bonus"
+            value={peso(commissionTotal)}
+            tone="positive"
+            hint={`${commissionEntries.length} qualifying releases`}
+          />
+          <StatCard label="Total credited" value={peso(baseReceived + commissionTotal)} tone="brand" />
+        </div>
+      </PageSection>
+
+      <PageSection
+        title="Commission received"
+        description="Bonus credits granted by your admin on qualifying credit releases."
+      >
+        {commissionEntries.length === 0 ? (
+          <Card className="shadow-[var(--shadow-card)]">
+            <CardContent className="py-6 text-center text-sm text-muted-foreground">
+              No commission credits in this range.
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="shadow-[var(--shadow-card)]">
+            <CardContent className="divide-y divide-border px-0 py-0">
+              {commissionEntries.map((e) => (
+                <div key={e.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{e.reason}</p>
+                    <p className="text-[11px] font-medium text-success">{commissionBreakdown(e)}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {shortDateTime(e.created_at)} · {e.tx_id ?? "—"}
+                    </p>
+                  </div>
+                  <p className="shrink-0 text-sm font-semibold text-success">+{peso(e.amount)}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
       </PageSection>
 
       <PageSection

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Download } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,8 @@ import { PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
 import { accountsIn, ledgerIn, peso, shortDateTime } from "@/lib/wavewallet";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { fetchEcosystemLedger, type CreditEntry } from "@/lib/wallet";
 
 export const Route = createFileRoute("/admin/reports")({
   head: () => ({
@@ -34,8 +36,55 @@ const ranges = [
 ];
 
 function AdminReports() {
-  const { ecosystem } = useSession("admin");
+  const { ecosystem, ecosystemDbId } = useSession("admin");
   const [range, setRange] = useState("monthly");
+  const [creditEntries, setCreditEntries] = useState<CreditEntry[]>([]);
+  const [names, setNames] = useState<Record<string, string>>({});
+
+  const loadCredits = useCallback(async () => {
+    if (!ecosystemDbId) return;
+    const [entries, { data: profiles }] = await Promise.all([
+      fetchEcosystemLedger(ecosystemDbId, 500),
+      supabase.from("profiles").select("id, full_name").eq("ecosystem_id", ecosystemDbId),
+    ]);
+    setCreditEntries(entries);
+    setNames(Object.fromEntries((profiles ?? []).map((p) => [p.id, p.full_name])));
+  }, [ecosystemDbId]);
+
+  useEffect(() => {
+    void loadCredits();
+  }, [loadCredits]);
+
+  const rangeDays = ranges.find((r) => r.id === range)?.days ?? 30;
+  const creditCutoff = Date.now() - (rangeDays || 3650) * 86400000;
+
+  const commissionRows = useMemo(() => {
+    const byUser = new Map<
+      string,
+      { base: number; bonus: number; total: number; count: number; lastPercent: number }
+    >();
+    for (const e of creditEntries) {
+      if (e.direction !== "credit") continue;
+      const bonus = Number(e.commission_amount ?? 0);
+      if (bonus <= 0) continue;
+      if (new Date(e.created_at).getTime() < creditCutoff) continue;
+      const base = Number(e.base_amount ?? e.amount - bonus);
+      const row = byUser.get(e.user_id) ?? { base: 0, bonus: 0, total: 0, count: 0, lastPercent: 0 };
+      row.base += base;
+      row.bonus += bonus;
+      row.total += e.amount;
+      row.count += 1;
+      row.lastPercent = Number(e.commission_percent ?? row.lastPercent);
+      byUser.set(e.user_id, row);
+    }
+    return [...byUser.entries()].sort((a, b) => b[1].bonus - a[1].bonus);
+  }, [creditEntries, creditCutoff]);
+
+  const commissionTotals = commissionRows.reduce(
+    (acc, [, r]) => ({ base: acc.base + r.base, bonus: acc.bonus + r.bonus, total: acc.total + r.total }),
+    { base: 0, bonus: 0, total: 0 },
+  );
+
   if (!ecosystem) return null;
 
   const days = ranges.find((r) => r.id === range)?.days ?? 30;
@@ -144,6 +193,56 @@ function AdminReports() {
                 </TableBody>
               </Table>
             </div>
+          </CardContent>
+        </Card>
+      </PageSection>
+
+      <PageSection
+        title="Reseller credit commission"
+        description="Base credits released by admins versus bonus credits granted, using the rate snapshotted on each transfer."
+      >
+        <div className="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <StatCard label="Base credits released" value={peso(commissionTotals.base)} tone="brand" />
+          <StatCard label="Commission granted" value={peso(commissionTotals.bonus)} tone="positive" />
+          <StatCard label="Total reseller credit" value={peso(commissionTotals.total)} />
+        </div>
+        <Card className="overflow-hidden py-0 shadow-[var(--shadow-card)]">
+          <CardContent className="px-0">
+            {commissionRows.length === 0 ? (
+              <p className="px-5 py-8 text-center text-sm text-muted-foreground">
+                No commission-bearing credit releases in this range.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Reseller</TableHead>
+                      <TableHead>Releases</TableHead>
+                      <TableHead>Base</TableHead>
+                      <TableHead>Commission</TableHead>
+                      <TableHead className="text-right">Total received</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {commissionRows.map(([userId, r]) => (
+                      <TableRow key={userId}>
+                        <TableCell className="font-medium">
+                          {names[userId] ?? userId.slice(0, 8)}
+                          <StatusBadge tone="brand" className="ml-2">
+                            {r.lastPercent}%
+                          </StatusBadge>
+                        </TableCell>
+                        <TableCell>{r.count}</TableCell>
+                        <TableCell>{peso(r.base)}</TableCell>
+                        <TableCell className="text-success">+{peso(r.bonus)}</TableCell>
+                        <TableCell className="text-right font-medium">{peso(r.total)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </CardContent>
         </Card>
       </PageSection>

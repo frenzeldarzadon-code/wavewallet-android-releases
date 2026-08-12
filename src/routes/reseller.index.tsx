@@ -5,7 +5,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, PageSection, StatCard } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
-import { fetchCreditBalance, fetchCreditLedger, type CreditEntry } from "@/lib/wallet";
+import {
+  commissionBreakdown,
+  fetchCreditBalance,
+  fetchCreditLedger,
+  type CreditEntry,
+} from "@/lib/wallet";
 
 export const Route = createFileRoute("/reseller/")({
   head: () => ({
@@ -52,11 +57,14 @@ function ResellerDashboard() {
 
   const loadsOut = entries.filter((e) => e.reason === "Credit load to customer");
   const topUps = entries.filter((e) => e.direction === "credit");
+  const commissionEarned = entries
+    .filter((e) => e.direction === "credit")
+    .reduce((s, e) => s + Number(e.commission_amount ?? 0), 0);
 
   return (
     <>
       <PageSection title="Reseller wallet" description={`Closed-loop credits inside ${ecosystem.name}.`}>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="Credit balance" value={peso(balance)} icon={Wallet} tone="positive" />
           <StatCard
             label="Loaded to customers"
@@ -70,6 +78,12 @@ function ResellerDashboard() {
             value={peso(topUps.reduce((s, e) => s + e.amount, 0))}
             hint="Top-ups from your admin"
             icon={ArrowDownLeft}
+          />
+          <StatCard
+            label="Commission bonus"
+            value={peso(commissionEarned)}
+            hint="Extra credits granted on admin releases"
+            tone="positive"
           />
         </div>
         <p className="mt-2 text-[11px] text-muted-foreground">
@@ -92,6 +106,9 @@ function ResellerDashboard() {
                 <div key={e.id} className="flex items-start justify-between gap-3 px-4 py-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{e.reason}</p>
+                    {commissionBreakdown(e) ? (
+                      <p className="text-[11px] font-medium text-success">{commissionBreakdown(e)}</p>
+                    ) : null}
                     <p className="text-[11px] text-muted-foreground">
                       {shortDateTime(e.created_at)} · {e.tx_id ?? "—"}
                       {e.reference ? ` · ${e.reference}` : ""}

@@ -6,6 +6,7 @@
  * balances are always read back from the ledger-maintained account rows.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { peso } from "@/lib/wavewallet";
 
 export interface CreditEntry {
   id: string;
@@ -17,7 +18,40 @@ export interface CreditEntry {
   tx_id: string | null;
   created_at: string;
   user_id: string;
+  /** Base amount before any reseller commission bonus (snapshotted at transaction time). */
+  base_amount?: number | null;
+  /** Commission rate used for this transaction — historical, never rewritten. */
+  commission_percent?: number | null;
+  /** Bonus credits granted on top of the base amount. */
+  commission_amount?: number | null;
 }
+
+export const LEDGER_COLUMNS =
+  "id, direction, amount, balance_after, reason, reference, tx_id, created_at, user_id, base_amount, commission_percent, commission_amount";
+
+/** Normalises the numeric columns coming back from PostgREST. */
+export function normalizeEntry(e: CreditEntry): CreditEntry {
+  return {
+    ...e,
+    amount: Number(e.amount),
+    balance_after: Number(e.balance_after),
+    base_amount: e.base_amount === null || e.base_amount === undefined ? null : Number(e.base_amount),
+    commission_percent:
+      e.commission_percent === null || e.commission_percent === undefined
+        ? null
+        : Number(e.commission_percent),
+    commission_amount:
+      e.commission_amount === null || e.commission_amount === undefined
+        ? null
+        : Number(e.commission_amount),
+  };
+}
+
+/** True when this entry carries a reseller commission bonus. */
+export function hasCommission(e: CreditEntry): boolean {
+  return Number(e.commission_amount ?? 0) > 0;
+}
+
 
 export interface VoucherProductRow {
   id: string;
@@ -77,16 +111,50 @@ export async function fetchCreditBalance(userId: string): Promise<number> {
 export async function fetchCreditLedger(userId: string, limit = 100): Promise<CreditEntry[]> {
   const { data } = await supabase
     .from("credit_ledger")
-    .select("id, direction, amount, balance_after, reason, reference, tx_id, created_at, user_id")
+    .select(LEDGER_COLUMNS)
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(limit);
-  return ((data ?? []) as unknown as CreditEntry[]).map((e) => ({
-    ...e,
-    amount: Number(e.amount),
-    balance_after: Number(e.balance_after),
-  }));
+  return ((data ?? []) as unknown as CreditEntry[]).map(normalizeEntry);
 }
+
+/** Ecosystem-wide credit movements (admin/super-admin views; RLS still applies). */
+export async function fetchEcosystemLedger(
+  ecosystemId: string,
+  limit = 200,
+): Promise<CreditEntry[]> {
+  const { data } = await supabase
+    .from("credit_ledger")
+    .select(LEDGER_COLUMNS)
+    .eq("ecosystem_id", ecosystemId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return ((data ?? []) as unknown as CreditEntry[]).map(normalizeEntry);
+}
+
+/**
+ * Resolves the commission rate the database would apply if the signed-in
+ * admin released credits to this member. The client can only read it —
+ * the rate used on a transfer is always recomputed server-side.
+ */
+export async function fetchCommissionRate(recipientId: string): Promise<number> {
+  const { data, error } = await supabase.rpc("commission_rate_for", {
+    _sender: (await supabase.auth.getUser()).data.user?.id ?? recipientId,
+    _recipient: recipientId,
+  });
+  if (error) return 0;
+  return Number(data ?? 0);
+}
+
+/** Admin/super-admin sets a reseller's commission — future transfers only. */
+export async function setResellerCommission(userId: string, percent: number): Promise<void> {
+  const { error } = await supabase.rpc("set_reseller_commission", {
+    _user_id: userId,
+    _percent: Math.trunc(percent),
+  });
+  if (error) throw new Error(friendlyWalletError(error.message));
+}
+
 
 export async function fetchShopProducts(): Promise<ShopProduct[]> {
   const { data, error } = await supabase.rpc("list_shop_products");
@@ -323,4 +391,25 @@ export async function parseCodeFile(file: File): Promise<string[]> {
   }
   const text = await file.text();
   return parsePastedCodes(text);
+}
+
+/* ------------------------------------------------------------------ */
+/* Commission display helpers                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Human-readable breakdown of a commission-bearing credit entry, e.g.
+ * "Credit received: 1,000 + 200 commission = 1,200".
+ * Values come from the snapshot stored on the ledger row, so historical
+ * entries keep the rate that was in force when they were created.
+ */
+export function commissionBreakdown(e: CreditEntry): string | null {
+  const bonus = Number(e.commission_amount ?? 0);
+  if (bonus <= 0) return null;
+  const base = Number(e.base_amount ?? e.amount);
+  const pct = Number(e.commission_percent ?? 0);
+  if (e.direction === "debit") {
+    return `Released ${peso(base)} · ${pct}% commission granted (${peso(bonus)}) — you were debited ${peso(base)} only`;
+  }
+  return `${peso(base)} + ${peso(bonus)} commission (${pct}%) = ${peso(base + bonus)}`;
 }
