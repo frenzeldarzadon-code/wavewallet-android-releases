@@ -118,7 +118,7 @@ function AdminTransactions() {
     try {
       const info = await fetchReversalInfo(row.txId);
       setReversal(info);
-      setReversalAmount(String(Math.min(info.amount ?? 0, info.available ?? 0)));
+      setReversalAmount(String(info.available ?? 0));
       setReversalReason(REVERSAL_REASONS[0]);
       setReversalNote("");
       if (!info.eligible) toast.error(info.message ?? "This transfer cannot be reversed");
@@ -127,13 +127,19 @@ function AdminTransactions() {
     }
   };
 
+  // `available` is what the database will still allow: the unreversed part of
+  // the transfer capped by the untouched credits in the recipient's wallet.
   const amountCheck = reversal
     ? validateReversalAmount({
         amount: Number(reversalAmount),
-        original: reversal.amount ?? 0,
+        original: Math.max(
+          0,
+          (reversal.amount ?? 0) - (reversal.reversed_amount ?? 0),
+        ),
         available: reversal.available ?? 0,
       })
     : null;
+
 
   const submitReversal = async () => {
     if (!reversal?.tx_id || !amountCheck?.ok) {
@@ -239,13 +245,17 @@ function AdminTransactions() {
                     {canReverse(r) ? (
                       <Button
                         size="sm"
-                        variant="ghost"
-                        className="mt-1 h-7 px-2 text-[11px]"
+                        variant="outline"
+                        className="mt-1.5 h-8 border-destructive/40 px-2.5 text-[11px] font-medium text-destructive hover:bg-destructive/10 hover:text-destructive"
                         onClick={() => void openReversal(r)}
                       >
-                        <RotateCcw className="size-3.5" /> Reverse
+                        <RotateCcw className="size-3.5" />
+                        {r.transfer && r.transfer.reversedAmount > 0
+                          ? `Reverse ${peso(r.transfer.remaining)}`
+                          : "Reverse"}
                       </Button>
                     ) : null}
+
                   </div>
                 </div>
               ))}

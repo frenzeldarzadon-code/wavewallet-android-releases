@@ -52,14 +52,51 @@ export interface ReversalInfo {
   reversed_by?: string | null;
 }
 
+/**
+ * Outgoing credit-transfer reasons written by `transfer_credits`.
+ *
+ * The database has labelled the sending leg differently across releases
+ * ("Credit transfer sent", "Credit load to customer", "Credit released to
+ * reseller", …). Matching one literal string hid the Reverse action for every
+ * real transfer, so the sending leg is recognised by shape instead.
+ */
+export function isTransferDebitReason(reason: string): boolean {
+  const r = (reason ?? "").trim().toLowerCase();
+  if (!r) return false;
+  if (r.includes("revers")) return false;
+  if (r.startsWith("voucher purchase")) return false;
+  return (
+    r.startsWith("credit transfer sent") ||
+    r.startsWith("credit load to") ||
+    r.startsWith("credit released")
+  );
+}
+
+/** Incoming leg of a transfer — never actionable, only the sending leg is. */
+export function isTransferCreditReason(reason: string): boolean {
+  const r = (reason ?? "").trim().toLowerCase();
+  if (r.includes("revers")) return false;
+  return (
+    r.startsWith("credit transfer received") ||
+    r.startsWith("credit load from") ||
+    r.startsWith("credit received")
+  );
+}
+
 /** Transfer ledger rows are the only entries this feature may act on. */
-export function isReversibleTransferEntry(e: Pick<CreditEntry, "direction" | "reason" | "sale_id" | "entry_kind" | "tx_id">): boolean {
+export function isReversibleTransferEntry(
+  e: Pick<CreditEntry, "direction" | "reason" | "sale_id" | "entry_kind" | "tx_id">,
+  opts: { hasReceiveLeg?: boolean } = {},
+): boolean {
   if (e.direction !== "debit") return false;
   if (e.sale_id) return false;
   if (e.entry_kind && e.entry_kind !== "general" && e.entry_kind !== "transfer") return false;
   if (!e.tx_id) return false;
-  return e.reason === "Credit transfer sent";
+  // A matching "<tx>-R" credit leg proves this is a transfer even when the
+  // wording is unknown; otherwise fall back to the reason shape.
+  return opts.hasReceiveLeg === true || isTransferDebitReason(e.reason);
 }
+
 
 export interface AmountCheck {
   ok: boolean;

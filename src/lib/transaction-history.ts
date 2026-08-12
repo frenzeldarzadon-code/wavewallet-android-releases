@@ -16,8 +16,11 @@ import { LEDGER_COLUMNS, normalizeEntry, type CreditEntry } from "@/lib/wallet";
 import {
   fetchReversalHistory,
   isReversibleTransferEntry,
+  isTransferCreditReason,
+  isTransferDebitReason,
   type ReversalRecord,
 } from "@/lib/transfer-reversal";
+
 
 export type TxKind = "transfer" | "adjustment" | "earning" | "purchase" | "reversal";
 
@@ -78,26 +81,42 @@ export interface VoucherSaleRow {
 export const SALE_COLUMNS =
   "id, created_at, buyer_id, reseller_id, product_name, quantity, sale_price, discount_percent, payment_method, tx_id, points_spent, points_earned, refunded_at";
 
+/** Groups reversal records by the transfer they correct (a transfer may be corrected in steps). */
+export function groupReversals(
+  reversals: ReversalRecord[],
+): Map<string, ReversalRecord[]> {
+  const map = new Map<string, ReversalRecord[]>();
+  for (const r of reversals) {
+    const list = map.get(r.original_tx_id);
+    if (list) list.push(r);
+    else map.set(r.original_tx_id, [r]);
+  }
+  return map;
+}
+
 /**
  * Derives the reversal state for a transfer from the ecosystem's reversal
- * records. A transfer already fully reversed must never offer Reverse again.
+ * records. Amounts accumulate across partial reversals, and a transfer whose
+ * whole amount has been returned must never offer Reverse again.
  */
 export function transferState(
   entry: Pick<CreditEntry, "amount" | "tx_id">,
-  byOriginalTx: Map<string, ReversalRecord>,
+  byOriginalTx: Map<string, ReversalRecord | ReversalRecord[]>,
 ): TransferReversalState {
-  const record = entry.tx_id ? (byOriginalTx.get(entry.tx_id) ?? null) : null;
+  const found = entry.tx_id ? byOriginalTx.get(entry.tx_id) : undefined;
+  const records = found ? (Array.isArray(found) ? found : [found]) : [];
   const original = Number(entry.amount ?? 0);
-  if (!record) {
+  if (records.length === 0) {
     return { status: "reversible", reversedAmount: 0, remaining: original, record: null };
   }
-  const reversed = Number(record.reversed_amount ?? 0);
+  const reversed = records.reduce((sum, r) => sum + Number(r.reversed_amount ?? 0), 0);
   const remaining = Math.max(0, original - reversed);
+  const latest = records.reduce((a, b) => (a.created_at >= b.created_at ? a : b));
   return {
-    status: record.kind === "partial" && remaining > 1e-9 ? "partially_reversed" : "reversed",
+    status: remaining > 1e-9 ? "partially_reversed" : "reversed",
     reversedAmount: reversed,
     remaining,
-    record,
+    record: latest,
   };
 }
 
@@ -107,13 +126,18 @@ export function canReverse(row: TxRow): boolean {
   return row.transfer.status !== "reversed" && row.transfer.remaining > 1e-9;
 }
 
-function ledgerKind(e: CreditEntry): TxKind {
+function ledgerKind(e: CreditEntry, hasReceiveLeg = false): TxKind {
   if (e.sale_id || e.entry_kind === "purchase") return "purchase";
   if (e.entry_kind === "sale_commission" || e.entry_kind === "upline_commission") return "earning";
-  if (e.reason === "Credit transfer sent" || e.reason === "Credit transfer received") {
+  if (e.entry_kind === "transfer_reversal" || e.reason.toLowerCase().includes("revers")) {
+    return "reversal";
+  }
+  if (
+    (e.direction === "debit" && (hasReceiveLeg || isTransferDebitReason(e.reason))) ||
+    (e.direction === "credit" && isTransferCreditReason(e.reason))
+  ) {
     return "transfer";
   }
-  if (e.reason.toLowerCase().includes("reversal")) return "reversal";
   return "adjustment";
 }
 
@@ -123,11 +147,19 @@ export function buildTransactionFeed(input: {
   sales: VoucherSaleRow[];
   reversals: ReversalRecord[];
 }): TxRow[] {
-  const byOriginalTx = new Map(input.reversals.map((r) => [r.original_tx_id, r]));
+  const byOriginalTx = groupReversals(input.reversals);
+  // A "<tx>-R" credit row is the receiving leg of "<tx>": pairing identifies a
+  // transfer regardless of how the ledger worded it.
+  const receiveLegs = new Set(
+    input.ledger
+      .filter((e) => e.direction === "credit" && e.tx_id?.endsWith("-R"))
+      .map((e) => e.tx_id!.slice(0, -2)),
+  );
   const rows: TxRow[] = [];
 
   for (const e of input.ledger) {
-    const kind = ledgerKind(e);
+    const hasReceiveLeg = Boolean(e.tx_id && receiveLegs.has(e.tx_id));
+    const kind = ledgerKind(e, hasReceiveLeg);
     rows.push({
       id: `ledger:${e.id}`,
       kind,
@@ -141,10 +173,11 @@ export function buildTransactionFeed(input: {
       direction: e.direction,
       balanceAfter: Number(e.balance_after),
       transfer:
-        kind === "transfer" && isReversibleTransferEntry(e)
+        kind === "transfer" && isReversibleTransferEntry(e, { hasReceiveLeg })
           ? transferState(e, byOriginalTx)
           : null,
       entry: e,
+
     });
   }
 
