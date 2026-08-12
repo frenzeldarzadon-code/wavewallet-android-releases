@@ -50,6 +50,7 @@ interface Member {
   status: string;
   role: string;
   balance: number;
+  points: number;
 }
 
 function AdminWallets() {
