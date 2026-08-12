@@ -80,7 +80,14 @@ function LoginPage() {
       .from("ecosystems")
       .select("id, name, slug, description")
       .eq("signup_enabled", true)
-      .then(({ data }) => active && setShops((data as SignupEcosystem[]) ?? []));
+      .then(({ data }) => {
+        if (!active) return;
+        const list = (data as SignupEcosystem[]) ?? [];
+        // The sandbox shop is only advertised inside the preview environment.
+        setShops(
+          isPreviewEnvironment() ? list : list.filter((e) => e.slug !== DEMO_ECOSYSTEM_SLUG),
+        );
+      });
     return () => {
       active = false;
     };
