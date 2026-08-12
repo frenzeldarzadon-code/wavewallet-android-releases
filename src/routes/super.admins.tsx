@@ -585,6 +585,8 @@ function ManageDialog({
     planPrice: String(row.plan_price),
     gracePeriodDays: String(row.grace_period_days),
     commission: "0",
+    saleReseller: "0",
+    saleSub: "0",
   });
   const [saving, setSaving] = useState(false);
   const url = `${origin()}/join/${row.slug}`;
@@ -592,6 +594,9 @@ function ManageDialog({
   useEffect(() => {
     void fetchEcosystemCommission(row.id).then((v) =>
       setState((s) => ({ ...s, commission: String(v) })),
+    );
+    void fetchEcosystemSaleCommission(row.id).then((v) =>
+      setState((s) => ({ ...s, saleReseller: String(v.reseller), saleSub: String(v.subreseller) })),
     );
   }, [row.id]);
 
