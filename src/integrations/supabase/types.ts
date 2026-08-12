@@ -801,6 +801,7 @@ export type Database = {
           buyer_role: Database["public"]["Enums"]["app_role"]
           created_at: string
           credits_per_point_used: number | null
+          discount_amount: number
           discount_percent: number
           ecosystem_id: string
           id: string
@@ -821,6 +822,7 @@ export type Database = {
           buyer_role: Database["public"]["Enums"]["app_role"]
           created_at?: string
           credits_per_point_used?: number | null
+          discount_amount?: number
           discount_percent?: number
           ecosystem_id: string
           id?: string
@@ -841,6 +843,7 @@ export type Database = {
           buyer_role?: Database["public"]["Enums"]["app_role"]
           created_at?: string
           credits_per_point_used?: number | null
+          discount_amount?: number
           discount_percent?: number
           ecosystem_id?: string
           id?: string
@@ -1156,6 +1159,10 @@ export type Database = {
         }[]
       }
       promote_to_reseller: {
+        Args: { _discount: number; _user_id: string }
+        Returns: undefined
+      }
+      promote_to_subreseller: {
         Args: { _discount: number; _user_id: string }
         Returns: undefined
       }
