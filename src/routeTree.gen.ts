@@ -44,6 +44,7 @@ import { Route as ResellerShopRouteImport } from './routes/reseller.shop'
 import { Route as SuperIndexRouteImport } from './routes/super.index'
 import { Route as SuperAdminsRouteImport } from './routes/super.admins'
 import { Route as SuperAuditRouteImport } from './routes/super.audit'
+import { Route as SuperExportRouteImport } from './routes/super.export'
 import { Route as SuperReportsRouteImport } from './routes/super.reports'
 import { Route as SuperSettingsRouteImport } from './routes/super.settings'
 import { Route as SuperSubscriptionsRouteImport } from './routes/super.subscriptions'
@@ -223,6 +224,11 @@ const SuperAuditRoute = SuperAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => SuperRoute,
 } as any)
+const SuperExportRoute = SuperExportRouteImport.update({
+  id: '/export',
+  path: '/export',
+  getParentRoute: () => SuperRoute,
+} as any)
 const SuperReportsRoute = SuperReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -271,6 +277,7 @@ export interface FileRoutesByFullPath {
   '/reseller/shop': typeof ResellerShopRoute
   '/super/admins': typeof SuperAdminsRoute
   '/super/audit': typeof SuperAuditRoute
+  '/super/export': typeof SuperExportRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
@@ -307,6 +314,7 @@ export interface FileRoutesByTo {
   '/reseller/shop': typeof ResellerShopRoute
   '/super/admins': typeof SuperAdminsRoute
   '/super/audit': typeof SuperAuditRoute
+  '/super/export': typeof SuperExportRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
@@ -348,6 +356,7 @@ export interface FileRoutesById {
   '/reseller/shop': typeof ResellerShopRoute
   '/super/admins': typeof SuperAdminsRoute
   '/super/audit': typeof SuperAuditRoute
+  '/super/export': typeof SuperExportRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
@@ -390,6 +399,7 @@ export interface FileRouteTypes {
     | '/reseller/shop'
     | '/super/admins'
     | '/super/audit'
+    | '/super/export'
     | '/super/reports'
     | '/super/settings'
     | '/super/subscriptions'
@@ -426,6 +436,7 @@ export interface FileRouteTypes {
     | '/reseller/shop'
     | '/super/admins'
     | '/super/audit'
+    | '/super/export'
     | '/super/reports'
     | '/super/settings'
     | '/super/subscriptions'
@@ -466,6 +477,7 @@ export interface FileRouteTypes {
     | '/reseller/shop'
     | '/super/admins'
     | '/super/audit'
+    | '/super/export'
     | '/super/reports'
     | '/super/settings'
     | '/super/subscriptions'
@@ -734,6 +746,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperAuditRouteImport
       parentRoute: typeof SuperRoute
     }
+    '/super/export': {
+      id: '/super/export'
+      path: '/export'
+      fullPath: '/super/export'
+      preLoaderRoute: typeof SuperExportRouteImport
+      parentRoute: typeof SuperRoute
+    }
     '/super/reports': {
       id: '/super/reports'
       path: '/reports'
@@ -833,6 +852,7 @@ const ResellerRouteWithChildren = ResellerRoute._addFileChildren(
 interface SuperRouteChildren {
   SuperAdminsRoute: typeof SuperAdminsRoute
   SuperAuditRoute: typeof SuperAuditRoute
+  SuperExportRoute: typeof SuperExportRoute
   SuperReportsRoute: typeof SuperReportsRoute
   SuperSettingsRoute: typeof SuperSettingsRoute
   SuperSubscriptionsRoute: typeof SuperSubscriptionsRoute
@@ -842,6 +862,7 @@ interface SuperRouteChildren {
 const SuperRouteChildren: SuperRouteChildren = {
   SuperAdminsRoute: SuperAdminsRoute,
   SuperAuditRoute: SuperAuditRoute,
+  SuperExportRoute: SuperExportRoute,
   SuperReportsRoute: SuperReportsRoute,
   SuperSettingsRoute: SuperSettingsRoute,
   SuperSubscriptionsRoute: SuperSubscriptionsRoute,
