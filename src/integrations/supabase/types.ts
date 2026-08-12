@@ -219,6 +219,112 @@ export type Database = {
           },
         ]
       }
+      credit_lot_consumptions: {
+        Row: {
+          amount: number
+          created_at: string
+          ecosystem_id: string
+          id: string
+          ledger_id: string
+          lot_id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          ecosystem_id: string
+          id?: string
+          ledger_id: string
+          lot_id: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          ecosystem_id?: string
+          id?: string
+          ledger_id?: string
+          lot_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_lot_consumptions_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_lot_consumptions_ledger_id_fkey"
+            columns: ["ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_lot_consumptions_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "credit_lots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_lots: {
+        Row: {
+          amount: number
+          created_at: string
+          ecosystem_id: string
+          id: string
+          ledger_id: string
+          remaining: number
+          seq: number
+          source_kind: string
+          source_user_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          ecosystem_id: string
+          id?: string
+          ledger_id: string
+          remaining: number
+          seq?: number
+          source_kind: string
+          source_user_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          ecosystem_id?: string
+          id?: string
+          ledger_id?: string
+          remaining?: number
+          seq?: number
+          source_kind?: string
+          source_user_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_lots_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_lots_ledger_id_fkey"
+            columns: ["ledger_id"]
+            isOneToOne: true
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ecosystems: {
         Row: {
           contact_email: string | null
@@ -651,6 +757,87 @@ export type Database = {
             columns: ["reward_id"]
             isOneToOne: false
             referencedRelation: "reward_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sale_commissions: {
+        Row: {
+          commission_amount: number
+          commission_percent: number
+          created_at: string
+          credits_consumed: number
+          ecosystem_id: string
+          id: string
+          ledger_id: string | null
+          recipient_id: string
+          reversed_at: string | null
+          sale_id: string
+          source_ledger_id: string
+          source_lot_id: string
+        }
+        Insert: {
+          commission_amount: number
+          commission_percent: number
+          created_at?: string
+          credits_consumed: number
+          ecosystem_id: string
+          id?: string
+          ledger_id?: string | null
+          recipient_id: string
+          reversed_at?: string | null
+          sale_id: string
+          source_ledger_id: string
+          source_lot_id: string
+        }
+        Update: {
+          commission_amount?: number
+          commission_percent?: number
+          created_at?: string
+          credits_consumed?: number
+          ecosystem_id?: string
+          id?: string
+          ledger_id?: string | null
+          recipient_id?: string
+          reversed_at?: string | null
+          sale_id?: string
+          source_ledger_id?: string
+          source_lot_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_commissions_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_commissions_ledger_id_fkey"
+            columns: ["ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_commissions_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_commissions_source_ledger_id_fkey"
+            columns: ["source_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_commissions_source_lot_id_fkey"
+            columns: ["source_lot_id"]
+            isOneToOne: false
+            referencedRelation: "credit_lots"
             referencedColumns: ["id"]
           },
         ]
@@ -1377,6 +1564,10 @@ export type Database = {
       reseller_load_credits: {
         Args: { _amount: number; _customer_id: string; _reference?: string }
         Returns: string
+      }
+      reverse_sale_commission: {
+        Args: { _reason?: string; _sale_id: string }
+        Returns: number
       }
       reverse_sale_points: {
         Args: { _reason: string; _sale_id: string }

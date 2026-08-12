@@ -469,10 +469,128 @@ export function commissionBreakdown(e: CreditEntry): string | null {
   const base = Number(e.base_amount ?? e.amount);
   const pct = Number(e.commission_percent ?? 0);
   if (e.entry_kind === "sale_commission") {
-    return `Credit-back on a customer voucher purchase of ${peso(base)} at ${pct}% = ${peso(bonus)}`;
+    return `Credit-back on ${peso(base)} of credits you funded, spent at ${pct}% = ${peso(bonus)}`;
   }
   if (e.direction === "debit") {
     return `Released ${peso(base)} · ${pct}% commission granted (${peso(bonus)}) — you were debited ${peso(base)} only`;
   }
   return `${peso(base)} + ${peso(bonus)} commission (${pct}%) = ${peso(base + bonus)}`;
 }
+
+/* ------------------------------------------------------------------ */
+/* Credit provenance (FIFO lots)                                       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A credit lot records where a batch of credits came from. Spending consumes
+ * lots oldest-first, and credit-back on a voucher purchase is paid to the
+ * reseller/subreseller who funded the exact credits being spent.
+ */
+export interface CreditLot {
+  id: string;
+  amount: number;
+  remaining: number;
+  created_at: string;
+  source_kind: string;
+  source_user_id: string | null;
+  source_name: string | null;
+}
+
+export async function fetchCreditLots(userId: string, limit = 50): Promise<CreditLot[]> {
+  const { data, error } = await supabase
+    .from("credit_lots")
+    .select("id, amount, remaining, created_at, source_kind, source_user_id")
+    .eq("user_id", userId)
+    .order("seq", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  const rows = data ?? [];
+  const ids = [...new Set(rows.map((r) => r.source_user_id).filter(Boolean))] as string[];
+  const names = new Map<string, string>();
+  if (ids.length) {
+    const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids);
+    for (const p of profs ?? []) names.set(p.id, p.full_name);
+  }
+  return rows.map((r) => ({
+    id: r.id,
+    amount: Number(r.amount),
+    remaining: Number(r.remaining),
+    created_at: r.created_at,
+    source_kind: r.source_kind,
+    source_user_id: r.source_user_id,
+    source_name: r.source_user_id ? (names.get(r.source_user_id) ?? null) : null,
+  }));
+}
+
+/** Plain-language label for where a lot of credits came from. */
+export function creditSourceLabel(lot: Pick<CreditLot, "source_kind" | "source_name">): string {
+  switch (lot.source_kind) {
+    case "reseller":
+      return lot.source_name ? `Reseller — ${lot.source_name}` : "Reseller";
+    case "subreseller":
+      return lot.source_name ? `Subreseller — ${lot.source_name}` : "Subreseller";
+    case "admin":
+      return "Shop admin (no credit-back)";
+    case "self":
+      return "Your own top-up";
+    case "legacy":
+      return "Earlier balance (source unknown)";
+    default:
+      return "System";
+  }
+}
+
+/** One credit-back component of a voucher sale, tied to the funding lot. */
+export interface SaleCommissionRow {
+  id: string;
+  sale_id: string;
+  recipient_id: string;
+  credits_consumed: number;
+  commission_percent: number;
+  commission_amount: number;
+  reversed_at: string | null;
+  created_at: string;
+  buyer_name: string | null;
+  product_name: string | null;
+  quantity: number | null;
+  tx_id: string | null;
+}
+
+/** Credit-back rows earned by a reseller/subreseller, newest first. */
+export async function fetchMyCreditBack(recipientId: string, limit = 50): Promise<SaleCommissionRow[]> {
+  const { data, error } = await supabase
+    .from("sale_commissions")
+    .select(
+      "id, sale_id, recipient_id, credits_consumed, commission_percent, commission_amount, reversed_at, created_at, voucher_sales(product_name, quantity, tx_id, buyer_id)",
+    )
+    .eq("recipient_id", recipientId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  const rows = (data ?? []) as unknown as Array<
+    Record<string, unknown> & {
+      voucher_sales: { product_name: string; quantity: number | null; tx_id: string; buyer_id: string } | null;
+    }
+  >;
+  const buyerIds = [...new Set(rows.map((r) => r.voucher_sales?.buyer_id).filter(Boolean))] as string[];
+  const names = new Map<string, string>();
+  if (buyerIds.length) {
+    const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", buyerIds);
+    for (const p of profs ?? []) names.set(p.id, p.full_name);
+  }
+  return rows.map((r) => ({
+    id: String(r["id"]),
+    sale_id: String(r["sale_id"]),
+    recipient_id: String(r["recipient_id"]),
+    credits_consumed: Number(r["credits_consumed"]),
+    commission_percent: Number(r["commission_percent"]),
+    commission_amount: Number(r["commission_amount"]),
+    reversed_at: (r["reversed_at"] as string | null) ?? null,
+    created_at: String(r["created_at"]),
+    buyer_name: r.voucher_sales?.buyer_id ? (names.get(r.voucher_sales.buyer_id) ?? null) : null,
+    product_name: r.voucher_sales?.product_name ?? null,
+    quantity: r.voucher_sales?.quantity ?? null,
+    tx_id: r.voucher_sales?.tx_id ?? null,
+  }));
+}
+
