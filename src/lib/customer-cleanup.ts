@@ -67,17 +67,12 @@ export function evaluateCustomerDeletion(
     reasons.push("Credit balance is exactly 0.");
   }
 
-  if (candidate.points !== 0) {
-    blockers.push(`Points balance is not zero (${candidate.points}).`);
-  } else if (candidate.pointsHeld !== 0) {
+  if (candidate.points !== 0) blockers.push(`Points balance is not zero (${candidate.points}).`);
+  if (candidate.pointsHeld !== 0)
     blockers.push(`There are points on hold (${candidate.pointsHeld}).`);
-  } else {
+  if (candidate.points === 0 && candidate.pointsHeld === 0)
     reasons.push("Points balance is 0 with nothing on hold.");
-  }
 
-  if (candidate.pointsHeld !== 0 && candidate.points === 0 && !blockers.includes(`There are points on hold (${candidate.pointsHeld}).`)) {
-    blockers.push(`There are points on hold (${candidate.pointsHeld}).`);
-  }
 
   if (candidate.pendingRedemptions > 0) {
     blockers.push(
