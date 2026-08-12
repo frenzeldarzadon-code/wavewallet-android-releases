@@ -14,6 +14,8 @@ import {
   type EcosystemOverviewRow,
 } from "@/lib/platform-overview";
 import { peso, shortDateTime, statusLabel } from "@/lib/wavewallet";
+import { MemberPicker } from "@/components/member-picker";
+import { EditMemberDialog, type EditableMember } from "@/components/edit-member-dialog";
 
 export const Route = createFileRoute("/super/")({
   head: () => ({
@@ -216,6 +218,21 @@ function SuperOverview() {
         </Card>
       </PageSection>
 
+      <PageSection
+        title="Member lookup"
+        description="Search any member across every shop by name, email or phone. Results show the shop they belong to; select one to correct their name, phone or email."
+      >
+        <Card className="shadow-[var(--shadow-card)]">
+          <CardContent>
+            <MemberPicker
+              showEcosystem
+              placeholder="Search all shops by name, email or phone"
+              onSelect={(m) => setEditingMember(m)}
+            />
+          </CardContent>
+        </Card>
+      </PageSection>
+
       <PageSection title="Plan configuration" description="Prices are configurable, never hard-coded.">
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-3">
@@ -242,6 +259,7 @@ function SuperOverview() {
       <p className="flex items-center gap-2 text-xs text-muted-foreground">
         <CreditCard className="size-3.5" /> Subscription approvals are handled in the Subscriptions tab.
       </p>
+      <EditMemberDialog member={editingMember} onClose={() => setEditingMember(null)} />
     </>
   );
 }
