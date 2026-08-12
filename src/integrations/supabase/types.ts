@@ -211,6 +211,8 @@ export type Database = {
           payment_reference: string | null
           plan_name: string
           plan_price: number
+          points_rule_updated_at: string
+          points_rule_version: number
           reviewed_at: string | null
           reviewed_by: string | null
           signup_enabled: boolean
@@ -233,6 +235,8 @@ export type Database = {
           payment_reference?: string | null
           plan_name?: string
           plan_price?: number
+          points_rule_updated_at?: string
+          points_rule_version?: number
           reviewed_at?: string | null
           reviewed_by?: string | null
           signup_enabled?: boolean
@@ -255,6 +259,8 @@ export type Database = {
           payment_reference?: string | null
           plan_name?: string
           plan_price?: number
+          points_rule_updated_at?: string
+          points_rule_version?: number
           reviewed_at?: string | null
           reviewed_by?: string | null
           signup_enabled?: boolean
@@ -311,10 +317,13 @@ export type Database = {
           amount: number
           balance_after: number
           created_at: string
+          credits_basis: number | null
+          credits_per_point_used: number | null
           direction: string
           ecosystem_id: string
           entry_type: string
           id: string
+          points_rule_version: number | null
           reason: string
           redemption_id: string | null
           reference: string | null
@@ -328,10 +337,13 @@ export type Database = {
           amount: number
           balance_after: number
           created_at?: string
+          credits_basis?: number | null
+          credits_per_point_used?: number | null
           direction: string
           ecosystem_id: string
           entry_type?: string
           id?: string
+          points_rule_version?: number | null
           reason: string
           redemption_id?: string | null
           reference?: string | null
@@ -345,10 +357,13 @@ export type Database = {
           amount?: number
           balance_after?: number
           created_at?: string
+          credits_basis?: number | null
+          credits_per_point_used?: number | null
           direction?: string
           ecosystem_id?: string
           entry_type?: string
           id?: string
+          points_rule_version?: number | null
           reason?: string
           redemption_id?: string | null
           reference?: string | null
@@ -773,6 +788,7 @@ export type Database = {
           buyer_id: string
           buyer_role: Database["public"]["Enums"]["app_role"]
           created_at: string
+          credits_per_point_used: number | null
           discount_percent: number
           ecosystem_id: string
           id: string
@@ -780,6 +796,7 @@ export type Database = {
           payment_method: string
           points_earned: number
           points_price: number | null
+          points_rule_version: number | null
           points_spent: number
           product_id: string
           product_name: string
@@ -791,6 +808,7 @@ export type Database = {
           buyer_id: string
           buyer_role: Database["public"]["Enums"]["app_role"]
           created_at?: string
+          credits_per_point_used?: number | null
           discount_percent?: number
           ecosystem_id: string
           id?: string
@@ -798,6 +816,7 @@ export type Database = {
           payment_method?: string
           points_earned?: number
           points_price?: number | null
+          points_rule_version?: number | null
           points_spent?: number
           product_id: string
           product_name: string
@@ -809,6 +828,7 @@ export type Database = {
           buyer_id?: string
           buyer_role?: Database["public"]["Enums"]["app_role"]
           created_at?: string
+          credits_per_point_used?: number | null
           discount_percent?: number
           ecosystem_id?: string
           id?: string
@@ -816,6 +836,7 @@ export type Database = {
           payment_method?: string
           points_earned?: number
           points_price?: number | null
+          points_rule_version?: number | null
           points_spent?: number
           product_id?: string
           product_name?: string
@@ -918,6 +939,8 @@ export type Database = {
           payment_reference: string | null
           plan_name: string
           plan_price: number
+          points_rule_updated_at: string
+          points_rule_version: number
           reviewed_at: string | null
           reviewed_by: string | null
           signup_enabled: boolean
@@ -1160,6 +1183,10 @@ export type Database = {
         Args: { _amount: number; _customer_id: string; _reference?: string }
         Returns: string
       }
+      reverse_sale_points: {
+        Args: { _reason: string; _sale_id: string }
+        Returns: string
+      }
       review_redemption: {
         Args: { _decision: string; _id: string; _note?: string }
         Returns: string
@@ -1220,6 +1247,8 @@ export type Database = {
           payment_reference: string | null
           plan_name: string
           plan_price: number
+          points_rule_updated_at: string
+          points_rule_version: number
           reviewed_at: string | null
           reviewed_by: string | null
           signup_enabled: boolean
@@ -1256,6 +1285,8 @@ export type Database = {
           payment_reference: string | null
           plan_name: string
           plan_price: number
+          points_rule_updated_at: string
+          points_rule_version: number
           reviewed_at: string | null
           reviewed_by: string | null
           signup_enabled: boolean
