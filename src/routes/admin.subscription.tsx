@@ -152,11 +152,21 @@ function AdminSubscription() {
               <p className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">{notice}</p>
             ) : null}
             {pending ? (
-              <p className="flex items-start gap-2 rounded-lg bg-warning/15 px-3 py-2 text-xs text-warning-foreground">
-                <Clock className="mt-0.5 size-3.5 shrink-0" />
-                Payment {pending.payment_reference} is awaiting approval. Restricted operator tools stay
-                locked until it is approved.
-              </p>
+              <div className="space-y-2 rounded-lg bg-warning/15 px-3 py-2 text-xs text-warning-foreground">
+                <p className="flex items-start gap-2">
+                  <Clock className="mt-0.5 size-3.5 shrink-0" />
+                  Payment {pending.payment_reference} is awaiting approval. Restricted operator tools
+                  stay locked until it is approved.
+                </p>
+                {facebookUrl ? (
+                  <Button asChild size="sm" variant="outline">
+                    <a href={facebookUrl} target="_blank" rel="noreferrer noopener">
+                      <Facebook className="size-4" /> Contact us on Facebook
+                      {facebookName ? ` · ${facebookName}` : ""}
+                    </a>
+                  </Button>
+                ) : null}
+              </div>
             ) : null}
             {!pending && lastRejected?.decision_reason ? (
               <p className="flex items-start gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
