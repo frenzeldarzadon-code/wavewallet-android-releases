@@ -194,9 +194,10 @@ function ResellerReports() {
             />
           )}
           <StatCard
-            label="Total credited to me"
-            value={peso(creditTotals.commissionBase + creditTotals.commissionBonus)}
+            label="Total benefit"
+            value={peso(creditBackTotal + uplineTotal + salesTotals.resellerMargin)}
             tone="brand"
+            hint="Cash earnings + discounts saved"
           />
           <StatCard
             label="Loaded to customers"
