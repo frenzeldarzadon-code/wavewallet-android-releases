@@ -1,5 +1,5 @@
 import { Link, useRouterState, type LinkProps } from "@tanstack/react-router";
-import { Menu, ShieldCheck, LogOut, ArrowLeft } from "lucide-react";
+import { Menu, ShieldCheck, LogOut, ArrowLeft, FlaskConical } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
