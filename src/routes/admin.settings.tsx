@@ -154,8 +154,8 @@ function AdminSettings() {
       </PageSection>
 
       <PageSection
-        title="Reseller commission"
-        description="Bonus credits your resellers receive whenever you or the platform owner release credits to them."
+        title="Credit-loading commission"
+        description="Bonus credits your resellers receive whenever you or the platform owner release credits to them. Resellers only — subresellers never earn this."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">
