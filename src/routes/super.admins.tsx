@@ -583,9 +583,16 @@ function ManageDialog({
     planName: row.plan_name,
     planPrice: String(row.plan_price),
     gracePeriodDays: String(row.grace_period_days),
+    commission: "0",
   });
   const [saving, setSaving] = useState(false);
   const url = `${origin()}/join/${row.slug}`;
+
+  useEffect(() => {
+    void fetchEcosystemCommission(row.id).then((v) =>
+      setState((s) => ({ ...s, commission: String(v) })),
+    );
+  }, [row.id]);
 
   const save = async () => {
     setSaving(true);
@@ -608,15 +615,29 @@ function ManageDialog({
       _plan_price: Number(state.planPrice) || 0,
       _grace_period_days: Number(state.gracePeriodDays) || 0,
     });
+    let commissionErr: string | null = null;
+    const pct = Number(state.commission);
+    if (Number.isNaN(pct) || pct < 0 || pct > 100) {
+      commissionErr = "Commission must be between 0 and 100";
+    } else {
+      try {
+        await setEcosystemCommission(row.id, pct);
+      } catch (e) {
+        commissionErr = (e as Error).message;
+      }
+    }
     setSaving(false);
     if (planErr) {
       toast.error("Settings saved, plan update failed", { description: planErr.message });
+    } else if (commissionErr) {
+      toast.error("Settings saved, commission update failed", { description: commissionErr });
     } else {
       toast.success("Ecosystem updated");
     }
     await onSaved();
     onClose();
   };
+
 
   const rotate = async () => {
     const { error } = await supabase.rpc("regenerate_signup_token", { _ecosystem_id: row.id });
