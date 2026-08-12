@@ -449,7 +449,16 @@ function SuperAdmins() {
                                 <Trash2 className="size-4" /> Delete
                               </Button>
                             )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => openPurge(e)}
+                            >
+                              <ShieldAlert className="size-4" /> Purge
+                            </Button>
                           </div>
+
 
                         </TableCell>
 
