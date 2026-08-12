@@ -542,7 +542,60 @@ function SuperAdmins() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!archiveFor} onOpenChange={(o) => !o && setArchiveFor(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete {archiveFor?.name}</DialogTitle>
+            <DialogDescription>
+              The shop is archived, not erased: signup closes, transactions freeze and every
+              member is suspended. Financial and audit history stays under the 1-year retention
+              policy.
+            </DialogDescription>
+          </DialogHeader>
+          {archiveFor && !archiveFor.cleanup_blockers?.length ? (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                No activity since{" "}
+                {archiveFor.last_activity_at ? shortDate(archiveFor.last_activity_at) : "—"} and
+                nothing of value is left in this shop.
+              </p>
+              <div className="space-y-1">
+                <Label htmlFor="archive-reason">Reason (optional)</Label>
+                <Textarea
+                  id="archive-reason"
+                  value={archiveReason}
+                  onChange={(ev) => setArchiveReason(ev.target.value)}
+                  placeholder="Why is this shop being closed?"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+              <p className="text-sm font-medium text-destructive">This shop cannot be deleted yet</p>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                {(archiveFor?.cleanup_blockers ?? []).map((b) => (
+                  <li key={b}>{b}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setArchiveFor(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={archiving || !archiveFor || (archiveFor.cleanup_blockers?.length ?? 0) > 0}
+              onClick={() => void confirmArchive()}
+            >
+              {archiving ? "Deleting…" : "Delete shop"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
+
   );
 }
 
