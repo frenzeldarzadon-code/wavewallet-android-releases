@@ -220,14 +220,14 @@ function AdminWallets() {
         ) : (
           <div className="grid gap-2 md:grid-cols-2">
             {filtered.map((m) => (
-              <Card key={m.id} className="shadow-[var(--shadow-card)]">
+              <Card key={m.id} className="min-w-0 shadow-[var(--shadow-card)]">
                 <CardContent className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{m.full_name}</p>
                     <p className="truncate text-[11px] text-muted-foreground">
                       {m.email} · {m.phone || "no mobile"}
                     </p>
-                    <div className="mt-1 flex gap-1.5">
+                    <div className="mt-1 flex flex-wrap gap-1.5">
                       <StatusBadge
                         tone={
                           m.role === "reseller" ? "brand" : m.role === "subreseller" ? "success" : "muted"
@@ -247,7 +247,7 @@ function AdminWallets() {
                   <div className="shrink-0 text-right">
                     <p className="text-lg font-semibold text-success">{peso(m.balance)}</p>
                     <p className="text-[11px] text-points">{m.points} pts</p>
-                    <div className="mt-1 flex gap-1.5">
+                    <div className="mt-1 flex flex-wrap gap-1.5">
                       <Button
                         size="sm"
                         variant="outline"
@@ -315,7 +315,7 @@ function AdminWallets() {
         {ledger.length === 0 ? (
           <EmptyState title="No credit movements yet" />
         ) : (
-          <Card className="shadow-[var(--shadow-card)]">
+          <Card className="min-w-0 shadow-[var(--shadow-card)]">
             <CardContent className="divide-y divide-border px-0 py-0">
               {ledger.map((e) => (
                 <div key={e.id} className="flex items-start justify-between gap-3 px-4 py-3">
