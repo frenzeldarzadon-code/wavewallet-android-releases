@@ -157,10 +157,12 @@ export interface CreditQuery {
   limit?: number;
 }
 
-export async function fetchCreditsReport(q: CreditQuery): Promise<CreditEntry[]> {
+export type CreditReportEntry = CreditEntry & { ecosystem_id: string };
+
+export async function fetchCreditsReport(q: CreditQuery): Promise<CreditReportEntry[]> {
   let query = supabase
     .from("credit_ledger")
-    .select(LEDGER_COLUMNS)
+    .select(`${LEDGER_COLUMNS}, ecosystem_id`)
     .gte("created_at", iso(q.range.start))
     .lte("created_at", iso(q.range.end))
     .order("created_at", { ascending: false })
@@ -169,7 +171,9 @@ export async function fetchCreditsReport(q: CreditQuery): Promise<CreditEntry[]>
   if (q.userId) query = query.eq("user_id", q.userId);
   const { data, error } = await query;
   if (error) throw new Error(error.message);
-  return ((data ?? []) as unknown as CreditEntry[]).map(normalizeEntry);
+  return ((data ?? []) as unknown as CreditReportEntry[]).map(
+    (e) => normalizeEntry(e) as CreditReportEntry,
+  );
 }
 
 export interface CreditSummary {

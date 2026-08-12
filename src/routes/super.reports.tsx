@@ -16,9 +16,9 @@ import {
   summariseCredits,
   summariseSales,
   toCsv,
+  type CreditReportEntry,
   type SaleReportRow,
 } from "@/lib/reports";
-import type { CreditEntry } from "@/lib/wallet";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/super/reports")({
@@ -58,7 +58,7 @@ function SuperReports() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [sales, setSales] = useState<SaleReportRow[]>([]);
-  const [credits, setCredits] = useState<CreditEntry[]>([]);
+  const [credits, setCredits] = useState<CreditReportEntry[]>([]);
   const [ecoNames, setEcoNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
@@ -113,7 +113,7 @@ function SuperReports() {
       map.set(s.ecosystem_id, row);
     }
     for (const c of credits) {
-      const ecoId = (c as CreditEntry & { ecosystem_id?: string }).ecosystem_id;
+      const ecoId = c.ecosystem_id;
       if (!ecoId) continue;
       const row = map.get(ecoId) ?? blank();
       if (c.direction === "credit") row.issued += c.amount;
