@@ -97,7 +97,7 @@ function ResellerDashboard() {
                 ? "Resellers only — subresellers earn sale credit-back instead"
                 : "Extra credits granted on admin releases"
             }
-            tone={isSubreseller ? "default" : "positive"}
+            tone={isSubreseller ? "neutral" : "positive"}
           />
         </div>
         <p className="mt-2 text-[11px] text-muted-foreground">
