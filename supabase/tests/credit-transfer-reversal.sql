@@ -110,10 +110,37 @@ BEGIN
   _info := public.transfer_reversal_info(_tx2);
   IF (_info->>'available')::numeric > 100 THEN RAISE EXCEPTION 'FAIL: unspent amount overstated'; END IF;
   IF (_info->>'available')::numeric <> 40 THEN RAISE EXCEPTION 'FAIL: expected 40 unspent, got %', _info->>'available'; END IF;
-  _res := public.reverse_credit_transfer(_tx2, 40, 'Wrong recipient');
+  _res := public.reverse_credit_transfer(_tx2, 15, 'Wrong recipient');
   IF _res->>'kind' <> 'partial' THEN RAISE EXCEPTION 'FAIL: expected partial reversal'; END IF;
   IF (SELECT balance FROM public.credit_accounts WHERE user_id = _recipient) < 0
   THEN RAISE EXCEPTION 'FAIL: recipient wallet went negative'; END IF;
+
+  -- 12. a second partial reversal is allowed and accumulates
+  _info := public.transfer_reversal_info(_tx2);
+  IF (_info->>'reversed_amount')::numeric <> 15 THEN RAISE EXCEPTION 'FAIL: cumulative reversed wrong (%)', _info->>'reversed_amount'; END IF;
+  IF (_info->>'available')::numeric <> 25 THEN RAISE EXCEPTION 'FAIL: expected 25 still reversible, got %', _info->>'available'; END IF;
+  IF (_info->>'eligible')::boolean IS NOT TRUE THEN RAISE EXCEPTION 'FAIL: partially reversed transfer became ineligible'; END IF;
+  _res := public.reverse_credit_transfer(_tx2, 25, 'Wrong recipient');
+  IF _res->>'kind' <> 'partial' THEN RAISE EXCEPTION 'FAIL: expected another partial reversal'; END IF;
+  IF (_res->>'total_reversed')::numeric <> 40 THEN RAISE EXCEPTION 'FAIL: total reversed wrong'; END IF;
+  IF (SELECT count(*) FROM public.credit_transfer_reversals WHERE original_tx_id = _tx2) <> 2
+  THEN RAISE EXCEPTION 'FAIL: stacked reversal rows not recorded'; END IF;
+  IF (SELECT balance FROM public.credit_accounts WHERE user_id = _recipient) < 0
+  THEN RAISE EXCEPTION 'FAIL: recipient wallet went negative after stacked reversal'; END IF;
+
+  -- 13. reversing beyond the remaining unspent amount is refused
+  BEGIN
+    PERFORM public.reverse_credit_transfer(_tx2, 1, 'Wrong amount');
+    RAISE EXCEPTION 'FAIL: reversal allowed beyond the unspent remainder';
+  EXCEPTION WHEN others THEN
+    IF SQLERRM LIKE 'FAIL%' THEN RAISE; END IF;
+  END;
+
+  -- 14. a fully returned transfer can never be reversed again
+  _info := public.transfer_reversal_info(_tx);
+  IF (_info->>'eligible')::boolean IS NOT FALSE THEN RAISE EXCEPTION 'FAIL: fully reversed transfer still eligible'; END IF;
+  IF _info->>'code' <> 'already_reversed' THEN RAISE EXCEPTION 'FAIL: wrong code for fully reversed transfer'; END IF;
+
 
   -- 11. voucher sale transactions are refused
   SELECT EXISTS (SELECT 1 FROM public.voucher_sales) INTO _ok;
