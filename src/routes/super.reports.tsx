@@ -231,8 +231,8 @@ function SuperReports() {
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">{peso(r.gross)}</TableCell>
                         <TableCell className="text-success">{peso(r.net)}</TableCell>
-                        <TableCell className="hidden lg:table-cell">{peso(r.issued)}</TableCell>
-                        <TableCell className="text-right text-success">+{peso(r.commission)}</TableCell>
+                        <TableCell className="hidden lg:table-cell">{peso(r.generated)}</TableCell>
+                        <TableCell className="text-right">{peso(r.transferred)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
