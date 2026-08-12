@@ -333,8 +333,11 @@ export type Database = {
           credits_per_point: number
           current_period_end: string | null
           default_commission_percent: number
+          default_reseller_discount_percent: number
           default_sale_commission_percent: number
+          default_subreseller_discount_percent: number
           default_subreseller_sale_commission_percent: number
+          default_upline_commission_percent: number
           description: string | null
           frozen_at: string | null
           frozen_by: string | null
@@ -364,8 +367,11 @@ export type Database = {
           credits_per_point?: number
           current_period_end?: string | null
           default_commission_percent?: number
+          default_reseller_discount_percent?: number
           default_sale_commission_percent?: number
+          default_subreseller_discount_percent?: number
           default_subreseller_sale_commission_percent?: number
+          default_upline_commission_percent?: number
           description?: string | null
           frozen_at?: string | null
           frozen_by?: string | null
@@ -395,8 +401,11 @@ export type Database = {
           credits_per_point?: number
           current_period_end?: string | null
           default_commission_percent?: number
+          default_reseller_discount_percent?: number
           default_sale_commission_percent?: number
+          default_subreseller_discount_percent?: number
           default_subreseller_sale_commission_percent?: number
+          default_upline_commission_percent?: number
           description?: string | null
           frozen_at?: string | null
           frozen_by?: string | null
@@ -832,12 +841,13 @@ export type Database = {
           credits_consumed: number
           ecosystem_id: string
           id: string
+          kind: string
           ledger_id: string | null
           recipient_id: string
           reversed_at: string | null
           sale_id: string
           source_ledger_id: string
-          source_lot_id: string
+          source_lot_id: string | null
         }
         Insert: {
           commission_amount: number
@@ -846,12 +856,13 @@ export type Database = {
           credits_consumed: number
           ecosystem_id: string
           id?: string
+          kind?: string
           ledger_id?: string | null
           recipient_id: string
           reversed_at?: string | null
           sale_id: string
           source_ledger_id: string
-          source_lot_id: string
+          source_lot_id?: string | null
         }
         Update: {
           commission_amount?: number
@@ -860,12 +871,13 @@ export type Database = {
           credits_consumed?: number
           ecosystem_id?: string
           id?: string
+          kind?: string
           ledger_id?: string | null
           recipient_id?: string
           reversed_at?: string | null
           sale_id?: string
           source_ledger_id?: string
-          source_lot_id?: string
+          source_lot_id?: string | null
         }
         Relationships: [
           {
@@ -1225,6 +1237,9 @@ export type Database = {
           sale_price: number
           tx_id: string
           unit_price: number | null
+          upline_commission_amount: number
+          upline_commission_percent: number
+          upline_recipient_id: string | null
         }
         Insert: {
           buyer_id: string
@@ -1255,6 +1270,9 @@ export type Database = {
           sale_price: number
           tx_id: string
           unit_price?: number | null
+          upline_commission_amount?: number
+          upline_commission_percent?: number
+          upline_recipient_id?: string | null
         }
         Update: {
           buyer_id?: string
@@ -1285,6 +1303,9 @@ export type Database = {
           sale_price?: number
           tx_id?: string
           unit_price?: number | null
+          upline_commission_amount?: number
+          upline_commission_percent?: number
+          upline_recipient_id?: string | null
         }
         Relationships: [
           {
@@ -1384,8 +1405,11 @@ export type Database = {
           credits_per_point: number
           current_period_end: string | null
           default_commission_percent: number
+          default_reseller_discount_percent: number
           default_sale_commission_percent: number
+          default_subreseller_discount_percent: number
           default_subreseller_sale_commission_percent: number
+          default_upline_commission_percent: number
           description: string | null
           frozen_at: string | null
           frozen_by: string | null
@@ -1769,8 +1793,61 @@ export type Database = {
           credits_per_point: number
           current_period_end: string | null
           default_commission_percent: number
+          default_reseller_discount_percent: number
           default_sale_commission_percent: number
+          default_subreseller_discount_percent: number
           default_subreseller_sale_commission_percent: number
+          default_upline_commission_percent: number
+          description: string | null
+          frozen_at: string | null
+          frozen_by: string | null
+          frozen_reason: string | null
+          grace_period_days: number
+          id: string
+          name: string
+          operations_frozen: boolean
+          payment_reference: string | null
+          plan_name: string
+          plan_price: number
+          points_rule_updated_at: string
+          points_rule_version: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          signup_enabled: boolean
+          signup_token: string
+          slug: string
+          submitted_at: string | null
+          subscription_state: Database["public"]["Enums"]["subscription_state"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ecosystems"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      set_ecosystem_rates: {
+        Args: {
+          _ecosystem_id: string
+          _reseller_discount_percent: number
+          _reseller_sale_percent: number
+          _subreseller_discount_percent: number
+          _subreseller_sale_percent: number
+          _upline_percent: number
+        }
+        Returns: {
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          credits_per_point: number
+          current_period_end: string | null
+          default_commission_percent: number
+          default_reseller_discount_percent: number
+          default_sale_commission_percent: number
+          default_subreseller_discount_percent: number
+          default_subreseller_sale_commission_percent: number
+          default_upline_commission_percent: number
           description: string | null
           frozen_at: string | null
           frozen_by: string | null
@@ -1894,8 +1971,11 @@ export type Database = {
           credits_per_point: number
           current_period_end: string | null
           default_commission_percent: number
+          default_reseller_discount_percent: number
           default_sale_commission_percent: number
+          default_subreseller_discount_percent: number
           default_subreseller_sale_commission_percent: number
+          default_upline_commission_percent: number
           description: string | null
           frozen_at: string | null
           frozen_by: string | null
@@ -1939,8 +2019,11 @@ export type Database = {
           credits_per_point: number
           current_period_end: string | null
           default_commission_percent: number
+          default_reseller_discount_percent: number
           default_sale_commission_percent: number
+          default_subreseller_discount_percent: number
           default_subreseller_sale_commission_percent: number
+          default_upline_commission_percent: number
           description: string | null
           frozen_at: string | null
           frozen_by: string | null
@@ -2007,6 +2090,14 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      upline_commission_rate_for: {
+        Args: { _ecosystem_id: string }
+        Returns: number
+      }
+      voucher_discount_percent_for: {
+        Args: { _user_id: string }
+        Returns: number
       }
     }
     Enums: {
