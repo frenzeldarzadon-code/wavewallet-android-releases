@@ -327,6 +327,9 @@ export type Database = {
       }
       ecosystems: {
         Row: {
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
           contact_email: string | null
           contact_phone: string | null
           created_at: string
@@ -344,6 +347,7 @@ export type Database = {
           frozen_reason: string | null
           grace_period_days: number
           id: string
+          last_activity_at: string | null
           name: string
           operations_frozen: boolean
           payment_reference: string | null
@@ -361,6 +365,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -378,6 +385,7 @@ export type Database = {
           frozen_reason?: string | null
           grace_period_days?: number
           id?: string
+          last_activity_at?: string | null
           name: string
           operations_frozen?: boolean
           payment_reference?: string | null
@@ -395,6 +403,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -412,6 +423,7 @@ export type Database = {
           frozen_reason?: string | null
           grace_period_days?: number
           id?: string
+          last_activity_at?: string | null
           name?: string
           operations_frozen?: boolean
           payment_reference?: string | null
@@ -1416,6 +1428,10 @@ export type Database = {
           unused: number
         }[]
       }
+      archive_ecosystem: {
+        Args: { _ecosystem_id: string; _reason?: string }
+        Returns: string
+      }
       assert_actor_active: { Args: never; Returns: undefined }
       can_load_credits: {
         Args: { _actor: string; _target: string }
@@ -1450,6 +1466,9 @@ export type Database = {
           _slug?: string
         }
         Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
           contact_email: string | null
           contact_phone: string | null
           created_at: string
@@ -1467,6 +1486,7 @@ export type Database = {
           frozen_reason: string | null
           grace_period_days: number
           id: string
+          last_activity_at: string | null
           name: string
           operations_frozen: boolean
           payment_reference: string | null
@@ -1529,6 +1549,15 @@ export type Database = {
           tx_id: string
         }[]
       }
+      ecosystem_cleanup_check: {
+        Args: { _ecosystem_id: string }
+        Returns: {
+          blockers: string[]
+          eligible: boolean
+          last_activity: string
+          status: string
+        }[]
+      }
       ecosystem_dashboard: {
         Args: { _ecosystem_id: string }
         Returns: {
@@ -1542,6 +1571,10 @@ export type Database = {
           suspended_count: number
           suspended_customer_count: number
         }[]
+      }
+      ecosystem_last_activity: {
+        Args: { _ecosystem_id: string }
+        Returns: string
       }
       expire_stale_invitations: { Args: never; Returns: undefined }
       expire_stale_subscriptions: { Args: never; Returns: number }
@@ -1702,6 +1735,10 @@ export type Database = {
         Args: never
         Returns: {
           admin_count: number
+          archived_at: string
+          archived_reason: string
+          cleanup_blockers: string[]
+          cleanup_status: string
           contact_email: string
           contact_phone: string
           created_at: string
@@ -1711,6 +1748,7 @@ export type Database = {
           frozen_reason: string
           grace_period_days: number
           id: string
+          last_activity_at: string
           member_count: number
           name: string
           operations_frozen: boolean
@@ -1854,6 +1892,7 @@ export type Database = {
         }
       }
       revoke_admin_invitation: { Args: { _id: string }; Returns: undefined }
+      run_ecosystem_cleanup: { Args: { _dry_run?: boolean }; Returns: Json }
       run_retention_purge: {
         Args: { _dry_run?: boolean }
         Returns: {
@@ -1887,6 +1926,9 @@ export type Database = {
       set_ecosystem_freeze: {
         Args: { _ecosystem_id: string; _frozen: boolean; _reason?: string }
         Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
           contact_email: string | null
           contact_phone: string | null
           created_at: string
@@ -1904,6 +1946,7 @@ export type Database = {
           frozen_reason: string | null
           grace_period_days: number
           id: string
+          last_activity_at: string | null
           name: string
           operations_frozen: boolean
           payment_reference: string | null
@@ -1937,6 +1980,9 @@ export type Database = {
           _upline_percent: number
         }
         Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
           contact_email: string | null
           contact_phone: string | null
           created_at: string
@@ -1954,6 +2000,7 @@ export type Database = {
           frozen_reason: string | null
           grace_period_days: number
           id: string
+          last_activity_at: string | null
           name: string
           operations_frozen: boolean
           payment_reference: string | null
@@ -2066,6 +2113,9 @@ export type Database = {
           _signup_enabled?: boolean
         }
         Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
           contact_email: string | null
           contact_phone: string | null
           created_at: string
@@ -2083,6 +2133,7 @@ export type Database = {
           frozen_reason: string | null
           grace_period_days: number
           id: string
+          last_activity_at: string | null
           name: string
           operations_frozen: boolean
           payment_reference: string | null
@@ -2114,6 +2165,9 @@ export type Database = {
           _plan_price: number
         }
         Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
           contact_email: string | null
           contact_phone: string | null
           created_at: string
@@ -2131,6 +2185,7 @@ export type Database = {
           frozen_reason: string | null
           grace_period_days: number
           id: string
+          last_activity_at: string | null
           name: string
           operations_frozen: boolean
           payment_reference: string | null
