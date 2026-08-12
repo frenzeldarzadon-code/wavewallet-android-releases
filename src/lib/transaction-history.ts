@@ -16,8 +16,11 @@ import { LEDGER_COLUMNS, normalizeEntry, type CreditEntry } from "@/lib/wallet";
 import {
   fetchReversalHistory,
   isReversibleTransferEntry,
+  isTransferCreditReason,
+  isTransferDebitReason,
   type ReversalRecord,
 } from "@/lib/transfer-reversal";
+
 
 export type TxKind = "transfer" | "adjustment" | "earning" | "purchase" | "reversal";
 
