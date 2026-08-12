@@ -332,8 +332,9 @@ function AdminReports() {
                       <TableHead>Channel partner</TableHead>
                       <TableHead>Vouchers</TableHead>
                       <TableHead className="hidden sm:table-cell">Gross</TableHead>
-                      <TableHead>Their margin</TableHead>
-                      <TableHead className="text-right">Commission</TableHead>
+                      <TableHead>Discount saved</TableHead>
+                      <TableHead className="text-right">Sale cashback</TableHead>
+                      <TableHead className="text-right">Upline</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -349,11 +350,10 @@ function AdminReports() {
                         <TableCell className="hidden sm:table-cell">{peso(r.gross)}</TableCell>
                         <TableCell className="text-destructive">{peso(r.margin)}</TableCell>
                         <TableCell className="text-right text-success">
-                          {r.role === "subreseller" ? (
-                            <span className="text-muted-foreground">—</span>
-                          ) : (
-                            `+${peso(r.commission)}`
-                          )}
+                          {r.commission > 0 ? `+${peso(r.commission)}` : "—"}
+                        </TableCell>
+                        <TableCell className="text-right text-success">
+                          {r.upline > 0 ? `+${peso(r.upline)}` : "—"}
                         </TableCell>
                       </TableRow>
                     ))}
