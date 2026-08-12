@@ -24,10 +24,15 @@ export interface CreditEntry {
   commission_percent?: number | null;
   /** Bonus credits granted on top of the base amount. */
   commission_amount?: number | null;
+  /** 'purchase' | 'sale_commission' | 'general' — how this entry was produced. */
+  entry_kind?: string | null;
+  /** Voucher sale that generated this entry (credit-back / purchase debits). */
+  sale_id?: string | null;
 }
 
 export const LEDGER_COLUMNS =
-  "id, direction, amount, balance_after, reason, reference, tx_id, created_at, user_id, base_amount, commission_percent, commission_amount";
+  "id, direction, amount, balance_after, reason, reference, tx_id, created_at, user_id, base_amount, commission_percent, commission_amount, entry_kind, sale_id";
+
 
 /** Normalises the numeric columns coming back from PostgREST. */
 export function normalizeEntry(e: CreditEntry): CreditEntry {
