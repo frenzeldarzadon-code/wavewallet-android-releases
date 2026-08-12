@@ -14,6 +14,8 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as InviteRouteImport } from './routes/invite'
 import { Route as ResellerRouteImport } from './routes/reseller'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SuperRouteImport } from './routes/super'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
@@ -68,6 +70,16 @@ const InviteRoute = InviteRouteImport.update({
 const ResellerRoute = ResellerRouteImport.update({
   id: '/reseller',
   path: '/reseller',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetupRoute = SetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SuperRoute = SuperRouteImport.update({
@@ -227,6 +239,8 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/invite': typeof InviteRoute
   '/reseller': typeof ResellerRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
+  '/setup': typeof SetupRoute
   '/super': typeof SuperRouteWithChildren
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/products': typeof AdminProductsRoute
@@ -261,6 +275,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/invite': typeof InviteRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/setup': typeof SetupRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/reports': typeof AdminReportsRoute
@@ -298,6 +314,8 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/invite': typeof InviteRoute
   '/reseller': typeof ResellerRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
+  '/setup': typeof SetupRoute
   '/super': typeof SuperRouteWithChildren
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/products': typeof AdminProductsRoute
@@ -337,6 +355,8 @@ export interface FileRouteTypes {
     | '/app'
     | '/invite'
     | '/reseller'
+    | '/reset-password'
+    | '/setup'
     | '/super'
     | '/admin/customers'
     | '/admin/products'
@@ -371,6 +391,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/invite'
+    | '/reset-password'
+    | '/setup'
     | '/admin/customers'
     | '/admin/products'
     | '/admin/reports'
@@ -407,6 +429,8 @@ export interface FileRouteTypes {
     | '/app'
     | '/invite'
     | '/reseller'
+    | '/reset-password'
+    | '/setup'
     | '/super'
     | '/admin/customers'
     | '/admin/products'
@@ -445,6 +469,8 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   InviteRoute: typeof InviteRoute
   ResellerRoute: typeof ResellerRouteWithChildren
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  SetupRoute: typeof SetupRoute
   SuperRoute: typeof SuperRouteWithChildren
   JoinSlugRoute: typeof JoinSlugRoute
 }
@@ -484,6 +510,20 @@ declare module '@tanstack/react-router' {
       path: '/reseller'
       fullPath: '/reseller'
       preLoaderRoute: typeof ResellerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/super': {
@@ -795,6 +835,8 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   InviteRoute: InviteRoute,
   ResellerRoute: ResellerRouteWithChildren,
+  ResetPasswordRoute: ResetPasswordRoute,
+  SetupRoute: SetupRoute,
   SuperRoute: SuperRouteWithChildren,
   JoinSlugRoute: JoinSlugRoute,
 }

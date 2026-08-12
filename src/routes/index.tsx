@@ -1,5 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, FlaskConical, LogIn } from "lucide-react";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { ArrowRight, FlaskConical, LogIn, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { DEMO_ECOSYSTEM_SLUG, DEMO_ROLES, isPreviewEnvironment } from "@/lib/demo";
 import { startDemoSession } from "@/lib/demo.functions";
 import { platformSettings } from "@/lib/wavewallet";
+import { superAdminSetupAvailable } from "@/lib/bootstrap.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -44,6 +45,8 @@ function LoginPage() {
   const [shops, setShops] = useState<SignupEcosystem[]>([]);
   const [preview, setPreview] = useState(false);
   const [demoBusy, setDemoBusy] = useState<string | null>(null);
+  // One-time platform-owner setup; the server decides whether it is still open.
+  const [setupOpen, setSetupOpen] = useState(false);
 
   useEffect(() => setPreview(isPreviewEnvironment()), []);
 
@@ -89,6 +92,9 @@ function LoginPage() {
         isPreviewEnvironment() ? list : list.filter((e) => e.slug !== DEMO_ECOSYSTEM_SLUG),
       );
     });
+    superAdminSetupAvailable()
+      .then((r) => active && setSetupOpen(r.available))
+      .catch(() => undefined);
     return () => {
       active = false;
     };
@@ -194,11 +200,33 @@ function LoginPage() {
                 <LogIn className="size-4" />
                 {busy ? "Signing in…" : "Continue"}
               </Button>
+              <p className="text-center text-xs">
+                <Link to="/reset-password" className="text-primary hover:underline">
+                  Forgot your password?
+                </Link>
+              </p>
               <p className="text-center text-[11px] text-muted-foreground">
                 Your role and ecosystem are resolved by the server after sign-in.
               </p>
             </CardContent>
           </Card>
+
+          {setupOpen ? (
+            <Link
+              to="/setup"
+              className="mt-4 flex items-center justify-between rounded-xl border border-primary/40 bg-primary/5 px-4 py-3 transition-colors hover:bg-primary/10"
+            >
+              <span>
+                <span className="flex items-center gap-1.5 text-sm font-semibold text-primary">
+                  <ShieldCheck className="size-4" /> Initial Super Admin setup
+                </span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">
+                  No platform owner exists yet — create the first one.
+                </span>
+              </span>
+              <ArrowRight className="size-4 text-primary" />
+            </Link>
+          ) : null}
 
           {preview ? (
             <div className="mt-6 rounded-xl border-2 border-dashed border-destructive/50 bg-destructive/5 p-4">
