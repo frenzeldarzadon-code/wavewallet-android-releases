@@ -202,6 +202,7 @@ export type Database = {
           contact_email: string | null
           contact_phone: string | null
           created_at: string
+          credits_per_point: number
           current_period_end: string | null
           description: string | null
           grace_period_days: number
@@ -223,6 +224,7 @@ export type Database = {
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
+          credits_per_point?: number
           current_period_end?: string | null
           description?: string | null
           grace_period_days?: number
@@ -244,6 +246,7 @@ export type Database = {
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
+          credits_per_point?: number
           current_period_end?: string | null
           description?: string | null
           grace_period_days?: number
@@ -310,9 +313,12 @@ export type Database = {
           created_at: string
           direction: string
           ecosystem_id: string
+          entry_type: string
           id: string
           reason: string
+          redemption_id: string | null
           reference: string | null
+          sale_id: string | null
           tx_id: string | null
           user_id: string
         }
@@ -324,9 +330,12 @@ export type Database = {
           created_at?: string
           direction: string
           ecosystem_id: string
+          entry_type?: string
           id?: string
           reason: string
+          redemption_id?: string | null
           reference?: string | null
+          sale_id?: string | null
           tx_id?: string | null
           user_id: string
         }
@@ -338,9 +347,12 @@ export type Database = {
           created_at?: string
           direction?: string
           ecosystem_id?: string
+          entry_type?: string
           id?: string
           reason?: string
+          redemption_id?: string | null
           reference?: string | null
+          sale_id?: string | null
           tx_id?: string | null
           user_id?: string
         }
@@ -414,6 +426,128 @@ export type Database = {
             columns: ["reseller_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reward_products: {
+        Row: {
+          active: boolean
+          archived: boolean
+          created_at: string
+          description: string
+          ecosystem_id: string
+          id: string
+          name: string
+          points_price: number
+          reserved: number
+          stock: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          archived?: boolean
+          created_at?: string
+          description?: string
+          ecosystem_id: string
+          id?: string
+          name: string
+          points_price: number
+          reserved?: number
+          stock?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          archived?: boolean
+          created_at?: string
+          description?: string
+          ecosystem_id?: string
+          id?: string
+          name?: string
+          points_price?: number
+          reserved?: number
+          stock?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_products_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reward_redemptions: {
+        Row: {
+          code: string
+          created_at: string
+          ecosystem_id: string
+          handled_at: string | null
+          handled_by: string | null
+          handled_by_name: string | null
+          id: string
+          note: string | null
+          points_price: number
+          reward_id: string
+          reward_name: string
+          status: string
+          tx_id: string | null
+          updated_at: string
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          ecosystem_id: string
+          handled_at?: string | null
+          handled_by?: string | null
+          handled_by_name?: string | null
+          id?: string
+          note?: string | null
+          points_price: number
+          reward_id: string
+          reward_name: string
+          status?: string
+          tx_id?: string | null
+          updated_at?: string
+          user_id: string
+          user_name?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          ecosystem_id?: string
+          handled_at?: string | null
+          handled_by?: string | null
+          handled_by_name?: string | null
+          id?: string
+          note?: string | null
+          points_price?: number
+          reward_id?: string
+          reward_name?: string
+          status?: string
+          tx_id?: string | null
+          updated_at?: string
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_redemptions_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reward_redemptions_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "reward_products"
             referencedColumns: ["id"]
           },
         ]
@@ -638,6 +772,9 @@ export type Database = {
           id: string
           list_price: number
           payment_method: string
+          points_earned: number
+          points_price: number | null
+          points_spent: number
           product_id: string
           product_name: string
           reseller_id: string | null
@@ -653,6 +790,9 @@ export type Database = {
           id?: string
           list_price: number
           payment_method?: string
+          points_earned?: number
+          points_price?: number | null
+          points_spent?: number
           product_id: string
           product_name: string
           reseller_id?: string | null
@@ -668,6 +808,9 @@ export type Database = {
           id?: string
           list_price?: number
           payment_method?: string
+          points_earned?: number
+          points_price?: number | null
+          points_spent?: number
           product_id?: string
           product_name?: string
           reseller_id?: string | null
@@ -726,6 +869,15 @@ export type Database = {
         }
         Returns: string
       }
+      admin_adjust_points: {
+        Args: {
+          _amount: number
+          _reason: string
+          _reference?: string
+          _user_id: string
+        }
+        Returns: string
+      }
       admin_product_inventory: {
         Args: { _ecosystem_id: string }
         Returns: {
@@ -751,6 +903,7 @@ export type Database = {
           contact_email: string | null
           contact_phone: string | null
           created_at: string
+          credits_per_point: number
           current_period_end: string | null
           description: string | null
           grace_period_days: number
@@ -847,6 +1000,43 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      list_ecosystem_redemptions: {
+        Args: { _ecosystem_id: string }
+        Returns: {
+          code: string
+          created_at: string
+          ecosystem_id: string
+          handled_at: string | null
+          handled_by: string | null
+          handled_by_name: string | null
+          id: string
+          note: string | null
+          points_price: number
+          reward_id: string
+          reward_name: string
+          status: string
+          tx_id: string | null
+          updated_at: string
+          user_id: string
+          user_name: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "reward_redemptions"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      list_rewards: {
+        Args: never
+        Returns: {
+          available: number
+          description: string
+          id: string
+          name: string
+          points_price: number
+        }[]
+      }
       list_shop_products: {
         Args: never
         Returns: {
@@ -858,6 +1048,19 @@ export type Database = {
           points_price: number
           promo_note: string
           promo_price: number
+        }[]
+      }
+      lookup_redemption: {
+        Args: { _code: string }
+        Returns: {
+          code: string
+          created_at: string
+          ecosystem_name: string
+          id: string
+          points_price: number
+          reward_name: string
+          status: string
+          user_name: string
         }[]
       }
       lookup_transfer_recipient: {
@@ -913,9 +1116,20 @@ export type Database = {
         Args: { _product_id: string }
         Returns: {
           code: string
+          points_earned: number
           product_name: string
           sale_id: string
           sale_price: number
+          tx_id: string
+        }[]
+      }
+      purchase_voucher_with_points: {
+        Args: { _product_id: string }
+        Returns: {
+          code: string
+          points_spent: number
+          product_name: string
+          sale_id: string
           tx_id: string
         }[]
       }
@@ -923,8 +1137,23 @@ export type Database = {
         Args: { _ecosystem_id: string }
         Returns: string
       }
+      request_redemption: {
+        Args: { _reward_id: string }
+        Returns: {
+          code: string
+          id: string
+          points_price: number
+          reward_name: string
+          status: string
+          tx_id: string
+        }[]
+      }
       reseller_load_credits: {
         Args: { _amount: number; _customer_id: string; _reference?: string }
+        Returns: string
+      }
+      review_redemption: {
+        Args: { _decision: string; _id: string; _note?: string }
         Returns: string
       }
       review_subscription: {
@@ -942,6 +1171,10 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      set_points_rule: {
+        Args: { _credits_per_point: number; _ecosystem_id: string }
+        Returns: number
       }
       set_reseller_discount: {
         Args: { _discount: number; _user_id: string }
@@ -970,6 +1203,7 @@ export type Database = {
           contact_email: string | null
           contact_phone: string | null
           created_at: string
+          credits_per_point: number
           current_period_end: string | null
           description: string | null
           grace_period_days: number
@@ -1005,6 +1239,7 @@ export type Database = {
           contact_email: string | null
           contact_phone: string | null
           created_at: string
+          credits_per_point: number
           current_period_end: string | null
           description: string | null
           grace_period_days: number

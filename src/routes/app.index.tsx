@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowDownLeft, ArrowUpRight, History, Send, ShoppingBag, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Gift, History, Send, ShoppingBag, Sparkles, Wallet } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +7,12 @@ import { EmptyState, PageSection, StatCard } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import { fetchCreditBalance, fetchCreditLedger, type CreditEntry } from "@/lib/wallet";
+import {
+  fetchPointsAccount,
+  fetchPointsLedger,
+  type PointsAccount,
+  type PointsEntry,
+} from "@/lib/rewards";
 
 export const Route = createFileRoute("/app/")({
   head: () => ({
@@ -33,15 +39,24 @@ function CustomerWallet() {
   const { account, ecosystem } = useSession("customer");
   const [balance, setBalance] = useState(0);
   const [entries, setEntries] = useState<CreditEntry[]>([]);
+  const [points, setPoints] = useState<PointsAccount>({ balance: 0, held: 0, available: 0 });
+  const [pointsEntries, setPointsEntries] = useState<PointsEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const userId = account?.id ?? null;
 
   const load = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
-    const [b, l] = await Promise.all([fetchCreditBalance(userId), fetchCreditLedger(userId, 25)]);
+    const [b, l, pa, pl] = await Promise.all([
+      fetchCreditBalance(userId),
+      fetchCreditLedger(userId, 25),
+      fetchPointsAccount(userId),
+      fetchPointsLedger(userId, 10),
+    ]);
     setBalance(b);
     setEntries(l);
+    setPoints(pa);
+    setPointsEntries(pl);
     setLoading(false);
   }, [userId]);
 
@@ -56,13 +71,20 @@ function CustomerWallet() {
   return (
     <>
       <PageSection title="My wallet" description={`Closed-loop credits inside ${ecosystem.name}.`}>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             label="Credit balance"
             value={peso(balance)}
             hint="Validated against your ledger"
             icon={Wallet}
             tone="positive"
+          />
+          <StatCard
+            label="Points balance"
+            value={`${points.available} pts`}
+            hint={points.held > 0 ? `${points.held} pts held for redemptions` : "Earned from voucher purchases"}
+            icon={Sparkles}
+            tone="brand"
           />
           <StatCard
             label="Credits received"
@@ -81,10 +103,15 @@ function CustomerWallet() {
       </PageSection>
 
       <PageSection>
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div className="grid gap-2 sm:grid-cols-4">
           <Button asChild>
             <Link to="/app/shop">
               <ShoppingBag className="size-4" /> Buy a voucher
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/app/rewards">
+              <Gift className="size-4" /> Rewards
             </Link>
           </Button>
           <Button asChild variant="outline">
@@ -99,6 +126,44 @@ function CustomerWallet() {
           </Button>
         </div>
       </PageSection>
+
+      <PageSection title="Recent points activity" description="Points are earned on credit-funded voucher purchases only.">
+        {pointsEntries.length === 0 ? (
+          <EmptyState
+            title="No points yet"
+            description="Buy a voucher with credits to start earning points."
+          />
+        ) : (
+          <Card className="shadow-[var(--shadow-card)]">
+            <CardContent className="divide-y divide-border px-0 py-0">
+              {pointsEntries.map((e) => (
+                <div key={e.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{e.reason}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {shortDateTime(e.created_at)} · {e.entry_type} · {e.tx_id ?? "—"}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p
+                      className={
+                        e.direction === "credit"
+                          ? "text-sm font-semibold text-success"
+                          : "text-sm font-semibold text-destructive"
+                      }
+                    >
+                      {e.direction === "credit" ? "+" : "−"}
+                      {e.amount} pts
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">Bal {e.balance_after}</p>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+      </PageSection>
+
 
       <PageSection title="Recent credit activity" description="Every entry carries a transaction ID.">
         {loading ? (

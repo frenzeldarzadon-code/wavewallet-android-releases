@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import { adminAdjustCredits, type CreditEntry } from "@/lib/wallet";
+import { adminAdjustPoints } from "@/lib/rewards";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/wallets")({
@@ -49,6 +50,7 @@ interface Member {
   status: string;
   role: string;
   balance: number;
+  points: number;
 }
 
 function AdminWallets() {
@@ -62,11 +64,12 @@ function AdminWallets() {
   const [reference, setReference] = useState("");
   const [busy, setBusy] = useState(false);
   const [ledger, setLedger] = useState<CreditEntry[]>([]);
+  const [mode, setMode] = useState<"credits" | "points">("credits");
 
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
     setLoading(true);
-    const [{ data: profiles }, { data: roles }, { data: accounts }, { data: entries }] =
+    const [{ data: profiles }, { data: roles }, { data: accounts }, { data: pointAccounts }, { data: entries }] =
       await Promise.all([
         supabase
           .from("profiles")
@@ -74,6 +77,7 @@ function AdminWallets() {
           .eq("ecosystem_id", ecosystemDbId),
         supabase.from("user_roles").select("user_id, role").eq("ecosystem_id", ecosystemDbId),
         supabase.from("credit_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
+        supabase.from("points_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
         supabase
           .from("credit_ledger")
           .select("id, direction, amount, balance_after, reason, reference, tx_id, created_at, user_id")
@@ -83,12 +87,14 @@ function AdminWallets() {
       ]);
     const roleBy = new Map((roles ?? []).map((r) => [r.user_id, r.role as string]));
     const balBy = new Map((accounts ?? []).map((a) => [a.user_id, Number(a.balance)]));
+    const ptsBy = new Map((pointAccounts ?? []).map((a) => [a.user_id, Number(a.balance)]));
     setMembers(
       (profiles ?? [])
         .map((p) => ({
           ...p,
           role: roleBy.get(p.id) ?? "customer",
           balance: balBy.get(p.id) ?? 0,
+          points: ptsBy.get(p.id) ?? 0,
         }))
         .filter((m) => m.role !== "admin" && m.role !== "super_admin")
         .sort((a, b) => a.full_name.localeCompare(b.full_name)),
@@ -134,14 +140,24 @@ function AdminWallets() {
     }
     setBusy(true);
     try {
-      const tx = await adminAdjustCredits({
-        userId: target.id,
-        amount: value,
-        reason,
-        reference,
-      });
-      toast.success("Wallet updated", {
-        description: `${value > 0 ? "+" : "−"}${peso(value)} · ${target.full_name} · ${tx}`,
+      const tx =
+        mode === "points"
+          ? await adminAdjustPoints({
+              userId: target.id,
+              amount: Math.trunc(value),
+              reason,
+              ...(reference ? { reference } : {}),
+            })
+          : await adminAdjustCredits({
+              userId: target.id,
+              amount: value,
+              reason,
+              reference,
+            });
+      toast.success(mode === "points" ? "Points updated" : "Wallet updated", {
+        description: `${value > 0 ? "+" : "−"}${
+          mode === "points" ? `${Math.abs(Math.trunc(value))} pts` : peso(Math.abs(value))
+        } · ${target.full_name} · ${tx}`,
       });
       setTarget(null);
       setAmount("");
@@ -196,10 +212,31 @@ function AdminWallets() {
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="text-lg font-semibold text-success">{peso(m.balance)}</p>
-                    <Button size="sm" variant="outline" className="mt-1" onClick={() => setTarget(m)}>
-                      <Wallet className="size-4" /> Add credits
-                    </Button>
+                    <p className="text-[11px] text-points">{m.points} pts</p>
+                    <div className="mt-1 flex gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setMode("credits");
+                          setTarget(m);
+                        }}
+                      >
+                        <Wallet className="size-4" /> Credits
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setMode("points");
+                          setTarget(m);
+                        }}
+                      >
+                        Points
+                      </Button>
+                    </div>
                   </div>
+
                 </CardContent>
               </Card>
             ))}
@@ -247,9 +284,12 @@ function AdminWallets() {
       <Dialog open={!!target} onOpenChange={(o) => !o && setTarget(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Adjust credits</DialogTitle>
+            <DialogTitle>{mode === "points" ? "Adjust points" : "Adjust credits"}</DialogTitle>
             <DialogDescription>
-              {target?.full_name} · current balance {peso(target?.balance ?? 0)}
+              {target?.full_name} ·{" "}
+              {mode === "points"
+                ? `${target?.points ?? 0} pts`
+                : `current balance ${peso(target?.balance ?? 0)}`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">

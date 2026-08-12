@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Facebook } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { fetchPointsRule, setPointsRule } from "@/lib/rewards";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,12 @@ function AdminSettings() {
     contactEmail: ecosystem?.contactEmail ?? "",
   });
   const [saving, setSaving] = useState(false);
+  const [rule, setRule] = useState("10");
+  const [savingRule, setSavingRule] = useState(false);
+  useEffect(() => {
+    if (!ecosystemDbId) return;
+    void fetchPointsRule(ecosystemDbId).then((v) => setRule(String(v)));
+  }, [ecosystemDbId]);
   if (!ecosystem) return null;
 
   const save = async () => {
@@ -141,18 +148,42 @@ function AdminSettings() {
         </Card>
       </PageSection>
 
-      <PageSection title="Points rule" description="Points are earned on qualifying purchases only — never on credit loads or transfers.">
+      <PageSection title="Points rule" description="Points are earned on credit-funded voucher purchases only — never on credit loads or transfers.">
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="rate">Qualifying spend per 1 point (PHP)</Label>
-              <Input id="rate" type="number" defaultValue={ecosystem.pointsPerPeso} />
+              <Input
+                id="rate"
+                type="number"
+                value={rule}
+                onChange={(e) => setRule(e.target.value)}
+              />
             </div>
-            <div className="flex items-end">
-              <p className="text-xs text-muted-foreground">
-                Current rule: every ₱{ecosystem.pointsPerPeso} of qualifying voucher spend earns 1
-                point.
-              </p>
+            <div className="flex items-end gap-2">
+              <Button
+                variant="outline"
+                disabled={savingRule}
+                onClick={async () => {
+                  if (!ecosystemDbId) return;
+                  const v = Number(rule);
+                  if (!v || v <= 0) {
+                    toast.error("Enter a spend amount greater than zero");
+                    return;
+                  }
+                  setSavingRule(true);
+                  try {
+                    await setPointsRule(ecosystemDbId, v);
+                    toast.success(`Every ₱${v} of qualifying spend now earns 1 point.`);
+                  } catch (e) {
+                    toast.error((e as Error).message);
+                  } finally {
+                    setSavingRule(false);
+                  }
+                }}
+              >
+                {savingRule ? "Saving…" : "Save points rule"}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -164,10 +195,10 @@ function AdminSettings() {
         </Button>
         <p className="text-xs text-muted-foreground">
           Shop name, description and contact details are stored in the database and audit-logged.
-          Facebook support details and the points rule are presentation placeholders until the
-          rewards engine ships.
+          Facebook support details are presentation placeholders.
         </p>
       </div>
+
     </>
   );
 }
