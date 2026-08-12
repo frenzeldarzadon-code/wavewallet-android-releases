@@ -836,6 +836,39 @@ function AdminCustomers() {
                 </StatusBadge>
               </div>
 
+              {detail.role === "customer" ? (
+                verdictFor(detail).eligible ? (
+                  <div className="rounded-lg border border-border p-3">
+                    <p className="text-sm font-medium">Account cleanup available</p>
+                    <p className="text-xs text-muted-foreground">
+                      This account holds no remaining value and can be deleted from the directory.
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="mt-2"
+                      onClick={() => {
+                        setDeleting(detail);
+                        setDetail(null);
+                      }}
+                    >
+                      <Trash2 className="size-4" /> Delete account
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-border p-3">
+                    <p className="text-sm font-medium">Account cleanup not available</p>
+                    <ul className="mt-1 list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+                      {verdictFor(detail).blockers.map((b) => (
+                        <li key={b}>{b}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )
+              ) : null}
+
+
+
               <div>
                 <p className="mb-2 text-sm font-medium">Recent activity</p>
                 {activity.length === 0 ? (
