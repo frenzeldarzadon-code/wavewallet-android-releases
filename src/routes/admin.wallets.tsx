@@ -212,10 +212,31 @@ function AdminWallets() {
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="text-lg font-semibold text-success">{peso(m.balance)}</p>
-                    <Button size="sm" variant="outline" className="mt-1" onClick={() => setTarget(m)}>
-                      <Wallet className="size-4" /> Add credits
-                    </Button>
+                    <p className="text-[11px] text-points">{m.points} pts</p>
+                    <div className="mt-1 flex gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setMode("credits");
+                          setTarget(m);
+                        }}
+                      >
+                        <Wallet className="size-4" /> Credits
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setMode("points");
+                          setTarget(m);
+                        }}
+                      >
+                        Points
+                      </Button>
+                    </div>
                   </div>
+
                 </CardContent>
               </Card>
             ))}
