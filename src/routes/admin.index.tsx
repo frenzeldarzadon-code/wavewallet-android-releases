@@ -31,10 +31,14 @@ interface Dash {
   member_count: number;
   customer_count: number;
   reseller_count: number;
+  subreseller_count: number;
+  admin_count: number;
   suspended_count: number;
+  suspended_customer_count: number;
   credits_outstanding: number;
   points_outstanding: number;
 }
+
 
 interface AuditRow {
   id: string;
