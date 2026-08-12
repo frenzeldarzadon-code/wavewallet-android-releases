@@ -64,11 +64,12 @@ function AdminWallets() {
   const [reference, setReference] = useState("");
   const [busy, setBusy] = useState(false);
   const [ledger, setLedger] = useState<CreditEntry[]>([]);
+  const [mode, setMode] = useState<"credits" | "points">("credits");
 
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
     setLoading(true);
-    const [{ data: profiles }, { data: roles }, { data: accounts }, { data: entries }] =
+    const [{ data: profiles }, { data: roles }, { data: accounts }, { data: pointAccounts }, { data: entries }] =
       await Promise.all([
         supabase
           .from("profiles")
@@ -76,6 +77,7 @@ function AdminWallets() {
           .eq("ecosystem_id", ecosystemDbId),
         supabase.from("user_roles").select("user_id, role").eq("ecosystem_id", ecosystemDbId),
         supabase.from("credit_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
+        supabase.from("points_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
         supabase
           .from("credit_ledger")
           .select("id, direction, amount, balance_after, reason, reference, tx_id, created_at, user_id")
@@ -85,12 +87,14 @@ function AdminWallets() {
       ]);
     const roleBy = new Map((roles ?? []).map((r) => [r.user_id, r.role as string]));
     const balBy = new Map((accounts ?? []).map((a) => [a.user_id, Number(a.balance)]));
+    const ptsBy = new Map((pointAccounts ?? []).map((a) => [a.user_id, Number(a.balance)]));
     setMembers(
       (profiles ?? [])
         .map((p) => ({
           ...p,
           role: roleBy.get(p.id) ?? "customer",
           balance: balBy.get(p.id) ?? 0,
+          points: ptsBy.get(p.id) ?? 0,
         }))
         .filter((m) => m.role !== "admin" && m.role !== "super_admin")
         .sort((a, b) => a.full_name.localeCompare(b.full_name)),
