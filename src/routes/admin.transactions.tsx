@@ -239,13 +239,17 @@ function AdminTransactions() {
                     {canReverse(r) ? (
                       <Button
                         size="sm"
-                        variant="ghost"
-                        className="mt-1 h-7 px-2 text-[11px]"
+                        variant="outline"
+                        className="mt-1.5 h-8 border-destructive/40 px-2.5 text-[11px] font-medium text-destructive hover:bg-destructive/10 hover:text-destructive"
                         onClick={() => void openReversal(r)}
                       >
-                        <RotateCcw className="size-3.5" /> Reverse
+                        <RotateCcw className="size-3.5" />
+                        {r.transfer && r.transfer.reversedAmount > 0
+                          ? `Reverse ${peso(r.transfer.remaining)}`
+                          : "Reverse"}
                       </Button>
                     ) : null}
+
                   </div>
                 </div>
               ))}
