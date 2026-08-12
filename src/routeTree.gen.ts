@@ -21,6 +21,7 @@ import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminResellersRouteImport } from './routes/admin.resellers'
 import { Route as AdminRewardsRouteImport } from './routes/admin.rewards'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminSignupLinkRouteImport } from './routes/admin.signup-link'
 import { Route as AdminSubscriptionRouteImport } from './routes/admin.subscription'
 import { Route as AdminVouchersRouteImport } from './routes/admin.vouchers'
 import { Route as AppIndexRouteImport } from './routes/app.index'
@@ -28,6 +29,7 @@ import { Route as AppHistoryRouteImport } from './routes/app.history'
 import { Route as AppRewardsRouteImport } from './routes/app.rewards'
 import { Route as AppShopRouteImport } from './routes/app.shop'
 import { Route as AppTransferRouteImport } from './routes/app.transfer'
+import { Route as JoinSlugRouteImport } from './routes/join.$slug'
 import { Route as ResellerIndexRouteImport } from './routes/reseller.index'
 import { Route as ResellerCustomersRouteImport } from './routes/reseller.customers'
 import { Route as ResellerRedemptionsRouteImport } from './routes/reseller.redemptions'
@@ -99,6 +101,11 @@ const AdminSettingsRoute = AdminSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSignupLinkRoute = AdminSignupLinkRouteImport.update({
+  id: '/signup-link',
+  path: '/signup-link',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminSubscriptionRoute = AdminSubscriptionRouteImport.update({
   id: '/subscription',
   path: '/subscription',
@@ -133,6 +140,11 @@ const AppTransferRoute = AppTransferRouteImport.update({
   id: '/transfer',
   path: '/transfer',
   getParentRoute: () => AppRoute,
+} as any)
+const JoinSlugRoute = JoinSlugRouteImport.update({
+  id: '/join/$slug',
+  path: '/join/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ResellerIndexRoute = ResellerIndexRouteImport.update({
   id: '/',
@@ -197,12 +209,14 @@ export interface FileRoutesByFullPath {
   '/admin/resellers': typeof AdminResellersRoute
   '/admin/rewards': typeof AdminRewardsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/signup-link': typeof AdminSignupLinkRoute
   '/admin/subscription': typeof AdminSubscriptionRoute
   '/admin/vouchers': typeof AdminVouchersRoute
   '/app/history': typeof AppHistoryRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
   '/app/transfer': typeof AppTransferRoute
+  '/join/$slug': typeof JoinSlugRoute
   '/reseller/customers': typeof ResellerCustomersRoute
   '/reseller/redemptions': typeof ResellerRedemptionsRoute
   '/reseller/reports': typeof ResellerReportsRoute
@@ -224,12 +238,14 @@ export interface FileRoutesByTo {
   '/admin/resellers': typeof AdminResellersRoute
   '/admin/rewards': typeof AdminRewardsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/signup-link': typeof AdminSignupLinkRoute
   '/admin/subscription': typeof AdminSubscriptionRoute
   '/admin/vouchers': typeof AdminVouchersRoute
   '/app/history': typeof AppHistoryRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
   '/app/transfer': typeof AppTransferRoute
+  '/join/$slug': typeof JoinSlugRoute
   '/reseller/customers': typeof ResellerCustomersRoute
   '/reseller/redemptions': typeof ResellerRedemptionsRoute
   '/reseller/reports': typeof ResellerReportsRoute
@@ -256,12 +272,14 @@ export interface FileRoutesById {
   '/admin/resellers': typeof AdminResellersRoute
   '/admin/rewards': typeof AdminRewardsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/signup-link': typeof AdminSignupLinkRoute
   '/admin/subscription': typeof AdminSubscriptionRoute
   '/admin/vouchers': typeof AdminVouchersRoute
   '/app/history': typeof AppHistoryRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
   '/app/transfer': typeof AppTransferRoute
+  '/join/$slug': typeof JoinSlugRoute
   '/reseller/customers': typeof ResellerCustomersRoute
   '/reseller/redemptions': typeof ResellerRedemptionsRoute
   '/reseller/reports': typeof ResellerReportsRoute
@@ -289,12 +307,14 @@ export interface FileRouteTypes {
     | '/admin/resellers'
     | '/admin/rewards'
     | '/admin/settings'
+    | '/admin/signup-link'
     | '/admin/subscription'
     | '/admin/vouchers'
     | '/app/history'
     | '/app/rewards'
     | '/app/shop'
     | '/app/transfer'
+    | '/join/$slug'
     | '/reseller/customers'
     | '/reseller/redemptions'
     | '/reseller/reports'
@@ -316,12 +336,14 @@ export interface FileRouteTypes {
     | '/admin/resellers'
     | '/admin/rewards'
     | '/admin/settings'
+    | '/admin/signup-link'
     | '/admin/subscription'
     | '/admin/vouchers'
     | '/app/history'
     | '/app/rewards'
     | '/app/shop'
     | '/app/transfer'
+    | '/join/$slug'
     | '/reseller/customers'
     | '/reseller/redemptions'
     | '/reseller/reports'
@@ -347,12 +369,14 @@ export interface FileRouteTypes {
     | '/admin/resellers'
     | '/admin/rewards'
     | '/admin/settings'
+    | '/admin/signup-link'
     | '/admin/subscription'
     | '/admin/vouchers'
     | '/app/history'
     | '/app/rewards'
     | '/app/shop'
     | '/app/transfer'
+    | '/join/$slug'
     | '/reseller/customers'
     | '/reseller/redemptions'
     | '/reseller/reports'
@@ -373,6 +397,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   ResellerRoute: typeof ResellerRouteWithChildren
   SuperRoute: typeof SuperRouteWithChildren
+  JoinSlugRoute: typeof JoinSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -461,6 +486,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSettingsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/signup-link': {
+      id: '/admin/signup-link'
+      path: '/signup-link'
+      fullPath: '/admin/signup-link'
+      preLoaderRoute: typeof AdminSignupLinkRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/subscription': {
       id: '/admin/subscription'
       path: '/subscription'
@@ -509,6 +541,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/transfer'
       preLoaderRoute: typeof AppTransferRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/join/$slug': {
+      id: '/join/$slug'
+      path: '/join/$slug'
+      fullPath: '/join/$slug'
+      preLoaderRoute: typeof JoinSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/reseller/': {
       id: '/reseller/'
@@ -590,6 +629,7 @@ interface AdminRouteChildren {
   AdminResellersRoute: typeof AdminResellersRoute
   AdminRewardsRoute: typeof AdminRewardsRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminSignupLinkRoute: typeof AdminSignupLinkRoute
   AdminSubscriptionRoute: typeof AdminSubscriptionRoute
   AdminVouchersRoute: typeof AdminVouchersRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -602,6 +642,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminResellersRoute: AdminResellersRoute,
   AdminRewardsRoute: AdminRewardsRoute,
   AdminSettingsRoute: AdminSettingsRoute,
+  AdminSignupLinkRoute: AdminSignupLinkRoute,
   AdminSubscriptionRoute: AdminSubscriptionRoute,
   AdminVouchersRoute: AdminVouchersRoute,
   AdminIndexRoute: AdminIndexRoute,
@@ -671,17 +712,8 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   ResellerRoute: ResellerRouteWithChildren,
   SuperRoute: SuperRouteWithChildren,
+  JoinSlugRoute: JoinSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
