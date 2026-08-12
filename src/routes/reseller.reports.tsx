@@ -85,8 +85,15 @@ function ResellerReports() {
     [credits],
   );
   const loadTotal = customerLoads.reduce((s, c) => s + c.amount, 0);
-  // Subresellers never earn commission — their entire earning is the voucher discount margin.
+  // Subresellers get no bonus on credit releases, but they do earn per-purchase
+  // credit-back on their customers' voucher purchases, just like resellers.
   const isSubreseller = account?.role === "subreseller";
+  const creditBack = useMemo(
+    () => commissionEntries.filter((c) => c.entry_kind === "sale_commission"),
+    [commissionEntries],
+  );
+  const creditBackTotal = creditBack.reduce((s, c) => s + c.amount, 0);
+
 
   const exportCsv = () => {
     const csv = toCsv(
