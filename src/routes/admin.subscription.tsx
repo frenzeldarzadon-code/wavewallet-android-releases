@@ -291,6 +291,19 @@ function AdminSubscription() {
                 read-only until the platform marks the subscription active. No tenant data is deleted
                 on expiry.
               </p>
+              {facebookUrl ? (
+                <div className="rounded-lg bg-brand-soft px-3 py-3 text-xs">
+                  <p className="mb-2 text-accent-foreground">
+                    Payment sent? Message us with your reference number so we can confirm it faster.
+                  </p>
+                  <Button asChild size="sm" variant="outline" className="w-full">
+                    <a href={facebookUrl} target="_blank" rel="noreferrer noopener">
+                      <Facebook className="size-4" /> Contact us on Facebook
+                      {facebookName ? ` · ${facebookName}` : ""}
+                    </a>
+                  </Button>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         </div>
