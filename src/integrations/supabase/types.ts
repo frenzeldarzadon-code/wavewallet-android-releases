@@ -149,6 +149,7 @@ export type Database = {
           id: string
           reason: string
           reference: string | null
+          tx_id: string | null
           user_id: string
         }
         Insert: {
@@ -162,6 +163,7 @@ export type Database = {
           id?: string
           reason: string
           reference?: string | null
+          tx_id?: string | null
           user_id: string
         }
         Update: {
@@ -175,6 +177,7 @@ export type Database = {
           id?: string
           reason?: string
           reference?: string | null
+          tx_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -310,6 +313,7 @@ export type Database = {
           id: string
           reason: string
           reference: string | null
+          tx_id: string | null
           user_id: string
         }
         Insert: {
@@ -323,6 +327,7 @@ export type Database = {
           id?: string
           reason: string
           reference?: string | null
+          tx_id?: string | null
           user_id: string
         }
         Update: {
@@ -336,6 +341,7 @@ export type Database = {
           id?: string
           reason?: string
           reference?: string | null
+          tx_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -444,6 +450,247 @@ export type Database = {
           },
         ]
       }
+      voucher_codes: {
+        Row: {
+          code: string
+          created_at: string
+          ecosystem_id: string
+          id: string
+          import_id: string | null
+          product_id: string
+          sale_id: string | null
+          sold_at: string | null
+          sold_to: string | null
+          status: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          ecosystem_id: string
+          id?: string
+          import_id?: string | null
+          product_id: string
+          sale_id?: string | null
+          sold_at?: string | null
+          sold_to?: string | null
+          status?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          ecosystem_id?: string
+          id?: string
+          import_id?: string | null
+          product_id?: string
+          sale_id?: string | null
+          sold_at?: string | null
+          sold_to?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_codes_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_codes_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_codes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_codes_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voucher_imports: {
+        Row: {
+          actor_id: string | null
+          actor_name: string
+          created_at: string
+          duplicate_count: number
+          ecosystem_id: string
+          id: string
+          imported_count: number
+          invalid_count: number
+          product_id: string
+          source: string
+          total_rows: number
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_name?: string
+          created_at?: string
+          duplicate_count?: number
+          ecosystem_id: string
+          id?: string
+          imported_count?: number
+          invalid_count?: number
+          product_id: string
+          source?: string
+          total_rows?: number
+        }
+        Update: {
+          actor_id?: string | null
+          actor_name?: string
+          created_at?: string
+          duplicate_count?: number
+          ecosystem_id?: string
+          id?: string
+          imported_count?: number
+          invalid_count?: number
+          product_id?: string
+          source?: string
+          total_rows?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_imports_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_imports_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voucher_products: {
+        Row: {
+          active: boolean
+          archived: boolean
+          created_at: string
+          credit_price: number
+          description: string
+          ecosystem_id: string
+          id: string
+          name: string
+          points_price: number | null
+          promo_note: string | null
+          promo_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          archived?: boolean
+          created_at?: string
+          credit_price?: number
+          description?: string
+          ecosystem_id: string
+          id?: string
+          name: string
+          points_price?: number | null
+          promo_note?: string | null
+          promo_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          archived?: boolean
+          created_at?: string
+          credit_price?: number
+          description?: string
+          ecosystem_id?: string
+          id?: string
+          name?: string
+          points_price?: number | null
+          promo_note?: string | null
+          promo_price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_products_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voucher_sales: {
+        Row: {
+          buyer_id: string
+          buyer_role: Database["public"]["Enums"]["app_role"]
+          created_at: string
+          discount_percent: number
+          ecosystem_id: string
+          id: string
+          list_price: number
+          payment_method: string
+          product_id: string
+          product_name: string
+          reseller_id: string | null
+          sale_price: number
+          tx_id: string
+        }
+        Insert: {
+          buyer_id: string
+          buyer_role: Database["public"]["Enums"]["app_role"]
+          created_at?: string
+          discount_percent?: number
+          ecosystem_id: string
+          id?: string
+          list_price: number
+          payment_method?: string
+          product_id: string
+          product_name: string
+          reseller_id?: string | null
+          sale_price: number
+          tx_id: string
+        }
+        Update: {
+          buyer_id?: string
+          buyer_role?: Database["public"]["Enums"]["app_role"]
+          created_at?: string
+          discount_percent?: number
+          ecosystem_id?: string
+          id?: string
+          list_price?: number
+          payment_method?: string
+          product_id?: string
+          product_name?: string
+          reseller_id?: string | null
+          sale_price?: number
+          tx_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_sales_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_sales_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       ecosystem_memberships: {
@@ -470,6 +717,24 @@ export type Database = {
       }
     }
     Functions: {
+      admin_adjust_credits: {
+        Args: {
+          _amount: number
+          _reason: string
+          _reference?: string
+          _user_id: string
+        }
+        Returns: string
+      }
+      admin_product_inventory: {
+        Args: { _ecosystem_id: string }
+        Returns: {
+          product_id: string
+          sold: number
+          total: number
+          unused: number
+        }[]
+      }
       create_ecosystem: {
         Args: {
           _contact_email?: string
@@ -539,6 +804,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      import_voucher_codes: {
+        Args: { _codes: string[]; _product_id: string; _source?: string }
+        Returns: {
+          batch_id: string
+          duplicate_count: number
+          imported_count: number
+          invalid_count: number
+        }[]
+      }
       invite_admin: {
         Args: {
           _ecosystem_id: string
@@ -573,6 +847,28 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      list_shop_products: {
+        Args: never
+        Returns: {
+          available: number
+          credit_price: number
+          description: string
+          id: string
+          name: string
+          points_price: number
+          promo_note: string
+          promo_price: number
+        }[]
+      }
+      lookup_transfer_recipient: {
+        Args: { _query: string }
+        Returns: {
+          full_name: string
+          id: string
+          masked_email: string
+          phone: string
+        }[]
+      }
       my_operational_status: {
         Args: never
         Returns: {
@@ -583,6 +879,7 @@ export type Database = {
           subscription_state: Database["public"]["Enums"]["subscription_state"]
         }[]
       }
+      new_tx_id: { Args: never; Returns: string }
       platform_overview: {
         Args: never
         Returns: {
@@ -612,8 +909,22 @@ export type Database = {
         Args: { _discount: number; _user_id: string }
         Returns: undefined
       }
+      purchase_voucher: {
+        Args: { _product_id: string }
+        Returns: {
+          code: string
+          product_name: string
+          sale_id: string
+          sale_price: number
+          tx_id: string
+        }[]
+      }
       regenerate_signup_token: {
         Args: { _ecosystem_id: string }
+        Returns: string
+      }
+      reseller_load_credits: {
+        Args: { _amount: number; _customer_id: string; _reference?: string }
         Returns: string
       }
       review_subscription: {
@@ -642,6 +953,10 @@ export type Database = {
         Returns: undefined
       }
       subscription_ok: { Args: { _ecosystem_id: string }; Returns: boolean }
+      transfer_credits: {
+        Args: { _amount: number; _note?: string; _recipient_id: string }
+        Returns: string
+      }
       update_ecosystem: {
         Args: {
           _contact_email?: string

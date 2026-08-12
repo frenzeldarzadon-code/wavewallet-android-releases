@@ -7,6 +7,7 @@ import {
   Link2,
   Package,
   Settings,
+  Wallet,
   Ticket,
   Users,
   UserSquare2,
@@ -22,6 +23,7 @@ const nav: NavItem[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { to: "/admin/products", label: "Voucher products", icon: Package },
   { to: "/admin/vouchers", label: "Code inventory", icon: Ticket },
+  { to: "/admin/wallets", label: "Wallets", icon: Wallet },
   { to: "/admin/rewards", label: "Rewards", icon: Gift },
   { to: "/admin/resellers", label: "Resellers", icon: Users },
   { to: "/admin/customers", label: "Customers", icon: UserSquare2 },
@@ -36,7 +38,7 @@ const bottomNav: NavItem[] = [
   { to: "/admin", label: "Home", icon: LayoutDashboard },
   { to: "/admin/products", label: "Products", icon: Package },
   { to: "/admin/vouchers", label: "Codes", icon: Ticket },
-  { to: "/admin/resellers", label: "Resellers", icon: Users },
+  { to: "/admin/wallets", label: "Wallets", icon: Wallet },
   { to: "/admin/reports", label: "Reports", icon: BarChart3 },
 ];
 
