@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { RedemptionQr } from "@/components/redemption-qr";
+import { RewardImage } from "@/components/reward-image";
 import { useSession } from "@/lib/session";
 import { shortDateTime } from "@/lib/wavewallet";
 import {
@@ -58,7 +59,12 @@ function CustomerRewards() {
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState<RewardListing | null>(null);
   const [busy, setBusy] = useState(false);
-  const [showing, setShowing] = useState<{ code: string; name: string; points: number } | null>(null);
+  const [showing, setShowing] = useState<{
+    code: string;
+    name: string;
+    points: number;
+    imagePath: string | null;
+  } | null>(null);
   const userId = account?.id ?? null;
 
   const load = useCallback(async () => {
@@ -92,7 +98,12 @@ function CustomerRewards() {
     try {
       const res = await requestRedemption(redeeming.id);
       setRedeeming(null);
-      setShowing({ code: res.code, name: res.reward_name, points: res.points_price });
+      setShowing({
+        code: res.code,
+        name: res.reward_name,
+        points: res.points_price,
+        imagePath: redeeming.image_path,
+      });
       toast.success("Redemption created", { description: "Show the QR code to claim your reward." });
       await load();
     } catch (e) {
@@ -138,6 +149,7 @@ function CustomerRewards() {
               return (
                 <Card key={r.id} className="shadow-[var(--shadow-card)]">
                   <CardContent className="space-y-3">
+                    <RewardImage path={r.image_path} alt={r.name} />
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="font-medium">{r.name}</p>
@@ -170,6 +182,9 @@ function CustomerRewards() {
             {mine.map((r) => (
               <Card key={r.id} className="shadow-[var(--shadow-card)]">
                 <CardContent className="space-y-3">
+                  {r.reward_image_path ? (
+                    <RewardImage path={r.reward_image_path} alt={r.reward_name} />
+                  ) : null}
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="truncate font-medium">{r.reward_name}</p>
@@ -187,7 +202,12 @@ function CustomerRewards() {
                           size="sm"
                           variant="outline"
                           onClick={() =>
-                            setShowing({ code: r.code, name: r.reward_name, points: r.points_price })
+                            setShowing({
+                              code: r.code,
+                              name: r.reward_name,
+                              points: r.points_price,
+                              imagePath: r.reward_image_path,
+                            })
                           }
                         >
                           Show QR
@@ -223,6 +243,9 @@ function CustomerRewards() {
               reseller approves the release.
             </DialogDescription>
           </DialogHeader>
+          {redeeming?.image_path ? (
+            <RewardImage path={redeeming.image_path} alt={redeeming.name} />
+          ) : null}
           <DialogFooter>
             <Button variant="outline" onClick={() => setRedeeming(null)}>
               Cancel
@@ -242,6 +265,9 @@ function CustomerRewards() {
               Show this screen at the counter · {showing?.points} points held
             </DialogDescription>
           </DialogHeader>
+          {showing?.imagePath ? (
+            <RewardImage path={showing.imagePath} alt={showing.name} />
+          ) : null}
           {showing ? <RedemptionQr code={showing.code} /> : null}
         </DialogContent>
       </Dialog>
