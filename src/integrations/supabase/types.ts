@@ -279,6 +279,7 @@ export type Database = {
           id: string
           ledger_id: string
           remaining: number
+          seq: number
           source_kind: string
           source_user_id: string | null
           user_id: string
@@ -290,6 +291,7 @@ export type Database = {
           id?: string
           ledger_id: string
           remaining: number
+          seq?: number
           source_kind: string
           source_user_id?: string | null
           user_id: string
@@ -301,6 +303,7 @@ export type Database = {
           id?: string
           ledger_id?: string
           remaining?: number
+          seq?: number
           source_kind?: string
           source_user_id?: string | null
           user_id?: string
