@@ -62,6 +62,8 @@ function AdminSubscription() {
 
   if (!ecosystem) return null;
   const sub = ecosystem.subscription;
+  const notice = stateNotice(sub.status);
+  const detailsMissing = Boolean(settings && !settings.gcash_number.trim());
   const pending = requests.find((r) => r.status === "pending") ?? null;
   const lastRejected = requests.find((r) => r.status === "rejected") ?? null;
   const per = settings ? periodLabel(settings.billing_period) : "month";
@@ -125,6 +127,9 @@ function AdminSubscription() {
                 <dd className="font-medium">{requests[0] ? shortDate(requests[0].created_at) : "—"}</dd>
               </div>
             </dl>
+            {notice ? (
+              <p className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">{notice}</p>
+            ) : null}
             {pending ? (
               <p className="flex items-start gap-2 rounded-lg bg-warning/15 px-3 py-2 text-xs text-warning-foreground">
                 <Clock className="mt-0.5 size-3.5 shrink-0" />
@@ -156,6 +161,13 @@ function AdminSubscription() {
               <Row label="Account name" value={settings?.gcash_account_name || "—"} />
               <Row label="Billing period" value={`Every ${per}`} />
               <Row label="Amount due" value={peso(Number(settings?.plan_price ?? 0))} highlight />
+              {detailsMissing ? (
+                <p className="flex items-start gap-2 rounded-lg bg-warning/15 px-3 py-2 text-xs text-warning-foreground">
+                  <Info className="mt-0.5 size-3.5 shrink-0" />
+                  The platform owner has not published collection details yet. Contact them before
+                  sending any payment.
+                </p>
+              ) : null}
               {settings?.payment_instructions ? (
                 <p className="flex items-start gap-2 rounded-lg bg-brand-soft px-3 py-2 text-xs text-accent-foreground">
                   <Info className="mt-0.5 size-3.5 shrink-0" />
@@ -291,4 +303,22 @@ function Row({ label, value, highlight }: { label: string; value: string; highli
       <span className={highlight ? "font-semibold text-success" : "font-medium"}>{value}</span>
     </div>
   );
+}
+
+/** Plain-language guidance for every subscription state. Data is never deleted. */
+function stateNotice(status: string): string | null {
+  switch (status) {
+    case "expired":
+      return "Your paid period and grace window have ended. Your shop is read-only — all customers, wallets, points and voucher records are safely kept. Submit a renewal below to reactivate.";
+    case "suspended":
+      return "This shop was suspended by the platform. Contact the platform owner — your data remains intact.";
+    case "rejected":
+      return "Your last payment was rejected. Review the reason, then submit a new payment reference below.";
+    case "awaiting_approval":
+      return "Your payment is queued for manual review by the platform owner.";
+    case "pending":
+      return "This shop has not been activated yet. Send the first payment below to start your subscription.";
+    default:
+      return null;
+  }
 }
