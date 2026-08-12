@@ -111,7 +111,7 @@ function AdminReports() {
   }, [load]);
 
   const salesTotals = useMemo(() => summariseSales(sales), [sales]);
-  const creditTotals = useMemo(() => summariseCredits(credits), [credits]);
+  
   const creditFlow = useMemo(() => summariseCreditFlow(credits), [credits]);
   const commissionSplit = useMemo(() => summariseSaleCommissions(commissions), [commissions]);
   const pointTotals = useMemo(() => summarisePoints(points), [points]);
