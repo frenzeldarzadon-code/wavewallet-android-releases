@@ -11,8 +11,12 @@ import { peso, shortDate, statusLabel } from "@/lib/wavewallet";
 import {
   fetchPlatformSettings,
   fetchRequestsForEcosystem,
+  monthsForPayment,
+  monthsLabel,
   periodLabel,
+  projectedExpiry,
   proofUrl,
+  requestMonths,
   requestTone,
   submitSubscriptionRequest,
   uploadProof,
@@ -69,6 +73,12 @@ function AdminSubscription() {
   const lastRejected =
     requests[0]?.status === "rejected" && sub.status !== "active" ? requests[0] : null;
   const per = settings ? periodLabel(settings.billing_period) : "month";
+  // This shop's own monthly rate drives how many months a payment buys.
+  const monthlyRate = Number(sub.priceMonthly || settings?.plan_price || 0);
+  const quote = monthsForPayment(Number(amountPaid), monthlyRate);
+  const newExpiry = quote.ok
+    ? projectedExpiry(sub.status === "active" ? sub.currentPeriodEnd : null, quote.months)
+    : null;
 
   const submit = async () => {
     if (!ecosystemDbId) return;
@@ -162,7 +172,17 @@ function AdminSubscription() {
               <Row label="GCash number" value={settings?.gcash_number || "—"} />
               <Row label="Account name" value={settings?.gcash_account_name || "—"} />
               <Row label="Billing period" value={`Every ${per}`} />
-              <Row label="Amount due" value={peso(Number(settings?.plan_price ?? 0))} highlight />
+              <Row label="Monthly rate (this shop)" value={`${peso(monthlyRate)} / month`} />
+              <Row
+                label="Amount due"
+                value={quote.ok ? `${peso(quote.amount)} · ${monthsLabel(quote.months)}` : peso(monthlyRate)}
+                highlight
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Pay any whole multiple of {peso(monthlyRate)} — {peso(monthlyRate)} = 1 month,{" "}
+                {peso(monthlyRate * 2)} = 2 months, {peso(monthlyRate * 3)} = 3 months. Partial
+                amounts are not accepted.
+              </p>
               {detailsMissing ? (
                 <p className="flex items-start gap-2 rounded-lg bg-warning/15 px-3 py-2 text-xs text-warning-foreground">
                   <Info className="mt-0.5 size-3.5 shrink-0" />
@@ -203,6 +223,15 @@ function AdminSubscription() {
                   onChange={(e) => setAmountPaid(e.target.value)}
                   disabled={Boolean(pending)}
                 />
+                {quote.ok ? (
+                  <p className="text-[11px] text-success">
+                    {monthsLabel(quote.months)} × {peso(quote.rate)} — active until{" "}
+                    {newExpiry ? shortDate(newExpiry.toISOString()) : "—"}
+                    {sub.status === "active" ? " (extends your current period)" : ""}
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-destructive">{quote.error}</p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="proof">Proof of payment (optional)</Label>
@@ -232,7 +261,9 @@ function AdminSubscription() {
               </div>
               <Button
                 className="w-full"
-                disabled={!reference.trim() || saving || !ecosystemDbId || Boolean(pending)}
+                disabled={
+                  !reference.trim() || !quote.ok || saving || !ecosystemDbId || Boolean(pending)
+                }
                 onClick={() => void submit()}
               >
                 <CheckCircle2 className="size-4" />
@@ -279,6 +310,11 @@ function HistoryRow({ request }: { request: SubscriptionRequest }) {
           <p className="text-xs text-muted-foreground">
             Ref {request.payment_reference} · submitted {shortDate(request.created_at)}
             {request.reviewed_at ? ` · reviewed ${shortDate(request.reviewed_at)}` : ""}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {monthsLabel(requestMonths(request))}
+            {request.monthly_rate ? ` × ${peso(Number(request.monthly_rate))}/month` : ""} ·{" "}
+            {peso(Number(request.amount_paid ?? request.amount_due))} paid
           </p>
           {request.period_end ? (
             <p className="text-xs text-success">Active until {shortDate(request.period_end)}</p>
