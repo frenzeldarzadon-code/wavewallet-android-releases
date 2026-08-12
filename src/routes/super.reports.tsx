@@ -88,7 +88,7 @@ function SuperReports() {
   }, [load]);
 
   const salesTotals = useMemo(() => summariseSales(sales), [sales]);
-  const creditTotals = useMemo(() => summariseCredits(credits), [credits]);
+  const creditFlow = useMemo(() => summariseCreditFlow(credits), [credits]);
 
   const perEcosystem = useMemo(() => {
     const map = new Map<string, EcoRow>();
@@ -97,8 +97,8 @@ function SuperReports() {
       gross: 0,
       net: 0,
       discounts: 0,
-      issued: 0,
-      commission: 0,
+      generated: 0,
+      transferred: 0,
       pointsSales: 0,
     });
     for (const s of sales) {
@@ -113,12 +113,18 @@ function SuperReports() {
       }
       map.set(s.ecosystem_id, row);
     }
+    const byEco = new Map<string, CreditReportEntry[]>();
     for (const c of credits) {
-      const ecoId = c.ecosystem_id;
-      if (!ecoId) continue;
+      if (!c.ecosystem_id) continue;
+      const list = byEco.get(c.ecosystem_id);
+      if (list) list.push(c);
+      else byEco.set(c.ecosystem_id, [c]);
+    }
+    for (const [ecoId, entries] of byEco) {
+      const flow = summariseCreditFlow(entries);
       const row = map.get(ecoId) ?? blank();
-      if (c.direction === "credit") row.issued += c.amount;
-      row.commission += Number(c.commission_amount ?? 0);
+      row.generated += flow.generated;
+      row.transferred += flow.transferred;
       map.set(ecoId, row);
     }
     return [...map.entries()].sort((a, b) => b[1].net - a[1].net);
