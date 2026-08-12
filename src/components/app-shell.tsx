@@ -55,7 +55,14 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
 
   return (
     <div className="min-h-screen bg-background">
+      {isDemo ? (
+        <div className="flex items-center justify-center gap-2 bg-warning px-4 py-1.5 text-center text-[11px] font-semibold uppercase tracking-wide text-warning-foreground sm:text-xs">
+          <FlaskConical className="size-3.5 shrink-0" />
+          Demo / preview environment — sample data only, not live customer data
+        </div>
+      ) : null}
       {superMode ? (
+
         <div className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-2 bg-destructive px-4 py-2 text-destructive-foreground">
           <div className="flex items-center gap-2 text-xs font-semibold sm:text-sm">
             <ShieldCheck className="size-4" />
