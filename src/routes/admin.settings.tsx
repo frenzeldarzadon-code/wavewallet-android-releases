@@ -32,6 +32,12 @@ function AdminSettings() {
     contactEmail: ecosystem?.contactEmail ?? "",
   });
   const [saving, setSaving] = useState(false);
+  const [rule, setRule] = useState("10");
+  const [savingRule, setSavingRule] = useState(false);
+  useEffect(() => {
+    if (!ecosystemDbId) return;
+    void fetchPointsRule(ecosystemDbId).then((v) => setRule(String(v)));
+  }, [ecosystemDbId]);
   if (!ecosystem) return null;
 
   const save = async () => {
