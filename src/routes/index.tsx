@@ -163,6 +163,40 @@ function LoginPage() {
             </CardContent>
           </Card>
 
+          {preview ? (
+            <div className="mt-6 rounded-xl border-2 border-dashed border-destructive/50 bg-destructive/5 p-4">
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-destructive">
+                  <FlaskConical className="size-3.5" /> Demo / preview access
+                </p>
+                <StatusBadge tone="danger">Not live data</StatusBadge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                One-tap sign-in to a sandbox shop filled with clearly fake sample data. Only shown in
+                the Lovable preview — never on a published site. Real shops, codes, credits and
+                payments are untouched.
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {DEMO_ROLES.map((d) => (
+                  <Button
+                    key={d.role}
+                    variant="outline"
+                    className="h-auto flex-col items-start gap-0.5 py-2.5 text-left"
+                    disabled={demoBusy !== null || busy}
+                    onClick={() => startDemo(d.role)}
+                  >
+                    <span className="text-sm font-semibold">
+                      {demoBusy === d.role ? "Preparing…" : `Demo ${d.label}`}
+                    </span>
+                    <span className="text-[11px] font-normal text-muted-foreground">{d.hint}</span>
+                  </Button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+
+
           <div className="mt-6 rounded-xl border border-border bg-card p-4">
             <div className="mb-2 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
