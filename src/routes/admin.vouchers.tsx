@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { FileUp, Upload } from "lucide-react";
+import { FileUp, Trash2, Upload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,19 +22,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
-  fetchImports,
+  deleteVoucherBatch,
+  deleteVoucherCode,
   fetchInventoryCounts,
   fetchProducts,
   fetchSales,
   importVoucherCodes,
   parseCodeFile,
   parsePastedCodes,
+  fetchVoucherBatches,
   type ImportResult,
   type InventoryCount,
   type SaleRow,
   type VoucherProductRow,
 } from "@/lib/wallet";
 import { toast } from "sonner";
+import {
+  batchDeleteBlockReason,
+  canDeleteCode,
+  type VoucherBatch,
+} from "@/lib/voucher-inventory";
 
 export const Route = createFileRoute("/admin/vouchers")({
   head: () => ({
@@ -62,15 +69,21 @@ interface CodeRow {
   code: string;
   status: string;
   product_id: string;
+  import_id: string | null;
+  sale_id: string | null;
   sold_at: string | null;
   sold_to: string | null;
 }
+
+type PendingDelete =
+  | { kind: "code"; code: CodeRow; batch: VoucherBatch | undefined }
+  | { kind: "batch"; batch: VoucherBatch };
 
 function AdminVouchers() {
   const { ecosystemDbId } = useSession("admin");
   const [products, setProducts] = useState<VoucherProductRow[]>([]);
   const [counts, setCounts] = useState<Record<string, InventoryCount>>({});
-  const [imports, setImports] = useState<Awaited<ReturnType<typeof fetchImports>>>([]);
+  const [batches, setBatches] = useState<VoucherBatch[]>([]);
   const [sales, setSales] = useState<SaleRow[]>([]);
   const [codes, setCodes] = useState<CodeRow[]>([]);
   const [buyers, setBuyers] = useState<Record<string, string>>({});
@@ -81,6 +94,8 @@ function AdminVouchers() {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<(ImportResult & { productName: string }) | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
@@ -88,18 +103,18 @@ function AdminVouchers() {
       const [p, c, i, s, cd] = await Promise.all([
         fetchProducts(ecosystemDbId),
         fetchInventoryCounts(ecosystemDbId),
-        fetchImports(ecosystemDbId),
+        fetchVoucherBatches(ecosystemDbId),
         fetchSales(ecosystemDbId),
         supabase
           .from("voucher_codes")
-          .select("id, code, status, product_id, sold_at, sold_to")
+          .select("id, code, status, product_id, import_id, sale_id, sold_at, sold_to")
           .eq("ecosystem_id", ecosystemDbId)
           .order("created_at", { ascending: false })
           .limit(200),
       ]);
       setProducts(p);
       setCounts(c);
-      setImports(i);
+      setBatches(i);
       setSales(s);
       setCodes((cd.data ?? []) as CodeRow[]);
       const ids = [...new Set(s.map((x) => x.buyer_id))];
@@ -143,6 +158,26 @@ function AdminVouchers() {
       toast.error("Import failed", { description: (e as Error).message });
     } finally {
       setBusy(false);
+    }
+  };
+
+  const runDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    try {
+      if (pendingDelete.kind === "code") {
+        await deleteVoucherCode(pendingDelete.code.id);
+        toast.success("Voucher code deleted");
+      } else {
+        const n = await deleteVoucherBatch(pendingDelete.batch.batch_id);
+        toast.success(`Batch deleted — ${n} unused code${n === 1 ? "" : "s"} removed`);
+      }
+      setPendingDelete(null);
+      await load();
+    } catch (e) {
+      toast.error("Deletion blocked", { description: (e as Error).message });
+    } finally {
+      setDeleting(false);
     }
   };
 
