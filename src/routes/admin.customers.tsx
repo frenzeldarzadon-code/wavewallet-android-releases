@@ -617,6 +617,15 @@ function AdminCustomers() {
                                 <UserCog className="size-4" /> Parent
                               </Button>
                             ) : null}
+                            {c.role === "reseller" || c.role === "subreseller" ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => void openRestructure(c)}
+                              >
+                                <Repeat className="size-4" /> Change role
+                              </Button>
+                            ) : null}
                             {c.role === "customer" ? (
                               <Button
                                 size="sm"
