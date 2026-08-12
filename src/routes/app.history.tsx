@@ -5,7 +5,15 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
-import { fetchCreditLedger, fetchMyPurchases, type CreditEntry } from "@/lib/wallet";
+import {
+  creditSourceLabel,
+  fetchCreditLedger,
+  fetchCreditLots,
+  fetchMyPurchases,
+  type CreditEntry,
+  type CreditLot,
+} from "@/lib/wallet";
+
 
 export const Route = createFileRoute("/app/history")({
   head: () => ({
