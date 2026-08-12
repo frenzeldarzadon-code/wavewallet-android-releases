@@ -505,6 +505,30 @@ export async function importVoucherCodes(
   return (data as unknown as ImportResult[])[0]!;
 }
 
+export type { VoucherBatch } from "@/lib/voucher-inventory";
+
+/** Upload batches with per-batch eligibility for deletion. */
+export async function fetchVoucherBatches(ecosystemId: string) {
+  const { data, error } = await supabase.rpc("list_voucher_batches", {
+    _ecosystem_id: ecosystemId,
+  });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as import("@/lib/voucher-inventory").VoucherBatch[];
+}
+
+/** Deletes one unused voucher code. Sold/assigned codes are rejected server-side. */
+export async function deleteVoucherCode(codeId: string): Promise<void> {
+  const { error } = await supabase.rpc("delete_voucher_code", { _code_id: codeId });
+  if (error) throw new Error(friendlyWalletError(error.message));
+}
+
+/** Atomically deletes an entire fully-unused upload batch. Returns codes removed. */
+export async function deleteVoucherBatch(batchId: string): Promise<number> {
+  const { data, error } = await supabase.rpc("delete_voucher_batch", { _import_id: batchId });
+  if (error) throw new Error(friendlyWalletError(error.message));
+  return Number(data ?? 0);
+}
+
 export interface PurchaseResult {
   tx_id: string;
   /** One code per purchased voucher. */
