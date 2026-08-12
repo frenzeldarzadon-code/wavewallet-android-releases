@@ -207,7 +207,7 @@ export async function resellerLoadCredits(input: {
     await supabase.rpc("reseller_load_credits", {
       _customer_id: input.customerId,
       _amount: input.amount,
-      _reference: input.reference ?? undefined,
+      ...(input.reference ? { _reference: input.reference } : {}),
     }),
   ) as unknown as string;
 }
