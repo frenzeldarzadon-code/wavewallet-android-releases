@@ -9,7 +9,7 @@ import { writeSession, type ResolvedSession } from "@/lib/session";
 import { platformSettings } from "@/lib/wavewallet";
 
 export interface NavItem {
-  to: LinkProps["to"];
+  to: NonNullable<LinkProps["to"]>;
   label: string;
   icon: ComponentType<{ className?: string }>;
 }

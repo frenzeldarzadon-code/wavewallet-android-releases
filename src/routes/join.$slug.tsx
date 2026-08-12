@@ -1,14 +1,13 @@
 import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
-import { ArrowRight, ShieldCheck, Wallet } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, MailCheck, ShieldCheck, Wallet } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/ui-kit";
-import { writeSession } from "@/lib/session";
-import { PermissionError, ecosystemBySlug, signUpCustomer } from "@/lib/wavewallet-actions";
+import { fetchSignupEcosystem, signUpCustomerAccount, type SignupEcosystem } from "@/lib/auth";
 import { platformSettings } from "@/lib/wavewallet";
 
 export const Route = createFileRoute("/join/$slug")({
@@ -35,9 +34,31 @@ export const Route = createFileRoute("/join/$slug")({
 function JoinPage() {
   const { slug } = useParams({ from: "/join/$slug" });
   const navigate = useNavigate();
-  const eco = ecosystemBySlug(slug);
-  const [form, setForm] = useState({ name: "", email: "", phone: "" });
+  const [eco, setEco] = useState<SignupEcosystem | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
   const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    fetchSignupEcosystem(slug).then((e) => {
+      if (!active) return;
+      setEco(e);
+      setLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center px-4">
+        <p className="text-sm text-muted-foreground">Loading shop…</p>
+      </main>
+    );
+  }
 
   if (!eco) {
     return (
@@ -58,15 +79,37 @@ function JoinPage() {
     );
   }
 
-  const submit = () => {
+  const submit = async () => {
+    if (busy) return;
+    if (!form.name.trim()) {
+      toast.error("Enter your full name.");
+      return;
+    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email.trim())) {
+      toast.error("Enter a valid email address.");
+      return;
+    }
+    if (form.password.length < 8) {
+      toast.error("Use a password with at least 8 characters.");
+      return;
+    }
     setBusy(true);
     try {
-      const account = signUpCustomer({ ecosystemSlug: slug, ...form });
-      writeSession({ accountId: account.id });
-      toast.success(`Welcome to ${eco.name}!`);
-      navigate({ to: "/app" });
+      const { needsEmailConfirmation } = await signUpCustomerAccount({
+        ecosystemSlug: slug,
+        fullName: form.name,
+        email: form.email,
+        phone: form.phone,
+        password: form.password,
+      });
+      if (needsEmailConfirmation) {
+        setSent(true);
+      } else {
+        toast.success(`Welcome to ${eco.name}!`);
+        navigate({ to: "/app" });
+      }
     } catch (e) {
-      toast.error(e instanceof PermissionError ? e.message : "Could not create your account.");
+      toast.error(e instanceof Error ? e.message : "Could not create your account.");
     } finally {
       setBusy(false);
     }
@@ -85,53 +128,82 @@ function JoinPage() {
       </div>
 
       <div className="mx-auto -mt-6 max-w-md px-4 pb-12">
-        <Card className="shadow-[var(--shadow-card)]">
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">You are joining</span>
-              <StatusBadge tone="brand">{eco.name}</StatusBadge>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="name">Full name</Label>
-              <Input
-                id="name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Juan Dela Cruz"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="you@example.com"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="phone">Mobile number</Label>
-              <Input
-                id="phone"
-                inputMode="tel"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="0917 000 0000"
-              />
-            </div>
-            <Button className="w-full" disabled={busy} onClick={submit}>
-              Create customer account
-              <ArrowRight className="size-4" />
-            </Button>
-            <p className="flex items-start gap-2 text-[11px] text-muted-foreground">
-              <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
-              Public signup always creates a customer account inside {eco.name}. Operator and
-              platform accounts are never created here.
-            </p>
-          </CardContent>
-        </Card>
+        {sent ? (
+          <Card className="shadow-[var(--shadow-card)]">
+            <CardContent className="space-y-3 py-8 text-center">
+              <MailCheck className="mx-auto size-8 text-success" />
+              <h2 className="text-lg font-semibold">Check your email</h2>
+              <p className="text-sm text-muted-foreground">
+                We sent a confirmation link to <span className="font-medium">{form.email}</span>.
+                Confirm it, then sign in to open your {eco.name} wallet.
+              </p>
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/">Back to sign in</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="shadow-[var(--shadow-card)]">
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">You are joining</span>
+                <StatusBadge tone="brand">{eco.name}</StatusBadge>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="name">Full name</Label>
+                <Input
+                  id="name"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="Juan Dela Cruz"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  placeholder="you@example.com"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="phone">Mobile number</Label>
+                <Input
+                  id="phone"
+                  inputMode="tel"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  placeholder="0917 000 0000"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete="new-password"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  placeholder="At least 8 characters"
+                  onKeyDown={(e) => e.key === "Enter" && submit()}
+                />
+              </div>
+              <Button className="w-full" disabled={busy} onClick={submit}>
+                {busy ? "Creating account…" : "Create customer account"}
+                <ArrowRight className="size-4" />
+              </Button>
+              <p className="flex items-start gap-2 text-[11px] text-muted-foreground">
+                <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
+                Public signup always creates a customer account inside {eco.name}. The role and
+                ecosystem are assigned by the database — operator and platform accounts are never
+                created here.
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="mt-4 rounded-xl border border-border bg-card p-4">
           <p className="flex items-center gap-2 text-xs font-semibold">

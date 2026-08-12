@@ -1,15 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, LogIn } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/ui-kit";
-import { homeFor, writeSession } from "@/lib/session";
-import { findAccountByLogin } from "@/lib/wavewallet-actions";
-import { accounts, ecosystems, getEcosystem, platformSettings } from "@/lib/wavewallet";
+import { homeFor } from "@/lib/session";
+import { loadAuthContext, signInWithPassword, type SignupEcosystem } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
+import { platformSettings } from "@/lib/wavewallet";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -35,21 +36,48 @@ export const Route = createFileRoute("/")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const [identifier, setIdentifier] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [shops, setShops] = useState<SignupEcosystem[]>([]);
 
-  const signIn = () => {
-    const account = findAccountByLogin(identifier);
-    if (!account) {
-      toast.error("No account found for that email or mobile number.");
+  // Already signed in? Send straight to the right dashboard.
+  useEffect(() => {
+    let active = true;
+    loadAuthContext().then((ctx) => {
+      if (active && ctx) navigate({ to: homeFor(ctx.role), replace: true });
+    });
+    supabase
+      .from("ecosystems")
+      .select("id, name, slug, description")
+      .eq("signup_enabled", true)
+      .then(({ data }) => active && setShops((data as SignupEcosystem[]) ?? []));
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
+
+  const signIn = async () => {
+    if (busy) return;
+    if (!email.trim() || !password) {
+      toast.error("Enter your email and password.");
       return;
     }
-    if (account.status !== "active") {
-      toast.error("This account is suspended. Contact your operator.");
-      return;
+    setBusy(true);
+    try {
+      const ctx = await signInWithPassword(email, password);
+      if (!ctx) throw new Error("We could not load your account profile.");
+      if (ctx.profile.status !== "active") {
+        await supabase.auth.signOut();
+        throw new Error("This account is suspended. Contact your operator.");
+      }
+      // Role is resolved after authentication — never chosen by the visitor.
+      navigate({ to: homeFor(ctx.role) });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not sign you in.");
+    } finally {
+      setBusy(false);
     }
-    writeSession({ accountId: account.id });
-    // Role is resolved after authentication — never chosen by the visitor.
-    navigate({ to: homeFor(account.role) });
   };
 
   return (
@@ -102,11 +130,12 @@ function LoginPage() {
           <Card className="mt-5 shadow-[var(--shadow-card)]">
             <CardContent className="space-y-3">
               <div className="space-y-1.5">
-                <Label htmlFor="email">Email or mobile number</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && signIn()}
                   placeholder="you@example.com"
                   autoComplete="username"
@@ -117,17 +146,19 @@ function LoginPage() {
                 <Input
                   id="password"
                   type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   autoComplete="current-password"
                   onKeyDown={(e) => e.key === "Enter" && signIn()}
                 />
               </div>
-              <Button className="w-full" onClick={signIn}>
+              <Button className="w-full" onClick={signIn} disabled={busy}>
                 <LogIn className="size-4" />
-                Continue
+                {busy ? "Signing in…" : "Continue"}
               </Button>
               <p className="text-center text-[11px] text-muted-foreground">
-                Demo build — passwords are not verified yet.
+                Your role and ecosystem are resolved by the server after sign-in.
               </p>
             </CardContent>
           </Card>
@@ -142,10 +173,10 @@ function LoginPage() {
             <p className="text-xs text-muted-foreground">
               Customer accounts are created through your hotspot operator's signup link
               (<span className="font-mono">/join/your-shop</span>). Ask your operator for theirs, or
-              open a demo shop below.
+              open a shop below.
             </p>
             <div className="mt-3 grid gap-2">
-              {ecosystems.map((e) => (
+              {shops.map((e) => (
                 <a
                   key={e.id}
                   href={`/join/${e.slug}`}
@@ -160,31 +191,6 @@ function LoginPage() {
               ))}
             </div>
           </div>
-
-          <details className="mt-4 rounded-xl border border-border bg-card p-4">
-            <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Demo sign-in emails
-            </summary>
-            <div className="mt-3 grid gap-1.5">
-              {accounts.slice(0, 6).map((a) => (
-                <button
-                  key={a.id}
-                  onClick={() => setIdentifier(a.email)}
-                  className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-colors hover:bg-accent"
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate font-medium">{a.name}</span>
-                    <span className="block truncate font-mono text-[11px] text-muted-foreground">
-                      {a.email}
-                    </span>
-                  </span>
-                  <span className="shrink-0 text-[11px] text-muted-foreground">
-                    {a.ecosystemId ? (getEcosystem(a.ecosystemId)?.name ?? "Ecosystem") : "Platform"}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </details>
         </div>
       </div>
     </div>
