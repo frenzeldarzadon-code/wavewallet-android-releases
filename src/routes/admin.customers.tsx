@@ -218,17 +218,9 @@ function AdminCustomers() {
       toast.error(error.message);
       return;
     }
-    // Credit-LOADING commission is reseller-only; subresellers never earn it.
-    if (promoteTo === "reseller") {
-      const bonus = Number(commission);
-      if (!Number.isNaN(bonus) && bonus > 0) {
-        try {
-          await setResellerCommission(promoting.id, bonus);
-        } catch (err) {
-          toast.error((err as Error).message);
-        }
-      }
-    }
+    // New members start on the shop-wide sales commission default; set a
+    // personal rate afterwards with the "Sales %" action if needed.
+
     toast.success(
       `${promoting.full_name} is now a ${roleLabel(promoteTo).toLowerCase()} — history preserved.`,
     );
