@@ -17,7 +17,14 @@ import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
-import { adminAdjustCredits, type CreditEntry } from "@/lib/wallet";
+import {
+  adminAdjustCredits,
+  commissionBreakdown,
+  fetchCommissionRate,
+  LEDGER_COLUMNS,
+  normalizeEntry,
+  type CreditEntry,
+} from "@/lib/wallet";
 import { adminAdjustPoints } from "@/lib/rewards";
 import { toast } from "sonner";
 
@@ -51,6 +58,7 @@ interface Member {
   role: string;
   balance: number;
   points: number;
+  commission: number;
 }
 
 function AdminWallets() {
@@ -65,6 +73,20 @@ function AdminWallets() {
   const [busy, setBusy] = useState(false);
   const [ledger, setLedger] = useState<CreditEntry[]>([]);
   const [mode, setMode] = useState<"credits" | "points">("credits");
+  // Rate is read from the database; the server recomputes it on submit.
+  const [rate, setRate] = useState(0);
+
+  useEffect(() => {
+    if (!target || mode !== "credits") {
+      setRate(0);
+      return;
+    }
+    let alive = true;
+    void fetchCommissionRate(target.id).then((r) => alive && setRate(r));
+    return () => {
+      alive = false;
+    };
+  }, [target, mode]);
 
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
@@ -73,14 +95,14 @@ function AdminWallets() {
       await Promise.all([
         supabase
           .from("profiles")
-          .select("id, full_name, email, phone, status")
+          .select("id, full_name, email, phone, status, reseller_commission_percent")
           .eq("ecosystem_id", ecosystemDbId),
         supabase.from("user_roles").select("user_id, role").eq("ecosystem_id", ecosystemDbId),
         supabase.from("credit_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
         supabase.from("points_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
         supabase
           .from("credit_ledger")
-          .select("id, direction, amount, balance_after, reason, reference, tx_id, created_at, user_id")
+          .select(LEDGER_COLUMNS)
           .eq("ecosystem_id", ecosystemDbId)
           .order("created_at", { ascending: false })
           .limit(60),
@@ -95,16 +117,13 @@ function AdminWallets() {
           role: roleBy.get(p.id) ?? "customer",
           balance: balBy.get(p.id) ?? 0,
           points: ptsBy.get(p.id) ?? 0,
+          commission: Number(p.reseller_commission_percent ?? 0),
         }))
         .filter((m) => m.role !== "admin" && m.role !== "super_admin")
         .sort((a, b) => a.full_name.localeCompare(b.full_name)),
     );
     setLedger(
-      ((entries ?? []) as unknown as CreditEntry[]).map((e) => ({
-        ...e,
-        amount: Number(e.amount),
-        balance_after: Number(e.balance_after),
-      })),
+      ((entries ?? []) as unknown as CreditEntry[]).map(normalizeEntry),
     );
     setLoading(false);
   }, [ecosystemDbId]);
@@ -204,7 +223,11 @@ function AdminWallets() {
                       {m.email} · {m.phone || "no mobile"}
                     </p>
                     <div className="mt-1 flex gap-1.5">
-                      <StatusBadge tone={m.role === "reseller" ? "brand" : "muted"}>{m.role}</StatusBadge>
+                      <StatusBadge tone={m.role === "reseller" ? "brand" : "muted"}>
+                        {m.role === "reseller" && m.commission > 0
+                          ? `reseller · ${m.commission}% bonus`
+                          : m.role}
+                      </StatusBadge>
                       <StatusBadge tone={m.status === "active" ? "success" : "danger"}>
                         {m.status}
                       </StatusBadge>
@@ -256,6 +279,9 @@ function AdminWallets() {
                     <p className="truncate text-sm font-medium">
                       {nameFor(e.user_id)} · {e.reason}
                     </p>
+                    {commissionBreakdown(e) ? (
+                      <p className="text-[11px] font-medium text-success">{commissionBreakdown(e)}</p>
+                    ) : null}
                     <p className="text-[11px] text-muted-foreground">
                       {shortDateTime(e.created_at)} · {e.tx_id ?? "—"}
                       {e.reference ? ` · ${e.reference}` : ""}
@@ -304,6 +330,18 @@ function AdminWallets() {
                 placeholder="0"
               />
             </div>
+            {mode === "credits" && rate > 0 ? (
+              <div className="rounded-lg border border-success/40 bg-success/10 px-3 py-2 text-xs">
+                <p className="font-medium text-success">
+                  Reseller commission {rate}% applies to this release.
+                </p>
+                <p className="mt-0.5 text-muted-foreground">
+                  Send {peso(Math.max(Number(amount) || 0, 0))} → {target?.full_name} receives{" "}
+                  {peso(Math.max(Number(amount) || 0, 0) * (1 + rate / 100))} ({rate}% bonus). You
+                  release only {peso(Math.max(Number(amount) || 0, 0))}.
+                </p>
+              </div>
+            ) : null}
             <div className="space-y-1.5">
               <Label htmlFor="wreason">Reason</Label>
               <Input

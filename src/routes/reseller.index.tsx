@@ -64,7 +64,7 @@ function ResellerDashboard() {
   return (
     <>
       <PageSection title="Reseller wallet" description={`Closed-loop credits inside ${ecosystem.name}.`}>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="Credit balance" value={peso(balance)} icon={Wallet} tone="positive" />
           <StatCard
             label="Loaded to customers"
