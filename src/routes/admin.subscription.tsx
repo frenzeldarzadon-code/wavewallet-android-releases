@@ -56,9 +56,12 @@ function AdminSubscription() {
     ]);
     setSettings(s);
     setRequests(r);
-    if (s && !amountPaid) setAmountPaid(String(Number(s.plan_price)));
+    if (!amountPaid) {
+      const rate = Number(ecosystem?.subscription.priceMonthly || s?.plan_price || 0);
+      if (rate > 0) setAmountPaid(String(rate));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ecosystemDbId]);
+  }, [ecosystemDbId, ecosystem?.subscription.priceMonthly]);
 
   useEffect(() => {
     void load();

@@ -11,7 +11,9 @@ import type { Database } from "@/integrations/supabase/types";
 import { peso, shortDate, statusLabel } from "@/lib/wavewallet";
 import {
   fetchAllRequests,
+  monthsLabel,
   periodLabel,
+  requestMonths,
   proofUrl,
   requestTone,
   reviewSubscriptionRequest,
@@ -203,8 +205,9 @@ function SuperSubscriptions() {
                   <CardContent className="flex flex-wrap items-start justify-between gap-3 py-4">
                     <div className="space-y-1">
                       <p className="text-sm font-medium">
-                        {ecoName[r.ecosystem_id] ?? "Shop"} · {peso(Number(r.amount_due))} /{" "}
-                        {periodLabel(r.billing_period)}
+                        {ecoName[r.ecosystem_id] ?? "Shop"} · {peso(Number(r.amount_due))} ·{" "}
+                        {monthsLabel(requestMonths(r))}
+                        {r.monthly_rate ? ` @ ${peso(Number(r.monthly_rate))}/month` : ""}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Ref {r.payment_reference} · {r.reviewed_by_name ?? "—"} ·{" "}
@@ -270,6 +273,13 @@ function PendingCard({
             <dt className="text-muted-foreground">Amount paid</dt>
             <dd className="font-medium">
               {request.amount_paid == null ? "—" : peso(Number(request.amount_paid))}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Months covered</dt>
+            <dd className="font-medium">
+              {monthsLabel(requestMonths(request))}
+              {request.monthly_rate ? ` @ ${peso(Number(request.monthly_rate))}/mo` : ""}
             </dd>
           </div>
           <div>
