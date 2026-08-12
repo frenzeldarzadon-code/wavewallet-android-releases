@@ -526,9 +526,9 @@ export async function fetchCreditLots(userId: string, limit = 50): Promise<Credi
 export function creditSourceLabel(lot: Pick<CreditLot, "source_kind" | "source_name">): string {
   switch (lot.source_kind) {
     case "reseller":
-      return `Reseller — ${lot.source_name ?? "reseller"}`;
+      return lot.source_name ? `Reseller — ${lot.source_name}` : "Reseller";
     case "subreseller":
-      return `Subreseller — ${lot.source_name ?? "subreseller"}`;
+      return lot.source_name ? `Subreseller — ${lot.source_name}` : "Subreseller";
     case "admin":
       return "Shop admin (no credit-back)";
     case "self":
