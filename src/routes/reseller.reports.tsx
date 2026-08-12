@@ -161,19 +161,24 @@ function ResellerReports() {
             value={String(salesTotals.count)}
             hint={`${salesTotals.creditCount} credits · ${salesTotals.pointsCount} points`}
           />
-          {isSubreseller ? (
-            <StatCard label="Commission credits" value="—" hint="Subresellers earn discount only" />
-          ) : (
-            <StatCard
-              label="Commission credits"
-              value={peso(creditTotals.commissionBonus)}
-              tone="positive"
-              hint={`${creditTotals.commissionCount} releases`}
-            />
-          )}
+          <StatCard
+            label="Credit-back earned"
+            value={peso(creditBackTotal)}
+            tone="positive"
+            hint={`${creditBack.length} customer purchases`}
+          />
         </div>
         <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard label="Credits received (base)" value={peso(creditTotals.commissionBase)} />
+          {isSubreseller ? (
+            <StatCard label="Release bonus" value="—" hint="Subresellers earn discount only" />
+          ) : (
+            <StatCard
+              label="Release bonus"
+              value={peso(creditTotals.commissionBonus - creditBackTotal)}
+              tone="positive"
+              hint={`${creditTotals.commissionCount} entries`}
+            />
+          )}
           <StatCard
             label="Total credited to me"
             value={peso(creditTotals.commissionBase + creditTotals.commissionBonus)}
@@ -190,19 +195,12 @@ function ResellerReports() {
       </PageSection>
 
       <PageSection
-        title={isSubreseller ? "Commission" : "Commission received"}
-        description={
-          isSubreseller
-            ? "Subresellers do not receive credit commission — your margin comes from the voucher discount."
-            : "Bonus credits granted by your shop admin on qualifying credit releases."
-        }
+        title="Credit-back & commission"
+        description="Credit-back is granted per voucher on every purchase your customers make, at the rate snapshotted at sale time."
       >
-        {isSubreseller || commissionEntries.length === 0 ? (
-          <EmptyState
-            title={
-              isSubreseller ? "Commission does not apply to subresellers" : "No commission credits in this range"
-            }
-          />
+        {commissionEntries.length === 0 ? (
+          <EmptyState title="No credit-back or commission in this range" />
+
         ) : (
           <Card className="shadow-[var(--shadow-card)]">
             <CardContent className="divide-y divide-border px-0 py-0">
