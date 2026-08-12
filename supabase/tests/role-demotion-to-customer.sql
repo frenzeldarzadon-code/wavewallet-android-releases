@@ -21,11 +21,11 @@
 
 DO $$
 DECLARE
-  _eco uuid := '8b4fc15e-f6b3-444b-89f6-51a145fe874f';  -- demo ecosystem
+  _eco uuid := '3a972878-ff7b-4dfb-8a5b-b681b1c81205';  -- demo ecosystem
   _admin uuid; _other_admin uuid;
-  _r1 uuid := '1ef6ecac-af2d-45bb-8bd8-64bff332b812';   -- demo reseller (owns one subreseller)
-  _sub uuid := 'bf10ec7d-2177-4f89-9293-c1307edf2cb4';  -- demo subreseller under _r1
-  _r2 uuid := '04c82e4d-2079-458d-805a-43b9b8b7a484';   -- demo customer, promoted below
+  _r1 uuid := 'cc8f0269-ad9b-422a-b67f-3e8ce6c1786d';   -- demo reseller (owns one subreseller)
+  _sub uuid := '4e13ccab-f4cf-43ea-be98-d393240d912b';  -- demo subreseller under _r1
+  _r2 uuid := 'b729ccda-9fcc-443f-810b-6ac981091225';   -- demo customer, promoted below
   _chk jsonb; _res jsonb;
   _bal numeric; _pts int; _r2_bal numeric; _r2_pts int; _sub_bal numeric; _sub_pts int;
   _n int; _prod uuid; _sale uuid := gen_random_uuid();
