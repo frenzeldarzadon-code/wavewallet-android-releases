@@ -127,7 +127,7 @@ export async function signInWithPassword(email: string, password: string) {
     email: email.trim().toLowerCase(),
     password,
   });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyAuthError(error.message));
   return loadAuthContext();
 }
 
