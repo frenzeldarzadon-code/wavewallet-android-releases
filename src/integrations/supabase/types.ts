@@ -978,6 +978,8 @@ export type Database = {
           decision_reason: string | null
           ecosystem_id: string
           id: string
+          monthly_rate: number | null
+          months_purchased: number | null
           payment_reference: string
           period_end: string | null
           period_start: string | null
@@ -1001,6 +1003,8 @@ export type Database = {
           decision_reason?: string | null
           ecosystem_id: string
           id?: string
+          monthly_rate?: number | null
+          months_purchased?: number | null
           payment_reference: string
           period_end?: string | null
           period_start?: string | null
@@ -1024,6 +1028,8 @@ export type Database = {
           decision_reason?: string | null
           ecosystem_id?: string
           id?: string
+          monthly_rate?: number | null
+          months_purchased?: number | null
           payment_reference?: string
           period_end?: string | null
           period_start?: string | null
@@ -1576,6 +1582,10 @@ export type Database = {
         Args: { _ecosystem_id: string }
         Returns: string
       }
+      ecosystem_monthly_rate: {
+        Args: { _ecosystem_id: string }
+        Returns: number
+      }
       expire_stale_invitations: { Args: never; Returns: undefined }
       expire_stale_subscriptions: { Args: never; Returns: number }
       get_signup_ecosystem: {
@@ -1719,6 +1729,10 @@ export type Database = {
           masked_email: string
           phone: string
         }[]
+      }
+      months_for_payment: {
+        Args: { _amount: number; _rate: number }
+        Returns: number
       }
       my_operational_status: {
         Args: never
@@ -1870,6 +1884,8 @@ export type Database = {
           decision_reason: string | null
           ecosystem_id: string
           id: string
+          monthly_rate: number | null
+          months_purchased: number | null
           payment_reference: string
           period_end: string | null
           period_start: string | null
@@ -2076,6 +2092,8 @@ export type Database = {
           decision_reason: string | null
           ecosystem_id: string
           id: string
+          monthly_rate: number | null
+          months_purchased: number | null
           payment_reference: string
           period_end: string | null
           period_start: string | null
