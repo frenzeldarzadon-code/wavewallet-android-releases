@@ -653,7 +653,93 @@ function SuperAdmins() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!purgeFor} onOpenChange={(o) => !o && closePurge()}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">
+              {purgeStep === "warning" ? "Permanently delete" : "Final confirmation —"}{" "}
+              {purgeFor?.name}
+            </DialogTitle>
+            <DialogDescription>{PURGE_WARNING}</DialogDescription>
+          </DialogHeader>
+
+          {purgeStep === "warning" ? (
+            <div className="space-y-3">
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+                <p className="text-sm font-medium text-destructive">
+                  Everything below is deleted, regardless of transaction or activity history:
+                </p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                  {PURGE_DELETION_ITEMS.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                A platform-level deletion record (who, which shop, when and why) is kept outside
+                this ecosystem so the audit trail survives. Other ecosystems and platform-owner
+                accounts are never touched. This is separate from the 1-year inactivity cleanup —
+                normal retention and reversal rules are unchanged.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="purge-name">
+                  Type <span className="font-mono font-medium">{purgeFor?.name}</span> to confirm
+                </Label>
+                <Input
+                  id="purge-name"
+                  value={purgeTyped}
+                  onChange={(ev) => setPurgeTyped(ev.target.value)}
+                  placeholder={purgeFor?.name ?? ""}
+                  autoComplete="off"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="purge-reason">Reason (required)</Label>
+                <Textarea
+                  id="purge-reason"
+                  value={purgeReason}
+                  onChange={(ev) => setPurgeReason(ev.target.value)}
+                  placeholder="Why is this ecosystem being permanently deleted?"
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={closePurge}>
+              Cancel
+            </Button>
+            {purgeStep === "warning" ? (
+              <Button variant="destructive" onClick={() => setPurgeStep("confirm")}>
+                I understand — continue
+              </Button>
+            ) : (
+              <Button
+                variant="destructive"
+                disabled={
+                  !purgeFor ||
+                  !canSubmitPurge({
+                    step: purgeStep,
+                    ecosystemName: purgeFor.name,
+                    typed: purgeTyped,
+                    reason: purgeReason,
+                    busy: purging,
+                  })
+                }
+                onClick={() => void confirmPurge()}
+              >
+                {purging ? "Deleting…" : "Permanently Delete Ecosystem"}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
+
 
   );
 }
