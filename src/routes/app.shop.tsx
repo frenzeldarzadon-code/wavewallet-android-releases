@@ -67,9 +67,10 @@ export function VoucherShopView({
   const [ratio, setRatio] = useState(10);
   const [loading, setLoading] = useState(true);
   const [buying, setBuying] = useState<{ product: ShopProduct; method: Method } | null>(null);
+  const [qty, setQty] = useState(1);
   const [busy, setBusy] = useState(false);
   const [issued, setIssued] = useState<{
-    code: string;
+    codes: string[];
     tx: string;
     name: string;
     price: string;
@@ -106,6 +107,15 @@ export function VoucherShopView({
 
   const priceFor = (p: ShopProduct) => Math.round(listPrice(p) * (100 - discountPercent)) / 100;
 
+  const openBuy = (product: ShopProduct, method: Method) => {
+    setQty(1);
+    setBuying({ product, method });
+  };
+
+  const maxQty = buying ? Math.min(50, Math.max(1, buying.product.available)) : 1;
+  const unit = buying ? priceFor(buying.product) : 0;
+  const total = Math.round(unit * qty * 100) / 100;
+
   const confirm = async () => {
     if (!buying) return;
     setBusy(true);
@@ -113,18 +123,18 @@ export function VoucherShopView({
       if (buying.method === "points") {
         const res = await purchaseVoucherWithPoints(buying.product.id);
         setIssued({
-          code: res.code,
+          codes: [res.code],
           tx: res.tx_id,
           name: res.product_name,
           price: `${res.points_spent} pts`,
           earned: 0,
         });
       } else {
-        const res = await purchaseVoucher(buying.product.id);
+        const res = await purchaseVoucher(buying.product.id, qty);
         setIssued({
-          code: res.code,
+          codes: res.codes,
           tx: res.tx_id,
-          name: res.product_name,
+          name: `${res.product_name}${res.quantity > 1 ? ` ×${res.quantity}` : ""}`,
           price: peso(res.sale_price),
           earned: Number(res.points_earned ?? 0),
         });
@@ -137,6 +147,7 @@ export function VoucherShopView({
       setBusy(false);
     }
   };
+
 
   return (
     <>
