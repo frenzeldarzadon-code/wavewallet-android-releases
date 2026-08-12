@@ -1440,6 +1440,33 @@ export type Database = {
         }
       }
       current_ecosystem: { Args: { _user_id: string }; Returns: string }
+      earnings_history: {
+        Args: {
+          _ecosystem?: string
+          _from?: string
+          _recipient?: string
+          _to?: string
+        }
+        Returns: {
+          basis_amount: number
+          counterparty_id: string
+          counterparty_name: string
+          earning_amount: number
+          earning_type: string
+          ecosystem_id: string
+          gross_amount: number
+          id: string
+          occurred_at: string
+          product_name: string
+          quantity: number
+          rate_percent: number
+          recipient_id: string
+          recipient_name: string
+          sale_id: string
+          status: string
+          tx_id: string
+        }[]
+      }
       ecosystem_dashboard: {
         Args: { _ecosystem_id: string }
         Returns: {
