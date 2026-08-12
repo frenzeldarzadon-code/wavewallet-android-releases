@@ -503,6 +503,73 @@ function AdminVouchers() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {pendingDelete?.kind === "batch" ? "Delete whole batch?" : "Delete voucher code?"}
+            </DialogTitle>
+            <DialogDescription>
+              This permanently removes unused inventory. Sold codes, sales, balances, commissions,
+              points and audit history are never touched.
+            </DialogDescription>
+          </DialogHeader>
+          {pendingDelete ? (
+            <dl className="space-y-1.5 rounded-xl bg-muted/50 px-3 py-3 text-xs">
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">Codes to delete</dt>
+                <dd className="font-medium">
+                  {pendingDelete.kind === "batch" ? pendingDelete.batch.unused_count : 1}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">Product</dt>
+                <dd className="font-medium">
+                  {pendingDelete.kind === "batch"
+                    ? pendingDelete.batch.product_name || "—"
+                    : products.find((p) => p.id === pendingDelete.code.product_id)?.name ?? "—"}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">Batch ID</dt>
+                <dd className="font-mono">
+                  {pendingDelete.kind === "batch"
+                    ? pendingDelete.batch.batch_id
+                    : pendingDelete.code.import_id ?? "—"}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">Uploaded</dt>
+                <dd>
+                  {pendingDelete.kind === "batch"
+                    ? shortDateTime(pendingDelete.batch.created_at)
+                    : pendingDelete.batch
+                      ? shortDateTime(pendingDelete.batch.created_at)
+                      : "—"}
+                </dd>
+              </div>
+              {pendingDelete.kind === "code" ? (
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">Code</dt>
+                  <dd className="font-mono">{pendingDelete.code.code}</dd>
+                </div>
+              ) : null}
+            </dl>
+          ) : null}
+          <p className="text-xs text-destructive">
+            Deletion is permanent and cannot be undone.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingDelete(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" disabled={deleting} onClick={() => void runDelete()}>
+              {deleting ? "Deleting…" : "Delete permanently"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!result} onOpenChange={(o) => !o && setResult(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
