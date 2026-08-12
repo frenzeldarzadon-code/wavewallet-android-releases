@@ -192,9 +192,21 @@ function JoinPage() {
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   placeholder="At least 8 characters"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="confirm">Confirm password</Label>
+                <Input
+                  id="confirm"
+                  type="password"
+                  autoComplete="new-password"
+                  value={form.confirm}
+                  onChange={(e) => setForm({ ...form, confirm: e.target.value })}
+                  placeholder="Repeat your password"
                   onKeyDown={(e) => e.key === "Enter" && submit()}
                 />
               </div>
+
               <Button className="w-full" disabled={busy} onClick={submit}>
                 {busy ? "Creating account…" : "Create customer account"}
                 <ArrowRight className="size-4" />
