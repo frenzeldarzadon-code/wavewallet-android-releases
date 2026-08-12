@@ -248,7 +248,7 @@ function AdminVouchers() {
         <TabsList className="mb-3 flex w-full flex-wrap justify-start">
           <TabsTrigger value="codes">Codes</TabsTrigger>
           <TabsTrigger value="sold">Sold history</TabsTrigger>
-          <TabsTrigger value="imports">Import history</TabsTrigger>
+          <TabsTrigger value="imports">Upload batches</TabsTrigger>
         </TabsList>
 
         <TabsContent value="codes">
@@ -262,8 +262,10 @@ function AdminVouchers() {
                     <TableRow>
                       <TableHead>Code</TableHead>
                       <TableHead>Product</TableHead>
+                      <TableHead>Batch</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Sold at</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -273,6 +275,9 @@ function AdminVouchers() {
                         <TableCell className="text-xs">
                           {products.find((p) => p.id === c.product_id)?.name ?? "—"}
                         </TableCell>
+                        <TableCell className="font-mono text-[11px] text-muted-foreground">
+                          {c.import_id ? c.import_id.slice(0, 8) : "—"}
+                        </TableCell>
                         <TableCell>
                           <StatusBadge tone={c.status === "sold" ? "danger" : "success"}>
                             {c.status === "sold" ? "Sold" : "Available"}
@@ -281,6 +286,26 @@ function AdminVouchers() {
                         <TableCell className="text-xs text-muted-foreground">
                           {c.sold_at ? shortDateTime(c.sold_at) : "—"}
                         </TableCell>
+                        <TableCell className="text-right">
+                          {canDeleteCode(c) ? (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-destructive"
+                              onClick={() =>
+                                setPendingDelete({
+                                  kind: "code",
+                                  code: c,
+                                  batch: batches.find((b) => b.batch_id === c.import_id),
+                                })
+                              }
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          ) : (
+                            <span className="text-[11px] text-muted-foreground">Locked</span>
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -288,6 +313,7 @@ function AdminVouchers() {
               </CardContent>
             </Card>
           )}
+
         </TabsContent>
 
         <TabsContent value="sold">
