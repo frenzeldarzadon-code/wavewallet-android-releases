@@ -1356,6 +1356,7 @@ export type Database = {
           unused: number
         }[]
       }
+      assert_actor_active: { Args: never; Returns: undefined }
       can_load_credits: {
         Args: { _actor: string; _target: string }
         Returns: boolean
