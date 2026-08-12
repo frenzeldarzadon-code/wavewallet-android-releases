@@ -131,7 +131,7 @@ function AdminResellers() {
 
       <PageSection
         title="Reseller network"
-        description="Wholesale discounts and sales commissions are captured at transaction time. Credit transfers move exact amounts.
+        description="Wholesale discounts and sales commissions are captured at transaction time. Credit transfers move exact amounts."
         action={
           <Button size="sm" asChild>
             <Link to="/admin/customers">
