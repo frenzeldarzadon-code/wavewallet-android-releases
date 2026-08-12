@@ -58,9 +58,11 @@ function ResellerDashboard() {
   const isSubreseller = account.role === "subreseller";
   const loadsOut = entries.filter((e) => e.reason === "Credit load to customer");
   const topUps = entries.filter((e) => e.direction === "credit");
-  const loadingCommission = entries
-    .filter((e) => e.direction === "credit" && e.entry_kind !== "sale_commission")
-    .reduce((s, e) => s + Number(e.commission_amount ?? 0), 0);
+  // Upline commission: paid to a reseller when their subreseller's credits fund
+  // a sale, or when the subreseller buys for themselves.
+  const uplineCommission = entries
+    .filter((e) => e.direction === "credit" && e.entry_kind === "upline_commission")
+    .reduce((s, e) => s + Number(e.amount ?? 0), 0);
   const saleCreditBack = entries
     .filter((e) => e.direction === "credit" && e.entry_kind === "sale_commission")
     .reduce((s, e) => s + Number(e.amount ?? 0), 0);
@@ -84,24 +86,25 @@ function ResellerDashboard() {
             icon={ArrowDownLeft}
           />
           <StatCard
-            label="Sale credit-back"
+            label="Sales cashback"
             value={peso(saleCreditBack)}
             hint="Earned when customers spend the credits you funded"
             tone="positive"
           />
           <StatCard
-            label="Credit-loading bonus"
-            value={peso(loadingCommission)}
+            label="Upline commission"
+            value={peso(uplineCommission)}
             hint={
               isSubreseller
-                ? "Resellers only — subresellers earn sale credit-back instead"
-                : "Extra credits granted on admin releases"
+                ? "Resellers only — this goes to your parent reseller"
+                : "Earned on your subresellers' sales and purchases"
             }
             tone={isSubreseller ? "neutral" : "positive"}
           />
         </div>
         <p className="mt-2 text-[11px] text-muted-foreground">
-          Your discount ({account.discountPercent ?? 0}%) is applied automatically at voucher checkout.
+          Your wholesale discount ({account.discountPercent ?? 0}%) is applied automatically at voucher
+          checkout. Credit transfers move exact amounts — no commission is added or deducted.
         </p>
       </PageSection>
 
