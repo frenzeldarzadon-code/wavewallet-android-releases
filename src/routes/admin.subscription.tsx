@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, Clock, Info, Upload, X } from "lucide-react";
+import { CheckCircle2, Clock, Facebook, Info, Upload, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageSection, StatusBadge, subscriptionTone } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
+import { facebookLabel, isFacebookUrl } from "@/lib/facebook";
 import { peso, shortDate, statusLabel } from "@/lib/wavewallet";
 import {
   fetchPlatformSettings,
@@ -71,6 +72,10 @@ function AdminSubscription() {
   if (!ecosystem) return null;
   const sub = ecosystem.subscription;
   const notice = stateNotice(sub.status);
+  // Configured per ecosystem by the platform owner; hidden entirely when unset.
+  const rawFacebook = (ecosystem.facebookPageUrl ?? "").trim();
+  const facebookUrl = isFacebookUrl(rawFacebook) ? rawFacebook : "";
+  const facebookName = facebookUrl ? facebookLabel(facebookUrl, ecosystem.facebookPageName) : "";
   const detailsMissing = Boolean(settings && !settings.gcash_number.trim());
   const pending = requests.find((r) => r.status === "pending") ?? null;
   // Only surface a rejection while it is still the outcome the operator must act on.
@@ -147,11 +152,21 @@ function AdminSubscription() {
               <p className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">{notice}</p>
             ) : null}
             {pending ? (
-              <p className="flex items-start gap-2 rounded-lg bg-warning/15 px-3 py-2 text-xs text-warning-foreground">
-                <Clock className="mt-0.5 size-3.5 shrink-0" />
-                Payment {pending.payment_reference} is awaiting approval. Restricted operator tools stay
-                locked until it is approved.
-              </p>
+              <div className="space-y-2 rounded-lg bg-warning/15 px-3 py-2 text-xs text-warning-foreground">
+                <p className="flex items-start gap-2">
+                  <Clock className="mt-0.5 size-3.5 shrink-0" />
+                  Payment {pending.payment_reference} is awaiting approval. Restricted operator tools
+                  stay locked until it is approved.
+                </p>
+                {facebookUrl ? (
+                  <Button asChild size="sm" variant="outline">
+                    <a href={facebookUrl} target="_blank" rel="noreferrer noopener">
+                      <Facebook className="size-4" /> Contact us on Facebook
+                      {facebookName ? ` · ${facebookName}` : ""}
+                    </a>
+                  </Button>
+                ) : null}
+              </div>
             ) : null}
             {!pending && lastRejected?.decision_reason ? (
               <p className="flex items-start gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
@@ -291,6 +306,19 @@ function AdminSubscription() {
                 read-only until the platform marks the subscription active. No tenant data is deleted
                 on expiry.
               </p>
+              {facebookUrl ? (
+                <div className="rounded-lg bg-brand-soft px-3 py-3 text-xs">
+                  <p className="mb-2 text-accent-foreground">
+                    Payment sent? Message us with your reference number so we can confirm it faster.
+                  </p>
+                  <Button asChild size="sm" variant="outline" className="w-full">
+                    <a href={facebookUrl} target="_blank" rel="noreferrer noopener">
+                      <Facebook className="size-4" /> Contact us on Facebook
+                      {facebookName ? ` · ${facebookName}` : ""}
+                    </a>
+                  </Button>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         </div>

@@ -451,6 +451,8 @@ export type Database = {
           default_subreseller_sale_commission_percent: number
           default_upline_commission_percent: number
           description: string | null
+          facebook_page_name: string | null
+          facebook_page_url: string | null
           frozen_at: string | null
           frozen_by: string | null
           frozen_reason: string | null
@@ -489,6 +491,8 @@ export type Database = {
           default_subreseller_sale_commission_percent?: number
           default_upline_commission_percent?: number
           description?: string | null
+          facebook_page_name?: string | null
+          facebook_page_url?: string | null
           frozen_at?: string | null
           frozen_by?: string | null
           frozen_reason?: string | null
@@ -527,6 +531,8 @@ export type Database = {
           default_subreseller_sale_commission_percent?: number
           default_upline_commission_percent?: number
           description?: string | null
+          facebook_page_name?: string | null
+          facebook_page_url?: string | null
           frozen_at?: string | null
           frozen_by?: string | null
           frozen_reason?: string | null
@@ -1676,6 +1682,8 @@ export type Database = {
           default_subreseller_sale_commission_percent: number
           default_upline_commission_percent: number
           description: string | null
+          facebook_page_name: string | null
+          facebook_page_url: string | null
           frozen_at: string | null
           frozen_by: string | null
           frozen_reason: string | null
@@ -2167,6 +2175,55 @@ export type Database = {
         Args: { _ecosystem_id: string; _percent: number }
         Returns: number
       }
+      set_ecosystem_facebook: {
+        Args: { _ecosystem_id: string; _page_name?: string; _url?: string }
+        Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          credits_per_point: number
+          current_period_end: string | null
+          default_commission_percent: number
+          default_reseller_discount_percent: number
+          default_sale_commission_percent: number
+          default_subreseller_discount_percent: number
+          default_subreseller_sale_commission_percent: number
+          default_upline_commission_percent: number
+          description: string | null
+          facebook_page_name: string | null
+          facebook_page_url: string | null
+          frozen_at: string | null
+          frozen_by: string | null
+          frozen_reason: string | null
+          grace_period_days: number
+          id: string
+          last_activity_at: string | null
+          name: string
+          operations_frozen: boolean
+          payment_reference: string | null
+          plan_name: string
+          plan_price: number
+          points_rule_updated_at: string
+          points_rule_version: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          signup_enabled: boolean
+          signup_token: string
+          slug: string
+          submitted_at: string | null
+          subscription_state: Database["public"]["Enums"]["subscription_state"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ecosystems"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       set_ecosystem_freeze: {
         Args: { _ecosystem_id: string; _frozen: boolean; _reason?: string }
         Returns: {
@@ -2185,6 +2242,8 @@ export type Database = {
           default_subreseller_sale_commission_percent: number
           default_upline_commission_percent: number
           description: string | null
+          facebook_page_name: string | null
+          facebook_page_url: string | null
           frozen_at: string | null
           frozen_by: string | null
           frozen_reason: string | null
@@ -2239,6 +2298,8 @@ export type Database = {
           default_subreseller_sale_commission_percent: number
           default_upline_commission_percent: number
           description: string | null
+          facebook_page_name: string | null
+          facebook_page_url: string | null
           frozen_at: string | null
           frozen_by: string | null
           frozen_reason: string | null
@@ -2377,6 +2438,8 @@ export type Database = {
           default_subreseller_sale_commission_percent: number
           default_upline_commission_percent: number
           description: string | null
+          facebook_page_name: string | null
+          facebook_page_url: string | null
           frozen_at: string | null
           frozen_by: string | null
           frozen_reason: string | null
@@ -2429,6 +2492,8 @@ export type Database = {
           default_subreseller_sale_commission_percent: number
           default_upline_commission_percent: number
           description: string | null
+          facebook_page_name: string | null
+          facebook_page_url: string | null
           frozen_at: string | null
           frozen_by: string | null
           frozen_reason: string | null

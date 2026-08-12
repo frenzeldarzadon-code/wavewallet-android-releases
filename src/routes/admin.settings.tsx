@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PageSection } from "@/components/ui-kit";
 import { RetentionPolicyCard } from "@/components/retention-policy-card";
 import { useSession } from "@/lib/session";
+import { facebookLabel, isFacebookUrl } from "@/lib/facebook";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -93,6 +94,11 @@ function AdminSettings() {
   };
 
   if (!ecosystem) return null;
+
+  // Read-only here: the platform owner configures it per ecosystem.
+  const rawFacebook = (ecosystem.facebookPageUrl ?? "").trim();
+  const facebookUrl = isFacebookUrl(rawFacebook) ? rawFacebook : "";
+
 
   const save = async () => {
     if (!ecosystemDbId) return;
@@ -177,26 +183,35 @@ function AdminSettings() {
         </Card>
       </PageSection>
 
-      <PageSection title="Facebook support" description="Shown in help areas for your customers and resellers.">
+      <PageSection
+        title="Facebook support"
+        description="Set by the platform owner for this shop. It appears on your payment screen so you can message support after paying."
+      >
         <Card className="shadow-[var(--shadow-card)]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
               <Facebook className="size-4 text-primary" /> Support page
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="fbname">Page name</Label>
-              <Input id="fbname" defaultValue={ecosystem.facebookPageName} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="fburl">Page URL</Label>
-              <Input id="fburl" defaultValue={ecosystem.facebookPageUrl} />
-            </div>
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="fbmsg">Support message</Label>
-              <Textarea id="fbmsg" rows={2} defaultValue={ecosystem.facebookSupportMessage} />
-            </div>
+          <CardContent className="space-y-2">
+            {facebookUrl ? (
+              <>
+                <p className="text-sm font-medium">{facebookLabel(facebookUrl, ecosystem.facebookPageName)}</p>
+                <a
+                  href={facebookUrl}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="break-all text-xs text-primary underline"
+                >
+                  {facebookUrl}
+                </a>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No Facebook page has been configured for this shop yet. Ask the platform owner to add
+                one.
+              </p>
+            )}
           </CardContent>
         </Card>
       </PageSection>

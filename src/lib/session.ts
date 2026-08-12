@@ -94,6 +94,9 @@ function toEcosystem(row: DbEcosystem): Ecosystem {
     description: row.description ?? base.description,
     contactEmail: row.contact_email ?? base.contactEmail,
     contactPhone: row.contact_phone ?? base.contactPhone,
+    // Configured by the platform owner per ecosystem — never hard-coded.
+    facebookPageUrl: row.facebook_page_url ?? "",
+    facebookPageName: row.facebook_page_name ?? "",
     subscription: {
       ...base.subscription,
       planName: row.plan_name,
