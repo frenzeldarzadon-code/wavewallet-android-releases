@@ -449,7 +449,7 @@ function AdminCustomers() {
             <>
               <div className="grid grid-cols-2 gap-3">
                 <StatCard label="Credit balance" value={peso(detail.credits)} tone="positive" />
-                <StatCard label="Points balance" value={`${detail.points} pts`} tone="points" />
+                <StatCard label="Points balance" value={`${detail.points} pts`} tone="brand" />
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge tone={detail.role === "reseller" ? "success" : "muted"}>
