@@ -17,7 +17,40 @@ export interface CreditEntry {
   tx_id: string | null;
   created_at: string;
   user_id: string;
+  /** Base amount before any reseller commission bonus (snapshotted at transaction time). */
+  base_amount?: number | null;
+  /** Commission rate used for this transaction — historical, never rewritten. */
+  commission_percent?: number | null;
+  /** Bonus credits granted on top of the base amount. */
+  commission_amount?: number | null;
 }
+
+export const LEDGER_COLUMNS =
+  "id, direction, amount, balance_after, reason, reference, tx_id, created_at, user_id, base_amount, commission_percent, commission_amount";
+
+/** Normalises the numeric columns coming back from PostgREST. */
+export function normalizeEntry(e: CreditEntry): CreditEntry {
+  return {
+    ...e,
+    amount: Number(e.amount),
+    balance_after: Number(e.balance_after),
+    base_amount: e.base_amount === null || e.base_amount === undefined ? null : Number(e.base_amount),
+    commission_percent:
+      e.commission_percent === null || e.commission_percent === undefined
+        ? null
+        : Number(e.commission_percent),
+    commission_amount:
+      e.commission_amount === null || e.commission_amount === undefined
+        ? null
+        : Number(e.commission_amount),
+  };
+}
+
+/** True when this entry carries a reseller commission bonus. */
+export function hasCommission(e: CreditEntry): boolean {
+  return Number(e.commission_amount ?? 0) > 0;
+}
+
 
 export interface VoucherProductRow {
   id: string;
