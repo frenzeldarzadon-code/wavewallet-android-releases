@@ -90,7 +90,7 @@ export function manualCreditIssue(input: {
   if (input.amount > MANUAL_CREDIT_MAX) {
     return `A single manual grant is limited to ${MANUAL_CREDIT_MAX.toLocaleString()} credits`;
   }
-  if (arguments.length && input.reason !== undefined && (input.reason ?? "").trim().length < 5) {
+  if (input.reason !== undefined && (input.reason ?? "").trim().length < 5) {
     return "Give a reason of at least 5 characters";
   }
   return null;
