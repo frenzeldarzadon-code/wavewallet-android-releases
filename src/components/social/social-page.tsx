@@ -218,15 +218,22 @@ export function SocialPage() {
         promote,
         tierId: promote ? (tier?.id ?? null) : null,
         ...(promote ? { currency: charge.currency } : {}),
+        audience,
       });
+      const deducted =
+        res.charged > 0
+          ? `${res.charged} ${res.currency === "points" ? "points" : "social credits"} deducted.`
+          : "Nothing was deducted.";
       toast.success(promote ? "Promoted post published" : "Posted", {
         description:
-          res.charged > 0
-            ? `${res.charged} ${res.currency === "points" ? "points" : "social credits"} deducted.`
-            : "Nothing was deducted.",
+          audience === "general"
+            ? `${deducted} Sent to ${res.pending_shops} other shop${res.pending_shops === 1 ? "" : "s"} for admin approval.`
+            : deducted,
       });
       setBody("");
       setPromote(false);
+      setAudience("ecosystem");
+
       setTierId("");
       setFile(null);
       setCrop(null);
