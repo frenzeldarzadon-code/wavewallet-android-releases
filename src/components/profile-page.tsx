@@ -1,3 +1,4 @@
+import { useServerFn } from "@tanstack/react-start";
 import { Check, ImagePlus, Loader2, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -22,6 +23,7 @@ import {
   type MyProfile,
 } from "@/lib/profile";
 import { validateImageFile } from "@/lib/image-optimize";
+import { updateOwnContact } from "@/lib/profile-contact.functions";
 import { useSession } from "@/lib/session";
 
 type HandleState = "idle" | "checking" | "available" | "taken" | "invalid";
@@ -33,6 +35,8 @@ export function ProfilePage() {
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState("");
   const [handle, setHandle] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [handleState, setHandleState] = useState<HandleState>("idle");
   const [handleError, setHandleError] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -40,6 +44,7 @@ export function ProfilePage() {
   const [removePhoto, setRemovePhoto] = useState(false);
 
   const userId = account?.id ?? null;
+  const saveContact = useServerFn(updateOwnContact);
 
   const load = useCallback(async () => {
     if (!userId) return;
@@ -49,6 +54,8 @@ export function ProfilePage() {
       setProfile(p);
       setName(p?.full_name ?? "");
       setHandle(p?.handle ?? "");
+      setPhone(p?.phone ?? "");
+      setEmail(p?.email ?? "");
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -135,6 +142,15 @@ export function ProfilePage() {
         ...(removePhoto && !avatarPath ? { clearAvatar: true } : {}),
       });
       if (removePhoto && !avatarPath) await deleteAvatar(profile.avatar_path);
+
+      // Contact details move the auth login too, so they go through a server function.
+      const contactChanged =
+        phone.trim() !== (profile.phone ?? "") ||
+        email.trim().toLowerCase() !== (profile.email ?? "").toLowerCase();
+      if (contactChanged) {
+        await saveContact({ data: { phone: phone.trim(), email: email.trim() } });
+      }
+
       setFile(null);
       setCrop(null);
       setRemovePhoto(false);
@@ -279,9 +295,36 @@ export function ProfilePage() {
               )}
             </div>
 
-            <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-              Signed in as {profile?.email}. Contact your shop admin to change your email or phone
-              number.
+            <div className="space-y-1.5">
+              <Label htmlFor="profile-phone">Phone number</Label>
+              <Input
+                id="profile-phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="h-11"
+                placeholder="09XX XXX XXXX"
+                inputMode="tel"
+                autoComplete="tel"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="profile-email">Email address</Label>
+              <Input
+                id="profile-email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-11"
+                placeholder="you@example.com"
+                inputMode="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                autoComplete="email"
+              />
+              <p className="text-xs text-muted-foreground">
+                This is also your sign-in address. Your phone and email are never shown in credit
+                recipient search results.
+              </p>
             </div>
 
             <Button
