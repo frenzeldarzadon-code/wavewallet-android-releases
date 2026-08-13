@@ -44,7 +44,7 @@ describe("act-as scope", () => {
 describe("operator audit filters", () => {
   const rows = [
     row({}),
-    row({ id: "2", targetRole: "reseller", target: "Ben Reseller (reseller)", operatorId: "op-2" }),
+    row({ id: "2", targetRole: "reseller", target: "Ben Reseller (reseller)", operatorId: "op-2", reason: "Balance check" }),
   ];
 
   it("filters by target role", () => {
