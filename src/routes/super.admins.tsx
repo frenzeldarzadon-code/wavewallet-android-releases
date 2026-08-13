@@ -420,6 +420,13 @@ function SuperAdmins() {
                             </Button>
                             <Button
                               size="sm"
+                              variant="outline"
+                              onClick={() => copy(`${origin()}/join/${e.slug}`, "Shareable link")}
+                            >
+                              <Copy className="size-4" /> Copy link
+                            </Button>
+                            <Button
+                              size="sm"
                               variant={e.operations_frozen ? "secondary" : "ghost"}
                               onClick={() => void toggleFreeze(e)}
                             >
