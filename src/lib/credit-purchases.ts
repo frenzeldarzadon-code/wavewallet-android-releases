@@ -61,6 +61,31 @@ export function creditGcashAccount(
   };
 }
 
+/**
+ * Safe, read-only support contact published by the platform owner. Returns
+ * null when nothing is configured or the URL is unsafe/malformed.
+ */
+export function supportContact(
+  settings: CreditPurchaseSettings | null | undefined,
+): { label: string; url: string; message: string } | null {
+  const raw = (settings?.support_page_url ?? "").trim();
+  if (!raw) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+  const name = (settings?.support_page_name ?? "").trim();
+  return {
+    label: name || parsed.hostname.replace(/^www\./, ""),
+    url: parsed.toString(),
+    message: (settings?.support_message ?? "").trim(),
+  };
+}
+
+
 export const RELEASE_WARNING =
   "Credits may reflect immediately as pending/held, but Superadmins have the right to freeze or withhold released credits if the GCash transaction cannot be verified or is disputed.";
 
