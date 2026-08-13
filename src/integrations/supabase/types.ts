@@ -696,6 +696,53 @@ export type Database = {
         }
         Relationships: []
       }
+      member_social_links: {
+        Row: {
+          created_at: string
+          ecosystem_id: string
+          id: string
+          is_public: boolean
+          label: string
+          platform: string
+          sort_order: number
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ecosystem_id: string
+          id?: string
+          is_public?: boolean
+          label?: string
+          platform: string
+          sort_order?: number
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ecosystem_id?: string
+          id?: string
+          is_public?: boolean
+          label?: string
+          platform?: string
+          sort_order?: number
+          updated_at?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_social_links_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_bootstrap: {
         Row: {
           claimed_at: string
@@ -2826,6 +2873,16 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      public_social_links: {
+        Args: { _user_id: string }
+        Returns: {
+          id: string
+          label: string
+          platform: string
+          sort_order: number
+          url: string
+        }[]
       }
       purchase_voucher: {
         Args: { _product_id: string; _quantity?: number }
