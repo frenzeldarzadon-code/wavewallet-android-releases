@@ -51,7 +51,7 @@ export function EcosystemSocialCard({ ecosystemId }: { ecosystemId: string }) {
       setEffective(state);
       setDraft(
         override ?? {
-          social_enabled: null,
+          social_enabled: state.social_enabled,
           daily_allowance: null,
           post_cost: null,
           comment_cost: null,
@@ -103,7 +103,7 @@ export function EcosystemSocialCard({ ecosystemId }: { ecosystemId: string }) {
             </div>
             <Switch
               id="ecoSocialOn"
-              checked={draft.social_enabled ?? effective?.social_enabled ?? true}
+              checked={draft.social_enabled}
               onCheckedChange={(v) => setDraft({ ...draft, social_enabled: v })}
             />
           </div>

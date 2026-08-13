@@ -558,15 +558,17 @@ export async function fetchEcosystemSocialOverride(
 export async function saveEcosystemSocialSettings(
   input: EcosystemSocialSettings & { ecosystemId?: string },
 ) {
+  const opt = <T,>(key: string, value: T | null) =>
+    value === null || value === undefined ? {} : { [key]: value };
   const { error } = await supabase.rpc("update_ecosystem_social_settings", {
-    _social_enabled: input.social_enabled ?? undefined,
-    _daily_allowance: input.daily_allowance ?? undefined,
-    _post_cost: input.post_cost ?? undefined,
-    _comment_cost: input.comment_cost ?? undefined,
-    _credit_exchange_rate: input.credit_exchange_rate ?? undefined,
-    _points_exchange_rate: input.points_exchange_rate ?? undefined,
-    _promotion_enabled: input.promotion_enabled ?? undefined,
-    ...(input.ecosystemId ? { _ecosystem_id: input.ecosystemId } : {}),
+    _social_enabled: input.social_enabled,
+    ...opt("_daily_allowance", input.daily_allowance),
+    ...opt("_post_cost", input.post_cost),
+    ...opt("_comment_cost", input.comment_cost),
+    ...opt("_credit_exchange_rate", input.credit_exchange_rate),
+    ...opt("_points_exchange_rate", input.points_exchange_rate),
+    ...opt("_promotion_enabled", input.promotion_enabled),
+    ...opt("_ecosystem_id", input.ecosystemId ?? null),
   });
   if (error) fail(error.message);
 }
