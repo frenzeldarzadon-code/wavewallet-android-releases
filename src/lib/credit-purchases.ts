@@ -77,7 +77,7 @@ export async function saveCreditPackage(input: {
 }): Promise<CreditPackage> {
   return unwrap(
     await supabase.rpc("save_credit_package", {
-      _id: input.id ?? null,
+      ...(input.id ? { _id: input.id } : {}),
       _name: input.name,
       _credits: input.credits,
       _price_php: input.pricePhp,
