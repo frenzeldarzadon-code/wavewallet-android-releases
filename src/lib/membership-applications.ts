@@ -70,10 +70,11 @@ export async function reviewApplication(
   approve: boolean,
   reason?: string,
 ): Promise<void> {
+  const trimmed = reason?.trim();
   const { error } = await supabase.rpc("review_membership_application", {
     _application_id: applicationId,
     _approve: approve,
-    _reason: reason?.trim() ? reason.trim() : undefined,
+    ...(trimmed ? { _reason: trimmed } : {}),
   });
   if (error) throw new Error(error.message);
 }
