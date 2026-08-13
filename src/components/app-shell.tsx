@@ -1,5 +1,5 @@
 import { Link, useRouterState, type LinkProps } from "@tanstack/react-router";
-import { Menu, ShieldCheck, LogOut, ArrowLeft, FlaskConical } from "lucide-react";
+import { Menu, ShieldCheck, LogOut, ArrowLeft, FlaskConical, UserCheck } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -63,6 +63,25 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
         <div className="flex items-center justify-center gap-2 bg-warning px-4 py-1.5 text-center text-[11px] font-semibold uppercase tracking-wide text-warning-foreground sm:text-xs">
           <FlaskConical className="size-3.5 shrink-0" />
           Demo / preview environment — sample data only, not live customer data
+        </div>
+      ) : null}
+      {session.actingAs ? (
+        <div className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-2 bg-destructive px-4 py-2 text-destructive-foreground">
+          <div className="flex items-center gap-2 text-xs font-semibold sm:text-sm">
+            <UserCheck className="size-4 shrink-0" />
+            <span>
+              ACTING AS {session.actingAs.session.targetName} — all changes are recorded under{" "}
+              {session.actingAs.operatorRole === "super_admin" ? "Super Admin" : "Admin"}{" "}
+              {session.actingAs.operatorName}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={session.exitActingAs}
+            className="inline-flex items-center gap-1.5 rounded-full bg-background/15 px-3 py-1 text-xs font-semibold hover:bg-background/25"
+          >
+            <ArrowLeft className="size-3.5" /> Exit account
+          </button>
         </div>
       ) : null}
       {superMode ? (

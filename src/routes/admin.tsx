@@ -14,6 +14,7 @@ import {
   Ticket,
   User,
   Users,
+  UserCheck,
   UserPlus,
   UserSquare2,
 } from "lucide-react";
@@ -42,6 +43,7 @@ const nav: NavItem[] = [
     : []),
   { to: "/admin/signup-link", label: "Customer signup link", icon: Link2 },
   { to: "/admin/reports", label: "Reports", icon: BarChart3 },
+  { to: "/admin/operator-log", label: "Operator actions", icon: UserCheck },
   { to: "/admin/settings", label: "Ecosystem", icon: Settings },
   { to: "/admin/profile", label: "My profile", icon: User },
 ];

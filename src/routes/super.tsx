@@ -6,6 +6,7 @@ import {
   DatabaseBackup,
   LayoutDashboard,
   ScrollText,
+  UserCheck,
   UserPlus,
   Settings,
   User,
@@ -25,6 +26,7 @@ export const superNav: NavItem[] = [
   { to: "/super/reports", label: "Reports", icon: BarChart3 },
   { to: "/super/export", label: "Data export", icon: DatabaseBackup },
   { to: "/super/audit", label: "Audit log", icon: ScrollText },
+  { to: "/super/operator-log", label: "Operator actions", icon: UserCheck },
   { to: "/super/settings", label: "Platform", icon: Settings },
   { to: "/super/profile", label: "My profile", icon: User },
 ];

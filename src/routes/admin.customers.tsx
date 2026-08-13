@@ -590,6 +590,21 @@ function AdminCustomers() {
                             <Button size="sm" variant="ghost" onClick={() => setEditingProfile(c)}>
                               <Pencil className="size-4" /> Edit
                             </Button>
+                            {isImpersonatable(c.role) && c.status === "active" ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  setAccessing({
+                                    id: c.id,
+                                    name: c.full_name || c.email,
+                                    role: c.role,
+                                  })
+                                }
+                              >
+                                <UserCheck className="size-4" /> Access account
+                              </Button>
+                            ) : null}
                             {c.role === "reseller" || c.role === "subreseller" ? (
                               <Button
                                 size="sm"
