@@ -273,7 +273,7 @@ export function CreditSupplyCard() {
 
       {settings ? (
         <PageSection
-          title="Admin shop settings"
+          title="Admin pricing settings"
           description="Two separate settings: what an admin pays for a credit allocation, and the discount an admin gets when buying vouchers from their own uploaded inventory."
         >
           <Card className="shadow-[var(--shadow-card)]">
