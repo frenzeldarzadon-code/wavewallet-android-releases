@@ -949,6 +949,7 @@ export type Database = {
       platform_settings: {
         Row: {
           admin_credit_discount_percent: number
+          admin_voucher_discount_percent: number
           billing_period: string
           created_at: string
           credit_gcash_account_name: string
@@ -972,6 +973,7 @@ export type Database = {
         }
         Insert: {
           admin_credit_discount_percent?: number
+          admin_voucher_discount_percent?: number
           billing_period?: string
           created_at?: string
           credit_gcash_account_name?: string
@@ -995,6 +997,7 @@ export type Database = {
         }
         Update: {
           admin_credit_discount_percent?: number
+          admin_voucher_discount_percent?: number
           billing_period?: string
           created_at?: string
           credit_gcash_account_name?: string
@@ -2686,6 +2689,7 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_voucher_discount_percent: { Args: never; Returns: number }
       archive_ecosystem: {
         Args: { _ecosystem_id: string; _reason?: string }
         Returns: string
@@ -3930,6 +3934,7 @@ export type Database = {
         }
         Returns: {
           admin_credit_discount_percent: number
+          admin_voucher_discount_percent: number
           billing_period: string
           created_at: string
           credit_gcash_account_name: string
@@ -4112,6 +4117,7 @@ export type Database = {
         }
         Returns: {
           admin_credit_discount_percent: number
+          admin_voucher_discount_percent: number
           billing_period: string
           created_at: string
           credit_gcash_account_name: string
