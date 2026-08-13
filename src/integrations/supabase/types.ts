@@ -883,6 +883,65 @@ export type Database = {
           },
         ]
       }
+      membership_applications: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decider_name: string | null
+          decider_role: Database["public"]["Enums"]["app_role"] | null
+          decision_reason: string | null
+          ecosystem_id: string
+          email: string
+          full_name: string
+          id: string
+          phone: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decider_name?: string | null
+          decider_role?: Database["public"]["Enums"]["app_role"] | null
+          decision_reason?: string | null
+          ecosystem_id: string
+          email: string
+          full_name?: string
+          id?: string
+          phone?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decider_name?: string | null
+          decider_role?: Database["public"]["Enums"]["app_role"] | null
+          decision_reason?: string | null
+          ecosystem_id?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_applications_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_bootstrap: {
         Row: {
           claimed_at: string
@@ -2703,6 +2762,10 @@ export type Database = {
         Args: { _actor: string; _target: string }
         Returns: boolean
       }
+      can_review_applications: {
+        Args: { _ecosystem_id: string; _user_id: string }
+        Returns: boolean
+      }
       claim_super_admin_bootstrap: {
         Args: { _email: string; _source: string }
         Returns: string
@@ -3133,6 +3196,15 @@ export type Database = {
         Args: { _amount: number; _rate: number }
         Returns: number
       }
+      my_membership_application: {
+        Args: never
+        Returns: {
+          created_at: string
+          decision_reason: string
+          ecosystem_name: string
+          status: string
+        }[]
+      }
       my_operational_status: {
         Args: never
         Returns: {
@@ -3330,6 +3402,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      review_membership_application: {
+        Args: { _application_id: string; _approve: boolean; _reason?: string }
+        Returns: undefined
       }
       review_redemption: {
         Args: { _decision: string; _id: string; _note?: string }
