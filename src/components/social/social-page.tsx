@@ -538,8 +538,12 @@ export function SocialPage() {
             <AlertDialogTitle>{promote ? "Publish a promoted post?" : "Publish this post?"}</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2 text-sm">
+                <p>
+                  Audience: <strong>{audienceLabel(audience)}</strong> — {audienceHelp(audience)}
+                </p>
                 <p>{chargeSummary(charge.amount, charge.currency)}</p>
                 <p>
+
                   Balance: {state?.balance ?? 0} social credits
                   {charge.currency === "points" ? ` · ${account.pointsBalance ?? 0} points` : ""}
                 </p>
