@@ -267,8 +267,24 @@ function AdminWallets() {
     <>
       <PageSection
         title="Wallet management"
-        description="Add or correct credits for customers and resellers. Every adjustment is audited."
+        description="Load credits from your shop wallet to members, or post a correction. Every movement is audited."
       >
+        <Card className="mb-3 border-primary/30 bg-primary/5 shadow-none">
+          <CardContent className="flex flex-wrap items-center justify-between gap-2 p-3">
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Your shop wallet</p>
+              <p className="text-lg font-semibold text-success">{peso(shopBalance)}</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Loading a member moves credits out of this balance. Only the platform owner can
+                create new credits — buy an allocation to top up.
+              </p>
+            </div>
+            <Button asChild size="sm">
+              <Link to="/admin/credits">Buy credits</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
         <div className="mb-3 flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
