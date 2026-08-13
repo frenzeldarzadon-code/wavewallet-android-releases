@@ -610,7 +610,9 @@ function AdminWallets() {
       <Dialog open={!!target} onOpenChange={(o) => !o && setTarget(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>{mode === "points" ? "Adjust points" : "Adjust credits"}</DialogTitle>
+            <DialogTitle>
+              {mode === "points" ? "Adjust points" : "Load or correct credits"}
+            </DialogTitle>
             <DialogDescription>
               {target?.full_name} ·{" "}
               {mode === "points"
@@ -620,7 +622,11 @@ function AdminWallets() {
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="wamt">Amount (negative to deduct)</Label>
+              <Label htmlFor="wamt">
+                {mode === "credits"
+                  ? "Amount to load (negative to correct/deduct)"
+                  : "Amount (negative to deduct)"}
+              </Label>
               <Input
                 id="wamt"
                 type="number"
@@ -631,10 +637,21 @@ function AdminWallets() {
               />
             </div>
             {mode === "credits" ? (
-              <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                Transfers carry no commission: {target?.full_name} receives exactly{" "}
-                {peso(Math.max(Number(amount) || 0, 0))}. Members earn from their wholesale voucher
-                discount and from sales commission when their credits are spent.
+              <div className="space-y-2">
+                <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                  A positive amount is transferred from your shop wallet ({peso(shopBalance)}) — no
+                  new credits are created and no commission is charged. {target?.full_name} receives
+                  exactly {peso(Math.max(Number(amount) || 0, 0))}.
+                </div>
+                {Number(amount) > shopBalance ? (
+                  <div className="flex gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                    <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+                    <span>
+                      Not enough credits in your shop wallet. Buy a credit allocation from the
+                      platform owner first.
+                    </span>
+                  </div>
+                ) : null}
               </div>
             ) : null}
             <div className="space-y-1.5">
