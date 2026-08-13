@@ -449,7 +449,7 @@ function AdminCustomers() {
 
   return (
     <>
-      <ApplicationsPanel ecosystemId={ecosystem?.id ?? null} />
+      <ApplicationsPanel ecosystemId={ecosystemDbId} />
       <PageSection>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="Members" value={String(customers.length)} tone="brand" />
