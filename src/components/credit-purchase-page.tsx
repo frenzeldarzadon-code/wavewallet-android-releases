@@ -1,7 +1,12 @@
 /**
- * Shop admin credit purchasing.
+ * Shop credit allocation for a shop admin.
  *
- * Buying credits never creates them: the order sits as "pending verification"
+ * The admin holds a shop wallet exactly like a reseller or customer; this page
+ * only requests an allocation from the platform owner's supply. There is no
+ * platform fee: the base rate is the whole value of the allocation, and the
+ * admin benefit is a discount on that base rate, not a waived fee.
+ *
+ * Requesting an allocation never creates credits: the order sits as "pending verification"
  * until the platform owner approves it, and only that approval writes a single
  * credit entry. The warning below is shown before every submission.
  */
@@ -110,7 +115,7 @@ export function CreditPurchasePage() {
         paymentReference: reference.trim(),
         ...(note.trim() ? { note: note.trim() } : {}),
       });
-      toast.success("Purchase submitted for verification", {
+      toast.success("Allocation requested", {
         description: "Credits are released once the platform owner approves the payment.",
       });
       setReference("");
@@ -124,25 +129,25 @@ export function CreditPurchasePage() {
     }
   };
 
-  if (loading) return <p className="text-sm text-muted-foreground">Loading credit packages…</p>;
+  if (loading) return <p className="text-sm text-muted-foreground">Loading credit allocations…</p>;
 
   return (
     <>
       <PageSection
-        title="Buy platform credits"
-        description="Only the platform owner can create credits. Buy an allocation here, then load it to your resellers and customers from Wallets."
+        title="Get credits for your shop"
+        description="Credits are created only by the platform owner. Request an allocation here — approved credits land in your own shop wallet, ready to spend on vouchers or to load to your resellers and customers."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-4">
             {packages.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No credit packages are on sale right now. Please contact the platform owner.
+                No credit allocations are available right now. Please contact the platform owner.
               </p>
             ) : (
               <>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label htmlFor="pkg">Credit package</Label>
+                    <Label htmlFor="pkg">Allocation package</Label>
                     <Select value={packageId} onValueChange={setPackageId}>
                       <SelectTrigger id="pkg">
                         <SelectValue placeholder="Choose a package" />
@@ -158,7 +163,7 @@ export function CreditPurchasePage() {
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="qty">Number of packages</Label>
+                    <Label htmlFor="qty">Number of allocations</Label>
                     <Input
                       id="qty"
                       type="number"
@@ -179,22 +184,36 @@ export function CreditPurchasePage() {
                   </div>
                   <dl className="mt-3 grid gap-1 text-sm">
                     <div className="flex justify-between">
-                      <dt className="text-muted-foreground">Platform list price</dt>
+                      <dt className="text-muted-foreground">
+                        Base rate ({Number(selected?.credits ?? 0).toLocaleString()} credits ={" "}
+                        {formatPhp(Number(selected?.price_php ?? 0), currency)})
+                      </dt>
                       <dd className={discount > 0 ? "line-through text-muted-foreground" : ""}>
                         {formatPhp(listPhp, currency)}
                       </dd>
                     </div>
+                    <div className="flex justify-between">
+                      <dt className="text-muted-foreground">Platform fee</dt>
+                      <dd className="font-medium">{formatPhp(0, currency)} — no fee</dd>
+                    </div>
                     {discount > 0 ? (
                       <div className="flex justify-between">
-                        <dt className="text-muted-foreground">Admin platform benefit</dt>
-                        <dd className="font-medium text-success">{discount}% off</dd>
+                        <dt className="text-muted-foreground">Admin shop allocation benefit</dt>
+                        <dd className="font-medium text-success">{discount}% off the base rate</dd>
                       </div>
                     ) : null}
                     <div className="flex justify-between border-t border-border pt-1 text-base font-semibold">
-                      <dt>You pay</dt>
+                      <dt>Admin pays</dt>
                       <dd>{formatPhp(payable, currency)}</dd>
                     </div>
                   </dl>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Credits are added to your Admin Shop Wallet once the platform owner approves.
+                    The base rate is the complete value of the allocation — there is no service
+                    fee, markup or surcharge anywhere in this flow, and the{" "}
+                    {discount}% benefit is a discount on your own shop allocation, not a waived
+                    platform fee.
+                  </p>
                 </div>
 
                 <div className="rounded-xl border border-border p-4 text-sm">
@@ -219,7 +238,7 @@ export function CreditPurchasePage() {
                   ) : null}
                   {payable === 0 ? (
                     <p className="mt-2 text-muted-foreground">
-                      Nothing to pay with your current admin benefit — submit the order and enter
+                      Nothing to pay with your current allocation benefit — submit the order and enter
                       &quot;FREE&quot; plus a short note as your reference.
                     </p>
                   ) : null}
@@ -257,7 +276,7 @@ export function CreditPurchasePage() {
                   disabled={!selected || !reference.trim() || busy}
                   onClick={() => setConfirming(true)}
                 >
-                  Submit purchase for verification
+                  Request allocation
                 </Button>
               </>
             )}
@@ -266,16 +285,16 @@ export function CreditPurchasePage() {
       </PageSection>
 
       <PageSection
-        title="Purchase history"
+        title="Allocation history"
         description="Kept separate from voucher transactions and linked to the credit entry each approval creates."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardHeader>
-            <CardTitle className="text-sm">Credit purchases</CardTitle>
+            <CardTitle className="text-sm">Shop credit allocations</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {orders.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No credit purchases yet.</p>
+              <p className="text-sm text-muted-foreground">No credit allocations yet.</p>
             ) : (
               orders.map((o) => (
                 <div key={o.id} className="rounded-xl border border-border p-3 text-sm">
@@ -295,8 +314,8 @@ export function CreditPurchasePage() {
                     </Badge>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    List {formatPhp(Number(o.list_php), currency)} · {o.discount_percent}% off ·
-                    Paid {formatPhp(Number(o.amount_due), currency)}
+                    Base {formatPhp(Number(o.list_php), currency)} · {o.discount_percent}% admin
+                    benefit · Paid {formatPhp(Number(o.amount_due), currency)} · No platform fee
                   </p>
                   {o.reviewed_at ? (
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -315,10 +334,11 @@ export function CreditPurchasePage() {
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Submit this credit purchase?</AlertDialogTitle>
+            <AlertDialogTitle>Request this shop credit allocation?</AlertDialogTitle>
             <AlertDialogDescription>
-              {credits.toLocaleString()} credits for {formatPhp(payable, currency)} using reference{" "}
-              {reference.trim()}. {RELEASE_WARNING}
+              {credits.toLocaleString()} credits into your shop wallet for{" "}
+              {formatPhp(payable, currency)} (base rate {formatPhp(listPhp, currency)}, {discount}%
+              admin benefit, no platform fee) using reference {reference.trim()}. {RELEASE_WARNING}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
