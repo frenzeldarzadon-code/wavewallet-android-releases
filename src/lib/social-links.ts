@@ -80,7 +80,10 @@ export function platformLabel(platform: SocialPlatform): string {
 export function normalizeUrl(input: string): string | null {
   const raw = input.trim();
   if (!raw) return null;
-  const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`;
+  const hasScheme = /^[a-z][a-z0-9+.-]*:/i.test(raw);
+  // Only http(s) are web links; mailto:, javascript:, data: and friends are out.
+  if (hasScheme && !/^https?:\/\//i.test(raw)) return null;
+  const withScheme = hasScheme ? raw : `https://${raw}`;
   let parsed: URL;
   try {
     parsed = new URL(withScheme);
