@@ -836,6 +836,65 @@ export type Database = {
         }
         Relationships: []
       }
+      impersonation_sessions: {
+        Row: {
+          created_at: string
+          ecosystem_id: string
+          ended_at: string | null
+          expires_at: string
+          id: string
+          operator_id: string
+          operator_name: string
+          operator_role: Database["public"]["Enums"]["app_role"]
+          reason: string | null
+          started_at: string
+          target_id: string
+          target_name: string
+          target_role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          ecosystem_id: string
+          ended_at?: string | null
+          expires_at?: string
+          id?: string
+          operator_id: string
+          operator_name: string
+          operator_role: Database["public"]["Enums"]["app_role"]
+          reason?: string | null
+          started_at?: string
+          target_id: string
+          target_name: string
+          target_role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          ecosystem_id?: string
+          ended_at?: string | null
+          expires_at?: string
+          id?: string
+          operator_id?: string
+          operator_name?: string
+          operator_role?: Database["public"]["Enums"]["app_role"]
+          reason?: string | null
+          started_at?: string
+          target_id?: string
+          target_name?: string
+          target_role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "impersonation_sessions_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_social_links: {
         Row: {
           created_at: string
@@ -2672,6 +2731,7 @@ export type Database = {
       }
     }
     Functions: {
+      acting_as: { Args: never; Returns: string }
       adjust_ecosystem_expiration: {
         Args: {
           _confirm_shorten?: boolean
@@ -2754,6 +2814,10 @@ export type Database = {
         Returns: string
       }
       assert_actor_active: { Args: never; Returns: undefined }
+      can_impersonate: {
+        Args: { _operator: string; _target: string }
+        Returns: boolean
+      }
       can_load_credits: {
         Args: { _actor: string; _target: string }
         Returns: boolean
@@ -2990,6 +3054,8 @@ export type Database = {
         Args: { _ecosystem_id: string }
         Returns: number
       }
+      effective_uid: { Args: never; Returns: string }
+      end_impersonation: { Args: never; Returns: undefined }
       expire_stale_invitations: { Args: never; Returns: undefined }
       expire_stale_subscriptions: { Args: never; Returns: number }
       freeze_credit_purchase_order: {
@@ -3164,6 +3230,17 @@ export type Database = {
           unused_count: number
         }[]
       }
+      log_operator_action: {
+        Args: {
+          _action: string
+          _details?: Json
+          _eco: string
+          _entity: string
+          _entity_id: string
+          _target: string
+        }
+        Returns: undefined
+      }
       lookup_redemption: {
         Args: { _code: string }
         Returns: {
@@ -3195,6 +3272,19 @@ export type Database = {
       months_for_payment: {
         Args: { _amount: number; _rate: number }
         Returns: number
+      }
+      my_impersonation: {
+        Args: never
+        Returns: {
+          ecosystem_id: string
+          expires_at: string
+          id: string
+          reason: string
+          started_at: string
+          target_id: string
+          target_name: string
+          target_role: Database["public"]["Enums"]["app_role"]
+        }[]
       }
       my_membership_application: {
         Args: never
@@ -3951,6 +4041,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      start_impersonation: {
+        Args: { _reason?: string; _target: string }
+        Returns: string
+      }
       submit_subscription_request: {
         Args: {
           _amount_paid?: number
@@ -3994,6 +4088,10 @@ export type Database = {
       }
       subscription_ok: { Args: { _ecosystem_id: string }; Returns: boolean }
       super_admin_bootstrap_available: { Args: never; Returns: boolean }
+      top_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       transfer_credits: {
         Args: { _amount: number; _note?: string; _recipient_id: string }
         Returns: string

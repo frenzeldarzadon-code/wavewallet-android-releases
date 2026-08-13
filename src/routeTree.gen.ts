@@ -21,6 +21,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
 import { Route as AdminCreditsRouteImport } from './routes/admin.credits'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
+import { Route as AdminOperatorLogRouteImport } from './routes/admin.operator-log'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as AdminProfileRouteImport } from './routes/admin.profile'
 import { Route as AdminReportsRouteImport } from './routes/admin.reports'
@@ -58,6 +59,7 @@ import { Route as SuperAdminsRouteImport } from './routes/super.admins'
 import { Route as SuperApplicationsRouteImport } from './routes/super.applications'
 import { Route as SuperAuditRouteImport } from './routes/super.audit'
 import { Route as SuperExportRouteImport } from './routes/super.export'
+import { Route as SuperOperatorLogRouteImport } from './routes/super.operator-log'
 import { Route as SuperProfileRouteImport } from './routes/super.profile'
 import { Route as SuperReportsRouteImport } from './routes/super.reports'
 import { Route as SuperSettingsRouteImport } from './routes/super.settings'
@@ -121,6 +123,11 @@ const AdminCreditsRoute = AdminCreditsRouteImport.update({
 const AdminCustomersRoute = AdminCustomersRouteImport.update({
   id: '/customers',
   path: '/customers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOperatorLogRoute = AdminOperatorLogRouteImport.update({
+  id: '/operator-log',
+  path: '/operator-log',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminProductsRoute = AdminProductsRouteImport.update({
@@ -308,6 +315,11 @@ const SuperExportRoute = SuperExportRouteImport.update({
   path: '/export',
   getParentRoute: () => SuperRoute,
 } as any)
+const SuperOperatorLogRoute = SuperOperatorLogRouteImport.update({
+  id: '/operator-log',
+  path: '/operator-log',
+  getParentRoute: () => SuperRoute,
+} as any)
 const SuperProfileRoute = SuperProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -341,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/operator-log': typeof AdminOperatorLogRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/profile': typeof AdminProfileRoute
   '/admin/reports': typeof AdminReportsRoute
@@ -375,6 +388,7 @@ export interface FileRoutesByFullPath {
   '/super/applications': typeof SuperApplicationsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/export': typeof SuperExportRoute
+  '/super/operator-log': typeof SuperOperatorLogRoute
   '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
@@ -392,6 +406,7 @@ export interface FileRoutesByTo {
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/operator-log': typeof AdminOperatorLogRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/profile': typeof AdminProfileRoute
   '/admin/reports': typeof AdminReportsRoute
@@ -426,6 +441,7 @@ export interface FileRoutesByTo {
   '/super/applications': typeof SuperApplicationsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/export': typeof SuperExportRoute
+  '/super/operator-log': typeof SuperOperatorLogRoute
   '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
@@ -448,6 +464,7 @@ export interface FileRoutesById {
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/operator-log': typeof AdminOperatorLogRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/profile': typeof AdminProfileRoute
   '/admin/reports': typeof AdminReportsRoute
@@ -482,6 +499,7 @@ export interface FileRoutesById {
   '/super/applications': typeof SuperApplicationsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/export': typeof SuperExportRoute
+  '/super/operator-log': typeof SuperOperatorLogRoute
   '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
@@ -505,6 +523,7 @@ export interface FileRouteTypes {
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
+    | '/admin/operator-log'
     | '/admin/products'
     | '/admin/profile'
     | '/admin/reports'
@@ -539,6 +558,7 @@ export interface FileRouteTypes {
     | '/super/applications'
     | '/super/audit'
     | '/super/export'
+    | '/super/operator-log'
     | '/super/profile'
     | '/super/reports'
     | '/super/settings'
@@ -556,6 +576,7 @@ export interface FileRouteTypes {
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
+    | '/admin/operator-log'
     | '/admin/products'
     | '/admin/profile'
     | '/admin/reports'
@@ -590,6 +611,7 @@ export interface FileRouteTypes {
     | '/super/applications'
     | '/super/audit'
     | '/super/export'
+    | '/super/operator-log'
     | '/super/profile'
     | '/super/reports'
     | '/super/settings'
@@ -611,6 +633,7 @@ export interface FileRouteTypes {
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
+    | '/admin/operator-log'
     | '/admin/products'
     | '/admin/profile'
     | '/admin/reports'
@@ -645,6 +668,7 @@ export interface FileRouteTypes {
     | '/super/applications'
     | '/super/audit'
     | '/super/export'
+    | '/super/operator-log'
     | '/super/profile'
     | '/super/reports'
     | '/super/settings'
@@ -751,6 +775,13 @@ declare module '@tanstack/react-router' {
       path: '/customers'
       fullPath: '/admin/customers'
       preLoaderRoute: typeof AdminCustomersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/operator-log': {
+      id: '/admin/operator-log'
+      path: '/operator-log'
+      fullPath: '/admin/operator-log'
+      preLoaderRoute: typeof AdminOperatorLogRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/products': {
@@ -1012,6 +1043,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperExportRouteImport
       parentRoute: typeof SuperRoute
     }
+    '/super/operator-log': {
+      id: '/super/operator-log'
+      path: '/operator-log'
+      fullPath: '/super/operator-log'
+      preLoaderRoute: typeof SuperOperatorLogRouteImport
+      parentRoute: typeof SuperRoute
+    }
     '/super/profile': {
       id: '/super/profile'
       path: '/profile'
@@ -1047,6 +1085,7 @@ interface AdminRouteChildren {
   AdminApplicationsRoute: typeof AdminApplicationsRoute
   AdminCreditsRoute: typeof AdminCreditsRoute
   AdminCustomersRoute: typeof AdminCustomersRoute
+  AdminOperatorLogRoute: typeof AdminOperatorLogRoute
   AdminProductsRoute: typeof AdminProductsRoute
   AdminProfileRoute: typeof AdminProfileRoute
   AdminReportsRoute: typeof AdminReportsRoute
@@ -1067,6 +1106,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminApplicationsRoute: AdminApplicationsRoute,
   AdminCreditsRoute: AdminCreditsRoute,
   AdminCustomersRoute: AdminCustomersRoute,
+  AdminOperatorLogRoute: AdminOperatorLogRoute,
   AdminProductsRoute: AdminProductsRoute,
   AdminProfileRoute: AdminProfileRoute,
   AdminReportsRoute: AdminReportsRoute,
@@ -1144,6 +1184,7 @@ interface SuperRouteChildren {
   SuperApplicationsRoute: typeof SuperApplicationsRoute
   SuperAuditRoute: typeof SuperAuditRoute
   SuperExportRoute: typeof SuperExportRoute
+  SuperOperatorLogRoute: typeof SuperOperatorLogRoute
   SuperProfileRoute: typeof SuperProfileRoute
   SuperReportsRoute: typeof SuperReportsRoute
   SuperSettingsRoute: typeof SuperSettingsRoute
@@ -1156,6 +1197,7 @@ const SuperRouteChildren: SuperRouteChildren = {
   SuperApplicationsRoute: SuperApplicationsRoute,
   SuperAuditRoute: SuperAuditRoute,
   SuperExportRoute: SuperExportRoute,
+  SuperOperatorLogRoute: SuperOperatorLogRoute,
   SuperProfileRoute: SuperProfileRoute,
   SuperReportsRoute: SuperReportsRoute,
   SuperSettingsRoute: SuperSettingsRoute,

@@ -7,6 +7,7 @@ import {
   Search,
   ShieldCheck,
   Trash2,
+  UserCheck,
   TrendingUp,
   UserCog,
 } from "lucide-react";
@@ -38,6 +39,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { peso, roleLabel, shortDate, shortDateTime, type Role } from "@/lib/wavewallet";
 import { EditMemberDialog, type EditableMember } from "@/components/edit-member-dialog";
 import { memberMatches } from "@/lib/member-admin";
+import { AccessAccountDialog, type AccessTarget } from "@/components/access-account-dialog";
+import { isImpersonatable } from "@/lib/impersonation";
 import {
   evaluateCustomerDeletion,
   type DeletionVerdict,
@@ -142,6 +145,8 @@ function AdminCustomers() {
   const [childParents, setChildParents] = useState<Record<string, string>>({});
   const [restructureReason, setRestructureReason] = useState("");
   const [editingProfile, setEditingProfile] = useState<EditableMember | null>(null);
+  // Secure act-as: entering a member account is a server-side delegation.
+  const [accessing, setAccessing] = useState<AccessTarget | null>(null);
 
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
@@ -590,6 +595,21 @@ function AdminCustomers() {
                             <Button size="sm" variant="ghost" onClick={() => setEditingProfile(c)}>
                               <Pencil className="size-4" /> Edit
                             </Button>
+                            {isImpersonatable(c.role) && c.status === "active" ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  setAccessing({
+                                    id: c.id,
+                                    name: c.full_name || c.email,
+                                    role: c.role,
+                                  })
+                                }
+                              >
+                                <UserCheck className="size-4" /> Access account
+                              </Button>
+                            ) : null}
                             {c.role === "reseller" || c.role === "subreseller" ? (
                               <Button
                                 size="sm"
@@ -1166,6 +1186,8 @@ function AdminCustomers() {
         onClose={() => setEditingProfile(null)}
         onSaved={() => void load()}
       />
+
+      <AccessAccountDialog target={accessing} onClose={() => setAccessing(null)} />
     </>
   );
 }

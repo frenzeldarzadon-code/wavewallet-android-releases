@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { loadAuthContext, type AuthContext, type DbEcosystem } from "@/lib/auth";
+import { endImpersonation } from "@/lib/impersonation";
 import { ecosystems, type Account, type Ecosystem, type Role } from "@/lib/wavewallet";
 
 const KEY = "wavewallet.session";
@@ -54,6 +55,10 @@ export interface ResolvedSession {
   ecosystemDbId: string | null;
   /** Subscription is active (or inside its grace period). */
   subscriptionOk: boolean;
+  /** Present while an authorized operator is acting as this account. */
+  actingAs: AuthContext["actingAs"];
+  /** Leaves the acted-as account and returns the operator to their own console. */
+  exitActingAs: () => void;
   reload: () => void;
   signOut: () => void;
 }
@@ -209,10 +214,19 @@ export function useSession(requiredRole?: Role): ResolvedSession {
   }, [ready, account, requiredRole, navigate]);
 
   const signOut = useCallback(async () => {
+    // Never leave a delegation open behind a sign-out.
+    await endImpersonation().catch(() => undefined);
     writeSession(null);
     await supabase.auth.signOut();
     navigate({ to: "/", replace: true });
   }, [navigate]);
+
+  const operatorRole = ctx?.actingAs?.operatorRole;
+  const exitActingAs = useCallback(async () => {
+    await endImpersonation();
+    setVersion((n) => n + 1);
+    navigate({ to: homeFor(operatorRole ?? "admin"), replace: true });
+  }, [navigate, operatorRole]);
 
   return {
     ready,
@@ -222,6 +236,8 @@ export function useSession(requiredRole?: Role): ResolvedSession {
     account,
     ecosystem,
     ecosystemDbId: activeEco?.id ?? null,
+    actingAs: ctx?.actingAs ?? null,
+    exitActingAs: () => void exitActingAs(),
     signOut,
   };
 }

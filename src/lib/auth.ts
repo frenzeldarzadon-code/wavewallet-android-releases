@@ -6,6 +6,7 @@
  * grant itself a role, pick an ecosystem, or read another tenant's rows.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { fetchActingSession, type ActingSession } from "@/lib/impersonation";
 import type { Role } from "@/lib/wavewallet";
 
 export interface DbEcosystem {
@@ -62,6 +63,17 @@ export interface AuthContext {
   wallets: Wallets;
   /** True when the ecosystem may run normal operations (subscription within grace). */
   subscriptionOk: boolean;
+  /**
+   * Set while an authorized operator is acting as another member. The context
+   * above then describes the TARGET account; the operator's own identity stays
+   * here so the UI can never hide who is really signed in.
+   */
+  actingAs?: {
+    session: ActingSession;
+    operatorId: string;
+    operatorName: string;
+    operatorRole: Role;
+  } | null;
 }
 
 /** Mirrors the database `subscription_ok()` rule so the UI can gate without a round trip. */
@@ -79,10 +91,23 @@ export async function loadAuthContext(): Promise<AuthContext | null> {
   const user = userData.user;
   if (!user) return null;
 
-  const [{ data: profile }, { data: roles }] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
-    supabase.from("user_roles").select("role, ecosystem_id").eq("user_id", user.id),
-  ]);
+  // An authorized operator may be acting as one of their members. The delegation
+  // itself lives in the database; here we only mirror it so the member UI renders
+  // the target's account. Reads still pass through the operator's own RLS rights.
+  const acting = await fetchActingSession();
+  const subjectId = acting?.targetId ?? user.id;
+
+  const [{ data: profile }, { data: roles }, { data: operatorProfile }, { data: operatorRoles }] =
+    await Promise.all([
+      supabase.from("profiles").select("*").eq("id", subjectId).maybeSingle(),
+      supabase.from("user_roles").select("role, ecosystem_id").eq("user_id", subjectId),
+      acting
+        ? supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle()
+        : Promise.resolve({ data: null }),
+      acting
+        ? supabase.from("user_roles").select("role").eq("user_id", user.id)
+        : Promise.resolve({ data: null }),
+    ]);
   if (!profile) return null;
   // A deleted (anonymised) customer keeps no access: their roles are revoked and
   // their login is banned server-side. Sign the stale session out immediately.
@@ -108,8 +133,8 @@ export async function loadAuthContext(): Promise<AuthContext | null> {
   }
 
   const [{ data: credit }, { data: points }, { data: status }] = await Promise.all([
-    supabase.from("credit_accounts").select("balance").eq("user_id", user.id).maybeSingle(),
-    supabase.from("points_accounts").select("balance, held").eq("user_id", user.id).maybeSingle(),
+    supabase.from("credit_accounts").select("balance").eq("user_id", subjectId).maybeSingle(),
+    supabase.from("points_accounts").select("balance, held").eq("user_id", subjectId).maybeSingle(),
     // Authoritative operational check (subscription state + period end + grace) computed
     // in the database. Used for route UX only — data access is still authorized by RLS.
     supabase.rpc("my_operational_status"),
@@ -117,7 +142,7 @@ export async function loadAuthContext(): Promise<AuthContext | null> {
   const operational = Array.isArray(status) ? status[0]?.operational : undefined;
 
   return {
-    userId: user.id,
+    userId: subjectId,
     role,
     profile: profile as DbProfile,
     ecosystem,
@@ -128,6 +153,16 @@ export async function loadAuthContext(): Promise<AuthContext | null> {
     },
     subscriptionOk:
       role === "super_admin" ? true : (operational ?? isSubscriptionOk(ecosystem)),
+    actingAs: acting
+      ? {
+          session: acting,
+          operatorId: user.id,
+          operatorName:
+            (operatorProfile as { full_name?: string } | null)?.full_name ?? "Operator",
+          operatorRole:
+            order.find((r) => (operatorRoles ?? []).some((x) => x.role === r)) ?? "admin",
+        }
+      : null,
   };
 }
 
