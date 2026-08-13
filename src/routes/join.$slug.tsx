@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { ArrowRight, MailCheck, ShieldCheck, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -34,7 +34,6 @@ export const Route = createFileRoute("/join/$slug")({
 
 function JoinPage() {
   const { slug } = useParams({ from: "/join/$slug" });
-  const navigate = useNavigate();
   const [eco, setEco] = useState<SignupEcosystem | null>(null);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirm: "" });
