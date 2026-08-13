@@ -1,16 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ProfilePage } from "@/components/profile-page";
+import { SuperProfilePage } from "@/components/super/super-profile-page";
 
 export const Route = createFileRoute("/super/profile")({
   head: () => ({
     meta: [
-      { title: "My Profile — WaveWallet Super Admin" },
+      { title: "Platform Owner Profile — WaveWallet" },
       {
         name: "description",
         content:
           "Update the platform owner display name, contact details and profile photo for the WaveWallet console.",
       },
-      { property: "og:title", content: "My Profile — WaveWallet Super Admin" },
+      { property: "og:title", content: "Platform Owner Profile — WaveWallet" },
       {
         property: "og:description",
         content: "Manage the platform owner display name, contact details and photo.",
@@ -19,5 +19,5 @@ export const Route = createFileRoute("/super/profile")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: ProfilePage,
+  component: SuperProfilePage,
 });
