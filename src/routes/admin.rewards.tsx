@@ -161,7 +161,12 @@ function AdminRewards() {
     try {
       let imagePath: string | null | undefined = undefined;
       if (imageFile) {
-        imagePath = await uploadRewardImage(ecosystemDbId, imageFile);
+        imagePath = await uploadRewardImage(
+          ecosystemDbId,
+          imageFile,
+          imageCrop?.crop,
+          imageCrop?.image,
+        );
       } else if (imageCleared) {
         imagePath = null;
       }
