@@ -177,7 +177,7 @@ function CustomerProfile() {
     );
   }
 
-  const currentAvatar = removePhoto ? null : profile?.avatar_path;
+  const currentAvatar = removePhoto ? null : (profile?.avatar_path ?? null);
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-4">
