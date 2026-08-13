@@ -18,6 +18,7 @@ import {
   fetchCreditBalance,
   fetchShopProducts,
   listPrice,
+  voucherCost,
   purchaseVoucher,
   type ShopProduct,
 } from "@/lib/wallet";
@@ -105,7 +106,7 @@ export function VoucherShopView({
 
   if (!account) return null;
 
-  const priceFor = (p: ShopProduct) => Math.round(listPrice(p) * (100 - discountPercent)) / 100;
+  const priceFor = (p: ShopProduct) => voucherCost(listPrice(p), discountPercent);
 
   const openBuy = (product: ShopProduct, method: Method) => {
     setQty(1);
