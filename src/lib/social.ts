@@ -118,9 +118,11 @@ export interface DmMessage {
   id: string;
   sender_id: string;
   body: string;
+  image_path: string | null;
   created_at: string;
   mine: boolean;
 }
+
 
 export interface SocialActivityRow {
   created_at: string;
