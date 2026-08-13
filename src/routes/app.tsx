@@ -1,5 +1,14 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
-import { Gift, History, Send, ShoppingBag, User, Wallet } from "lucide-react";
+import {
+  Gift,
+  History,
+  MessageSquare,
+  Send,
+  ShoppingBag,
+  User,
+  Users,
+  Wallet,
+} from "lucide-react";
 import { AppShell, type NavItem } from "@/components/app-shell";
 import { useSession } from "@/lib/session";
 
@@ -11,6 +20,8 @@ const nav: NavItem[] = [
   { to: "/app", label: "Wallet", icon: Wallet },
   { to: "/app/shop", label: "Voucher shop", icon: ShoppingBag },
   { to: "/app/rewards", label: "Rewards", icon: Gift },
+  { to: "/app/social", label: "Community", icon: Users },
+  { to: "/app/messages", label: "Messages", icon: MessageSquare },
   { to: "/app/transfer", label: "Transfer", icon: Send },
   { to: "/app/history", label: "History", icon: History },
   { to: "/app/profile", label: "My profile", icon: User },
@@ -19,8 +30,8 @@ const nav: NavItem[] = [
 const bottomNav: NavItem[] = [
   { to: "/app", label: "Wallet", icon: Wallet },
   { to: "/app/shop", label: "Shop", icon: ShoppingBag },
-  { to: "/app/rewards", label: "Rewards", icon: Gift },
-  { to: "/app/history", label: "History", icon: History },
+  { to: "/app/social", label: "Community", icon: Users },
+  { to: "/app/messages", label: "Messages", icon: MessageSquare },
   { to: "/app/profile", label: "Profile", icon: User },
 ];
 
