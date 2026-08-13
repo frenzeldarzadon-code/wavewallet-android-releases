@@ -37,6 +37,7 @@ import { useSession } from "@/lib/session";
 import { supabase } from "@/integrations/supabase/client";
 import { peso, roleLabel, shortDate, shortDateTime, type Role } from "@/lib/wavewallet";
 import { EditMemberDialog, type EditableMember } from "@/components/edit-member-dialog";
+import { ApplicationsPanel } from "@/components/applications-panel";
 import { memberMatches } from "@/lib/member-admin";
 import {
   evaluateCustomerDeletion,
