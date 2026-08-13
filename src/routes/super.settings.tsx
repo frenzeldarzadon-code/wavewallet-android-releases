@@ -26,9 +26,9 @@ export const Route = createFileRoute("/super/settings")({
   head: () => ({
     meta: [
       { title: "Platform Settings — WaveWallet Super Admin" },
-      { name: "description", content: "Configure subscription price, billing period, grace period, GCash collection details and support channel." },
+      { name: "description", content: "Configure GCash collection details, support channel, credit supply and platform-wide defaults." },
       { property: "og:title", content: "Platform Settings — WaveWallet Super Admin" },
-      { property: "og:description", content: "Configure subscription price, billing period, grace period, GCash collection details and support channel." },
+      { property: "og:description", content: "Configure GCash collection details, support channel, credit supply and platform-wide defaults." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
