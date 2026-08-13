@@ -309,7 +309,7 @@ export function CreditPurchasePage() {
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
                     Base {formatPhp(Number(o.list_php), currency)} · {o.discount_percent}% admin
-                    benefit · Paid {formatPhp(Number(o.amount_due), currency)} · No platform fee
+                    benefit · Paid {formatPhp(Number(o.amount_due), currency)}
                   </p>
                   {o.reviewed_at ? (
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -332,7 +332,7 @@ export function CreditPurchasePage() {
             <AlertDialogDescription>
               {credits.toLocaleString()} credits into your shop wallet for{" "}
               {formatPhp(payable, currency)} (base rate {formatPhp(listPhp, currency)}, {discount}%
-              admin benefit, no platform fee) using reference {reference.trim()}. {RELEASE_WARNING}
+              admin benefit) using reference {reference.trim()}. {RELEASE_WARNING}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
