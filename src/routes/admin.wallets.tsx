@@ -76,7 +76,7 @@ interface Member {
 }
 
 function AdminWallets() {
-  const { ecosystemDbId } = useSession("admin");
+  const { ecosystemDbId, account } = useSession("admin");
   const [members, setMembers] = useState<Member[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -89,6 +89,8 @@ function AdminWallets() {
   const [busy, setBusy] = useState(false);
   const [ledger, setLedger] = useState<CreditEntry[]>([]);
   const [mode, setMode] = useState<"credits" | "points">("credits");
+  /** The admin's own wallet — the only source of credits they can hand out. */
+  const [shopBalance, setShopBalance] = useState(0);
   const [reversal, setReversal] = useState<ReversalInfo | null>(null);
   const [reversalAmount, setReversalAmount] = useState("");
   const [reversalReason, setReversalReason] = useState<string>(REVERSAL_REASONS[0]);
