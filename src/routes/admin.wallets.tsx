@@ -119,6 +119,7 @@ function AdminWallets() {
     const roleBy = new Map((roles ?? []).map((r) => [r.user_id, r.role as string]));
     const balBy = new Map((accounts ?? []).map((a) => [a.user_id, Number(a.balance)]));
     const ptsBy = new Map((pointAccounts ?? []).map((a) => [a.user_id, Number(a.balance)]));
+    setShopBalance(account?.id ? (balBy.get(account.id) ?? 0) : 0);
     setMembers(
       (profiles ?? [])
         .map((p) => ({
