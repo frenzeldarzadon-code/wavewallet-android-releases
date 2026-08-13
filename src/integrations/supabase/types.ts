@@ -1028,6 +1028,84 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_credit_issuances: {
+        Row: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          category: string | null
+          created_at: string
+          ecosystem_id: string | null
+          ecosystem_name: string | null
+          id: string
+          ledger_id: string | null
+          operator_id: string
+          operator_name: string
+          reason: string
+          recipient_id: string
+          recipient_name: string
+          recipient_role: Database["public"]["Enums"]["app_role"] | null
+          reference: string | null
+          request_key: string
+          tx_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          category?: string | null
+          created_at?: string
+          ecosystem_id?: string | null
+          ecosystem_name?: string | null
+          id?: string
+          ledger_id?: string | null
+          operator_id: string
+          operator_name: string
+          reason: string
+          recipient_id: string
+          recipient_name: string
+          recipient_role?: Database["public"]["Enums"]["app_role"] | null
+          reference?: string | null
+          request_key: string
+          tx_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          balance_before?: number
+          category?: string | null
+          created_at?: string
+          ecosystem_id?: string | null
+          ecosystem_name?: string | null
+          id?: string
+          ledger_id?: string | null
+          operator_id?: string
+          operator_name?: string
+          reason?: string
+          recipient_id?: string
+          recipient_name?: string
+          recipient_role?: Database["public"]["Enums"]["app_role"] | null
+          reference?: string | null
+          request_key?: string
+          tx_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_credit_issuances_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_credit_issuances_ledger_id_fkey"
+            columns: ["ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_deletion_log: {
         Row: {
           actor_id: string | null
@@ -3313,6 +3391,14 @@ export type Database = {
       }
       new_tx_id: { Args: never; Returns: string }
       normalize_handle: { Args: { _handle: string }; Returns: string }
+      platform_credit_supply: {
+        Args: never
+        Returns: {
+          issuance_count: number
+          last_issued_at: string
+          total_issued: number
+        }[]
+      }
       platform_overview: {
         Args: never
         Returns: {
@@ -4117,6 +4203,17 @@ export type Database = {
           role: string
           status: string
         }[]
+      }
+      superadmin_issue_credits: {
+        Args: {
+          _amount: number
+          _category?: string
+          _reason: string
+          _reference?: string
+          _request_key?: string
+          _user_id: string
+        }
+        Returns: string
       }
       top_role: {
         Args: { _user_id: string }
