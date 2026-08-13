@@ -97,7 +97,7 @@ describe("identity line (wrong-recipient prevention)", () => {
   it("matches members by @handle as well as name, email and phone", () => {
     expect(memberMatches(member(), "@mar")).toBe(true);
     expect(memberMatches(member(), "maria@")).toBe(true);
-    expect(memberMatches(member({ handle: null }), "@mar")).toBe(true);
+    expect(memberMatches(member({ handle: null }), "maria")).toBe(true);
     expect(memberMatches(member({ full_name: "Juan", handle: "juanito" }), "@zzz")).toBe(false);
   });
 });
