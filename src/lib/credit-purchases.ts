@@ -66,8 +66,8 @@ export function creditGcashAccount(
  * null when nothing is configured or the URL is unsafe/malformed.
  */
 export function supportContact(
-  settings: CreditPurchaseSettings | null | undefined,
-): { label: string; url: string; message: string } | null {
+  settings: Partial<CreditPurchaseSettings> | null | undefined,
+): { label: string; href: string; message: string } | null {
   const raw = (settings?.support_page_url ?? "").trim();
   if (!raw) return null;
   let parsed: URL;
@@ -80,7 +80,7 @@ export function supportContact(
   const name = (settings?.support_page_name ?? "").trim();
   return {
     label: name || parsed.hostname.replace(/^www\./, ""),
-    url: parsed.toString(),
+    href: parsed.toString(),
     message: (settings?.support_message ?? "").trim(),
   };
 }
