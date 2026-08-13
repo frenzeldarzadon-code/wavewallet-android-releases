@@ -5,13 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { PageSection } from "@/components/ui-kit";
 import { RetentionPolicyCard } from "@/components/retention-policy-card";
 import { CreditSupplyCard } from "@/components/super/credit-supply-card";
@@ -19,21 +12,16 @@ import { SocialSettingsCard } from "@/components/social/social-settings-card";
 import { PromotionTiersCard } from "@/components/social/promotion-tiers-card";
 import { SOCIAL_ENABLED } from "@/lib/features";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  BILLING_PERIODS,
-  fetchPlatformSettings,
-  type BillingPeriod,
-  type PlatformSettings,
-} from "@/lib/subscription";
+import { fetchPlatformSettings, type PlatformSettings } from "@/lib/subscription";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/super/settings")({
   head: () => ({
     meta: [
       { title: "Platform Settings — WaveWallet Super Admin" },
-      { name: "description", content: "Configure subscription price, billing period, grace period, GCash collection details and support channel." },
+      { name: "description", content: "Configure GCash collection details, support channel, credit supply and platform-wide defaults." },
       { property: "og:title", content: "Platform Settings — WaveWallet Super Admin" },
-      { property: "og:description", content: "Configure subscription price, billing period, grace period, GCash collection details and support channel." },
+      { property: "og:description", content: "Configure GCash collection details, support channel, credit supply and platform-wide defaults." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -76,74 +64,12 @@ function SuperSettings() {
     }
     if (data) setForm(data as PlatformSettings);
     toast.success("Platform settings saved", {
-      description: "New pricing applies to future subscription requests only.",
+      description: "Collection and support details updated.",
     });
   };
 
   return (
     <>
-      <PageSection
-        title="Subscription plan"
-        description="Price changes apply to future requests — approved subscriptions keep the amount they were billed."
-      >
-        <Card className="shadow-[var(--shadow-card)]">
-          <CardContent className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="planName">Plan name</Label>
-              <Input
-                id="planName"
-                value={form.plan_name}
-                onChange={(e) => set("plan_name", e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="planPrice">Price per period (PHP)</Label>
-              <Input
-                id="planPrice"
-                type="number"
-                value={String(form.plan_price)}
-                onChange={(e) => set("plan_price", Number(e.target.value))}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="period">Billing period</Label>
-              <Select
-                value={form.billing_period}
-                onValueChange={(v) => set("billing_period", v as BillingPeriod)}
-              >
-                <SelectTrigger id="period">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {BILLING_PERIODS.map((p) => (
-                    <SelectItem key={p.value} value={p.value}>
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="grace">Grace period (days)</Label>
-              <Input
-                id="grace"
-                type="number"
-                value={String(form.grace_period_days)}
-                onChange={(e) => set("grace_period_days", Number(e.target.value))}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="currency">Currency</Label>
-              <Input
-                id="currency"
-                value={form.currency}
-                onChange={(e) => set("currency", e.target.value)}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </PageSection>
-
       <PageSection title="Collection details" description="Shown to operators on their subscription screen.">
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">
