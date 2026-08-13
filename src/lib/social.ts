@@ -72,6 +72,8 @@ export interface SocialState {
 }
 
 
+export type PostAudience = "ecosystem" | "general";
+
 export interface FeedPost {
   id: string;
   author_id: string;
@@ -89,7 +91,36 @@ export interface FeedPost {
   liked_by_me: boolean;
   created_at: string;
   can_delete: boolean;
+  audience: PostAudience;
+  origin_ecosystem_name: string | null;
 }
+
+/** One shop's decision about a General post. */
+export interface DistributionRow {
+  id: string;
+  post_id: string;
+  status: "pending" | "approved" | "rejected";
+  note: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+  reviewed_by_name: string | null;
+  ecosystem_id: string;
+  origin_ecosystem_name: string;
+  author_name: string;
+  author_handle: string | null;
+  author_avatar: string | null;
+  body: string;
+  image_path: string | null;
+  post_created_at: string;
+}
+
+/** Author-facing status: shop + decision only, never the private admin note. */
+export interface DistributionStatus {
+  ecosystem_name: string;
+  status: "pending" | "approved" | "rejected";
+  reviewed_at: string | null;
+}
+
 
 export interface FeedComment {
   id: string;
