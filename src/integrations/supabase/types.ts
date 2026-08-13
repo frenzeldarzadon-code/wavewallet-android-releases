@@ -4314,27 +4314,17 @@ export type Database = {
         Args: { _email: string; _phone: string }
         Returns: Json
       }
-      update_own_profile:
-        | {
-            Args: {
-              _avatar_path?: string
-              _clear_avatar?: boolean
-              _full_name?: string
-              _handle?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              _avatar_path?: string
-              _bio?: string
-              _clear_avatar?: boolean
-              _full_name?: string
-              _handle?: string
-              _preferences?: Json
-            }
-            Returns: Json
-          }
+      update_own_profile: {
+        Args: {
+          _avatar_path?: string
+          _bio?: string
+          _clear_avatar?: boolean
+          _full_name?: string
+          _handle?: string
+          _preferences?: Json
+        }
+        Returns: Json
+      }
       update_platform_settings: {
         Args: {
           _billing_period: string

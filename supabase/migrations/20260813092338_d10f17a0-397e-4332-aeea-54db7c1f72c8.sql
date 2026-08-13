@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.update_own_profile(text, text, text, boolean);
