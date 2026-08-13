@@ -89,7 +89,9 @@ import {
   validateSocialImage,
   type FeedComment,
   type FeedPost,
+  type DistributionStatus,
   type PostAudience,
+
   type PromotionTier,
   type SocialCurrency,
   type SocialState,
