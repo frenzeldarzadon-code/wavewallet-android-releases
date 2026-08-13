@@ -1,32 +1,48 @@
 /**
- * Stage 4 — optional reward images.
+ * Reward shop images.
  *
  * Binaries live in the private `reward-images` bucket, never in Postgres.
  * Objects are stored as `{ecosystem_id}/{uuid}.{ext}` so storage RLS can scope
  * reads to members of that ecosystem and writes to that ecosystem's admin.
  * Only the object path is persisted on reward_products / reward_redemptions.
+ *
+ * Uploads are cropped, resized and compressed in the browser to one uniform
+ * 16:10 thumbnail before they reach storage — original full-resolution files
+ * are never stored.
  */
 import { supabase } from "@/integrations/supabase/client";
+import {
+  MAX_UPLOAD_BYTES,
+  REWARD_TARGET,
+  loadImage,
+  optimizeImage,
+  optimizedName,
+  validateImageFile,
+  type CropRect,
+} from "@/lib/image-optimize";
 
 export const REWARD_IMAGE_BUCKET = "reward-images";
-export const MAX_REWARD_IMAGE_BYTES = 3 * 1024 * 1024; // 3 MB
-const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+export const MAX_REWARD_IMAGE_BYTES = MAX_UPLOAD_BYTES;
 
 export function validateRewardImage(file: File): string | null {
-  if (!ALLOWED.includes(file.type)) return "Use a JPG, PNG, WEBP or GIF image.";
-  if (file.size > MAX_REWARD_IMAGE_BYTES) return "That image is larger than 3 MB.";
-  return null;
+  return validateImageFile(file);
 }
 
-/** Uploads a new image and returns its storage path. Never overwrites an existing object. */
-export async function uploadRewardImage(ecosystemId: string, file: File): Promise<string> {
+/** Uploads an optimised image and returns its storage path. Never overwrites. */
+export async function uploadRewardImage(
+  ecosystemId: string,
+  file: File,
+  crop?: CropRect,
+  preloaded?: HTMLImageElement,
+): Promise<string> {
   const problem = validateRewardImage(file);
   if (problem) throw new Error(problem);
-  const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
-  const path = `${ecosystemId}/${crypto.randomUUID()}.${ext || "jpg"}`;
+  const source = preloaded ?? (await loadImage(file));
+  const { blob, mime } = await optimizeImage(source, REWARD_TARGET, crop);
+  const path = `${ecosystemId}/${optimizedName(crypto.randomUUID(), mime)}`;
   const { error } = await supabase.storage
     .from(REWARD_IMAGE_BUCKET)
-    .upload(path, file, { contentType: file.type, upsert: false });
+    .upload(path, blob, { contentType: mime, upsert: false });
   if (error) throw new Error(error.message);
   return path;
 }
