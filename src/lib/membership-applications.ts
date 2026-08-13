@@ -81,3 +81,41 @@ export async function reviewApplication(
 
 export const applicationTone = (s: ApplicationStatus) =>
   s === "approved" ? "success" : s === "rejected" ? "danger" : "warning";
+
+/** Roles that may approve or reject a signup application. Mirrors the database. */
+export const APPROVER_ROLES = ["super_admin", "admin", "reseller", "subreseller"] as const;
+export type ApproverRole = (typeof APPROVER_ROLES)[number];
+
+/**
+ * UI mirror of `public.can_review_applications`. The database re-checks this on
+ * every decision — a rejected client-side check is only a nicer message.
+ */
+export function canReviewApplication(
+  actor: { role: string; ecosystemId: string | null },
+  applicationEcosystemId: string,
+): boolean {
+  if (actor.role === "super_admin") return true;
+  if (!(APPROVER_ROLES as readonly string[]).includes(actor.role)) return false;
+  return !!actor.ecosystemId && actor.ecosystemId === applicationEcosystemId;
+}
+
+export interface SignupDraft {
+  slug: string;
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirm: string;
+}
+
+/** Client-side validation for the public signup form. Returns null when valid. */
+export function validateSignupDraft(d: SignupDraft, allowedSlugs: string[]): string | null {
+  if (!d.slug || !allowedSlugs.includes(d.slug))
+    return "Choose the ecosystem you are joining.";
+  if (!d.name.trim()) return "Enter your full name.";
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email.trim())) return "Enter a valid email address.";
+  if (d.phone.trim().replace(/\D/g, "").length < 7) return "Enter a valid mobile number.";
+  if (d.password.length < 8) return "Use a password with at least 8 characters.";
+  if (d.password !== d.confirm) return "Passwords do not match.";
+  return null;
+}
