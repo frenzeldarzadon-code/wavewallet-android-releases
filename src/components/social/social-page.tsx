@@ -152,7 +152,10 @@ export function SocialPage() {
     void refresh();
   }, [account, refresh]);
 
-  const tiers = useMemo<PromotionTier[]>(() => (state ? availableTiers(state) : []), [state]);
+  const tiers = useMemo<PromotionTier[]>(
+    () => (state ? availableTiers({ promotion_tiers: state.promotion_tiers, role: session.role }) : []),
+    [state, session.role],
+  );
   const tier = useMemo(() => tiers.find((t) => t.id === tierId) ?? null, [tiers, tierId]);
   const charge = useMemo(
     () =>

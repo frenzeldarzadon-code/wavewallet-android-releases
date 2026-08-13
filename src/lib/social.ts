@@ -182,8 +182,18 @@ export function postCharge(
 }
 
 /** Tiers the member may actually buy right now. */
-export function availableTiers(state: Pick<SocialState, "promotion_tiers">): PromotionTier[] {
-  return (state.promotion_tiers ?? []).filter((t) => t.active);
+export function availableTiers(input: {
+  promotion_tiers: PromotionTier[];
+  role?: string | null;
+}): PromotionTier[] {
+  const privileged =
+    input.role === "reseller" ||
+    input.role === "subreseller" ||
+    input.role === "admin" ||
+    input.role === "super_admin";
+  return (input.promotion_tiers ?? [])
+    .filter((t) => t.active && (t.eligibility !== "reseller" || privileged))
+    .sort((a, b) => a.sort_order - b.sort_order);
 }
 
 /** Human duration of a promotion tier, for the pre-purchase disclosure. */
