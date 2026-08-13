@@ -494,7 +494,10 @@ export function SocialPage() {
               </div>
             ) : null}
 
+            <p className="text-xs text-muted-foreground">{audienceHelp(audience)}</p>
+
             <p className="text-xs text-muted-foreground">
+
               {promote
                 ? `${tier?.name ?? "Promotion"} costs ${charge.amount} ${charge.currency === "points" ? "points" : "social credits"} and stays highlighted for ${tierDuration(tier?.duration_hours ?? 24)}. Replies to a promoted post are free for everyone — only you pay.`
                 : `A normal post costs ${state?.post_cost ?? 1} social credit. Likes are always free; replies cost ${state?.comment_cost ?? 1} social credit unless the post is promoted.`}
