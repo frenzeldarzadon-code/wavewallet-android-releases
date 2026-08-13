@@ -176,15 +176,16 @@ export async function updateLink(
   id: string,
   patch: { platform?: SocialPlatform; url?: string; label?: string; isPublic?: boolean },
 ): Promise<void> {
-  const next: Record<string, unknown> = {};
-  if (patch.platform) next["platform"] = patch.platform;
   if (patch.url !== undefined) {
     const problem = validateLink(patch.platform ?? "custom", patch.url);
     if (problem) throw new Error(problem);
-    next["url"] = normalizeUrl(patch.url)!;
   }
-  if (patch.label !== undefined) next["label"] = patch.label.trim();
-  if (patch.isPublic !== undefined) next["is_public"] = patch.isPublic;
+  const next = {
+    ...(patch.platform ? { platform: patch.platform } : {}),
+    ...(patch.url !== undefined ? { url: normalizeUrl(patch.url)! } : {}),
+    ...(patch.label !== undefined ? { label: patch.label.trim() } : {}),
+    ...(patch.isPublic !== undefined ? { is_public: patch.isPublic } : {}),
+  };
   const { error } = await supabase.from("member_social_links").update(next).eq("id", id);
   if (error) throw new Error(friendly(error.message));
 }
