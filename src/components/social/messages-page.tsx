@@ -1,8 +1,10 @@
-import { ArrowLeft, Flag, Loader2, Send, ShieldOff, UserPlus } from "lucide-react";
+import { ArrowLeft, Flag, ImagePlus, Loader2, Send, ShieldOff, UserPlus, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -15,19 +17,46 @@ import {
 import { EmptyState, PageSection } from "@/components/ui-kit";
 import { MemberAvatar } from "@/components/member-avatar";
 import { MemberPicker } from "@/components/member-picker";
+import { ImageCropper } from "@/components/image-cropper";
 import { displayHandle } from "@/lib/profile";
 import { useSession } from "@/lib/session";
+import type { CropRect } from "@/lib/image-optimize";
 import {
+  SOCIAL_IMAGE_ASPECT,
   fetchMessages,
   fetchThreads,
   relativeTime,
   reportContent,
   sendMessage,
   setBlocked,
+  socialImageUrl,
+  uploadSocialImage,
   validateMessageBody,
+  validateSocialImage,
   type DmMessage,
   type DmThread,
 } from "@/lib/social";
+
+/** Signed-url image inside a chat bubble. */
+function MessageImage({ path }: { path: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    void socialImageUrl(path).then((u) => active && setUrl(u));
+    return () => {
+      active = false;
+    };
+  }, [path]);
+  if (!url) return <div className="mb-1 aspect-4/3 w-48 animate-pulse rounded-xl bg-muted" />;
+  return (
+    <img
+      src={url}
+      alt="Attachment"
+      loading="lazy"
+      className="mb-1 aspect-4/3 w-48 rounded-xl object-cover"
+    />
+  );
+}
 
 export function MessagesPage() {
   const session = useSession();
@@ -37,6 +66,8 @@ export function MessagesPage() {
   const [messages, setMessages] = useState<DmMessage[]>([]);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [crop, setCrop] = useState<{ image: HTMLImageElement; crop: CropRect } | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
@@ -67,17 +98,44 @@ export function MessagesPage() {
     }
   };
 
+  const pickFile = (f: File | null) => {
+    if (!f) {
+      setFile(null);
+      setCrop(null);
+      return;
+    }
+    const problem = validateSocialImage(f);
+    if (problem) {
+      toast.error(problem);
+      return;
+    }
+    setFile(f);
+  };
+
   const send = async () => {
     if (!active) return;
-    const problem = validateMessageBody(body);
+    const hasImage = Boolean(file && crop);
+    const problem = hasImage && !body.trim() ? null : validateMessageBody(body);
     if (problem) {
       toast.error(problem);
       return;
     }
     setSending(true);
     try {
-      await sendMessage(active.member_id, body);
+      let imagePath: string | null = null;
+      if (file && crop && session.ecosystemDbId && session.account) {
+        imagePath = await uploadSocialImage({
+          ecosystemId: session.ecosystemDbId,
+          userId: session.account.id,
+          file,
+          crop: crop.crop,
+          preloaded: crop.image,
+        });
+      }
+      await sendMessage(active.member_id, body, imagePath);
       setBody("");
+      setFile(null);
+      setCrop(null);
       setMessages(await fetchMessages(active.thread_id));
       await loadThreads();
       requestAnimationFrame(() => bottom.current?.scrollIntoView({ block: "end" }));
@@ -174,7 +232,8 @@ export function MessagesPage() {
                       : "max-w-[80%] rounded-2xl rounded-bl-sm bg-card px-3 py-2 text-sm shadow-[var(--shadow-card)]"
                   }
                 >
-                  <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                  {m.image_path ? <MessageImage path={m.image_path} /> : null}
+                  {m.body ? <p className="whitespace-pre-wrap break-words">{m.body}</p> : null}
                   <p className="mt-1 text-[10px] opacity-70">{relativeTime(m.created_at)}</p>
                 </div>
               </div>
@@ -188,17 +247,45 @@ export function MessagesPage() {
             You blocked this member. Unblock to continue the conversation.
           </p>
         ) : (
-          <div className="flex items-end gap-2">
-            <Textarea
-              rows={1}
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              placeholder="Message…"
-              className="min-h-11 text-base"
-            />
-            <Button className="h-11" disabled={!body.trim() || sending} onClick={() => void send()}>
-              {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-            </Button>
+          <div className="space-y-2">
+            {file ? (
+              <div className="space-y-2">
+                <ImageCropper file={file} aspect={SOCIAL_IMAGE_ASPECT} onChange={setCrop} />
+                <Button variant="ghost" size="sm" onClick={() => pickFile(null)}>
+                  <X className="size-4" /> Remove photo
+                </Button>
+              </div>
+            ) : null}
+            <div className="flex items-end gap-2">
+              <Label
+                htmlFor="dmPhoto"
+                className="inline-flex h-11 cursor-pointer items-center rounded-xl border border-border px-3"
+              >
+                <ImagePlus className="size-4" />
+                <span className="sr-only">Attach a photo</span>
+              </Label>
+              <Input
+                id="dmPhoto"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
+              />
+              <Textarea
+                rows={1}
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                placeholder="Message…"
+                className="min-h-11 text-base"
+              />
+              <Button
+                className="h-11"
+                disabled={(!body.trim() && !crop) || sending}
+                onClick={() => void send()}
+              >
+                {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+              </Button>
+            </div>
           </div>
         )}
 
