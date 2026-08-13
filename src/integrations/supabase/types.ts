@@ -4083,6 +4083,10 @@ export type Database = {
         }
         Returns: Json
       }
+      update_own_contact: {
+        Args: { _email: string; _phone: string }
+        Returns: Json
+      }
       update_own_profile: {
         Args: {
           _avatar_path?: string
