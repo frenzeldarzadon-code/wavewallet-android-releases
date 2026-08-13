@@ -8,7 +8,7 @@
  * one immutable `superadmin_credit_issuance` ledger row, one platform issuance
  * supply row and one audit entry naming the operator.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Coins, Loader2, ShieldAlert, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,8 @@ import type { MemberSearchResult } from "@/lib/member-admin";
 import { roleLabel, type Role } from "@/lib/wavewallet";
 import {
   CREDIT_ISSUANCE_ACTION,
+  fetchCreditSupply,
+  type CreditSupply,
   CREDIT_ISSUANCE_CATEGORIES,
   issueCredits,
   issuanceFormIssue,
@@ -47,6 +49,10 @@ export function ManualCreditCard() {
   const [reference, setReference] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [supply, setSupply] = useState<CreditSupply | null>(null);
+
+  const loadSupply = () => void fetchCreditSupply().then(setSupply);
+  useEffect(loadSupply, []);
 
   const credits = Number(amount);
   const issue = issuanceFormIssue({
@@ -76,6 +82,7 @@ export function ManualCreditCard() {
       setCategory("");
       setReference("");
       setConfirming(false);
+      loadSupply();
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -91,6 +98,17 @@ export function ManualCreditCard() {
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-4">
+            {supply ? (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm">
+                <span className="text-muted-foreground">Platform credits issued to date</span>
+                <span className="font-semibold">
+                  {supply.total_issued.toLocaleString()} credits
+                  <span className="ml-2 font-normal text-muted-foreground">
+                    across {supply.issuance_count.toLocaleString()} issuances
+                  </span>
+                </span>
+              </div>
+            ) : null}
             {target ? (
               <div className="flex items-center gap-3 rounded-xl border border-border p-3">
                 <MemberAvatar
