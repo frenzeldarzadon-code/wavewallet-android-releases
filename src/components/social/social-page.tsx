@@ -931,3 +931,54 @@ function PostCard({
     </Card>
   );
 }
+
+/**
+ * Author-facing distribution status of their own General post.
+ * Shows shop names and decisions only — private admin notes are never returned.
+ */
+function GeneralStatus({ postId }: { postId: string }) {
+  const [rows, setRows] = useState<DistributionStatus[] | null>(null);
+  const [open, setOpen] = useState(false);
+
+  const load = async () => {
+    setOpen(true);
+    if (rows) return;
+    try {
+      setRows(await fetchDistributionStatus(postId));
+    } catch (e) {
+      toast.error("Could not load sharing status", { description: (e as Error).message });
+    }
+  };
+
+  if (!open) {
+    return (
+      <Button variant="ghost" size="sm" className="mt-1 h-8 px-0 text-xs" onClick={() => void load()}>
+        Where is this shared?
+      </Button>
+    );
+  }
+
+  return (
+    <div className="mt-2 rounded-xl bg-muted p-2 text-xs">
+      {rows === null ? (
+        <p className="text-muted-foreground">Loading…</p>
+      ) : (
+        <>
+          <p className="font-medium">{distributionSummary(rows)}</p>
+          <ul className="mt-1 space-y-0.5 text-muted-foreground">
+            {rows.map((r) => (
+              <li key={r.ecosystem_name}>
+                {r.ecosystem_name} —{" "}
+                {r.status === "approved"
+                  ? "approved"
+                  : r.status === "rejected"
+                    ? "not approved"
+                    : "waiting for approval"}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}
