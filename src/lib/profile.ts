@@ -6,6 +6,7 @@
  * roles, discounts or commissions, and no authentication data is exposed.
  */
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { AVATAR_TARGET, optimizeImage, optimizedName } from "@/lib/image-optimize";
 
 export const AVATAR_BUCKET = "avatars";
@@ -76,12 +77,15 @@ export interface MyProfile {
   avatar_path: string | null;
   email: string;
   phone: string;
+  bio: string | null;
+  preferences: Json | null;
+  joined_at: string;
 }
 
 export async function fetchMyProfile(userId: string): Promise<MyProfile | null> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, full_name, handle, avatar_path, email, phone")
+    .select("id, full_name, handle, avatar_path, email, phone, bio, preferences, joined_at")
     .eq("id", userId)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -147,6 +151,9 @@ export interface ProfileUpdate {
   handle?: string | null;
   avatarPath?: string | null;
   clearAvatar?: boolean;
+  bio?: string | null;
+  /** Merged into the stored preferences object by the database. */
+  preferences?: Record<string, unknown>;
 }
 
 export async function updateOwnProfile(update: ProfileUpdate): Promise<void> {
@@ -157,6 +164,8 @@ export async function updateOwnProfile(update: ProfileUpdate): Promise<void> {
       ? { _avatar_path: update.avatarPath }
       : {}),
     ...(update.clearAvatar ? { _clear_avatar: true } : {}),
+    ...(update.bio !== undefined ? { _bio: (update.bio ?? "").trim() } : {}),
+    ...(update.preferences !== undefined ? { _preferences: update.preferences as Json } : {}),
   });
   if (error) throw new Error(error.message);
 }
