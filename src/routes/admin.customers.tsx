@@ -1186,6 +1186,8 @@ function AdminCustomers() {
         onClose={() => setEditingProfile(null)}
         onSaved={() => void load()}
       />
+
+      <AccessAccountDialog target={accessing} onClose={() => setAccessing(null)} />
     </>
   );
 }
