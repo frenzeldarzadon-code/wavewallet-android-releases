@@ -81,6 +81,9 @@ export interface FeedPost {
   body: string;
   image_path: string | null;
   promoted: boolean;
+  promotion_tier_name: string | null;
+  promotion_expires_at: string | null;
+
   like_count: number;
   comment_count: number;
   liked_by_me: boolean;
