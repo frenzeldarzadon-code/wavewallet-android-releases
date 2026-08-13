@@ -29,6 +29,33 @@ export interface CreditPurchaseSettings {
   credit_release_mode: string;
   default_admin_sale_commission_percent: number;
   currency: string;
+  /**
+   * Read-only contact channel published by the platform owner. Only the name,
+   * URL and message are exposed here — never any other platform setting.
+   */
+  support_page_name?: string | null;
+  support_page_url?: string | null;
+  support_message?: string | null;
+}
+
+/** Contact card details for the credit purchase flow, or null when unpublished. */
+export function supportContact(
+  settings: Pick<CreditPurchaseSettings, "support_page_name" | "support_page_url" | "support_message"> | null | undefined,
+): { href: string; label: string; message: string } | null {
+  const raw = (settings?.support_page_url ?? "").trim();
+  if (!raw) return null;
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+  return {
+    href: url.toString(),
+    label: (settings?.support_page_name ?? "").trim() || url.hostname.replace(/^www\./, ""),
+    message: (settings?.support_message ?? "").trim(),
+  };
 }
 
 export const RELEASE_WARNING =
@@ -101,7 +128,7 @@ export async function fetchCreditPurchaseSettings(): Promise<CreditPurchaseSetti
   const { data, error } = await supabase
     .from("platform_settings")
     .select(
-      "admin_credit_discount_percent, admin_voucher_discount_percent, credit_gcash_number, credit_gcash_account_name, credit_payment_instructions, credit_release_mode, default_admin_sale_commission_percent, currency",
+      "admin_credit_discount_percent, admin_voucher_discount_percent, credit_gcash_number, credit_gcash_account_name, credit_payment_instructions, credit_release_mode, default_admin_sale_commission_percent, currency, support_page_name, support_page_url, support_message",
     )
     .eq("id", 1)
     .maybeSingle();
