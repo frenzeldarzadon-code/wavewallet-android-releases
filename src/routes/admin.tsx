@@ -40,11 +40,15 @@ const nav: NavItem[] = [
     : []),
   { to: "/admin/signup-link", label: "Customer signup link", icon: Link2 },
   { to: "/admin/reports", label: "Reports", icon: BarChart3 },
-  { to: "/admin/subscription", label: "Subscription", icon: CreditCard },
   { to: "/admin/settings", label: "Ecosystem", icon: Settings },
   { to: "/admin/profile", label: "My profile", icon: User },
 ];
 
+
+// Subscription plan management is not part of the Admin console. The screen
+// stays reachable only while the shop is locked out, so a lapsed admin can
+// still renew — it is never offered as a normal navigation tab.
+const renewNav: NavItem = { to: "/admin/subscription", label: "Renew access", icon: CreditCard };
 
 const bottomNav: NavItem[] = [
   { to: "/admin", label: "Home", icon: LayoutDashboard },
@@ -71,7 +75,7 @@ function AdminLayout() {
   return (
     <AppShell
       session={session}
-      nav={gated ? nav.filter((i) => readOnlyPaths.includes(i.to)) : nav}
+      nav={gated ? [...nav.filter((i) => readOnlyPaths.includes(i.to)), renewNav] : nav}
       bottomNav={gated ? [] : bottomNav}
       title={session.ecosystem.name}
       subtitle="Admin console"

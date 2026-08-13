@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { RELEASE_WARNING, STATUS_LABEL, amountDue, formatPhp } from "@/lib/credit-purchases";
+import {
+  RELEASE_WARNING,
+  STATUS_LABEL,
+  amountDue,
+  formatPhp,
+  supportContact,
+} from "@/lib/credit-purchases";
 
 describe("amountDue", () => {
   it("charges the full list price with no discount", () => {
@@ -38,5 +44,38 @@ describe("status labels", () => {
 
   it("warns that released credits can still be frozen", () => {
     expect(RELEASE_WARNING).toMatch(/freeze or withhold/i);
+  });
+});
+
+describe("support contact for the credit purchase flow", () => {
+  const base = { support_page_name: "WaveWallet Support", support_page_url: "", support_message: "" };
+
+  it("returns null when no contact URL is configured", () => {
+    expect(supportContact(null)).toBeNull();
+    expect(supportContact(base)).toBeNull();
+    expect(supportContact({ ...base, support_page_url: "   " })).toBeNull();
+  });
+
+  it("returns the configured page name and URL", () => {
+    const c = supportContact({
+      ...base,
+      support_page_url: "https://facebook.com/wavewallet",
+      support_message: "Message us for payment concerns.",
+    });
+    expect(c?.href).toBe("https://facebook.com/wavewallet");
+    expect(c?.label).toBe("WaveWallet Support");
+    expect(c?.message).toBe("Message us for payment concerns.");
+  });
+
+  it("falls back to the host when no page name is set", () => {
+    expect(
+      supportContact({ ...base, support_page_name: "", support_page_url: "https://www.facebook.com/x" })
+        ?.label,
+    ).toBe("facebook.com");
+  });
+
+  it("rejects unsafe or malformed URLs", () => {
+    expect(supportContact({ ...base, support_page_url: "javascript:alert(1)" })).toBeNull();
+    expect(supportContact({ ...base, support_page_url: "not a url" })).toBeNull();
   });
 });

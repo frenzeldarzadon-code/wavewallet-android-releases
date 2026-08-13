@@ -11,7 +11,14 @@
  * credit entry. The warning below is shown before every submission.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Coins, Loader2 } from "lucide-react";
+import {
+  AlertTriangle,
+  Coins,
+  ExternalLink,
+  Loader2,
+  MessageCircle,
+  Smartphone,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,6 +54,7 @@ import {
   fetchCreditPurchaseOrders,
   fetchCreditPurchaseSettings,
   formatPhp,
+  supportContact,
   type CreditPackage,
   type CreditPurchaseOrder,
   type CreditPurchaseSettings,
@@ -100,6 +108,7 @@ export function CreditPurchasePage() {
     [packages, packageId],
   );
   const currency = settings?.currency ?? "PHP";
+  const contact = useMemo(() => supportContact(settings), [settings]);
   const discount = settings?.admin_credit_discount_percent ?? 100;
   const listPhp = selected ? Number(selected.price_php) * quantity : 0;
   const payable = amountDue(listPhp, discount);
@@ -210,16 +219,33 @@ export function CreditPurchasePage() {
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-border p-4 text-sm">
-                  <p className="font-semibold">GCash payment</p>
+                <div className="rounded-xl border border-success/40 bg-success/5 p-4 text-sm">
+                  <p className="flex items-center gap-2 font-semibold">
+                    <Smartphone className="size-4 text-success" />
+                    Pay via GCash
+                  </p>
                   {settings?.credit_gcash_number ? (
-                    <p className="mt-1 text-muted-foreground">
-                      Send to{" "}
-                      <span className="font-medium text-foreground">
-                        {settings.credit_gcash_account_name || "Platform GCash"}
-                      </span>{" "}
-                      — <span className="font-mono">{settings.credit_gcash_number}</span>
-                    </p>
+                    <dl className="mt-2 grid gap-1">
+                      <div className="flex flex-wrap justify-between gap-2">
+                        <dt className="text-muted-foreground">Account name</dt>
+                        <dd className="font-medium">
+                          {settings.credit_gcash_account_name || "Platform GCash"}
+                        </dd>
+                      </div>
+                      <div className="flex flex-wrap justify-between gap-2">
+                        <dt className="text-muted-foreground">GCash number</dt>
+                        <dd className="font-mono font-medium">{settings.credit_gcash_number}</dd>
+                      </div>
+                      <div className="flex flex-wrap justify-between gap-2 border-t border-border pt-1">
+                        <dt className="text-muted-foreground">Amount to send</dt>
+                        <dd className="font-semibold">
+                          {formatPhp(payable, currency)}
+                          <span className="ml-1 font-normal text-muted-foreground">
+                            for {credits.toLocaleString()} credits
+                          </span>
+                        </dd>
+                      </div>
+                    </dl>
                   ) : (
                     <p className="mt-1 text-muted-foreground">
                       The platform owner has not published GCash details yet.
@@ -230,13 +256,34 @@ export function CreditPurchasePage() {
                       {settings.credit_payment_instructions}
                     </p>
                   ) : null}
-                  {payable === 0 ? (
-                    <p className="mt-2 text-muted-foreground">
-                      Nothing to pay with your current allocation benefit — submit the order and enter
-                      &quot;FREE&quot; plus a short note as your reference.
-                    </p>
-                  ) : null}
+                  <p className="mt-2 text-muted-foreground">
+                    {payable === 0
+                      ? 'Nothing to pay with your current allocation benefit — submit the order and enter "FREE" plus a short note as your reference.'
+                      : "Complete the GCash payment before or while submitting this request, then enter the GCash reference number below."}
+                  </p>
                 </div>
+
+                {contact ? (
+                  <div className="rounded-xl border border-border p-4 text-sm">
+                    <p className="font-semibold">Questions or payment inquiries?</p>
+                    {contact.message ? (
+                      <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
+                        {contact.message}
+                      </p>
+                    ) : null}
+                    <a
+                      className="mt-2 inline-flex items-center gap-1.5 font-medium text-primary underline-offset-4 hover:underline"
+                      href={contact.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <MessageCircle className="size-4" />
+                      {contact.label}
+                      <ExternalLink className="size-3.5" />
+                    </a>
+                  </div>
+                ) : null}
+
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
