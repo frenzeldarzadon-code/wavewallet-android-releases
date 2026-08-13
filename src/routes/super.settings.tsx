@@ -211,6 +211,8 @@ function SuperSettings() {
         {saving ? "Saving…" : "Save changes"}
       </Button>
 
+      <SocialSettingsCard />
+
       <RetentionPolicyCard canRun />
     </>
   );
