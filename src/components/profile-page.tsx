@@ -16,9 +16,9 @@ import {
   fetchMyProfile,
   checkHandle,
   normalizeHandle,
+  profileSaveIssue,
   updateOwnProfile,
   uploadAvatar,
-  validateDisplayName,
   validateHandle,
   type MyProfile,
 } from "@/lib/profile";
@@ -111,19 +111,19 @@ export function ProfilePage() {
   };
 
   const save = async () => {
-    if (!userId || !ecosystemDbId || !profile) return;
-    const nameProblem = validateDisplayName(name);
-    if (nameProblem) {
-      toast.error(nameProblem);
+    if (!userId || !profile) {
+      toast.error("Your profile is still loading — try again in a moment");
       return;
     }
-    const handleProblem = validateHandle(handle);
-    if (handleProblem) {
-      toast.error(handleProblem);
-      return;
-    }
-    if (handleState === "taken") {
-      toast.error("That handle is already taken in this shop");
+    const issue = profileSaveIssue({
+      name,
+      handle,
+      handleState,
+      hasFile: Boolean(file),
+      hasCrop: Boolean(crop),
+    });
+    if (issue) {
+      toast.error(issue);
       return;
     }
     setBusy(true);

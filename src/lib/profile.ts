@@ -88,9 +88,19 @@ export async function fetchMyProfile(userId: string): Promise<MyProfile | null> 
   return (data as MyProfile | null) ?? null;
 }
 
-/** Object path for a member's avatar: `{ecosystem}/{user}/{uuid}.webp`. */
-export function avatarPathFor(ecosystemId: string, userId: string, mime: string): string {
-  return `${ecosystemId}/${userId}/${optimizedName(crypto.randomUUID(), mime)}`;
+/**
+ * Object path for a member's avatar: `{ecosystem}/{user}/{uuid}.webp`.
+ * Platform-level members (no shop, e.g. the platform owner) use `platform/`.
+ */
+export const PLATFORM_AVATAR_FOLDER = "platform";
+
+export function avatarPathFor(
+  ecosystemId: string | null | undefined,
+  userId: string,
+  mime: string,
+): string {
+  const folder = ecosystemId || PLATFORM_AVATAR_FOLDER;
+  return `${folder}/${userId}/${optimizedName(crypto.randomUUID(), mime)}`;
 }
 
 /**
@@ -98,7 +108,7 @@ export function avatarPathFor(ecosystemId: string, userId: string, mime: string)
  * avatar target, then removes the previous object so storage does not grow.
  */
 export async function uploadAvatar(input: {
-  ecosystemId: string;
+  ecosystemId: string | null;
   userId: string;
   source: HTMLImageElement;
   crop?: { x: number; y: number; width: number; height: number };
@@ -158,4 +168,26 @@ export function initialsOf(name: string): string {
   const first = parts[0]![0] ?? "";
   const last = parts.length > 1 ? (parts[parts.length - 1]![0] ?? "") : "";
   return (first + last).toUpperCase();
+}
+
+/**
+ * One place that decides whether "Save profile" may run, so the button, the
+ * save handler and the tests all agree. Returns a message to show, or null.
+ */
+export function profileSaveIssue(input: {
+  name: string;
+  handle: string;
+  handleState: HandleCheck | "idle" | "checking";
+  hasFile: boolean;
+  hasCrop: boolean;
+}): string | null {
+  const nameProblem = validateDisplayName(input.name);
+  if (nameProblem) return nameProblem;
+  const handleProblem = validateHandle(input.handle);
+  if (handleProblem) return handleProblem;
+  if (input.handleState === "checking") return "Still checking that handle — try again in a moment";
+  if (input.handleState === "taken")
+    return `${displayHandle(input.handle)} is already used by another member of this shop. Choose a different handle to save.`;
+  if (input.hasFile && !input.hasCrop) return "Your photo is still loading — try again in a moment";
+  return null;
 }
