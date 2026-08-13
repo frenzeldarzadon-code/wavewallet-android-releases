@@ -1,11 +1,12 @@
 /**
- * Manual credit (platform owner only).
+ * Super Admin Credit Issuance (platform owner only).
  *
- * A direct grant into any account's credit wallet. It is not a voucher
- * generator and it is not an admin purchase: no voucher inventory, no codes
- * and no commission are created. The grant goes through `admin_adjust_credits`,
- * which only the platform owner may call with a positive amount, and writes one
- * immutable ledger row plus an audit entry naming the operator.
+ * The platform owner mints credits straight into any account. It is not a
+ * voucher generator, not an admin purchase and not a wallet transfer: the
+ * operator's own balance is never read or debited, so issuing with a zero
+ * balance is valid. `superadmin_issue_credits` authorizes the caller, writes
+ * one immutable `superadmin_credit_issuance` ledger row, one platform issuance
+ * supply row and one audit entry naming the operator.
  */
 import { useState } from "react";
 import { Coins, Loader2, ShieldAlert, X } from "lucide-react";

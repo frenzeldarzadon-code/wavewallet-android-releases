@@ -180,9 +180,19 @@ export function ManualCreditDialog({
               />
             </div>
 
-            <p className="rounded-lg bg-brand-soft px-3 py-2 text-xs text-accent-foreground">
-              New balance after issuance: <strong>{after.toLocaleString()}</strong> credits
-            </p>
+            <div className="space-y-1 rounded-lg bg-brand-soft px-3 py-2 text-xs text-accent-foreground">
+              <p>
+                Issuing <strong>{credits > 0 ? credits.toLocaleString() : "—"}</strong> credits to{" "}
+                <strong>{target.full_name}</strong>.
+              </p>
+              <p>
+                New balance after issuance: <strong>{after.toLocaleString()}</strong> credits
+              </p>
+              {reason.trim() ? <p>Reason: “{reason.trim()}”</p> : null}
+              <p className="font-medium">
+                Issued by Super Admin — does not deduct from Super Admin wallet.
+              </p>
+            </div>
             {issue ? <p className="text-xs text-destructive">{issue}</p> : null}
           </div>
         ) : null}
