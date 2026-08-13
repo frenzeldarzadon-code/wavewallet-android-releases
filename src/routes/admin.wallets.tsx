@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, RotateCcw, Search, UserCog, Wallet } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { EditMemberDialog, type EditableMember } from "@/components/edit-member-dialog";
