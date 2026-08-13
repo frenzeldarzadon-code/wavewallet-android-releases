@@ -177,6 +177,30 @@ export function ProfilePage() {
 
   const currentAvatar = removePhoto ? null : (profile?.avatar_path ?? null);
 
+  // Identity and security settings stay with the account owner: an operator who
+  // is acting as a member cannot change their name, @handle, photo or contacts.
+  if (actingAs) {
+    return (
+      <div className="mx-auto w-full max-w-2xl">
+        <PageSection
+          title="Profile"
+          description={`You are acting as ${actingAs.session.targetName}.`}
+        >
+          <Card>
+            <CardContent className="space-y-2 p-4 sm:p-5">
+              <p className="text-sm font-medium">Profile editing is unavailable while acting as a member.</p>
+              <p className="text-sm text-muted-foreground">
+                Names, @handles, photos, contact details and security settings can only be changed
+                by the account owner. Use “Edit” in your member list for permitted admin changes —
+                those are logged under your own name.
+              </p>
+            </CardContent>
+          </Card>
+        </PageSection>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto w-full max-w-2xl space-y-4">
       <PageSection
