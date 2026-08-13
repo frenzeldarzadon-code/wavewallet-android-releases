@@ -261,7 +261,7 @@ export async function createPost(input: {
 }): Promise<{ post_id: string; charged: number; currency: string; balance: number }> {
   const { data, error } = await supabase.rpc("social_create_post", {
     _body: input.body.trim(),
-    _image_path: input.imagePath ?? null,
+    ...(input.imagePath ? { _image_path: input.imagePath } : {}),
     _promote: input.promote,
   });
   if (error) fail(error.message);
