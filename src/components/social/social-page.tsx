@@ -358,13 +358,50 @@ export function SocialPage() {
               </div>
             </div>
 
+            {/* Audience choice — mobile-first, always visible before writing. */}
+            <div className="space-y-1.5">
+              <Label>Who can see this?</Label>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {(["ecosystem", "general"] as PostAudience[]).map((a) => (
+                  <button
+                    key={a}
+                    type="button"
+                    onClick={() => setAudience(a)}
+                    aria-pressed={audience === a}
+                    className={
+                      audience === a
+                        ? "rounded-xl border-2 border-primary bg-primary/5 p-3 text-left"
+                        : "rounded-xl border border-border p-3 text-left"
+                    }
+                  >
+                    <span className="flex items-center gap-2 text-sm font-semibold">
+                      {a === "general" ? (
+                        <Globe2 className="size-4 text-primary" aria-hidden />
+                      ) : (
+                        <Users className="size-4 text-primary" aria-hidden />
+                      )}
+                      {audienceLabel(a)}
+                    </span>
+                    <span className="mt-1 block text-xs text-muted-foreground">
+                      {audienceHelp(a)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <Textarea
               value={body}
               onChange={(e) => setBody(e.target.value.slice(0, POST_MAX_CHARS))}
               rows={3}
-              placeholder="Share something with your shop…"
+              placeholder={
+                audience === "general"
+                  ? "Share something with the whole WaveWallet network…"
+                  : "Share something with your shop…"
+              }
               className="min-h-24 text-base"
             />
+
 
             {file ? (
               <div className="space-y-2">
