@@ -85,15 +85,15 @@ describe("creditGcashAccount", () => {
   const base = {
     admin_credit_discount_percent: 100,
     admin_voucher_discount_percent: 100,
-    credit_gcash_number: "",
-    credit_gcash_account_name: "",
-    credit_payment_instructions: "",
     credit_release_mode: "manual",
     default_admin_sale_commission_percent: 0,
     currency: "PHP",
+    gcash_number: "",
+    gcash_account_name: "",
+    payment_instructions: "",
   };
 
-  it("falls back to the platform collection account", () => {
+  it("mirrors the platform collection account exactly", () => {
     expect(
       creditGcashAccount({
         ...base,
@@ -104,20 +104,16 @@ describe("creditGcashAccount", () => {
     ).toEqual({ number: "0917", accountName: "Owner", instructions: "Send now" });
   });
 
-  it("prefers the credit-specific account when published", () => {
-    expect(
-      creditGcashAccount({
-        ...base,
-        credit_gcash_number: "0918",
-        credit_gcash_account_name: "Credits",
-        gcash_number: "0917",
-        gcash_account_name: "Owner",
-      }),
-    ).toEqual({ number: "0918", accountName: "Credits", instructions: "" });
+  it("follows platform setting changes", () => {
+    const before = creditGcashAccount({ ...base, gcash_number: "0917", gcash_account_name: "Owner" });
+    const after = creditGcashAccount({ ...base, gcash_number: "0999", gcash_account_name: "New Owner" });
+    expect(before?.number).toBe("0917");
+    expect(after).toEqual({ number: "0999", accountName: "New Owner", instructions: "" });
   });
 
-  it("returns null when nothing is configured", () => {
+  it("returns null when the platform account is not configured", () => {
     expect(creditGcashAccount(base)).toBeNull();
     expect(creditGcashAccount(null)).toBeNull();
   });
 });
+
