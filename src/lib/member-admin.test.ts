@@ -13,7 +13,10 @@ import {
 const member = (over: Partial<MemberSearchResult> = {}): MemberSearchResult => ({
   id: "u1",
   full_name: "Maria Dela Cruz",
+  handle: "maria",
+  avatar_path: null,
   email: "Maria@Example.com",
+  masked_email: "M***@Example.com",
   phone: "0917-555-1234",
   status: "active",
   role: "customer",
