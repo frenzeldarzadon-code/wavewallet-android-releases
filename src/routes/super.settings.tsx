@@ -15,6 +15,7 @@ import {
 import { PageSection } from "@/components/ui-kit";
 import { RetentionPolicyCard } from "@/components/retention-policy-card";
 import { SocialSettingsCard } from "@/components/social/social-settings-card";
+import { PromotionTiersCard } from "@/components/social/promotion-tiers-card";
 import { supabase } from "@/integrations/supabase/client";
 import {
   BILLING_PERIODS,
@@ -213,6 +214,11 @@ function SuperSettings() {
       </Button>
 
       <SocialSettingsCard />
+      <PromotionTiersCard
+        ecosystemId={null}
+        title="Default promotion types"
+        description="Platform-wide promotion levels every shop starts with. Shops may customise or add their own."
+      />
 
       <RetentionPolicyCard canRun />
     </>
