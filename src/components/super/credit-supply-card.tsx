@@ -9,15 +9,13 @@
  *      (releases nothing) or freeze an approved purchase that is disputed.
  */
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, Plus, Snowflake, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -26,41 +24,31 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageSection } from "@/components/ui-kit";
-import { statusTone } from "@/components/credit-purchase-page";
 import {
-  STATUS_LABEL,
   deleteCreditPackage,
   fetchCreditPackages,
-  fetchCreditPurchaseOrders,
   fetchCreditPurchaseSettings,
   formatPhp,
-  freezeCreditPurchaseOrder,
-  reviewCreditPurchaseOrder,
   saveCreditPackage,
   updateCreditPurchaseSettings,
   type CreditPackage,
-  type CreditPurchaseOrder,
   type CreditPurchaseSettings,
-  type OrderStatus,
 } from "@/lib/credit-purchases";
 
 export function CreditSupplyCard() {
   const [packages, setPackages] = useState<CreditPackage[]>([]);
   const [settings, setSettings] = useState<CreditPurchaseSettings | null>(null);
-  const [orders, setOrders] = useState<CreditPurchaseOrder[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [draft, setDraft] = useState({ name: "", credits: "1000", price: "10" });
 
   const load = useCallback(async () => {
     try {
-      const [pkgs, cfg, list] = await Promise.all([
+      const [pkgs, cfg] = await Promise.all([
         fetchCreditPackages(),
         fetchCreditPurchaseSettings(),
-        fetchCreditPurchaseOrders({ limit: 50 }),
       ]);
       setPackages(pkgs);
       setSettings(cfg);
-      setOrders(list);
     } catch (e) {
       toast.error((e as Error).message);
     }
