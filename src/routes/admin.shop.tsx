@@ -1,4 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { fetchMyVoucherDiscount } from "@/lib/wallet";
+import { useSession } from "@/lib/session";
 import { VoucherShopView } from "./app.shop";
 
 export const Route = createFileRoute("/admin/shop")({
@@ -28,5 +31,14 @@ export const Route = createFileRoute("/admin/shop")({
  * a voucher. The purchase is paid from the admin's own shop wallet.
  */
 function AdminShop() {
-  return <VoucherShopView role="admin" />;
+  const { account } = useSession("admin");
+  // The admin voucher shop discount is configured by the platform owner
+  // (default 100% off) and resolved server-side, so the price shown here is
+  // exactly what checkout charges.
+  const [discount, setDiscount] = useState(0);
+  useEffect(() => {
+    if (!account?.id) return;
+    void fetchMyVoucherDiscount(account.id).then(setDiscount);
+  }, [account?.id]);
+  return <VoucherShopView role="admin" discountPercent={discount} />;
 }

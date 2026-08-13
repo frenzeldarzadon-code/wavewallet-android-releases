@@ -100,6 +100,17 @@ export interface SaleRow {
 export const listPrice = (p: { credit_price: number; promo_price: number | null }) =>
   Number(p.promo_price ?? p.credit_price);
 
+/**
+ * Credits actually charged for a voucher after the buyer's shop discount.
+ * Admins get the platform-wide admin voucher discount (default 100% off),
+ * resellers/subresellers their configured discount. Mirrors purchase_voucher.
+ */
+export const voucherCost = (list: number, discountPercent: number) => {
+  const pct = Math.max(0, Math.min(100, discountPercent));
+  return Math.round(list * (100 - pct)) / 100;
+};
+
+
 /* ------------------------------------------------------------------ */
 /* Reads                                                               */
 /* ------------------------------------------------------------------ */

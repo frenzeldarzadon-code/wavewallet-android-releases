@@ -21,6 +21,8 @@ export type OrderStatus = "pending" | "approved" | "rejected" | "frozen";
 
 export interface CreditPurchaseSettings {
   admin_credit_discount_percent: number;
+  /** Discount an admin gets when buying vouchers from their own uploaded inventory. */
+  admin_voucher_discount_percent: number;
   credit_gcash_number: string;
   credit_gcash_account_name: string;
   credit_payment_instructions: string;
@@ -99,7 +101,7 @@ export async function fetchCreditPurchaseSettings(): Promise<CreditPurchaseSetti
   const { data, error } = await supabase
     .from("platform_settings")
     .select(
-      "admin_credit_discount_percent, credit_gcash_number, credit_gcash_account_name, credit_payment_instructions, credit_release_mode, default_admin_sale_commission_percent, currency",
+      "admin_credit_discount_percent, admin_voucher_discount_percent, credit_gcash_number, credit_gcash_account_name, credit_payment_instructions, credit_release_mode, default_admin_sale_commission_percent, currency",
     )
     .eq("id", 1)
     .maybeSingle();
@@ -117,6 +119,7 @@ export async function updateCreditPurchaseSettings(
     _credit_payment_instructions: input.credit_payment_instructions,
     _credit_release_mode: input.credit_release_mode,
     _default_admin_sale_commission_percent: input.default_admin_sale_commission_percent,
+    _admin_voucher_discount_percent: input.admin_voucher_discount_percent,
   });
   if (error) throw new Error(error.message);
 }

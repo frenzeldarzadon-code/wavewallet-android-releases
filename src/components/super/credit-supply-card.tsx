@@ -272,13 +272,15 @@ export function CreditSupplyCard() {
 
       {settings ? (
         <PageSection
-          title="Admin shop allocation settings"
-          description="Base rates live on the packages above; the benefit below is the discount an admin gets on their own shop allocation."
+          title="Admin shop settings"
+          description="Two separate settings: what an admin pays for a credit allocation, and the discount an admin gets when buying vouchers from their own uploaded inventory."
         >
           <Card className="shadow-[var(--shadow-card)]">
             <CardContent className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="adminDiscount">Admin allocation benefit (%)</Label>
+                <Label htmlFor="adminDiscount">
+                  Admin Credit Allocation Base Rate — discount (%)
+                </Label>
                 <Input
                   id="adminDiscount"
                   type="number"
@@ -290,10 +292,30 @@ export function CreditSupplyCard() {
                   }
                 />
                 <p className="text-xs text-muted-foreground">
-                  100% means an admin pays nothing for their own shop allocation. This is a
-                  discount on the base rate, not a waived platform fee — there is no fee.
+                  Base rates live on the packages above (default 1,000 credits = PHP 10.00).
+                  100% means an admin pays nothing for their own allocation. There is no
+                  platform fee.
                 </p>
               </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="adminVoucherDiscount">Admin Voucher Shop Discount (%)</Label>
+                <Input
+                  id="adminVoucherDiscount"
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={String(settings.admin_voucher_discount_percent)}
+                  onChange={(e) =>
+                    set("admin_voucher_discount_percent", Number(e.target.value))
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Applies only to vouchers an admin takes from their own uploaded inventory.
+                  At 100% off a PHP 10 voucher costs the admin 0 credits and their shop wallet
+                  is untouched. Separate from the allocation rate above.
+                </p>
+              </div>
+
               <div className="space-y-1.5">
                 <Label htmlFor="releaseMode">Credit release</Label>
                 <Select
