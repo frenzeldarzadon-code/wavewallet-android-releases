@@ -17,6 +17,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { RewardImage } from "@/components/reward-image";
+import { ImageCropper } from "@/components/image-cropper";
+import type { CropRect } from "@/lib/image-optimize";
 import {
   deleteRewardImage,
   uploadRewardImage,
