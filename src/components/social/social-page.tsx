@@ -55,6 +55,8 @@ import {
   COMMENT_MAX_CHARS,
   POST_MAX_CHARS,
   SOCIAL_IMAGE_ASPECT,
+  audienceHelp,
+  audienceLabel,
   availableTiers,
   canAfford,
   chargeSummary,
@@ -63,9 +65,11 @@ import {
   createPost,
   deleteComment,
   deletePost,
+  distributionSummary,
   exchangeForSocialCredits,
   exchangeGain,
   fetchComments,
+  fetchDistributionStatus,
   fetchFeed,
   fetchSocialState,
   postCharge,
@@ -81,11 +85,13 @@ import {
   validateSocialImage,
   type FeedComment,
   type FeedPost,
+  type PostAudience,
   type PromotionTier,
   type SocialCurrency,
   type SocialState,
 } from "@/lib/social";
 import { sendMessage } from "@/lib/social";
+
 
 /** Signed-image thumbnail for a post. */
 function PostImage({ path }: { path: string }) {
