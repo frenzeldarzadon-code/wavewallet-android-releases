@@ -93,7 +93,7 @@ export function CreditSupplyCard() {
     <>
       <PageSection
         title="Credit supply"
-        description="Only you can create credits. Packages define the platform price shop admins pay for an allocation."
+        description="Only you can create credits. Each package is a shop allocation: the base rate is its complete value — no platform fee, markup or surcharge is added anywhere."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardHeader>
@@ -105,12 +105,73 @@ export function CreditSupplyCard() {
                 key={p.id}
                 className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-3"
               >
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1 space-y-1.5">
                   <p className="truncate text-sm font-medium">{p.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {Number(p.credits).toLocaleString()} credits ·{" "}
-                    {formatPhp(Number(p.price_php), currency)}
-                  </p>
+                  <div className="flex flex-wrap items-end gap-3">
+                    <div className="space-y-1">
+                      <Label htmlFor={`credits-${p.id}`} className="text-xs">
+                        Credits
+                      </Label>
+                      <Input
+                        id={`credits-${p.id}`}
+                        className="h-8 w-28"
+                        type="number"
+                        min={1}
+                        defaultValue={String(Number(p.credits))}
+                        onBlur={(e) => {
+                          const credits = Number(e.target.value);
+                          if (!credits || credits === Number(p.credits)) return;
+                          void run(
+                            p.id,
+                            () =>
+                              saveCreditPackage({
+                                id: p.id,
+                                name: p.name,
+                                credits,
+                                pricePhp: Number(p.price_php),
+                                active: p.active,
+                                sortOrder: p.sort_order,
+                              }),
+                            "Allocation size updated",
+                          );
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor={`price-${p.id}`} className="text-xs">
+                        Base rate ({currency})
+                      </Label>
+                      <Input
+                        id={`price-${p.id}`}
+                        className="h-8 w-28"
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        defaultValue={String(Number(p.price_php))}
+                        onBlur={(e) => {
+                          const price = Number(e.target.value);
+                          if (Number.isNaN(price) || price === Number(p.price_php)) return;
+                          void run(
+                            p.id,
+                            () =>
+                              saveCreditPackage({
+                                id: p.id,
+                                name: p.name,
+                                credits: Number(p.credits),
+                                pricePhp: price,
+                                active: p.active,
+                                sortOrder: p.sort_order,
+                              }),
+                            "Base rate updated",
+                          );
+                        }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {Number(p.credits).toLocaleString()} credits ={" "}
+                      {formatPhp(Number(p.price_php), currency)} · no platform fee
+                    </p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
@@ -172,7 +233,7 @@ export function CreditSupplyCard() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="pkgPrice">Price ({currency})</Label>
+                <Label htmlFor="pkgPrice">Base rate ({currency})</Label>
                 <Input
                   id="pkgPrice"
                   type="number"
@@ -211,13 +272,13 @@ export function CreditSupplyCard() {
 
       {settings ? (
         <PageSection
-          title="Admin credit purchase settings"
-          description="The list price stays configurable while admins pay the discounted amount — change either without touching code."
+          title="Admin shop allocation settings"
+          description="Base rates live on the packages above; the benefit below is the discount an admin gets on their own shop allocation."
         >
           <Card className="shadow-[var(--shadow-card)]">
             <CardContent className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="adminDiscount">Admin discount (%)</Label>
+                <Label htmlFor="adminDiscount">Admin allocation benefit (%)</Label>
                 <Input
                   id="adminDiscount"
                   type="number"
@@ -229,7 +290,8 @@ export function CreditSupplyCard() {
                   }
                 />
                 <p className="text-xs text-muted-foreground">
-                  100% means admins pay nothing — the platform benefit.
+                  100% means an admin pays nothing for their own shop allocation. This is a
+                  discount on the base rate, not a waived platform fee — there is no fee.
                 </p>
               </div>
               <div className="space-y-1.5">

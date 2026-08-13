@@ -56,7 +56,7 @@ export function VoucherShopView({
   role,
   discountPercent = 0,
 }: {
-  role: "customer" | "reseller" | "subreseller";
+  role: "customer" | "reseller" | "subreseller" | "admin";
   discountPercent?: number;
 }) {
   // Subresellers share the reseller workspace; the database still authorizes each purchase.
