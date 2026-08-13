@@ -41,6 +41,7 @@ import { Route as JoinSlugRouteImport } from './routes/join.$slug'
 import { Route as ResellerIndexRouteImport } from './routes/reseller.index'
 import { Route as ResellerCustomersRouteImport } from './routes/reseller.customers'
 import { Route as ResellerEarningsRouteImport } from './routes/reseller.earnings'
+import { Route as ResellerMessagesRouteImport } from './routes/reseller.messages'
 import { Route as ResellerRedemptionsRouteImport } from './routes/reseller.redemptions'
 import { Route as ResellerReportsRouteImport } from './routes/reseller.reports'
 import { Route as ResellerShopRouteImport } from './routes/reseller.shop'
@@ -213,6 +214,11 @@ const ResellerEarningsRoute = ResellerEarningsRouteImport.update({
   path: '/earnings',
   getParentRoute: () => ResellerRoute,
 } as any)
+const ResellerMessagesRoute = ResellerMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => ResellerRoute,
+} as any)
 const ResellerRedemptionsRoute = ResellerRedemptionsRouteImport.update({
   id: '/redemptions',
   path: '/redemptions',
@@ -299,6 +305,7 @@ export interface FileRoutesByFullPath {
   '/join/$slug': typeof JoinSlugRoute
   '/reseller/customers': typeof ResellerCustomersRoute
   '/reseller/earnings': typeof ResellerEarningsRoute
+  '/reseller/messages': typeof ResellerMessagesRoute
   '/reseller/redemptions': typeof ResellerRedemptionsRoute
   '/reseller/reports': typeof ResellerReportsRoute
   '/reseller/shop': typeof ResellerShopRoute
@@ -340,6 +347,7 @@ export interface FileRoutesByTo {
   '/join/$slug': typeof JoinSlugRoute
   '/reseller/customers': typeof ResellerCustomersRoute
   '/reseller/earnings': typeof ResellerEarningsRoute
+  '/reseller/messages': typeof ResellerMessagesRoute
   '/reseller/redemptions': typeof ResellerRedemptionsRoute
   '/reseller/reports': typeof ResellerReportsRoute
   '/reseller/shop': typeof ResellerShopRoute
@@ -386,6 +394,7 @@ export interface FileRoutesById {
   '/join/$slug': typeof JoinSlugRoute
   '/reseller/customers': typeof ResellerCustomersRoute
   '/reseller/earnings': typeof ResellerEarningsRoute
+  '/reseller/messages': typeof ResellerMessagesRoute
   '/reseller/redemptions': typeof ResellerRedemptionsRoute
   '/reseller/reports': typeof ResellerReportsRoute
   '/reseller/shop': typeof ResellerShopRoute
@@ -433,6 +442,7 @@ export interface FileRouteTypes {
     | '/join/$slug'
     | '/reseller/customers'
     | '/reseller/earnings'
+    | '/reseller/messages'
     | '/reseller/redemptions'
     | '/reseller/reports'
     | '/reseller/shop'
@@ -474,6 +484,7 @@ export interface FileRouteTypes {
     | '/join/$slug'
     | '/reseller/customers'
     | '/reseller/earnings'
+    | '/reseller/messages'
     | '/reseller/redemptions'
     | '/reseller/reports'
     | '/reseller/shop'
@@ -519,6 +530,7 @@ export interface FileRouteTypes {
     | '/join/$slug'
     | '/reseller/customers'
     | '/reseller/earnings'
+    | '/reseller/messages'
     | '/reseller/redemptions'
     | '/reseller/reports'
     | '/reseller/shop'
@@ -773,6 +785,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResellerEarningsRouteImport
       parentRoute: typeof ResellerRoute
     }
+    '/reseller/messages': {
+      id: '/reseller/messages'
+      path: '/messages'
+      fullPath: '/reseller/messages'
+      preLoaderRoute: typeof ResellerMessagesRouteImport
+      parentRoute: typeof ResellerRoute
+    }
     '/reseller/redemptions': {
       id: '/reseller/redemptions'
       path: '/redemptions'
@@ -912,6 +931,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 interface ResellerRouteChildren {
   ResellerCustomersRoute: typeof ResellerCustomersRoute
   ResellerEarningsRoute: typeof ResellerEarningsRoute
+  ResellerMessagesRoute: typeof ResellerMessagesRoute
   ResellerRedemptionsRoute: typeof ResellerRedemptionsRoute
   ResellerReportsRoute: typeof ResellerReportsRoute
   ResellerShopRoute: typeof ResellerShopRoute
@@ -922,6 +942,7 @@ interface ResellerRouteChildren {
 const ResellerRouteChildren: ResellerRouteChildren = {
   ResellerCustomersRoute: ResellerCustomersRoute,
   ResellerEarningsRoute: ResellerEarningsRoute,
+  ResellerMessagesRoute: ResellerMessagesRoute,
   ResellerRedemptionsRoute: ResellerRedemptionsRoute,
   ResellerReportsRoute: ResellerReportsRoute,
   ResellerShopRoute: ResellerShopRoute,
