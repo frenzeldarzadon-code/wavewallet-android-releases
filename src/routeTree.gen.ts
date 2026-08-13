@@ -48,18 +48,24 @@ import { Route as ResellerIndexRouteImport } from './routes/reseller.index'
 import { Route as ResellerApplicationsRouteImport } from './routes/reseller.applications'
 import { Route as ResellerCustomersRouteImport } from './routes/reseller.customers'
 import { Route as ResellerEarningsRouteImport } from './routes/reseller.earnings'
+import { Route as ResellerHistoryRouteImport } from './routes/reseller.history'
 import { Route as ResellerMessagesRouteImport } from './routes/reseller.messages'
 import { Route as ResellerProfileRouteImport } from './routes/reseller.profile'
 import { Route as ResellerRedemptionsRouteImport } from './routes/reseller.redemptions'
 import { Route as ResellerReportsRouteImport } from './routes/reseller.reports'
+import { Route as ResellerRewardsRouteImport } from './routes/reseller.rewards'
 import { Route as ResellerShopRouteImport } from './routes/reseller.shop'
 import { Route as ResellerSocialRouteImport } from './routes/reseller.social'
+import { Route as ResellerTransferRouteImport } from './routes/reseller.transfer'
+import { Route as ResellerWalletRouteImport } from './routes/reseller.wallet'
 import { Route as SuperIndexRouteImport } from './routes/super.index'
 import { Route as SuperAdminsRouteImport } from './routes/super.admins'
 import { Route as SuperApplicationsRouteImport } from './routes/super.applications'
+import { Route as SuperApprovalsRouteImport } from './routes/super.approvals'
 import { Route as SuperAuditRouteImport } from './routes/super.audit'
 import { Route as SuperCreditsRouteImport } from './routes/super.credits'
 import { Route as SuperExportRouteImport } from './routes/super.export'
+import { Route as SuperMembersRouteImport } from './routes/super.members'
 import { Route as SuperOperatorLogRouteImport } from './routes/super.operator-log'
 import { Route as SuperProfileRouteImport } from './routes/super.profile'
 import { Route as SuperReportsRouteImport } from './routes/super.reports'
@@ -261,6 +267,11 @@ const ResellerEarningsRoute = ResellerEarningsRouteImport.update({
   path: '/earnings',
   getParentRoute: () => ResellerRoute,
 } as any)
+const ResellerHistoryRoute = ResellerHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => ResellerRoute,
+} as any)
 const ResellerMessagesRoute = ResellerMessagesRouteImport.update({
   id: '/messages',
   path: '/messages',
@@ -281,6 +292,11 @@ const ResellerReportsRoute = ResellerReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => ResellerRoute,
 } as any)
+const ResellerRewardsRoute = ResellerRewardsRouteImport.update({
+  id: '/rewards',
+  path: '/rewards',
+  getParentRoute: () => ResellerRoute,
+} as any)
 const ResellerShopRoute = ResellerShopRouteImport.update({
   id: '/shop',
   path: '/shop',
@@ -289,6 +305,16 @@ const ResellerShopRoute = ResellerShopRouteImport.update({
 const ResellerSocialRoute = ResellerSocialRouteImport.update({
   id: '/social',
   path: '/social',
+  getParentRoute: () => ResellerRoute,
+} as any)
+const ResellerTransferRoute = ResellerTransferRouteImport.update({
+  id: '/transfer',
+  path: '/transfer',
+  getParentRoute: () => ResellerRoute,
+} as any)
+const ResellerWalletRoute = ResellerWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
   getParentRoute: () => ResellerRoute,
 } as any)
 const SuperIndexRoute = SuperIndexRouteImport.update({
@@ -306,6 +332,11 @@ const SuperApplicationsRoute = SuperApplicationsRouteImport.update({
   path: '/applications',
   getParentRoute: () => SuperRoute,
 } as any)
+const SuperApprovalsRoute = SuperApprovalsRouteImport.update({
+  id: '/approvals',
+  path: '/approvals',
+  getParentRoute: () => SuperRoute,
+} as any)
 const SuperAuditRoute = SuperAuditRouteImport.update({
   id: '/audit',
   path: '/audit',
@@ -319,6 +350,11 @@ const SuperCreditsRoute = SuperCreditsRouteImport.update({
 const SuperExportRoute = SuperExportRouteImport.update({
   id: '/export',
   path: '/export',
+  getParentRoute: () => SuperRoute,
+} as any)
+const SuperMembersRoute = SuperMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
   getParentRoute: () => SuperRoute,
 } as any)
 const SuperOperatorLogRoute = SuperOperatorLogRouteImport.update({
@@ -384,17 +420,23 @@ export interface FileRoutesByFullPath {
   '/reseller/applications': typeof ResellerApplicationsRoute
   '/reseller/customers': typeof ResellerCustomersRoute
   '/reseller/earnings': typeof ResellerEarningsRoute
+  '/reseller/history': typeof ResellerHistoryRoute
   '/reseller/messages': typeof ResellerMessagesRoute
   '/reseller/profile': typeof ResellerProfileRoute
   '/reseller/redemptions': typeof ResellerRedemptionsRoute
   '/reseller/reports': typeof ResellerReportsRoute
+  '/reseller/rewards': typeof ResellerRewardsRoute
   '/reseller/shop': typeof ResellerShopRoute
   '/reseller/social': typeof ResellerSocialRoute
+  '/reseller/transfer': typeof ResellerTransferRoute
+  '/reseller/wallet': typeof ResellerWalletRoute
   '/super/admins': typeof SuperAdminsRoute
   '/super/applications': typeof SuperApplicationsRoute
+  '/super/approvals': typeof SuperApprovalsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/credits': typeof SuperCreditsRoute
   '/super/export': typeof SuperExportRoute
+  '/super/members': typeof SuperMembersRoute
   '/super/operator-log': typeof SuperOperatorLogRoute
   '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
@@ -438,17 +480,23 @@ export interface FileRoutesByTo {
   '/reseller/applications': typeof ResellerApplicationsRoute
   '/reseller/customers': typeof ResellerCustomersRoute
   '/reseller/earnings': typeof ResellerEarningsRoute
+  '/reseller/history': typeof ResellerHistoryRoute
   '/reseller/messages': typeof ResellerMessagesRoute
   '/reseller/profile': typeof ResellerProfileRoute
   '/reseller/redemptions': typeof ResellerRedemptionsRoute
   '/reseller/reports': typeof ResellerReportsRoute
+  '/reseller/rewards': typeof ResellerRewardsRoute
   '/reseller/shop': typeof ResellerShopRoute
   '/reseller/social': typeof ResellerSocialRoute
+  '/reseller/transfer': typeof ResellerTransferRoute
+  '/reseller/wallet': typeof ResellerWalletRoute
   '/super/admins': typeof SuperAdminsRoute
   '/super/applications': typeof SuperApplicationsRoute
+  '/super/approvals': typeof SuperApprovalsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/credits': typeof SuperCreditsRoute
   '/super/export': typeof SuperExportRoute
+  '/super/members': typeof SuperMembersRoute
   '/super/operator-log': typeof SuperOperatorLogRoute
   '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
@@ -497,17 +545,23 @@ export interface FileRoutesById {
   '/reseller/applications': typeof ResellerApplicationsRoute
   '/reseller/customers': typeof ResellerCustomersRoute
   '/reseller/earnings': typeof ResellerEarningsRoute
+  '/reseller/history': typeof ResellerHistoryRoute
   '/reseller/messages': typeof ResellerMessagesRoute
   '/reseller/profile': typeof ResellerProfileRoute
   '/reseller/redemptions': typeof ResellerRedemptionsRoute
   '/reseller/reports': typeof ResellerReportsRoute
+  '/reseller/rewards': typeof ResellerRewardsRoute
   '/reseller/shop': typeof ResellerShopRoute
   '/reseller/social': typeof ResellerSocialRoute
+  '/reseller/transfer': typeof ResellerTransferRoute
+  '/reseller/wallet': typeof ResellerWalletRoute
   '/super/admins': typeof SuperAdminsRoute
   '/super/applications': typeof SuperApplicationsRoute
+  '/super/approvals': typeof SuperApprovalsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/credits': typeof SuperCreditsRoute
   '/super/export': typeof SuperExportRoute
+  '/super/members': typeof SuperMembersRoute
   '/super/operator-log': typeof SuperOperatorLogRoute
   '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
@@ -557,17 +611,23 @@ export interface FileRouteTypes {
     | '/reseller/applications'
     | '/reseller/customers'
     | '/reseller/earnings'
+    | '/reseller/history'
     | '/reseller/messages'
     | '/reseller/profile'
     | '/reseller/redemptions'
     | '/reseller/reports'
+    | '/reseller/rewards'
     | '/reseller/shop'
     | '/reseller/social'
+    | '/reseller/transfer'
+    | '/reseller/wallet'
     | '/super/admins'
     | '/super/applications'
+    | '/super/approvals'
     | '/super/audit'
     | '/super/credits'
     | '/super/export'
+    | '/super/members'
     | '/super/operator-log'
     | '/super/profile'
     | '/super/reports'
@@ -611,17 +671,23 @@ export interface FileRouteTypes {
     | '/reseller/applications'
     | '/reseller/customers'
     | '/reseller/earnings'
+    | '/reseller/history'
     | '/reseller/messages'
     | '/reseller/profile'
     | '/reseller/redemptions'
     | '/reseller/reports'
+    | '/reseller/rewards'
     | '/reseller/shop'
     | '/reseller/social'
+    | '/reseller/transfer'
+    | '/reseller/wallet'
     | '/super/admins'
     | '/super/applications'
+    | '/super/approvals'
     | '/super/audit'
     | '/super/credits'
     | '/super/export'
+    | '/super/members'
     | '/super/operator-log'
     | '/super/profile'
     | '/super/reports'
@@ -669,17 +735,23 @@ export interface FileRouteTypes {
     | '/reseller/applications'
     | '/reseller/customers'
     | '/reseller/earnings'
+    | '/reseller/history'
     | '/reseller/messages'
     | '/reseller/profile'
     | '/reseller/redemptions'
     | '/reseller/reports'
+    | '/reseller/rewards'
     | '/reseller/shop'
     | '/reseller/social'
+    | '/reseller/transfer'
+    | '/reseller/wallet'
     | '/super/admins'
     | '/super/applications'
+    | '/super/approvals'
     | '/super/audit'
     | '/super/credits'
     | '/super/export'
+    | '/super/members'
     | '/super/operator-log'
     | '/super/profile'
     | '/super/reports'
@@ -978,6 +1050,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResellerEarningsRouteImport
       parentRoute: typeof ResellerRoute
     }
+    '/reseller/history': {
+      id: '/reseller/history'
+      path: '/history'
+      fullPath: '/reseller/history'
+      preLoaderRoute: typeof ResellerHistoryRouteImport
+      parentRoute: typeof ResellerRoute
+    }
     '/reseller/messages': {
       id: '/reseller/messages'
       path: '/messages'
@@ -1006,6 +1085,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResellerReportsRouteImport
       parentRoute: typeof ResellerRoute
     }
+    '/reseller/rewards': {
+      id: '/reseller/rewards'
+      path: '/rewards'
+      fullPath: '/reseller/rewards'
+      preLoaderRoute: typeof ResellerRewardsRouteImport
+      parentRoute: typeof ResellerRoute
+    }
     '/reseller/shop': {
       id: '/reseller/shop'
       path: '/shop'
@@ -1018,6 +1104,20 @@ declare module '@tanstack/react-router' {
       path: '/social'
       fullPath: '/reseller/social'
       preLoaderRoute: typeof ResellerSocialRouteImport
+      parentRoute: typeof ResellerRoute
+    }
+    '/reseller/transfer': {
+      id: '/reseller/transfer'
+      path: '/transfer'
+      fullPath: '/reseller/transfer'
+      preLoaderRoute: typeof ResellerTransferRouteImport
+      parentRoute: typeof ResellerRoute
+    }
+    '/reseller/wallet': {
+      id: '/reseller/wallet'
+      path: '/wallet'
+      fullPath: '/reseller/wallet'
+      preLoaderRoute: typeof ResellerWalletRouteImport
       parentRoute: typeof ResellerRoute
     }
     '/super/': {
@@ -1041,6 +1141,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperApplicationsRouteImport
       parentRoute: typeof SuperRoute
     }
+    '/super/approvals': {
+      id: '/super/approvals'
+      path: '/approvals'
+      fullPath: '/super/approvals'
+      preLoaderRoute: typeof SuperApprovalsRouteImport
+      parentRoute: typeof SuperRoute
+    }
     '/super/audit': {
       id: '/super/audit'
       path: '/audit'
@@ -1060,6 +1167,13 @@ declare module '@tanstack/react-router' {
       path: '/export'
       fullPath: '/super/export'
       preLoaderRoute: typeof SuperExportRouteImport
+      parentRoute: typeof SuperRoute
+    }
+    '/super/members': {
+      id: '/super/members'
+      path: '/members'
+      fullPath: '/super/members'
+      preLoaderRoute: typeof SuperMembersRouteImport
       parentRoute: typeof SuperRoute
     }
     '/super/operator-log': {
@@ -1172,12 +1286,16 @@ interface ResellerRouteChildren {
   ResellerApplicationsRoute: typeof ResellerApplicationsRoute
   ResellerCustomersRoute: typeof ResellerCustomersRoute
   ResellerEarningsRoute: typeof ResellerEarningsRoute
+  ResellerHistoryRoute: typeof ResellerHistoryRoute
   ResellerMessagesRoute: typeof ResellerMessagesRoute
   ResellerProfileRoute: typeof ResellerProfileRoute
   ResellerRedemptionsRoute: typeof ResellerRedemptionsRoute
   ResellerReportsRoute: typeof ResellerReportsRoute
+  ResellerRewardsRoute: typeof ResellerRewardsRoute
   ResellerShopRoute: typeof ResellerShopRoute
   ResellerSocialRoute: typeof ResellerSocialRoute
+  ResellerTransferRoute: typeof ResellerTransferRoute
+  ResellerWalletRoute: typeof ResellerWalletRoute
   ResellerIndexRoute: typeof ResellerIndexRoute
 }
 
@@ -1185,12 +1303,16 @@ const ResellerRouteChildren: ResellerRouteChildren = {
   ResellerApplicationsRoute: ResellerApplicationsRoute,
   ResellerCustomersRoute: ResellerCustomersRoute,
   ResellerEarningsRoute: ResellerEarningsRoute,
+  ResellerHistoryRoute: ResellerHistoryRoute,
   ResellerMessagesRoute: ResellerMessagesRoute,
   ResellerProfileRoute: ResellerProfileRoute,
   ResellerRedemptionsRoute: ResellerRedemptionsRoute,
   ResellerReportsRoute: ResellerReportsRoute,
+  ResellerRewardsRoute: ResellerRewardsRoute,
   ResellerShopRoute: ResellerShopRoute,
   ResellerSocialRoute: ResellerSocialRoute,
+  ResellerTransferRoute: ResellerTransferRoute,
+  ResellerWalletRoute: ResellerWalletRoute,
   ResellerIndexRoute: ResellerIndexRoute,
 }
 
@@ -1201,9 +1323,11 @@ const ResellerRouteWithChildren = ResellerRoute._addFileChildren(
 interface SuperRouteChildren {
   SuperAdminsRoute: typeof SuperAdminsRoute
   SuperApplicationsRoute: typeof SuperApplicationsRoute
+  SuperApprovalsRoute: typeof SuperApprovalsRoute
   SuperAuditRoute: typeof SuperAuditRoute
   SuperCreditsRoute: typeof SuperCreditsRoute
   SuperExportRoute: typeof SuperExportRoute
+  SuperMembersRoute: typeof SuperMembersRoute
   SuperOperatorLogRoute: typeof SuperOperatorLogRoute
   SuperProfileRoute: typeof SuperProfileRoute
   SuperReportsRoute: typeof SuperReportsRoute
@@ -1215,9 +1339,11 @@ interface SuperRouteChildren {
 const SuperRouteChildren: SuperRouteChildren = {
   SuperAdminsRoute: SuperAdminsRoute,
   SuperApplicationsRoute: SuperApplicationsRoute,
+  SuperApprovalsRoute: SuperApprovalsRoute,
   SuperAuditRoute: SuperAuditRoute,
   SuperCreditsRoute: SuperCreditsRoute,
   SuperExportRoute: SuperExportRoute,
+  SuperMembersRoute: SuperMembersRoute,
   SuperOperatorLogRoute: SuperOperatorLogRoute,
   SuperProfileRoute: SuperProfileRoute,
   SuperReportsRoute: SuperReportsRoute,
