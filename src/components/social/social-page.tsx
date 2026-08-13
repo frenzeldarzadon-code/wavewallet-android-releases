@@ -1,7 +1,9 @@
 import {
   Coins,
   Flag,
+  Globe2,
   Heart,
+
   ImagePlus,
   Loader2,
   MessageCircle,
@@ -9,7 +11,9 @@ import {
   Send,
   ShieldOff,
   Trash2,
+  Users,
   X,
+
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -55,6 +59,8 @@ import {
   COMMENT_MAX_CHARS,
   POST_MAX_CHARS,
   SOCIAL_IMAGE_ASPECT,
+  audienceHelp,
+  audienceLabel,
   availableTiers,
   canAfford,
   chargeSummary,
@@ -63,9 +69,11 @@ import {
   createPost,
   deleteComment,
   deletePost,
+  distributionSummary,
   exchangeForSocialCredits,
   exchangeGain,
   fetchComments,
+  fetchDistributionStatus,
   fetchFeed,
   fetchSocialState,
   postCharge,
@@ -81,11 +89,15 @@ import {
   validateSocialImage,
   type FeedComment,
   type FeedPost,
+  type DistributionStatus,
+  type PostAudience,
+
   type PromotionTier,
   type SocialCurrency,
   type SocialState,
 } from "@/lib/social";
 import { sendMessage } from "@/lib/social";
+
 
 /** Signed-image thumbnail for a post. */
 function PostImage({ path }: { path: string }) {
@@ -118,6 +130,8 @@ export function SocialPage() {
   // composer
   const [body, setBody] = useState("");
   const [promote, setPromote] = useState(false);
+  const [audience, setAudience] = useState<PostAudience>("ecosystem");
+
   const [tierId, setTierId] = useState<string>("");
   const [payWith, setPayWith] = useState<SocialCurrency>("social");
   const [file, setFile] = useState<File | null>(null);
@@ -210,15 +224,22 @@ export function SocialPage() {
         promote,
         tierId: promote ? (tier?.id ?? null) : null,
         ...(promote ? { currency: charge.currency } : {}),
+        audience,
       });
+      const deducted =
+        res.charged > 0
+          ? `${res.charged} ${res.currency === "points" ? "points" : "social credits"} deducted.`
+          : "Nothing was deducted.";
       toast.success(promote ? "Promoted post published" : "Posted", {
         description:
-          res.charged > 0
-            ? `${res.charged} ${res.currency === "points" ? "points" : "social credits"} deducted.`
-            : "Nothing was deducted.",
+          audience === "general"
+            ? `${deducted} Sent to ${res.pending_shops} other shop${res.pending_shops === 1 ? "" : "s"} for admin approval.`
+            : deducted,
       });
       setBody("");
       setPromote(false);
+      setAudience("ecosystem");
+
       setTierId("");
       setFile(null);
       setCrop(null);
@@ -343,13 +364,50 @@ export function SocialPage() {
               </div>
             </div>
 
+            {/* Audience choice — mobile-first, always visible before writing. */}
+            <div className="space-y-1.5">
+              <Label>Who can see this?</Label>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {(["ecosystem", "general"] as PostAudience[]).map((a) => (
+                  <button
+                    key={a}
+                    type="button"
+                    onClick={() => setAudience(a)}
+                    aria-pressed={audience === a}
+                    className={
+                      audience === a
+                        ? "rounded-xl border-2 border-primary bg-primary/5 p-3 text-left"
+                        : "rounded-xl border border-border p-3 text-left"
+                    }
+                  >
+                    <span className="flex items-center gap-2 text-sm font-semibold">
+                      {a === "general" ? (
+                        <Globe2 className="size-4 text-primary" aria-hidden />
+                      ) : (
+                        <Users className="size-4 text-primary" aria-hidden />
+                      )}
+                      {audienceLabel(a)}
+                    </span>
+                    <span className="mt-1 block text-xs text-muted-foreground">
+                      {audienceHelp(a)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <Textarea
               value={body}
               onChange={(e) => setBody(e.target.value.slice(0, POST_MAX_CHARS))}
               rows={3}
-              placeholder="Share something with your shop…"
+              placeholder={
+                audience === "general"
+                  ? "Share something with the whole WaveWallet network…"
+                  : "Share something with your shop…"
+              }
               className="min-h-24 text-base"
             />
+
 
             {file ? (
               <div className="space-y-2">
@@ -438,7 +496,10 @@ export function SocialPage() {
               </div>
             ) : null}
 
+            <p className="text-xs text-muted-foreground">{audienceHelp(audience)}</p>
+
             <p className="text-xs text-muted-foreground">
+
               {promote
                 ? `${tier?.name ?? "Promotion"} costs ${charge.amount} ${charge.currency === "points" ? "points" : "social credits"} and stays highlighted for ${tierDuration(tier?.duration_hours ?? 24)}. Replies to a promoted post are free for everyone — only you pay.`
                 : `A normal post costs ${state?.post_cost ?? 1} social credit. Likes are always free; replies cost ${state?.comment_cost ?? 1} social credit unless the post is promoted.`}
@@ -479,8 +540,12 @@ export function SocialPage() {
             <AlertDialogTitle>{promote ? "Publish a promoted post?" : "Publish this post?"}</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2 text-sm">
+                <p>
+                  Audience: <strong>{audienceLabel(audience)}</strong> — {audienceHelp(audience)}
+                </p>
                 <p>{chargeSummary(charge.amount, charge.currency)}</p>
                 <p>
+
                   Balance: {state?.balance ?? 0} social credits
                   {charge.currency === "points" ? ` · ${account.pointsBalance ?? 0} points` : ""}
                 </p>
@@ -722,8 +787,18 @@ function PostCard({
                   {post.promotion_tier_name ? `${post.promotion_tier_name} · Promoted` : "Promoted"}
                 </Badge>
               ) : null}
+              {post.audience === "general" ? (
+                <Badge variant="outline" className="gap-1">
+                  <Globe2 className="size-3" aria-hidden /> General
+                  {post.origin_ecosystem_name ? ` · from ${post.origin_ecosystem_name}` : ""}
+                </Badge>
+              ) : null}
             </div>
             <p className="mt-1 whitespace-pre-wrap break-words text-sm">{post.body}</p>
+            {post.audience === "general" && post.author_id === meId ? (
+              <GeneralStatus postId={post.id} />
+            ) : null}
+
           </div>
         </div>
 
@@ -856,5 +931,56 @@ function PostCard({
         </DialogContent>
       </Dialog>
     </Card>
+  );
+}
+
+/**
+ * Author-facing distribution status of their own General post.
+ * Shows shop names and decisions only — private admin notes are never returned.
+ */
+function GeneralStatus({ postId }: { postId: string }) {
+  const [rows, setRows] = useState<DistributionStatus[] | null>(null);
+  const [open, setOpen] = useState(false);
+
+  const load = async () => {
+    setOpen(true);
+    if (rows) return;
+    try {
+      setRows(await fetchDistributionStatus(postId));
+    } catch (e) {
+      toast.error("Could not load sharing status", { description: (e as Error).message });
+    }
+  };
+
+  if (!open) {
+    return (
+      <Button variant="ghost" size="sm" className="mt-1 h-8 px-0 text-xs" onClick={() => void load()}>
+        Where is this shared?
+      </Button>
+    );
+  }
+
+  return (
+    <div className="mt-2 rounded-xl bg-muted p-2 text-xs">
+      {rows === null ? (
+        <p className="text-muted-foreground">Loading…</p>
+      ) : (
+        <>
+          <p className="font-medium">{distributionSummary(rows)}</p>
+          <ul className="mt-1 space-y-0.5 text-muted-foreground">
+            {rows.map((r) => (
+              <li key={r.ecosystem_name}>
+                {r.ecosystem_name} —{" "}
+                {r.status === "approved"
+                  ? "approved"
+                  : r.status === "rejected"
+                    ? "not approved"
+                    : "waiting for approval"}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
   );
 }

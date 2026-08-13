@@ -72,6 +72,8 @@ export interface SocialState {
 }
 
 
+export type PostAudience = "ecosystem" | "general";
+
 export interface FeedPost {
   id: string;
   author_id: string;
@@ -89,7 +91,36 @@ export interface FeedPost {
   liked_by_me: boolean;
   created_at: string;
   can_delete: boolean;
+  audience: PostAudience;
+  origin_ecosystem_name: string | null;
 }
+
+/** One shop's decision about a General post. */
+export interface DistributionRow {
+  id: string;
+  post_id: string;
+  status: "pending" | "approved" | "rejected";
+  note: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+  reviewed_by_name: string | null;
+  ecosystem_id: string;
+  origin_ecosystem_name: string;
+  author_name: string;
+  author_handle: string | null;
+  author_avatar: string | null;
+  body: string;
+  image_path: string | null;
+  post_created_at: string;
+}
+
+/** Author-facing status: shop + decision only, never the private admin note. */
+export interface DistributionStatus {
+  ecosystem_name: string;
+  status: "pending" | "approved" | "rejected";
+  reviewed_at: string | null;
+}
+
 
 export interface FeedComment {
   id: string;
@@ -333,6 +364,7 @@ export async function createPost(input: {
   promote: boolean;
   tierId?: string | null;
   currency?: SocialCurrency;
+  audience?: PostAudience;
 }): Promise<{
   post_id: string;
   charged: number;
@@ -340,6 +372,8 @@ export async function createPost(input: {
   tier: string | null;
   expires_at: string | null;
   balance: number;
+  audience: PostAudience;
+  pending_shops: number;
 }> {
   const { data, error } = await supabase.rpc("social_create_post", {
     _body: input.body.trim(),
@@ -347,6 +381,7 @@ export async function createPost(input: {
     _promote: input.promote,
     ...(input.tierId ? { _tier_id: input.tierId } : {}),
     ...(input.currency ? { _currency: input.currency } : {}),
+    _audience: input.audience ?? "ecosystem",
   });
   if (error) fail(error.message);
   return data as unknown as {
@@ -356,8 +391,45 @@ export async function createPost(input: {
     tier: string | null;
     expires_at: string | null;
     balance: number;
+    audience: PostAudience;
+    pending_shops: number;
   };
 }
+
+/** Queue of General posts awaiting (or already given) a decision in one shop. */
+export async function fetchGeneralQueue(
+  ecosystemId?: string | null,
+  status: "pending" | "approved" | "rejected" | "all" = "pending",
+): Promise<DistributionRow[]> {
+  const { data, error } = await supabase.rpc("social_general_queue", {
+    ...(ecosystemId ? { _eco: ecosystemId } : {}),
+    _status: status,
+  });
+  if (error) fail(error.message);
+  return (data ?? []) as DistributionRow[];
+}
+
+export async function reviewDistribution(
+  id: string,
+  status: "approved" | "rejected",
+  note?: string,
+) {
+  const { error } = await supabase.rpc("social_review_distribution", {
+    _id: id,
+    _status: status,
+    ...(note && note.trim() ? { _note: note.trim() } : {}),
+  });
+  if (error) fail(error.message);
+}
+
+export async function fetchDistributionStatus(postId: string): Promise<DistributionStatus[]> {
+  const { data, error } = await supabase.rpc("social_post_distribution_status", {
+    _post_id: postId,
+  });
+  if (error) fail(error.message);
+  return (data ?? []) as DistributionStatus[];
+}
+
 
 export async function createComment(postId: string, body: string) {
   const { data, error } = await supabase.rpc("social_create_comment", {
@@ -632,4 +704,28 @@ export async function refundPromotion(postId: string, reason: string) {
   });
   if (error) fail(error.message);
   return data as unknown as { refunded: number; currency: string; tx_id: string };
+}
+
+// --------------------------------------------------- general-post presentation
+
+/** Plain-language name of the audience a member picked. */
+export function audienceLabel(audience: PostAudience): string {
+  return audience === "general" ? "General / All Ecosystems" : "My Ecosystem";
+}
+
+/** What the member is told before publishing, per audience. */
+export function audienceHelp(audience: PostAudience): string {
+  return audience === "general"
+    ? "Shared with the wider WaveWallet network. Each other shop's admin must approve it before it shows in their community — it appears in your own shop right away."
+    : "Only members and admins of your own shop can see this post.";
+}
+
+/** One-line status of a General post for its author, e.g. "Live in 2 shops · 1 pending". */
+export function distributionSummary(rows: DistributionStatus[]): string {
+  if (rows.length === 0) return "No shops yet";
+  const n = (s: DistributionStatus["status"]) => rows.filter((r) => r.status === s).length;
+  const parts: string[] = [`Live in ${n("approved")} shop${n("approved") === 1 ? "" : "s"}`];
+  if (n("pending") > 0) parts.push(`${n("pending")} pending`);
+  if (n("rejected") > 0) parts.push(`${n("rejected")} declined`);
+  return parts.join(" · ");
 }

@@ -1575,8 +1575,76 @@ export type Database = {
           },
         ]
       }
+      social_post_distributions: {
+        Row: {
+          auto_published: boolean
+          created_at: string
+          ecosystem_id: string
+          id: string
+          note: string | null
+          origin_ecosystem_id: string
+          post_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewed_by_name: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          auto_published?: boolean
+          created_at?: string
+          ecosystem_id: string
+          id?: string
+          note?: string | null
+          origin_ecosystem_id: string
+          post_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewed_by_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          auto_published?: boolean
+          created_at?: string
+          ecosystem_id?: string
+          id?: string
+          note?: string | null
+          origin_ecosystem_id?: string
+          post_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewed_by_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_post_distributions_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_post_distributions_origin_ecosystem_id_fkey"
+            columns: ["origin_ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_post_distributions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_posts: {
         Row: {
+          audience: string
           author_id: string
           body: string
           comment_count: number
@@ -1602,6 +1670,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          audience?: string
           author_id: string
           body: string
           comment_count?: number
@@ -1627,6 +1696,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          audience?: string
           author_id?: string
           body?: string
           comment_count?: number
@@ -3323,6 +3393,17 @@ export type Database = {
             }
             Returns: Json
           }
+        | {
+            Args: {
+              _audience?: string
+              _body: string
+              _currency?: string
+              _image_path?: string
+              _promote?: boolean
+              _tier_id?: string
+            }
+            Returns: Json
+          }
       social_delete_comment: {
         Args: { _comment_id: string; _reason?: string }
         Returns: undefined
@@ -3339,6 +3420,7 @@ export type Database = {
       social_feed: {
         Args: { _before?: string; _limit?: number }
         Returns: {
+          audience: string
           author_avatar: string
           author_handle: string
           author_id: string
@@ -3351,9 +3433,30 @@ export type Database = {
           image_path: string
           like_count: number
           liked_by_me: boolean
+          origin_ecosystem_name: string
           promoted: boolean
           promotion_expires_at: string
           promotion_tier_name: string
+        }[]
+      }
+      social_general_queue: {
+        Args: { _eco?: string; _status?: string }
+        Returns: {
+          author_avatar: string
+          author_handle: string
+          author_name: string
+          body: string
+          created_at: string
+          ecosystem_id: string
+          id: string
+          image_path: string
+          note: string
+          origin_ecosystem_name: string
+          post_created_at: string
+          post_id: string
+          reviewed_at: string
+          reviewed_by_name: string
+          status: string
         }[]
       }
       social_move: {
@@ -3380,6 +3483,18 @@ export type Database = {
           id: string
         }[]
       }
+      social_post_distribution_status: {
+        Args: { _post_id: string }
+        Returns: {
+          ecosystem_name: string
+          reviewed_at: string
+          status: string
+        }[]
+      }
+      social_post_visible_in: {
+        Args: { _eco: string; _post_id: string }
+        Returns: boolean
+      }
       social_rate_limit: {
         Args: {
           _max: number
@@ -3395,6 +3510,10 @@ export type Database = {
       }
       social_report: {
         Args: { _reason: string; _target_id: string; _target_type: string }
+        Returns: undefined
+      }
+      social_review_distribution: {
+        Args: { _id: string; _note?: string; _status: string }
         Returns: undefined
       }
       social_review_report: {
