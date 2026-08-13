@@ -42,14 +42,32 @@ export function validateDisplayName(name: string): string | null {
   return null;
 }
 
-/** Friendly availability check — the database still enforces uniqueness. */
-export async function isHandleAvailable(handle: string): Promise<boolean> {
+export type HandleCheck = "available" | "taken" | "invalid" | "unknown";
+
+/**
+ * Friendly availability check — the database still enforces uniqueness.
+ * A failed check reports "unknown" so a network/permission problem is never
+ * shown to the member as a false "already taken".
+ */
+export async function checkHandle(
+  handle: string,
+  currentHandle?: string | null,
+): Promise<HandleCheck> {
   const h = normalizeHandle(handle);
-  if (validateHandle(h) || !h) return false;
+  if (!h) return "invalid";
+  if (validateHandle(h)) return "invalid";
+  // Keeping your own handle is always allowed.
+  if (normalizeHandle(currentHandle ?? "") === h) return "available";
   const { data, error } = await supabase.rpc("handle_available", { _handle: h });
-  if (error) return false;
-  return Boolean(data);
+  if (error) return "unknown";
+  return data ? "available" : "taken";
 }
+
+/** Back-compat boolean helper. */
+export async function isHandleAvailable(handle: string): Promise<boolean> {
+  return (await checkHandle(handle)) === "available";
+}
+
 
 export interface MyProfile {
   id: string;

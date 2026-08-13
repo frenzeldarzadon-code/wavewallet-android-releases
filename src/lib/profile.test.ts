@@ -96,3 +96,14 @@ describe("image optimisation", () => {
     expect(optimizedName("abc", "image/jpeg")).toBe("abc.jpg");
   });
 });
+
+describe("handle availability scoping (client rules)", () => {
+  it("treats the member's own current handle as available, in any spelling", () => {
+    expect(normalizeHandle(" @Maria_DC ")).toBe(normalizeHandle("maria_dc"));
+  });
+
+  it("keeps an empty handle optional rather than invalid", () => {
+    expect(validateHandle("")).toBeNull();
+    expect(normalizeHandle("   ")).toBe("");
+  });
+});
