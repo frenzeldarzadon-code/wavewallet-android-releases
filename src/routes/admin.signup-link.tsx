@@ -171,29 +171,6 @@ function AdminSignupLink() {
         </Card>
       </PageSection>
 
-      <PageSection title="Signup page preview" description="What the customer sees when they open your link.">
-        <Card className="overflow-hidden py-0 shadow-[var(--shadow-card)]">
-          <CardContent className="px-0">
-            <div className="surface-gradient px-5 py-6 text-primary-foreground">
-              <p className="text-[10px] uppercase tracking-wide opacity-80">WaveWallet · Customer signup</p>
-              <p className="mt-1.5 text-lg font-semibold">Join {ecosystem.name}</p>
-              <p className="mt-1 text-xs opacity-90 line-clamp-2">{ecosystem.description}</p>
-            </div>
-            <div className="space-y-2.5 p-5">
-              {["Full name", "Email", "Mobile number", "Password"].map((f) => (
-                <div key={f} className="space-y-1">
-                  <p className="text-[11px] font-medium text-muted-foreground">{f}</p>
-                  <div className="h-9 rounded-md border border-border bg-muted/40" />
-                </div>
-              ))}
-              <div className="h-9 rounded-md bg-primary/90" />
-              <p className="text-center text-[11px] text-muted-foreground">
-                Creates a customer account in {ecosystem.name}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </PageSection>
     </>
   );
 }
