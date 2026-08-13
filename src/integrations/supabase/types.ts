@@ -335,6 +335,143 @@ export type Database = {
           },
         ]
       }
+      credit_packages: {
+        Row: {
+          active: boolean
+          created_at: string
+          credits: number
+          id: string
+          name: string
+          price_php: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          credits: number
+          id?: string
+          name: string
+          price_php: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          credits?: number
+          id?: string
+          name?: string
+          price_php?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      credit_purchase_orders: {
+        Row: {
+          amount_due: number
+          buyer_id: string
+          buyer_name: string
+          created_at: string
+          credit_ledger_id: string | null
+          credits: number
+          decision_reason: string | null
+          discount_percent: number
+          ecosystem_id: string
+          freeze_ledger_id: string | null
+          id: string
+          list_php: number
+          note: string | null
+          package_id: string | null
+          package_name: string
+          payment_reference: string
+          quantity: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_name: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_due: number
+          buyer_id: string
+          buyer_name: string
+          created_at?: string
+          credit_ledger_id?: string | null
+          credits: number
+          decision_reason?: string | null
+          discount_percent?: number
+          ecosystem_id: string
+          freeze_ledger_id?: string | null
+          id?: string
+          list_php: number
+          note?: string | null
+          package_id?: string | null
+          package_name: string
+          payment_reference: string
+          quantity?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_due?: number
+          buyer_id?: string
+          buyer_name?: string
+          created_at?: string
+          credit_ledger_id?: string | null
+          credits?: number
+          decision_reason?: string | null
+          discount_percent?: number
+          ecosystem_id?: string
+          freeze_ledger_id?: string | null
+          id?: string
+          list_php?: number
+          note?: string | null
+          package_id?: string | null
+          package_name?: string
+          payment_reference?: string
+          quantity?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_purchase_orders_credit_ledger_id_fkey"
+            columns: ["credit_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_purchase_orders_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_purchase_orders_freeze_ledger_id_fkey"
+            columns: ["freeze_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_purchase_orders_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "credit_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_transfer_reversals: {
         Row: {
           actor_id: string | null
@@ -575,6 +712,7 @@ export type Database = {
       }
       ecosystems: {
         Row: {
+          admin_sale_commission_percent: number
           archived_at: string | null
           archived_by: string | null
           archived_reason: string | null
@@ -615,6 +753,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admin_sale_commission_percent?: number
           archived_at?: string | null
           archived_by?: string | null
           archived_reason?: string | null
@@ -655,6 +794,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admin_sale_commission_percent?: number
           archived_at?: string | null
           archived_by?: string | null
           archived_reason?: string | null
@@ -808,9 +948,15 @@ export type Database = {
       }
       platform_settings: {
         Row: {
+          admin_credit_discount_percent: number
           billing_period: string
           created_at: string
+          credit_gcash_account_name: string
+          credit_gcash_number: string
+          credit_payment_instructions: string
+          credit_release_mode: string
           currency: string
+          default_admin_sale_commission_percent: number
           gcash_account_name: string
           gcash_number: string
           grace_period_days: number
@@ -825,9 +971,15 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          admin_credit_discount_percent?: number
           billing_period?: string
           created_at?: string
+          credit_gcash_account_name?: string
+          credit_gcash_number?: string
+          credit_payment_instructions?: string
+          credit_release_mode?: string
           currency?: string
+          default_admin_sale_commission_percent?: number
           gcash_account_name?: string
           gcash_number?: string
           grace_period_days?: number
@@ -842,9 +994,15 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          admin_credit_discount_percent?: number
           billing_period?: string
           created_at?: string
+          credit_gcash_account_name?: string
+          credit_gcash_number?: string
+          credit_payment_instructions?: string
+          credit_release_mode?: string
           currency?: string
+          default_admin_sale_commission_percent?: number
           gcash_account_name?: string
           gcash_number?: string
           grace_period_days?: number
@@ -2497,6 +2655,15 @@ export type Database = {
         }
         Returns: string
       }
+      admin_load_credits: {
+        Args: {
+          _amount: number
+          _reason?: string
+          _reference?: string
+          _user_id: string
+        }
+        Returns: string
+      }
       admin_product_inventory: {
         Args: { _ecosystem_id: string }
         Returns: {
@@ -2505,6 +2672,10 @@ export type Database = {
           total: number
           unused: number
         }[]
+      }
+      admin_sale_commission_rate_for: {
+        Args: { _eco: string }
+        Returns: number
       }
       admin_update_member_profile: {
         Args: {
@@ -2544,6 +2715,44 @@ export type Database = {
           user_id: string
         }[]
       }
+      create_credit_purchase_order: {
+        Args: {
+          _note?: string
+          _package_id: string
+          _payment_reference: string
+          _quantity: number
+        }
+        Returns: {
+          amount_due: number
+          buyer_id: string
+          buyer_name: string
+          created_at: string
+          credit_ledger_id: string | null
+          credits: number
+          decision_reason: string | null
+          discount_percent: number
+          ecosystem_id: string
+          freeze_ledger_id: string | null
+          id: string
+          list_php: number
+          note: string | null
+          package_id: string | null
+          package_name: string
+          payment_reference: string
+          quantity: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_name: string | null
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_purchase_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_ecosystem: {
         Args: {
           _contact_email?: string
@@ -2557,6 +2766,7 @@ export type Database = {
           _slug?: string
         }
         Returns: {
+          admin_sale_commission_percent: number
           archived_at: string | null
           archived_by: string | null
           archived_reason: string | null
@@ -2611,6 +2821,7 @@ export type Database = {
           eligible: boolean
         }[]
       }
+      delete_credit_package: { Args: { _id: string }; Returns: undefined }
       delete_customer_account: {
         Args: { _reason?: string; _user_id: string }
         Returns: undefined
@@ -2714,6 +2925,39 @@ export type Database = {
       }
       expire_stale_invitations: { Args: never; Returns: undefined }
       expire_stale_subscriptions: { Args: never; Returns: number }
+      freeze_credit_purchase_order: {
+        Args: { _order_id: string; _reason: string }
+        Returns: {
+          amount_due: number
+          buyer_id: string
+          buyer_name: string
+          created_at: string
+          credit_ledger_id: string | null
+          credits: number
+          decision_reason: string | null
+          discount_percent: number
+          ecosystem_id: string
+          freeze_ledger_id: string | null
+          id: string
+          list_php: number
+          note: string | null
+          package_id: string | null
+          package_name: string
+          payment_reference: string
+          quantity: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_name: string | null
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_purchase_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       get_signup_ecosystem: {
         Args: { _slug: string }
         Returns: {
@@ -3050,6 +3294,39 @@ export type Database = {
         Args: { _reason: string; _sale_id: string }
         Returns: string
       }
+      review_credit_purchase_order: {
+        Args: { _approve: boolean; _order_id: string; _reason?: string }
+        Returns: {
+          amount_due: number
+          buyer_id: string
+          buyer_name: string
+          created_at: string
+          credit_ledger_id: string | null
+          credits: number
+          decision_reason: string | null
+          discount_percent: number
+          ecosystem_id: string
+          freeze_ledger_id: string | null
+          id: string
+          list_php: number
+          note: string | null
+          package_id: string | null
+          package_name: string
+          payment_reference: string
+          quantity: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_name: string | null
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_purchase_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       review_redemption: {
         Args: { _decision: string; _id: string; _note?: string }
         Returns: string
@@ -3127,6 +3404,32 @@ export type Database = {
         Args: { _recipient: string }
         Returns: number
       }
+      save_credit_package: {
+        Args: {
+          _active: boolean
+          _credits: number
+          _id: string
+          _name: string
+          _price_php: number
+          _sort_order: number
+        }
+        Returns: {
+          active: boolean
+          created_at: string
+          credits: number
+          id: string
+          name: string
+          price_php: number
+          sort_order: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_packages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       search_members: {
         Args: { _ecosystem_id?: string; _query: string }
         Returns: {
@@ -3145,6 +3448,10 @@ export type Database = {
           status: string
         }[]
       }
+      set_admin_sale_commission: {
+        Args: { _ecosystem_id: string; _percent: number }
+        Returns: number
+      }
       set_ecosystem_commission: {
         Args: { _ecosystem_id: string; _percent: number }
         Returns: number
@@ -3152,6 +3459,7 @@ export type Database = {
       set_ecosystem_facebook: {
         Args: { _ecosystem_id: string; _page_name?: string; _url?: string }
         Returns: {
+          admin_sale_commission_percent: number
           archived_at: string | null
           archived_by: string | null
           archived_reason: string | null
@@ -3201,6 +3509,7 @@ export type Database = {
       set_ecosystem_freeze: {
         Args: { _ecosystem_id: string; _frozen: boolean; _reason?: string }
         Returns: {
+          admin_sale_commission_percent: number
           archived_at: string | null
           archived_by: string | null
           archived_reason: string | null
@@ -3257,6 +3566,7 @@ export type Database = {
           _upline_percent: number
         }
         Returns: {
+          admin_sale_commission_percent: number
           archived_at: string | null
           archived_by: string | null
           archived_reason: string | null
@@ -3609,6 +3919,45 @@ export type Database = {
         Returns: string
       }
       transfer_reversal_info: { Args: { _tx_id: string }; Returns: Json }
+      update_credit_purchase_settings: {
+        Args: {
+          _admin_credit_discount_percent: number
+          _credit_gcash_account_name: string
+          _credit_gcash_number: string
+          _credit_payment_instructions: string
+          _credit_release_mode: string
+          _default_admin_sale_commission_percent: number
+        }
+        Returns: {
+          admin_credit_discount_percent: number
+          billing_period: string
+          created_at: string
+          credit_gcash_account_name: string
+          credit_gcash_number: string
+          credit_payment_instructions: string
+          credit_release_mode: string
+          currency: string
+          default_admin_sale_commission_percent: number
+          gcash_account_name: string
+          gcash_number: string
+          grace_period_days: number
+          id: number
+          payment_instructions: string
+          plan_name: string
+          plan_price: number
+          support_message: string
+          support_page_name: string
+          support_page_url: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "platform_settings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       update_ecosystem: {
         Args: {
           _contact_email?: string
@@ -3619,6 +3968,7 @@ export type Database = {
           _signup_enabled?: boolean
         }
         Returns: {
+          admin_sale_commission_percent: number
           archived_at: string | null
           archived_by: string | null
           archived_reason: string | null
@@ -3673,6 +4023,7 @@ export type Database = {
           _plan_price: number
         }
         Returns: {
+          admin_sale_commission_percent: number
           archived_at: string | null
           archived_by: string | null
           archived_reason: string | null
@@ -3756,9 +4107,15 @@ export type Database = {
           _support_page_url: string
         }
         Returns: {
+          admin_credit_discount_percent: number
           billing_period: string
           created_at: string
+          credit_gcash_account_name: string
+          credit_gcash_number: string
+          credit_payment_instructions: string
+          credit_release_mode: string
           currency: string
+          default_admin_sale_commission_percent: number
           gcash_account_name: string
           gcash_number: string
           grace_period_days: number
