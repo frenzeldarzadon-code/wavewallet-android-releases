@@ -96,22 +96,30 @@ export function MemberPicker({
               <button
                 type="button"
                 onClick={() => onSelect(m)}
-                className="flex w-full flex-col gap-1 rounded-md px-3 py-2 text-left transition-colors hover:bg-muted"
+                className="flex w-full items-start gap-3 rounded-md px-3 py-3 text-left transition-colors hover:bg-muted"
               >
-                <span className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium">{m.full_name}</span>
-                  <StatusBadge tone={m.status === "active" ? "success" : "danger"}>
-                    {roleLabel(m.role as Role)}
-                  </StatusBadge>
-                  {showEcosystem && m.ecosystem_name ? (
-                    <span className="text-xs text-muted-foreground">{m.ecosystem_name}</span>
+                <MemberAvatar path={m.avatar_path} name={m.full_name} />
+                <span className="min-w-0 flex-1 space-y-1">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium">{m.full_name}</span>
+                    {m.handle ? (
+                      <span className="text-xs text-muted-foreground">@{m.handle}</span>
+                    ) : null}
+                    <StatusBadge tone={m.status === "active" ? "success" : "danger"}>
+                      {roleLabel(m.role as Role)}
+                    </StatusBadge>
+                    {showEcosystem && m.ecosystem_name ? (
+                      <span className="text-xs text-muted-foreground">{m.ecosystem_name}</span>
+                    ) : null}
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {m.email || m.masked_email} · {m.phone}
+                  </span>
+                  {m.credit_balance || m.points_balance ? (
+                    <span className="block text-xs text-muted-foreground">
+                      Balance {peso(m.credit_balance)} · {m.points_balance} pts
+                    </span>
                   ) : null}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {m.email} · {m.phone}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  Balance {peso(m.credit_balance)} · {m.points_balance} pts
                 </span>
               </button>
             </li>
