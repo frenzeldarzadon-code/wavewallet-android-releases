@@ -32,6 +32,7 @@ import type { MemberSearchResult } from "@/lib/member-admin";
 import { roleLabel, type Role } from "@/lib/wavewallet";
 import {
   MANUAL_CREDIT_ACTION,
+  MANUAL_CREDIT_CATEGORIES,
   grantManualCredit,
   manualCreditIssue,
   previewBalance,
@@ -41,12 +42,17 @@ export function ManualCreditCard() {
   const [target, setTarget] = useState<MemberSearchResult | null>(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
+  const [category, setCategory] = useState("");
   const [reference, setReference] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const credits = Number(amount);
-  const issue = manualCreditIssue({ userId: target?.id ?? null, amount: credits });
+  const issue = manualCreditIssue({
+    userId: target?.id ?? null,
+    amount: credits,
+    reason: note,
+  });
   const after = target ? previewBalance(target.credit_balance, credits) : 0;
 
   const submit = async () => {
@@ -56,7 +62,8 @@ export function ManualCreditCard() {
       const tx = await grantManualCredit({
         userId: target.id,
         amount: credits,
-        ...(note.trim() ? { note: note.trim() } : {}),
+        reason: note.trim(),
+        ...(category ? { category } : {}),
         ...(reference.trim() ? { reference: reference.trim() } : {}),
       });
       toast.success("Manual credit granted", {
@@ -65,6 +72,7 @@ export function ManualCreditCard() {
       setTarget(null);
       setAmount("");
       setNote("");
+      setCategory("");
       setReference("");
       setConfirming(false);
     } catch (e) {
@@ -127,11 +135,28 @@ export function ManualCreditCard() {
                   id="manualAmount"
                   type="number"
                   min={1}
+                  step={1}
                   inputMode="numeric"
                   value={amount}
                   placeholder="1000"
                   onChange={(e) => setAmount(e.target.value)}
                 />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="manualCategory">Category (optional)</Label>
+                <select
+                  id="manualCategory"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="">No category</option>
+                  {MANUAL_CREDIT_CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="manualRef">Reference (optional)</Label>
@@ -143,7 +168,7 @@ export function ManualCreditCard() {
                 />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="manualNote">Reason / note (optional)</Label>
+                <Label htmlFor="manualNote">Reason (required)</Label>
                 <Textarea
                   id="manualNote"
                   value={note}
