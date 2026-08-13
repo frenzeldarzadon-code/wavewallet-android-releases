@@ -53,6 +53,7 @@ import { Route as ResellerShopRouteImport } from './routes/reseller.shop'
 import { Route as ResellerSocialRouteImport } from './routes/reseller.social'
 import { Route as SuperIndexRouteImport } from './routes/super.index'
 import { Route as SuperAdminsRouteImport } from './routes/super.admins'
+import { Route as SuperApplicationsRouteImport } from './routes/super.applications'
 import { Route as SuperAuditRouteImport } from './routes/super.audit'
 import { Route as SuperExportRouteImport } from './routes/super.export'
 import { Route as SuperProfileRouteImport } from './routes/super.profile'
@@ -280,6 +281,11 @@ const SuperAdminsRoute = SuperAdminsRouteImport.update({
   path: '/admins',
   getParentRoute: () => SuperRoute,
 } as any)
+const SuperApplicationsRoute = SuperApplicationsRouteImport.update({
+  id: '/applications',
+  path: '/applications',
+  getParentRoute: () => SuperRoute,
+} as any)
 const SuperAuditRoute = SuperAuditRouteImport.update({
   id: '/audit',
   path: '/audit',
@@ -352,6 +358,7 @@ export interface FileRoutesByFullPath {
   '/reseller/shop': typeof ResellerShopRoute
   '/reseller/social': typeof ResellerSocialRoute
   '/super/admins': typeof SuperAdminsRoute
+  '/super/applications': typeof SuperApplicationsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/export': typeof SuperExportRoute
   '/super/profile': typeof SuperProfileRoute
@@ -400,6 +407,7 @@ export interface FileRoutesByTo {
   '/reseller/shop': typeof ResellerShopRoute
   '/reseller/social': typeof ResellerSocialRoute
   '/super/admins': typeof SuperAdminsRoute
+  '/super/applications': typeof SuperApplicationsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/export': typeof SuperExportRoute
   '/super/profile': typeof SuperProfileRoute
@@ -453,6 +461,7 @@ export interface FileRoutesById {
   '/reseller/shop': typeof ResellerShopRoute
   '/reseller/social': typeof ResellerSocialRoute
   '/super/admins': typeof SuperAdminsRoute
+  '/super/applications': typeof SuperApplicationsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/export': typeof SuperExportRoute
   '/super/profile': typeof SuperProfileRoute
@@ -507,6 +516,7 @@ export interface FileRouteTypes {
     | '/reseller/shop'
     | '/reseller/social'
     | '/super/admins'
+    | '/super/applications'
     | '/super/audit'
     | '/super/export'
     | '/super/profile'
@@ -555,6 +565,7 @@ export interface FileRouteTypes {
     | '/reseller/shop'
     | '/reseller/social'
     | '/super/admins'
+    | '/super/applications'
     | '/super/audit'
     | '/super/export'
     | '/super/profile'
@@ -607,6 +618,7 @@ export interface FileRouteTypes {
     | '/reseller/shop'
     | '/reseller/social'
     | '/super/admins'
+    | '/super/applications'
     | '/super/audit'
     | '/super/export'
     | '/super/profile'
@@ -941,6 +953,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperAdminsRouteImport
       parentRoute: typeof SuperRoute
     }
+    '/super/applications': {
+      id: '/super/applications'
+      path: '/applications'
+      fullPath: '/super/applications'
+      preLoaderRoute: typeof SuperApplicationsRouteImport
+      parentRoute: typeof SuperRoute
+    }
     '/super/audit': {
       id: '/super/audit'
       path: '/audit'
@@ -1080,6 +1099,7 @@ const ResellerRouteWithChildren = ResellerRoute._addFileChildren(
 
 interface SuperRouteChildren {
   SuperAdminsRoute: typeof SuperAdminsRoute
+  SuperApplicationsRoute: typeof SuperApplicationsRoute
   SuperAuditRoute: typeof SuperAuditRoute
   SuperExportRoute: typeof SuperExportRoute
   SuperProfileRoute: typeof SuperProfileRoute
@@ -1091,6 +1111,7 @@ interface SuperRouteChildren {
 
 const SuperRouteChildren: SuperRouteChildren = {
   SuperAdminsRoute: SuperAdminsRoute,
+  SuperApplicationsRoute: SuperApplicationsRoute,
   SuperAuditRoute: SuperAuditRoute,
   SuperExportRoute: SuperExportRoute,
   SuperProfileRoute: SuperProfileRoute,

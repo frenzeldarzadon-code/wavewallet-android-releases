@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { ArrowRight, MailCheck, ShieldCheck, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/ui-kit";
 import { fetchSignupEcosystem, signUpCustomerAccount, type SignupEcosystem } from "@/lib/auth";
 import { platformSettings } from "@/lib/wavewallet";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/join/$slug")({
   head: () => ({
@@ -33,12 +34,12 @@ export const Route = createFileRoute("/join/$slug")({
 
 function JoinPage() {
   const { slug } = useParams({ from: "/join/$slug" });
-  const navigate = useNavigate();
   const [eco, setEco] = useState<SignupEcosystem | null>(null);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirm: "" });
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const [needsEmail, setNeedsEmail] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -106,12 +107,10 @@ function JoinPage() {
         phone: form.phone,
         password: form.password,
       });
-      if (needsEmailConfirmation) {
-        setSent(true);
-      } else {
-        toast.success(`Welcome to ${eco.name}!`);
-        navigate({ to: "/app" });
-      }
+      // Membership always waits for an approver, so there is no direct entry.
+      await supabase.auth.signOut();
+      setNeedsEmail(needsEmailConfirmation);
+      setSent(true);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not create your account.");
     } finally {
@@ -136,10 +135,13 @@ function JoinPage() {
           <Card className="shadow-[var(--shadow-card)]">
             <CardContent className="space-y-3 py-8 text-center">
               <MailCheck className="mx-auto size-8 text-success" />
-              <h2 className="text-lg font-semibold">Check your email</h2>
+              <h2 className="text-lg font-semibold">Application received</h2>
               <p className="text-sm text-muted-foreground">
-                We sent a confirmation link to <span className="font-medium">{form.email}</span>.
-                Confirm it, then sign in to open your {eco.name} wallet.
+                Your account is pending approval. You can enter the ecosystem after an authorized
+                member of {eco.name} approves your application.
+                {needsEmail
+                  ? " We also sent a confirmation link to your email — please confirm it."
+                  : ""}
               </p>
               <Button asChild variant="outline" className="w-full">
                 <Link to="/">Back to sign in</Link>

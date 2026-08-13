@@ -25,6 +25,7 @@ import {
   type RecipientMatch,
 } from "@/lib/wallet";
 import { toast } from "sonner";
+import { ApplicationsPanel } from "@/components/applications-panel";
 
 export const Route = createFileRoute("/reseller/customers")({
   head: () => ({
@@ -48,7 +49,7 @@ export const Route = createFileRoute("/reseller/customers")({
 });
 
 function ResellerCustomers() {
-  const { account, ecosystem } = useSession("reseller");
+  const { account, ecosystem, ecosystemDbId } = useSession("reseller");
   const [query, setQuery] = useState("");
   const [matches, setMatches] = useState<RecipientMatch[] | null>(null);
   const [selected, setSelected] = useState<RecipientMatch | null>(null);
@@ -109,6 +110,10 @@ function ResellerCustomers() {
 
   return (
     <>
+      <ApplicationsPanel
+        ecosystemId={ecosystemDbId}
+        description="New members who chose this shop. They cannot enter until approved."
+      />
       <PageSection
         title="Load customer credits"
         description={`Available in your wallet: ${peso(balance)} · any customer in ${ecosystem.name}, plus the subresellers you own.`}
