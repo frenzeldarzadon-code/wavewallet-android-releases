@@ -18,6 +18,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SuperRouteImport } from './routes/super'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
 import { Route as AdminCreditsRouteImport } from './routes/admin.credits'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
@@ -104,6 +105,11 @@ const SuperRoute = SuperRouteImport.update({
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminApplicationsRoute = AdminApplicationsRouteImport.update({
+  id: '/applications',
+  path: '/applications',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminCreditsRoute = AdminCreditsRouteImport.update({
@@ -326,6 +332,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/super': typeof SuperRouteWithChildren
+  '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/products': typeof AdminProductsRoute
@@ -375,6 +382,7 @@ export interface FileRoutesByTo {
   '/invite': typeof InviteRoute
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
+  '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/products': typeof AdminProductsRoute
@@ -429,6 +437,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/super': typeof SuperRouteWithChildren
+  '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/products': typeof AdminProductsRoute
@@ -484,6 +493,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/setup'
     | '/super'
+    | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
     | '/admin/products'
@@ -533,6 +543,7 @@ export interface FileRouteTypes {
     | '/invite'
     | '/reset-password'
     | '/setup'
+    | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
     | '/admin/products'
@@ -586,6 +597,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/setup'
     | '/super'
+    | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
     | '/admin/products'
@@ -706,6 +718,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/applications': {
+      id: '/admin/applications'
+      path: '/applications'
+      fullPath: '/admin/applications'
+      preLoaderRoute: typeof AdminApplicationsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/credits': {
@@ -1006,6 +1025,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminApplicationsRoute: typeof AdminApplicationsRoute
   AdminCreditsRoute: typeof AdminCreditsRoute
   AdminCustomersRoute: typeof AdminCustomersRoute
   AdminProductsRoute: typeof AdminProductsRoute
@@ -1025,6 +1045,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminApplicationsRoute: AdminApplicationsRoute,
   AdminCreditsRoute: AdminCreditsRoute,
   AdminCustomersRoute: AdminCustomersRoute,
   AdminProductsRoute: AdminProductsRoute,
