@@ -339,35 +339,6 @@ export function CreditSupplyCard() {
                 </p>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="cgName">GCash account name</Label>
-                <Input
-                  id="cgName"
-                  value={settings.credit_gcash_account_name}
-                  onChange={(e) => set("credit_gcash_account_name", e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="cgNumber">GCash number</Label>
-                <Input
-                  id="cgNumber"
-                  value={settings.credit_gcash_number}
-                  onChange={(e) => set("credit_gcash_number", e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Shown to admins on their Shop credits screen. Leave blank to use the
-                  platform Collection details account above.
-                </p>
-              </div>
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="cgInstructions">Payment instructions</Label>
-                <Textarea
-                  id="cgInstructions"
-                  rows={3}
-                  value={settings.credit_payment_instructions}
-                  onChange={(e) => set("credit_payment_instructions", e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
                 <Label htmlFor="adminComm">Default shop commission on member purchases (%)</Label>
                 <Input
                   id="adminComm"
