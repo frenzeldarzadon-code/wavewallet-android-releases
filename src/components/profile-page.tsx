@@ -14,7 +14,7 @@ import type { CropRect } from "@/lib/image-optimize";
 import {
   deleteAvatar,
   fetchMyProfile,
-  isHandleAvailable,
+  checkHandle,
   normalizeHandle,
   updateOwnProfile,
   uploadAvatar,
@@ -26,7 +26,7 @@ import { validateImageFile } from "@/lib/image-optimize";
 import { updateOwnContact } from "@/lib/profile-contact.functions";
 import { useSession } from "@/lib/session";
 
-type HandleState = "idle" | "checking" | "available" | "taken" | "invalid";
+type HandleState = "idle" | "checking" | "available" | "taken" | "invalid" | "unknown";
 
 export function ProfilePage() {
   // No required role here: the parent layout route (/app, /admin, /reseller, /super)
@@ -89,8 +89,8 @@ export function ProfilePage() {
     setHandleState("checking");
     let active = true;
     const timer = window.setTimeout(async () => {
-      const ok = await isHandleAvailable(value);
-      if (active) setHandleState(ok ? "available" : "taken");
+      const result = await checkHandle(value, profile?.handle);
+      if (active) setHandleState(result);
     }, 350);
     return () => {
       active = false;
@@ -313,6 +313,10 @@ export function ProfilePage() {
               ) : handleState === "taken" ? (
                 <p className="text-xs text-destructive">
                   @{normalizeHandle(handle)} is already taken in this shop
+                </p>
+              ) : handleState === "unknown" ? (
+                <p className="text-xs text-muted-foreground">
+                  We could not check that handle right now. You can still try saving it.
                 </p>
               ) : (
                 <p className="text-xs text-muted-foreground">
