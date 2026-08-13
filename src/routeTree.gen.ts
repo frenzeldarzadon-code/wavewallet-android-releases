@@ -34,6 +34,7 @@ import { Route as AppHistoryRouteImport } from './routes/app.history'
 import { Route as AppProfileRouteImport } from './routes/app.profile'
 import { Route as AppRewardsRouteImport } from './routes/app.rewards'
 import { Route as AppShopRouteImport } from './routes/app.shop'
+import { Route as AppSocialRouteImport } from './routes/app.social'
 import { Route as AppTransferRouteImport } from './routes/app.transfer'
 import { Route as JoinSlugRouteImport } from './routes/join.$slug'
 import { Route as ResellerIndexRouteImport } from './routes/reseller.index'
@@ -175,6 +176,11 @@ const AppShopRoute = AppShopRouteImport.update({
   path: '/shop',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSocialRoute = AppSocialRouteImport.update({
+  id: '/social',
+  path: '/social',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppTransferRoute = AppTransferRouteImport.update({
   id: '/transfer',
   path: '/transfer',
@@ -275,6 +281,7 @@ export interface FileRoutesByFullPath {
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
+  '/app/social': typeof AppSocialRoute
   '/app/transfer': typeof AppTransferRoute
   '/join/$slug': typeof JoinSlugRoute
   '/reseller/customers': typeof ResellerCustomersRoute
@@ -313,6 +320,7 @@ export interface FileRoutesByTo {
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
+  '/app/social': typeof AppSocialRoute
   '/app/transfer': typeof AppTransferRoute
   '/join/$slug': typeof JoinSlugRoute
   '/reseller/customers': typeof ResellerCustomersRoute
@@ -356,6 +364,7 @@ export interface FileRoutesById {
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
+  '/app/social': typeof AppSocialRoute
   '/app/transfer': typeof AppTransferRoute
   '/join/$slug': typeof JoinSlugRoute
   '/reseller/customers': typeof ResellerCustomersRoute
@@ -400,6 +409,7 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/rewards'
     | '/app/shop'
+    | '/app/social'
     | '/app/transfer'
     | '/join/$slug'
     | '/reseller/customers'
@@ -438,6 +448,7 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/rewards'
     | '/app/shop'
+    | '/app/social'
     | '/app/transfer'
     | '/join/$slug'
     | '/reseller/customers'
@@ -480,6 +491,7 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/rewards'
     | '/app/shop'
+    | '/app/social'
     | '/app/transfer'
     | '/join/$slug'
     | '/reseller/customers'
@@ -688,6 +700,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppShopRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/social': {
+      id: '/app/social'
+      path: '/social'
+      fullPath: '/app/social'
+      preLoaderRoute: typeof AppSocialRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/transfer': {
       id: '/app/transfer'
       path: '/transfer'
@@ -833,6 +852,7 @@ interface AppRouteChildren {
   AppProfileRoute: typeof AppProfileRoute
   AppRewardsRoute: typeof AppRewardsRoute
   AppShopRoute: typeof AppShopRoute
+  AppSocialRoute: typeof AppSocialRoute
   AppTransferRoute: typeof AppTransferRoute
   AppIndexRoute: typeof AppIndexRoute
 }
@@ -842,6 +862,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProfileRoute: AppProfileRoute,
   AppRewardsRoute: AppRewardsRoute,
   AppShopRoute: AppShopRoute,
+  AppSocialRoute: AppSocialRoute,
   AppTransferRoute: AppTransferRoute,
   AppIndexRoute: AppIndexRoute,
 }
