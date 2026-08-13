@@ -66,7 +66,7 @@ export function ManualCreditCard() {
         ...(category ? { category } : {}),
         ...(reference.trim() ? { reference: reference.trim() } : {}),
       });
-      toast.success("Manual credit granted", {
+      toast.success("Credits issued", {
         description: `${credits.toLocaleString()} credits to ${target.full_name} · ${tx}`,
       });
       setTarget(null);
@@ -85,8 +85,8 @@ export function ManualCreditCard() {
   return (
     <>
       <PageSection
-        title="Manual credit"
-        description="Platform-owner grant straight into an account's credit wallet. Recorded as “Superadmin Manual Credit” with your name, the amount, the reason and the resulting balance. It creates no vouchers and no commission."
+        title="Issue credits"
+        description="Super Admin Credit Issuance: new credits are minted from the platform issuance authority straight into an account. Nothing is deducted from your own wallet — you can issue with a zero balance. Recorded with your name, the amount, the reason and the resulting balance. It creates no vouchers and no commission."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-4">
@@ -130,7 +130,7 @@ export function ManualCreditCard() {
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="manualAmount">Credits to grant</Label>
+                <Label htmlFor="manualAmount">Credits to issue</Label>
                 <Input
                   id="manualAmount"
                   type="number"
@@ -190,7 +190,7 @@ export function ManualCreditCard() {
                     <dd>{target.credit_balance.toLocaleString()}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Manual credit</dt>
+                    <dt className="text-muted-foreground">Credits issued</dt>
                     <dd className="text-success">+{credits.toLocaleString()}</dd>
                   </div>
                   <div className="flex justify-between font-semibold">
@@ -203,15 +203,16 @@ export function ManualCreditCard() {
 
             <div className="flex flex-wrap items-center gap-3">
               <Button disabled={Boolean(issue) || busy} onClick={() => setConfirming(true)}>
-                Review and grant
+                Review and issue
               </Button>
               {issue ? <p className="text-xs text-muted-foreground">{issue}</p> : null}
             </div>
 
             <p className="flex items-start gap-2 text-xs text-muted-foreground">
               <ShieldAlert className="mt-0.5 size-3.5 shrink-0 text-warning" />
-              Manual credits increase the platform credit supply. They are permanent ledger
-              entries — corrections are made with a new adjustment, never by editing history.
+              Issued credits increase the platform credit supply and never debit your wallet. They
+              are permanent ledger entries — corrections are made with a new adjustment, never by
+              editing history.
             </p>
           </CardContent>
         </Card>
@@ -222,9 +223,10 @@ export function ManualCreditCard() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm {CREDIT_ISSUANCE_ACTION.toLowerCase()}</AlertDialogTitle>
             <AlertDialogDescription>
-              {credits.toLocaleString()} credits will be granted to {target?.full_name} and their
-              balance becomes {after.toLocaleString()}. This writes a permanent ledger entry under
-              your name and cannot be undone — only reversed with a new adjustment.
+              {credits.toLocaleString()} credits will be issued to {target?.full_name} and their
+              balance becomes {after.toLocaleString()}. Reason: “{note.trim()}”. Issued by Super
+              Admin — does not deduct from the Super Admin wallet. This writes a permanent ledger
+              entry under your name and cannot be undone — only reversed with a new adjustment.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -236,7 +238,7 @@ export function ManualCreditCard() {
                 void submit();
               }}
             >
-              {busy ? <Loader2 className="size-4 animate-spin" /> : null} Grant credits
+              {busy ? <Loader2 className="size-4 animate-spin" /> : null} Issue credits
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

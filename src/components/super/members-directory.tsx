@@ -162,7 +162,7 @@ export function MembersDirectory() {
                       onClick={() => setCreditTarget(m)}
                       className="h-9"
                     >
-                      <Coins className="size-4" /> Manual credit
+                      <Coins className="size-4" /> Issue credits
                     </Button>
                     {canActAsMember(m) ? (
                       <Button

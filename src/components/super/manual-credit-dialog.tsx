@@ -80,7 +80,7 @@ export function ManualCreditDialog({
         ...(category ? { category } : {}),
         ...(reference.trim() ? { reference: reference.trim() } : {}),
       });
-      toast.success("Manual credit granted", {
+      toast.success("Credits issued", {
         description: `${credits.toLocaleString()} credits to ${target.full_name} · ${tx}`,
       });
       reset();
@@ -105,10 +105,11 @@ export function ManualCreditDialog({
     >
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Manual credit</DialogTitle>
+          <DialogTitle>Issue credits</DialogTitle>
           <DialogDescription>
-            Recorded as “Superadmin Manual Credit” with your identity, the reason and the resulting
-            balance. No vouchers and no commission are created.
+            Super Admin Credit Issuance. Recorded with your identity, the reason and the resulting
+            balance. Issued by Super Admin — does not deduct from the Super Admin wallet. No
+            vouchers and no commission are created.
           </DialogDescription>
         </DialogHeader>
 
@@ -129,7 +130,7 @@ export function ManualCreditDialog({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="mc-amount">Credits to add</Label>
+              <Label htmlFor="mc-amount">Credits to issue</Label>
               <Input
                 id="mc-amount"
                 type="number"
@@ -180,7 +181,7 @@ export function ManualCreditDialog({
             </div>
 
             <p className="rounded-lg bg-brand-soft px-3 py-2 text-xs text-accent-foreground">
-              New balance after grant: <strong>{after.toLocaleString()}</strong> credits
+              New balance after issuance: <strong>{after.toLocaleString()}</strong> credits
             </p>
             {issue ? <p className="text-xs text-destructive">{issue}</p> : null}
           </div>
@@ -197,7 +198,7 @@ export function ManualCreditDialog({
             Cancel
           </Button>
           <Button disabled={!!issue || busy} onClick={() => void submit()}>
-            {busy ? "Granting…" : "Grant credits"}
+            {busy ? "Issuing…" : "Issue credits"}
           </Button>
         </DialogFooter>
       </DialogContent>
