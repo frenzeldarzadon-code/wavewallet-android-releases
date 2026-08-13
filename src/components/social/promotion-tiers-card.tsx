@@ -23,9 +23,10 @@ import {
   type PromotionTier,
 } from "@/lib/social";
 
-type Draft = Omit<PromotionTier, "id" | "is_default"> & { id?: string };
+type Draft = Omit<PromotionTier, "id" | "is_default"> & { id: string | null };
 
 const blank = (order: number): Draft => ({
+  id: null,
   name: "",
   description: "",
   price_social: 20,
@@ -77,7 +78,7 @@ export function PromotionTiersCard({
     try {
       await savePromotionTier({
         ...draft,
-        id: draft.id ?? null,
+        id: draft.id,
         ecosystemId: ecosystemId ?? null,
       });
       toast.success("Promotion type saved");
@@ -137,11 +138,7 @@ export function PromotionTiersCard({
                 size="sm"
                 className="h-9"
                 onClick={() =>
-                  setDraft(
-                    t.is_default && ecosystemId
-                      ? { ...t, id: undefined }
-                      : { ...t, id: t.id },
-                  )
+                  setDraft({ ...t, id: t.is_default && ecosystemId ? null : t.id })
                 }
               >
                 {t.is_default && ecosystemId ? "Customise" : "Edit"}

@@ -559,13 +559,13 @@ export async function saveEcosystemSocialSettings(
   input: EcosystemSocialSettings & { ecosystemId?: string },
 ) {
   const { error } = await supabase.rpc("update_ecosystem_social_settings", {
-    _social_enabled: input.social_enabled,
-    _daily_allowance: input.daily_allowance,
-    _post_cost: input.post_cost,
-    _comment_cost: input.comment_cost,
-    _credit_exchange_rate: input.credit_exchange_rate,
-    _points_exchange_rate: input.points_exchange_rate,
-    _promotion_enabled: input.promotion_enabled,
+    _social_enabled: input.social_enabled ?? undefined,
+    _daily_allowance: input.daily_allowance ?? undefined,
+    _post_cost: input.post_cost ?? undefined,
+    _comment_cost: input.comment_cost ?? undefined,
+    _credit_exchange_rate: input.credit_exchange_rate ?? undefined,
+    _points_exchange_rate: input.points_exchange_rate ?? undefined,
+    _promotion_enabled: input.promotion_enabled ?? undefined,
     ...(input.ecosystemId ? { _ecosystem_id: input.ecosystemId } : {}),
   });
   if (error) fail(error.message);
