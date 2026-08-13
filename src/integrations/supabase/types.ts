@@ -434,6 +434,92 @@ export type Database = {
           },
         ]
       }
+      dm_messages: {
+        Row: {
+          body: string
+          created_at: string
+          ecosystem_id: string
+          id: string
+          read_at: string | null
+          recipient_id: string
+          sender_id: string
+          thread_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          ecosystem_id: string
+          id?: string
+          read_at?: string | null
+          recipient_id: string
+          sender_id: string
+          thread_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          ecosystem_id?: string
+          id?: string
+          read_at?: string | null
+          recipient_id?: string
+          sender_id?: string
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dm_messages_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dm_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "dm_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dm_threads: {
+        Row: {
+          created_at: string
+          ecosystem_id: string
+          id: string
+          last_message_at: string | null
+          last_message_preview: string | null
+          user_a: string
+          user_b: string
+        }
+        Insert: {
+          created_at?: string
+          ecosystem_id: string
+          id?: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          user_a: string
+          user_b: string
+        }
+        Update: {
+          created_at?: string
+          ecosystem_id?: string
+          id?: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          user_a?: string
+          user_b?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dm_threads_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ecosystems: {
         Row: {
           archived_at: string | null
@@ -1124,6 +1210,442 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      social_ad_events: {
+        Row: {
+          claimed_at: string | null
+          created_at: string
+          ecosystem_id: string
+          id: string
+          provider: string
+          provider_event_id: string
+          reward_amount: number | null
+          user_id: string
+          verified: boolean
+        }
+        Insert: {
+          claimed_at?: string | null
+          created_at?: string
+          ecosystem_id: string
+          id?: string
+          provider: string
+          provider_event_id: string
+          reward_amount?: number | null
+          user_id: string
+          verified?: boolean
+        }
+        Update: {
+          claimed_at?: string | null
+          created_at?: string
+          ecosystem_id?: string
+          id?: string
+          provider?: string
+          provider_event_id?: string
+          reward_amount?: number | null
+          user_id?: string
+          verified?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_ad_events_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+          ecosystem_id: string
+          id: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+          ecosystem_id: string
+          id?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+          ecosystem_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_blocks_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_comments: {
+        Row: {
+          author_id: string
+          body: string
+          charged: boolean
+          created_at: string
+          ecosystem_id: string
+          id: string
+          post_id: string
+          removed_at: string | null
+          removed_by: string | null
+          removed_reason: string | null
+          status: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          charged?: boolean
+          created_at?: string
+          ecosystem_id: string
+          id?: string
+          post_id: string
+          removed_at?: string | null
+          removed_by?: string | null
+          removed_reason?: string | null
+          status?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          charged?: boolean
+          created_at?: string
+          ecosystem_id?: string
+          id?: string
+          post_id?: string
+          removed_at?: string | null
+          removed_by?: string | null
+          removed_reason?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_comments_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_credit_accounts: {
+        Row: {
+          balance: number
+          created_at: string
+          ecosystem_id: string
+          id: string
+          last_allowance_on: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          ecosystem_id: string
+          id?: string
+          last_allowance_on?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          ecosystem_id?: string
+          id?: string
+          last_allowance_on?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_credit_accounts_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_credit_ledger: {
+        Row: {
+          account_id: string
+          amount: number
+          balance_after: number
+          created_at: string
+          direction: string
+          ecosystem_id: string
+          id: string
+          reason: string
+          reference: string | null
+          source: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          balance_after: number
+          created_at?: string
+          direction: string
+          ecosystem_id: string
+          id?: string
+          reason: string
+          reference?: string | null
+          source: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          direction?: string
+          ecosystem_id?: string
+          id?: string
+          reason?: string
+          reference?: string | null
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_credit_ledger_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "social_credit_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_credit_ledger_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_likes: {
+        Row: {
+          created_at: string
+          ecosystem_id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ecosystem_id: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ecosystem_id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_likes_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_posts: {
+        Row: {
+          author_id: string
+          body: string
+          comment_count: number
+          created_at: string
+          ecosystem_id: string
+          id: string
+          image_path: string | null
+          like_count: number
+          promoted: boolean
+          promotion_cost: number | null
+          promotion_currency: string | null
+          removed_at: string | null
+          removed_by: string | null
+          removed_reason: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          comment_count?: number
+          created_at?: string
+          ecosystem_id: string
+          id?: string
+          image_path?: string | null
+          like_count?: number
+          promoted?: boolean
+          promotion_cost?: number | null
+          promotion_currency?: string | null
+          removed_at?: string | null
+          removed_by?: string | null
+          removed_reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          comment_count?: number
+          created_at?: string
+          ecosystem_id?: string
+          id?: string
+          image_path?: string | null
+          like_count?: number
+          promoted?: boolean
+          promotion_cost?: number | null
+          promotion_currency?: string | null
+          removed_at?: string | null
+          removed_by?: string | null
+          removed_reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_posts_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_reports: {
+        Row: {
+          created_at: string
+          ecosystem_id: string
+          handled_at: string | null
+          handled_by: string | null
+          id: string
+          reason: string
+          reporter_id: string
+          status: string
+          target_id: string
+          target_type: string
+          target_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          ecosystem_id: string
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          reason: string
+          reporter_id: string
+          status?: string
+          target_id: string
+          target_type: string
+          target_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          ecosystem_id?: string
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          reason?: string
+          reporter_id?: string
+          status?: string
+          target_id?: string
+          target_type?: string
+          target_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_reports_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_settings: {
+        Row: {
+          ad_daily_limit: number
+          ad_reward_amount: number
+          ads_enabled: boolean
+          comment_cost: number
+          created_at: string
+          credit_exchange_rate: number
+          daily_allowance: number
+          id: number
+          points_exchange_rate: number
+          post_cost: number
+          promotion_cost_points: number
+          promotion_cost_social: number
+          promotion_currency: string
+          promotion_enabled: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          ad_daily_limit?: number
+          ad_reward_amount?: number
+          ads_enabled?: boolean
+          comment_cost?: number
+          created_at?: string
+          credit_exchange_rate?: number
+          daily_allowance?: number
+          id?: number
+          points_exchange_rate?: number
+          post_cost?: number
+          promotion_cost_points?: number
+          promotion_cost_social?: number
+          promotion_currency?: string
+          promotion_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          ad_daily_limit?: number
+          ad_reward_amount?: number
+          ads_enabled?: boolean
+          comment_cost?: number
+          created_at?: string
+          credit_exchange_rate?: number
+          daily_allowance?: number
+          id?: number
+          points_exchange_rate?: number
+          post_cost?: number
+          promotion_cost_points?: number
+          promotion_cost_social?: number
+          promotion_currency?: string
+          promotion_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       subscription_adjustments: {
         Row: {
@@ -1820,6 +2342,33 @@ export type Database = {
       }
       delete_voucher_batch: { Args: { _import_id: string }; Returns: number }
       delete_voucher_code: { Args: { _code_id: string }; Returns: undefined }
+      dm_messages_for: {
+        Args: { _thread_id: string }
+        Returns: {
+          body: string
+          created_at: string
+          id: string
+          mine: boolean
+          sender_id: string
+        }[]
+      }
+      dm_open_thread: { Args: { _member_id: string }; Returns: string }
+      dm_send: { Args: { _body: string; _member_id: string }; Returns: Json }
+      dm_thread_list: {
+        Args: never
+        Returns: {
+          blocked: boolean
+          last_message_at: string
+          member_avatar: string
+          member_handle: string
+          member_id: string
+          member_name: string
+          preview: string
+          thread_id: string
+          unread: number
+        }[]
+      }
+      dm_unread_count: { Args: never; Returns: number }
       earnings_history: {
         Args: {
           _ecosystem?: string
@@ -2495,6 +3044,144 @@ export type Database = {
         Returns: undefined
       }
       slugify: { Args: { _value: string }; Returns: string }
+      social_admin_activity: {
+        Args: { _ecosystem_id?: string; _limit?: number }
+        Returns: {
+          amount: number
+          balance_after: number
+          created_at: string
+          direction: string
+          reason: string
+          source: string
+          user_id: string
+          user_name: string
+        }[]
+      }
+      social_admin_reports: {
+        Args: { _ecosystem_id?: string }
+        Returns: {
+          content: string
+          created_at: string
+          id: string
+          reason: string
+          reporter_name: string
+          status: string
+          target_id: string
+          target_name: string
+          target_type: string
+        }[]
+      }
+      social_can_moderate: {
+        Args: { _eco: string; _user: string }
+        Returns: boolean
+      }
+      social_claim_ad_reward: {
+        Args: { _provider: string; _provider_event_id: string }
+        Returns: Json
+      }
+      social_create_comment: {
+        Args: { _body: string; _post_id: string }
+        Returns: Json
+      }
+      social_create_post: {
+        Args: { _body: string; _image_path?: string; _promote?: boolean }
+        Returns: Json
+      }
+      social_delete_comment: {
+        Args: { _comment_id: string; _reason?: string }
+        Returns: undefined
+      }
+      social_delete_post: {
+        Args: { _post_id: string; _reason?: string }
+        Returns: undefined
+      }
+      social_exchange: {
+        Args: { _amount: number; _kind: string }
+        Returns: Json
+      }
+      social_feed: {
+        Args: { _before?: string; _limit?: number }
+        Returns: {
+          author_avatar: string
+          author_handle: string
+          author_id: string
+          author_name: string
+          body: string
+          can_delete: boolean
+          comment_count: number
+          created_at: string
+          id: string
+          image_path: string
+          like_count: number
+          liked_by_me: boolean
+          promoted: boolean
+        }[]
+      }
+      social_move: {
+        Args: {
+          _amount: number
+          _direction: string
+          _reason: string
+          _reference?: string
+          _source: string
+          _user: string
+        }
+        Returns: number
+      }
+      social_post_comments: {
+        Args: { _post_id: string }
+        Returns: {
+          author_avatar: string
+          author_handle: string
+          author_id: string
+          author_name: string
+          body: string
+          can_delete: boolean
+          created_at: string
+          id: string
+        }[]
+      }
+      social_rate_limit: {
+        Args: {
+          _max: number
+          _sources: string[]
+          _user: string
+          _window: string
+        }
+        Returns: undefined
+      }
+      social_report: {
+        Args: { _reason: string; _target_id: string; _target_type: string }
+        Returns: undefined
+      }
+      social_review_report: {
+        Args: { _report_id: string; _status: string }
+        Returns: undefined
+      }
+      social_set_block: {
+        Args: { _blocked: boolean; _member_id: string }
+        Returns: undefined
+      }
+      social_state: { Args: never; Returns: Json }
+      social_toggle_like: { Args: { _post_id: string }; Returns: Json }
+      social_wallet: {
+        Args: { _user: string }
+        Returns: {
+          balance: number
+          created_at: string
+          ecosystem_id: string
+          id: string
+          last_allowance_on: string | null
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "social_credit_accounts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       submit_subscription_request: {
         Args: {
           _amount_paid?: number
@@ -2696,6 +3383,46 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "platform_settings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      update_social_settings: {
+        Args: {
+          _ad_daily_limit: number
+          _ad_reward_amount: number
+          _ads_enabled: boolean
+          _comment_cost: number
+          _credit_exchange_rate: number
+          _daily_allowance: number
+          _points_exchange_rate: number
+          _post_cost: number
+          _promotion_cost_points: number
+          _promotion_cost_social: number
+          _promotion_currency: string
+          _promotion_enabled: boolean
+        }
+        Returns: {
+          ad_daily_limit: number
+          ad_reward_amount: number
+          ads_enabled: boolean
+          comment_cost: number
+          created_at: string
+          credit_exchange_rate: number
+          daily_allowance: number
+          id: number
+          points_exchange_rate: number
+          post_cost: number
+          promotion_cost_points: number
+          promotion_cost_social: number
+          promotion_currency: string
+          promotion_enabled: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "social_settings"
           isOneToOne: true
           isSetofReturn: false
         }

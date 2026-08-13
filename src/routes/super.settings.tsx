@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { PageSection } from "@/components/ui-kit";
 import { RetentionPolicyCard } from "@/components/retention-policy-card";
+import { SocialSettingsCard } from "@/components/social/social-settings-card";
 import { supabase } from "@/integrations/supabase/client";
 import {
   BILLING_PERIODS,
@@ -210,6 +211,8 @@ function SuperSettings() {
       <Button disabled={saving} onClick={() => void save()}>
         {saving ? "Saving…" : "Save changes"}
       </Button>
+
+      <SocialSettingsCard />
 
       <RetentionPolicyCard canRun />
     </>
