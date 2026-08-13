@@ -17,8 +17,11 @@ import { supabase } from "@/integrations/supabase/client";
 export interface MemberSearchResult {
   id: string;
   full_name: string;
+  handle: string | null;
+  avatar_path: string | null;
   email: string;
   phone: string;
+  masked_email: string;
   status: string;
   role: string;
   ecosystem_id: string | null;
