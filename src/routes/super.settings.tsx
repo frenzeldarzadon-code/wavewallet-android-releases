@@ -19,12 +19,7 @@ import { SocialSettingsCard } from "@/components/social/social-settings-card";
 import { PromotionTiersCard } from "@/components/social/promotion-tiers-card";
 import { SOCIAL_ENABLED } from "@/lib/features";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  BILLING_PERIODS,
-  fetchPlatformSettings,
-  type BillingPeriod,
-  type PlatformSettings,
-} from "@/lib/subscription";
+import { fetchPlatformSettings, type PlatformSettings } from "@/lib/subscription";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/super/settings")({
