@@ -3923,46 +3923,88 @@ export type Database = {
         Returns: string
       }
       transfer_reversal_info: { Args: { _tx_id: string }; Returns: Json }
-      update_credit_purchase_settings: {
-        Args: {
-          _admin_credit_discount_percent: number
-          _credit_gcash_account_name: string
-          _credit_gcash_number: string
-          _credit_payment_instructions: string
-          _credit_release_mode: string
-          _default_admin_sale_commission_percent: number
-        }
-        Returns: {
-          admin_credit_discount_percent: number
-          admin_voucher_discount_percent: number
-          billing_period: string
-          created_at: string
-          credit_gcash_account_name: string
-          credit_gcash_number: string
-          credit_payment_instructions: string
-          credit_release_mode: string
-          currency: string
-          default_admin_sale_commission_percent: number
-          gcash_account_name: string
-          gcash_number: string
-          grace_period_days: number
-          id: number
-          payment_instructions: string
-          plan_name: string
-          plan_price: number
-          support_message: string
-          support_page_name: string
-          support_page_url: string
-          updated_at: string
-          updated_by: string | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "platform_settings"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+      update_credit_purchase_settings:
+        | {
+            Args: {
+              _admin_credit_discount_percent: number
+              _credit_gcash_account_name: string
+              _credit_gcash_number: string
+              _credit_payment_instructions: string
+              _credit_release_mode: string
+              _default_admin_sale_commission_percent: number
+            }
+            Returns: {
+              admin_credit_discount_percent: number
+              admin_voucher_discount_percent: number
+              billing_period: string
+              created_at: string
+              credit_gcash_account_name: string
+              credit_gcash_number: string
+              credit_payment_instructions: string
+              credit_release_mode: string
+              currency: string
+              default_admin_sale_commission_percent: number
+              gcash_account_name: string
+              gcash_number: string
+              grace_period_days: number
+              id: number
+              payment_instructions: string
+              plan_name: string
+              plan_price: number
+              support_message: string
+              support_page_name: string
+              support_page_url: string
+              updated_at: string
+              updated_by: string | null
+            }
+            SetofOptions: {
+              from: "*"
+              to: "platform_settings"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: {
+              _admin_credit_discount_percent: number
+              _admin_voucher_discount_percent?: number
+              _credit_gcash_account_name: string
+              _credit_gcash_number: string
+              _credit_payment_instructions: string
+              _credit_release_mode: string
+              _default_admin_sale_commission_percent: number
+            }
+            Returns: {
+              admin_credit_discount_percent: number
+              admin_voucher_discount_percent: number
+              billing_period: string
+              created_at: string
+              credit_gcash_account_name: string
+              credit_gcash_number: string
+              credit_payment_instructions: string
+              credit_release_mode: string
+              currency: string
+              default_admin_sale_commission_percent: number
+              gcash_account_name: string
+              gcash_number: string
+              grace_period_days: number
+              id: number
+              payment_instructions: string
+              plan_name: string
+              plan_price: number
+              support_message: string
+              support_page_name: string
+              support_page_url: string
+              updated_at: string
+              updated_by: string | null
+            }
+            SetofOptions: {
+              from: "*"
+              to: "platform_settings"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       update_ecosystem: {
         Args: {
           _contact_email?: string
