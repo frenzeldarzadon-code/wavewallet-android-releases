@@ -29,7 +29,10 @@ import { useSession } from "@/lib/session";
 type HandleState = "idle" | "checking" | "available" | "taken" | "invalid";
 
 export function ProfilePage() {
-  const { account, ecosystemDbId, reload } = useSession("customer");
+  // No required role here: the parent layout route (/app, /admin, /reseller, /super)
+  // already gates access. Every member edits only their own profile — the database
+  // authorizes each write via auth.uid().
+  const { account, ecosystemDbId, reload } = useSession();
   const [profile, setProfile] = useState<MyProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
