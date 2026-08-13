@@ -12,6 +12,7 @@ import {
 import { AppShell, type NavItem } from "@/components/app-shell";
 import { useSession } from "@/lib/session";
 import { roleLabel } from "@/lib/wavewallet";
+import { SOCIAL_ENABLED } from "@/lib/features";
 
 export const Route = createFileRoute("/reseller")({
   component: ResellerLayout,
@@ -21,8 +22,12 @@ const nav: NavItem[] = [
   { to: "/reseller", label: "Dashboard", icon: LayoutDashboard },
   { to: "/reseller/shop", label: "Buy vouchers", icon: ShoppingCart },
   { to: "/reseller/customers", label: "My customers", icon: Users },
-  { to: "/reseller/social", label: "Community", icon: Users },
-  { to: "/reseller/messages", label: "Messages", icon: MessageSquare },
+  ...(SOCIAL_ENABLED
+    ? ([
+        { to: "/reseller/social", label: "Community", icon: Users },
+        { to: "/reseller/messages", label: "Messages", icon: MessageSquare },
+      ] as NavItem[])
+    : []),
   { to: "/reseller/redemptions", label: "Redemptions", icon: Gift },
   { to: "/reseller/reports", label: "Reports", icon: BarChart3 },
   { to: "/reseller/earnings", label: "Earnings", icon: Wallet },

@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   ScrollText,
   Settings,
+  User,
 } from "lucide-react";
 import { AppShell, type NavItem } from "@/components/app-shell";
 import { useSession } from "@/lib/session";
@@ -23,6 +24,7 @@ export const superNav: NavItem[] = [
   { to: "/super/export", label: "Data export", icon: DatabaseBackup },
   { to: "/super/audit", label: "Audit log", icon: ScrollText },
   { to: "/super/settings", label: "Platform", icon: Settings },
+  { to: "/super/profile", label: "My profile", icon: User },
 ];
 
 
