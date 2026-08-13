@@ -38,6 +38,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { EmptyState, PageSection } from "@/components/ui-kit";
 import { ImageCropper } from "@/components/image-cropper";
 import { MemberAvatar } from "@/components/member-avatar";
@@ -48,6 +55,7 @@ import {
   COMMENT_MAX_CHARS,
   POST_MAX_CHARS,
   SOCIAL_IMAGE_ASPECT,
+  availableTiers,
   canAfford,
   chargeSummary,
   commentCharge,
@@ -65,6 +73,7 @@ import {
   reportContent,
   setBlocked,
   socialImageUrl,
+  tierDuration,
   toggleLike,
   uploadSocialImage,
   validateCommentBody,
@@ -72,6 +81,8 @@ import {
   validateSocialImage,
   type FeedComment,
   type FeedPost,
+  type PromotionTier,
+  type SocialCurrency,
   type SocialState,
 } from "@/lib/social";
 import { sendMessage } from "@/lib/social";
@@ -107,6 +118,8 @@ export function SocialPage() {
   // composer
   const [body, setBody] = useState("");
   const [promote, setPromote] = useState(false);
+  const [tierId, setTierId] = useState<string>("");
+  const [payWith, setPayWith] = useState<SocialCurrency>("social");
   const [file, setFile] = useState<File | null>(null);
   const [crop, setCrop] = useState<{ image: HTMLImageElement; crop: CropRect } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -139,10 +152,22 @@ export function SocialPage() {
     void refresh();
   }, [account, refresh]);
 
-  const charge = useMemo(
-    () => (state ? postCharge(state, promote) : { amount: 0, currency: "social" as const }),
-    [state, promote],
+  const tiers = useMemo<PromotionTier[]>(
+    () => (state ? availableTiers({ promotion_tiers: state.promotion_tiers, role: account?.role ?? null }) : []),
+    [state, account?.role],
   );
+  const tier = useMemo(() => tiers.find((t) => t.id === tierId) ?? null, [tiers, tierId]);
+  const charge = useMemo(
+    () =>
+      state
+        ? postCharge(state, promote, tier, payWith)
+        : { amount: 0, currency: "social" as SocialCurrency },
+    [state, promote, tier, payWith],
+  );
+
+  useEffect(() => {
+    if (promote && !tierId && tiers.length > 0) setTierId(tiers[0]!.id);
+  }, [promote, tierId, tiers]);
 
   if (!account) return null;
 
@@ -179,7 +204,13 @@ export function SocialPage() {
           preloaded: crop.image,
         });
       }
-      const res = await createPost({ body, imagePath, promote });
+      const res = await createPost({
+        body,
+        imagePath,
+        promote,
+        tierId: promote ? (tier?.id ?? null) : null,
+        ...(promote ? { currency: charge.currency } : {}),
+      });
       toast.success(promote ? "Promoted post published" : "Posted", {
         description:
           res.charged > 0
@@ -188,6 +219,7 @@ export function SocialPage() {
       });
       setBody("");
       setPromote(false);
+      setTierId("");
       setFile(null);
       setCrop(null);
       setConfirmOpen(false);
@@ -343,7 +375,7 @@ export function SocialPage() {
                 onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
               />
 
-              {state?.promotion_enabled ? (
+              {state?.promotion_enabled && tiers.length > 0 ? (
                 <label className="inline-flex h-11 items-center gap-2 rounded-xl border border-border px-3 text-sm font-medium">
                   <Megaphone className="size-4 text-primary" aria-hidden />
                   Promote
@@ -360,9 +392,55 @@ export function SocialPage() {
               </Button>
             </div>
 
+            {promote && tiers.length > 0 ? (
+              <div className="grid gap-2 rounded-xl border border-primary/40 bg-primary/5 p-3 sm:grid-cols-2">
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="promoTier">Promotion type</Label>
+                  <Select value={tierId} onValueChange={setTierId}>
+                    <SelectTrigger id="promoTier" className="h-11">
+                      <SelectValue placeholder="Choose a promotion" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {tiers.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          {t.name} · {tierDuration(t.duration_hours)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {tier?.description ? (
+                    <p className="text-xs text-muted-foreground">{tier.description}</p>
+                  ) : null}
+                </div>
+                {tier?.currency === "both" ? (
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label>Pay with</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        type="button"
+                        variant={payWith === "social" ? "default" : "outline"}
+                        className="h-11"
+                        onClick={() => setPayWith("social")}
+                      >
+                        {tier.price_social} social credits
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={payWith === "points" ? "default" : "outline"}
+                        className="h-11"
+                        onClick={() => setPayWith("points")}
+                      >
+                        {tier.price_points} points
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
             <p className="text-xs text-muted-foreground">
               {promote
-                ? `Promoted posts are labelled “Promoted” and cost ${charge.amount} ${charge.currency === "points" ? "points" : "social credits"}. Replies to a promoted post are free for everyone.`
+                ? `${tier?.name ?? "Promotion"} costs ${charge.amount} ${charge.currency === "points" ? "points" : "social credits"} and stays highlighted for ${tierDuration(tier?.duration_hours ?? 24)}. Replies to a promoted post are free for everyone — only you pay.`
                 : `A normal post costs ${state?.post_cost ?? 1} social credit. Likes are always free; replies cost ${state?.comment_cost ?? 1} social credit unless the post is promoted.`}
             </p>
           </CardContent>
@@ -407,10 +485,18 @@ export function SocialPage() {
                   {charge.currency === "points" ? ` · ${account.pointsBalance ?? 0} points` : ""}
                 </p>
                 {promote ? (
-                  <p>
-                    Your post will be labelled <strong>Promoted</strong>. Only this post is charged
-                    the promotion fee — replies and comments on it do not consume social credits.
-                  </p>
+                  <>
+                    <p>
+                      Promotion: <strong>{tier?.name ?? "Promoted"}</strong> ·{" "}
+                      {tierDuration(tier?.duration_hours ?? 24)} · paid in{" "}
+                      {charge.currency === "points" ? "points" : "social credits"}.
+                    </p>
+                    <p>
+                      Your post will be labelled <strong>Promoted</strong>. Only you pay this fee —
+                      replies and comments on a promoted post do not consume social credits from the
+                      members replying.
+                    </p>
+                  </>
                 ) : (
                   <p>Likes are free. Replies to this post cost {state?.comment_cost ?? 1} social credit.</p>
                 )}
@@ -632,7 +718,9 @@ function PostCard({
               ) : null}
               <span className="text-xs text-muted-foreground">· {relativeTime(post.created_at)}</span>
               {post.promoted ? (
-                <Badge className="bg-primary text-primary-foreground">Promoted</Badge>
+                <Badge className="bg-primary text-primary-foreground">
+                  {post.promotion_tier_name ? `${post.promotion_tier_name} · Promoted` : "Promoted"}
+                </Badge>
               ) : null}
             </div>
             <p className="mt-1 whitespace-pre-wrap break-words text-sm">{post.body}</p>

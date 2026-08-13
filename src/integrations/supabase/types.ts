@@ -440,6 +440,7 @@ export type Database = {
           created_at: string
           ecosystem_id: string
           id: string
+          image_path: string | null
           read_at: string | null
           recipient_id: string
           sender_id: string
@@ -450,6 +451,7 @@ export type Database = {
           created_at?: string
           ecosystem_id: string
           id?: string
+          image_path?: string | null
           read_at?: string | null
           recipient_id: string
           sender_id: string
@@ -460,6 +462,7 @@ export type Database = {
           created_at?: string
           ecosystem_id?: string
           id?: string
+          image_path?: string | null
           read_at?: string | null
           recipient_id?: string
           sender_id?: string
@@ -515,6 +518,56 @@ export type Database = {
             foreignKeyName: "dm_threads_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ecosystem_social_settings: {
+        Row: {
+          comment_cost: number | null
+          created_at: string
+          credit_exchange_rate: number | null
+          daily_allowance: number | null
+          ecosystem_id: string
+          points_exchange_rate: number | null
+          post_cost: number | null
+          promotion_enabled: boolean | null
+          social_enabled: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          comment_cost?: number | null
+          created_at?: string
+          credit_exchange_rate?: number | null
+          daily_allowance?: number | null
+          ecosystem_id: string
+          points_exchange_rate?: number | null
+          post_cost?: number | null
+          promotion_enabled?: boolean | null
+          social_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          comment_cost?: number | null
+          created_at?: string
+          credit_exchange_rate?: number | null
+          daily_allowance?: number | null
+          ecosystem_id?: string
+          points_exchange_rate?: number | null
+          post_cost?: number | null
+          promotion_enabled?: boolean | null
+          social_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ecosystem_social_settings_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: true
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -1488,6 +1541,13 @@ export type Database = {
           promoted: boolean
           promotion_cost: number | null
           promotion_currency: string | null
+          promotion_duration_hours: number | null
+          promotion_expires_at: string | null
+          promotion_priority: number
+          promotion_refund_reason: string | null
+          promotion_refunded_at: string | null
+          promotion_tier_id: string | null
+          promotion_tier_name: string | null
           removed_at: string | null
           removed_by: string | null
           removed_reason: string | null
@@ -1506,6 +1566,13 @@ export type Database = {
           promoted?: boolean
           promotion_cost?: number | null
           promotion_currency?: string | null
+          promotion_duration_hours?: number | null
+          promotion_expires_at?: string | null
+          promotion_priority?: number
+          promotion_refund_reason?: string | null
+          promotion_refunded_at?: string | null
+          promotion_tier_id?: string | null
+          promotion_tier_name?: string | null
           removed_at?: string | null
           removed_by?: string | null
           removed_reason?: string | null
@@ -1524,6 +1591,13 @@ export type Database = {
           promoted?: boolean
           promotion_cost?: number | null
           promotion_currency?: string | null
+          promotion_duration_hours?: number | null
+          promotion_expires_at?: string | null
+          promotion_priority?: number
+          promotion_refund_reason?: string | null
+          promotion_refunded_at?: string | null
+          promotion_tier_id?: string | null
+          promotion_tier_name?: string | null
           removed_at?: string | null
           removed_by?: string | null
           removed_reason?: string | null
@@ -1533,6 +1607,72 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "social_posts_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_posts_promotion_tier_id_fkey"
+            columns: ["promotion_tier_id"]
+            isOneToOne: false
+            referencedRelation: "social_promotion_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_promotion_tiers: {
+        Row: {
+          active: boolean
+          created_at: string
+          currency: string
+          description: string
+          duration_hours: number
+          ecosystem_id: string | null
+          eligibility: string
+          id: string
+          name: string
+          price_points: number
+          price_social: number
+          priority: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          currency?: string
+          description?: string
+          duration_hours?: number
+          ecosystem_id?: string | null
+          eligibility?: string
+          id?: string
+          name: string
+          price_points?: number
+          price_social?: number
+          priority?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          currency?: string
+          description?: string
+          duration_hours?: number
+          ecosystem_id?: string | null
+          eligibility?: string
+          id?: string
+          name?: string
+          price_points?: number
+          price_social?: number
+          priority?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_promotion_tiers_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "ecosystems"
@@ -1593,13 +1733,19 @@ export type Database = {
       social_settings: {
         Row: {
           ad_daily_limit: number
+          ad_provider: string
           ad_reward_amount: number
           ads_enabled: boolean
+          allow_admin_overrides: boolean
           comment_cost: number
           created_at: string
           credit_exchange_rate: number
           daily_allowance: number
           id: number
+          image_max_kb: number
+          image_max_px: number
+          max_daily_allowance: number
+          max_exchange_rate: number
           points_exchange_rate: number
           post_cost: number
           promotion_cost_points: number
@@ -1611,13 +1757,19 @@ export type Database = {
         }
         Insert: {
           ad_daily_limit?: number
+          ad_provider?: string
           ad_reward_amount?: number
           ads_enabled?: boolean
+          allow_admin_overrides?: boolean
           comment_cost?: number
           created_at?: string
           credit_exchange_rate?: number
           daily_allowance?: number
           id?: number
+          image_max_kb?: number
+          image_max_px?: number
+          max_daily_allowance?: number
+          max_exchange_rate?: number
           points_exchange_rate?: number
           post_cost?: number
           promotion_cost_points?: number
@@ -1629,13 +1781,19 @@ export type Database = {
         }
         Update: {
           ad_daily_limit?: number
+          ad_provider?: string
           ad_reward_amount?: number
           ads_enabled?: boolean
+          allow_admin_overrides?: boolean
           comment_cost?: number
           created_at?: string
           credit_exchange_rate?: number
           daily_allowance?: number
           id?: number
+          image_max_kb?: number
+          image_max_px?: number
+          max_daily_allowance?: number
+          max_exchange_rate?: number
           points_exchange_rate?: number
           post_cost?: number
           promotion_cost_points?: number
@@ -2340,6 +2498,10 @@ export type Database = {
         Args: { _reason?: string; _user_id: string }
         Returns: undefined
       }
+      delete_social_promotion_tier: {
+        Args: { _tier_id: string }
+        Returns: undefined
+      }
       delete_voucher_batch: { Args: { _import_id: string }; Returns: number }
       delete_voucher_code: { Args: { _code_id: string }; Returns: undefined }
       dm_messages_for: {
@@ -2348,12 +2510,18 @@ export type Database = {
           body: string
           created_at: string
           id: string
+          image_path: string
           mine: boolean
           sender_id: string
         }[]
       }
       dm_open_thread: { Args: { _member_id: string }; Returns: string }
-      dm_send: { Args: { _body: string; _member_id: string }; Returns: Json }
+      dm_send:
+        | { Args: { _body: string; _member_id: string }; Returns: Json }
+        | {
+            Args: { _body: string; _image_path?: string; _member_id: string }
+            Returns: Json
+          }
       dm_thread_list: {
         Args: never
         Returns: {
@@ -3083,10 +3251,21 @@ export type Database = {
         Args: { _body: string; _post_id: string }
         Returns: Json
       }
-      social_create_post: {
-        Args: { _body: string; _image_path?: string; _promote?: boolean }
-        Returns: Json
-      }
+      social_create_post:
+        | {
+            Args: { _body: string; _image_path?: string; _promote?: boolean }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _body: string
+              _currency?: string
+              _image_path?: string
+              _promote?: boolean
+              _tier_id?: string
+            }
+            Returns: Json
+          }
       social_delete_comment: {
         Args: { _comment_id: string; _reason?: string }
         Returns: undefined
@@ -3095,6 +3274,7 @@ export type Database = {
         Args: { _post_id: string; _reason?: string }
         Returns: undefined
       }
+      social_effective_settings: { Args: { _eco: string }; Returns: Json }
       social_exchange: {
         Args: { _amount: number; _kind: string }
         Returns: Json
@@ -3115,6 +3295,8 @@ export type Database = {
           like_count: number
           liked_by_me: boolean
           promoted: boolean
+          promotion_expires_at: string
+          promotion_tier_name: string
         }[]
       }
       social_move: {
@@ -3150,6 +3332,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      social_refund_promotion: {
+        Args: { _post_id: string; _reason: string }
+        Returns: Json
+      }
       social_report: {
         Args: { _reason: string; _target_id: string; _target_type: string }
         Returns: undefined
@@ -3163,6 +3349,23 @@ export type Database = {
         Returns: undefined
       }
       social_state: { Args: never; Returns: Json }
+      social_tiers_for: {
+        Args: { _eco: string }
+        Returns: {
+          active: boolean
+          currency: string
+          description: string
+          duration_hours: number
+          eligibility: string
+          id: string
+          is_default: boolean
+          name: string
+          price_points: number
+          price_social: number
+          priority: number
+          sort_order: number
+        }[]
+      }
       social_toggle_like: { Args: { _post_id: string }; Returns: Json }
       social_wallet: {
         Args: { _user: string }
@@ -3340,6 +3543,19 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      update_ecosystem_social_settings: {
+        Args: {
+          _comment_cost?: number
+          _credit_exchange_rate?: number
+          _daily_allowance?: number
+          _ecosystem_id?: string
+          _points_exchange_rate?: number
+          _post_cost?: number
+          _promotion_enabled?: boolean
+          _social_enabled: boolean
+        }
+        Returns: Json
+      }
       update_own_profile: {
         Args: {
           _avatar_path?: string
@@ -3390,11 +3606,17 @@ export type Database = {
       update_social_settings: {
         Args: {
           _ad_daily_limit: number
+          _ad_provider?: string
           _ad_reward_amount: number
           _ads_enabled: boolean
+          _allow_admin_overrides?: boolean
           _comment_cost: number
           _credit_exchange_rate: number
           _daily_allowance: number
+          _image_max_kb?: number
+          _image_max_px?: number
+          _max_daily_allowance?: number
+          _max_exchange_rate?: number
           _points_exchange_rate: number
           _post_cost: number
           _promotion_cost_points: number
@@ -3404,13 +3626,19 @@ export type Database = {
         }
         Returns: {
           ad_daily_limit: number
+          ad_provider: string
           ad_reward_amount: number
           ads_enabled: boolean
+          allow_admin_overrides: boolean
           comment_cost: number
           created_at: string
           credit_exchange_rate: number
           daily_allowance: number
           id: number
+          image_max_kb: number
+          image_max_px: number
+          max_daily_allowance: number
+          max_exchange_rate: number
           points_exchange_rate: number
           post_cost: number
           promotion_cost_points: number
@@ -3430,6 +3658,23 @@ export type Database = {
       upline_commission_rate_for: {
         Args: { _ecosystem_id: string }
         Returns: number
+      }
+      upsert_social_promotion_tier: {
+        Args: {
+          _active: boolean
+          _currency: string
+          _description: string
+          _duration_hours: number
+          _ecosystem_id?: string
+          _eligibility: string
+          _name: string
+          _price_points: number
+          _price_social: number
+          _priority: number
+          _sort_order?: number
+          _tier_id?: string
+        }
+        Returns: string
       }
       voucher_discount_percent_for: {
         Args: { _user_id: string }

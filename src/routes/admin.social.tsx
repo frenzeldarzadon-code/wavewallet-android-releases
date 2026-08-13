@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState, PageSection } from "@/components/ui-kit";
+import { EcosystemSocialCard } from "@/components/social/ecosystem-social-card";
+import { PromotionTiersCard } from "@/components/social/promotion-tiers-card";
 import { useSession } from "@/lib/session";
 import {
   deleteComment,
@@ -86,6 +88,17 @@ function AdminSocial() {
 
   return (
     <>
+      {ecosystemDbId ? (
+        <>
+          <EcosystemSocialCard ecosystemId={ecosystemDbId} />
+          <PromotionTiersCard
+            ecosystemId={ecosystemDbId}
+            title="Promotion types for my shop"
+            description="Members pay to highlight a post. Customise the platform levels or add your own — every promoted post is clearly labelled."
+          />
+        </>
+      ) : null}
+
       <PageSection
         title="Reported content"
         description="Members can report posts, replies and other members. Everything here is scoped to your shop only."

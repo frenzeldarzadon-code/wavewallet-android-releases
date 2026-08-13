@@ -30,9 +30,28 @@ export const SOCIAL_IMAGE_TARGET: ImageTarget = {
 
 export const SOCIAL_IMAGE_ASPECT = SOCIAL_IMAGE_TARGET.width / SOCIAL_IMAGE_TARGET.height;
 
+export type SocialCurrency = "social" | "points";
+
+/** A configurable paid-promotion level. Prices are snapshotted onto the post. */
+export interface PromotionTier {
+  id: string;
+  name: string;
+  description: string;
+  price_social: number;
+  price_points: number;
+  currency: "social" | "points" | "both";
+  duration_hours: number;
+  priority: number;
+  eligibility: "all" | "reseller";
+  active: boolean;
+  sort_order: number;
+  is_default: boolean;
+}
+
 export interface SocialState {
   balance: number;
   ecosystem_id: string;
+  social_enabled: boolean;
   daily_allowance: number;
   post_cost: number;
   comment_cost: number;
@@ -43,10 +62,15 @@ export interface SocialState {
   promotion_cost_social: number;
   promotion_cost_points: number;
   ads_enabled: boolean;
+  ad_provider: string;
   ad_reward_amount: number;
   ad_daily_limit: number;
   ads_claimed_today: number;
+  image_max_px: number;
+  image_max_kb: number;
+  promotion_tiers: PromotionTier[];
 }
+
 
 export interface FeedPost {
   id: string;
@@ -57,6 +81,9 @@ export interface FeedPost {
   body: string;
   image_path: string | null;
   promoted: boolean;
+  promotion_tier_name: string | null;
+  promotion_expires_at: string | null;
+
   like_count: number;
   comment_count: number;
   liked_by_me: boolean;
@@ -91,9 +118,11 @@ export interface DmMessage {
   id: string;
   sender_id: string;
   body: string;
+  image_path: string | null;
   created_at: string;
   mine: boolean;
 }
+
 
 export interface SocialActivityRow {
   created_at: string;
@@ -135,12 +164,56 @@ export function postCharge(
     "post_cost" | "promotion_currency" | "promotion_cost_social" | "promotion_cost_points"
   >,
   promote: boolean,
-): { amount: number; currency: "social" | "points" } {
+  tier?: PromotionTier | null,
+  currency?: SocialCurrency,
+): { amount: number; currency: SocialCurrency } {
   if (!promote) return { amount: state.post_cost, currency: "social" };
+  if (tier) {
+    const cur: SocialCurrency =
+      tier.currency === "both" ? (currency ?? "social") : (tier.currency as SocialCurrency);
+    return {
+      amount: cur === "points" ? tier.price_points : tier.price_social,
+      currency: cur,
+    };
+  }
   return state.promotion_currency === "points"
     ? { amount: state.promotion_cost_points, currency: "points" }
     : { amount: state.promotion_cost_social, currency: "social" };
 }
+
+/** Tiers the member may actually buy right now. */
+export function availableTiers(input: {
+  promotion_tiers: PromotionTier[];
+  role?: string | null;
+}): PromotionTier[] {
+  const privileged =
+    input.role === "reseller" ||
+    input.role === "subreseller" ||
+    input.role === "admin" ||
+    input.role === "super_admin";
+  return (input.promotion_tiers ?? [])
+    .filter((t) => t.active && (t.eligibility !== "reseller" || privileged))
+    .sort((a, b) => a.sort_order - b.sort_order);
+}
+
+/** Human duration of a promotion tier, for the pre-purchase disclosure. */
+export function tierDuration(hours: number): string {
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"}`;
+  const days = Math.round(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"}`;
+}
+
+/** True only when a real rewarded-ad provider is configured and enabled. */
+export function adsAvailable(
+  state: Pick<SocialState, "ads_enabled" | "ad_provider" | "ad_daily_limit" | "ads_claimed_today">,
+): boolean {
+  return (
+    state.ads_enabled &&
+    state.ad_provider.trim().length > 0 &&
+    state.ads_claimed_today < state.ad_daily_limit
+  );
+}
+
 
 /** Replies to a promoted post are free — this is disclosed before publishing. */
 export function commentCharge(
@@ -258,14 +331,32 @@ export async function createPost(input: {
   body: string;
   imagePath?: string | null;
   promote: boolean;
-}): Promise<{ post_id: string; charged: number; currency: string; balance: number }> {
+  tierId?: string | null;
+  currency?: SocialCurrency;
+}): Promise<{
+  post_id: string;
+  charged: number;
+  currency: string;
+  tier: string | null;
+  expires_at: string | null;
+  balance: number;
+}> {
   const { data, error } = await supabase.rpc("social_create_post", {
     _body: input.body.trim(),
     ...(input.imagePath ? { _image_path: input.imagePath } : {}),
     _promote: input.promote,
+    ...(input.tierId ? { _tier_id: input.tierId } : {}),
+    ...(input.currency ? { _currency: input.currency } : {}),
   });
   if (error) fail(error.message);
-  return data as unknown as { post_id: string; charged: number; currency: string; balance: number };
+  return data as unknown as {
+    post_id: string;
+    charged: number;
+    currency: string;
+    tier: string | null;
+    expires_at: string | null;
+    balance: number;
+  };
 }
 
 export async function createComment(postId: string, body: string) {
@@ -350,8 +441,12 @@ export async function fetchMessages(threadId: string): Promise<DmMessage[]> {
   return (data ?? []) as DmMessage[];
 }
 
-export async function sendMessage(memberId: string, body: string) {
-  const { data, error } = await supabase.rpc("dm_send", { _member_id: memberId, _body: body.trim() });
+export async function sendMessage(memberId: string, body: string, imagePath?: string | null) {
+  const { data, error } = await supabase.rpc("dm_send", {
+    _member_id: memberId,
+    _body: body.trim(),
+    ...(imagePath ? { _image_path: imagePath } : {}),
+  });
   if (error) fail(error.message);
   return data as unknown as { thread_id: string; message_id: string };
 }
@@ -441,4 +536,100 @@ export async function socialImageUrl(path?: string | null): Promise<string | nul
   if (error || !data?.signedUrl) return null;
   urlCache.set(path, { url: data.signedUrl, expires: Date.now() + 55 * 60 * 1000 });
   return data.signedUrl;
+}
+
+// -------------------------------------------------- community configuration
+
+export interface EcosystemSocialSettings {
+  social_enabled: boolean;
+  daily_allowance: number | null;
+  post_cost: number | null;
+  comment_cost: number | null;
+  credit_exchange_rate: number | null;
+  points_exchange_rate: number | null;
+  promotion_enabled: boolean | null;
+}
+
+/** Effective (platform default + shop override) settings for a shop. */
+export async function fetchEcosystemSocialOverride(
+  ecosystemId: string,
+): Promise<EcosystemSocialSettings | null> {
+  const { data, error } = await supabase
+    .from("ecosystem_social_settings")
+    .select(
+      "social_enabled, daily_allowance, post_cost, comment_cost, credit_exchange_rate, points_exchange_rate, promotion_enabled",
+    )
+    .eq("ecosystem_id", ecosystemId)
+    .maybeSingle();
+  if (error) fail(error.message);
+  return (data as EcosystemSocialSettings | null) ?? null;
+}
+
+export async function saveEcosystemSocialSettings(
+  input: EcosystemSocialSettings & { ecosystemId?: string },
+) {
+  const opt = <T,>(key: string, value: T | null) =>
+    value === null || value === undefined ? {} : { [key]: value };
+  const { error } = await supabase.rpc("update_ecosystem_social_settings", {
+    _social_enabled: input.social_enabled,
+    ...opt("_daily_allowance", input.daily_allowance),
+    ...opt("_post_cost", input.post_cost),
+    ...opt("_comment_cost", input.comment_cost),
+    ...opt("_credit_exchange_rate", input.credit_exchange_rate),
+    ...opt("_points_exchange_rate", input.points_exchange_rate),
+    ...opt("_promotion_enabled", input.promotion_enabled),
+    ...opt("_ecosystem_id", input.ecosystemId ?? null),
+  });
+  if (error) fail(error.message);
+}
+
+export async function fetchPromotionTiers(ecosystemId: string | null): Promise<PromotionTier[]> {
+  if (!ecosystemId) {
+    const { data, error } = await supabase
+      .from("social_promotion_tiers")
+      .select("*")
+      .is("ecosystem_id", null)
+      .order("sort_order");
+    if (error) fail(error.message);
+    return ((data ?? []) as unknown as PromotionTier[]).map((t) => ({ ...t, is_default: true }));
+  }
+  const { data, error } = await supabase.rpc("social_tiers_for", { _eco: ecosystemId });
+  if (error) fail(error.message);
+  return (data ?? []) as unknown as PromotionTier[];
+}
+
+export async function savePromotionTier(
+  tier: Omit<PromotionTier, "id" | "is_default"> & { id?: string | null; ecosystemId?: string | null },
+): Promise<string> {
+  const { data, error } = await supabase.rpc("upsert_social_promotion_tier", {
+    _name: tier.name.trim(),
+    _description: tier.description ?? "",
+    _price_social: tier.price_social,
+    _price_points: tier.price_points,
+    _currency: tier.currency,
+    _duration_hours: tier.duration_hours,
+    _priority: tier.priority,
+    _eligibility: tier.eligibility,
+    _active: tier.active,
+    _sort_order: tier.sort_order,
+    ...(tier.id ? { _tier_id: tier.id } : {}),
+    ...(tier.ecosystemId ? { _ecosystem_id: tier.ecosystemId } : {}),
+  });
+  if (error) fail(error.message);
+  return data as unknown as string;
+}
+
+export async function disablePromotionTier(tierId: string) {
+  const { error } = await supabase.rpc("delete_social_promotion_tier", { _tier_id: tierId });
+  if (error) fail(error.message);
+}
+
+/** Explicit, authorised refund of a promotion charge. Never automatic. */
+export async function refundPromotion(postId: string, reason: string) {
+  const { data, error } = await supabase.rpc("social_refund_promotion", {
+    _post_id: postId,
+    _reason: reason.trim(),
+  });
+  if (error) fail(error.message);
+  return data as unknown as { refunded: number; currency: string; tx_id: string };
 }

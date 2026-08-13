@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  availableTiers,
   canAfford,
   chargeSummary,
   commentCharge,
@@ -7,10 +8,28 @@ import {
   postCharge,
   relativeTime,
   sourceLabel,
+  tierDuration,
   validateCommentBody,
   validateMessageBody,
   validatePostBody,
+  type PromotionTier,
 } from "@/lib/social";
+
+const tier = (over: Partial<PromotionTier> = {}): PromotionTier => ({
+  id: "t1",
+  name: "Featured",
+  description: "",
+  price_social: 30,
+  price_points: 15,
+  currency: "both",
+  duration_hours: 48,
+  priority: 5,
+  eligibility: "all",
+  active: true,
+  sort_order: 1,
+  is_default: false,
+  ...over,
+});
 
 const state = {
   balance: 5,
@@ -124,5 +143,45 @@ describe("presentation helpers", () => {
     expect(relativeTime("2026-01-10T11:30:00Z", now)).toBe("30m");
     expect(relativeTime("2026-01-10T09:00:00Z", now)).toBe("3h");
     expect(relativeTime("2026-01-08T12:00:00Z", now)).toBe("2d");
+  });
+});
+
+
+describe("promotion tiers", () => {
+  it("charges the tier price in the chosen currency", () => {
+    expect(postCharge(state, true, tier(), "points")).toEqual({ amount: 15, currency: "points" });
+    expect(postCharge(state, true, tier(), "social")).toEqual({ amount: 30, currency: "social" });
+  });
+
+  it("ignores the requested currency when the tier only accepts one", () => {
+    expect(postCharge(state, true, tier({ currency: "points" }), "social")).toEqual({
+      amount: 15,
+      currency: "points",
+    });
+  });
+
+  it("falls back to the shop promotion price when no tier is chosen", () => {
+    expect(postCharge(state, true, null, "social")).toEqual({ amount: 20, currency: "social" });
+  });
+
+  it("hides inactive and reseller-only tiers from ordinary members", () => {
+    const tiers = [
+      tier({ id: "a" }),
+      tier({ id: "b", active: false }),
+      tier({ id: "c", eligibility: "reseller" }),
+    ];
+    expect(availableTiers({ promotion_tiers: tiers, role: "customer" }).map((t) => t.id)).toEqual([
+      "a",
+    ]);
+    expect(availableTiers({ promotion_tiers: tiers, role: "reseller" }).map((t) => t.id)).toEqual([
+      "a",
+      "c",
+    ]);
+  });
+
+  it("describes durations in plain language", () => {
+    expect(tierDuration(1)).toBe("1 hour");
+    expect(tierDuration(24)).toBe("1 day");
+    expect(tierDuration(72)).toBe("3 days");
   });
 });
