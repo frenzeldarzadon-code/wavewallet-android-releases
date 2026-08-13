@@ -6,6 +6,7 @@ import {
   DatabaseBackup,
   LayoutDashboard,
   ScrollText,
+  UserPlus,
   Settings,
   User,
 } from "lucide-react";
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/super")({
 export const superNav: NavItem[] = [
   { to: "/super", label: "Overview", icon: LayoutDashboard },
   { to: "/super/admins", label: "Ecosystems", icon: Building2 },
+  { to: "/super/applications", label: "Applications", icon: UserPlus },
   { to: "/super/subscriptions", label: "Subscriptions", icon: CreditCard },
   { to: "/super/reports", label: "Reports", icon: BarChart3 },
   { to: "/super/export", label: "Data export", icon: DatabaseBackup },
