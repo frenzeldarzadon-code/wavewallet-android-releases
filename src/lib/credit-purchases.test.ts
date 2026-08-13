@@ -79,3 +79,44 @@ describe("support contact for the credit purchase flow", () => {
     expect(supportContact({ ...base, support_page_url: "not a url" })).toBeNull();
   });
 });
+
+describe("creditGcashAccount", () => {
+  const base = {
+    admin_credit_discount_percent: 100,
+    admin_voucher_discount_percent: 100,
+    credit_gcash_number: "",
+    credit_gcash_account_name: "",
+    credit_payment_instructions: "",
+    credit_release_mode: "manual",
+    default_admin_sale_commission_percent: 0,
+    currency: "PHP",
+  };
+
+  it("falls back to the platform collection account", () => {
+    expect(
+      creditGcashAccount({
+        ...base,
+        gcash_number: "0917",
+        gcash_account_name: "Owner",
+        payment_instructions: "Send now",
+      }),
+    ).toEqual({ number: "0917", accountName: "Owner", instructions: "Send now" });
+  });
+
+  it("prefers the credit-specific account when published", () => {
+    expect(
+      creditGcashAccount({
+        ...base,
+        credit_gcash_number: "0918",
+        credit_gcash_account_name: "Credits",
+        gcash_number: "0917",
+        gcash_account_name: "Owner",
+      }),
+    ).toEqual({ number: "0918", accountName: "Credits", instructions: "" });
+  });
+
+  it("returns null when nothing is configured", () => {
+    expect(creditGcashAccount(base)).toBeNull();
+    expect(creditGcashAccount(null)).toBeNull();
+  });
+});
