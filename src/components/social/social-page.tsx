@@ -1,7 +1,9 @@
 import {
   Coins,
   Flag,
+  Globe2,
   Heart,
+
   ImagePlus,
   Loader2,
   MessageCircle,
