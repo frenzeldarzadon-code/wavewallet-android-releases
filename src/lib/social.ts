@@ -705,3 +705,27 @@ export async function refundPromotion(postId: string, reason: string) {
   if (error) fail(error.message);
   return data as unknown as { refunded: number; currency: string; tx_id: string };
 }
+
+// --------------------------------------------------- general-post presentation
+
+/** Plain-language name of the audience a member picked. */
+export function audienceLabel(audience: PostAudience): string {
+  return audience === "general" ? "General / All Ecosystems" : "My Ecosystem";
+}
+
+/** What the member is told before publishing, per audience. */
+export function audienceHelp(audience: PostAudience): string {
+  return audience === "general"
+    ? "Shared with the wider WaveWallet network. Each other shop's admin must approve it before it shows in their community — it appears in your own shop right away."
+    : "Only members and admins of your own shop can see this post.";
+}
+
+/** One-line status of a General post for its author, e.g. "Live in 2 shops · 1 pending". */
+export function distributionSummary(rows: DistributionStatus[]): string {
+  if (rows.length === 0) return "No shops yet";
+  const n = (s: DistributionStatus["status"]) => rows.filter((r) => r.status === s).length;
+  const parts: string[] = [`Live in ${n("approved")} shop${n("approved") === 1 ? "" : "s"}`];
+  if (n("pending") > 0) parts.push(`${n("pending")} pending`);
+  if (n("rejected") > 0) parts.push(`${n("rejected")} declined`);
+  return parts.join(" · ");
+}
