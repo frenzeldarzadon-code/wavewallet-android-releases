@@ -1,6 +1,7 @@
 import { Navigate, Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 import {
   BarChart3,
+  Coins,
   CreditCard,
   Gift,
   LayoutDashboard,
@@ -11,11 +12,13 @@ import {
   Settings,
   Wallet,
   Ticket,
+  User,
   Users,
   UserSquare2,
 } from "lucide-react";
 import { AppShell, type NavItem } from "@/components/app-shell";
 import { useSession } from "@/lib/session";
+import { SOCIAL_ENABLED } from "@/lib/features";
 
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
@@ -26,15 +29,19 @@ const nav: NavItem[] = [
   { to: "/admin/products", label: "Voucher products", icon: Package },
   { to: "/admin/vouchers", label: "Code inventory", icon: Ticket },
   { to: "/admin/wallets", label: "Wallets", icon: Wallet },
+  { to: "/admin/credits", label: "Buy credits", icon: Coins },
   { to: "/admin/transactions", label: "Transactions", icon: ReceiptText },
   { to: "/admin/rewards", label: "Rewards", icon: Gift },
   { to: "/admin/resellers", label: "Resellers", icon: Users },
   { to: "/admin/customers", label: "Customers", icon: UserSquare2 },
-  { to: "/admin/social", label: "Community", icon: MessagesSquare },
+  ...(SOCIAL_ENABLED
+    ? ([{ to: "/admin/social", label: "Community", icon: MessagesSquare }] as NavItem[])
+    : []),
   { to: "/admin/signup-link", label: "Customer signup link", icon: Link2 },
   { to: "/admin/reports", label: "Reports", icon: BarChart3 },
   { to: "/admin/subscription", label: "Subscription", icon: CreditCard },
   { to: "/admin/settings", label: "Ecosystem", icon: Settings },
+  { to: "/admin/profile", label: "My profile", icon: User },
 ];
 
 

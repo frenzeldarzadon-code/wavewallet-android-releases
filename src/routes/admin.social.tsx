@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SOCIAL_ENABLED } from "@/lib/features";
+import { SocialDisabled } from "@/components/social/social-disabled";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -39,7 +41,7 @@ export const Route = createFileRoute("/admin/social")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: AdminSocial,
+  component: AdminSocialGate,
 });
 
 function AdminSocial() {
@@ -177,4 +179,9 @@ function AdminSocial() {
       </PageSection>
     </>
   );
+}
+
+function AdminSocialGate() {
+  if (!SOCIAL_ENABLED) return <SocialDisabled backTo="/admin" />;
+  return <AdminSocial />;
 }

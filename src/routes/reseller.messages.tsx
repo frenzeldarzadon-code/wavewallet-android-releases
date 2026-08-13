@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SOCIAL_ENABLED } from "@/lib/features";
+import { SocialDisabled } from "@/components/social/social-disabled";
 import { MessagesPage } from "@/components/social/messages-page";
 
 export const Route = createFileRoute("/reseller/messages")({
@@ -15,5 +17,10 @@ export const Route = createFileRoute("/reseller/messages")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: MessagesPage,
+  component: MessagesPageGate,
 });
+
+function MessagesPageGate() {
+  if (!SOCIAL_ENABLED) return <SocialDisabled backTo="/reseller" />;
+  return <MessagesPage />;
+}

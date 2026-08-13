@@ -18,8 +18,10 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SuperRouteImport } from './routes/super'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminCreditsRouteImport } from './routes/admin.credits'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
+import { Route as AdminProfileRouteImport } from './routes/admin.profile'
 import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminResellersRouteImport } from './routes/admin.resellers'
 import { Route as AdminRewardsRouteImport } from './routes/admin.rewards'
@@ -52,6 +54,7 @@ import { Route as SuperIndexRouteImport } from './routes/super.index'
 import { Route as SuperAdminsRouteImport } from './routes/super.admins'
 import { Route as SuperAuditRouteImport } from './routes/super.audit'
 import { Route as SuperExportRouteImport } from './routes/super.export'
+import { Route as SuperProfileRouteImport } from './routes/super.profile'
 import { Route as SuperReportsRouteImport } from './routes/super.reports'
 import { Route as SuperSettingsRouteImport } from './routes/super.settings'
 import { Route as SuperSubscriptionsRouteImport } from './routes/super.subscriptions'
@@ -101,6 +104,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCreditsRoute = AdminCreditsRouteImport.update({
+  id: '/credits',
+  path: '/credits',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCustomersRoute = AdminCustomersRouteImport.update({
   id: '/customers',
   path: '/customers',
@@ -109,6 +117,11 @@ const AdminCustomersRoute = AdminCustomersRouteImport.update({
 const AdminProductsRoute = AdminProductsRouteImport.update({
   id: '/products',
   path: '/products',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProfileRoute = AdminProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminReportsRoute = AdminReportsRouteImport.update({
@@ -271,6 +284,11 @@ const SuperExportRoute = SuperExportRouteImport.update({
   path: '/export',
   getParentRoute: () => SuperRoute,
 } as any)
+const SuperProfileRoute = SuperProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => SuperRoute,
+} as any)
 const SuperReportsRoute = SuperReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -296,8 +314,10 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/super': typeof SuperRouteWithChildren
+  '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/resellers': typeof AdminResellersRoute
   '/admin/rewards': typeof AdminRewardsRoute
@@ -327,6 +347,7 @@ export interface FileRoutesByFullPath {
   '/super/admins': typeof SuperAdminsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/export': typeof SuperExportRoute
+  '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
@@ -340,8 +361,10 @@ export interface FileRoutesByTo {
   '/invite': typeof InviteRoute
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
+  '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/resellers': typeof AdminResellersRoute
   '/admin/rewards': typeof AdminRewardsRoute
@@ -371,6 +394,7 @@ export interface FileRoutesByTo {
   '/super/admins': typeof SuperAdminsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/export': typeof SuperExportRoute
+  '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
@@ -389,8 +413,10 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/super': typeof SuperRouteWithChildren
+  '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/resellers': typeof AdminResellersRoute
   '/admin/rewards': typeof AdminRewardsRoute
@@ -420,6 +446,7 @@ export interface FileRoutesById {
   '/super/admins': typeof SuperAdminsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/export': typeof SuperExportRoute
+  '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
@@ -439,8 +466,10 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/setup'
     | '/super'
+    | '/admin/credits'
     | '/admin/customers'
     | '/admin/products'
+    | '/admin/profile'
     | '/admin/reports'
     | '/admin/resellers'
     | '/admin/rewards'
@@ -470,6 +499,7 @@ export interface FileRouteTypes {
     | '/super/admins'
     | '/super/audit'
     | '/super/export'
+    | '/super/profile'
     | '/super/reports'
     | '/super/settings'
     | '/super/subscriptions'
@@ -483,8 +513,10 @@ export interface FileRouteTypes {
     | '/invite'
     | '/reset-password'
     | '/setup'
+    | '/admin/credits'
     | '/admin/customers'
     | '/admin/products'
+    | '/admin/profile'
     | '/admin/reports'
     | '/admin/resellers'
     | '/admin/rewards'
@@ -514,6 +546,7 @@ export interface FileRouteTypes {
     | '/super/admins'
     | '/super/audit'
     | '/super/export'
+    | '/super/profile'
     | '/super/reports'
     | '/super/settings'
     | '/super/subscriptions'
@@ -531,8 +564,10 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/setup'
     | '/super'
+    | '/admin/credits'
     | '/admin/customers'
     | '/admin/products'
+    | '/admin/profile'
     | '/admin/reports'
     | '/admin/resellers'
     | '/admin/rewards'
@@ -562,6 +597,7 @@ export interface FileRouteTypes {
     | '/super/admins'
     | '/super/audit'
     | '/super/export'
+    | '/super/profile'
     | '/super/reports'
     | '/super/settings'
     | '/super/subscriptions'
@@ -648,6 +684,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/credits': {
+      id: '/admin/credits'
+      path: '/credits'
+      fullPath: '/admin/credits'
+      preLoaderRoute: typeof AdminCreditsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/customers': {
       id: '/admin/customers'
       path: '/customers'
@@ -660,6 +703,13 @@ declare module '@tanstack/react-router' {
       path: '/products'
       fullPath: '/admin/products'
       preLoaderRoute: typeof AdminProductsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/profile': {
+      id: '/admin/profile'
+      path: '/profile'
+      fullPath: '/admin/profile'
+      preLoaderRoute: typeof AdminProfileRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/reports': {
@@ -886,6 +936,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperExportRouteImport
       parentRoute: typeof SuperRoute
     }
+    '/super/profile': {
+      id: '/super/profile'
+      path: '/profile'
+      fullPath: '/super/profile'
+      preLoaderRoute: typeof SuperProfileRouteImport
+      parentRoute: typeof SuperRoute
+    }
     '/super/reports': {
       id: '/super/reports'
       path: '/reports'
@@ -911,8 +968,10 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminCreditsRoute: typeof AdminCreditsRoute
   AdminCustomersRoute: typeof AdminCustomersRoute
   AdminProductsRoute: typeof AdminProductsRoute
+  AdminProfileRoute: typeof AdminProfileRoute
   AdminReportsRoute: typeof AdminReportsRoute
   AdminResellersRoute: typeof AdminResellersRoute
   AdminRewardsRoute: typeof AdminRewardsRoute
@@ -927,8 +986,10 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminCreditsRoute: AdminCreditsRoute,
   AdminCustomersRoute: AdminCustomersRoute,
   AdminProductsRoute: AdminProductsRoute,
+  AdminProfileRoute: AdminProfileRoute,
   AdminReportsRoute: AdminReportsRoute,
   AdminResellersRoute: AdminResellersRoute,
   AdminRewardsRoute: AdminRewardsRoute,
@@ -1000,6 +1061,7 @@ interface SuperRouteChildren {
   SuperAdminsRoute: typeof SuperAdminsRoute
   SuperAuditRoute: typeof SuperAuditRoute
   SuperExportRoute: typeof SuperExportRoute
+  SuperProfileRoute: typeof SuperProfileRoute
   SuperReportsRoute: typeof SuperReportsRoute
   SuperSettingsRoute: typeof SuperSettingsRoute
   SuperSubscriptionsRoute: typeof SuperSubscriptionsRoute
@@ -1010,6 +1072,7 @@ const SuperRouteChildren: SuperRouteChildren = {
   SuperAdminsRoute: SuperAdminsRoute,
   SuperAuditRoute: SuperAuditRoute,
   SuperExportRoute: SuperExportRoute,
+  SuperProfileRoute: SuperProfileRoute,
   SuperReportsRoute: SuperReportsRoute,
   SuperSettingsRoute: SuperSettingsRoute,
   SuperSubscriptionsRoute: SuperSubscriptionsRoute,
