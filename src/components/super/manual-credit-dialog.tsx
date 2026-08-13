@@ -1,6 +1,6 @@
 /**
  * Manual Credit for one already-selected account (launched from the Super Admin
- * directory). It reuses the exact same validation and `grantManualCredit` call
+ * directory). It reuses the exact same validation and `issueCredits` call
  * as the standalone card — required reason, optional category/reference,
  * confirmation, atomic ledger write and audit trail all live server-side.
  */
@@ -27,9 +27,9 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { MemberAvatar } from "@/components/member-avatar";
 import {
-  MANUAL_CREDIT_CATEGORIES,
-  grantManualCredit,
-  manualCreditIssue,
+  CREDIT_ISSUANCE_CATEGORIES,
+  issueCredits,
+  issuanceFormIssue,
   previewBalance,
 } from "@/lib/credit-management";
 import { roleLabel, type Role } from "@/lib/wavewallet";
@@ -59,7 +59,7 @@ export function ManualCreditDialog({
   const [busy, setBusy] = useState(false);
 
   const credits = Number(amount);
-  const issue = manualCreditIssue({ userId: target?.id ?? null, amount: credits, reason });
+  const issue = issuanceFormIssue({ userId: target?.id ?? null, amount: credits, reason });
   const after = target ? previewBalance(target.credit_balance, credits) : 0;
 
   const reset = () => {
@@ -73,7 +73,7 @@ export function ManualCreditDialog({
     if (!target || issue) return;
     setBusy(true);
     try {
-      const tx = await grantManualCredit({
+      const tx = await issueCredits({
         userId: target.id,
         amount: credits,
         reason: reason.trim(),
@@ -149,7 +149,7 @@ export function ManualCreditDialog({
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {MANUAL_CREDIT_CATEGORIES.map((c) => (
+                  {CREDIT_ISSUANCE_CATEGORIES.map((c) => (
                     <SelectItem key={c} value={c}>
                       {c}
                     </SelectItem>

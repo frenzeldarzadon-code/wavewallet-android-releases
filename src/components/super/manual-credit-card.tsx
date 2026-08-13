@@ -31,10 +31,10 @@ import { MemberAvatar } from "@/components/member-avatar";
 import type { MemberSearchResult } from "@/lib/member-admin";
 import { roleLabel, type Role } from "@/lib/wavewallet";
 import {
-  MANUAL_CREDIT_ACTION,
-  MANUAL_CREDIT_CATEGORIES,
-  grantManualCredit,
-  manualCreditIssue,
+  CREDIT_ISSUANCE_ACTION,
+  CREDIT_ISSUANCE_CATEGORIES,
+  issueCredits,
+  issuanceFormIssue,
   previewBalance,
 } from "@/lib/credit-management";
 
@@ -48,7 +48,7 @@ export function ManualCreditCard() {
   const [busy, setBusy] = useState(false);
 
   const credits = Number(amount);
-  const issue = manualCreditIssue({
+  const issue = issuanceFormIssue({
     userId: target?.id ?? null,
     amount: credits,
     reason: note,
@@ -59,7 +59,7 @@ export function ManualCreditCard() {
     if (!target || issue) return;
     setBusy(true);
     try {
-      const tx = await grantManualCredit({
+      const tx = await issueCredits({
         userId: target.id,
         amount: credits,
         reason: note.trim(),
@@ -151,7 +151,7 @@ export function ManualCreditCard() {
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                 >
                   <option value="">No category</option>
-                  {MANUAL_CREDIT_CATEGORIES.map((c) => (
+                  {CREDIT_ISSUANCE_CATEGORIES.map((c) => (
                     <option key={c} value={c}>
                       {c}
                     </option>
@@ -220,7 +220,7 @@ export function ManualCreditCard() {
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm {MANUAL_CREDIT_ACTION.toLowerCase()}</AlertDialogTitle>
+            <AlertDialogTitle>Confirm {CREDIT_ISSUANCE_ACTION.toLowerCase()}</AlertDialogTitle>
             <AlertDialogDescription>
               {credits.toLocaleString()} credits will be granted to {target?.full_name} and their
               balance becomes {after.toLocaleString()}. This writes a permanent ledger entry under
