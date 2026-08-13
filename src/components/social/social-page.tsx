@@ -785,8 +785,18 @@ function PostCard({
                   {post.promotion_tier_name ? `${post.promotion_tier_name} · Promoted` : "Promoted"}
                 </Badge>
               ) : null}
+              {post.audience === "general" ? (
+                <Badge variant="outline" className="gap-1">
+                  <Globe2 className="size-3" aria-hidden /> General
+                  {post.origin_ecosystem_name ? ` · from ${post.origin_ecosystem_name}` : ""}
+                </Badge>
+              ) : null}
             </div>
             <p className="mt-1 whitespace-pre-wrap break-words text-sm">{post.body}</p>
+            {post.audience === "general" && post.author_id === meId ? (
+              <GeneralStatus postId={post.id} />
+            ) : null}
+
           </div>
         </div>
 
