@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, RotateCcw, Search, UserCog, Wallet } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { EditMemberDialog, type EditableMember } from "@/components/edit-member-dialog";
@@ -76,7 +76,7 @@ interface Member {
 }
 
 function AdminWallets() {
-  const { ecosystemDbId } = useSession("admin");
+  const { ecosystemDbId, account } = useSession("admin");
   const [members, setMembers] = useState<Member[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -89,6 +89,8 @@ function AdminWallets() {
   const [busy, setBusy] = useState(false);
   const [ledger, setLedger] = useState<CreditEntry[]>([]);
   const [mode, setMode] = useState<"credits" | "points">("credits");
+  /** The admin's own wallet — the only source of credits they can hand out. */
+  const [shopBalance, setShopBalance] = useState(0);
   const [reversal, setReversal] = useState<ReversalInfo | null>(null);
   const [reversalAmount, setReversalAmount] = useState("");
   const [reversalReason, setReversalReason] = useState<string>(REVERSAL_REASONS[0]);
@@ -117,6 +119,7 @@ function AdminWallets() {
     const roleBy = new Map((roles ?? []).map((r) => [r.user_id, r.role as string]));
     const balBy = new Map((accounts ?? []).map((a) => [a.user_id, Number(a.balance)]));
     const ptsBy = new Map((pointAccounts ?? []).map((a) => [a.user_id, Number(a.balance)]));
+    setShopBalance(account?.id ? (balBy.get(account.id) ?? 0) : 0);
     setMembers(
       (profiles ?? [])
         .map((p) => ({
@@ -136,7 +139,7 @@ function AdminWallets() {
     );
     setReversals(await fetchReversalHistory(ecosystemDbId));
     setLoading(false);
-  }, [ecosystemDbId]);
+  }, [ecosystemDbId, account?.id]);
 
   useEffect(() => {
     void load();
@@ -264,8 +267,24 @@ function AdminWallets() {
     <>
       <PageSection
         title="Wallet management"
-        description="Add or correct credits for customers and resellers. Every adjustment is audited."
+        description="Load credits from your shop wallet to members, or post a correction. Every movement is audited."
       >
+        <Card className="mb-3 border-primary/30 bg-primary/5 shadow-none">
+          <CardContent className="flex flex-wrap items-center justify-between gap-2 p-3">
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Your shop wallet</p>
+              <p className="text-lg font-semibold text-success">{peso(shopBalance)}</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Loading a member moves credits out of this balance. Only the platform owner can
+                create new credits — buy an allocation to top up.
+              </p>
+            </div>
+            <Button asChild size="sm">
+              <Link to="/admin/credits">Buy credits</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
         <div className="mb-3 flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -591,7 +610,9 @@ function AdminWallets() {
       <Dialog open={!!target} onOpenChange={(o) => !o && setTarget(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>{mode === "points" ? "Adjust points" : "Adjust credits"}</DialogTitle>
+            <DialogTitle>
+              {mode === "points" ? "Adjust points" : "Load or correct credits"}
+            </DialogTitle>
             <DialogDescription>
               {target?.full_name} ·{" "}
               {mode === "points"
@@ -601,7 +622,11 @@ function AdminWallets() {
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="wamt">Amount (negative to deduct)</Label>
+              <Label htmlFor="wamt">
+                {mode === "credits"
+                  ? "Amount to load (negative to correct/deduct)"
+                  : "Amount (negative to deduct)"}
+              </Label>
               <Input
                 id="wamt"
                 type="number"
@@ -612,10 +637,21 @@ function AdminWallets() {
               />
             </div>
             {mode === "credits" ? (
-              <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                Transfers carry no commission: {target?.full_name} receives exactly{" "}
-                {peso(Math.max(Number(amount) || 0, 0))}. Members earn from their wholesale voucher
-                discount and from sales commission when their credits are spent.
+              <div className="space-y-2">
+                <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                  A positive amount is transferred from your shop wallet ({peso(shopBalance)}) — no
+                  new credits are created and no commission is charged. {target?.full_name} receives
+                  exactly {peso(Math.max(Number(amount) || 0, 0))}.
+                </div>
+                {Number(amount) > shopBalance ? (
+                  <div className="flex gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                    <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+                    <span>
+                      Not enough credits in your shop wallet. Buy a credit allocation from the
+                      platform owner first.
+                    </span>
+                  </div>
+                ) : null}
               </div>
             ) : null}
             <div className="space-y-1.5">
@@ -641,8 +677,11 @@ function AdminWallets() {
             <Button variant="outline" onClick={() => setTarget(null)}>
               Cancel
             </Button>
-            <Button onClick={() => void submit()} disabled={busy}>
-              {busy ? "Saving…" : "Apply adjustment"}
+            <Button
+              onClick={() => void submit()}
+              disabled={busy || (mode === "credits" && Number(amount) > shopBalance)}
+            >
+              {busy ? "Saving…" : mode === "credits" ? "Confirm credit movement" : "Apply adjustment"}
             </Button>
           </DialogFooter>
         </DialogContent>
