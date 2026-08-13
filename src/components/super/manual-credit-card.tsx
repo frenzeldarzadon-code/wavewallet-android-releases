@@ -1,13 +1,14 @@
 /**
- * Manual credit (platform owner only).
+ * Super Admin Credit Issuance (platform owner only).
  *
- * A direct grant into any account's credit wallet. It is not a voucher
- * generator and it is not an admin purchase: no voucher inventory, no codes
- * and no commission are created. The grant goes through `admin_adjust_credits`,
- * which only the platform owner may call with a positive amount, and writes one
- * immutable ledger row plus an audit entry naming the operator.
+ * The platform owner mints credits straight into any account. It is not a
+ * voucher generator, not an admin purchase and not a wallet transfer: the
+ * operator's own balance is never read or debited, so issuing with a zero
+ * balance is valid. `superadmin_issue_credits` authorizes the caller, writes
+ * one immutable `superadmin_credit_issuance` ledger row, one platform issuance
+ * supply row and one audit entry naming the operator.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Coins, Loader2, ShieldAlert, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -31,10 +32,12 @@ import { MemberAvatar } from "@/components/member-avatar";
 import type { MemberSearchResult } from "@/lib/member-admin";
 import { roleLabel, type Role } from "@/lib/wavewallet";
 import {
-  MANUAL_CREDIT_ACTION,
-  MANUAL_CREDIT_CATEGORIES,
-  grantManualCredit,
-  manualCreditIssue,
+  CREDIT_ISSUANCE_ACTION,
+  fetchCreditSupply,
+  type CreditSupply,
+  CREDIT_ISSUANCE_CATEGORIES,
+  issueCredits,
+  issuanceFormIssue,
   previewBalance,
 } from "@/lib/credit-management";
 
@@ -46,9 +49,13 @@ export function ManualCreditCard() {
   const [reference, setReference] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [supply, setSupply] = useState<CreditSupply | null>(null);
+
+  const loadSupply = () => void fetchCreditSupply().then(setSupply);
+  useEffect(loadSupply, []);
 
   const credits = Number(amount);
-  const issue = manualCreditIssue({
+  const issue = issuanceFormIssue({
     userId: target?.id ?? null,
     amount: credits,
     reason: note,
@@ -59,14 +66,14 @@ export function ManualCreditCard() {
     if (!target || issue) return;
     setBusy(true);
     try {
-      const tx = await grantManualCredit({
+      const tx = await issueCredits({
         userId: target.id,
         amount: credits,
         reason: note.trim(),
         ...(category ? { category } : {}),
         ...(reference.trim() ? { reference: reference.trim() } : {}),
       });
-      toast.success("Manual credit granted", {
+      toast.success("Credits issued", {
         description: `${credits.toLocaleString()} credits to ${target.full_name} · ${tx}`,
       });
       setTarget(null);
@@ -75,6 +82,7 @@ export function ManualCreditCard() {
       setCategory("");
       setReference("");
       setConfirming(false);
+      loadSupply();
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -85,11 +93,22 @@ export function ManualCreditCard() {
   return (
     <>
       <PageSection
-        title="Manual credit"
-        description="Platform-owner grant straight into an account's credit wallet. Recorded as “Superadmin Manual Credit” with your name, the amount, the reason and the resulting balance. It creates no vouchers and no commission."
+        title="Issue credits"
+        description="Super Admin Credit Issuance: new credits are minted from the platform issuance authority straight into an account. Nothing is deducted from your own wallet — you can issue with a zero balance. Recorded with your name, the amount, the reason and the resulting balance. It creates no vouchers and no commission."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-4">
+            {supply ? (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm">
+                <span className="text-muted-foreground">Platform credits issued to date</span>
+                <span className="font-semibold">
+                  {supply.total_issued.toLocaleString()} credits
+                  <span className="ml-2 font-normal text-muted-foreground">
+                    across {supply.issuance_count.toLocaleString()} issuances
+                  </span>
+                </span>
+              </div>
+            ) : null}
             {target ? (
               <div className="flex items-center gap-3 rounded-xl border border-border p-3">
                 <MemberAvatar
@@ -130,7 +149,7 @@ export function ManualCreditCard() {
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="manualAmount">Credits to grant</Label>
+                <Label htmlFor="manualAmount">Credits to issue</Label>
                 <Input
                   id="manualAmount"
                   type="number"
@@ -151,7 +170,7 @@ export function ManualCreditCard() {
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                 >
                   <option value="">No category</option>
-                  {MANUAL_CREDIT_CATEGORIES.map((c) => (
+                  {CREDIT_ISSUANCE_CATEGORIES.map((c) => (
                     <option key={c} value={c}>
                       {c}
                     </option>
@@ -190,7 +209,7 @@ export function ManualCreditCard() {
                     <dd>{target.credit_balance.toLocaleString()}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Manual credit</dt>
+                    <dt className="text-muted-foreground">Credits issued</dt>
                     <dd className="text-success">+{credits.toLocaleString()}</dd>
                   </div>
                   <div className="flex justify-between font-semibold">
@@ -203,15 +222,16 @@ export function ManualCreditCard() {
 
             <div className="flex flex-wrap items-center gap-3">
               <Button disabled={Boolean(issue) || busy} onClick={() => setConfirming(true)}>
-                Review and grant
+                Review and issue
               </Button>
               {issue ? <p className="text-xs text-muted-foreground">{issue}</p> : null}
             </div>
 
             <p className="flex items-start gap-2 text-xs text-muted-foreground">
               <ShieldAlert className="mt-0.5 size-3.5 shrink-0 text-warning" />
-              Manual credits increase the platform credit supply. They are permanent ledger
-              entries — corrections are made with a new adjustment, never by editing history.
+              Issued credits increase the platform credit supply and never debit your wallet. They
+              are permanent ledger entries — corrections are made with a new adjustment, never by
+              editing history.
             </p>
           </CardContent>
         </Card>
@@ -220,11 +240,12 @@ export function ManualCreditCard() {
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm {MANUAL_CREDIT_ACTION.toLowerCase()}</AlertDialogTitle>
+            <AlertDialogTitle>Confirm {CREDIT_ISSUANCE_ACTION.toLowerCase()}</AlertDialogTitle>
             <AlertDialogDescription>
-              {credits.toLocaleString()} credits will be granted to {target?.full_name} and their
-              balance becomes {after.toLocaleString()}. This writes a permanent ledger entry under
-              your name and cannot be undone — only reversed with a new adjustment.
+              {credits.toLocaleString()} credits will be issued to {target?.full_name} and their
+              balance becomes {after.toLocaleString()}. Reason: “{note.trim()}”. Issued by Super
+              Admin — does not deduct from the Super Admin wallet. This writes a permanent ledger
+              entry under your name and cannot be undone — only reversed with a new adjustment.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -236,7 +257,7 @@ export function ManualCreditCard() {
                 void submit();
               }}
             >
-              {busy ? <Loader2 className="size-4 animate-spin" /> : null} Grant credits
+              {busy ? <Loader2 className="size-4 animate-spin" /> : null} Issue credits
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

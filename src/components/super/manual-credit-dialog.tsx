@@ -1,6 +1,6 @@
 /**
  * Manual Credit for one already-selected account (launched from the Super Admin
- * directory). It reuses the exact same validation and `grantManualCredit` call
+ * directory). It reuses the exact same validation and `issueCredits` call
  * as the standalone card — required reason, optional category/reference,
  * confirmation, atomic ledger write and audit trail all live server-side.
  */
@@ -27,9 +27,9 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { MemberAvatar } from "@/components/member-avatar";
 import {
-  MANUAL_CREDIT_CATEGORIES,
-  grantManualCredit,
-  manualCreditIssue,
+  CREDIT_ISSUANCE_CATEGORIES,
+  issueCredits,
+  issuanceFormIssue,
   previewBalance,
 } from "@/lib/credit-management";
 import { roleLabel, type Role } from "@/lib/wavewallet";
@@ -59,7 +59,7 @@ export function ManualCreditDialog({
   const [busy, setBusy] = useState(false);
 
   const credits = Number(amount);
-  const issue = manualCreditIssue({ userId: target?.id ?? null, amount: credits, reason });
+  const issue = issuanceFormIssue({ userId: target?.id ?? null, amount: credits, reason });
   const after = target ? previewBalance(target.credit_balance, credits) : 0;
 
   const reset = () => {
@@ -73,14 +73,14 @@ export function ManualCreditDialog({
     if (!target || issue) return;
     setBusy(true);
     try {
-      const tx = await grantManualCredit({
+      const tx = await issueCredits({
         userId: target.id,
         amount: credits,
         reason: reason.trim(),
         ...(category ? { category } : {}),
         ...(reference.trim() ? { reference: reference.trim() } : {}),
       });
-      toast.success("Manual credit granted", {
+      toast.success("Credits issued", {
         description: `${credits.toLocaleString()} credits to ${target.full_name} · ${tx}`,
       });
       reset();
@@ -105,10 +105,11 @@ export function ManualCreditDialog({
     >
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Manual credit</DialogTitle>
+          <DialogTitle>Issue credits</DialogTitle>
           <DialogDescription>
-            Recorded as “Superadmin Manual Credit” with your identity, the reason and the resulting
-            balance. No vouchers and no commission are created.
+            Super Admin Credit Issuance. Recorded with your identity, the reason and the resulting
+            balance. Issued by Super Admin — does not deduct from the Super Admin wallet. No
+            vouchers and no commission are created.
           </DialogDescription>
         </DialogHeader>
 
@@ -129,7 +130,7 @@ export function ManualCreditDialog({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="mc-amount">Credits to add</Label>
+              <Label htmlFor="mc-amount">Credits to issue</Label>
               <Input
                 id="mc-amount"
                 type="number"
@@ -149,7 +150,7 @@ export function ManualCreditDialog({
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {MANUAL_CREDIT_CATEGORIES.map((c) => (
+                  {CREDIT_ISSUANCE_CATEGORIES.map((c) => (
                     <SelectItem key={c} value={c}>
                       {c}
                     </SelectItem>
@@ -179,9 +180,19 @@ export function ManualCreditDialog({
               />
             </div>
 
-            <p className="rounded-lg bg-brand-soft px-3 py-2 text-xs text-accent-foreground">
-              New balance after grant: <strong>{after.toLocaleString()}</strong> credits
-            </p>
+            <div className="space-y-1 rounded-lg bg-brand-soft px-3 py-2 text-xs text-accent-foreground">
+              <p>
+                Issuing <strong>{credits > 0 ? credits.toLocaleString() : "—"}</strong> credits to{" "}
+                <strong>{target.full_name}</strong>.
+              </p>
+              <p>
+                New balance after issuance: <strong>{after.toLocaleString()}</strong> credits
+              </p>
+              {reason.trim() ? <p>Reason: “{reason.trim()}”</p> : null}
+              <p className="font-medium">
+                Issued by Super Admin — does not deduct from Super Admin wallet.
+              </p>
+            </div>
             {issue ? <p className="text-xs text-destructive">{issue}</p> : null}
           </div>
         ) : null}
@@ -197,7 +208,7 @@ export function ManualCreditDialog({
             Cancel
           </Button>
           <Button disabled={!!issue || busy} onClick={() => void submit()}>
-            {busy ? "Granting…" : "Grant credits"}
+            {busy ? "Issuing…" : "Issue credits"}
           </Button>
         </DialogFooter>
       </DialogContent>
