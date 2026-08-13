@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { PageSection } from "@/components/ui-kit";
 import { ImageCropper } from "@/components/image-cropper";
 import { MemberAvatar } from "@/components/member-avatar";
+import { SocialLinksCard } from "@/components/social-links-card";
 import type { CropRect } from "@/lib/image-optimize";
 import {
   deleteAvatar,
@@ -315,6 +316,10 @@ function CustomerProfile() {
           </CardContent>
         </Card>
       </PageSection>
+
+      {ecosystemDbId && userId ? (
+        <SocialLinksCard ecosystemId={ecosystemDbId} userId={userId} />
+      ) : null}
     </div>
   );
 }
