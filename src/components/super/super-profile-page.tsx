@@ -6,7 +6,7 @@
  * Nothing here widens permissions: the database still authorizes each read and
  * write, and an operator acting as another member cannot edit identity.
  */
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import {
   Activity,
   BadgeCheck,
@@ -16,7 +16,6 @@ import {
   Fingerprint,
   Globe,
   KeyRound,
-  LayoutDashboard,
   Loader2,
   LogOut,
   Monitor,
@@ -114,7 +113,6 @@ const PRIVILEGES: Array<{ label: string; hint: string; icon: LucideIcon; to?: st
 ];
 
 export function SuperProfilePage() {
-  const navigate = useNavigate();
   const { account, ecosystemDbId, actingAs, reload, signOut } = useSession();
   const userId = account?.id ?? null;
 
@@ -791,13 +789,6 @@ export function SuperProfilePage() {
         />
       ) : null}
 
-      <p className="sr-only">
-        <LayoutDashboard className="size-3" />
-        Platform owner profile
-      </p>
-      <span className="sr-only" aria-hidden>
-        {navigate ? "" : ""}
-      </span>
     </div>
   );
 }

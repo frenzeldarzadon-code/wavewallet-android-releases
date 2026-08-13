@@ -127,12 +127,12 @@ export interface ProfileCompletion {
 
 /** Completion is computed from real, editable fields only. */
 export function profileCompletion(input: {
-  fullName?: string | null;
-  handle?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  bio?: string | null;
-  avatarPath?: string | null;
+  fullName?: string | null | undefined;
+  handle?: string | null | undefined;
+  email?: string | null | undefined;
+  phone?: string | null | undefined;
+  bio?: string | null | undefined;
+  avatarPath?: string | null | undefined;
 }): ProfileCompletion {
   const has = (v?: string | null) => Boolean((v ?? "").trim());
   const fields: CompletionField[] = [
