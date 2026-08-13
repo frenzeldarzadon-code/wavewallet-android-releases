@@ -37,7 +37,6 @@ import { useSession } from "@/lib/session";
 import { supabase } from "@/integrations/supabase/client";
 import { peso, roleLabel, shortDate, shortDateTime, type Role } from "@/lib/wavewallet";
 import { EditMemberDialog, type EditableMember } from "@/components/edit-member-dialog";
-import { ApplicationsPanel } from "@/components/applications-panel";
 import { memberMatches } from "@/lib/member-admin";
 import {
   evaluateCustomerDeletion,
@@ -449,7 +448,6 @@ function AdminCustomers() {
 
   return (
     <>
-      <ApplicationsPanel ecosystemId={ecosystemDbId} />
       <PageSection>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="Members" value={String(customers.length)} tone="brand" />

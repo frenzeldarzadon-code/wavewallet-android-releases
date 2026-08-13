@@ -6,6 +6,7 @@ import {
   MessageSquare,
   ShoppingCart,
   User,
+  UserPlus,
   Users,
   Wallet,
 } from "lucide-react";
@@ -22,6 +23,7 @@ const nav: NavItem[] = [
   { to: "/reseller", label: "Dashboard", icon: LayoutDashboard },
   { to: "/reseller/shop", label: "Buy vouchers", icon: ShoppingCart },
   { to: "/reseller/customers", label: "My customers", icon: Users },
+  { to: "/reseller/applications", label: "Applications", icon: UserPlus },
   ...(SOCIAL_ENABLED
     ? ([
         { to: "/reseller/social", label: "Community", icon: Users },

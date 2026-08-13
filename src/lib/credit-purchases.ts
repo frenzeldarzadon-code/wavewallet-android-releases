@@ -36,6 +36,37 @@ export interface CreditPurchaseSettings {
   support_page_name?: string | null;
   support_page_url?: string | null;
   support_message?: string | null;
+  /**
+   * Platform-wide GCash collection account configured by the platform owner.
+   * Read-only here: admins can see where to pay but never edit these.
+   */
+  gcash_number?: string | null;
+  gcash_account_name?: string | null;
+  payment_instructions?: string | null;
+}
+
+/**
+ * The GCash account an admin should pay for a credit allocation.
+ *
+ * There is exactly one platform source of truth: the platform owner's
+ * settings. A credit-specific account is used when the owner published one,
+ * otherwise the platform collection account applies, so changing the account
+ * in Platform settings updates this screen immediately.
+ */
+export function creditGcashAccount(
+  settings: CreditPurchaseSettings | null | undefined,
+): { number: string; accountName: string; instructions: string } | null {
+  const number =
+    (settings?.credit_gcash_number ?? "").trim() || (settings?.gcash_number ?? "").trim();
+  if (!number) return null;
+  const accountName =
+    ((settings?.credit_gcash_number ?? "").trim()
+      ? (settings?.credit_gcash_account_name ?? "").trim()
+      : (settings?.gcash_account_name ?? "").trim()) || "Platform GCash";
+  const instructions =
+    (settings?.credit_payment_instructions ?? "").trim() ||
+    (settings?.payment_instructions ?? "").trim();
+  return { number, accountName, instructions };
 }
 
 /** Contact card details for the credit purchase flow, or null when unpublished. */
@@ -128,7 +159,7 @@ export async function fetchCreditPurchaseSettings(): Promise<CreditPurchaseSetti
   const { data, error } = await supabase
     .from("platform_settings")
     .select(
-      "admin_credit_discount_percent, admin_voucher_discount_percent, credit_gcash_number, credit_gcash_account_name, credit_payment_instructions, credit_release_mode, default_admin_sale_commission_percent, currency, support_page_name, support_page_url, support_message",
+      "admin_credit_discount_percent, admin_voucher_discount_percent, credit_gcash_number, credit_gcash_account_name, credit_payment_instructions, credit_release_mode, default_admin_sale_commission_percent, currency, support_page_name, support_page_url, support_message, gcash_number, gcash_account_name, payment_instructions",
     )
     .eq("id", 1)
     .maybeSingle();
