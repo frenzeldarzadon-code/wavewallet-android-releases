@@ -364,6 +364,7 @@ export async function createPost(input: {
   promote: boolean;
   tierId?: string | null;
   currency?: SocialCurrency;
+  audience?: PostAudience;
 }): Promise<{
   post_id: string;
   charged: number;
@@ -371,6 +372,8 @@ export async function createPost(input: {
   tier: string | null;
   expires_at: string | null;
   balance: number;
+  audience: PostAudience;
+  pending_shops: number;
 }> {
   const { data, error } = await supabase.rpc("social_create_post", {
     _body: input.body.trim(),
@@ -378,6 +381,7 @@ export async function createPost(input: {
     _promote: input.promote,
     ...(input.tierId ? { _tier_id: input.tierId } : {}),
     ...(input.currency ? { _currency: input.currency } : {}),
+    _audience: input.audience ?? "ecosystem",
   });
   if (error) fail(error.message);
   return data as unknown as {
@@ -387,8 +391,45 @@ export async function createPost(input: {
     tier: string | null;
     expires_at: string | null;
     balance: number;
+    audience: PostAudience;
+    pending_shops: number;
   };
 }
+
+/** Queue of General posts awaiting (or already given) a decision in one shop. */
+export async function fetchGeneralQueue(
+  ecosystemId?: string | null,
+  status: "pending" | "approved" | "rejected" | "all" = "pending",
+): Promise<DistributionRow[]> {
+  const { data, error } = await supabase.rpc("social_general_queue", {
+    ...(ecosystemId ? { _eco: ecosystemId } : {}),
+    _status: status,
+  });
+  if (error) fail(error.message);
+  return (data ?? []) as DistributionRow[];
+}
+
+export async function reviewDistribution(
+  id: string,
+  status: "approved" | "rejected",
+  note?: string,
+) {
+  const { error } = await supabase.rpc("social_review_distribution", {
+    _id: id,
+    _status: status,
+    ...(note && note.trim() ? { _note: note.trim() } : {}),
+  });
+  if (error) fail(error.message);
+}
+
+export async function fetchDistributionStatus(postId: string): Promise<DistributionStatus[]> {
+  const { data, error } = await supabase.rpc("social_post_distribution_status", {
+    _post_id: postId,
+  });
+  if (error) fail(error.message);
+  return (data ?? []) as DistributionStatus[];
+}
+
 
 export async function createComment(postId: string, body: string) {
   const { data, error } = await supabase.rpc("social_create_comment", {
