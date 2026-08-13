@@ -21,7 +21,7 @@ import {
   signUpCustomerAccount,
   type SignupEcosystem,
 } from "@/lib/auth";
-import { fetchMyApplication } from "@/lib/membership-applications";
+import { fetchMyApplication, validateSignupDraft } from "@/lib/membership-applications";
 import { supabase } from "@/integrations/supabase/client";
 import { DEMO_ECOSYSTEM_SLUG, DEMO_ROLES, isPreviewEnvironment } from "@/lib/demo";
 import { startDemoSession } from "@/lib/demo.functions";
@@ -169,28 +169,12 @@ function LoginPage() {
   const signUp = async () => {
     if (signupBusy) return;
     const shop = shops.find((e) => e.slug === form.slug);
-    if (!shop) {
-      toast.error("Choose the ecosystem you are joining.");
-      return;
-    }
-    if (!form.name.trim()) {
-      toast.error("Enter your full name.");
-      return;
-    }
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email.trim())) {
-      toast.error("Enter a valid email address.");
-      return;
-    }
-    if (form.phone.trim().replace(/\D/g, "").length < 7) {
-      toast.error("Enter a valid mobile number.");
-      return;
-    }
-    if (form.password.length < 8) {
-      toast.error("Use a password with at least 8 characters.");
-      return;
-    }
-    if (form.password !== form.confirm) {
-      toast.error("Passwords do not match.");
+    const problem = validateSignupDraft(
+      form,
+      shops.map((e) => e.slug),
+    );
+    if (problem || !shop) {
+      toast.error(problem ?? "Choose the ecosystem you are joining.");
       return;
     }
     setSignupBusy(true);
