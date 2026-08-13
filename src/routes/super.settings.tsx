@@ -64,7 +64,7 @@ function SuperSettings() {
     }
     if (data) setForm(data as PlatformSettings);
     toast.success("Platform settings saved", {
-      description: "New pricing applies to future subscription requests only.",
+      description: "Collection and support details updated.",
     });
   };
 
