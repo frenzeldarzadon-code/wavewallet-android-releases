@@ -4094,6 +4094,30 @@ export type Database = {
       }
       subscription_ok: { Args: { _ecosystem_id: string }; Returns: boolean }
       super_admin_bootstrap_available: { Args: never; Returns: boolean }
+      super_list_members: {
+        Args: {
+          _ecosystem_id?: string
+          _limit?: number
+          _offset?: number
+          _query?: string
+          _role?: string
+        }
+        Returns: {
+          avatar_path: string
+          credit_balance: number
+          ecosystem_id: string
+          ecosystem_name: string
+          email: string
+          full_name: string
+          handle: string
+          id: string
+          joined_at: string
+          phone: string
+          points_balance: number
+          role: string
+          status: string
+        }[]
+      }
       top_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

@@ -505,9 +505,14 @@ export async function transferCredits(input: {
 export interface RecipientMatch {
   id: string;
   full_name: string;
+  /** Social handle, when the member has claimed one. */
+  handle?: string | null;
+  avatar_path?: string | null;
+  /** Masked for members, full for shop staff. */
   phone: string;
   masked_email: string;
 }
+
 
 export async function lookupRecipient(query: string): Promise<RecipientMatch[]> {
   const { data, error } = await supabase.rpc("lookup_transfer_recipient", { _query: query });

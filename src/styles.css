@@ -41,6 +41,7 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-danger-soft: var(--danger-soft);
   --color-brand-soft: var(--brand-soft);
+  --color-app: var(--app);
   --color-points: var(--points);
   --color-border: var(--border);
   --color-input: var(--input);
@@ -76,6 +77,8 @@
   --primary: oklch(0.55 0.19 256);
   --primary-foreground: oklch(0.99 0.005 250);
   --brand-soft: oklch(0.95 0.03 254);
+  /* Page canvas: a touch cooler than card white so elevated surfaces read. */
+  --app: oklch(0.972 0.008 248);
   --secondary: oklch(0.955 0.012 250);
   --secondary-foreground: oklch(0.32 0.04 258);
   --muted: oklch(0.962 0.01 250);
@@ -119,6 +122,7 @@
   --primary: oklch(0.66 0.17 256);
   --primary-foreground: oklch(0.16 0.03 258);
   --brand-soft: oklch(0.3 0.06 256);
+  --app: oklch(0.185 0.025 258);
   --secondary: oklch(0.29 0.03 258);
   --secondary-foreground: oklch(0.97 0.008 250);
   --muted: oklch(0.29 0.03 258);
