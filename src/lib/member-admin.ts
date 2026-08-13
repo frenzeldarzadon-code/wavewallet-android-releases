@@ -17,8 +17,11 @@ import { supabase } from "@/integrations/supabase/client";
 export interface MemberSearchResult {
   id: string;
   full_name: string;
+  handle: string | null;
+  avatar_path: string | null;
   email: string;
   phone: string;
+  masked_email: string;
   status: string;
   role: string;
   ecosystem_id: string | null;
@@ -41,30 +44,38 @@ export const digitsOf = (value: string) => value.replace(/[^0-9]/g, "");
 
 /**
  * Client-side mirror of the database matcher — case-insensitive, partial match
- * on name, email or phone. Used to filter an already-loaded list instantly
- * while the server search debounces.
+ * on name, @handle, email or phone. Used to filter an already-loaded list
+ * instantly while the server search debounces.
  */
 export function memberMatches(
-  member: Pick<MemberSearchResult, "full_name" | "email" | "phone">,
+  member: Pick<MemberSearchResult, "full_name" | "email" | "phone"> & {
+    handle?: string | null;
+  },
   query: string,
 ): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
   const digits = digitsOf(q);
+  const handleQuery = q.replace(/^@+/, "");
   return (
     member.full_name.toLowerCase().includes(q) ||
     member.email.toLowerCase().includes(q) ||
+    (!!member.handle && handleQuery !== "" && member.handle.toLowerCase().includes(handleQuery)) ||
     (digits !== "" && digitsOf(member.phone).includes(digits))
   );
 }
 
 /**
- * A one-line, unambiguous description of a member so an admin cannot credit
- * the wrong person: name, role, email and phone (plus the shop when searching
- * across ecosystems).
+ * A one-line, unambiguous description of a member so nobody credits the wrong
+ * person: @handle, email and phone (plus the shop when searching across
+ * ecosystems). Resellers only ever receive masked contact details.
  */
 export function memberIdentityLine(m: MemberSearchResult, withEcosystem = false): string {
-  const parts = [m.email, m.phone].filter(Boolean);
+  const parts = [
+    m.handle ? `@${m.handle}` : null,
+    m.email || m.masked_email,
+    m.phone,
+  ].filter(Boolean) as string[];
   if (withEcosystem && m.ecosystem_name) parts.push(m.ecosystem_name);
   return parts.join(" · ");
 }

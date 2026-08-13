@@ -17,6 +17,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { RewardImage } from "@/components/reward-image";
+import { ImageCropper } from "@/components/image-cropper";
+import type { CropRect } from "@/lib/image-optimize";
 import {
   deleteRewardImage,
   uploadRewardImage,
@@ -79,15 +81,14 @@ function AdminRewards() {
   const [verify, setVerify] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageCrop, setImageCrop] = useState<{ image: HTMLImageElement; crop: CropRect } | null>(
+    null,
+  );
   const [imageCleared, setImageCleared] = useState(false);
 
   const resetImageState = () => {
     setImageFile(null);
-    setImagePreview((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return null;
-    });
+    setImageCrop(null);
     setImageCleared(false);
   };
 
@@ -98,11 +99,8 @@ function AdminRewards() {
       toast.error(problem);
       return;
     }
-    setImagePreview((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return URL.createObjectURL(file);
-    });
     setImageFile(file);
+    setImageCrop(null);
     setImageCleared(false);
   };
 
@@ -163,7 +161,12 @@ function AdminRewards() {
     try {
       let imagePath: string | null | undefined = undefined;
       if (imageFile) {
-        imagePath = await uploadRewardImage(ecosystemDbId, imageFile);
+        imagePath = await uploadRewardImage(
+          ecosystemDbId,
+          imageFile,
+          imageCrop?.crop,
+          imageCrop?.image,
+        );
       } else if (imageCleared) {
         imagePath = null;
       }
@@ -447,10 +450,8 @@ function AdminRewards() {
             </div>
             <div className="space-y-1.5">
               <Label>Image (optional)</Label>
-              {imagePreview ? (
-                <div className="relative flex aspect-[16/10] w-full items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
-                  <img src={imagePreview} alt="Selected reward" className="size-full object-cover" />
-                </div>
+              {imageFile ? (
+                <ImageCropper file={imageFile} aspect={16 / 10} onChange={setImageCrop} />
               ) : (
                 <RewardImage
                   path={imageCleared ? null : form.imagePath}
@@ -462,18 +463,18 @@ function AdminRewards() {
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="flex-1"
+                  className="h-10 flex-1"
                   onClick={() => document.getElementById("rimage")?.click()}
                 >
                   <ImagePlus className="size-4" />
-                  {imagePreview || (form.imagePath && !imageCleared) ? "Replace" : "Upload"}
+                  {imageFile || (form.imagePath && !imageCleared) ? "Replace" : "Upload"}
                 </Button>
-                {imagePreview || (form.imagePath && !imageCleared) ? (
+                {imageFile || (form.imagePath && !imageCleared) ? (
                   <Button
                     type="button"
                     size="sm"
                     variant="ghost"
-                    className="flex-1 text-destructive"
+                    className="h-10 flex-1 text-destructive"
                     onClick={() => {
                       resetImageState();
                       setImageCleared(true);
@@ -494,7 +495,7 @@ function AdminRewards() {
                 }}
               />
               <p className="text-[11px] text-muted-foreground">
-                JPG, PNG, WEBP or GIF · up to 3 MB. Rewards work fine without an image.
+                JPG, PNG, WEBP or GIF · up to 8 MB. Saved as a uniform, compressed thumbnail.
               </p>
             </div>
             <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2">

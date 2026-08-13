@@ -31,6 +31,7 @@ import { Route as AdminVouchersRouteImport } from './routes/admin.vouchers'
 import { Route as AdminWalletsRouteImport } from './routes/admin.wallets'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppHistoryRouteImport } from './routes/app.history'
+import { Route as AppProfileRouteImport } from './routes/app.profile'
 import { Route as AppRewardsRouteImport } from './routes/app.rewards'
 import { Route as AppShopRouteImport } from './routes/app.shop'
 import { Route as AppTransferRouteImport } from './routes/app.transfer'
@@ -159,6 +160,11 @@ const AppHistoryRoute = AppHistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => AppRoute,
 } as any)
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppRewardsRoute = AppRewardsRouteImport.update({
   id: '/rewards',
   path: '/rewards',
@@ -266,6 +272,7 @@ export interface FileRoutesByFullPath {
   '/admin/vouchers': typeof AdminVouchersRoute
   '/admin/wallets': typeof AdminWalletsRoute
   '/app/history': typeof AppHistoryRoute
+  '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
   '/app/transfer': typeof AppTransferRoute
@@ -303,6 +310,7 @@ export interface FileRoutesByTo {
   '/admin/vouchers': typeof AdminVouchersRoute
   '/admin/wallets': typeof AdminWalletsRoute
   '/app/history': typeof AppHistoryRoute
+  '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
   '/app/transfer': typeof AppTransferRoute
@@ -345,6 +353,7 @@ export interface FileRoutesById {
   '/admin/vouchers': typeof AdminVouchersRoute
   '/admin/wallets': typeof AdminWalletsRoute
   '/app/history': typeof AppHistoryRoute
+  '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
   '/app/transfer': typeof AppTransferRoute
@@ -388,6 +397,7 @@ export interface FileRouteTypes {
     | '/admin/vouchers'
     | '/admin/wallets'
     | '/app/history'
+    | '/app/profile'
     | '/app/rewards'
     | '/app/shop'
     | '/app/transfer'
@@ -425,6 +435,7 @@ export interface FileRouteTypes {
     | '/admin/vouchers'
     | '/admin/wallets'
     | '/app/history'
+    | '/app/profile'
     | '/app/rewards'
     | '/app/shop'
     | '/app/transfer'
@@ -466,6 +477,7 @@ export interface FileRouteTypes {
     | '/admin/vouchers'
     | '/admin/wallets'
     | '/app/history'
+    | '/app/profile'
     | '/app/rewards'
     | '/app/shop'
     | '/app/transfer'
@@ -655,6 +667,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppHistoryRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/profile': {
+      id: '/app/profile'
+      path: '/profile'
+      fullPath: '/app/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/rewards': {
       id: '/app/rewards'
       path: '/rewards'
@@ -811,6 +830,7 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface AppRouteChildren {
   AppHistoryRoute: typeof AppHistoryRoute
+  AppProfileRoute: typeof AppProfileRoute
   AppRewardsRoute: typeof AppRewardsRoute
   AppShopRoute: typeof AppShopRoute
   AppTransferRoute: typeof AppTransferRoute
@@ -819,6 +839,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppHistoryRoute: AppHistoryRoute,
+  AppProfileRoute: AppProfileRoute,
   AppRewardsRoute: AppRewardsRoute,
   AppShopRoute: AppShopRoute,
   AppTransferRoute: AppTransferRoute,

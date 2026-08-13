@@ -13,7 +13,10 @@ import {
 const member = (over: Partial<MemberSearchResult> = {}): MemberSearchResult => ({
   id: "u1",
   full_name: "Maria Dela Cruz",
+  handle: "maria",
+  avatar_path: null,
   email: "Maria@Example.com",
+  masked_email: "M***@Example.com",
   phone: "0917-555-1234",
   status: "active",
   role: "customer",
@@ -69,8 +72,18 @@ describe("member matching", () => {
 });
 
 describe("identity line (wrong-recipient prevention)", () => {
-  it("always shows email and phone", () => {
-    expect(memberIdentityLine(member())).toBe("Maria@Example.com · 0917-555-1234");
+  it("always shows handle, email and phone", () => {
+    expect(memberIdentityLine(member())).toBe("@maria · Maria@Example.com · 0917-555-1234");
+  });
+
+  it("falls back to the masked email when contact details are hidden", () => {
+    expect(memberIdentityLine(member({ email: "" }))).toContain("M***@Example.com");
+  });
+
+  it("omits the handle when the member has none", () => {
+    expect(memberIdentityLine(member({ handle: null }))).toBe(
+      "Maria@Example.com · 0917-555-1234",
+    );
   });
 
   it("adds the shop when searching across ecosystems", () => {
@@ -79,6 +92,13 @@ describe("identity line (wrong-recipient prevention)", () => {
 
   it("omits a missing shop name", () => {
     expect(memberIdentityLine(member({ ecosystem_name: null }), true)).not.toContain("·  ");
+  });
+
+  it("matches members by @handle as well as name, email and phone", () => {
+    expect(memberMatches(member(), "@mar")).toBe(true);
+    expect(memberMatches(member(), "maria@")).toBe(true);
+    expect(memberMatches(member({ handle: null }), "maria")).toBe(true);
+    expect(memberMatches(member({ full_name: "Juan", handle: "juanito" }), "@zzz")).toBe(false);
   });
 });
 

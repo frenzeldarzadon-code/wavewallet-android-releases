@@ -792,6 +792,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_path: string | null
           created_at: string
           deleted_at: string | null
           deleted_by: string | null
@@ -799,6 +800,7 @@ export type Database = {
           ecosystem_id: string | null
           email: string
           full_name: string
+          handle: string | null
           id: string
           is_demo: boolean
           joined_at: string
@@ -811,6 +813,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          avatar_path?: string | null
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
@@ -818,6 +821,7 @@ export type Database = {
           ecosystem_id?: string | null
           email?: string
           full_name?: string
+          handle?: string | null
           id: string
           is_demo?: boolean
           joined_at?: string
@@ -830,6 +834,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          avatar_path?: string | null
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
@@ -837,6 +842,7 @@ export type Database = {
           ecosystem_id?: string | null
           email?: string
           full_name?: string
+          handle?: string | null
           id?: string
           is_demo?: boolean
           joined_at?: string
@@ -1883,6 +1889,10 @@ export type Database = {
           slug: string
         }[]
       }
+      handle_available: {
+        Args: { _ecosystem_id?: string; _handle: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2025,7 +2035,9 @@ export type Database = {
       lookup_transfer_recipient: {
         Args: { _query: string }
         Returns: {
+          avatar_path: string
           full_name: string
+          handle: string
           id: string
           masked_email: string
           phone: string
@@ -2050,6 +2062,7 @@ export type Database = {
         }[]
       }
       new_tx_id: { Args: never; Returns: string }
+      normalize_handle: { Args: { _handle: string }; Returns: string }
       platform_overview: {
         Args: never
         Returns: {
@@ -2273,12 +2286,15 @@ export type Database = {
       search_members: {
         Args: { _ecosystem_id?: string; _query: string }
         Returns: {
+          avatar_path: string
           credit_balance: number
           ecosystem_id: string
           ecosystem_name: string
           email: string
           full_name: string
+          handle: string
           id: string
+          masked_email: string
           phone: string
           points_balance: number
           role: string
@@ -2636,6 +2652,15 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      update_own_profile: {
+        Args: {
+          _avatar_path?: string
+          _clear_avatar?: boolean
+          _full_name?: string
+          _handle?: string
+        }
+        Returns: Json
       }
       update_platform_settings: {
         Args: {
