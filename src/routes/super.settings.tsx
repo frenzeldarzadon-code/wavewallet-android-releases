@@ -77,68 +77,6 @@ function SuperSettings() {
 
   return (
     <>
-      <PageSection
-        title="Subscription plan"
-        description="Price changes apply to future requests — approved subscriptions keep the amount they were billed."
-      >
-        <Card className="shadow-[var(--shadow-card)]">
-          <CardContent className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="planName">Plan name</Label>
-              <Input
-                id="planName"
-                value={form.plan_name}
-                onChange={(e) => set("plan_name", e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="planPrice">Price per period (PHP)</Label>
-              <Input
-                id="planPrice"
-                type="number"
-                value={String(form.plan_price)}
-                onChange={(e) => set("plan_price", Number(e.target.value))}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="period">Billing period</Label>
-              <Select
-                value={form.billing_period}
-                onValueChange={(v) => set("billing_period", v as BillingPeriod)}
-              >
-                <SelectTrigger id="period">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {BILLING_PERIODS.map((p) => (
-                    <SelectItem key={p.value} value={p.value}>
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="grace">Grace period (days)</Label>
-              <Input
-                id="grace"
-                type="number"
-                value={String(form.grace_period_days)}
-                onChange={(e) => set("grace_period_days", Number(e.target.value))}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="currency">Currency</Label>
-              <Input
-                id="currency"
-                value={form.currency}
-                onChange={(e) => set("currency", e.target.value)}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </PageSection>
-
       <PageSection title="Collection details" description="Shown to operators on their subscription screen.">
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">
