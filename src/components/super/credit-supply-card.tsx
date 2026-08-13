@@ -94,7 +94,7 @@ export function CreditSupplyCard() {
     <>
       <PageSection
         title="Credit supply"
-        description="Only you can create credits. Each package is a shop allocation: the base rate is its complete value — no platform fee, markup or surcharge is added anywhere."
+        description="Only you can create credits. Each package is a shop allocation: the base rate is its complete value."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardHeader>
@@ -170,7 +170,7 @@ export function CreditSupplyCard() {
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {Number(p.credits).toLocaleString()} credits ={" "}
-                      {formatPhp(Number(p.price_php), currency)} · no platform fee
+                      {formatPhp(Number(p.price_php), currency)}
                     </p>
                   </div>
                 </div>
@@ -294,8 +294,7 @@ export function CreditSupplyCard() {
                 />
                 <p className="text-xs text-muted-foreground">
                   Base rates live on the packages above (default 1,000 credits = PHP 10.00).
-                  100% means an admin pays nothing for their own allocation. There is no
-                  platform fee.
+                  100% means an admin pays nothing for their own allocation.
                 </p>
               </div>
               <div className="space-y-1.5">

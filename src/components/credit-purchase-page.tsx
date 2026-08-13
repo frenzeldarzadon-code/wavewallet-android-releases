@@ -2,9 +2,9 @@
  * Shop credit allocation for a shop admin.
  *
  * The admin holds a shop wallet exactly like a reseller or customer; this page
- * only requests an allocation from the platform owner's supply. There is no
- * platform fee: the base rate is the whole value of the allocation, and the
- * admin benefit is a discount on that base rate, not a waived fee.
+ * only requests an allocation from the platform owner's supply. The base rate
+ * is the whole value of the allocation, and the admin benefit is a discount on
+ * that base rate.
  *
  * Requesting an allocation never creates credits: the order sits as "pending verification"
  * until the platform owner approves it, and only that approval writes a single
@@ -192,10 +192,6 @@ export function CreditPurchasePage() {
                         {formatPhp(listPhp, currency)}
                       </dd>
                     </div>
-                    <div className="flex justify-between">
-                      <dt className="text-muted-foreground">Platform fee</dt>
-                      <dd className="font-medium">{formatPhp(0, currency)} — no fee</dd>
-                    </div>
                     {discount > 0 ? (
                       <div className="flex justify-between">
                         <dt className="text-muted-foreground">Admin shop allocation benefit</dt>
@@ -209,10 +205,8 @@ export function CreditPurchasePage() {
                   </dl>
                   <p className="mt-2 text-xs text-muted-foreground">
                     Credits are added to your Admin Shop Wallet once the platform owner approves.
-                    The base rate is the complete value of the allocation — there is no service
-                    fee, markup or surcharge anywhere in this flow, and the{" "}
-                    {discount}% benefit is a discount on your own shop allocation, not a waived
-                    platform fee.
+                    The base rate is the complete value of the allocation, and the {discount}%
+                    benefit is a discount on your own shop allocation.
                   </p>
                 </div>
 
@@ -315,7 +309,7 @@ export function CreditPurchasePage() {
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
                     Base {formatPhp(Number(o.list_php), currency)} · {o.discount_percent}% admin
-                    benefit · Paid {formatPhp(Number(o.amount_due), currency)} · No platform fee
+                    benefit · Paid {formatPhp(Number(o.amount_due), currency)}
                   </p>
                   {o.reviewed_at ? (
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -338,7 +332,7 @@ export function CreditPurchasePage() {
             <AlertDialogDescription>
               {credits.toLocaleString()} credits into your shop wallet for{" "}
               {formatPhp(payable, currency)} (base rate {formatPhp(listPhp, currency)}, {discount}%
-              admin benefit, no platform fee) using reference {reference.trim()}. {RELEASE_WARNING}
+              admin benefit) using reference {reference.trim()}. {RELEASE_WARNING}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
