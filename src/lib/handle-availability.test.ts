@@ -42,3 +42,63 @@ describe("checkHandle", () => {
     expect(await checkHandle("newhandle")).toBe("unknown");
   });
 });
+
+describe("profileSaveIssue", () => {
+  const base = { name: "Maria Dela Cruz", handle: "maria_dc", hasFile: false, hasCrop: false };
+
+  it("allows a valid save", async () => {
+    const { profileSaveIssue } = await import("./profile");
+    expect(profileSaveIssue({ ...base, handleState: "available" })).toBeNull();
+  });
+
+  it("allows an unchanged handle (idle state)", async () => {
+    const { profileSaveIssue } = await import("./profile");
+    expect(profileSaveIssue({ ...base, handleState: "idle" })).toBeNull();
+  });
+
+  it("allows an empty optional handle", async () => {
+    const { profileSaveIssue } = await import("./profile");
+    expect(profileSaveIssue({ ...base, handle: "", handleState: "idle" })).toBeNull();
+  });
+
+  it("saves even when availability could not be checked", async () => {
+    const { profileSaveIssue } = await import("./profile");
+    expect(profileSaveIssue({ ...base, handleState: "unknown" })).toBeNull();
+  });
+
+  it("blocks a genuinely taken handle with a clear explanation", async () => {
+    const { profileSaveIssue } = await import("./profile");
+    expect(profileSaveIssue({ ...base, handleState: "taken" })).toMatch(/already used by another/);
+  });
+
+  it("blocks a malformed handle and a missing name", async () => {
+    const { profileSaveIssue } = await import("./profile");
+    expect(profileSaveIssue({ ...base, handle: "no spaces", handleState: "idle" })).toMatch(
+      /letters, numbers/,
+    );
+    expect(profileSaveIssue({ ...base, name: "  ", handleState: "idle" })).toMatch(/required/);
+  });
+
+  it("waits for a picked photo to finish loading", async () => {
+    const { profileSaveIssue } = await import("./profile");
+    expect(
+      profileSaveIssue({ ...base, handleState: "available", hasFile: true, hasCrop: false }),
+    ).toMatch(/still loading/);
+    expect(
+      profileSaveIssue({ ...base, handleState: "available", hasFile: true, hasCrop: true }),
+    ).toBeNull();
+  });
+
+  it("waits while a check is still running", async () => {
+    const { profileSaveIssue } = await import("./profile");
+    expect(profileSaveIssue({ ...base, handleState: "checking" })).toMatch(/checking/i);
+  });
+});
+
+describe("avatar paths", () => {
+  it("stores shop photos under the shop folder and platform photos under 'platform'", async () => {
+    const { avatarPathFor } = await import("./profile");
+    expect(avatarPathFor("eco-1", "user-1", "image/webp")).toMatch(/^eco-1\/user-1\/.+\.webp$/);
+    expect(avatarPathFor(null, "user-1", "image/webp")).toMatch(/^platform\/user-1\/.+\.webp$/);
+  });
+});

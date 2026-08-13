@@ -19,7 +19,6 @@ import {
   profileSaveIssue,
   updateOwnProfile,
   uploadAvatar,
-  validateDisplayName,
   validateHandle,
   type MyProfile,
 } from "@/lib/profile";
