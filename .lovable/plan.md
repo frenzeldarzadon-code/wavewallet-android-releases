@@ -1,18 +1,48 @@
-# Fix Reversal Actions in Admin and Super Admin Mode
+# Secure "Access Account" (act-as) with dual-identity audit
 
-## Implementation
-- Recognize the production outgoing credit-load transaction format while continuing to exclude incoming legs, purchases, adjustments, and reversal entries.
-- Preserve the current transaction row layout, but show a prominent Reverse action for eligible outgoing transfers, Reversed for completed transfers, and the remaining reversible amount/action after partial reversals.
-- Keep the confirmation dialog and route every mutation through the existing `reverse_credit_transfer` database function.
-- Update reversal persistence and RPC checks to support multiple safe partial reversals up to the original transfer amount, while retaining immutable ledger entries, lot-based unspent-credit checks, tenant authorization, audit logs, and duplicate/full-reversal protection.
-- Make transaction-history aggregation cumulative across partial reversal records so both Super Admin ecosystem access and normal Admin mode display the correct state.
+Operators (Admin, Super Admin) can enter a downline member's account, act on their behalf, and every mutation is permanently stamped with both the operator and the target identity.
 
-## Validation
-- Extend unit tests for the real production transaction labels, incoming/purchase exclusions, cumulative partial state, and full completion.
-- Extend database regression coverage for partial-then-partial/full reversal, duplicate protection, balance safety, and audit/history preservation.
-- Verify the Transactions page in Super Admin Mode and Admin mode with Playwright at desktop/mobile dimensions.
-- Run the relevant/full automated tests and publish the completed fix.
+## Scope rules (enforced in the database)
 
-## Technical details
-- Add a database migration that removes the one-record-per-transfer uniqueness constraint and computes cumulative reversed totals atomically under row locks.
-- Continue using ecosystem-scoped reads protected by existing RLS; no accounting, commission, discount, purchase, or refund rules are changed.
+- Admin: only Resellers, Subresellers and Customers whose ecosystem matches the admin's own ecosystem.
+- Super Admin: same target roles, any ecosystem.
+- Never a target that holds `admin` or `super_admin` role.
+- Reseller / Subreseller / Customer: no access at all.
+- Acting as a member never grants the operator anything the operator does not already have; the operator's own JWT and role stay in force for every statement.
+
+## Backend (migration)
+
+1. `impersonation_sessions` table: operator_id, operator_name, operator_role, target_id, target_name, target_role, ecosystem_id, reason, started_at, ended_at, ended_reason, user_agent. GRANTs + RLS (operator sees own rows; ecosystem admins and super admins can read rows for their ecosystem; no direct insert/update — only via RPCs).
+2. `public.can_impersonate(_operator uuid, _target uuid)` — SECURITY DEFINER, encodes the scope rules above.
+3. `public.start_impersonation(_target uuid, _reason text)` — validates, closes any stale session, opens one (hard cap: one active session per operator, auto-expiry after 60 minutes), writes an `audit_logs` row `Access Account — started`.
+4. `public.end_impersonation()` — closes the session and writes the matching audit row.
+5. `public.acting_as()` → target uuid of the caller's active, unexpired session, else NULL. `public.effective_uid()` → `coalesce(acting_as(), auth.uid())`.
+6. Member-facing RPCs that must work "as the member" switch their subject from `auth.uid()` to `public.effective_uid()`, while the audit/actor columns keep the real `auth.uid()`:
+   - `purchase_voucher`, `purchase_voucher_with_points`, `request_redemption`, credit transfer.
+   - Explicitly NOT switched (blocked while impersonating, with a server-side error and a UI explanation): password/email/security changes, DMs and social posting, role changes, admin/super-admin RPCs, subscription and platform settings.
+7. `public.log_operator_action(...)` helper used by the above so each mutation writes an `audit_logs` row with `action = 'Admin Action — Acting as Customer'` (or Reseller / Subreseller, `Superadmin Action — …`) and `metadata` containing operator id/name/role, target id/name/role, ecosystem, entity id, before/after values where safe, reason, session id and user agent. `actor_id`/`actor_name` always stay the operator — history never shows the target as the author.
+
+## Frontend
+
+- `src/lib/impersonation.ts` + `impersonation.functions.ts`: start/end/status calls, eligibility helper, pure functions for the audit label and scope checks (unit-tested).
+- `AccessAccountDialog`: confirmation naming the target, role, ecosystem, an optional reason field, and the warning that everything is logged under the operator.
+- Entry points: "Access account" row action in `admin.customers`, `admin.resellers`, `reseller`-free (not added), and the Super Admin member screens.
+- `/operator/act/$userId` workspace (mobile-first) with tabs: Overview & wallets, Voucher shop purchase, Rewards, Transaction history, Profile. All reads are scoped to the target and already permitted by RLS for the operator.
+- Persistent banner (sticky, top, red/amber, rendered in `AppShell` whenever a session is active): "ACTING AS {target} — all changes are recorded under {operator}" plus an "Exit account" button; the banner also shows on every other route so the operator cannot forget.
+- Exiting ends the server session and returns to the operator's own dashboard.
+
+## Audit UI
+
+- Super Admin: new "Operator actions" section on the audit/reports screen with filters for operator, target, role, ecosystem, action and date range.
+- Admin: the same list filtered to their ecosystem, on their reports screen.
+
+## Verification
+
+- SQL test file `supabase/tests/impersonation.sql`: admin→own-downline allowed; admin→other ecosystem denied; admin→admin/super denied; reseller/customer denied; expired session inert; blocked-action list rejected; audit rows carry both identities.
+- Vitest units for label/eligibility/session helpers; full suite, typecheck and build.
+- Publish after everything passes.
+
+## Notes / assumptions
+
+- Impersonation runs on the operator's own session with a server-side delegation record — no target JWT is ever minted, so the operator's identity is preserved and no secret (password, hash, OTP, payment credential) is ever readable.
+- Historical rows and balances are untouched.
