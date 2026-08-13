@@ -7,6 +7,7 @@ import {
   Search,
   ShieldCheck,
   Trash2,
+  UserCheck,
   TrendingUp,
   UserCog,
 } from "lucide-react";
@@ -38,6 +39,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { peso, roleLabel, shortDate, shortDateTime, type Role } from "@/lib/wavewallet";
 import { EditMemberDialog, type EditableMember } from "@/components/edit-member-dialog";
 import { memberMatches } from "@/lib/member-admin";
+import { AccessAccountDialog, type AccessTarget } from "@/components/access-account-dialog";
+import { isImpersonatable } from "@/lib/impersonation";
 import {
   evaluateCustomerDeletion,
   type DeletionVerdict,
@@ -142,6 +145,8 @@ function AdminCustomers() {
   const [childParents, setChildParents] = useState<Record<string, string>>({});
   const [restructureReason, setRestructureReason] = useState("");
   const [editingProfile, setEditingProfile] = useState<EditableMember | null>(null);
+  // Secure act-as: entering a member account is a server-side delegation.
+  const [accessing, setAccessing] = useState<AccessTarget | null>(null);
 
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
