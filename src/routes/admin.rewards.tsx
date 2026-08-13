@@ -81,15 +81,14 @@ function AdminRewards() {
   const [verify, setVerify] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageCrop, setImageCrop] = useState<{ image: HTMLImageElement; crop: CropRect } | null>(
+    null,
+  );
   const [imageCleared, setImageCleared] = useState(false);
 
   const resetImageState = () => {
     setImageFile(null);
-    setImagePreview((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return null;
-    });
+    setImageCrop(null);
     setImageCleared(false);
   };
 
@@ -100,11 +99,8 @@ function AdminRewards() {
       toast.error(problem);
       return;
     }
-    setImagePreview((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return URL.createObjectURL(file);
-    });
     setImageFile(file);
+    setImageCrop(null);
     setImageCleared(false);
   };
 
