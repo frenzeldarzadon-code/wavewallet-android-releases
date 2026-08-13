@@ -30,9 +30,28 @@ export const SOCIAL_IMAGE_TARGET: ImageTarget = {
 
 export const SOCIAL_IMAGE_ASPECT = SOCIAL_IMAGE_TARGET.width / SOCIAL_IMAGE_TARGET.height;
 
+export type SocialCurrency = "social" | "points";
+
+/** A configurable paid-promotion level. Prices are snapshotted onto the post. */
+export interface PromotionTier {
+  id: string;
+  name: string;
+  description: string;
+  price_social: number;
+  price_points: number;
+  currency: "social" | "points" | "both";
+  duration_hours: number;
+  priority: number;
+  eligibility: "all" | "reseller";
+  active: boolean;
+  sort_order: number;
+  is_default: boolean;
+}
+
 export interface SocialState {
   balance: number;
   ecosystem_id: string;
+  social_enabled: boolean;
   daily_allowance: number;
   post_cost: number;
   comment_cost: number;
@@ -43,10 +62,15 @@ export interface SocialState {
   promotion_cost_social: number;
   promotion_cost_points: number;
   ads_enabled: boolean;
+  ad_provider: string;
   ad_reward_amount: number;
   ad_daily_limit: number;
   ads_claimed_today: number;
+  image_max_px: number;
+  image_max_kb: number;
+  promotion_tiers: PromotionTier[];
 }
+
 
 export interface FeedPost {
   id: string;
