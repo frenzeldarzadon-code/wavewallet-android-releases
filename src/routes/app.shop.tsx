@@ -155,7 +155,13 @@ export function VoucherShopView({
         title="Voucher shop"
         description={`Balance: ${peso(balance)} · ${points.available} pts available${
           discountPercent > 0
-            ? ` · ${discountPercent}% ${role === "subreseller" ? "subreseller" : "reseller"} discount applied`
+            ? ` · ${discountPercent}% ${
+                role === "admin"
+                  ? "admin voucher"
+                  : role === "subreseller"
+                    ? "subreseller"
+                    : "reseller"
+              } discount applied`
             : ""
         }`}
       >
@@ -201,8 +207,9 @@ export function VoucherShopView({
                     </div>
                     {discountPercent > 0 ? (
                       <p className="rounded-lg bg-success/10 px-2.5 py-1.5 text-[11px] font-medium text-success">
-                        Your cost {peso(price)} · sell at {peso(listPrice(p))} · margin{" "}
-                        {peso(listPrice(p) - price)} ({discountPercent}%)
+                        {role === "admin"
+                          ? `Normal price ${peso(listPrice(p))} · admin discount ${discountPercent}% · your cost ${peso(price)}`
+                          : `Your cost ${peso(price)} · sell at ${peso(listPrice(p))} · margin ${peso(listPrice(p) - price)} (${discountPercent}%)`}
                       </p>
                     ) : null}
                     <div className="grid gap-2">
