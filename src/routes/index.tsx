@@ -1,14 +1,27 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, FlaskConical, LogIn, ShieldCheck } from "lucide-react";
+import { ArrowRight, FlaskConical, LogIn, MailCheck, ShieldCheck, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui-kit";
 import { homeFor } from "@/lib/session";
-import { loadAuthContext, signInWithPassword, type SignupEcosystem } from "@/lib/auth";
+import {
+  loadAuthContext,
+  signInWithPassword,
+  signUpCustomerAccount,
+  type SignupEcosystem,
+} from "@/lib/auth";
+import { fetchMyApplication } from "@/lib/membership-applications";
 import { supabase } from "@/integrations/supabase/client";
 import { DEMO_ECOSYSTEM_SLUG, DEMO_ROLES, isPreviewEnvironment } from "@/lib/demo";
 import { startDemoSession } from "@/lib/demo.functions";
@@ -47,6 +60,17 @@ function LoginPage() {
   const [demoBusy, setDemoBusy] = useState<string | null>(null);
   // One-time platform-owner setup; the server decides whether it is still open.
   const [setupOpen, setSetupOpen] = useState(false);
+  // Self-service signup: the ecosystem comes from a fixed list, never free text.
+  const [form, setForm] = useState({
+    slug: "",
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirm: "",
+  });
+  const [signupBusy, setSignupBusy] = useState(false);
+  const [applied, setApplied] = useState<{ shop: string; needsEmail: boolean } | null>(null);
 
   useEffect(() => setPreview(isPreviewEnvironment()), []);
 
@@ -110,6 +134,25 @@ function LoginPage() {
     try {
       const ctx = await signInWithPassword(email, password);
       if (!ctx) throw new Error("We could not load your account profile.");
+      // A self-signup only becomes a membership once an approver acts. Until
+      // then the database grants no ecosystem and no role — this is just the
+      // human-readable explanation.
+      if (!ctx.ecosystem && ctx.role === "customer") {
+        const app = await fetchMyApplication();
+        await supabase.auth.signOut();
+        if (app?.status === "rejected") {
+          throw new Error(
+            `Your application to ${app.ecosystem_name} was rejected${
+              app.decision_reason ? `: ${app.decision_reason}` : "."
+            }`,
+          );
+        }
+        throw new Error(
+          app
+            ? `Your account is pending approval. You can enter ${app.ecosystem_name} after an authorized member approves your application.`
+            : "This account is not linked to an ecosystem yet. Contact your operator.",
+        );
+      }
       if (ctx.profile.status !== "active") {
         await supabase.auth.signOut();
         throw new Error("This account is suspended. Contact your operator.");
@@ -120,6 +163,54 @@ function LoginPage() {
       toast.error(e instanceof Error ? e.message : "Could not sign you in.");
     } finally {
       setBusy(false);
+    }
+  };
+
+  const signUp = async () => {
+    if (signupBusy) return;
+    const shop = shops.find((e) => e.slug === form.slug);
+    if (!shop) {
+      toast.error("Choose the ecosystem you are joining.");
+      return;
+    }
+    if (!form.name.trim()) {
+      toast.error("Enter your full name.");
+      return;
+    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email.trim())) {
+      toast.error("Enter a valid email address.");
+      return;
+    }
+    if (form.phone.trim().replace(/\D/g, "").length < 7) {
+      toast.error("Enter a valid mobile number.");
+      return;
+    }
+    if (form.password.length < 8) {
+      toast.error("Use a password with at least 8 characters.");
+      return;
+    }
+    if (form.password !== form.confirm) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+    setSignupBusy(true);
+    try {
+      const { needsEmailConfirmation } = await signUpCustomerAccount({
+        ecosystemSlug: shop.slug,
+        fullName: form.name,
+        email: form.email,
+        phone: form.phone,
+        password: form.password,
+      });
+      // Signing up never grants access: drop any session the auth server issued.
+      await supabase.auth.signOut();
+      setApplied({ shop: shop.name, needsEmail: needsEmailConfirmation });
+      setForm({ slug: "", name: "", email: "", phone: "", password: "", confirm: "" });
+      toast.success("Your application is pending approval.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not create your account.");
+    } finally {
+      setSignupBusy(false);
     }
   };
 
