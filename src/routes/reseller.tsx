@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   MessageSquare,
   ShoppingCart,
+  User,
   Users,
   Wallet,
 } from "lucide-react";
@@ -25,6 +26,7 @@ const nav: NavItem[] = [
   { to: "/reseller/redemptions", label: "Redemptions", icon: Gift },
   { to: "/reseller/reports", label: "Reports", icon: BarChart3 },
   { to: "/reseller/earnings", label: "Earnings", icon: Wallet },
+  { to: "/reseller/profile", label: "My profile", icon: User },
 ];
 
 function ResellerLayout() {
