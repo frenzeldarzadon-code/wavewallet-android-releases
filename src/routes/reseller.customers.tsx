@@ -25,7 +25,6 @@ import {
   type RecipientMatch,
 } from "@/lib/wallet";
 import { toast } from "sonner";
-import { ApplicationsPanel } from "@/components/applications-panel";
 
 export const Route = createFileRoute("/reseller/customers")({
   head: () => ({
@@ -110,10 +109,6 @@ function ResellerCustomers() {
 
   return (
     <>
-      <ApplicationsPanel
-        ecosystemId={ecosystemDbId}
-        description="New members who chose this shop. They cannot enter until approved."
-      />
       <PageSection
         title="Load customer credits"
         description={`Available in your wallet: ${peso(balance)} · any customer in ${ecosystem.name}, plus the subresellers you own.`}

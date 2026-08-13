@@ -50,6 +50,7 @@ import {
   STATUS_LABEL,
   amountDue,
   createCreditPurchaseOrder,
+  creditGcashAccount,
   fetchCreditPackages,
   fetchCreditPurchaseOrders,
   fetchCreditPurchaseSettings,
@@ -109,6 +110,7 @@ export function CreditPurchasePage() {
   );
   const currency = settings?.currency ?? "PHP";
   const contact = useMemo(() => supportContact(settings), [settings]);
+  const gcash = useMemo(() => creditGcashAccount(settings), [settings]);
   const discount = settings?.admin_credit_discount_percent ?? 100;
   const listPhp = selected ? Number(selected.price_php) * quantity : 0;
   const payable = amountDue(listPhp, discount);
@@ -224,17 +226,15 @@ export function CreditPurchasePage() {
                     <Smartphone className="size-4 text-success" />
                     Pay via GCash
                   </p>
-                  {settings?.credit_gcash_number ? (
+                  {gcash ? (
                     <dl className="mt-2 grid gap-1">
                       <div className="flex flex-wrap justify-between gap-2">
                         <dt className="text-muted-foreground">Account name</dt>
-                        <dd className="font-medium">
-                          {settings.credit_gcash_account_name || "Platform GCash"}
-                        </dd>
+                        <dd className="font-medium">{gcash.accountName}</dd>
                       </div>
                       <div className="flex flex-wrap justify-between gap-2">
                         <dt className="text-muted-foreground">GCash number</dt>
-                        <dd className="font-mono font-medium">{settings.credit_gcash_number}</dd>
+                        <dd className="font-mono font-medium">{gcash.number}</dd>
                       </div>
                       <div className="flex flex-wrap justify-between gap-2 border-t border-border pt-1">
                         <dt className="text-muted-foreground">Amount to send</dt>
@@ -251,9 +251,9 @@ export function CreditPurchasePage() {
                       The platform owner has not published GCash details yet.
                     </p>
                   )}
-                  {settings?.credit_payment_instructions ? (
+                  {gcash?.instructions ? (
                     <p className="mt-2 whitespace-pre-wrap text-muted-foreground">
-                      {settings.credit_payment_instructions}
+                      {gcash.instructions}
                     </p>
                   ) : null}
                   <p className="mt-2 text-muted-foreground">

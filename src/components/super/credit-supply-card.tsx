@@ -353,6 +353,10 @@ export function CreditSupplyCard() {
                   value={settings.credit_gcash_number}
                   onChange={(e) => set("credit_gcash_number", e.target.value)}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Shown to admins on their Shop credits screen. Leave blank to use the
+                  platform Collection details account above.
+                </p>
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="cgInstructions">Payment instructions</Label>

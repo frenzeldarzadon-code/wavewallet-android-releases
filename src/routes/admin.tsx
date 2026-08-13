@@ -14,6 +14,7 @@ import {
   Ticket,
   User,
   Users,
+  UserPlus,
   UserSquare2,
 } from "lucide-react";
 import { AppShell, type NavItem } from "@/components/app-shell";
@@ -35,6 +36,7 @@ const nav: NavItem[] = [
   { to: "/admin/rewards", label: "Rewards", icon: Gift },
   { to: "/admin/resellers", label: "Resellers", icon: Users },
   { to: "/admin/customers", label: "Customers", icon: UserSquare2 },
+  { to: "/admin/applications", label: "Applications", icon: UserPlus },
   ...(SOCIAL_ENABLED
     ? ([{ to: "/admin/social", label: "Community", icon: MessagesSquare }] as NavItem[])
     : []),
