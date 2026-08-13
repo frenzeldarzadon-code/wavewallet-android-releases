@@ -77,7 +77,8 @@ export async function saveCreditPackage(input: {
 }): Promise<CreditPackage> {
   return unwrap(
     await supabase.rpc("save_credit_package", {
-      ...(input.id ? { _id: input.id } : {}),
+      // The database treats a null id as "create a new package".
+      _id: (input.id ?? null) as unknown as string,
       _name: input.name,
       _credits: input.credits,
       _price_php: input.pricePhp,
