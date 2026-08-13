@@ -21,6 +21,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminCreditsRouteImport } from './routes/admin.credits'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
+import { Route as AdminProfileRouteImport } from './routes/admin.profile'
 import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminResellersRouteImport } from './routes/admin.resellers'
 import { Route as AdminRewardsRouteImport } from './routes/admin.rewards'
@@ -115,6 +116,11 @@ const AdminCustomersRoute = AdminCustomersRouteImport.update({
 const AdminProductsRoute = AdminProductsRouteImport.update({
   id: '/products',
   path: '/products',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProfileRoute = AdminProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminReportsRoute = AdminReportsRouteImport.update({
@@ -305,6 +311,7 @@ export interface FileRoutesByFullPath {
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/resellers': typeof AdminResellersRoute
   '/admin/rewards': typeof AdminRewardsRoute
@@ -350,6 +357,7 @@ export interface FileRoutesByTo {
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/resellers': typeof AdminResellersRoute
   '/admin/rewards': typeof AdminRewardsRoute
@@ -400,6 +408,7 @@ export interface FileRoutesById {
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/resellers': typeof AdminResellersRoute
   '/admin/rewards': typeof AdminRewardsRoute
@@ -451,6 +460,7 @@ export interface FileRouteTypes {
     | '/admin/credits'
     | '/admin/customers'
     | '/admin/products'
+    | '/admin/profile'
     | '/admin/reports'
     | '/admin/resellers'
     | '/admin/rewards'
@@ -496,6 +506,7 @@ export interface FileRouteTypes {
     | '/admin/credits'
     | '/admin/customers'
     | '/admin/products'
+    | '/admin/profile'
     | '/admin/reports'
     | '/admin/resellers'
     | '/admin/rewards'
@@ -545,6 +556,7 @@ export interface FileRouteTypes {
     | '/admin/credits'
     | '/admin/customers'
     | '/admin/products'
+    | '/admin/profile'
     | '/admin/reports'
     | '/admin/resellers'
     | '/admin/rewards'
@@ -679,6 +691,13 @@ declare module '@tanstack/react-router' {
       path: '/products'
       fullPath: '/admin/products'
       preLoaderRoute: typeof AdminProductsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/profile': {
+      id: '/admin/profile'
+      path: '/profile'
+      fullPath: '/admin/profile'
+      preLoaderRoute: typeof AdminProfileRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/reports': {
@@ -933,6 +952,7 @@ interface AdminRouteChildren {
   AdminCreditsRoute: typeof AdminCreditsRoute
   AdminCustomersRoute: typeof AdminCustomersRoute
   AdminProductsRoute: typeof AdminProductsRoute
+  AdminProfileRoute: typeof AdminProfileRoute
   AdminReportsRoute: typeof AdminReportsRoute
   AdminResellersRoute: typeof AdminResellersRoute
   AdminRewardsRoute: typeof AdminRewardsRoute
@@ -950,6 +970,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCreditsRoute: AdminCreditsRoute,
   AdminCustomersRoute: AdminCustomersRoute,
   AdminProductsRoute: AdminProductsRoute,
+  AdminProfileRoute: AdminProfileRoute,
   AdminReportsRoute: AdminReportsRoute,
   AdminResellersRoute: AdminResellersRoute,
   AdminRewardsRoute: AdminRewardsRoute,
