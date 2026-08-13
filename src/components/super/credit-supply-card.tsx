@@ -3,7 +3,8 @@
  *
  * Three responsibilities, all restricted to the platform owner in the database:
  *   1. configure credit packages (the only priced source of new credits),
- *   2. configure the admin discount, GCash collection details and release mode,
+ *   2. configure the admin credit allocation rate, admin voucher shop discount,
+ *      GCash collection details and release mode,
  *   3. verify admin purchases — approve (releases credits once), reject
  *      (releases nothing) or freeze an approved purchase that is disputed.
  */
