@@ -159,12 +159,46 @@ export function postCharge(
     "post_cost" | "promotion_currency" | "promotion_cost_social" | "promotion_cost_points"
   >,
   promote: boolean,
-): { amount: number; currency: "social" | "points" } {
+  tier?: PromotionTier | null,
+  currency?: SocialCurrency,
+): { amount: number; currency: SocialCurrency } {
   if (!promote) return { amount: state.post_cost, currency: "social" };
+  if (tier) {
+    const cur: SocialCurrency =
+      tier.currency === "both" ? (currency ?? "social") : (tier.currency as SocialCurrency);
+    return {
+      amount: cur === "points" ? tier.price_points : tier.price_social,
+      currency: cur,
+    };
+  }
   return state.promotion_currency === "points"
     ? { amount: state.promotion_cost_points, currency: "points" }
     : { amount: state.promotion_cost_social, currency: "social" };
 }
+
+/** Tiers the member may actually buy right now. */
+export function availableTiers(state: Pick<SocialState, "promotion_tiers">): PromotionTier[] {
+  return (state.promotion_tiers ?? []).filter((t) => t.active);
+}
+
+/** Human duration of a promotion tier, for the pre-purchase disclosure. */
+export function tierDuration(hours: number): string {
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"}`;
+  const days = Math.round(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"}`;
+}
+
+/** True only when a real rewarded-ad provider is configured and enabled. */
+export function adsAvailable(
+  state: Pick<SocialState, "ads_enabled" | "ad_provider" | "ad_daily_limit" | "ads_claimed_today">,
+): boolean {
+  return (
+    state.ads_enabled &&
+    state.ad_provider.trim().length > 0 &&
+    state.ads_claimed_today < state.ad_daily_limit
+  );
+}
+
 
 /** Replies to a promoted post are free — this is disclosed before publishing. */
 export function commentCharge(
