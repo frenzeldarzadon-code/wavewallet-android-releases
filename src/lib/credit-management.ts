@@ -128,8 +128,8 @@ export async function issueCredits(input: {
     _user_id: input.userId,
     _amount: input.amount,
     _reason: issuanceReason(input.reason, input.category ?? null),
-    _category: input.category ?? null,
-    _reference: input.reference?.trim() || null,
+    ...(input.category ? { _category: input.category } : {}),
+    ...(input.reference?.trim() ? { _reference: input.reference.trim() } : {}),
     _request_key: input.requestKey ?? crypto.randomUUID(),
   });
   if (error) throw new Error(error.message);
