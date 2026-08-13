@@ -23,9 +23,6 @@ export interface CreditPurchaseSettings {
   admin_credit_discount_percent: number;
   /** Discount an admin gets when buying vouchers from their own uploaded inventory. */
   admin_voucher_discount_percent: number;
-  credit_gcash_number: string;
-  credit_gcash_account_name: string;
-  credit_payment_instructions: string;
   credit_release_mode: string;
   default_admin_sale_commission_percent: number;
   currency: string;
@@ -48,46 +45,46 @@ export interface CreditPurchaseSettings {
 /**
  * The GCash account an admin should pay for a credit allocation.
  *
- * There is exactly one platform source of truth: the platform owner's
- * settings. A credit-specific account is used when the owner published one,
- * otherwise the platform collection account applies, so changing the account
- * in Platform settings updates this screen immediately.
+ * Single source of truth: the platform owner's Platform settings collection
+ * account. Changing it there changes this screen immediately. Admins can read
+ * these details but never edit them.
  */
 export function creditGcashAccount(
   settings: CreditPurchaseSettings | null | undefined,
 ): { number: string; accountName: string; instructions: string } | null {
-  const number =
-    (settings?.credit_gcash_number ?? "").trim() || (settings?.gcash_number ?? "").trim();
+  const number = (settings?.gcash_number ?? "").trim();
   if (!number) return null;
-  const accountName =
-    ((settings?.credit_gcash_number ?? "").trim()
-      ? (settings?.credit_gcash_account_name ?? "").trim()
-      : (settings?.gcash_account_name ?? "").trim()) || "Platform GCash";
-  const instructions =
-    (settings?.credit_payment_instructions ?? "").trim() ||
-    (settings?.payment_instructions ?? "").trim();
-  return { number, accountName, instructions };
+  return {
+    number,
+    accountName: (settings?.gcash_account_name ?? "").trim() || "Platform GCash",
+    instructions: (settings?.payment_instructions ?? "").trim(),
+  };
 }
 
-/** Contact card details for the credit purchase flow, or null when unpublished. */
+/**
+ * Safe, read-only support contact published by the platform owner. Returns
+ * null when nothing is configured or the URL is unsafe/malformed.
+ */
 export function supportContact(
-  settings: Pick<CreditPurchaseSettings, "support_page_name" | "support_page_url" | "support_message"> | null | undefined,
-): { href: string; label: string; message: string } | null {
+  settings: Partial<CreditPurchaseSettings> | null | undefined,
+): { label: string; href: string; message: string } | null {
   const raw = (settings?.support_page_url ?? "").trim();
   if (!raw) return null;
-  let url: URL;
+  let parsed: URL;
   try {
-    url = new URL(raw);
+    parsed = new URL(raw);
   } catch {
     return null;
   }
-  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+  const name = (settings?.support_page_name ?? "").trim();
   return {
-    href: url.toString(),
-    label: (settings?.support_page_name ?? "").trim() || url.hostname.replace(/^www\./, ""),
+    label: name || parsed.hostname.replace(/^www\./, ""),
+    href: parsed.toString(),
     message: (settings?.support_message ?? "").trim(),
   };
 }
+
 
 export const RELEASE_WARNING =
   "Credits may reflect immediately as pending/held, but Superadmins have the right to freeze or withhold released credits if the GCash transaction cannot be verified or is disputed.";
@@ -159,7 +156,7 @@ export async function fetchCreditPurchaseSettings(): Promise<CreditPurchaseSetti
   const { data, error } = await supabase
     .from("platform_settings")
     .select(
-      "admin_credit_discount_percent, admin_voucher_discount_percent, credit_gcash_number, credit_gcash_account_name, credit_payment_instructions, credit_release_mode, default_admin_sale_commission_percent, currency, support_page_name, support_page_url, support_message, gcash_number, gcash_account_name, payment_instructions",
+      "admin_credit_discount_percent, admin_voucher_discount_percent, credit_release_mode, default_admin_sale_commission_percent, currency, support_page_name, support_page_url, support_message, gcash_number, gcash_account_name, payment_instructions",
     )
     .eq("id", 1)
     .maybeSingle();
@@ -172,9 +169,11 @@ export async function updateCreditPurchaseSettings(
 ): Promise<void> {
   const { error } = await supabase.rpc("update_credit_purchase_settings", {
     _admin_credit_discount_percent: input.admin_credit_discount_percent,
-    _credit_gcash_number: input.credit_gcash_number,
-    _credit_gcash_account_name: input.credit_gcash_account_name,
-    _credit_payment_instructions: input.credit_payment_instructions,
+    // Legacy credit-specific GCash columns are no longer surfaced anywhere;
+    // the platform collection account is the only source of truth.
+    _credit_gcash_number: "",
+    _credit_gcash_account_name: "",
+    _credit_payment_instructions: "",
     _credit_release_mode: input.credit_release_mode,
     _default_admin_sale_commission_percent: input.default_admin_sale_commission_percent,
     _admin_voucher_discount_percent: input.admin_voucher_discount_percent,
