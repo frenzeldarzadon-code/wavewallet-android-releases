@@ -54,6 +54,7 @@ import { Route as SuperIndexRouteImport } from './routes/super.index'
 import { Route as SuperAdminsRouteImport } from './routes/super.admins'
 import { Route as SuperAuditRouteImport } from './routes/super.audit'
 import { Route as SuperExportRouteImport } from './routes/super.export'
+import { Route as SuperProfileRouteImport } from './routes/super.profile'
 import { Route as SuperReportsRouteImport } from './routes/super.reports'
 import { Route as SuperSettingsRouteImport } from './routes/super.settings'
 import { Route as SuperSubscriptionsRouteImport } from './routes/super.subscriptions'
@@ -283,6 +284,11 @@ const SuperExportRoute = SuperExportRouteImport.update({
   path: '/export',
   getParentRoute: () => SuperRoute,
 } as any)
+const SuperProfileRoute = SuperProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => SuperRoute,
+} as any)
 const SuperReportsRoute = SuperReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -341,6 +347,7 @@ export interface FileRoutesByFullPath {
   '/super/admins': typeof SuperAdminsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/export': typeof SuperExportRoute
+  '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
@@ -387,6 +394,7 @@ export interface FileRoutesByTo {
   '/super/admins': typeof SuperAdminsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/export': typeof SuperExportRoute
+  '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
@@ -438,6 +446,7 @@ export interface FileRoutesById {
   '/super/admins': typeof SuperAdminsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/export': typeof SuperExportRoute
+  '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
@@ -490,6 +499,7 @@ export interface FileRouteTypes {
     | '/super/admins'
     | '/super/audit'
     | '/super/export'
+    | '/super/profile'
     | '/super/reports'
     | '/super/settings'
     | '/super/subscriptions'
@@ -536,6 +546,7 @@ export interface FileRouteTypes {
     | '/super/admins'
     | '/super/audit'
     | '/super/export'
+    | '/super/profile'
     | '/super/reports'
     | '/super/settings'
     | '/super/subscriptions'
@@ -586,6 +597,7 @@ export interface FileRouteTypes {
     | '/super/admins'
     | '/super/audit'
     | '/super/export'
+    | '/super/profile'
     | '/super/reports'
     | '/super/settings'
     | '/super/subscriptions'
@@ -924,6 +936,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperExportRouteImport
       parentRoute: typeof SuperRoute
     }
+    '/super/profile': {
+      id: '/super/profile'
+      path: '/profile'
+      fullPath: '/super/profile'
+      preLoaderRoute: typeof SuperProfileRouteImport
+      parentRoute: typeof SuperRoute
+    }
     '/super/reports': {
       id: '/super/reports'
       path: '/reports'
@@ -1042,6 +1061,7 @@ interface SuperRouteChildren {
   SuperAdminsRoute: typeof SuperAdminsRoute
   SuperAuditRoute: typeof SuperAuditRoute
   SuperExportRoute: typeof SuperExportRoute
+  SuperProfileRoute: typeof SuperProfileRoute
   SuperReportsRoute: typeof SuperReportsRoute
   SuperSettingsRoute: typeof SuperSettingsRoute
   SuperSubscriptionsRoute: typeof SuperSubscriptionsRoute
@@ -1052,6 +1072,7 @@ const SuperRouteChildren: SuperRouteChildren = {
   SuperAdminsRoute: SuperAdminsRoute,
   SuperAuditRoute: SuperAuditRoute,
   SuperExportRoute: SuperExportRoute,
+  SuperProfileRoute: SuperProfileRoute,
   SuperReportsRoute: SuperReportsRoute,
   SuperSettingsRoute: SuperSettingsRoute,
   SuperSubscriptionsRoute: SuperSubscriptionsRoute,
