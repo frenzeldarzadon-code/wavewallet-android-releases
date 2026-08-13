@@ -57,6 +57,25 @@ describe("manual credit validation", () => {
   });
 });
 
+describe("manual credit reason and category", () => {
+  it("requires a meaningful reason when one is supplied", () => {
+    expect(manualCreditIssue({ userId: "u1", amount: 100, reason: "  " })).toMatch(/reason/);
+    expect(manualCreditIssue({ userId: "u1", amount: 100, reason: "ok" })).toMatch(/reason/);
+    expect(manualCreditIssue({ userId: "u1", amount: 100, reason: "verified payment" })).toBeNull();
+  });
+
+  it("refuses fractional credits", () => {
+    expect(manualCreditIssue({ userId: "u1", amount: 10.5 })).toMatch(/whole number/);
+  });
+
+  it("tags the ledger reason with the category", () => {
+    expect(manualCreditReason("paid via gcash", "Goodwill")).toBe(
+      `${MANUAL_CREDIT_ACTION} — [Goodwill] paid via gcash`,
+    );
+    expect(manualCreditReason(null, "Correction")).toBe(`${MANUAL_CREDIT_ACTION} — [Correction]`);
+  });
+});
+
 describe("manual credit provenance", () => {
   it("labels the ledger entry as a manual grant", () => {
     expect(manualCreditReason()).toBe(MANUAL_CREDIT_ACTION);
