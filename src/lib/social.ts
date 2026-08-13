@@ -321,14 +321,32 @@ export async function createPost(input: {
   body: string;
   imagePath?: string | null;
   promote: boolean;
-}): Promise<{ post_id: string; charged: number; currency: string; balance: number }> {
+  tierId?: string | null;
+  currency?: SocialCurrency;
+}): Promise<{
+  post_id: string;
+  charged: number;
+  currency: string;
+  tier: string | null;
+  expires_at: string | null;
+  balance: number;
+}> {
   const { data, error } = await supabase.rpc("social_create_post", {
     _body: input.body.trim(),
     ...(input.imagePath ? { _image_path: input.imagePath } : {}),
     _promote: input.promote,
+    ...(input.tierId ? { _tier_id: input.tierId } : {}),
+    ...(input.currency ? { _currency: input.currency } : {}),
   });
   if (error) fail(error.message);
-  return data as unknown as { post_id: string; charged: number; currency: string; balance: number };
+  return data as unknown as {
+    post_id: string;
+    charged: number;
+    currency: string;
+    tier: string | null;
+    expires_at: string | null;
+    balance: number;
+  };
 }
 
 export async function createComment(postId: string, body: string) {
@@ -413,8 +431,12 @@ export async function fetchMessages(threadId: string): Promise<DmMessage[]> {
   return (data ?? []) as DmMessage[];
 }
 
-export async function sendMessage(memberId: string, body: string) {
-  const { data, error } = await supabase.rpc("dm_send", { _member_id: memberId, _body: body.trim() });
+export async function sendMessage(memberId: string, body: string, imagePath?: string | null) {
+  const { data, error } = await supabase.rpc("dm_send", {
+    _member_id: memberId,
+    _body: body.trim(),
+    ...(imagePath ? { _image_path: imagePath } : {}),
+  });
   if (error) fail(error.message);
   return data as unknown as { thread_id: string; message_id: string };
 }
@@ -504,4 +526,98 @@ export async function socialImageUrl(path?: string | null): Promise<string | nul
   if (error || !data?.signedUrl) return null;
   urlCache.set(path, { url: data.signedUrl, expires: Date.now() + 55 * 60 * 1000 });
   return data.signedUrl;
+}
+
+// -------------------------------------------------- community configuration
+
+export interface EcosystemSocialSettings {
+  social_enabled: boolean;
+  daily_allowance: number | null;
+  post_cost: number | null;
+  comment_cost: number | null;
+  credit_exchange_rate: number | null;
+  points_exchange_rate: number | null;
+  promotion_enabled: boolean | null;
+}
+
+/** Effective (platform default + shop override) settings for a shop. */
+export async function fetchEcosystemSocialOverride(
+  ecosystemId: string,
+): Promise<EcosystemSocialSettings | null> {
+  const { data, error } = await supabase
+    .from("ecosystem_social_settings")
+    .select(
+      "social_enabled, daily_allowance, post_cost, comment_cost, credit_exchange_rate, points_exchange_rate, promotion_enabled",
+    )
+    .eq("ecosystem_id", ecosystemId)
+    .maybeSingle();
+  if (error) fail(error.message);
+  return (data as EcosystemSocialSettings | null) ?? null;
+}
+
+export async function saveEcosystemSocialSettings(
+  input: EcosystemSocialSettings & { ecosystemId?: string },
+) {
+  const { error } = await supabase.rpc("update_ecosystem_social_settings", {
+    _social_enabled: input.social_enabled,
+    _daily_allowance: input.daily_allowance,
+    _post_cost: input.post_cost,
+    _comment_cost: input.comment_cost,
+    _credit_exchange_rate: input.credit_exchange_rate,
+    _points_exchange_rate: input.points_exchange_rate,
+    _promotion_enabled: input.promotion_enabled,
+    ...(input.ecosystemId ? { _ecosystem_id: input.ecosystemId } : {}),
+  });
+  if (error) fail(error.message);
+}
+
+export async function fetchPromotionTiers(ecosystemId: string | null): Promise<PromotionTier[]> {
+  if (!ecosystemId) {
+    const { data, error } = await supabase
+      .from("social_promotion_tiers")
+      .select("*")
+      .is("ecosystem_id", null)
+      .order("sort_order");
+    if (error) fail(error.message);
+    return ((data ?? []) as unknown as PromotionTier[]).map((t) => ({ ...t, is_default: true }));
+  }
+  const { data, error } = await supabase.rpc("social_tiers_for", { _eco: ecosystemId });
+  if (error) fail(error.message);
+  return (data ?? []) as unknown as PromotionTier[];
+}
+
+export async function savePromotionTier(
+  tier: Omit<PromotionTier, "id" | "is_default"> & { id?: string | null; ecosystemId?: string | null },
+): Promise<string> {
+  const { data, error } = await supabase.rpc("upsert_social_promotion_tier", {
+    _name: tier.name.trim(),
+    _description: tier.description ?? "",
+    _price_social: tier.price_social,
+    _price_points: tier.price_points,
+    _currency: tier.currency,
+    _duration_hours: tier.duration_hours,
+    _priority: tier.priority,
+    _eligibility: tier.eligibility,
+    _active: tier.active,
+    _sort_order: tier.sort_order,
+    ...(tier.id ? { _tier_id: tier.id } : {}),
+    ...(tier.ecosystemId ? { _ecosystem_id: tier.ecosystemId } : {}),
+  });
+  if (error) fail(error.message);
+  return data as unknown as string;
+}
+
+export async function disablePromotionTier(tierId: string) {
+  const { error } = await supabase.rpc("delete_social_promotion_tier", { _tier_id: tierId });
+  if (error) fail(error.message);
+}
+
+/** Explicit, authorised refund of a promotion charge. Never automatic. */
+export async function refundPromotion(postId: string, reason: string) {
+  const { data, error } = await supabase.rpc("social_refund_promotion", {
+    _post_id: postId,
+    _reason: reason.trim(),
+  });
+  if (error) fail(error.message);
+  return data as unknown as { refunded: number; currency: string; tx_id: string };
 }
