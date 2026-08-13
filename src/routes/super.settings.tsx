@@ -14,8 +14,10 @@ import {
 } from "@/components/ui/select";
 import { PageSection } from "@/components/ui-kit";
 import { RetentionPolicyCard } from "@/components/retention-policy-card";
+import { CreditSupplyCard } from "@/components/super/credit-supply-card";
 import { SocialSettingsCard } from "@/components/social/social-settings-card";
 import { PromotionTiersCard } from "@/components/social/promotion-tiers-card";
+import { SOCIAL_ENABLED } from "@/lib/features";
 import { supabase } from "@/integrations/supabase/client";
 import {
   BILLING_PERIODS,
@@ -213,12 +215,18 @@ function SuperSettings() {
         {saving ? "Saving…" : "Save changes"}
       </Button>
 
-      <SocialSettingsCard />
-      <PromotionTiersCard
-        ecosystemId={null}
-        title="Default promotion types"
-        description="Platform-wide promotion levels every shop starts with. Shops may customise or add their own."
-      />
+      <CreditSupplyCard />
+
+      {SOCIAL_ENABLED ? (
+        <>
+          <SocialSettingsCard />
+          <PromotionTiersCard
+            ecosystemId={null}
+            title="Default promotion types"
+            description="Platform-wide promotion levels every shop starts with. Shops may customise or add their own."
+          />
+        </>
+      ) : null}
 
       <RetentionPolicyCard canRun />
     </>
