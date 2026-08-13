@@ -139,7 +139,7 @@ function AdminWallets() {
     );
     setReversals(await fetchReversalHistory(ecosystemDbId));
     setLoading(false);
-  }, [ecosystemDbId]);
+  }, [ecosystemDbId, account?.id]);
 
   useEffect(() => {
     void load();
