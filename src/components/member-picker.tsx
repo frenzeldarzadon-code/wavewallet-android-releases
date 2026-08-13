@@ -10,6 +10,7 @@ import { Loader2, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/ui-kit";
+import { MemberAvatar } from "@/components/member-avatar";
 import {
   MIN_SEARCH_LENGTH,
   searchMembers,
