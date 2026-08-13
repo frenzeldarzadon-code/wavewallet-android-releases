@@ -443,6 +443,26 @@ export async function adminAdjustCredits(input: {
   ) as unknown as string;
 }
 
+/**
+ * Shop admin hands credits to a member from the admin's OWN balance.
+ * Credits are never created here — only the platform owner can do that.
+ */
+export async function adminLoadCredits(input: {
+  userId: string;
+  amount: number;
+  reason?: string;
+  reference?: string;
+}): Promise<string> {
+  return unwrap(
+    await supabase.rpc("admin_load_credits", {
+      _user_id: input.userId,
+      _amount: input.amount,
+      ...(input.reason ? { _reason: input.reason } : {}),
+      ...(input.reference ? { _reference: input.reference } : {}),
+    }),
+  ) as unknown as string;
+}
+
 export async function resellerLoadCredits(input: {
   customerId: string;
   amount: number;

@@ -22,6 +22,7 @@ import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
   adminAdjustCredits,
+  adminLoadCredits,
   commissionBreakdown,
   LEDGER_COLUMNS,
   normalizeEntry,
@@ -171,12 +172,21 @@ function AdminWallets() {
               reason,
               ...(reference ? { reference } : {}),
             })
-          : await adminAdjustCredits({
-              userId: target.id,
-              amount: value,
-              reason,
-              reference,
-            });
+          : value > 0
+            ? // Positive amounts move credits out of the admin's own wallet;
+              // creating credits is a platform-owner power.
+              await adminLoadCredits({
+                userId: target.id,
+                amount: value,
+                reason,
+                reference,
+              })
+            : await adminAdjustCredits({
+                userId: target.id,
+                amount: value,
+                reason,
+                reference,
+              });
       toast.success(mode === "points" ? "Points updated" : "Wallet updated", {
         description: `${value > 0 ? "+" : "−"}${
           mode === "points" ? `${Math.abs(Math.trunc(value))} pts` : peso(Math.abs(value))
