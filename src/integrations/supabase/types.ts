@@ -1258,6 +1258,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_path: string | null
+          bio: string | null
           created_at: string
           deleted_at: string | null
           deleted_by: string | null
@@ -1270,6 +1271,7 @@ export type Database = {
           is_demo: boolean
           joined_at: string
           phone: string
+          preferences: Json
           reseller_commission_percent: number | null
           reseller_discount_percent: number
           reseller_id: string | null
@@ -1279,6 +1281,7 @@ export type Database = {
         }
         Insert: {
           avatar_path?: string | null
+          bio?: string | null
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
@@ -1291,6 +1294,7 @@ export type Database = {
           is_demo?: boolean
           joined_at?: string
           phone?: string
+          preferences?: Json
           reseller_commission_percent?: number | null
           reseller_discount_percent?: number
           reseller_id?: string | null
@@ -1300,6 +1304,7 @@ export type Database = {
         }
         Update: {
           avatar_path?: string | null
+          bio?: string | null
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
@@ -1312,6 +1317,7 @@ export type Database = {
           is_demo?: boolean
           joined_at?: string
           phone?: string
+          preferences?: Json
           reseller_commission_percent?: number | null
           reseller_discount_percent?: number
           reseller_id?: string | null
@@ -4311,9 +4317,11 @@ export type Database = {
       update_own_profile: {
         Args: {
           _avatar_path?: string
+          _bio?: string
           _clear_avatar?: boolean
           _full_name?: string
           _handle?: string
+          _preferences?: Json
         }
         Returns: Json
       }
