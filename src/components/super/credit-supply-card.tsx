@@ -9,15 +9,13 @@
  *      (releases nothing) or freeze an approved purchase that is disputed.
  */
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, Plus, Snowflake, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -26,41 +24,31 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageSection } from "@/components/ui-kit";
-import { statusTone } from "@/components/credit-purchase-page";
 import {
-  STATUS_LABEL,
   deleteCreditPackage,
   fetchCreditPackages,
-  fetchCreditPurchaseOrders,
   fetchCreditPurchaseSettings,
   formatPhp,
-  freezeCreditPurchaseOrder,
-  reviewCreditPurchaseOrder,
   saveCreditPackage,
   updateCreditPurchaseSettings,
   type CreditPackage,
-  type CreditPurchaseOrder,
   type CreditPurchaseSettings,
-  type OrderStatus,
 } from "@/lib/credit-purchases";
 
 export function CreditSupplyCard() {
   const [packages, setPackages] = useState<CreditPackage[]>([]);
   const [settings, setSettings] = useState<CreditPurchaseSettings | null>(null);
-  const [orders, setOrders] = useState<CreditPurchaseOrder[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [draft, setDraft] = useState({ name: "", credits: "1000", price: "10" });
 
   const load = useCallback(async () => {
     try {
-      const [pkgs, cfg, list] = await Promise.all([
+      const [pkgs, cfg] = await Promise.all([
         fetchCreditPackages(),
         fetchCreditPurchaseSettings(),
-        fetchCreditPurchaseOrders({ limit: 50 }),
       ]);
       setPackages(pkgs);
       setSettings(cfg);
-      setOrders(list);
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -371,105 +359,7 @@ export function CreditSupplyCard() {
         </PageSection>
       ) : null}
 
-      <PageSection
-        title="Credit purchase verification"
-        description="Approving releases the credits exactly once. Rejecting releases nothing. Freezing pulls released credits back."
-      >
-        <Card className="shadow-[var(--shadow-card)]">
-          <CardContent className="space-y-3">
-            {orders.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No credit purchases submitted yet.</p>
-            ) : (
-              orders.map((o) => (
-                <div key={o.id} className="rounded-xl border border-border p-3 text-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">
-                        {o.buyer_name} — {Number(o.credits).toLocaleString()} credits
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {o.package_name} ×{o.quantity} ·{" "}
-                        {formatPhp(Number(o.amount_due), currency)} · Ref{" "}
-                        <span className="font-mono">{o.payment_reference}</span>
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Submitted {new Date(o.created_at).toLocaleString()}
-                      </p>
-                    </div>
-                    <Badge variant={statusTone(o.status)}>
-                      {STATUS_LABEL[o.status as OrderStatus] ?? o.status}
-                    </Badge>
-                  </div>
-                  {o.note ? (
-                    <p className="mt-2 text-xs text-muted-foreground">Note: {o.note}</p>
-                  ) : null}
-                  {o.reviewed_at ? (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {o.reviewer_name} on {new Date(o.reviewed_at).toLocaleString()}
-                      {o.decision_reason ? ` — ${o.decision_reason}` : ""}
-                    </p>
-                  ) : null}
-
-                  {o.status === "pending" ? (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <Button
-                        size="sm"
-                        disabled={busy === o.id}
-                        onClick={() =>
-                          void run(
-                            o.id,
-                            () => reviewCreditPurchaseOrder(o.id, true),
-                            "Credits released",
-                          )
-                        }
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        disabled={busy === o.id}
-                        onClick={() => {
-                          const reason = window.prompt("Reason for rejecting this payment?");
-                          if (!reason?.trim()) return;
-                          void run(
-                            o.id,
-                            () => reviewCreditPurchaseOrder(o.id, false, reason.trim()),
-                            "Purchase rejected",
-                          );
-                        }}
-                      >
-                        Reject
-                      </Button>
-                    </div>
-                  ) : null}
-
-                  {o.status === "approved" ? (
-                    <div className="mt-3">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={busy === o.id}
-                        onClick={() => {
-                          const reason = window.prompt("Why are these credits being frozen?");
-                          if (!reason?.trim()) return;
-                          void run(
-                            o.id,
-                            () => freezeCreditPurchaseOrder(o.id, reason.trim()),
-                            "Released credits frozen",
-                          );
-                        }}
-                      >
-                        <Snowflake className="size-4" /> Freeze released credits
-                      </Button>
-                    </div>
-                  ) : null}
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
-      </PageSection>
     </>
+
   );
 }

@@ -58,6 +58,7 @@ import { Route as SuperIndexRouteImport } from './routes/super.index'
 import { Route as SuperAdminsRouteImport } from './routes/super.admins'
 import { Route as SuperApplicationsRouteImport } from './routes/super.applications'
 import { Route as SuperAuditRouteImport } from './routes/super.audit'
+import { Route as SuperCreditsRouteImport } from './routes/super.credits'
 import { Route as SuperExportRouteImport } from './routes/super.export'
 import { Route as SuperOperatorLogRouteImport } from './routes/super.operator-log'
 import { Route as SuperProfileRouteImport } from './routes/super.profile'
@@ -310,6 +311,11 @@ const SuperAuditRoute = SuperAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => SuperRoute,
 } as any)
+const SuperCreditsRoute = SuperCreditsRouteImport.update({
+  id: '/credits',
+  path: '/credits',
+  getParentRoute: () => SuperRoute,
+} as any)
 const SuperExportRoute = SuperExportRouteImport.update({
   id: '/export',
   path: '/export',
@@ -387,6 +393,7 @@ export interface FileRoutesByFullPath {
   '/super/admins': typeof SuperAdminsRoute
   '/super/applications': typeof SuperApplicationsRoute
   '/super/audit': typeof SuperAuditRoute
+  '/super/credits': typeof SuperCreditsRoute
   '/super/export': typeof SuperExportRoute
   '/super/operator-log': typeof SuperOperatorLogRoute
   '/super/profile': typeof SuperProfileRoute
@@ -440,6 +447,7 @@ export interface FileRoutesByTo {
   '/super/admins': typeof SuperAdminsRoute
   '/super/applications': typeof SuperApplicationsRoute
   '/super/audit': typeof SuperAuditRoute
+  '/super/credits': typeof SuperCreditsRoute
   '/super/export': typeof SuperExportRoute
   '/super/operator-log': typeof SuperOperatorLogRoute
   '/super/profile': typeof SuperProfileRoute
@@ -498,6 +506,7 @@ export interface FileRoutesById {
   '/super/admins': typeof SuperAdminsRoute
   '/super/applications': typeof SuperApplicationsRoute
   '/super/audit': typeof SuperAuditRoute
+  '/super/credits': typeof SuperCreditsRoute
   '/super/export': typeof SuperExportRoute
   '/super/operator-log': typeof SuperOperatorLogRoute
   '/super/profile': typeof SuperProfileRoute
@@ -557,6 +566,7 @@ export interface FileRouteTypes {
     | '/super/admins'
     | '/super/applications'
     | '/super/audit'
+    | '/super/credits'
     | '/super/export'
     | '/super/operator-log'
     | '/super/profile'
@@ -610,6 +620,7 @@ export interface FileRouteTypes {
     | '/super/admins'
     | '/super/applications'
     | '/super/audit'
+    | '/super/credits'
     | '/super/export'
     | '/super/operator-log'
     | '/super/profile'
@@ -667,6 +678,7 @@ export interface FileRouteTypes {
     | '/super/admins'
     | '/super/applications'
     | '/super/audit'
+    | '/super/credits'
     | '/super/export'
     | '/super/operator-log'
     | '/super/profile'
@@ -1036,6 +1048,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperAuditRouteImport
       parentRoute: typeof SuperRoute
     }
+    '/super/credits': {
+      id: '/super/credits'
+      path: '/credits'
+      fullPath: '/super/credits'
+      preLoaderRoute: typeof SuperCreditsRouteImport
+      parentRoute: typeof SuperRoute
+    }
     '/super/export': {
       id: '/super/export'
       path: '/export'
@@ -1183,6 +1202,7 @@ interface SuperRouteChildren {
   SuperAdminsRoute: typeof SuperAdminsRoute
   SuperApplicationsRoute: typeof SuperApplicationsRoute
   SuperAuditRoute: typeof SuperAuditRoute
+  SuperCreditsRoute: typeof SuperCreditsRoute
   SuperExportRoute: typeof SuperExportRoute
   SuperOperatorLogRoute: typeof SuperOperatorLogRoute
   SuperProfileRoute: typeof SuperProfileRoute
@@ -1196,6 +1216,7 @@ const SuperRouteChildren: SuperRouteChildren = {
   SuperAdminsRoute: SuperAdminsRoute,
   SuperApplicationsRoute: SuperApplicationsRoute,
   SuperAuditRoute: SuperAuditRoute,
+  SuperCreditsRoute: SuperCreditsRoute,
   SuperExportRoute: SuperExportRoute,
   SuperOperatorLogRoute: SuperOperatorLogRoute,
   SuperProfileRoute: SuperProfileRoute,

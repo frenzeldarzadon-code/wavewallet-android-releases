@@ -13,6 +13,8 @@ export interface NavItem {
   to: NonNullable<LinkProps["to"]>;
   label: string;
   icon: ComponentType<{ className?: string }>;
+  /** Optional attention count (e.g. items waiting for review). */
+  badge?: number;
 }
 
 interface Props {
@@ -51,7 +53,12 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
           )}
         >
           <item.icon className="size-4.5 shrink-0" />
-          {item.label}
+          <span className="flex-1 truncate">{item.label}</span>
+          {item.badge && item.badge > 0 ? (
+            <span className="rounded-full bg-destructive px-1.5 py-0.5 text-[11px] font-semibold leading-none text-destructive-foreground">
+              {item.badge > 99 ? "99+" : item.badge}
+            </span>
+          ) : null}
         </Link>
       ))}
     </nav>
