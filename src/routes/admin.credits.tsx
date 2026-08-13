@@ -4,16 +4,16 @@ import { CreditPurchasePage } from "@/components/credit-purchase-page";
 export const Route = createFileRoute("/admin/credits")({
   head: () => ({
     meta: [
-      { title: "Buy Credits — WaveWallet Admin" },
+      { title: "Shop Credit Allocation — WaveWallet Admin" },
       {
         name: "description",
         content:
-          "Buy a platform credit allocation for your shop, submit the GCash reference and track verification status.",
+          "Request a credit allocation for your shop wallet at the configured base rate, submit the GCash reference and track verification status.",
       },
-      { property: "og:title", content: "Buy Credits — WaveWallet Admin" },
+      { property: "og:title", content: "Shop Credit Allocation — WaveWallet Admin" },
       {
         property: "og:description",
-        content: "Purchase platform credits and track verification status.",
+        content: "Request shop credits and track verification status.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
