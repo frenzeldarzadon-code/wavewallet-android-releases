@@ -677,8 +677,11 @@ function AdminWallets() {
             <Button variant="outline" onClick={() => setTarget(null)}>
               Cancel
             </Button>
-            <Button onClick={() => void submit()} disabled={busy}>
-              {busy ? "Saving…" : "Apply adjustment"}
+            <Button
+              onClick={() => void submit()}
+              disabled={busy || (mode === "credits" && Number(amount) > shopBalance)}
+            >
+              {busy ? "Saving…" : mode === "credits" ? "Confirm credit movement" : "Apply adjustment"}
             </Button>
           </DialogFooter>
         </DialogContent>
