@@ -39,7 +39,10 @@ export function MoneySettingsCard() {
   const save = async () => {
     const problem =
       validateValuation(form.creditsPerUnit, form.phpPerUnit, form.feePercent) ??
-      validateCashback(form.cashbackReseller, form.cashbackSubreseller);
+      validateCashback(form.cashbackReseller, form.cashbackSubreseller) ??
+      (Number.isFinite(form.shopTransferFee) && form.shopTransferFee >= 0
+        ? null
+        : "The shop transfer fee must be zero or more credits.");
     if (problem) {
       toast.error(problem);
       return;
@@ -96,6 +99,20 @@ export function MoneySettingsCard() {
           Current valuation: <span className="font-medium text-foreground">{describeRate(form)}</span>. A 100 credit
           cash out pays {peso(example.gross)} gross, {peso(example.fee)} fee, {peso(example.net)} net.
         </p>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="ms-transfer-fee">Shop-to-shop transfer fee (credits)</Label>
+          <Input
+            id="ms-transfer-fee"
+            inputMode="decimal"
+            value={form.shopTransferFee}
+            onChange={(e) => set("shopTransferFee", Number(e.target.value))}
+          />
+          <p className="text-xs text-muted-foreground">
+            Deducted from every transfer a member makes between two of their own shop wallets, and collected as
+            platform earnings.
+          </p>
+        </div>
 
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="space-y-1.5">

@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { EmptyState, PageSection } from "@/components/ui-kit";
 import { MemberAvatar } from "@/components/member-avatar";
 import { RecipientSearch } from "@/components/customer/recipient-search";
+import { ShopTransferCard } from "@/components/customer/shop-transfer-card";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import { recipientIdentityLine } from "@/lib/recipient-search";
@@ -143,6 +144,8 @@ export function TransferPage() {
           </CardContent>
         </Card>
       </PageSection>
+
+      <ShopTransferCard onDone={() => void load()} />
 
       <PageSection title="Transfer history">
         {entries.length === 0 ? (

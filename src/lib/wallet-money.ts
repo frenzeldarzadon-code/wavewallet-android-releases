@@ -54,6 +54,8 @@ export interface MoneySettings {
   feePercent: number;
   cashbackReseller: number;
   cashbackSubreseller: number;
+  /** Flat credits charged when a member moves credits between their shops. */
+  shopTransferFee: number;
 }
 
 export const MONEY_SETTINGS_FALLBACK: MoneySettings = {
@@ -62,6 +64,7 @@ export const MONEY_SETTINGS_FALLBACK: MoneySettings = {
   feePercent: 1,
   cashbackReseller: 10,
   cashbackSubreseller: 20,
+  shopTransferFee: 5,
 };
 
 /** Supabase RPC args are exact-optional: drop undefined keys before sending. */
@@ -182,7 +185,7 @@ export async function fetchMoneySettings(): Promise<MoneySettings> {
   const { data } = await supabase
     .from("platform_settings")
     .select(
-      "cash_out_credits_per_unit, cash_out_php_per_unit, withdrawal_fee_percent, cashback_reseller_percent, cashback_subreseller_percent",
+      "cash_out_credits_per_unit, cash_out_php_per_unit, withdrawal_fee_percent, cashback_reseller_percent, cashback_subreseller_percent, shop_transfer_fee_credits",
     )
     .eq("id", 1)
     .maybeSingle();
@@ -193,6 +196,7 @@ export async function fetchMoneySettings(): Promise<MoneySettings> {
     feePercent: Number(data.withdrawal_fee_percent),
     cashbackReseller: Number(data.cashback_reseller_percent),
     cashbackSubreseller: Number(data.cashback_subreseller_percent),
+    shopTransferFee: Number(data.shop_transfer_fee_credits ?? 5),
   };
 }
 
@@ -203,6 +207,7 @@ export async function saveMoneySettings(s: MoneySettings): Promise<void> {
     _credits_per_unit: s.creditsPerUnit,
     _php_per_unit: s.phpPerUnit,
     _withdrawal_fee: s.feePercent,
+    _shop_transfer_fee: s.shopTransferFee,
   }));
   if (error) throw new Error(error.message);
 }

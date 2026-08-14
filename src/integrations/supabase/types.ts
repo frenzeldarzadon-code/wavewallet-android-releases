@@ -1422,6 +1422,7 @@ export type Database = {
           payment_instructions: string
           plan_name: string
           plan_price: number
+          shop_transfer_fee_credits: number
           support_message: string
           support_page_name: string
           support_page_url: string
@@ -1451,6 +1452,7 @@ export type Database = {
           payment_instructions?: string
           plan_name?: string
           plan_price?: number
+          shop_transfer_fee_credits?: number
           support_message?: string
           support_page_name?: string
           support_page_url?: string
@@ -1480,6 +1482,7 @@ export type Database = {
           payment_instructions?: string
           plan_name?: string
           plan_price?: number
+          shop_transfer_fee_credits?: number
           support_message?: string
           support_page_name?: string
           support_page_url?: string
@@ -2068,6 +2071,57 @@ export type Database = {
             columns: ["source_lot_id"]
             isOneToOne: false
             referencedRelation: "credit_lots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_transfer_fees: {
+        Row: {
+          created_at: string
+          fee_credits: number
+          from_ecosystem_id: string | null
+          gross_credits: number
+          id: string
+          net_credits: number
+          to_ecosystem_id: string | null
+          tx_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fee_credits: number
+          from_ecosystem_id?: string | null
+          gross_credits: number
+          id?: string
+          net_credits: number
+          to_ecosystem_id?: string | null
+          tx_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fee_credits?: number
+          from_ecosystem_id?: string | null
+          gross_credits?: number
+          id?: string
+          net_credits?: number
+          to_ecosystem_id?: string | null
+          tx_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_transfer_fees_from_ecosystem_id_fkey"
+            columns: ["from_ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_transfer_fees_to_ecosystem_id_fkey"
+            columns: ["to_ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
         ]
@@ -3715,6 +3769,7 @@ export type Database = {
         Args: { _ecosystem_id?: string; _user_id: string }
         Returns: string
       }
+      ensure_global_wallet: { Args: { _user_id: string }; Returns: string }
       ensure_membership_wallets: {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: undefined
@@ -4033,6 +4088,14 @@ export type Database = {
           my_rating: number
           transacted_at: string
           transaction_id: string
+        }[]
+      }
+      my_shop_wallets: {
+        Args: never
+        Returns: {
+          balance: number
+          ecosystem_id: string
+          ecosystem_name: string
         }[]
       }
       new_tx_id: { Args: never; Returns: string }
@@ -4754,6 +4817,7 @@ export type Database = {
           _cashback_subreseller: number
           _credits_per_unit: number
           _php_per_unit: number
+          _shop_transfer_fee?: number
           _withdrawal_fee: number
         }
         Returns: {
@@ -4778,6 +4842,7 @@ export type Database = {
           payment_instructions: string
           plan_name: string
           plan_price: number
+          shop_transfer_fee_credits: number
           support_message: string
           support_page_name: string
           support_page_url: string
@@ -5126,6 +5191,19 @@ export type Database = {
         Args: { _amount: number; _note?: string; _recipient_id: string }
         Returns: string
       }
+      transfer_credits_between_shops: {
+        Args: {
+          _amount: number
+          _from_ecosystem_id: string
+          _note?: string
+          _to_ecosystem_id: string
+        }
+        Returns: {
+          fee_credits: number
+          net_credits: number
+          tx_id: string
+        }[]
+      }
       transfer_reversal_info: { Args: { _tx_id: string }; Returns: Json }
       update_credit_purchase_settings:
         | {
@@ -5159,6 +5237,7 @@ export type Database = {
               payment_instructions: string
               plan_name: string
               plan_price: number
+              shop_transfer_fee_credits: number
               support_message: string
               support_page_name: string
               support_page_url: string
@@ -5205,6 +5284,7 @@ export type Database = {
               payment_instructions: string
               plan_name: string
               plan_price: number
+              shop_transfer_fee_credits: number
               support_message: string
               support_page_name: string
               support_page_url: string
@@ -5395,6 +5475,7 @@ export type Database = {
           payment_instructions: string
           plan_name: string
           plan_price: number
+          shop_transfer_fee_credits: number
           support_message: string
           support_page_name: string
           support_page_url: string
@@ -5517,6 +5598,10 @@ export type Database = {
       voucher_discount_percent_for: {
         Args: { _user_id: string }
         Returns: number
+      }
+      wallet_id_for: {
+        Args: { _ecosystem_id: string; _user_id: string }
+        Returns: string
       }
       wallet_integrity_check: {
         Args: never
