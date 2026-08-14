@@ -260,7 +260,8 @@ export function SocialPage() {
                 <Coins className="size-4 text-success" aria-hidden />
                 <span className="font-semibold">{state?.balance ?? "—"} social credits</span>
                 <span className="text-muted-foreground">
-                  · {state?.daily_allowance ?? 5} free daily
+                  · {state?.free_balance ?? 0} free left today of {state?.daily_allowance ?? 5} ·{" "}
+                  {state?.purchased_balance ?? 0} purchased
                 </span>
               </div>
               <Button
