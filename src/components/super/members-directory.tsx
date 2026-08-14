@@ -32,6 +32,7 @@ import {
   type PlatformMember,
 } from "@/lib/platform-members";
 import { roleLabel } from "@/lib/wavewallet";
+import { RoleBadge } from "@/components/role-badge";
 import {
   resetBlockedReason,
   sendAccountRecovery,
@@ -168,7 +169,7 @@ export function MembersDirectory() {
                       {visibleIdentifiers(m).phone ? ` · ${visibleIdentifiers(m).phone}` : ""}
                     </p>
                     <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                      <Badge variant="secondary">{roleLabel(m.role)}</Badge>
+                      <RoleBadge role={m.role} showCustomer />
                       {m.ecosystem_name ? <Badge variant="outline">{m.ecosystem_name}</Badge> : null}
                       <Badge variant="outline">{m.status}</Badge>
                     </div>
