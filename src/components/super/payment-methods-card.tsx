@@ -150,6 +150,15 @@ export function PaymentMethodsCard() {
             onChange={(e) => setForm({ ...form, instructions: e.target.value })}
           />
         </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="pm-notes">Notes</Label>
+          <Textarea
+            id="pm-notes"
+            rows={2}
+            value={form.notes}
+            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+          />
+        </div>
         <div className="flex items-center gap-2">
           <Switch
             id="pm-active"
