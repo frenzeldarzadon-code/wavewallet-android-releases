@@ -79,6 +79,7 @@ import { Route as SuperProfileRouteImport } from './routes/super.profile'
 import { Route as SuperReportsRouteImport } from './routes/super.reports'
 import { Route as SuperSettingsRouteImport } from './routes/super.settings'
 import { Route as SuperSubscriptionsRouteImport } from './routes/super.subscriptions'
+import { Route as SuperUniverseRouteImport } from './routes/super.universe'
 import { Route as UniverseIndexRouteImport } from './routes/universe.index'
 import { Route as UniverseMessagesRouteImport } from './routes/universe.messages'
 import { Route as UniverseNotificationsRouteImport } from './routes/universe.notifications'
@@ -436,6 +437,11 @@ const SuperSubscriptionsRoute = SuperSubscriptionsRouteImport.update({
   path: '/subscriptions',
   getParentRoute: () => SuperRoute,
 } as any)
+const SuperUniverseRoute = SuperUniverseRouteImport.update({
+  id: '/universe',
+  path: '/universe',
+  getParentRoute: () => SuperRoute,
+} as any)
 const UniverseIndexRoute = UniverseIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -534,6 +540,7 @@ export interface FileRoutesByFullPath {
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
+  '/super/universe': typeof SuperUniverseRoute
   '/universe/messages': typeof UniverseMessagesRoute
   '/universe/notifications': typeof UniverseNotificationsRoute
   '/universe/profile': typeof UniverseProfileRoute
@@ -607,6 +614,7 @@ export interface FileRoutesByTo {
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
+  '/super/universe': typeof SuperUniverseRoute
   '/universe/messages': typeof UniverseMessagesRoute
   '/universe/notifications': typeof UniverseNotificationsRoute
   '/universe/profile': typeof UniverseProfileRoute
@@ -686,6 +694,7 @@ export interface FileRoutesById {
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
+  '/super/universe': typeof SuperUniverseRoute
   '/universe/messages': typeof UniverseMessagesRoute
   '/universe/notifications': typeof UniverseNotificationsRoute
   '/universe/profile': typeof UniverseProfileRoute
@@ -766,6 +775,7 @@ export interface FileRouteTypes {
     | '/super/reports'
     | '/super/settings'
     | '/super/subscriptions'
+    | '/super/universe'
     | '/universe/messages'
     | '/universe/notifications'
     | '/universe/profile'
@@ -839,6 +849,7 @@ export interface FileRouteTypes {
     | '/super/reports'
     | '/super/settings'
     | '/super/subscriptions'
+    | '/super/universe'
     | '/universe/messages'
     | '/universe/notifications'
     | '/universe/profile'
@@ -917,6 +928,7 @@ export interface FileRouteTypes {
     | '/super/reports'
     | '/super/settings'
     | '/super/subscriptions'
+    | '/super/universe'
     | '/universe/messages'
     | '/universe/notifications'
     | '/universe/profile'
@@ -1435,6 +1447,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperSubscriptionsRouteImport
       parentRoute: typeof SuperRoute
     }
+    '/super/universe': {
+      id: '/super/universe'
+      path: '/universe'
+      fullPath: '/super/universe'
+      preLoaderRoute: typeof SuperUniverseRouteImport
+      parentRoute: typeof SuperRoute
+    }
     '/universe/': {
       id: '/universe/'
       path: '/'
@@ -1611,6 +1630,7 @@ interface SuperRouteChildren {
   SuperReportsRoute: typeof SuperReportsRoute
   SuperSettingsRoute: typeof SuperSettingsRoute
   SuperSubscriptionsRoute: typeof SuperSubscriptionsRoute
+  SuperUniverseRoute: typeof SuperUniverseRoute
   SuperIndexRoute: typeof SuperIndexRoute
 }
 
@@ -1627,6 +1647,7 @@ const SuperRouteChildren: SuperRouteChildren = {
   SuperReportsRoute: SuperReportsRoute,
   SuperSettingsRoute: SuperSettingsRoute,
   SuperSubscriptionsRoute: SuperSubscriptionsRoute,
+  SuperUniverseRoute: SuperUniverseRoute,
   SuperIndexRoute: SuperIndexRoute,
 }
 
