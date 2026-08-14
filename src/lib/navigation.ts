@@ -302,6 +302,7 @@ export function superAdminNav(): Nav {
         { to: "/super/operator-log", label: "Operator actions", icon: UserCheck },
       ],
     },
+    ...(SOCIAL_ENABLED ? [{ label: "Community", items: universeNav }] : []),
     {
       label: "Account",
       items: [
