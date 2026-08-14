@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { FacebookSupportCard } from "@/components/facebook-support-card";
+import { PaymentMethodCards } from "@/components/money/payment-method-cards";
 import { useSession } from "@/lib/session";
 import { shortDateTime } from "@/lib/wavewallet";
 import { fetchCreditBalance } from "@/lib/wallet";
