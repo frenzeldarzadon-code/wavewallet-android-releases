@@ -4817,6 +4817,7 @@ export type Database = {
           _cashback_subreseller: number
           _credits_per_unit: number
           _php_per_unit: number
+          _shop_transfer_fee?: number
           _withdrawal_fee: number
         }
         Returns: {
