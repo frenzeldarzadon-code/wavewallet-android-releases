@@ -21,6 +21,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
 import { Route as AdminCreditsRouteImport } from './routes/admin.credits'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
+import { Route as AdminMoneyRouteImport } from './routes/admin.money'
 import { Route as AdminOperatorLogRouteImport } from './routes/admin.operator-log'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as AdminProfileRouteImport } from './routes/admin.profile'
@@ -132,6 +133,11 @@ const AdminCreditsRoute = AdminCreditsRouteImport.update({
 const AdminCustomersRoute = AdminCustomersRouteImport.update({
   id: '/customers',
   path: '/customers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMoneyRoute = AdminMoneyRouteImport.update({
+  id: '/money',
+  path: '/money',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminOperatorLogRoute = AdminOperatorLogRouteImport.update({
@@ -407,6 +413,7 @@ export interface FileRoutesByFullPath {
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/money': typeof AdminMoneyRoute
   '/admin/operator-log': typeof AdminOperatorLogRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/profile': typeof AdminProfileRoute
@@ -469,6 +476,7 @@ export interface FileRoutesByTo {
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/money': typeof AdminMoneyRoute
   '/admin/operator-log': typeof AdminOperatorLogRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/profile': typeof AdminProfileRoute
@@ -536,6 +544,7 @@ export interface FileRoutesById {
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/money': typeof AdminMoneyRoute
   '/admin/operator-log': typeof AdminOperatorLogRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/profile': typeof AdminProfileRoute
@@ -604,6 +613,7 @@ export interface FileRouteTypes {
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
+    | '/admin/money'
     | '/admin/operator-log'
     | '/admin/products'
     | '/admin/profile'
@@ -666,6 +676,7 @@ export interface FileRouteTypes {
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
+    | '/admin/money'
     | '/admin/operator-log'
     | '/admin/products'
     | '/admin/profile'
@@ -732,6 +743,7 @@ export interface FileRouteTypes {
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
+    | '/admin/money'
     | '/admin/operator-log'
     | '/admin/products'
     | '/admin/profile'
@@ -883,6 +895,13 @@ declare module '@tanstack/react-router' {
       path: '/customers'
       fullPath: '/admin/customers'
       preLoaderRoute: typeof AdminCustomersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/money': {
+      id: '/admin/money'
+      path: '/money'
+      fullPath: '/admin/money'
+      preLoaderRoute: typeof AdminMoneyRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/operator-log': {
@@ -1256,6 +1275,7 @@ interface AdminRouteChildren {
   AdminApplicationsRoute: typeof AdminApplicationsRoute
   AdminCreditsRoute: typeof AdminCreditsRoute
   AdminCustomersRoute: typeof AdminCustomersRoute
+  AdminMoneyRoute: typeof AdminMoneyRoute
   AdminOperatorLogRoute: typeof AdminOperatorLogRoute
   AdminProductsRoute: typeof AdminProductsRoute
   AdminProfileRoute: typeof AdminProfileRoute
@@ -1277,6 +1297,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminApplicationsRoute: AdminApplicationsRoute,
   AdminCreditsRoute: AdminCreditsRoute,
   AdminCustomersRoute: AdminCustomersRoute,
+  AdminMoneyRoute: AdminMoneyRoute,
   AdminOperatorLogRoute: AdminOperatorLogRoute,
   AdminProductsRoute: AdminProductsRoute,
   AdminProfileRoute: AdminProfileRoute,
