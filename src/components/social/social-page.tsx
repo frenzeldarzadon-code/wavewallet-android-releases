@@ -3,7 +3,6 @@ import {
   Flag,
   Globe2,
   Heart,
-
   ImagePlus,
   Loader2,
   MessageCircle,
@@ -13,7 +12,6 @@ import {
   Trash2,
   Users,
   X,
-
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -91,14 +89,12 @@ import {
   type FeedPost,
   type DistributionStatus,
   type PostAudience,
-
   type PromotionTier,
   type SocialCurrency,
   type SocialState,
 } from "@/lib/social";
 import { sendMessage } from "@/lib/social";
 import { PostComposer } from "@/components/social/post-composer";
-
 
 /** Signed-image thumbnail for a post. */
 function PostImage({ path }: { path: string }) {
@@ -131,7 +127,6 @@ export function SocialPage() {
   // composer
   const [composerOpen, setComposerOpen] = useState(false);
 
-
   // exchange
   const [exchangeOpen, setExchangeOpen] = useState(false);
   const [exchangeKind, setExchangeKind] = useState<"credit" | "points">("credit");
@@ -160,12 +155,14 @@ export function SocialPage() {
   }, [account, refresh]);
 
   const tiers = useMemo<PromotionTier[]>(
-    () => (state ? availableTiers({ promotion_tiers: state.promotion_tiers, role: account?.role ?? null }) : []),
+    () =>
+      state
+        ? availableTiers({ promotion_tiers: state.promotion_tiers, role: account?.role ?? null })
+        : [],
     [state, account?.role],
   );
 
   if (!account) return null;
-
 
   const like = async (post: FeedPost) => {
     // Optimistic: likes are always free.
@@ -206,7 +203,9 @@ export function SocialPage() {
   const block = async (memberId: string, name: string) => {
     try {
       await setBlocked(memberId, true);
-      toast.success(`${name} is blocked`, { description: "You will not see each other's content." });
+      toast.success(`${name} is blocked`, {
+        description: "You will not see each other's content.",
+      });
       await refresh();
     } catch (e) {
       toast.error("Could not block", { description: (e as Error).message });
@@ -247,7 +246,6 @@ export function SocialPage() {
     }
   };
 
-
   return (
     <>
       <PageSection
@@ -283,8 +281,8 @@ export function SocialPage() {
             </Button>
 
             <p className="text-xs text-muted-foreground">
-              Write first — you choose where to share it and whether to promote it before anything is
-              deducted. A normal post costs {state?.post_cost ?? 1} social credit.
+              Write first — you choose where to share it and whether to promote it before anything
+              is deducted. A normal post costs {state?.post_cost ?? 1} social credit.
             </p>
           </CardContent>
         </Card>
@@ -302,7 +300,6 @@ export function SocialPage() {
           onPosted={refresh}
         />
       ) : null}
-
 
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading the feed…</p>
@@ -328,7 +325,6 @@ export function SocialPage() {
           ))}
         </div>
       )}
-
 
       {/* Exchange */}
       <Dialog open={exchangeOpen} onOpenChange={setExchangeOpen}>
@@ -382,8 +378,8 @@ export function SocialPage() {
             </p>
             {state?.ads_enabled ? (
               <p className="text-xs text-muted-foreground">
-                Rewarded ads grant {state.ad_reward_amount} social credits after a verified completed
-                ad ({state.ads_claimed_today}/{state.ad_daily_limit} claimed today).
+                Rewarded ads grant {state.ad_reward_amount} social credits after a verified
+                completed ad ({state.ads_claimed_today}/{state.ad_daily_limit} claimed today).
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
@@ -522,7 +518,9 @@ function PostCard({
                   {displayHandle(post.author_handle)}
                 </span>
               ) : null}
-              <span className="text-xs text-muted-foreground">· {relativeTime(post.created_at)}</span>
+              <span className="text-xs text-muted-foreground">
+                · {relativeTime(post.created_at)}
+              </span>
               {post.promoted ? (
                 <Badge className="bg-primary text-primary-foreground">
                   {post.promotion_tier_name ? `${post.promotion_tier_name} · Promoted` : "Promoted"}
@@ -539,7 +537,6 @@ function PostCard({
             {post.audience === "general" && post.author_id === meId ? (
               <GeneralStatus postId={post.id} />
             ) : null}
-
           </div>
         </div>
 
@@ -547,10 +544,17 @@ function PostCard({
 
         <div className="flex flex-wrap items-center gap-1">
           <Button variant="ghost" size="sm" className="h-10 gap-1.5" onClick={onLike}>
-            <Heart className={post.liked_by_me ? "size-4 fill-destructive text-destructive" : "size-4"} />
+            <Heart
+              className={post.liked_by_me ? "size-4 fill-destructive text-destructive" : "size-4"}
+            />
             {post.like_count}
           </Button>
-          <Button variant="ghost" size="sm" className="h-10 gap-1.5" onClick={() => void openComments()}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-10 gap-1.5"
+            onClick={() => void openComments()}
+          >
             <MessageCircle className="size-4" />
             {post.comment_count}
           </Button>
@@ -695,7 +699,12 @@ function GeneralStatus({ postId }: { postId: string }) {
 
   if (!open) {
     return (
-      <Button variant="ghost" size="sm" className="mt-1 h-8 px-0 text-xs" onClick={() => void load()}>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="mt-1 h-8 px-0 text-xs"
+        onClick={() => void load()}
+      >
         Where is this shared?
       </Button>
     );

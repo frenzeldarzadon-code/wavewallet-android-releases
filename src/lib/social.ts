@@ -71,7 +71,6 @@ export interface SocialState {
   promotion_tiers: PromotionTier[];
 }
 
-
 export type PostAudience = "ecosystem" | "general" | "shops";
 
 /** A shop the member may share a post into — approved, active memberships only. */
@@ -129,7 +128,6 @@ export interface DistributionStatus {
   reviewed_at: string | null;
 }
 
-
 export interface FeedComment {
   id: string;
   author_id: string;
@@ -161,7 +159,6 @@ export interface DmMessage {
   created_at: string;
   mine: boolean;
 }
-
 
 export interface SocialActivityRow {
   created_at: string;
@@ -252,7 +249,6 @@ export function adsAvailable(
     state.ads_claimed_today < state.ad_daily_limit
   );
 }
-
 
 /** Replies to a promoted post are free — this is disclosed before publishing. */
 export function commentCharge(
@@ -441,7 +437,6 @@ export async function fetchDistributionStatus(postId: string): Promise<Distribut
   if (error) fail(error.message);
   return (data ?? []) as DistributionStatus[];
 }
-
 
 export async function createComment(postId: string, body: string) {
   const { data, error } = await supabase.rpc("social_create_comment", {
@@ -652,7 +647,7 @@ export async function fetchEcosystemSocialOverride(
 export async function saveEcosystemSocialSettings(
   input: EcosystemSocialSettings & { ecosystemId?: string },
 ) {
-  const opt = <T,>(key: string, value: T | null) =>
+  const opt = <T>(key: string, value: T | null) =>
     value === null || value === undefined ? {} : { [key]: value };
   const { error } = await supabase.rpc("update_ecosystem_social_settings", {
     _social_enabled: input.social_enabled,
@@ -683,7 +678,10 @@ export async function fetchPromotionTiers(ecosystemId: string | null): Promise<P
 }
 
 export async function savePromotionTier(
-  tier: Omit<PromotionTier, "id" | "is_default"> & { id?: string | null; ecosystemId?: string | null },
+  tier: Omit<PromotionTier, "id" | "is_default"> & {
+    id?: string | null;
+    ecosystemId?: string | null;
+  },
 ): Promise<string> {
   const { data, error } = await supabase.rpc("upsert_social_promotion_tier", {
     _name: tier.name.trim(),

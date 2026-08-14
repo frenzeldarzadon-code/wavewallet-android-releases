@@ -327,7 +327,9 @@ export function PostComposer({
                     {a === "ecosystem" ? ownShopName : audienceLabel(a)}
                     {audience === a ? <Check className="ml-auto size-4 text-primary" /> : null}
                   </span>
-                  <span className="mt-1 block text-xs text-muted-foreground">{audienceHelp(a)}</span>
+                  <span className="mt-1 block text-xs text-muted-foreground">
+                    {audienceHelp(a)}
+                  </span>
                 </button>
               ))}
             </div>
