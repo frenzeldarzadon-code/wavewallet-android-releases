@@ -100,6 +100,7 @@ export interface FeedPost {
   can_delete: boolean;
   audience: PostAudience;
   origin_ecosystem_name: string | null;
+  author_role: string | null;
 }
 
 /** One shop's decision about a General post. */
