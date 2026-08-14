@@ -64,6 +64,10 @@ export const MONEY_SETTINGS_FALLBACK: MoneySettings = {
   cashbackSubreseller: 20,
 };
 
+/** Supabase RPC args are exact-optional: drop undefined keys before sending. */
+const rpcArgs = <T,>(o: Record<string, unknown>): T =>
+  Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined)) as T;
+
 const round2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
 
 /** Shop admin keeps whatever the two downstream rates do not take. */
@@ -182,13 +186,13 @@ export async function fetchMoneySettings(): Promise<MoneySettings> {
 }
 
 export async function saveMoneySettings(s: MoneySettings): Promise<void> {
-  const { error } = await supabase.rpc("set_platform_money_settings", {
+  const { error } = await supabase.rpc("set_platform_money_settings", rpcArgs({
     _cashback_reseller: Math.round(s.cashbackReseller),
     _cashback_subreseller: Math.round(s.cashbackSubreseller),
     _credits_per_unit: s.creditsPerUnit,
     _php_per_unit: s.phpPerUnit,
     _withdrawal_fee: s.feePercent,
-  });
+  }));
   if (error) throw new Error(error.message);
 }
 
@@ -211,7 +215,7 @@ export async function savePaymentMethod(input: {
   active: boolean;
   sort_order?: number;
 }): Promise<PaymentMethod> {
-  const { data, error } = await supabase.rpc("upsert_payment_method", {
+  const { data, error } = await supabase.rpc("upsert_payment_method", rpcArgs({
     _id: input.id ?? undefined,
     _name: input.name,
     _method_type: input.method_type,
@@ -221,13 +225,13 @@ export async function savePaymentMethod(input: {
     _notes: input.notes ?? undefined,
     _active: input.active,
     _sort_order: input.sort_order ?? 0,
-  });
+  }));
   if (error) throw new Error(error.message);
   return data as unknown as PaymentMethod;
 }
 
 export async function deletePaymentMethod(id: string): Promise<void> {
-  const { error } = await supabase.rpc("delete_payment_method", { _id: id });
+  const { error } = await supabase.rpc("delete_payment_method", rpcArgs({ _id: id }));
   if (error) throw new Error(error.message);
 }
 
@@ -239,20 +243,20 @@ export async function requestWithdrawal(input: {
   notes?: string | null;
   requestKey: string;
 }): Promise<WithdrawalRequest> {
-  const { data, error } = await supabase.rpc("request_withdrawal", {
+  const { data, error } = await supabase.rpc("request_withdrawal", rpcArgs({
     _credits: input.credits,
     _payment_mode: input.mode,
     _account_name: input.accountName ?? undefined,
     _account_number: input.accountNumber ?? undefined,
     _notes: input.notes ?? undefined,
     _request_key: input.requestKey,
-  });
+  }));
   if (error) throw new Error(error.message);
   return data as unknown as WithdrawalRequest;
 }
 
 export async function cancelWithdrawal(id: string): Promise<void> {
-  const { error } = await supabase.rpc("cancel_withdrawal", { _id: id });
+  const { error } = await supabase.rpc("cancel_withdrawal", rpcArgs({ _id: id }));
   if (error) throw new Error(error.message);
 }
 
@@ -261,11 +265,11 @@ export async function reviewWithdrawal(
   action: "approve" | "reject" | "release",
   reason?: string | null,
 ): Promise<void> {
-  const { error } = await supabase.rpc("review_withdrawal", {
+  const { error } = await supabase.rpc("review_withdrawal", rpcArgs({
     _id: id,
     _action: action,
     _reason: reason ?? undefined,
-  });
+  }));
   if (error) throw new Error(error.message);
 }
 
@@ -276,19 +280,19 @@ export async function requestCashIn(input: {
   notes?: string | null;
   requestKey: string;
 }): Promise<CashInRequest> {
-  const { data, error } = await supabase.rpc("request_cash_in", {
+  const { data, error } = await supabase.rpc("request_cash_in", rpcArgs({
     _method_id: input.methodId,
     _amount_php: input.amountPhp,
     _payer_reference: input.payerReference ?? undefined,
     _notes: input.notes ?? undefined,
     _request_key: input.requestKey,
-  });
+  }));
   if (error) throw new Error(error.message);
   return data as unknown as CashInRequest;
 }
 
 export async function cancelCashIn(id: string): Promise<void> {
-  const { error } = await supabase.rpc("cancel_cash_in", { _id: id });
+  const { error } = await supabase.rpc("cancel_cash_in", rpcArgs({ _id: id }));
   if (error) throw new Error(error.message);
 }
 
@@ -297,7 +301,7 @@ export async function reviewCashIn(
   action: "approve" | "reject",
   reason?: string | null,
 ): Promise<void> {
-  const { error } = await supabase.rpc("review_cash_in", { _id: id, _action: action, _reason: reason ?? undefined });
+  const { error } = await supabase.rpc("review_cash_in", rpcArgs({ _id: id, _action: action, _reason: reason ?? undefined }));
   if (error) throw new Error(error.message);
 }
 
