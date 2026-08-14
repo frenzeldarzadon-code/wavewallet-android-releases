@@ -87,8 +87,8 @@ export function VoucherShopView({
     try {
       const [p, b, pts, r] = await Promise.all([
         fetchShopProducts(),
-        fetchCreditBalance(userId),
-        fetchPointsAccount(userId),
+        fetchCreditBalance(userId, ecosystemDbId),
+        fetchPointsAccount(userId, ecosystemDbId),
         ecosystemDbId ? fetchPointsRule(ecosystemDbId) : Promise.resolve(10),
       ]);
       setProducts(p);

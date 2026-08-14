@@ -63,10 +63,13 @@ function ResellerCustomers() {
 
   const load = useCallback(async () => {
     if (!userId) return;
-    const [b, l] = await Promise.all([fetchCreditBalance(userId), fetchCreditLedger(userId, 50)]);
+    const [b, l] = await Promise.all([
+      fetchCreditBalance(userId, ecosystemDbId),
+      fetchCreditLedger(userId, ecosystemDbId, 50),
+    ]);
     setBalance(b);
     setHistory(l.filter((e) => e.reason === "Credit load to customer"));
-  }, [userId]);
+  }, [userId, ecosystemDbId]);
 
   useEffect(() => {
     void load();

@@ -81,7 +81,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
         fetchRetailProducts(ecosystemDbId),
         fetchStoreSettings(ecosystemDbId),
         fetchMyRetailOrders(ecosystemDbId),
-        fetchCreditBalance(userId),
+        fetchCreditBalance(userId, ecosystemDbId),
       ]);
       setProducts(p);
       setSettings(s);

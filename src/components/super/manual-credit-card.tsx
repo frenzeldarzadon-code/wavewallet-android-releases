@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { PageSection } from "@/components/ui-kit";
 import { MemberPicker } from "@/components/member-picker";
+import { ShopWalletSelect } from "@/components/super/shop-wallet-select";
+import type { MemberShopWallet } from "@/lib/credit-management";
 import { MemberAvatar } from "@/components/member-avatar";
 import type { MemberSearchResult } from "@/lib/member-admin";
 import { roleLabel, type Role } from "@/lib/wavewallet";
@@ -47,6 +49,9 @@ export function ManualCreditCard() {
   const [note, setNote] = useState("");
   const [category, setCategory] = useState("");
   const [reference, setReference] = useState("");
+  const [shopId, setShopId] = useState<string | null>(null);
+  const [shopWallet, setShopWallet] = useState<MemberShopWallet | null>(null);
+  const [shopRequired, setShopRequired] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [supply, setSupply] = useState<CreditSupply | null>(null);
@@ -60,7 +65,9 @@ export function ManualCreditCard() {
     amount: credits,
     reason: note,
   });
-  const after = target ? previewBalance(target.credit_balance, credits) : 0;
+  /** Balance shown is the destination shop wallet, never a merged total. */
+  const currentBalance = shopWallet ? shopWallet.balance : (target?.credit_balance ?? 0);
+  const after = target ? previewBalance(currentBalance, credits) : 0;
 
   const submit = async () => {
     if (!target || issue) return;
@@ -72,11 +79,16 @@ export function ManualCreditCard() {
         reason: note.trim(),
         ...(category ? { category } : {}),
         ...(reference.trim() ? { reference: reference.trim() } : {}),
+        ecosystemId: shopId,
       });
       toast.success("Credits issued", {
-        description: `${credits.toLocaleString()} credits to ${target.full_name} · ${tx}`,
+        description: `${credits.toLocaleString()} credits to ${target.full_name}${
+          shopWallet ? ` · ${shopWallet.ecosystemName}` : ""
+        } · ${tx}`,
       });
       setTarget(null);
+      setShopId(null);
+      setShopWallet(null);
       setAmount("");
       setNote("");
       setCategory("");
@@ -131,7 +143,11 @@ export function ManualCreditCard() {
                   variant="ghost"
                   size="icon"
                   aria-label="Clear selected account"
-                  onClick={() => setTarget(null)}
+                  onClick={() => {
+                    setTarget(null);
+                    setShopId(null);
+                    setShopWallet(null);
+                  }}
                 >
                   <X className="size-4" />
                 </Button>
@@ -146,6 +162,16 @@ export function ManualCreditCard() {
                 />
               </div>
             )}
+
+            <ShopWalletSelect
+              userId={target?.id ?? null}
+              value={shopId}
+              onChange={(id, wallet) => {
+                setShopId(id);
+                setShopWallet(wallet);
+              }}
+              onRequired={setShopRequired}
+            />
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
@@ -205,8 +231,10 @@ export function ManualCreditCard() {
                 </div>
                 <dl className="mt-2 grid gap-1">
                   <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Current balance</dt>
-                    <dd>{target.credit_balance.toLocaleString()}</dd>
+                    <dt className="text-muted-foreground">
+                    Current balance{shopWallet ? ` · ${shopWallet.ecosystemName}` : ""}
+                  </dt>
+                    <dd>{currentBalance.toLocaleString()}</dd>
                   </div>
                   <div className="flex justify-between">
                     <dt className="text-muted-foreground">Credits issued</dt>
@@ -221,10 +249,18 @@ export function ManualCreditCard() {
             ) : null}
 
             <div className="flex flex-wrap items-center gap-3">
-              <Button disabled={Boolean(issue) || busy} onClick={() => setConfirming(true)}>
+              <Button
+                disabled={Boolean(issue) || shopRequired || busy}
+                onClick={() => setConfirming(true)}
+              >
                 Review and issue
               </Button>
               {issue ? <p className="text-xs text-muted-foreground">{issue}</p> : null}
+              {!issue && shopRequired ? (
+                <p className="text-xs text-muted-foreground">
+                  Choose which shop wallet receives the credits.
+                </p>
+              ) : null}
             </div>
 
             <p className="flex items-start gap-2 text-xs text-muted-foreground">

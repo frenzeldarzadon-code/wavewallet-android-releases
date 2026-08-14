@@ -138,8 +138,33 @@ export async function loadAuthContext(): Promise<AuthContext | null> {
   }
 
   const [{ data: credit }, { data: points }, { data: status }] = await Promise.all([
-    supabase.from("credit_accounts").select("balance").eq("user_id", subjectId).maybeSingle(),
-    supabase.from("points_accounts").select("balance, held").eq("user_id", subjectId).maybeSingle(),
+    // Wallets are per shop: read only the wallet of the ACTIVE shop.
+    ecosystemId
+      ? supabase
+          .from("credit_accounts")
+          .select("balance")
+          .eq("user_id", subjectId)
+          .eq("ecosystem_id", ecosystemId)
+          .maybeSingle()
+      : supabase
+          .from("credit_accounts")
+          .select("balance")
+          .eq("user_id", subjectId)
+          .is("ecosystem_id", null)
+          .maybeSingle(),
+    ecosystemId
+      ? supabase
+          .from("points_accounts")
+          .select("balance, held")
+          .eq("user_id", subjectId)
+          .eq("ecosystem_id", ecosystemId)
+          .maybeSingle()
+      : supabase
+          .from("points_accounts")
+          .select("balance, held")
+          .eq("user_id", subjectId)
+          .is("ecosystem_id", null)
+          .maybeSingle(),
     // Authoritative operational check (subscription state + period end + grace) computed
     // in the database. Used for route UX only — data access is still authorized by RLS.
     supabase.rpc("my_operational_status"),

@@ -107,11 +107,40 @@ export function issuanceFormIssue(input: {
 
 /* ------------------------------------------------------------------ data */
 
+export interface MemberShopWallet {
+  ecosystemId: string;
+  ecosystemName: string;
+  role: string;
+  balance: number;
+}
+
+/**
+ * The shops one member belongs to, with the balance each shop wallet holds.
+ * Wallets never merge across shops, so issuance must name the shop it lands
+ * in. Platform-owner only; the database re-checks that.
+ */
+export async function fetchMemberShopWallets(userId: string): Promise<MemberShopWallet[]> {
+  const { data, error } = await supabase.rpc("member_shop_wallets", { _user_id: userId });
+  if (error) return [];
+  return ((data ?? []) as {
+    ecosystem_id: string;
+    ecosystem_name: string;
+    role: string;
+    balance: number;
+  }[]).map((r) => ({
+    ecosystemId: r.ecosystem_id,
+    ecosystemName: r.ecosystem_name,
+    role: r.role,
+    balance: Number(r.balance ?? 0),
+  }));
+}
+
 /**
  * Mints credits into an account from the platform issuance authority.
  *
  * Nothing is taken from the operator's wallet — the platform owner may issue
- * with a zero balance. Authorization, atomicity, duplicate protection
+ * with a zero balance. The credits land in the recipient's wallet for the
+ * chosen shop only. Authorization, atomicity, duplicate protection
  * (`requestKey`) and the audit trail are all the database's job.
  */
 export async function issueCredits(input: {
@@ -121,6 +150,7 @@ export async function issueCredits(input: {
   category?: string;
   reference?: string;
   requestKey?: string;
+  ecosystemId?: string | null;
 }): Promise<string> {
   const issue = issuanceFormIssue(input);
   if (issue) throw new Error(issue);
@@ -131,10 +161,12 @@ export async function issueCredits(input: {
     ...(input.category ? { _category: input.category } : {}),
     ...(input.reference?.trim() ? { _reference: input.reference.trim() } : {}),
     _request_key: input.requestKey ?? crypto.randomUUID(),
+    ...(input.ecosystemId ? { _ecosystem_id: input.ecosystemId } : {}),
   });
   if (error) throw new Error(error.message);
   return data as unknown as string;
 }
+
 
 export interface CreditSupply {
   total_issued: number;

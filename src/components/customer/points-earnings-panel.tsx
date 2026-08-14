@@ -12,7 +12,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { EMPTY_PERIOD_TOTALS, type PeriodTotals } from "@/lib/earnings";
 import { pointsEarnings, type PointsEarningRow } from "@/lib/role-earnings";
 
-export function PointsEarningsPanel({ userId }: { userId: string }) {
+export function PointsEarningsPanel({
+  userId,
+  ecosystemId,
+}: {
+  userId: string;
+  /** Points, like credits, belong to one shop membership. */
+  ecosystemId: string | null;
+}) {
   const [totals, setTotals] = useState<PeriodTotals>(EMPTY_PERIOD_TOTALS);
   const [loading, setLoading] = useState(true);
 
@@ -22,10 +29,14 @@ export function PointsEarningsPanel({ userId }: { userId: string }) {
     from.setMonth(0, 1);
     from.setHours(0, 0, 0, 0);
     void (async () => {
-      const { data } = await supabase
+      const scoped = supabase
         .from("points_ledger")
         .select("entry_type, direction, amount, created_at")
-        .eq("user_id", userId)
+        .eq("user_id", userId);
+      const { data } = await (ecosystemId
+        ? scoped.eq("ecosystem_id", ecosystemId)
+        : scoped.is("ecosystem_id", null)
+      )
         .gte("created_at", from.toISOString())
         .order("created_at", { ascending: false })
         .limit(1000);
@@ -40,7 +51,7 @@ export function PointsEarningsPanel({ userId }: { userId: string }) {
     return () => {
       live = false;
     };
-  }, [userId]);
+  }, [userId, ecosystemId]);
 
   return (
     <PageSection

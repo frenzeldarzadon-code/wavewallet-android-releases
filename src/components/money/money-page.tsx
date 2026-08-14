@@ -73,7 +73,7 @@ const newKey = () =>
  * accounting and approval rules are unchanged and shared by every role.
  */
 export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } = {}) {
-  const { account } = useSession();
+  const { account, ecosystemDbId } = useSession();
   const userId = account?.id ?? null;
   const [settings, setSettings] = useState<MoneySettings>(MONEY_SETTINGS_FALLBACK);
   const [platform, setPlatform] = useState<PlatformSettings | null>(null);
@@ -101,7 +101,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
     const [s, p, b, m, w, c] = await Promise.all([
       fetchMoneySettings(),
       fetchPlatformSettings(),
-      fetchCreditBalance(userId),
+      fetchCreditBalance(userId, ecosystemDbId),
       fetchPaymentMethods(true).catch(() => []),
       fetchMyWithdrawals(userId).catch(() => []),
       fetchMyCashIns(userId).catch(() => []),
@@ -112,7 +112,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
     setMethods(m);
     setWithdrawals(w);
     setCashIns(c);
-  }, [userId]);
+  }, [userId, ecosystemDbId]);
 
   useEffect(() => {
     void load();

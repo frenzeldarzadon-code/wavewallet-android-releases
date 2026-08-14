@@ -37,7 +37,7 @@ import {
 import { toast } from "sonner";
 
 export function RewardsPage() {
-  const { account, ecosystem } = useSession();
+  const { account, ecosystem, ecosystemDbId } = useSession();
   const [points, setPoints] = useState<PointsAccount>({ balance: 0, held: 0, available: 0 });
   const [rewards, setRewards] = useState<RewardListing[]>([]);
   const [mine, setMine] = useState<RedemptionRow[]>([]);
@@ -57,7 +57,7 @@ export function RewardsPage() {
     setLoading(true);
     try {
       const [p, r, m] = await Promise.all([
-        fetchPointsAccount(userId),
+        fetchPointsAccount(userId, ecosystemDbId),
         fetchRewards(),
         fetchMyRedemptions(userId),
       ]);

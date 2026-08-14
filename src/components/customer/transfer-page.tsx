@@ -36,7 +36,7 @@ import {
 } from "@/lib/wallet";
 
 export function TransferPage() {
-  const { account, ecosystem } = useSession();
+  const { account, ecosystem, ecosystemDbId } = useSession();
   const [selected, setSelected] = useState<RecipientMatch | null>(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
@@ -48,10 +48,13 @@ export function TransferPage() {
 
   const load = useCallback(async () => {
     if (!userId) return;
-    const [b, l] = await Promise.all([fetchCreditBalance(userId), fetchCreditLedger(userId, 50)]);
+    const [b, l] = await Promise.all([
+      fetchCreditBalance(userId, ecosystemDbId),
+      fetchCreditLedger(userId, ecosystemDbId, 50),
+    ]);
     setBalance(b);
     setEntries(l.filter((e) => e.reason.toLowerCase().includes("transfer")));
-  }, [userId]);
+  }, [userId, ecosystemDbId]);
 
   useEffect(() => {
     void load();
