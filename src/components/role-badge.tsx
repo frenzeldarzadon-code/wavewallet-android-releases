@@ -21,7 +21,7 @@ const LABELS: Record<string, string> = {
   customer: "Customer",
 };
 
-export function SuperAdminBadge({ className }: { className?: string }) {
+export function SuperAdminBadge({ className }: { className?: string | undefined }) {
   return (
     <Badge
       className={cn(
