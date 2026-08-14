@@ -58,6 +58,7 @@ interface EcoRow {
 
 function SuperReports() {
   const { account } = useSession("super_admin");
+  const [expenseVersion, setExpenseVersion] = useState(0);
   const [range, setRange] = useState("monthly");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");

@@ -16,6 +16,7 @@ import {
 import { peso, shortDateTime, statusLabel } from "@/lib/wavewallet";
 import { MemberPicker } from "@/components/member-picker";
 import { EditMemberDialog, type EditableMember } from "@/components/edit-member-dialog";
+import { SuperEarningsPanel } from "@/components/super-earnings-panel";
 
 export const Route = createFileRoute("/super/")({
   head: () => ({
