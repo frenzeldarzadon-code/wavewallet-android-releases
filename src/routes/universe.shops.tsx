@@ -77,6 +77,8 @@ function UniverseShops() {
   return (
     <UniverseShell title="Shops" subtitle="Your memberships and the directory">
       <div className="space-y-6 px-4 sm:px-0">
+        <ShopInvitationsCard onChanged={() => void load()} />
+
         <PageSection
           title="Your shops"
           description="Each membership keeps its own role, wallet and history. Switching only changes which one is active."
