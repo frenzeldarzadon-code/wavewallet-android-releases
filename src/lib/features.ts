@@ -1,14 +1,21 @@
 /**
  * Product feature flags.
  *
- * The Social Community and private Messages/DM features are complete and their
- * data is fully preserved in the database — they are simply switched off in the
- * live UI for now. Flipping `SOCIAL_ENABLED` back to `true` restores the
- * navigation entries and pages with no data loss and no migration.
+ * The Social Community and private Messages/DM features live in the Universe
+ * layer — the global space above every ecosystem. Financial data stays
+ * ecosystem-scoped; only identity and community are global.
  */
-export const SOCIAL_ENABLED = false;
+export const SOCIAL_ENABLED = true;
 
-/** Paths that only make sense while the social layer is switched on. */
+/** Canonical Universe destinations. */
+export const UNIVERSE_PATHS = {
+  feed: "/universe",
+  messages: "/universe/messages",
+  shops: "/universe/shops",
+  profile: "/universe/profile",
+} as const;
+
+/** Legacy per-console paths that now redirect into the Universe. */
 export const SOCIAL_PATHS = [
   "/app/social",
   "/app/messages",
