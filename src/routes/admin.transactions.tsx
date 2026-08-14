@@ -55,7 +55,7 @@ export const Route = createFileRoute("/admin/transactions")({
       {
         property: "og:description",
         content:
-          "Audit every financial movement in your ecosystem and reverse disputed credit transfers safely.",
+          "Audit every financial movement in your shop and reverse disputed credit transfers safely.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

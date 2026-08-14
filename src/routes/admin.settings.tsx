@@ -23,9 +23,9 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/admin/settings")({
   head: () => ({
     meta: [
-      { title: "Ecosystem Settings — WaveWallet Admin" },
+      { title: "Shop Settings — WaveWallet Admin" },
       { name: "description", content: "Name your shop, set contact details, Facebook support channel and points earning rules." },
-      { property: "og:title", content: "Ecosystem Settings — WaveWallet Admin" },
+      { property: "og:title", content: "Shop Settings — WaveWallet Admin" },
       { property: "og:description", content: "Name your shop, set contact details, Facebook support channel and points earning rules." },
     ],
   }),
@@ -153,7 +153,7 @@ function AdminSettings() {
       toast.error("Could not save settings", { description: error.message });
       return;
     }
-    toast.success("Ecosystem settings saved.");
+    toast.success("Shop settings saved.");
     await reload?.();
   };
 
@@ -163,7 +163,7 @@ function AdminSettings() {
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="name">Ecosystem / shop name</Label>
+              <Label htmlFor="name">Shop / shop name</Label>
               <Input
                 id="name"
                 value={form.name}
@@ -428,7 +428,7 @@ function AdminSettings() {
         </Button>
         <p className="text-xs text-muted-foreground">
           Shop name, description and contact details are stored in the database and audit-logged.
-          Your Facebook support page is stored per ecosystem and audit-logged on every change.
+          Your Facebook support page is stored per shop and audit-logged on every change.
         </p>
       </div>
 

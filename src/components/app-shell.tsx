@@ -19,7 +19,7 @@ import {
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { EcosystemSwitcher } from "@/components/ecosystem-switcher";
+import { EcosystemSwitcher } from "@/components/shop-switcher";
 
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";

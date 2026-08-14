@@ -4,9 +4,9 @@ import { MembersDirectory } from "@/components/super/members-directory";
 export const Route = createFileRoute("/super/members")({
   head: () => ({
     meta: [
-      { title: "Ecosystem Members — WaveWallet Super Admin" },
+      { title: "Shop Members — WaveWallet Super Admin" },
       { name: "description", content: "Browse every account across all shops with balances, roles, account access and manual credit." },
-      { property: "og:title", content: "Ecosystem Members — WaveWallet Super Admin" },
+      { property: "og:title", content: "Shop Members — WaveWallet Super Admin" },
       { property: "og:description", content: "Browse every account across all shops with balances, roles, account access and manual credit." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

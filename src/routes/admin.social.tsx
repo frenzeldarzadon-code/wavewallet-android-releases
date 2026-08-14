@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState, PageSection } from "@/components/ui-kit";
 import { GeneralQueueCard } from "@/components/social/general-queue-card";
-import { EcosystemSocialCard } from "@/components/social/ecosystem-social-card";
+import { EcosystemSocialCard } from "@/components/social/shop-social-card";
 import { PromotionTiersCard } from "@/components/social/promotion-tiers-card";
 import { useSession } from "@/lib/session";
 import {

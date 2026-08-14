@@ -29,7 +29,7 @@ import {
   cleanupStatusLabel,
   cleanupStatusTone,
   type CleanupStatus,
-} from "@/lib/ecosystem-cleanup";
+} from "@/lib/shop-cleanup";
 import {
   PURGE_DELETION_ITEMS,
   PURGE_WARNING,
@@ -37,7 +37,7 @@ import {
   purgeEcosystem,
   summarizePurge,
   type PurgeStep,
-} from "@/lib/ecosystem-purge";
+} from "@/lib/shop-purge";
 
 
 type Overview = Database["public"]["Functions"]["platform_overview"]["Returns"][number];
@@ -46,15 +46,15 @@ type Invitation = Database["public"]["Tables"]["admin_invitations"]["Row"];
 export const Route = createFileRoute("/super/admins")({
   head: () => ({
     meta: [
-      { title: "Ecosystems & Admins — WaveWallet Super Admin" },
+      { title: "Shops & Admins — WaveWallet Super Admin" },
       {
         name: "description",
-        content: "Create tenant ecosystems, edit plans, manage signup links and invite operators.",
+        content: "Create tenant shops, edit plans, manage signup links and invite operators.",
       },
-      { property: "og:title", content: "Ecosystems & Admins — WaveWallet Super Admin" },
+      { property: "og:title", content: "Shops & Admins — WaveWallet Super Admin" },
       {
         property: "og:description",
-        content: "Create tenant ecosystems, edit plans, manage signup links and invite operators.",
+        content: "Create tenant shops, edit plans, manage signup links and invite operators.",
       },
     ],
   }),
@@ -111,7 +111,7 @@ function SuperAdmins() {
       supabase.rpc("platform_overview"),
       supabase.rpc("list_admin_invitations"),
     ]);
-    if (error) toast.error("Could not load ecosystems", { description: error.message });
+    if (error) toast.error("Could not load shops", { description: error.message });
     setRows((overview as Overview[] | null) ?? []);
     setInvites((inv as Invitation[] | null) ?? []);
     setLoading(false);
@@ -220,11 +220,11 @@ function SuperAdmins() {
     setPurging(true);
     try {
       const result = await purgeEcosystem(purgeFor.id, purgeTyped, purgeReason.trim());
-      toast.success("Ecosystem permanently deleted", { description: summarizePurge(result) });
+      toast.success("Shop permanently deleted", { description: summarizePurge(result) });
       closePurge();
       await load();
     } catch (err) {
-      toast.error("Could not delete this ecosystem", {
+      toast.error("Could not delete this shop", {
         description: err instanceof Error ? err.message : "Unexpected error",
       });
     } finally {
@@ -237,7 +237,7 @@ function SuperAdmins() {
   const create = async () => {
     const name = form.name.trim();
     if (!name) {
-      toast.error("Give the ecosystem a name.");
+      toast.error("Give the shop a name.");
       return;
     }
     setSaving(true);
@@ -254,7 +254,7 @@ function SuperAdmins() {
     });
     if (error || !data) {
       setSaving(false);
-      toast.error("Could not create ecosystem", { description: error?.message });
+      toast.error("Could not create shop", { description: error?.message });
       return;
     }
     const created = data as unknown as { id: string; slug: string };
@@ -265,10 +265,10 @@ function SuperAdmins() {
         _email: adminEmail,
         _role: "admin",
       });
-      if (invErr) toast.error("Ecosystem created, invite failed", { description: invErr.message });
+      if (invErr) toast.error("Shop created, invite failed", { description: invErr.message });
       else toast.success(`Ecosystem created — ${adminEmail} invited as admin.`);
     } else {
-      toast.success("Ecosystem created");
+      toast.success("Shop created");
     }
     if (created.slug !== slugify(form.slug.trim() || name)) {
       toast(`Slug adjusted to /join/${created.slug} to keep it unique.`);
@@ -322,27 +322,27 @@ function SuperAdmins() {
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search ecosystems by name, slug, contact or plan"
+              placeholder="Search shops by name, slug, contact or plan"
               className="pl-9"
             />
           </div>
           <Button size="sm" onClick={() => setCreateOpen(true)}>
-            <Plus className="size-4" /> New ecosystem
+            <Plus className="size-4" /> New shop
           </Button>
         </div>
       </PageSection>
 
       <PageSection
-        title="Tenant ecosystems"
-        description="One ecosystem = one isolated shop. Counts come straight from the database."
+        title="Tenant shops"
+        description="One shop = one isolated shop. Counts come straight from the database."
       >
         <Card className="overflow-hidden shadow-[var(--shadow-card)]">
           <CardContent className="px-0">
             {loading ? (
-              <p className="px-5 py-8 text-center text-sm text-muted-foreground">Loading ecosystems…</p>
+              <p className="px-5 py-8 text-center text-sm text-muted-foreground">Loading shops…</p>
             ) : filtered.length === 0 ? (
               <EmptyState
-                title="No ecosystems yet"
+                title="No shops yet"
                 description="Create the first tenant and invite its operator — public signup can never create one."
               />
             ) : (
@@ -350,7 +350,7 @@ function SuperAdmins() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Ecosystem</TableHead>
+                      <TableHead>Shop</TableHead>
                       <TableHead>Subscription</TableHead>
                       <TableHead>People</TableHead>
                       <TableHead>Signup</TableHead>
@@ -486,14 +486,14 @@ function SuperAdmins() {
         <Card className="overflow-hidden shadow-[var(--shadow-card)]">
           <CardContent className="px-0">
             {invites.length === 0 ? (
-              <EmptyState title="No invitations" description="Invite an operator from an ecosystem's Manage panel." />
+              <EmptyState title="No invitations" description="Invite an operator from an shop's Manage panel." />
             ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Email</TableHead>
-                      <TableHead>Ecosystem</TableHead>
+                      <TableHead>Shop</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -685,7 +685,7 @@ function SuperAdmins() {
               </div>
               <p className="text-xs text-muted-foreground">
                 A platform-level deletion record (who, which shop, when and why) is kept outside
-                this ecosystem so the audit trail survives. Other ecosystems and platform-owner
+                this shop so the audit trail survives. Other shops and platform-owner
                 accounts are never touched. This is separate from the 1-year inactivity cleanup —
                 normal retention and reversal rules are unchanged.
               </p>
@@ -710,7 +710,7 @@ function SuperAdmins() {
                   id="purge-reason"
                   value={purgeReason}
                   onChange={(ev) => setPurgeReason(ev.target.value)}
-                  placeholder="Why is this ecosystem being permanently deleted?"
+                  placeholder="Why is this shop being permanently deleted?"
                 />
               </div>
             </div>
@@ -739,7 +739,7 @@ function SuperAdmins() {
                 }
                 onClick={() => void confirmPurge()}
               >
-                {purging ? "Deleting…" : "Permanently Delete Ecosystem"}
+                {purging ? "Deleting…" : "Permanently Delete Shop"}
               </Button>
             )}
           </DialogFooter>
@@ -771,14 +771,14 @@ function CreateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Create ecosystem</DialogTitle>
+          <DialogTitle>Create shop</DialogTitle>
           <DialogDescription>
             A duplicate slug is resolved automatically by the database, so links never collide.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="cName">Ecosystem / shop name</Label>
+            <Label htmlFor="cName">Shop / shop name</Label>
             <Input
               id="cName"
               value={form.name}
@@ -880,7 +880,7 @@ function CreateDialog({
             Cancel
           </Button>
           <Button onClick={onSubmit} disabled={saving}>
-            {saving ? "Creating…" : "Create ecosystem"}
+            {saving ? "Creating…" : "Create shop"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -977,7 +977,7 @@ function ManageDialog({
     } else if (commissionErr) {
       toast.error("Settings saved, commission update failed", { description: commissionErr });
     } else {
-      toast.success("Ecosystem updated");
+      toast.success("Shop updated");
     }
     await onSaved();
     onClose();
@@ -1148,7 +1148,7 @@ function ManageDialog({
             <div>
               <p className="text-sm font-medium">Customer signups</p>
               <p className="text-xs text-muted-foreground">
-                Disabling stops the link resolving; the ecosystem stays intact.
+                Disabling stops the link resolving; the shop stays intact.
               </p>
             </div>
             <Switch

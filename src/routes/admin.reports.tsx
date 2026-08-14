@@ -59,7 +59,7 @@ export const Route = createFileRoute("/admin/reports")({
       {
         property: "og:description",
         content:
-          "Ecosystem revenue, reseller commission and credit activity built from immutable ledger records.",
+          "Shop revenue, reseller commission and credit activity built from immutable ledger records.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

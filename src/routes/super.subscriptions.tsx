@@ -189,7 +189,7 @@ function SuperSubscriptions() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Ecosystem</TableHead>
+                    <TableHead>Shop</TableHead>
                     <TableHead>Plan</TableHead>
                     <TableHead className="hidden sm:table-cell">Reference</TableHead>
                     <TableHead className="hidden md:table-cell">Period end</TableHead>

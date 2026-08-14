@@ -130,7 +130,7 @@ export function SocialPage() {
   // composer
   const [body, setBody] = useState("");
   const [promote, setPromote] = useState(false);
-  const [audience, setAudience] = useState<PostAudience>("ecosystem");
+  const [audience, setAudience] = useState<PostAudience>("shop");
 
   const [tierId, setTierId] = useState<string>("");
   const [payWith, setPayWith] = useState<SocialCurrency>("social");

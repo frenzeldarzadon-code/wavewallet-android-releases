@@ -16,7 +16,7 @@ export const Route = createFileRoute("/admin/signup-link")({
       {
         name: "description",
         content:
-          "Share your ecosystem's unique customer signup link so new users join your shop automatically as customers.",
+          "Share your shop's unique customer signup link so new users join your shop automatically as customers.",
       },
       { property: "og:title", content: "Customer Signup Link — WaveWallet Admin" },
       {
@@ -122,7 +122,7 @@ function AdminSignupLink() {
     <>
       <PageSection
         title="Customer signup link"
-        description="Anyone who opens this link joins your ecosystem as a customer. Admin and reseller accounts are never created here."
+        description="Anyone who opens this link joins your shop as a customer. Admin and reseller accounts are never created here."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-3">

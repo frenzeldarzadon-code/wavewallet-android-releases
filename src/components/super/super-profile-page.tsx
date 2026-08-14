@@ -105,7 +105,7 @@ interface AuthFacts {
 
 const PRIVILEGES: Array<{ label: string; hint: string; icon: LucideIcon; to?: string }> = [
   { label: "Manage admins", hint: "Create, invite and restructure shop owners", icon: UserCheck, to: "/super/admins" },
-  { label: "Access ecosystems", hint: "Enter any tenant with a full audit trail", icon: Building2, to: "/super/admins" },
+  { label: "Access shops", hint: "Enter any tenant with a full audit trail", icon: Building2, to: "/super/admins" },
   { label: "Platform settings", hint: "Pricing, payments and platform defaults", icon: Settings, to: "/super/settings" },
   { label: "Subscriptions", hint: "Review payment proofs and periods", icon: Coins, to: "/super/subscriptions" },
   { label: "Reports", hint: "Cross-tenant financial reporting", icon: TrendingUp, to: "/super/reports" },
@@ -364,7 +364,7 @@ export function SuperProfilePage() {
       >
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
           <LinkStat
-            label="Total ecosystems"
+            label="Total shops"
             value={statsLoaded ? String(snapshot.ecosystems) : "—"}
             hint={`${snapshot.archived} archived`}
             icon={Building2}
@@ -525,7 +525,7 @@ export function SuperProfilePage() {
               <div className="p-4">
                 <EmptyState
                   title="No activity recorded yet"
-                  description="Approvals, ecosystem access and platform changes you make will appear here."
+                  description="Approvals, shop access and platform changes you make will appear here."
                 />
               </div>
             ) : (
@@ -745,7 +745,7 @@ export function SuperProfilePage() {
               <div className="min-w-0">
                 <p className="text-sm font-medium text-destructive">Deactivate account</p>
                 <p className="text-xs text-muted-foreground">
-                  Suspends platform owner sign-in. Ecosystems, wallets and ledgers are always
+                  Suspends platform owner sign-in. Shops, wallets and ledgers are always
                   retained — nothing is deleted.
                 </p>
               </div>
@@ -762,7 +762,7 @@ export function SuperProfilePage() {
                       The platform owner account cannot deactivate itself while it is the only
                       account with platform-wide access — doing so would lock every shop out of
                       subscription review and support. Promote a second platform owner first. No
-                      ecosystem, wallet or ledger data is ever deleted by deactivation.
+                      shop, wallet or ledger data is ever deleted by deactivation.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

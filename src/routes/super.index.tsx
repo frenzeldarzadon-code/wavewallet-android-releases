@@ -22,9 +22,9 @@ export const Route = createFileRoute("/super/")({
   head: () => ({
     meta: [
       { title: "Platform Overview — WaveWallet Super Admin" },
-      { name: "description", content: "Cross-tenant overview of ecosystems, subscriptions and platform revenue." },
+      { name: "description", content: "Cross-tenant overview of shops, subscriptions and platform revenue." },
       { property: "og:title", content: "Platform Overview — WaveWallet Super Admin" },
-      { property: "og:description", content: "Cross-tenant overview of ecosystems, subscriptions and platform revenue." },
+      { property: "og:description", content: "Cross-tenant overview of shops, subscriptions and platform revenue." },
     ],
   }),
   component: SuperOverview,
@@ -66,7 +66,7 @@ function SuperOverview() {
         supabase.from("platform_settings").select("plan_name, plan_price, grace_period_days").maybeSingle(),
       ]);
       if (!active) return;
-      if (error) toast.error("Could not load ecosystems", { description: error.message });
+      if (error) toast.error("Could not load shops", { description: error.message });
       setRows((overview as EcosystemOverviewRow[] | null) ?? []);
       setAudit((a as AuditRow[] | null) ?? []);
       setSettings((s as Settings | null) ?? null);
@@ -94,7 +94,7 @@ function SuperOverview() {
       <PageSection>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard
-            label="Ecosystems"
+            label="Shops"
             value={dash(String(live.length))}
             icon={Building2}
             tone="brand"
@@ -124,7 +124,7 @@ function SuperOverview() {
 
       <SuperEarningsPanel />
 
-      <PageSection title="Ecosystems" description="Each Admin owns exactly one isolated tenant.">
+      <PageSection title="Shops" description="Each Admin owns exactly one isolated tenant.">
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading live counters…</p>
         ) : (
@@ -180,14 +180,14 @@ function SuperOverview() {
                       </div>
                     </dl>
                     <Button size="sm" className="w-full" onClick={() => accessEcosystem(eco.id)}>
-                      Access ecosystem
+                      Access shop
                     </Button>
                   </CardContent>
                 </Card>
               );
             })}
             {live.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No ecosystems yet.</p>
+              <p className="text-sm text-muted-foreground">No shops yet.</p>
             ) : null}
           </div>
         )}

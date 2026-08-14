@@ -69,12 +69,12 @@ export const Route = createFileRoute("/admin/customers")({
       { title: "Customers — WaveWallet Admin" },
       {
         name: "description",
-        content: "All customer accounts in your ecosystem, with reseller promotion and discount control.",
+        content: "All customer accounts in your shop, with reseller promotion and discount control.",
       },
       { property: "og:title", content: "Customers — WaveWallet Admin" },
       {
         property: "og:description",
-        content: "All customer accounts in your ecosystem, with reseller promotion and discount control.",
+        content: "All customer accounts in your shop, with reseller promotion and discount control.",
       },
     ],
   }),
@@ -487,7 +487,7 @@ function AdminCustomers() {
 
       <PageSection
         title="Customer directory"
-        description="Scoped strictly to this ecosystem by database row-level security."
+        description="Scoped strictly to this shop by database row-level security."
       >
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <div className="relative min-w-0 flex-1">

@@ -20,12 +20,12 @@ export const Route = createFileRoute("/invite")({
       {
         name: "description",
         content:
-          "Accept your WaveWallet operator invitation and set up the account for your assigned hotspot ecosystem.",
+          "Accept your WaveWallet operator invitation and set up the account for your assigned hotspot shop.",
       },
       { property: "og:title", content: "Operator onboarding — WaveWallet" },
       {
         property: "og:description",
-        content: "Invitation-only onboarding for hotspot operators running a WaveWallet ecosystem.",
+        content: "Invitation-only onboarding for hotspot operators running a WaveWallet shop.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -100,7 +100,7 @@ function InvitePage() {
           </p>
           <h1 className="mt-2 text-2xl font-semibold leading-tight">Accept your invitation</h1>
           <p className="mt-2 text-sm opacity-90">
-            Use the exact email address the platform owner invited. Your ecosystem and operator role
+            Use the exact email address the platform owner invited. Your shop and operator role
             are assigned by the database — they can never be chosen here.
           </p>
         </div>
@@ -114,7 +114,7 @@ function InvitePage() {
               <h2 className="text-lg font-semibold">Check your email</h2>
               <p className="text-sm text-muted-foreground">
                 We sent a confirmation link to <span className="font-medium">{form.email}</span>.
-                Confirm it, then sign in to open your ecosystem console.
+                Confirm it, then sign in to open your shop console.
               </p>
               <Button asChild variant="outline" className="w-full">
                 <Link to="/">Back to sign in</Link>
