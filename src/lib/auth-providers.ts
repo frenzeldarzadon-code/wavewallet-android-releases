@@ -10,7 +10,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 
-export type ProviderId = "google" | "facebook";
+export type ProviderId = "google";
 
 export interface ProviderInfo {
   id: ProviderId;
@@ -22,23 +22,11 @@ export interface ProviderInfo {
 }
 
 /**
- * Google is enabled through Lovable Cloud managed social login.
- *
- * Facebook is NOT offered by the managed auth environment, so it cannot be
- * enabled from the app. Enabling it requires a Facebook OAuth app
- * (App ID + App Secret) configured as a Facebook provider in the backend auth
- * settings. Until that exists the button stays disabled rather than failing.
+ * Google is the only social login offered. It is enabled through Lovable Cloud
+ * managed social login and links to the person's existing account when the
+ * verified Google email matches, so no duplicate identity is created.
  */
-export const PROVIDERS: ProviderInfo[] = [
-  { id: "google", label: "Google", available: true },
-  {
-    id: "facebook",
-    label: "Facebook",
-    available: false,
-    unavailableReason:
-      "Facebook sign-in is not configured. It needs a Facebook OAuth app (App ID and App Secret) registered as a Facebook auth provider in the backend before it can be switched on.",
-  },
-];
+export const PROVIDERS: ProviderInfo[] = [{ id: "google", label: "Google", available: true }];
 
 export function providerInfo(id: ProviderId): ProviderInfo {
   return PROVIDERS.find((p) => p.id === id) ?? { id, label: id, available: false };

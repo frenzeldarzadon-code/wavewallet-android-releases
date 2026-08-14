@@ -6,6 +6,11 @@
  * grant itself a role, pick an ecosystem, or read another tenant's rows.
  */
 import { supabase } from "@/integrations/supabase/client";
+import {
+  normalizePhone,
+  resolveLoginEmail,
+  signupAuthEmail,
+} from "@/lib/account-identifiers";
 import { fetchActingSession, type ActingSession } from "@/lib/impersonation";
 import type { Role } from "@/lib/wavewallet";
 
@@ -166,17 +171,22 @@ export async function loadAuthContext(): Promise<AuthContext | null> {
   };
 }
 
-export async function signInWithPassword(email: string, password: string) {
-  const { error } = await supabase.auth.signInWithPassword({
-    email: email.trim().toLowerCase(),
-    password,
-  });
+/**
+ * Sign in with an email address OR a mobile number, plus the password. The
+ * identifier is translated locally — nothing is looked up, so no account can be
+ * probed from the login form.
+ */
+export async function signInWithPassword(identifier: string, password: string) {
+  const authEmail = resolveLoginEmail(identifier);
+  if (!authEmail) throw new Error("Enter your email address or mobile number.");
+  const { error } = await supabase.auth.signInWithPassword({ email: authEmail, password });
   if (error) throw new Error(friendlyAuthError(error.message));
   return loadAuthContext();
 }
 
 export interface CustomerSignupInput {
-  ecosystemSlug: string;
+  /** Optional: only set when signing up through a shop's /join link. */
+  ecosystemSlug?: string;
   fullName: string;
   email: string;
   phone: string;
@@ -184,20 +194,22 @@ export interface CustomerSignupInput {
 }
 
 /**
- * Public signup. The role is decided by a database trigger (always `customer`)
- * and the ecosystem is resolved server-side from the invite slug — neither can
- * be forged from the browser.
+ * Public signup. This always creates the person's ONE global account: the role
+ * is decided by a database trigger and shop membership is requested separately
+ * and requires approval. Email and phone are both optional individually, but at
+ * least one must be present — a phone-only account authenticates through a
+ * deterministic, non-deliverable address.
  */
 export async function signUpCustomerAccount(input: CustomerSignupInput) {
   const { data, error } = await supabase.auth.signUp({
-    email: input.email.trim().toLowerCase(),
+    email: signupAuthEmail({ email: input.email, phone: input.phone }),
     password: input.password,
     options: {
       emailRedirectTo: `${window.location.origin}/`,
       data: {
         full_name: input.fullName.trim(),
-        phone: input.phone.trim(),
-        ecosystem_slug: input.ecosystemSlug.toLowerCase(),
+        phone: normalizePhone(input.phone),
+        ...(input.ecosystemSlug ? { ecosystem_slug: input.ecosystemSlug.toLowerCase() } : {}),
       },
     },
   });
@@ -232,14 +244,14 @@ export async function signUpInvitedOperator(input: {
 export function friendlyAuthError(message: string): string {
   const m = message.toLowerCase();
   if (m.includes("already registered") || m.includes("already been registered") || m.includes("duplicate"))
-    return "That email already has an account. Sign in instead, or use another email.";
+    return "That email or mobile number already has an account. Sign in instead.";
   if (m.includes("valid ecosystem invite link"))
     return "This signup link is no longer active. Ask your operator for their current link.";
   if (m.includes("password"))
     return "Please choose a stronger password (at least 8 characters).";
   if (m.includes("rate limit") || m.includes("too many"))
     return "Too many attempts. Please wait a minute and try again.";
-  if (m.includes("invalid login credentials")) return "Wrong email or password.";
+  if (m.includes("invalid login credentials")) return "Wrong email/mobile number or password.";
   return message;
 }
 

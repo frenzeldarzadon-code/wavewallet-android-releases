@@ -6,13 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui-kit";
 import { SocialSignIn } from "@/components/auth/social-sign-in";
 import { homeFor } from "@/lib/session";
@@ -20,9 +13,9 @@ import {
   loadAuthContext,
   signInWithPassword,
   signUpCustomerAccount,
-  type SignupEcosystem,
 } from "@/lib/auth";
-import { fetchMyApplication, validateSignupDraft } from "@/lib/membership-applications";
+import { fetchMyApplication } from "@/lib/membership-applications";
+import { isRealEmail, validateGlobalSignup } from "@/lib/account-identifiers";
 import { supabase } from "@/integrations/supabase/client";
 import { DEMO_ECOSYSTEM_SLUG, DEMO_ROLES, isPreviewEnvironment } from "@/lib/demo";
 import { startDemoSession } from "@/lib/demo.functions";
@@ -56,14 +49,12 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  const [shops, setShops] = useState<SignupEcosystem[]>([]);
   const [preview, setPreview] = useState(false);
   const [demoBusy, setDemoBusy] = useState<string | null>(null);
   // One-time platform-owner setup; the server decides whether it is still open.
   const [setupOpen, setSetupOpen] = useState(false);
   // Self-service signup: the ecosystem comes from a fixed list, never free text.
   const [form, setForm] = useState({
-    slug: "",
     name: "",
     email: "",
     phone: "",
@@ -71,7 +62,7 @@ function LoginPage() {
     confirm: "",
   });
   const [signupBusy, setSignupBusy] = useState(false);
-  const [applied, setApplied] = useState<{ shop: string; needsEmail: boolean } | null>(null);
+  const [applied, setApplied] = useState<{ needsEmail: boolean } | null>(null);
 
   useEffect(() => setPreview(isPreviewEnvironment()), []);
 
@@ -113,17 +104,6 @@ function LoginPage() {
       }
       navigate({ to: homeFor(ctx.role), replace: true });
     });
-    // Signed-out visitors cannot read the shops table directly (row-level
-    // security), so the open-signup list comes from a safe public function
-    // that exposes name/slug/description only.
-    supabase.rpc("list_signup_ecosystems").then(({ data }) => {
-      if (!active) return;
-      const list = (data as SignupEcosystem[] | null) ?? [];
-      // The sandbox shop is only advertised inside the preview environment.
-      setShops(
-        isPreviewEnvironment() ? list : list.filter((e) => e.slug !== DEMO_ECOSYSTEM_SLUG),
-      );
-    });
     superAdminSetupAvailable()
       .then((r) => active && setSetupOpen(r.available))
       .catch(() => undefined);
@@ -135,7 +115,7 @@ function LoginPage() {
   const signIn = async () => {
     if (busy) return;
     if (!email.trim() || !password) {
-      toast.error("Enter your email and password.");
+      toast.error("Enter your email or mobile number, and your password.");
       return;
     }
     setBusy(true);
@@ -176,29 +156,25 @@ function LoginPage() {
 
   const signUp = async () => {
     if (signupBusy) return;
-    const shop = shops.find((e) => e.slug === form.slug);
-    const problem = validateSignupDraft(
-      form,
-      shops.map((e) => e.slug),
-    );
-    if (problem || !shop) {
-      toast.error(problem ?? "Choose the shop you are joining.");
+    const problem = validateGlobalSignup(form);
+    if (problem) {
+      toast.error(problem);
       return;
     }
     setSignupBusy(true);
     try {
       const { needsEmailConfirmation } = await signUpCustomerAccount({
-        ecosystemSlug: shop.slug,
         fullName: form.name,
         email: form.email,
         phone: form.phone,
         password: form.password,
       });
-      // Signing up never grants access: drop any session the auth server issued.
+      // Creating the global account never grants shop access: sign out and let
+      // the person apply to a shop from the Universe directory.
       await supabase.auth.signOut();
-      setApplied({ shop: shop.name, needsEmail: needsEmailConfirmation });
-      setForm({ slug: "", name: "", email: "", phone: "", password: "", confirm: "" });
-      toast.success("Your application is pending approval.");
+      setApplied({ needsEmail: needsEmailConfirmation && isRealEmail(form.email) });
+      setForm({ name: "", email: "", phone: "", password: "", confirm: "" });
+      toast.success("Your WaveWallet account is ready. Sign in to join a shop.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not create your account.");
     } finally {
@@ -256,14 +232,15 @@ function LoginPage() {
           <Card className="mt-5 shadow-[var(--shadow-card)]">
             <CardContent className="space-y-3">
               <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email or mobile number</Label>
                 <Input
                   id="email"
-                  type="email"
+                  type="text"
+                  inputMode="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && signIn()}
-                  placeholder="you@example.com"
+                  placeholder="you@example.com or 0917 000 0000"
                   autoComplete="username"
                 />
               </div>
@@ -347,19 +324,18 @@ function LoginPage() {
           <div className="mt-6 rounded-xl border border-border bg-card p-4">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                New customer?
+                New here?
               </p>
-              <StatusBadge tone="warning">Approval required</StatusBadge>
+              <StatusBadge tone="success">Free account</StatusBadge>
             </div>
 
             {applied ? (
               <div className="space-y-3 text-center">
                 <MailCheck className="mx-auto size-8 text-success" />
-                <h3 className="text-sm font-semibold">Application received</h3>
+                <h3 className="text-sm font-semibold">Account created</h3>
                 <p className="text-xs text-muted-foreground">
-                  Your account is pending approval. You can enter the ecosystem after an authorized
-                  member approves your application
-                  {applied.shop ? ` at ${applied.shop}` : ""}.
+                  Sign in to browse shops and apply to the one you want to join. Shop access starts
+                  once an authorized member approves your application.
                   {applied.needsEmail
                     ? " We also emailed you a confirmation link — please confirm your email address."
                     : ""}
@@ -373,55 +349,22 @@ function LoginPage() {
                 <div>
                   <h3 className="text-sm font-semibold">Create your account</h3>
                   <p className="text-xs text-muted-foreground">
-                    Pick the shop you are joining. Access starts once an authorized member
-                    approves your application.
+                    One account for everything. Give us an email address or a mobile number — at
+                    least one is required. You can join a shop after signing in.
                   </p>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="su-shop">Which shop are you joining?</Label>
-                  <Select value={form.slug} onValueChange={(v) => setForm({ ...form, slug: v })}>
-                    <SelectTrigger id="su-shop">
-                      <SelectValue placeholder="Select an shop" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {shops.map((e) => (
-                        <SelectItem key={e.id} value={e.slug}>
-                          {e.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {shops.length === 0 ? (
-                    <p className="text-[11px] text-muted-foreground">
-                      No shop is open for public membership right now.
-                    </p>
-                  ) : null}
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="su-name">Full name</Label>
-                    <Input
-                      id="su-name"
-                      value={form.name}
-                      onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      placeholder="Juan Dela Cruz"
-                      autoComplete="name"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="su-phone">Mobile number</Label>
-                    <Input
-                      id="su-phone"
-                      inputMode="tel"
-                      value={form.phone}
-                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                      placeholder="0917 000 0000"
-                      autoComplete="tel"
-                    />
-                  </div>
+                  <Label htmlFor="su-name">Full name</Label>
+                  <Input
+                    id="su-name"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder="Juan Dela Cruz"
+                    autoComplete="name"
+                  />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="su-email">Email</Label>
+                  <Label htmlFor="su-email">Email (optional)</Label>
                   <Input
                     id="su-email"
                     type="email"
@@ -430,6 +373,21 @@ function LoginPage() {
                     placeholder="you@example.com"
                     autoComplete="email"
                   />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="su-phone">Mobile number (optional)</Label>
+                  <Input
+                    id="su-phone"
+                    inputMode="tel"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    placeholder="0917 000 0000"
+                    autoComplete="tel"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Enter at least one of email or mobile number — that is what you will sign in
+                    with. Only an email address can reset a forgotten password by itself.
+                  </p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
@@ -460,14 +418,14 @@ function LoginPage() {
                   className="w-full"
                   variant="secondary"
                   onClick={signUp}
-                  disabled={signupBusy || shops.length === 0}
+                  disabled={signupBusy}
                 >
                   <UserPlus className="size-4" />
-                  {signupBusy ? "Submitting…" : "Create account"}
+                  {signupBusy ? "Creating…" : "Create account"}
                 </Button>
                 <p className="text-center text-[11px] text-muted-foreground">
-                  Self-signup always creates a normal customer account. Your role and access are
-                  granted by the shop, never chosen here.
+                  Signing up creates a normal member account. Roles and shop access are granted by
+                  the shop, never chosen here.
                 </p>
               </div>
             )}
