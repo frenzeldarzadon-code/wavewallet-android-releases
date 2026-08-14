@@ -21,8 +21,7 @@ export interface DeletionCheck {
   credit_total: number;
   points_total: number;
   social_purchased: number;
-  blockers: string[];
-  reasons: string[];
+  reason: string;
 }
 
 function fail(message: string): never {
@@ -57,14 +56,12 @@ export async function fetchDeletionCheck(userId: string): Promise<DeletionCheck>
       credit_total: 0,
       points_total: 0,
       social_purchased: 0,
-      blockers: ["Member not found"],
-      reasons: [],
+      reason: "Member not found or already removed.",
     }
   );
 }
 
 /** Plain-language summary of why an account may or may not be removed. */
 export function deletionSummary(check: DeletionCheck): string {
-  if (check.eligible) return check.reasons.join(" ") || "No balances and no pending money.";
-  return check.blockers.join(" ");
+  return check.reason || "The safety check did not return a reason.";
 }

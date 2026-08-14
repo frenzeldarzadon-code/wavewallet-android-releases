@@ -7,7 +7,8 @@
 -- longer exists (s.purchased_balance). The current model is:
 --   social_credit_accounts.balance      -> purchased credits (blocks deletion)
 --   social_credit_accounts.free_balance -> daily allowance   (ignored)
--- Credits and points are summed across EVERY shop wallet.
+-- Credits and points are summed across EVERY shop wallet. The eligibility
+-- result uses one text reason so PostgreSQL never coerces messages to arrays.
 
 BEGIN;
 
@@ -42,7 +43,10 @@ begin
 
   -- Zero-balance account: eligible.
   select * into _chk from public.platform_user_deletion_check(_zero);
-  if not _chk.eligible then raise exception 'zero-balance user blocked: %', _chk.blockers; end if;
+  if not _chk.eligible then raise exception 'zero-balance user blocked: %', _chk.reason; end if;
+  if _chk.reason not like 'All Shop credit balances are zero%' then
+    raise exception 'unexpected eligible reason: %', _chk.reason;
+  end if;
 
   -- Balance held in a SECOND shop must still block deletion.
   insert into public.credit_accounts (user_id, ecosystem_id, balance)
@@ -51,13 +55,16 @@ begin
   select * into _chk from public.platform_user_deletion_check(_rich);
   if _chk.eligible then raise exception 'user with credits in another shop wrongly eligible'; end if;
   if _chk.credit_total <> 25 then raise exception 'credit total = %, expected 25', _chk.credit_total; end if;
+  if _chk.reason not like '%QA Del B: 25 credits%' then
+    raise exception 'funded shop missing from reason: %', _chk.reason;
+  end if;
 
   -- Purchased social credits block; the free daily allowance does not.
   insert into public.social_credit_accounts (user_id, ecosystem_id, balance, free_balance)
   values (_social, null, 0, 10)
   on conflict do nothing;
   select * into _chk from public.platform_user_deletion_check(_social);
-  if not _chk.eligible then raise exception 'free allowance wrongly blocked deletion: %', _chk.blockers; end if;
+  if not _chk.eligible then raise exception 'free allowance wrongly blocked deletion: %', _chk.reason; end if;
   update public.social_credit_accounts set balance = 7 where user_id = _social;
   select * into _chk from public.platform_user_deletion_check(_social);
   if _chk.eligible then raise exception 'purchased social credits did not block deletion'; end if;
