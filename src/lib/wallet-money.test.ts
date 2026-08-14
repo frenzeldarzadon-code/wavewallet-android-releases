@@ -3,6 +3,7 @@ import {
   adminCashbackPercent,
   canDecideMoney,
   canRequestMoney,
+  creditsAfterFee,
   describeRate,
   filterByStatus,
   MONEY_SETTINGS_FALLBACK,
