@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { friendlyAuthError } from "@/lib/auth";
+import { supportContact } from "@/lib/credit-purchases";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
@@ -38,6 +39,22 @@ function ResetPasswordPage() {
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  // Accounts registered with a mobile number only cannot receive email, so the
+  // official support page (configured by the platform owner) is shown instead.
+  const [support, setSupport] = useState<{ label: string; href: string; message: string } | null>(
+    null,
+  );
+
+  useEffect(() => {
+    let active = true;
+    supabase.rpc("public_support_contact").then(({ data }) => {
+      if (!active) return;
+      setSupport(supportContact((data as Record<string, string>[] | null)?.[0] ?? null));
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // A recovery link lands here with a `type=recovery` hash that Supabase turns
   // into a short-lived session; only then do we show the "new password" form.
@@ -160,6 +177,28 @@ function ResetPasswordPage() {
                   {busy ? "Sending…" : sent ? "Link sent" : "Send reset link"}
                 </Button>
               </>
+            )}
+            {recovery ? null : (
+              <div className="rounded-lg border border-border bg-muted/40 p-3">
+                <p className="text-xs font-semibold">No email on your account?</p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                  If you registered with a mobile number only, we cannot email you a reset link.
+                  {support ? " Message the official support page for help:" : " Contact your shop operator for help."}
+                </p>
+                {support ? (
+                  <a
+                    className="mt-1 inline-block text-xs font-medium text-primary hover:underline"
+                    href={support.href}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                  >
+                    {support.label}
+                  </a>
+                ) : null}
+                {support?.message ? (
+                  <p className="mt-1 text-[11px] text-muted-foreground">{support.message}</p>
+                ) : null}
+              </div>
             )}
             <p className="text-center text-xs">
               <Link to="/" className="text-primary hover:underline">

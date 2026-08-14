@@ -2209,7 +2209,7 @@ export type Database = {
         Row: {
           balance: number
           created_at: string
-          ecosystem_id: string
+          ecosystem_id: string | null
           id: string
           last_allowance_on: string | null
           updated_at: string
@@ -2218,7 +2218,7 @@ export type Database = {
         Insert: {
           balance?: number
           created_at?: string
-          ecosystem_id: string
+          ecosystem_id?: string | null
           id?: string
           last_allowance_on?: string | null
           updated_at?: string
@@ -2227,7 +2227,7 @@ export type Database = {
         Update: {
           balance?: number
           created_at?: string
-          ecosystem_id?: string
+          ecosystem_id?: string | null
           id?: string
           last_allowance_on?: string | null
           updated_at?: string
@@ -4102,6 +4102,14 @@ export type Database = {
           url: string
         }[]
       }
+      public_support_contact: {
+        Args: never
+        Returns: {
+          support_message: string
+          support_page_name: string
+          support_page_url: string
+        }[]
+      }
       purchase_voucher: {
         Args: { _product_id: string; _quantity?: number }
         Returns: {
@@ -5014,7 +5022,7 @@ export type Database = {
         Returns: {
           balance: number
           created_at: string
-          ecosystem_id: string
+          ecosystem_id: string | null
           id: string
           last_allowance_on: string | null
           updated_at: string

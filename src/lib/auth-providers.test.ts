@@ -11,12 +11,10 @@ import {
 const id = (provider: string): LinkedIdentity => ({ id: provider, provider, email: null });
 
 describe("connected login providers", () => {
-  it("offers Google and reports Facebook as not configured", () => {
+  it("offers Google only — Facebook is not present at all", () => {
     expect(providerInfo("google").available).toBe(true);
-    const fb = providerInfo("facebook");
-    expect(fb.available).toBe(false);
-    expect(fb.unavailableReason).toMatch(/Facebook OAuth app/i);
-    expect(PROVIDERS).toHaveLength(2);
+    expect(PROVIDERS).toHaveLength(1);
+    expect(PROVIDERS.map((p) => p.id)).toEqual(["google"]);
   });
 
   it("never lets the last usable login be removed", () => {

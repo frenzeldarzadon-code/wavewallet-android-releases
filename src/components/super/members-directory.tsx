@@ -6,7 +6,7 @@
  * Credit — reachable per row. Both actions keep their existing server-side
  * authorization; this screen is only a launcher.
  */
-import { Coins, KeyRound, Search } from "lucide-react";
+import { Coins, KeyRound, LifeBuoy, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,11 @@ import {
   type PlatformMember,
 } from "@/lib/platform-members";
 import { roleLabel } from "@/lib/wavewallet";
+import {
+  resetBlockedReason,
+  sendAccountRecovery,
+  visibleIdentifiers,
+} from "@/lib/account-assistance";
 
 const ALL = "all";
 
@@ -44,6 +49,26 @@ export function MembersDirectory() {
   const [loading, setLoading] = useState(true);
   const [accessTarget, setAccessTarget] = useState<AccessTarget | null>(null);
   const [creditTarget, setCreditTarget] = useState<PlatformMember | null>(null);
+  const [recoveryBusy, setRecoveryBusy] = useState<string | null>(null);
+
+  /** Sends the member their own reset link. No credential is ever revealed. */
+  const assist = async (m: PlatformMember) => {
+    setRecoveryBusy(m.id);
+    try {
+      await sendAccountRecovery({
+        id: m.id,
+        full_name: m.full_name,
+        email: m.email,
+        phone: m.phone,
+        ecosystem_id: m.ecosystem_id,
+      });
+      toast.success(`Recovery link sent to ${m.full_name}'s email.`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setRecoveryBusy(null);
+    }
+  };
 
   useEffect(() => {
     void fetchEcosystemNames().then(setShops).catch(() => undefined);
@@ -139,7 +164,8 @@ export function MembersDirectory() {
                       ) : null}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {m.email} · {m.phone}
+                      {visibleIdentifiers(m).email ?? "No email on file"}
+                      {visibleIdentifiers(m).phone ? ` · ${visibleIdentifiers(m).phone}` : ""}
                     </p>
                     <div className="mt-1 flex flex-wrap items-center gap-1.5">
                       <Badge variant="secondary">{roleLabel(m.role)}</Badge>
@@ -163,6 +189,17 @@ export function MembersDirectory() {
                       className="h-9"
                     >
                       <Coins className="size-4" /> Issue credits
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-9"
+                      disabled={recoveryBusy !== null || resetBlockedReason(m) !== null}
+                      title={resetBlockedReason(m) ?? "Email the member a secure reset link"}
+                      onClick={() => void assist(m)}
+                    >
+                      <LifeBuoy className="size-4" />
+                      {recoveryBusy === m.id ? "Sending…" : "Send reset link"}
                     </Button>
                     {canActAsMember(m) ? (
                       <Button
