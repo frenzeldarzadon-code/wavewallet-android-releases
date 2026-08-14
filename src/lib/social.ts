@@ -49,11 +49,17 @@ export interface PromotionTier {
 }
 
 export interface SocialState {
+  /** Spendable total: today's unused free allowance plus purchased credits. */
   balance: number;
+  /** Today's remaining free allowance. Resets each server day, never rolls over. */
+  free_balance: number;
+  /** Purchased/earned credits. Never touched by the daily reset. */
+  purchased_balance: number;
   ecosystem_id: string;
   social_enabled: boolean;
   daily_allowance: number;
   post_cost: number;
+  /** Always 0 — replies and comments are free. Kept for historical settings rows. */
   comment_cost: number;
   credit_exchange_rate: number;
   points_exchange_rate: number;
@@ -250,12 +256,12 @@ export function adsAvailable(
   );
 }
 
-/** Replies to a promoted post are free — this is disclosed before publishing. */
-export function commentCharge(
-  state: Pick<SocialState, "comment_cost">,
-  postIsPromoted: boolean,
-): number {
-  return postIsPromoted ? 0 : state.comment_cost;
+/**
+ * Replies and comments never consume social credits, on any post, in any shop.
+ * The database enforces the same rule; this exists so the UI can say so.
+ */
+export function commentCharge(): number {
+  return 0;
 }
 
 export function currencyLabel(currency: "social" | "points"): string {
