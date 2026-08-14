@@ -212,7 +212,7 @@ export type Database = {
         Row: {
           balance: number
           created_at: string
-          ecosystem_id: string
+          ecosystem_id: string | null
           id: string
           updated_at: string
           user_id: string
@@ -220,7 +220,7 @@ export type Database = {
         Insert: {
           balance?: number
           created_at?: string
-          ecosystem_id: string
+          ecosystem_id?: string | null
           id?: string
           updated_at?: string
           user_id: string
@@ -228,7 +228,7 @@ export type Database = {
         Update: {
           balance?: number
           created_at?: string
-          ecosystem_id?: string
+          ecosystem_id?: string | null
           id?: string
           updated_at?: string
           user_id?: string
@@ -254,7 +254,7 @@ export type Database = {
           commission_percent: number | null
           created_at: string
           direction: string
-          ecosystem_id: string
+          ecosystem_id: string | null
           entry_kind: string
           id: string
           reason: string
@@ -274,7 +274,7 @@ export type Database = {
           commission_percent?: number | null
           created_at?: string
           direction: string
-          ecosystem_id: string
+          ecosystem_id?: string | null
           entry_kind?: string
           id?: string
           reason: string
@@ -294,7 +294,7 @@ export type Database = {
           commission_percent?: number | null
           created_at?: string
           direction?: string
-          ecosystem_id?: string
+          ecosystem_id?: string | null
           entry_kind?: string
           id?: string
           reason?: string
