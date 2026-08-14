@@ -816,6 +816,65 @@ export type Database = {
           },
         ]
       }
+      ecosystem_memberships: {
+        Row: {
+          created_at: string
+          ecosystem_id: string
+          handle: string | null
+          id: string
+          joined_at: string
+          membership_state: string
+          reseller_commission_percent: number | null
+          reseller_discount_percent: number
+          reseller_id: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          sale_commission_percent: number | null
+          status: Database["public"]["Enums"]["account_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ecosystem_id: string
+          handle?: string | null
+          id?: string
+          joined_at?: string
+          membership_state?: string
+          reseller_commission_percent?: number | null
+          reseller_discount_percent?: number
+          reseller_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          sale_commission_percent?: number | null
+          status?: Database["public"]["Enums"]["account_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ecosystem_id?: string
+          handle?: string | null
+          id?: string
+          joined_at?: string
+          membership_state?: string
+          reseller_commission_percent?: number | null
+          reseller_discount_percent?: number
+          reseller_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          sale_commission_percent?: number | null
+          status?: Database["public"]["Enums"]["account_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ecosystem_memberships_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ecosystem_social_settings: {
         Row: {
           comment_cost: number | null
@@ -1548,6 +1607,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_ecosystem_id: string | null
           avatar_path: string | null
           bio: string | null
           created_at: string
@@ -1571,6 +1631,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          active_ecosystem_id?: string | null
           avatar_path?: string | null
           bio?: string | null
           created_at?: string
@@ -1594,6 +1655,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          active_ecosystem_id?: string | null
           avatar_path?: string | null
           bio?: string | null
           created_at?: string
@@ -1617,6 +1679,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_active_ecosystem_id_fkey"
+            columns: ["active_ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -3119,31 +3188,11 @@ export type Database = {
       }
     }
     Views: {
-      ecosystem_memberships: {
-        Row: {
-          ecosystem_id: string | null
-          email: string | null
-          full_name: string | null
-          joined_at: string | null
-          phone: string | null
-          reseller_discount_percent: number | null
-          role: Database["public"]["Enums"]["app_role"] | null
-          status: Database["public"]["Enums"]["account_status"] | null
-          user_id: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_roles_ecosystem_id_fkey"
-            columns: ["ecosystem_id"]
-            isOneToOne: false
-            referencedRelation: "ecosystems"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       acting_as: { Args: never; Returns: string }
+      active_ecosystem: { Args: { _user_id: string }; Returns: string }
       adjust_ecosystem_expiration: {
         Args: {
           _confirm_shorten?: boolean
@@ -3549,6 +3598,10 @@ export type Database = {
         Args: { _ecosystem_id?: string; _user_id: string }
         Returns: string
       }
+      ensure_membership_wallets: {
+        Args: { _ecosystem_id: string; _user_id: string }
+        Returns: undefined
+      }
       expire_stale_invitations: { Args: never; Returns: undefined }
       expire_stale_subscriptions: { Args: never; Returns: number }
       freeze_credit_purchase_order: {
@@ -3595,6 +3648,10 @@ export type Database = {
       }
       handle_available: {
         Args: { _ecosystem_id?: string; _handle: string }
+        Returns: boolean
+      }
+      has_membership: {
+        Args: { _ecosystem_id: string; _user_id: string }
         Returns: boolean
       }
       has_role: {
@@ -3762,6 +3819,10 @@ export type Database = {
         Args: { _email: string; _exclude?: string }
         Returns: boolean
       }
+      membership_role: {
+        Args: { _ecosystem_id: string; _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       money_settings: {
         Args: never
         Returns: {
@@ -3796,6 +3857,18 @@ export type Database = {
           decision_reason: string
           ecosystem_name: string
           status: string
+        }[]
+      }
+      my_memberships: {
+        Args: never
+        Returns: {
+          ecosystem_id: string
+          ecosystem_name: string
+          ecosystem_slug: string
+          is_active: boolean
+          membership_state: string
+          role: Database["public"]["Enums"]["app_role"]
+          status: Database["public"]["Enums"]["account_status"]
         }[]
       }
       my_operational_status: {
@@ -4870,6 +4943,7 @@ export type Database = {
         }
         Returns: string
       }
+      switch_ecosystem: { Args: { _ecosystem_id: string }; Returns: string }
       top_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
