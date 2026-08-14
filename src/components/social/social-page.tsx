@@ -558,6 +558,38 @@ function PostCard({
     }
   };
 
+  /**
+   * Gifts are refused client-side and server-side alike; the button is also
+   * locked while a gift is in flight so a double tap cannot double-spend.
+   */
+  const sendGift = async () => {
+    const amount = Number(giftAmount);
+    const issue = giftIssue({
+      purchased_balance: state?.purchased_balance ?? 0,
+      amount,
+      isSelf: post.author_id === meId,
+    });
+    if (issue) {
+      toast.error(issue);
+      return;
+    }
+    setGifting(true);
+    try {
+      const res = await giftSocialCredits({ postId: post.id, amount });
+      setGiftOpen(false);
+      toast.success(`Gifted ${res.amount} social credits to ${post.author_name}`, {
+        description: `You have ${res.sender_balance} purchased social credits left.`,
+      });
+      await onChanged();
+    } catch (e) {
+      toast.error("Could not send the gift", { description: (e as Error).message });
+    } finally {
+      setGifting(false);
+    }
+  };
+
+
+
   return (
     <Card className="shadow-[var(--shadow-card)]">
       <CardContent className="space-y-3">
