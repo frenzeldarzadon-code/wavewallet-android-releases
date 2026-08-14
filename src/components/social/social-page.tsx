@@ -162,87 +162,9 @@ export function SocialPage() {
     () => (state ? availableTiers({ promotion_tiers: state.promotion_tiers, role: account?.role ?? null }) : []),
     [state, account?.role],
   );
-  const tier = useMemo(() => tiers.find((t) => t.id === tierId) ?? null, [tiers, tierId]);
-  const charge = useMemo(
-    () =>
-      state
-        ? postCharge(state, promote, tier, payWith)
-        : { amount: 0, currency: "social" as SocialCurrency },
-    [state, promote, tier, payWith],
-  );
-
-  useEffect(() => {
-    if (promote && !tierId && tiers.length > 0) setTierId(tiers[0]!.id);
-  }, [promote, tierId, tiers]);
 
   if (!account) return null;
 
-  const pickFile = (f: File | null) => {
-    if (!f) {
-      setFile(null);
-      setCrop(null);
-      return;
-    }
-    const problem = validateSocialImage(f);
-    if (problem) {
-      toast.error(problem);
-      return;
-    }
-    setFile(f);
-  };
-
-  const submitPost = async () => {
-    if (!state) return;
-    const problem = validatePostBody(body);
-    if (problem) {
-      toast.error(problem);
-      return;
-    }
-    setPosting(true);
-    try {
-      let imagePath: string | null = null;
-      if (file && crop) {
-        imagePath = await uploadSocialImage({
-          ecosystemId: state.ecosystem_id,
-          userId: account.id,
-          file,
-          crop: crop.crop,
-          preloaded: crop.image,
-        });
-      }
-      const res = await createPost({
-        body,
-        imagePath,
-        promote,
-        tierId: promote ? (tier?.id ?? null) : null,
-        ...(promote ? { currency: charge.currency } : {}),
-        audience,
-      });
-      const deducted =
-        res.charged > 0
-          ? `${res.charged} ${res.currency === "points" ? "points" : "social credits"} deducted.`
-          : "Nothing was deducted.";
-      toast.success(promote ? "Promoted post published" : "Posted", {
-        description:
-          audience === "general"
-            ? `${deducted} Sent to ${res.pending_shops} other shop${res.pending_shops === 1 ? "" : "s"} for admin approval.`
-            : deducted,
-      });
-      setBody("");
-      setPromote(false);
-      setAudience("ecosystem");
-
-      setTierId("");
-      setFile(null);
-      setCrop(null);
-      setConfirmOpen(false);
-      await refresh();
-    } catch (e) {
-      toast.error("Could not publish", { description: (e as Error).message });
-    } finally {
-      setPosting(false);
-    }
-  };
 
   const like = async (post: FeedPost) => {
     // Optimistic: likes are always free.
