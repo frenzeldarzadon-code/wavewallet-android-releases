@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.social_create_comment(uuid, text);

@@ -78,6 +78,7 @@ import { Route as UniverseIndexRouteImport } from './routes/universe.index'
 import { Route as UniverseMessagesRouteImport } from './routes/universe.messages'
 import { Route as UniverseProfileRouteImport } from './routes/universe.profile'
 import { Route as UniverseShopsRouteImport } from './routes/universe.shops'
+import { Route as UniverseUHandleRouteImport } from './routes/universe.u.$handle'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -424,6 +425,11 @@ const UniverseShopsRoute = UniverseShopsRouteImport.update({
   path: '/shops',
   getParentRoute: () => UniverseRoute,
 } as any)
+const UniverseUHandleRoute = UniverseUHandleRouteImport.update({
+  id: '/u/$handle',
+  path: '/u/$handle',
+  getParentRoute: () => UniverseRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -495,6 +501,7 @@ export interface FileRoutesByFullPath {
   '/reseller/': typeof ResellerIndexRoute
   '/super/': typeof SuperIndexRoute
   '/universe/': typeof UniverseIndexRoute
+  '/universe/u/$handle': typeof UniverseUHandleRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -561,6 +568,7 @@ export interface FileRoutesByTo {
   '/reseller': typeof ResellerIndexRoute
   '/super': typeof SuperIndexRoute
   '/universe': typeof UniverseIndexRoute
+  '/universe/u/$handle': typeof UniverseUHandleRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -633,6 +641,7 @@ export interface FileRoutesById {
   '/reseller/': typeof ResellerIndexRoute
   '/super/': typeof SuperIndexRoute
   '/universe/': typeof UniverseIndexRoute
+  '/universe/u/$handle': typeof UniverseUHandleRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -706,6 +715,7 @@ export interface FileRouteTypes {
     | '/reseller/'
     | '/super/'
     | '/universe/'
+    | '/universe/u/$handle'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -772,6 +782,7 @@ export interface FileRouteTypes {
     | '/reseller'
     | '/super'
     | '/universe'
+    | '/universe/u/$handle'
   id:
     | '__root__'
     | '/'
@@ -843,6 +854,7 @@ export interface FileRouteTypes {
     | '/reseller/'
     | '/super/'
     | '/universe/'
+    | '/universe/u/$handle'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1343,6 +1355,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UniverseShopsRouteImport
       parentRoute: typeof UniverseRoute
     }
+    '/universe/u/$handle': {
+      id: '/universe/u/$handle'
+      path: '/u/$handle'
+      fullPath: '/universe/u/$handle'
+      preLoaderRoute: typeof UniverseUHandleRouteImport
+      parentRoute: typeof UniverseRoute
+    }
   }
 }
 
@@ -1495,6 +1514,7 @@ interface UniverseRouteChildren {
   UniverseProfileRoute: typeof UniverseProfileRoute
   UniverseShopsRoute: typeof UniverseShopsRoute
   UniverseIndexRoute: typeof UniverseIndexRoute
+  UniverseUHandleRoute: typeof UniverseUHandleRoute
 }
 
 const UniverseRouteChildren: UniverseRouteChildren = {
@@ -1502,6 +1522,7 @@ const UniverseRouteChildren: UniverseRouteChildren = {
   UniverseProfileRoute: UniverseProfileRoute,
   UniverseShopsRoute: UniverseShopsRoute,
   UniverseIndexRoute: UniverseIndexRoute,
+  UniverseUHandleRoute: UniverseUHandleRoute,
 }
 
 const UniverseRouteWithChildren = UniverseRoute._addFileChildren(

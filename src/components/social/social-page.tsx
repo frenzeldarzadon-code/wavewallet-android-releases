@@ -1,5 +1,6 @@
 import {
   Coins,
+  EyeOff,
   Flag,
   Globe2,
   Heart,
@@ -7,12 +8,14 @@ import {
   Loader2,
   MessageCircle,
   Megaphone,
+  Reply,
   Send,
   ShieldOff,
   Trash2,
   Users,
   X,
 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -94,8 +97,10 @@ import {
   type SocialCurrency,
   type SocialState,
 } from "@/lib/social";
-import { sendMessage } from "@/lib/social";
+import { canReplyTo, hidePostForShop, sendMessage, threadComments } from "@/lib/social";
 import { PostComposer } from "@/components/social/post-composer";
+import { MentionText } from "@/components/social/mention-text";
+import { MentionInput } from "@/components/social/mention-input";
 
 /** Signed-image thumbnail for a post. */
 function PostImage({ path }: { path: string }) {
@@ -115,6 +120,20 @@ function PostImage({ path }: { path: string }) {
       loading="lazy"
       className="aspect-4/3 w-full rounded-xl object-cover"
     />
+  );
+}
+
+/**
+ * Wraps an avatar or name so it opens the author's public Universe profile.
+ * Members without a handle are not linkable (the database gives everyone one,
+ * so this is only a safety net for legacy rows).
+ */
+function AuthorLink({ handle, children }: { handle: string | null; children: React.ReactNode }) {
+  if (!handle) return <>{children}</>;
+  return (
+    <Link to="/universe/u/$handle" params={{ handle }} className="min-w-0">
+      {children}
+    </Link>
   );
 }
 
@@ -452,12 +471,16 @@ function PostCard({
   const [open, setOpen] = useState(false);
   const [comments, setComments] = useState<FeedComment[]>([]);
   const [reply, setReply] = useState("");
+  const [replyTo, setReplyTo] = useState<FeedComment | null>(null);
   const [confirmReply, setConfirmReply] = useState(false);
   const [busy, setBusy] = useState(false);
   const [dm, setDm] = useState("");
   const [dmOpen, setDmOpen] = useState(false);
+  const [hideOpen, setHideOpen] = useState(false);
+  const [hideReason, setHideReason] = useState("");
 
   const cost = commentCharge();
+  const thread = threadComments(comments);
 
   const loadComments = async () => {
     try {
@@ -481,8 +504,9 @@ function PostCard({
     }
     setBusy(true);
     try {
-      const res = await createComment(post.id, reply);
+      const res = await createComment(post.id, reply, replyTo?.id ?? null);
       setReply("");
+      setReplyTo(null);
       setConfirmReply(false);
       toast.success("Reply posted", {
         description: res.charged > 0 ? `${res.charged} social credit deducted.` : "Free reply.",
@@ -493,6 +517,20 @@ function PostCard({
       toast.error("Could not reply", { description: (e as Error).message });
     } finally {
       setBusy(false);
+    }
+  };
+
+  const hideForShop = async () => {
+    try {
+      await hidePostForShop(post.id, true, hideReason);
+      setHideOpen(false);
+      setHideReason("");
+      toast.success("Hidden from your shop", {
+        description: "It stays public in the Universe and visible to other shops.",
+      });
+      await onChanged();
+    } catch (e) {
+      toast.error("Could not hide that post", { description: (e as Error).message });
     }
   };
 
@@ -511,14 +549,22 @@ function PostCard({
     <Card className="shadow-[var(--shadow-card)]">
       <CardContent className="space-y-3">
         <div className="flex items-start gap-3">
-          <MemberAvatar path={post.author_avatar} name={post.author_name} />
+          <AuthorLink handle={post.author_handle}>
+            <MemberAvatar path={post.author_avatar} name={post.author_name} />
+          </AuthorLink>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="truncate text-sm font-semibold">{post.author_name}</span>
-              {post.author_handle ? (
-                <span className="truncate text-xs text-muted-foreground">
-                  {displayHandle(post.author_handle)}
+              <AuthorLink handle={post.author_handle}>
+                <span className="truncate text-sm font-semibold hover:underline">
+                  {post.author_name}
                 </span>
+              </AuthorLink>
+              {post.author_handle ? (
+                <AuthorLink handle={post.author_handle}>
+                  <span className="truncate text-xs font-medium text-primary hover:underline">
+                    {displayHandle(post.author_handle)}
+                  </span>
+                </AuthorLink>
               ) : null}
               <span className="text-xs text-muted-foreground">
                 · {relativeTime(post.created_at)}
@@ -540,7 +586,8 @@ function PostCard({
                 <Badge variant="secondary">{roleBadge(post.author_role)}</Badge>
               ) : null}
             </div>
-            <p className="mt-1 whitespace-pre-wrap break-words text-sm">{post.body}</p>
+            <MentionText body={post.body} className="mt-1" />
+
             {post.audience === "general" && post.author_id === meId ? (
               <GeneralStatus postId={post.id} />
             ) : null}
@@ -578,6 +625,16 @@ function PostCard({
               </Button>
             </>
           ) : null}
+          {post.can_hide ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-10 gap-1.5 text-xs"
+              onClick={() => setHideOpen(true)}
+            >
+              <EyeOff className="size-4" /> Hide from my shop
+            </Button>
+          ) : null}
           {post.can_delete ? (
             <Button
               variant="ghost"
@@ -592,16 +649,48 @@ function PostCard({
 
         {open ? (
           <div className="space-y-3 border-t border-border pt-3">
-            {comments.map((c) => (
-              <div key={c.id} className="flex items-start gap-2">
-                <MemberAvatar path={c.author_avatar} name={c.author_name} className="size-8" />
-                <div className="min-w-0 flex-1 rounded-xl bg-muted px-3 py-2">
-                  <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-                    <span className="font-semibold text-foreground">{c.author_name}</span>
-                    {c.author_handle ? <span>{displayHandle(c.author_handle)}</span> : null}
-                    <span>· {relativeTime(c.created_at)}</span>
+            {thread.map((c) => (
+              <div
+                key={c.id}
+                className="flex items-start gap-2"
+                style={{ marginLeft: `${(c.depth - 1) * 16}px` }}
+              >
+                <AuthorLink handle={c.author_handle}>
+                  <MemberAvatar path={c.author_avatar} name={c.author_name} className="size-8" />
+                </AuthorLink>
+                <div className="min-w-0 flex-1">
+                  <div className="rounded-xl bg-muted px-3 py-2">
+                    <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                      <AuthorLink handle={c.author_handle}>
+                        <span className="font-semibold text-foreground hover:underline">
+                          {c.author_name}
+                        </span>
+                      </AuthorLink>
+                      {c.author_handle ? (
+                        <AuthorLink handle={c.author_handle}>
+                          <span className="text-primary hover:underline">
+                            {displayHandle(c.author_handle)}
+                          </span>
+                        </AuthorLink>
+                      ) : null}
+                      <span>· {relativeTime(c.created_at)}</span>
+                    </div>
+                    <MentionText body={c.body} />
                   </div>
-                  <p className="whitespace-pre-wrap break-words text-sm">{c.body}</p>
+                  {canReplyTo(c.depth) ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 gap-1 px-2 text-xs"
+                      onClick={() => setReplyTo(c)}
+                    >
+                      <Reply className="size-3.5" /> Reply
+                    </Button>
+                  ) : (
+                    <p className="px-2 py-1 text-xs text-muted-foreground">
+                      Replies stop at three levels
+                    </p>
+                  )}
                 </div>
                 {c.can_delete ? (
                   <Button
@@ -620,13 +709,32 @@ function PostCard({
               </div>
             ))}
 
+            {replyTo ? (
+              <div className="flex items-center justify-between rounded-lg bg-accent px-3 py-1.5 text-xs">
+                <span className="truncate">Replying to {replyTo.author_name}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2"
+                  onClick={() => setReplyTo(null)}
+                >
+                  <X className="size-3.5" />
+                </Button>
+              </div>
+            ) : null}
+
             <div className="flex items-end gap-2">
-              <Textarea
+              <MentionInput
+                className="flex-1"
                 rows={1}
                 value={reply}
-                onChange={(e) => setReply(e.target.value.slice(0, COMMENT_MAX_CHARS))}
-                placeholder={cost > 0 ? `Reply (costs ${cost} social credit)` : "Reply (free)"}
-                className="min-h-11"
+                onChange={setReply}
+                maxLength={COMMENT_MAX_CHARS}
+                placeholder={
+                  cost > 0
+                    ? `Reply (costs ${cost} social credit) — type @ to mention`
+                    : "Reply (free) — type @ to mention"
+                }
               />
               <Button
                 className="h-11"
@@ -662,6 +770,35 @@ function PostCard({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={hideOpen} onOpenChange={setHideOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Hide this post from your shop?</DialogTitle>
+            <DialogDescription>
+              Your members will no longer see it. The post stays published in the Universe and
+              visible to other shops — only the platform owner can delete it for everyone. Your name
+              and reason are recorded.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor={`hide-${post.id}`}>Reason (optional)</Label>
+            <Textarea
+              id={`hide-${post.id}`}
+              rows={2}
+              value={hideReason}
+              onChange={(e) => setHideReason(e.target.value)}
+              placeholder="Why is this not suitable for your members?"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setHideOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => void hideForShop()}>Hide for my shop</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={dmOpen} onOpenChange={setDmOpen}>
         <DialogContent>

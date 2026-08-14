@@ -1,0 +1,10 @@
+revoke all on function public.social_hide_post_for_shop(uuid, boolean, text, uuid) from anon, public;
+revoke all on function public.social_hidden_posts(uuid) from anon, public;
+revoke all on function public.social_create_comment(uuid, text, uuid) from anon, public;
+revoke all on function public.social_handle_search(text, integer) from public;
+revoke all on function public.universe_profile(text) from public;
+grant execute on function public.social_hide_post_for_shop(uuid, boolean, text, uuid) to authenticated;
+grant execute on function public.social_hidden_posts(uuid) to authenticated;
+grant execute on function public.social_create_comment(uuid, text, uuid) to authenticated;
+grant execute on function public.social_handle_search(text, integer) to authenticated;
+grant execute on function public.universe_profile(text) to authenticated;

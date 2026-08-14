@@ -17,6 +17,10 @@ import {
   postReadiness,
   roleBadge,
   selectedShopNames,
+  MAX_REPLY_DEPTH,
+  canReplyTo,
+  threadComments,
+  type FeedComment,
 } from "@/lib/social";
 
 const tier = (over: Partial<PromotionTier> = {}): PromotionTier => ({
@@ -242,5 +246,48 @@ describe("universe composer flow", () => {
     expect(roleBadge("super_admin")).toBe("Platform");
     expect(roleBadge("admin")).toBe("Shop admin");
     expect(roleBadge("customer")).toBeNull();
+  });
+});
+
+describe("threaded replies", () => {
+  const c = (id: string, parent: string | null, depth: number, at: string) =>
+    ({
+      id,
+      author_id: "u",
+      author_name: "Member",
+      author_handle: "member",
+      author_avatar: null,
+      body: id,
+      created_at: at,
+      can_delete: false,
+      parent_id: parent,
+      depth,
+    }) as FeedComment;
+
+  it("stops at three levels", () => {
+    expect(MAX_REPLY_DEPTH).toBe(3);
+    expect(canReplyTo(1)).toBe(true);
+    expect(canReplyTo(2)).toBe(true);
+    expect(canReplyTo(3)).toBe(false);
+  });
+
+  it("places every reply directly under its parent", () => {
+    const flat = [
+      c("a", null, 1, "2026-01-01T00:00:00Z"),
+      c("b", null, 1, "2026-01-01T00:02:00Z"),
+      c("a1", "a", 2, "2026-01-01T00:01:00Z"),
+      c("a1x", "a1", 3, "2026-01-01T00:01:30Z"),
+    ];
+    expect(threadComments(flat).map((x) => [x.id, x.depth])).toEqual([
+      ["a", 1],
+      ["a1", 2],
+      ["a1x", 3],
+      ["b", 1],
+    ]);
+  });
+
+  it("keeps a reply visible when its parent is gone", () => {
+    const flat = [c("orphan", "deleted", 2, "2026-01-01T00:00:00Z")];
+    expect(threadComments(flat).map((x) => [x.id, x.depth])).toEqual([["orphan", 1]]);
   });
 });
