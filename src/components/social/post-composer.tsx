@@ -26,7 +26,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
+import { MentionInput } from "@/components/social/mention-input";
+import { MentionText } from "@/components/social/mention-text";
 import {
   Dialog,
   DialogContent,
@@ -284,13 +285,13 @@ export function PostComposer({
 
         {step === "write" ? (
           <div className="space-y-3">
-            <Textarea
-              autoFocus
+            <MentionInput
               value={body}
-              onChange={(e) => setBody(e.target.value.slice(0, POST_MAX_CHARS))}
+              onChange={setBody}
+              maxLength={POST_MAX_CHARS}
               rows={6}
-              placeholder="What's happening?"
-              className="min-h-36 text-base"
+              placeholder="What's happening? Type @ to mention someone"
+              className="text-base"
             />
             <p className="text-right text-xs text-muted-foreground">
               {body.length}/{POST_MAX_CHARS}
@@ -467,7 +468,7 @@ export function PostComposer({
         {step === "review" ? (
           <div className="space-y-3">
             <div className="rounded-2xl border border-border p-4 text-sm">
-              <p className="whitespace-pre-wrap break-words">{body}</p>
+              <MentionText body={body} />
               {file ? <p className="mt-2 text-xs text-muted-foreground">1 photo attached</p> : null}
             </div>
             {!promote && detection.level !== "none" && promotionAvailable ? (

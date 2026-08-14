@@ -2208,8 +2208,10 @@ export type Database = {
           body: string
           charged: boolean
           created_at: string
+          depth: number
           ecosystem_id: string
           id: string
+          parent_id: string | null
           post_id: string
           removed_at: string | null
           removed_by: string | null
@@ -2221,8 +2223,10 @@ export type Database = {
           body: string
           charged?: boolean
           created_at?: string
+          depth?: number
           ecosystem_id: string
           id?: string
+          parent_id?: string | null
           post_id: string
           removed_at?: string | null
           removed_by?: string | null
@@ -2234,8 +2238,10 @@ export type Database = {
           body?: string
           charged?: boolean
           created_at?: string
+          depth?: number
           ecosystem_id?: string
           id?: string
+          parent_id?: string | null
           post_id?: string
           removed_at?: string | null
           removed_by?: string | null
@@ -2248,6 +2254,13 @@ export type Database = {
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "social_comments"
             referencedColumns: ["id"]
           },
           {
@@ -2453,6 +2466,51 @@ export type Database = {
           },
           {
             foreignKeyName: "social_post_distributions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_post_shop_hides: {
+        Row: {
+          created_at: string
+          ecosystem_id: string
+          hidden_by: string
+          hidden_by_name: string
+          id: string
+          post_id: string
+          reason: string | null
+        }
+        Insert: {
+          created_at?: string
+          ecosystem_id: string
+          hidden_by: string
+          hidden_by_name?: string
+          id?: string
+          post_id: string
+          reason?: string | null
+        }
+        Update: {
+          created_at?: string
+          ecosystem_id?: string
+          hidden_by?: string
+          hidden_by_name?: string
+          id?: string
+          post_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_post_shop_hides_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_post_shop_hides_post_id_fkey"
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "social_posts"
@@ -3825,6 +3883,10 @@ export type Database = {
         Args: { _ecosystem_id?: string; _handle: string }
         Returns: boolean
       }
+      handle_candidate: {
+        Args: { _email?: string; _name: string }
+        Returns: string
+      }
       has_membership: {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: boolean
@@ -4916,10 +4978,12 @@ export type Database = {
         Args: { _provider: string; _provider_event_id: string }
         Returns: Json
       }
-      social_create_comment: {
-        Args: { _body: string; _post_id: string }
-        Returns: Json
-      }
+      social_create_comment:
+        | { Args: { _body: string; _post_id: string }; Returns: Json }
+        | {
+            Args: { _body: string; _parent_id?: string; _post_id: string }
+            Returns: Json
+          }
       social_create_post: {
         Args: {
           _audience?: string
@@ -4956,6 +5020,7 @@ export type Database = {
           author_role: string
           body: string
           can_delete: boolean
+          can_hide: boolean
           comment_count: number
           created_at: string
           id: string
@@ -4988,6 +5053,40 @@ export type Database = {
           status: string
         }[]
       }
+      social_handle_search: {
+        Args: { _limit?: number; _q: string }
+        Returns: {
+          avatar_path: string
+          full_name: string
+          handle: string
+          user_id: string
+        }[]
+      }
+      social_hidden_posts: {
+        Args: { _eco?: string }
+        Returns: {
+          author_avatar: string
+          author_handle: string
+          author_name: string
+          body: string
+          ecosystem_id: string
+          hidden_at: string
+          hidden_by_name: string
+          image_path: string
+          post_created_at: string
+          post_id: string
+          reason: string
+        }[]
+      }
+      social_hide_post_for_shop: {
+        Args: {
+          _eco?: string
+          _hidden: boolean
+          _post_id: string
+          _reason?: string
+        }
+        Returns: Json
+      }
       social_move: {
         Args: {
           _amount: number
@@ -5009,7 +5108,9 @@ export type Database = {
           body: string
           can_delete: boolean
           created_at: string
+          depth: number
           id: string
+          parent_id: string
         }[]
       }
       social_post_distribution_status: {
@@ -5204,6 +5305,21 @@ export type Database = {
         }[]
       }
       transfer_reversal_info: { Args: { _tx_id: string }; Returns: Json }
+      unique_handle: {
+        Args: { _base: string; _exclude?: string }
+        Returns: string
+      }
+      universe_profile: {
+        Args: { _handle: string }
+        Returns: {
+          avatar_path: string
+          bio: string
+          full_name: string
+          handle: string
+          joined_at: string
+          user_id: string
+        }[]
+      }
       update_credit_purchase_settings:
         | {
             Args: {

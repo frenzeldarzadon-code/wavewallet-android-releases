@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState, PageSection } from "@/components/ui-kit";
-import { GeneralQueueCard } from "@/components/social/general-queue-card";
+import { HiddenPostsCard } from "@/components/social/hidden-posts-card";
 import { EcosystemSocialCard } from "@/components/social/ecosystem-social-card";
 import { PromotionTiersCard } from "@/components/social/promotion-tiers-card";
 import { useSession } from "@/lib/session";
@@ -102,7 +102,7 @@ function AdminSocial() {
         </>
       ) : null}
 
-      <GeneralQueueCard ecosystemId={ecosystemDbId} />
+      <HiddenPostsCard ecosystemId={ecosystemDbId} />
 
       <PageSection
         title="Reported content"

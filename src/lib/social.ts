@@ -102,10 +102,46 @@ export interface FeedPost {
   comment_count: number;
   liked_by_me: boolean;
   created_at: string;
+  /** Global delete — author or platform owner only. */
   can_delete: boolean;
   audience: PostAudience;
   origin_ecosystem_name: string | null;
   author_role: string | null;
+  /** Shop admin may hide this post from their own shop's members. */
+  can_hide?: boolean;
+}
+
+/** A post a shop admin hid from their own members. Still public elsewhere. */
+export interface HiddenPostRow {
+  post_id: string;
+  ecosystem_id: string;
+  hidden_by_name: string;
+  reason: string | null;
+  hidden_at: string;
+  author_name: string;
+  author_handle: string | null;
+  author_avatar: string | null;
+  body: string;
+  image_path: string | null;
+  post_created_at: string;
+}
+
+/** A member suggested while typing an @mention. */
+export interface MentionSuggestion {
+  user_id: string;
+  full_name: string;
+  handle: string;
+  avatar_path: string | null;
+}
+
+/** Public Universe profile — identity only, never wallets or messages. */
+export interface UniverseProfile {
+  user_id: string;
+  full_name: string;
+  handle: string;
+  avatar_path: string | null;
+  bio: string | null;
+  joined_at: string;
 }
 
 /** One shop's decision about a General post. */
@@ -143,6 +179,43 @@ export interface FeedComment {
   body: string;
   created_at: string;
   can_delete: boolean;
+  /** Null for a top-level comment. */
+  parent_id: string | null;
+  /** 1 = comment, 2 = reply, 3 = reply to a reply. Never deeper. */
+  depth: number;
+}
+
+/** Threaded replies stop at three levels, in the UI and in the database. */
+export const MAX_REPLY_DEPTH = 3;
+
+/** A reply box is only offered when the answer would still fit in the thread. */
+export function canReplyTo(depth: number): boolean {
+  return depth < MAX_REPLY_DEPTH;
+}
+
+/**
+ * Orders a flat comment list into a thread: every reply follows its parent,
+ * oldest first, with the depth the database recorded. Orphans (whose parent was
+ * removed) fall back to the top level so no reply ever disappears.
+ */
+export function threadComments(comments: FeedComment[]): FeedComment[] {
+  const byParent = new Map<string, FeedComment[]>();
+  const ids = new Set(comments.map((c) => c.id));
+  for (const c of comments) {
+    const key = c.parent_id && ids.has(c.parent_id) ? c.parent_id : "root";
+    const list = byParent.get(key) ?? [];
+    list.push(c);
+    byParent.set(key, list);
+  }
+  const out: FeedComment[] = [];
+  const walk = (key: string, depth: number) => {
+    for (const c of byParent.get(key) ?? []) {
+      out.push({ ...c, depth: Math.min(depth, MAX_REPLY_DEPTH) });
+      walk(c.id, depth + 1);
+    }
+  };
+  walk("root", 1);
+  return out;
 }
 
 export interface DmThread {
@@ -444,13 +517,65 @@ export async function fetchDistributionStatus(postId: string): Promise<Distribut
   return (data ?? []) as DistributionStatus[];
 }
 
-export async function createComment(postId: string, body: string) {
+export async function createComment(postId: string, body: string, parentId?: string | null) {
   const { data, error } = await supabase.rpc("social_create_comment", {
     _post_id: postId,
     _body: body.trim(),
+    ...(parentId ? { _parent_id: parentId } : {}),
   });
   if (error) fail(error.message);
-  return data as unknown as { comment_id: string; charged: number; balance: number };
+  return data as unknown as {
+    comment_id: string;
+    charged: number;
+    balance: number;
+    depth: number;
+  };
+}
+
+/**
+ * Shop-scoped visibility control. Hides (or restores) a post for the members of
+ * one shop only — the post stays public in the Universe and in every other
+ * shop. The database checks that the caller really moderates that shop and
+ * records who acted, when and why.
+ */
+export async function hidePostForShop(
+  postId: string,
+  hidden: boolean,
+  reason?: string,
+  ecosystemId?: string | null,
+) {
+  const { error } = await supabase.rpc("social_hide_post_for_shop", {
+    _post_id: postId,
+    _hidden: hidden,
+    ...(reason && reason.trim() ? { _reason: reason.trim() } : {}),
+    ...(ecosystemId ? { _eco: ecosystemId } : {}),
+  });
+  if (error) fail(error.message);
+}
+
+export async function fetchHiddenPosts(ecosystemId?: string | null): Promise<HiddenPostRow[]> {
+  const { data, error } = await supabase.rpc("social_hidden_posts", {
+    ...(ecosystemId ? { _eco: ecosystemId } : {}),
+  });
+  if (error) fail(error.message);
+  return (data ?? []) as HiddenPostRow[];
+}
+
+/** Handle/name autocomplete for @mentions. */
+export async function searchHandles(query: string): Promise<MentionSuggestion[]> {
+  const q = query.trim();
+  if (!q) return [];
+  const { data, error } = await supabase.rpc("social_handle_search", { _q: q, _limit: 8 });
+  if (error) return [];
+  return (data ?? []) as MentionSuggestion[];
+}
+
+/** Public Universe profile by handle. Returns null when nobody uses it. */
+export async function fetchUniverseProfile(handle: string): Promise<UniverseProfile | null> {
+  const { data, error } = await supabase.rpc("universe_profile", { _handle: handle });
+  if (error) fail(error.message);
+  const rows = (data ?? []) as UniverseProfile[];
+  return rows[0] ?? null;
 }
 
 export async function toggleLike(postId: string) {
@@ -750,7 +875,7 @@ export function audienceLabel(audience: PostAudience): string {
 /** What the member is told before publishing, per audience. */
 export function audienceHelp(audience: PostAudience): string {
   if (audience === "general")
-    return "Shared with the wider WaveWallet Universe. Each other shop's admin must approve it before it appears in their community — it appears in your own shop right away.";
+    return "Published to the whole WaveWallet Universe straight away — no shop approval is needed. A shop admin may later hide it from their own members, and it stays visible everywhere else.";
   if (audience === "shops")
     return "Shared only with the shop communities you pick. You can only pick shops you are an approved member of.";
   return "Only members and admins of your own shop can see this post.";
