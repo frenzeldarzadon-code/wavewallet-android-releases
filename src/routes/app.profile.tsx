@@ -1,24 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ProfilePage } from "@/components/profile-page";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
+/** The global profile lives in the Universe; shop consoles keep only shop data. */
 export const Route = createFileRoute("/app/profile")({
-  head: () => ({
-    meta: [
-      { title: "My Profile — WaveWallet" },
-      {
-        name: "description",
-        content:
-          "Update your display name, choose a unique @handle and set a profile photo for your WaveWallet account.",
-      },
-      { property: "og:title", content: "My Profile — WaveWallet" },
-      {
-        property: "og:description",
-        content: "Manage your display name, @handle and profile photo.",
-      },
-      { property: "og:type", content: "profile" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
-  component: ProfilePage,
+  beforeLoad: () => {
+    throw redirect({ to: "/universe/profile", replace: true });
+  },
 });
-

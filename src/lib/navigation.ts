@@ -84,9 +84,9 @@ export function restrictNav(nav: Nav, allowed: string[], extra?: NavItem): Nav {
 /* Customer                                                            */
 /* ------------------------------------------------------------------ */
 
-const customerSocial: NavItem[] = [
-  { to: "/app/social", label: "Community", icon: Users },
-  { to: "/app/messages", label: "Messages", icon: MessageSquare },
+const universeNav: NavItem[] = [
+  { to: "/universe", label: "Universe", icon: Users },
+  { to: "/universe/messages", label: "Messages", icon: MessageSquare },
 ];
 
 export function customerNav(): Nav {
@@ -113,7 +113,7 @@ export function customerNav(): Nav {
         { to: "/app/history", label: "Transaction history", icon: History },
       ],
     },
-    ...(SOCIAL_ENABLED ? [{ label: "Community", items: customerSocial }] : []),
+    ...(SOCIAL_ENABLED ? [{ label: "Community", items: universeNav }] : []),
   ];
 }
 
@@ -178,10 +178,7 @@ export function resellerNav(role: Role = "reseller"): Nav {
       ? [
           {
             label: "Community",
-            items: [
-              { to: "/reseller/social", label: "Community", icon: Users },
-              { to: "/reseller/messages", label: "Messages", icon: MessageSquare },
-            ] as NavItem[],
+            items: universeNav,
           },
         ]
       : []),
@@ -244,7 +241,8 @@ export function adminNav(): Nav {
           {
             label: "Community",
             items: [
-              { to: "/admin/social", label: "Community", icon: MessagesSquare },
+              ...universeNav,
+              { to: "/admin/social", label: "Moderation", icon: MessagesSquare },
             ] as NavItem[],
           },
         ]
@@ -304,6 +302,7 @@ export function superAdminNav(): Nav {
         { to: "/super/operator-log", label: "Operator actions", icon: UserCheck },
       ],
     },
+    ...(SOCIAL_ENABLED ? [{ label: "Community", items: universeNav }] : []),
     {
       label: "Account",
       items: [

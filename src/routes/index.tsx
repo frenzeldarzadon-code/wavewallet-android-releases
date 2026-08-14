@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui-kit";
+import { SocialSignIn } from "@/components/auth/social-sign-in";
 import { homeFor } from "@/lib/session";
 import {
   loadAuthContext,
@@ -103,7 +104,14 @@ function LoginPage() {
   useEffect(() => {
     let active = true;
     loadAuthContext().then((ctx) => {
-      if (active && ctx) navigate({ to: homeFor(ctx.role), replace: true });
+      if (!active || !ctx) return;
+      // A brand-new social sign-in has no shop membership yet — land them in
+      // the Universe directory instead of a console they cannot use.
+      if (!ctx.ecosystem && ctx.role === "customer") {
+        navigate({ to: "/universe/shops", replace: true });
+        return;
+      }
+      navigate({ to: homeFor(ctx.role), replace: true });
     });
     // Signed-out visitors cannot read the shops table directly (row-level
     // security), so the open-signup list comes from a safe public function
@@ -280,6 +288,7 @@ function LoginPage() {
                   Forgot your password?
                 </Link>
               </p>
+              <SocialSignIn disabled={busy} />
               <p className="text-center text-[11px] text-muted-foreground">
                 Your role and ecosystem are resolved by the server after sign-in.
               </p>

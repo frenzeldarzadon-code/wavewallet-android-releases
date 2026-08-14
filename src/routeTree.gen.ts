@@ -17,6 +17,7 @@ import { Route as ResellerRouteImport } from './routes/reseller'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SuperRouteImport } from './routes/super'
+import { Route as UniverseRouteImport } from './routes/universe'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
 import { Route as AdminCreditsRouteImport } from './routes/admin.credits'
@@ -74,6 +75,10 @@ import { Route as SuperProfileRouteImport } from './routes/super.profile'
 import { Route as SuperReportsRouteImport } from './routes/super.reports'
 import { Route as SuperSettingsRouteImport } from './routes/super.settings'
 import { Route as SuperSubscriptionsRouteImport } from './routes/super.subscriptions'
+import { Route as UniverseIndexRouteImport } from './routes/universe.index'
+import { Route as UniverseMessagesRouteImport } from './routes/universe.messages'
+import { Route as UniverseProfileRouteImport } from './routes/universe.profile'
+import { Route as UniverseShopsRouteImport } from './routes/universe.shops'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -113,6 +118,11 @@ const SetupRoute = SetupRouteImport.update({
 const SuperRoute = SuperRouteImport.update({
   id: '/super',
   path: '/super',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UniverseRoute = UniverseRouteImport.update({
+  id: '/universe',
+  path: '/universe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -400,6 +410,26 @@ const SuperSubscriptionsRoute = SuperSubscriptionsRouteImport.update({
   path: '/subscriptions',
   getParentRoute: () => SuperRoute,
 } as any)
+const UniverseIndexRoute = UniverseIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => UniverseRoute,
+} as any)
+const UniverseMessagesRoute = UniverseMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => UniverseRoute,
+} as any)
+const UniverseProfileRoute = UniverseProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => UniverseRoute,
+} as any)
+const UniverseShopsRoute = UniverseShopsRouteImport.update({
+  id: '/shops',
+  path: '/shops',
+  getParentRoute: () => UniverseRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -410,6 +440,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/super': typeof SuperRouteWithChildren
+  '/universe': typeof UniverseRouteWithChildren
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -463,10 +494,14 @@ export interface FileRoutesByFullPath {
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
+  '/universe/messages': typeof UniverseMessagesRoute
+  '/universe/profile': typeof UniverseProfileRoute
+  '/universe/shops': typeof UniverseShopsRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/reseller/': typeof ResellerIndexRoute
   '/super/': typeof SuperIndexRoute
+  '/universe/': typeof UniverseIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -526,10 +561,14 @@ export interface FileRoutesByTo {
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
+  '/universe/messages': typeof UniverseMessagesRoute
+  '/universe/profile': typeof UniverseProfileRoute
+  '/universe/shops': typeof UniverseShopsRoute
   '/admin': typeof AdminIndexRoute
   '/app': typeof AppIndexRoute
   '/reseller': typeof ResellerIndexRoute
   '/super': typeof SuperIndexRoute
+  '/universe': typeof UniverseIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -541,6 +580,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/super': typeof SuperRouteWithChildren
+  '/universe': typeof UniverseRouteWithChildren
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -594,10 +634,14 @@ export interface FileRoutesById {
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
+  '/universe/messages': typeof UniverseMessagesRoute
+  '/universe/profile': typeof UniverseProfileRoute
+  '/universe/shops': typeof UniverseShopsRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/reseller/': typeof ResellerIndexRoute
   '/super/': typeof SuperIndexRoute
+  '/universe/': typeof UniverseIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -610,6 +654,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/setup'
     | '/super'
+    | '/universe'
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
@@ -663,10 +708,14 @@ export interface FileRouteTypes {
     | '/super/reports'
     | '/super/settings'
     | '/super/subscriptions'
+    | '/universe/messages'
+    | '/universe/profile'
+    | '/universe/shops'
     | '/admin/'
     | '/app/'
     | '/reseller/'
     | '/super/'
+    | '/universe/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -726,10 +775,14 @@ export interface FileRouteTypes {
     | '/super/reports'
     | '/super/settings'
     | '/super/subscriptions'
+    | '/universe/messages'
+    | '/universe/profile'
+    | '/universe/shops'
     | '/admin'
     | '/app'
     | '/reseller'
     | '/super'
+    | '/universe'
   id:
     | '__root__'
     | '/'
@@ -740,6 +793,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/setup'
     | '/super'
+    | '/universe'
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
@@ -793,10 +847,14 @@ export interface FileRouteTypes {
     | '/super/reports'
     | '/super/settings'
     | '/super/subscriptions'
+    | '/universe/messages'
+    | '/universe/profile'
+    | '/universe/shops'
     | '/admin/'
     | '/app/'
     | '/reseller/'
     | '/super/'
+    | '/universe/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -808,6 +866,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SetupRoute: typeof SetupRoute
   SuperRoute: typeof SuperRouteWithChildren
+  UniverseRoute: typeof UniverseRouteWithChildren
   JoinSlugRoute: typeof JoinSlugRoute
 }
 
@@ -867,6 +926,13 @@ declare module '@tanstack/react-router' {
       path: '/super'
       fullPath: '/super'
       preLoaderRoute: typeof SuperRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/universe': {
+      id: '/universe'
+      path: '/universe'
+      fullPath: '/universe'
+      preLoaderRoute: typeof UniverseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -1268,6 +1334,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperSubscriptionsRouteImport
       parentRoute: typeof SuperRoute
     }
+    '/universe/': {
+      id: '/universe/'
+      path: '/'
+      fullPath: '/universe/'
+      preLoaderRoute: typeof UniverseIndexRouteImport
+      parentRoute: typeof UniverseRoute
+    }
+    '/universe/messages': {
+      id: '/universe/messages'
+      path: '/messages'
+      fullPath: '/universe/messages'
+      preLoaderRoute: typeof UniverseMessagesRouteImport
+      parentRoute: typeof UniverseRoute
+    }
+    '/universe/profile': {
+      id: '/universe/profile'
+      path: '/profile'
+      fullPath: '/universe/profile'
+      preLoaderRoute: typeof UniverseProfileRouteImport
+      parentRoute: typeof UniverseRoute
+    }
+    '/universe/shops': {
+      id: '/universe/shops'
+      path: '/shops'
+      fullPath: '/universe/shops'
+      preLoaderRoute: typeof UniverseShopsRouteImport
+      parentRoute: typeof UniverseRoute
+    }
   }
 }
 
@@ -1417,6 +1511,24 @@ const SuperRouteChildren: SuperRouteChildren = {
 
 const SuperRouteWithChildren = SuperRoute._addFileChildren(SuperRouteChildren)
 
+interface UniverseRouteChildren {
+  UniverseMessagesRoute: typeof UniverseMessagesRoute
+  UniverseProfileRoute: typeof UniverseProfileRoute
+  UniverseShopsRoute: typeof UniverseShopsRoute
+  UniverseIndexRoute: typeof UniverseIndexRoute
+}
+
+const UniverseRouteChildren: UniverseRouteChildren = {
+  UniverseMessagesRoute: UniverseMessagesRoute,
+  UniverseProfileRoute: UniverseProfileRoute,
+  UniverseShopsRoute: UniverseShopsRoute,
+  UniverseIndexRoute: UniverseIndexRoute,
+}
+
+const UniverseRouteWithChildren = UniverseRoute._addFileChildren(
+  UniverseRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
@@ -1426,6 +1538,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SetupRoute: SetupRoute,
   SuperRoute: SuperRouteWithChildren,
+  UniverseRoute: UniverseRouteWithChildren,
   JoinSlugRoute: JoinSlugRoute,
 }
 export const routeTree = rootRouteImport
