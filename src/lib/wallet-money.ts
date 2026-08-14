@@ -122,6 +122,17 @@ export function snapshotQuote(row: Pick<WithdrawalRequest, "credits" | "gross_ph
   };
 }
 
+/**
+ * Credits a member keeps after the withdrawal fee. Presentation helper: the
+ * fee percent is the authoritative snapshot, the peso valuation is never shown
+ * to members.
+ */
+export function creditsAfterFee(credits: number, feePercent: number): number {
+  const c = Number(credits) || 0;
+  const f = Number(feePercent) || 0;
+  return round2(c - (c * f) / 100);
+}
+
 export function describeRate(s: MoneySettings): string {
   return `${s.creditsPerUnit.toLocaleString()} credits = ₱${s.phpPerUnit.toLocaleString()}`;
 }
