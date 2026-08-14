@@ -1,13 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AlertTriangle, ArrowRight, Coins, Link2, Ticket, Users } from "lucide-react";
+import { ArrowRight, Coins, Link2, Ticket, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PageSection, StatCard, StatusBadge, subscriptionTone } from "@/components/ui-kit";
+import { PageSection, StatCard } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminEarningsPanel } from "@/components/admin-earnings-panel";
-import { peso, shortDate, shortDateTime, statusLabel } from "@/lib/wavewallet";
+import { peso, shortDateTime } from "@/lib/wavewallet";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
@@ -15,12 +15,12 @@ export const Route = createFileRoute("/admin/")({
       { title: "Admin Dashboard — WaveWallet" },
       {
         name: "description",
-        content: "Ecosystem overview: members, resellers, outstanding credits and points, subscription and recent activity.",
+        content: "Shop overview: members, resellers, outstanding credits and points, ratings and recent activity.",
       },
       { property: "og:title", content: "Admin Dashboard — WaveWallet" },
       {
         property: "og:description",
-        content: "Ecosystem overview: members, resellers, outstanding credits and points, subscription and recent activity.",
+        content: "Shop overview: members, resellers, outstanding credits and points, ratings and recent activity.",
       },
     ],
   }),
@@ -79,7 +79,6 @@ function AdminDashboard() {
   }, [ecosystemDbId]);
 
   if (!ecosystem) return null;
-  const sub = ecosystem.subscription;
 
   return (
     <>
@@ -87,7 +86,7 @@ function AdminDashboard() {
 
       <PageSection
         title={ecosystem.name}
-        description="Live figures from your ecosystem — nothing here is shared with other shops."
+        description="Live figures from your shop — nothing here is shared with other shops."
       >
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           <StatCard
@@ -145,7 +144,7 @@ function AdminDashboard() {
 
       <PageSection
         title="Recent activity"
-        description="Audit trail for this ecosystem."
+        description="Audit trail for this shop."
         action={
           <Button asChild variant="ghost" size="sm">
             <Link to="/admin/customers">
@@ -187,7 +186,7 @@ function AdminDashboard() {
             <div>
               <p className="text-sm font-medium">Customer signup link</p>
               <p className="text-xs text-muted-foreground">
-                Share /join/{ecosystem.slug} to onboard customers straight into this ecosystem.
+                Share /join/{ecosystem.slug} to onboard customers straight into this shop.
               </p>
             </div>
           </div>
