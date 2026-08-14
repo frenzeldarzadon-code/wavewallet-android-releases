@@ -3683,6 +3683,16 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      joinable_ecosystems: {
+        Args: never
+        Returns: {
+          description: string
+          id: string
+          name: string
+          pending: boolean
+          slug: string
+        }[]
+      }
       list_admin_invitations: {
         Args: never
         Returns: {
@@ -3836,6 +3846,16 @@ export type Database = {
       months_for_payment: {
         Args: { _amount: number; _rate: number }
         Returns: number
+      }
+      my_applications: {
+        Args: never
+        Returns: {
+          created_at: string
+          decision_reason: string
+          ecosystem_id: string
+          ecosystem_name: string
+          status: string
+        }[]
       }
       my_impersonation: {
         Args: never
@@ -4067,6 +4087,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      request_join_ecosystem: {
+        Args: { _ecosystem_id: string }
+        Returns: string
       }
       request_redemption: {
         Args: { _reward_id: string }
