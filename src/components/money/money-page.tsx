@@ -357,6 +357,13 @@ export function MoneyPage() {
         </TabsContent>
 
         <TabsContent value="in" className="mt-4 space-y-4">
+          <PageSection
+            title="Where to send your payment"
+            description="Pay to one of the accounts below, then submit your cash in request with the reference number."
+          >
+            <PaymentMethodCards methods={methods} selectedId={methodId} onSelect={setMethodId} />
+          </PageSection>
+
           <Card className="shadow-[var(--shadow-card)]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm">
