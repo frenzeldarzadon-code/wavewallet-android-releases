@@ -159,12 +159,15 @@ export type Database = {
           credits: number
           decision_reason: string | null
           ecosystem_id: string | null
+          fee_percent: number
+          fee_php: number
           id: string
           ledger_id: string | null
           method_details: Json
           method_id: string | null
           method_name: string
           method_type: string
+          net_php: number | null
           notes: string | null
           payer_reference: string | null
           rate_credits: number
@@ -186,12 +189,15 @@ export type Database = {
           credits: number
           decision_reason?: string | null
           ecosystem_id?: string | null
+          fee_percent?: number
+          fee_php?: number
           id?: string
           ledger_id?: string | null
           method_details?: Json
           method_id?: string | null
           method_name: string
           method_type: string
+          net_php?: number | null
           notes?: string | null
           payer_reference?: string | null
           rate_credits: number
@@ -213,12 +219,15 @@ export type Database = {
           credits?: number
           decision_reason?: string | null
           ecosystem_id?: string | null
+          fee_percent?: number
+          fee_php?: number
           id?: string
           ledger_id?: string | null
           method_details?: Json
           method_id?: string | null
           method_name?: string
           method_type?: string
+          net_php?: number | null
           notes?: string | null
           payer_reference?: string | null
           rate_credits?: number
@@ -1610,6 +1619,7 @@ export type Database = {
           admin_credit_discount_percent: number
           admin_voucher_discount_percent: number
           billing_period: string
+          cash_in_fee_percent: number
           cash_out_credits_per_unit: number
           cash_out_php_per_unit: number
           cashback_reseller_percent: number
@@ -1641,6 +1651,7 @@ export type Database = {
           admin_credit_discount_percent?: number
           admin_voucher_discount_percent?: number
           billing_period?: string
+          cash_in_fee_percent?: number
           cash_out_credits_per_unit?: number
           cash_out_php_per_unit?: number
           cashback_reseller_percent?: number
@@ -1672,6 +1683,7 @@ export type Database = {
           admin_credit_discount_percent?: number
           admin_voucher_discount_percent?: number
           billing_period?: string
+          cash_in_fee_percent?: number
           cash_out_credits_per_unit?: number
           cash_out_php_per_unit?: number
           cashback_reseller_percent?: number
@@ -4071,12 +4083,15 @@ export type Database = {
           credits: number
           decision_reason: string | null
           ecosystem_id: string | null
+          fee_percent: number
+          fee_php: number
           id: string
           ledger_id: string | null
           method_details: Json
           method_id: string | null
           method_name: string
           method_type: string
+          net_php: number | null
           notes: string | null
           payer_reference: string | null
           rate_credits: number
@@ -4708,6 +4723,7 @@ export type Database = {
       money_settings: {
         Args: never
         Returns: {
+          cash_in_fee_percent: number
           cashback_reseller: number
           cashback_subreseller: number
           credits_per_unit: number
@@ -5140,12 +5156,15 @@ export type Database = {
           credits: number
           decision_reason: string | null
           ecosystem_id: string | null
+          fee_percent: number
+          fee_php: number
           id: string
           ledger_id: string | null
           method_details: Json
           method_id: string | null
           method_name: string
           method_type: string
+          net_php: number | null
           notes: string | null
           payer_reference: string | null
           rate_credits: number
@@ -5300,12 +5319,15 @@ export type Database = {
           credits: number
           decision_reason: string | null
           ecosystem_id: string | null
+          fee_percent: number
+          fee_php: number
           id: string
           ledger_id: string | null
           method_details: Json
           method_id: string | null
           method_name: string
           method_type: string
+          net_php: number | null
           notes: string | null
           payer_reference: string | null
           rate_credits: number
@@ -5753,6 +5775,7 @@ export type Database = {
       }
       set_platform_money_settings: {
         Args: {
+          _cash_in_fee?: number
           _cashback_reseller: number
           _cashback_subreseller: number
           _credits_per_unit: number
@@ -5764,6 +5787,7 @@ export type Database = {
           admin_credit_discount_percent: number
           admin_voucher_discount_percent: number
           billing_period: string
+          cash_in_fee_percent: number
           cash_out_credits_per_unit: number
           cash_out_php_per_unit: number
           cashback_reseller_percent: number
@@ -6238,6 +6262,7 @@ export type Database = {
           bio: string
           full_name: string
           handle: string
+          is_platform: boolean
           joined_at: string
           user_id: string
         }[]
@@ -6269,6 +6294,7 @@ export type Database = {
               admin_credit_discount_percent: number
               admin_voucher_discount_percent: number
               billing_period: string
+              cash_in_fee_percent: number
               cash_out_credits_per_unit: number
               cash_out_php_per_unit: number
               cashback_reseller_percent: number
@@ -6317,6 +6343,7 @@ export type Database = {
               admin_credit_discount_percent: number
               admin_voucher_discount_percent: number
               billing_period: string
+              cash_in_fee_percent: number
               cash_out_credits_per_unit: number
               cash_out_php_per_unit: number
               cashback_reseller_percent: number
@@ -6527,6 +6554,7 @@ export type Database = {
           admin_credit_discount_percent: number
           admin_voucher_discount_percent: number
           billing_period: string
+          cash_in_fee_percent: number
           cash_out_credits_per_unit: number
           cash_out_php_per_unit: number
           cashback_reseller_percent: number
