@@ -102,6 +102,56 @@ export type Database = {
           },
         ]
       }
+      business_expenses: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string
+          created_by: string
+          created_by_name: string | null
+          description: string
+          ecosystem_id: string | null
+          id: string
+          scope: string
+          spent_at: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category?: string | null
+          created_at?: string
+          created_by: string
+          created_by_name?: string | null
+          description: string
+          ecosystem_id?: string | null
+          id?: string
+          scope: string
+          spent_at?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          created_by?: string
+          created_by_name?: string | null
+          description?: string
+          ecosystem_id?: string | null
+          id?: string
+          scope?: string
+          spent_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_expenses_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cash_in_requests: {
         Row: {
           amount_php: number
@@ -3394,6 +3444,7 @@ export type Database = {
         Args: { _reason?: string; _user_id: string }
         Returns: undefined
       }
+      delete_expense: { Args: { _id: string }; Returns: boolean }
       delete_payment_method: { Args: { _id: string }; Returns: undefined }
       delete_social_promotion_tier: {
         Args: { _tier_id: string }
@@ -3854,6 +3905,35 @@ export type Database = {
         Returns: Json
       }
       real_super_admin_exists: { Args: never; Returns: boolean }
+      record_expense: {
+        Args: {
+          _amount: number
+          _category?: string
+          _description: string
+          _ecosystem_id?: string
+          _scope?: string
+          _spent_at?: string
+        }
+        Returns: {
+          amount: number
+          category: string | null
+          created_at: string
+          created_by: string
+          created_by_name: string | null
+          description: string
+          ecosystem_id: string | null
+          id: string
+          scope: string
+          spent_at: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "business_expenses"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       refund_voucher_sale: {
         Args: { _reason: string; _sale_id: string }
         Returns: {

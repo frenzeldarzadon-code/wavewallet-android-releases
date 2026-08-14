@@ -367,3 +367,54 @@ export function periodTotals(rows: EarningRow[], types?: EarningType[]): PeriodT
   }
   return out;
 }
+
+/**
+ * Generic today / month / quarter / year rollup for any dated amount, using the
+ * same reporting-timezone calendar boundaries as `periodTotals`. Shared by the
+ * expense, points-earnings and cash-out-fee dashboards so every role's periods
+ * are computed identically.
+ */
+export function periodTotalsOf<T>(
+  items: T[],
+  at: (item: T) => string | Date,
+  amount: (item: T) => number,
+): PeriodTotals {
+  const now = zonedParts(new Date());
+  const q = Math.floor((now.month - 1) / 3);
+  const out: PeriodTotals = { today: 0, month: 0, quarter: 0, year: 0 };
+  for (const item of items) {
+    const value = amount(item);
+    if (!value) continue;
+    const p = zonedParts(at(item));
+    if (p.year !== now.year) continue;
+    out.year += value;
+    if (Math.floor((p.month - 1) / 3) === q) out.quarter += value;
+    if (p.month === now.month) {
+      out.month += value;
+      if (p.day === now.day) out.today += value;
+    }
+  }
+  return out;
+}
+
+/** Element-wise A − B for the four dashboard periods (earnings less expenses). */
+export function subtractPeriods(a: PeriodTotals, b: PeriodTotals): PeriodTotals {
+  return {
+    today: a.today - b.today,
+    month: a.month - b.month,
+    quarter: a.quarter - b.quarter,
+    year: a.year - b.year,
+  };
+}
+
+/** Element-wise A + B for the four dashboard periods. */
+export function addPeriods(a: PeriodTotals, b: PeriodTotals): PeriodTotals {
+  return {
+    today: a.today + b.today,
+    month: a.month + b.month,
+    quarter: a.quarter + b.quarter,
+    year: a.year + b.year,
+  };
+}
+
+export const EMPTY_PERIOD_TOTALS: PeriodTotals = { today: 0, month: 0, quarter: 0, year: 0 };

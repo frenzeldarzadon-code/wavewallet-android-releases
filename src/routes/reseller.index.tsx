@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react";
+import { ArrowUpRight, Wallet } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, PageSection, StatCard } from "@/components/ui-kit";
-import { EarningsSummaryCards } from "@/components/earnings-summary-cards";
+import { SellerEarningsPanel } from "@/components/seller-earnings-panel";
 import { FacebookSupportCard } from "@/components/facebook-support-card";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
@@ -57,22 +57,15 @@ function ResellerDashboard() {
 
   if (!account || !ecosystem) return null;
 
-  const isSubreseller = account.role === "subreseller";
   const loadsOut = entries.filter((e) => e.reason === "Credit load to customer");
-  const topUps = entries.filter((e) => e.direction === "credit");
-  // Upline commission: paid to a reseller when their subreseller's credits fund
-  // a sale, or when the subreseller buys for themselves.
-  const uplineCommission = entries
-    .filter((e) => e.direction === "credit" && e.entry_kind === "upline_commission")
-    .reduce((s, e) => s + Number(e.amount ?? 0), 0);
-  const saleCreditBack = entries
-    .filter((e) => e.direction === "credit" && e.entry_kind === "sale_commission")
-    .reduce((s, e) => s + Number(e.amount ?? 0), 0);
 
   return (
     <>
-      <PageSection title="Reseller wallet" description={`Closed-loop credits inside ${ecosystem.name}.`}>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <PageSection
+        title="Reseller wallet"
+        description={`Closed-loop credits inside ${ecosystem.name}.`}
+      >
+        <div className="grid grid-cols-2 gap-3">
           <StatCard label="Credit balance" value={peso(balance)} icon={Wallet} tone="positive" />
           <StatCard
             label="Loaded to customers"
@@ -81,42 +74,15 @@ function ResellerDashboard() {
             icon={ArrowUpRight}
             tone="brand"
           />
-          <StatCard
-            label="Credits received"
-            value={peso(topUps.reduce((s, e) => s + e.amount, 0))}
-            hint="Top-ups from your admin"
-            icon={ArrowDownLeft}
-          />
-          <StatCard
-            label="Sales cashback"
-            value={peso(saleCreditBack)}
-            hint="Earned when customers spend the credits you funded"
-            tone="positive"
-          />
-          <StatCard
-            label="Upline commission"
-            value={peso(uplineCommission)}
-            hint={
-              isSubreseller
-                ? "Resellers only — this goes to your parent reseller"
-                : "Earned on your subresellers' sales and purchases"
-            }
-            tone={isSubreseller ? "neutral" : "positive"}
-          />
         </div>
         <p className="mt-2 text-[11px] text-muted-foreground">
-          Your wholesale discount ({account.discountPercent ?? 0}%) is applied automatically at voucher
-          checkout. Credit transfers move exact amounts — no commission is added or deducted.
+          Your wholesale discount ({account.discountPercent ?? 0}%) is applied automatically at
+          voucher checkout. Credit transfers move exact amounts — no commission is added or
+          deducted.
         </p>
       </PageSection>
 
-      <EarningsSummaryCards
-        title="Total benefit (separate from your wallet balance)"
-        description="Cash earnings plus wholesale discounts saved, ledger-backed for the current periods. Credit transfers are face value and never counted."
-        types={["sale_cashback", "upline_commission", "wholesale_discount"]}
-        recipientId={account.id}
-        linkTo="/reseller/earnings"
-      />
+      <SellerEarningsPanel recipientId={account.id} />
 
       <PageSection title="Wallet activity">
         {loading ? (
@@ -134,7 +100,9 @@ function ResellerDashboard() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{e.reason}</p>
                     {commissionBreakdown(e) ? (
-                      <p className="text-[11px] font-medium text-success">{commissionBreakdown(e)}</p>
+                      <p className="text-[11px] font-medium text-success">
+                        {commissionBreakdown(e)}
+                      </p>
                     ) : null}
                     <p className="text-[11px] text-muted-foreground">
                       {shortDateTime(e.created_at)} · {e.tx_id ?? "—"}
