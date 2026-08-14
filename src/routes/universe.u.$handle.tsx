@@ -111,9 +111,11 @@ function UniverseMemberProfile() {
                   </p>
                 </>
               )}
-              {!profile.is_platform && session.account && session.account.id !== profile.user_id ? (
+              {!profile.is_platform && profile.user_id && session.account
+              && session.account.id !== profile.user_id ? (
                 <RelationshipActions userId={profile.user_id} />
               ) : null}
+
               <Button asChild variant="outline" size="sm">
                 <Link to="/universe">Back to the feed</Link>
               </Button>
