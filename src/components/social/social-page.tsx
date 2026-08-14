@@ -340,7 +340,7 @@ export function SocialPage() {
     <>
       <PageSection
         title="Community"
-        description={`Share updates and promote your products with other ${session.ecosystem?.name ?? "shop"} members.`}
+        description={`Share updates and promote your products with the wider WaveWallet Universe.`}
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-3">
@@ -352,161 +352,45 @@ export function SocialPage() {
                   · {state?.daily_allowance ?? 5} free daily
                 </span>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9"
-                  onClick={() => setExchangeOpen(true)}
-                >
-                  Get more
-                </Button>
-              </div>
-            </div>
-
-            {/* Audience choice — mobile-first, always visible before writing. */}
-            <div className="space-y-1.5">
-              <Label>Who can see this?</Label>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {(["ecosystem", "general"] as PostAudience[]).map((a) => (
-                  <button
-                    key={a}
-                    type="button"
-                    onClick={() => setAudience(a)}
-                    aria-pressed={audience === a}
-                    className={
-                      audience === a
-                        ? "rounded-xl border-2 border-primary bg-primary/5 p-3 text-left"
-                        : "rounded-xl border border-border p-3 text-left"
-                    }
-                  >
-                    <span className="flex items-center gap-2 text-sm font-semibold">
-                      {a === "general" ? (
-                        <Globe2 className="size-4 text-primary" aria-hidden />
-                      ) : (
-                        <Users className="size-4 text-primary" aria-hidden />
-                      )}
-                      {audienceLabel(a)}
-                    </span>
-                    <span className="mt-1 block text-xs text-muted-foreground">
-                      {audienceHelp(a)}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <Textarea
-              value={body}
-              onChange={(e) => setBody(e.target.value.slice(0, POST_MAX_CHARS))}
-              rows={3}
-              placeholder={
-                audience === "general"
-                  ? "Share something with the whole WaveWallet network…"
-                  : "Share something with your shop…"
-              }
-              className="min-h-24 text-base"
-            />
-
-
-            {file ? (
-              <div className="space-y-2">
-                <ImageCropper file={file} aspect={SOCIAL_IMAGE_ASPECT} onChange={setCrop} />
-                <Button variant="ghost" size="sm" onClick={() => pickFile(null)}>
-                  <X className="size-4" /> Remove photo
-                </Button>
-              </div>
-            ) : null}
-
-            <div className="flex flex-wrap items-center gap-2">
-              <Label
-                htmlFor="socialPhoto"
-                className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-border px-3 text-sm font-medium"
-              >
-                <ImagePlus className="size-4" /> Photo
-              </Label>
-              <Input
-                id="socialPhoto"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
-              />
-
-              {state?.promotion_enabled && tiers.length > 0 ? (
-                <label className="inline-flex h-11 items-center gap-2 rounded-xl border border-border px-3 text-sm font-medium">
-                  <Megaphone className="size-4 text-primary" aria-hidden />
-                  Promote
-                  <Switch checked={promote} onCheckedChange={setPromote} aria-label="Promote this post" />
-                </label>
-              ) : null}
-
               <Button
-                className="ml-auto h-11"
-                disabled={!body.trim() || posting}
-                onClick={() => setConfirmOpen(true)}
+                variant="outline"
+                size="sm"
+                className="h-9"
+                onClick={() => setExchangeOpen(true)}
               >
-                <Send className="size-4" /> Post
+                Get more
               </Button>
             </div>
 
-            {promote && tiers.length > 0 ? (
-              <div className="grid gap-2 rounded-xl border border-primary/40 bg-primary/5 p-3 sm:grid-cols-2">
-                <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="promoTier">Promotion type</Label>
-                  <Select value={tierId} onValueChange={setTierId}>
-                    <SelectTrigger id="promoTier" className="h-11">
-                      <SelectValue placeholder="Choose a promotion" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tiers.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          {t.name} · {tierDuration(t.duration_hours)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {tier?.description ? (
-                    <p className="text-xs text-muted-foreground">{tier.description}</p>
-                  ) : null}
-                </div>
-                {tier?.currency === "both" ? (
-                  <div className="space-y-1.5 sm:col-span-2">
-                    <Label>Pay with</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        type="button"
-                        variant={payWith === "social" ? "default" : "outline"}
-                        className="h-11"
-                        onClick={() => setPayWith("social")}
-                      >
-                        {tier.price_social} social credits
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={payWith === "points" ? "default" : "outline"}
-                        className="h-11"
-                        onClick={() => setPayWith("points")}
-                      >
-                        {tier.price_points} points
-                      </Button>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-
-            <p className="text-xs text-muted-foreground">{audienceHelp(audience)}</p>
+            <Button
+              className="h-12 w-full text-base"
+              disabled={!state}
+              onClick={() => setComposerOpen(true)}
+            >
+              <Send className="size-4" /> Create post
+            </Button>
 
             <p className="text-xs text-muted-foreground">
-
-              {promote
-                ? `${tier?.name ?? "Promotion"} costs ${charge.amount} ${charge.currency === "points" ? "points" : "social credits"} and stays highlighted for ${tierDuration(tier?.duration_hours ?? 24)}. Replies to a promoted post are free for everyone — only you pay.`
-                : `A normal post costs ${state?.post_cost ?? 1} social credit. Likes are always free; replies cost ${state?.comment_cost ?? 1} social credit unless the post is promoted.`}
+              Write first — you choose where to share it and whether to promote it before anything is
+              deducted. A normal post costs {state?.post_cost ?? 1} social credit.
             </p>
           </CardContent>
         </Card>
       </PageSection>
+
+      {state ? (
+        <PostComposer
+          open={composerOpen}
+          onOpenChange={setComposerOpen}
+          state={state}
+          tiers={tiers}
+          userId={account.id}
+          pointsBalance={account.pointsBalance ?? 0}
+          ownShopName={session.ecosystem?.name ?? "My shop"}
+          onPosted={refresh}
+        />
+      ) : null}
+
 
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading the feed…</p>
