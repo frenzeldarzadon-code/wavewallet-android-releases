@@ -882,6 +882,7 @@ export type Database = {
           credit_exchange_rate: number | null
           daily_allowance: number | null
           ecosystem_id: string
+          free_posts_per_day: number | null
           points_exchange_rate: number | null
           post_cost: number | null
           promotion_enabled: boolean | null
@@ -895,6 +896,7 @@ export type Database = {
           credit_exchange_rate?: number | null
           daily_allowance?: number | null
           ecosystem_id: string
+          free_posts_per_day?: number | null
           points_exchange_rate?: number | null
           post_cost?: number | null
           promotion_enabled?: boolean | null
@@ -908,6 +910,7 @@ export type Database = {
           credit_exchange_rate?: number | null
           daily_allowance?: number | null
           ecosystem_id?: string
+          free_posts_per_day?: number | null
           points_exchange_rate?: number | null
           post_cost?: number | null
           promotion_enabled?: boolean | null
@@ -2544,6 +2547,7 @@ export type Database = {
           removed_reason: string | null
           status: string
           updated_at: string
+          used_free_post: boolean
         }
         Insert: {
           audience?: string
@@ -2570,6 +2574,7 @@ export type Database = {
           removed_reason?: string | null
           status?: string
           updated_at?: string
+          used_free_post?: boolean
         }
         Update: {
           audience?: string
@@ -2596,6 +2601,7 @@ export type Database = {
           removed_reason?: string | null
           status?: string
           updated_at?: string
+          used_free_post?: boolean
         }
         Relationships: [
           {
@@ -2734,6 +2740,7 @@ export type Database = {
           created_at: string
           credit_exchange_rate: number
           daily_allowance: number
+          free_posts_per_day: number
           id: number
           image_max_kb: number
           image_max_px: number
@@ -2758,6 +2765,7 @@ export type Database = {
           created_at?: string
           credit_exchange_rate?: number
           daily_allowance?: number
+          free_posts_per_day?: number
           id?: number
           image_max_kb?: number
           image_max_px?: number
@@ -2782,6 +2790,7 @@ export type Database = {
           created_at?: string
           credit_exchange_rate?: number
           daily_allowance?: number
+          free_posts_per_day?: number
           id?: number
           image_max_kb?: number
           image_max_px?: number
@@ -5031,6 +5040,7 @@ export type Database = {
           promotion_tier_name: string
         }[]
       }
+      social_free_posts_used: { Args: { _user: string }; Returns: number }
       social_general_queue: {
         Args: { _eco?: string; _status?: string }
         Returns: {
@@ -5050,6 +5060,21 @@ export type Database = {
           reviewed_by_name: string
           status: string
         }[]
+      }
+      social_gift_audit: {
+        Args: { _limit?: number }
+        Returns: {
+          amount: number
+          created_at: string
+          post_id: string
+          recipient_name: string
+          sender_balance_after: number
+          sender_name: string
+        }[]
+      }
+      social_gift_credits: {
+        Args: { _amount: number; _note?: string; _post_id: string }
+        Returns: Json
       }
       social_handle_search: {
         Args: { _limit?: number; _q: string }
@@ -5095,6 +5120,17 @@ export type Database = {
           _user: string
         }
         Returns: number
+      }
+      social_my_credit_history: {
+        Args: { _limit?: number }
+        Returns: {
+          amount: number
+          balance_after: number
+          created_at: string
+          direction: string
+          reason: string
+          source: string
+        }[]
       }
       social_post_comments: {
         Args: { _post_id: string }
@@ -5603,58 +5639,114 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      update_social_settings: {
-        Args: {
-          _ad_daily_limit: number
-          _ad_provider?: string
-          _ad_reward_amount: number
-          _ads_enabled: boolean
-          _allow_admin_overrides?: boolean
-          _comment_cost: number
-          _credit_exchange_rate: number
-          _daily_allowance: number
-          _image_max_kb?: number
-          _image_max_px?: number
-          _max_daily_allowance?: number
-          _max_exchange_rate?: number
-          _points_exchange_rate: number
-          _post_cost: number
-          _promotion_cost_points: number
-          _promotion_cost_social: number
-          _promotion_currency: string
-          _promotion_enabled: boolean
-        }
-        Returns: {
-          ad_daily_limit: number
-          ad_provider: string
-          ad_reward_amount: number
-          ads_enabled: boolean
-          allow_admin_overrides: boolean
-          comment_cost: number
-          created_at: string
-          credit_exchange_rate: number
-          daily_allowance: number
-          id: number
-          image_max_kb: number
-          image_max_px: number
-          max_daily_allowance: number
-          max_exchange_rate: number
-          points_exchange_rate: number
-          post_cost: number
-          promotion_cost_points: number
-          promotion_cost_social: number
-          promotion_currency: string
-          promotion_enabled: boolean
-          updated_at: string
-          updated_by: string | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "social_settings"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+      update_social_settings:
+        | {
+            Args: {
+              _ad_daily_limit: number
+              _ad_provider?: string
+              _ad_reward_amount: number
+              _ads_enabled: boolean
+              _allow_admin_overrides?: boolean
+              _comment_cost: number
+              _credit_exchange_rate: number
+              _daily_allowance: number
+              _image_max_kb?: number
+              _image_max_px?: number
+              _max_daily_allowance?: number
+              _max_exchange_rate?: number
+              _points_exchange_rate: number
+              _post_cost: number
+              _promotion_cost_points: number
+              _promotion_cost_social: number
+              _promotion_currency: string
+              _promotion_enabled: boolean
+            }
+            Returns: {
+              ad_daily_limit: number
+              ad_provider: string
+              ad_reward_amount: number
+              ads_enabled: boolean
+              allow_admin_overrides: boolean
+              comment_cost: number
+              created_at: string
+              credit_exchange_rate: number
+              daily_allowance: number
+              free_posts_per_day: number
+              id: number
+              image_max_kb: number
+              image_max_px: number
+              max_daily_allowance: number
+              max_exchange_rate: number
+              points_exchange_rate: number
+              post_cost: number
+              promotion_cost_points: number
+              promotion_cost_social: number
+              promotion_currency: string
+              promotion_enabled: boolean
+              updated_at: string
+              updated_by: string | null
+            }
+            SetofOptions: {
+              from: "*"
+              to: "social_settings"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: {
+              _ad_daily_limit: number
+              _ad_provider?: string
+              _ad_reward_amount: number
+              _ads_enabled: boolean
+              _allow_admin_overrides?: boolean
+              _comment_cost: number
+              _credit_exchange_rate: number
+              _daily_allowance: number
+              _free_posts_per_day?: number
+              _image_max_kb?: number
+              _image_max_px?: number
+              _max_daily_allowance?: number
+              _max_exchange_rate?: number
+              _points_exchange_rate: number
+              _post_cost: number
+              _promotion_cost_points: number
+              _promotion_cost_social: number
+              _promotion_currency: string
+              _promotion_enabled: boolean
+            }
+            Returns: {
+              ad_daily_limit: number
+              ad_provider: string
+              ad_reward_amount: number
+              ads_enabled: boolean
+              allow_admin_overrides: boolean
+              comment_cost: number
+              created_at: string
+              credit_exchange_rate: number
+              daily_allowance: number
+              free_posts_per_day: number
+              id: number
+              image_max_kb: number
+              image_max_px: number
+              max_daily_allowance: number
+              max_exchange_rate: number
+              points_exchange_rate: number
+              post_cost: number
+              promotion_cost_points: number
+              promotion_cost_social: number
+              promotion_currency: string
+              promotion_enabled: boolean
+              updated_at: string
+              updated_by: string | null
+            }
+            SetofOptions: {
+              from: "*"
+              to: "social_settings"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       upline_commission_rate_for: {
         Args: { _ecosystem_id: string }
         Returns: number

@@ -6,6 +6,11 @@ import {
   commentCharge,
   exchangeGain,
   postCharge,
+  giftIssue,
+  canGift,
+  freePostDisclosure,
+  LIKE_COST,
+  DM_COST,
   relativeTime,
   sourceLabel,
   tierDuration,
@@ -48,21 +53,23 @@ const state = {
   promotion_currency: "social" as const,
   promotion_cost_social: 20,
   promotion_cost_points: 20,
+  free_posts_left: 0,
 };
 
 describe("post charges", () => {
   it("charges one social credit for a normal post", () => {
-    expect(postCharge(state, false)).toEqual({ amount: 1, currency: "social" });
+    expect(postCharge(state, false)).toEqual({ amount: 1, currency: "social", free: false });
   });
 
   it("charges the promotion fee in social credits by default", () => {
-    expect(postCharge(state, true)).toEqual({ amount: 20, currency: "social" });
+    expect(postCharge(state, true)).toEqual({ amount: 20, currency: "social", free: false });
   });
 
   it("charges points when the platform configures points promotions", () => {
     expect(postCharge({ ...state, promotion_currency: "points" }, true)).toEqual({
       amount: 20,
       currency: "points",
+      free: false,
     });
   });
 
@@ -152,19 +159,20 @@ describe("presentation helpers", () => {
 
 describe("promotion tiers", () => {
   it("charges the tier price in the chosen currency", () => {
-    expect(postCharge(state, true, tier(), "points")).toEqual({ amount: 15, currency: "points" });
-    expect(postCharge(state, true, tier(), "social")).toEqual({ amount: 30, currency: "social" });
+    expect(postCharge(state, true, tier(), "points")).toEqual({ amount: 15, currency: "points", free: false });
+    expect(postCharge(state, true, tier(), "social")).toEqual({ amount: 30, currency: "social", free: false });
   });
 
   it("ignores the requested currency when the tier only accepts one", () => {
     expect(postCharge(state, true, tier({ currency: "points" }), "social")).toEqual({
       amount: 15,
       currency: "points",
+      free: false,
     });
   });
 
   it("falls back to the shop promotion price when no tier is chosen", () => {
-    expect(postCharge(state, true, null, "social")).toEqual({ amount: 20, currency: "social" });
+    expect(postCharge(state, true, null, "social")).toEqual({ amount: 20, currency: "social", free: false });
   });
 
   it("hides inactive and reseller-only tiers from ordinary members", () => {
@@ -237,9 +245,10 @@ describe("universe composer flow", () => {
       promotion_currency: "social" as const,
       promotion_cost_social: 20,
       promotion_cost_points: 200,
+      free_posts_left: 0,
     };
-    expect(postCharge(state, false)).toEqual({ amount: 1, currency: "social" });
-    expect(postCharge(state, true)).toEqual({ amount: 20, currency: "social" });
+    expect(postCharge(state, false)).toEqual({ amount: 1, currency: "social", free: false });
+    expect(postCharge(state, true)).toEqual({ amount: 20, currency: "social", free: false });
   });
 
   it("badges operators only", () => {
@@ -289,5 +298,70 @@ describe("threaded replies", () => {
   it("keeps a reply visible when its parent is gone", () => {
     const flat = [c("orphan", "deleted", 2, "2026-01-01T00:00:00Z")];
     expect(threadComments(flat).map((x) => [x.id, x.depth])).toEqual([["orphan", 1]]);
+  });
+});
+
+describe("free posts per day", () => {
+  it("makes an ordinary post free while the daily allowance lasts", () => {
+    expect(postCharge({ ...state, free_posts_left: 1 }, false)).toEqual({
+      amount: 0,
+      currency: "social",
+      free: true,
+    });
+  });
+
+  it("charges paid social credits once the allowance is used", () => {
+    expect(postCharge({ ...state, free_posts_left: 0 }, false)).toEqual({
+      amount: 1,
+      currency: "social",
+      free: false,
+    });
+  });
+
+  it("never makes a promotion free, even with a free post left", () => {
+    expect(postCharge({ ...state, free_posts_left: 5 }, true).amount).toBe(20);
+  });
+
+  it("follows the platform owner's configured allowance", () => {
+    const three = freePostDisclosure({ free_posts_left: 3, free_posts_per_day: 3, post_cost: 1 });
+    expect(three[0]).toBe("Free posts remaining today: 3 of 3");
+    const none = freePostDisclosure({ free_posts_left: 0, free_posts_per_day: 1, post_cost: 2 });
+    expect(none[1]).toMatch(/cost 2 paid social credits/);
+    expect(none[2]).toMatch(/cannot be gifted/i);
+  });
+
+  it("keeps likes, replies and DMs free", () => {
+    expect(LIKE_COST).toBe(0);
+    expect(DM_COST).toBe(0);
+    expect(commentCharge()).toBe(0);
+  });
+});
+
+describe("social credit gifting", () => {
+  it("refuses to gift when the member only holds promotional credits", () => {
+    expect(giftIssue({ purchased_balance: 0, amount: 5, isSelf: false })).toMatch(
+      /Free promotional credits cannot be gifted/,
+    );
+    expect(canGift({ purchased_balance: 0 }, false)).toBe(false);
+  });
+
+  it("refuses self-gifts", () => {
+    expect(giftIssue({ purchased_balance: 50, amount: 5, isSelf: true })).toMatch(/yourself/);
+    expect(canGift({ purchased_balance: 50 }, true)).toBe(false);
+  });
+
+  it("refuses amounts above the purchased balance", () => {
+    expect(giftIssue({ purchased_balance: 3, amount: 4, isSelf: false })).toMatch(/only have 3/);
+  });
+
+  it("refuses zero, fractional and oversized gifts", () => {
+    expect(giftIssue({ purchased_balance: 50, amount: 0, isSelf: false })).toBeTruthy();
+    expect(giftIssue({ purchased_balance: 50, amount: 1.5, isSelf: false })).toMatch(/whole/);
+    expect(giftIssue({ purchased_balance: 50_000, amount: 1001, isSelf: false })).toMatch(/at most/);
+  });
+
+  it("allows a gift funded entirely by purchased credits", () => {
+    expect(giftIssue({ purchased_balance: 10, amount: 10, isSelf: false })).toBeNull();
+    expect(canGift({ purchased_balance: 10 }, false)).toBe(true);
   });
 });
