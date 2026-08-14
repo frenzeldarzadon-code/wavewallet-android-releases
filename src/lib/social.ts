@@ -366,14 +366,14 @@ export async function fetchComments(postId: string): Promise<FeedComment[]> {
 
 // ------------------------------------------------------------------ writes
 
-export async function createPost(input: {
-  body: string;
-  imagePath?: string | null;
-  promote: boolean;
-  tierId?: string | null;
-  currency?: SocialCurrency;
-  audience?: PostAudience;
-}): Promise<{
+/** Shops the member may target — approved, active memberships only. */
+export async function fetchTargetShops(): Promise<TargetShop[]> {
+  const { data, error } = await supabase.rpc("social_target_shops");
+  if (error) fail(error.message);
+  return (data ?? []) as TargetShop[];
+}
+
+export interface CreatePostResult {
   post_id: string;
   charged: number;
   currency: string;
@@ -382,26 +382,30 @@ export async function createPost(input: {
   balance: number;
   audience: PostAudience;
   pending_shops: number;
-}> {
+  live_shops: number;
+}
+
+export async function createPost(input: {
+  body: string;
+  imagePath?: string | null;
+  promote: boolean;
+  tierId?: string | null;
+  currency?: SocialCurrency;
+  audience?: PostAudience;
+  shopIds?: string[];
+}): Promise<CreatePostResult> {
+  const audience = input.audience ?? "ecosystem";
   const { data, error } = await supabase.rpc("social_create_post", {
     _body: input.body.trim(),
     ...(input.imagePath ? { _image_path: input.imagePath } : {}),
     _promote: input.promote,
     ...(input.tierId ? { _tier_id: input.tierId } : {}),
     ...(input.currency ? { _currency: input.currency } : {}),
-    _audience: input.audience ?? "ecosystem",
+    _audience: audience,
+    ...(audience === "shops" ? { _shop_ids: input.shopIds ?? [] } : {}),
   });
   if (error) fail(error.message);
-  return data as unknown as {
-    post_id: string;
-    charged: number;
-    currency: string;
-    tier: string | null;
-    expires_at: string | null;
-    balance: number;
-    audience: PostAudience;
-    pending_shops: number;
-  };
+  return data as unknown as CreatePostResult;
 }
 
 /** Queue of General posts awaiting (or already given) a decision in one shop. */
