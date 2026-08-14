@@ -3494,6 +3494,10 @@ export type Database = {
       }
       effective_uid: { Args: never; Returns: string }
       end_impersonation: { Args: never; Returns: undefined }
+      ensure_credit_account: {
+        Args: { _ecosystem_id?: string; _user_id: string }
+        Returns: string
+      }
       expire_stale_invitations: { Args: never; Returns: undefined }
       expire_stale_subscriptions: { Args: never; Returns: number }
       freeze_credit_purchase_order: {
