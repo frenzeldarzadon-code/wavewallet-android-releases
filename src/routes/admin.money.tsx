@@ -12,5 +12,15 @@ export const Route = createFileRoute("/admin/money")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: () => <MoneyPage />,
+  validateSearch: (search: Record<string, unknown>): { tab?: "in" | "out" } =>
+    search["tab"] === "in" ? { tab: "in" } : search["tab"] === "out" ? { tab: "out" } : {},
+  component: AdminMoney,
+});
+
+function AdminMoney() {
+  const { tab } = Route.useSearch();
+  return <MoneyPage initialTab={tab ?? "out"} />;
+}
+
+const _unused = () => ({
 });

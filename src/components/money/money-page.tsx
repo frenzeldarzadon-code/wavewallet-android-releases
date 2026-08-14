@@ -68,7 +68,11 @@ const newKey = () =>
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random()}`;
 
-export function MoneyPage() {
+/**
+ * `initialTab` only picks which tab opens first — the request flows,
+ * accounting and approval rules are unchanged and shared by every role.
+ */
+export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } = {}) {
   const { account } = useSession();
   const userId = account?.id ?? null;
   const [settings, setSettings] = useState<MoneySettings>(MONEY_SETTINGS_FALLBACK);
@@ -211,7 +215,7 @@ export function MoneyPage() {
         </div>
       </PageSection>
 
-      <Tabs defaultValue="out" className="mb-6">
+      <Tabs defaultValue={initialTab} className="mb-6">
         <TabsList>
           <TabsTrigger value="out">Cash out</TabsTrigger>
           <TabsTrigger value="in">Cash in</TabsTrigger>
