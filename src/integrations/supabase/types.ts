@@ -2264,6 +2264,7 @@ export type Database = {
           balance: number
           created_at: string
           ecosystem_id: string | null
+          free_balance: number
           id: string
           last_allowance_on: string | null
           updated_at: string
@@ -2273,6 +2274,7 @@ export type Database = {
           balance?: number
           created_at?: string
           ecosystem_id?: string | null
+          free_balance?: number
           id?: string
           last_allowance_on?: string | null
           updated_at?: string
@@ -2282,6 +2284,7 @@ export type Database = {
           balance?: number
           created_at?: string
           ecosystem_id?: string | null
+          free_balance?: number
           id?: string
           last_allowance_on?: string | null
           updated_at?: string
@@ -5083,6 +5086,7 @@ export type Database = {
           balance: number
           created_at: string
           ecosystem_id: string | null
+          free_balance: number
           id: string
           last_allowance_on: string | null
           updated_at: string
