@@ -78,8 +78,10 @@ export function UniverseUsersCard({
       setCheck(await fetchDeletionCheck(u.user_id));
     } catch (e) {
       // Never leave the dialog spinning: show the reason inline and in a toast.
-      setCheckError((e as Error).message || "The safety check could not be completed.");
-      toast.error("Could not check that account", { description: (e as Error).message });
+      setCheckError("We couldn't complete the safety check. No changes were made.");
+      toast.error("Could not check that account", {
+        description: "We couldn't complete the safety check. No changes were made.",
+      });
     }
   };
 
@@ -114,7 +116,9 @@ export function UniverseUsersCard({
       setRemoving(null);
       await load();
     } catch (e) {
-      toast.error("Could not remove that account", { description: (e as Error).message });
+      toast.error("Could not remove that account", {
+        description: (e as Error).message || "No changes were made.",
+      });
     } finally {
       setBusy(false);
     }

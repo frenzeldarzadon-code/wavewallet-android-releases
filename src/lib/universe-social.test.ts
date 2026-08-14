@@ -100,8 +100,7 @@ describe("account deletion safety", () => {
     credit_total: 0,
     points_total: 0,
     social_purchased: 0,
-    blockers: [],
-    reasons: ["No credits, points or pending money."],
+    reason: "No credits, points or pending money.",
   };
 
   it("explains why an empty account may go", () => {
@@ -114,7 +113,7 @@ describe("account deletion safety", () => {
         ...base,
         eligible: false,
         credit_total: 120,
-        blockers: ["They still hold 120 credits."],
+        reason: "They still hold 120 credits.",
       }),
     ).toBe("They still hold 120 credits.");
   });
