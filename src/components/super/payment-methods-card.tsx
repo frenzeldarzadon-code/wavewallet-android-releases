@@ -150,6 +150,15 @@ export function PaymentMethodsCard() {
             onChange={(e) => setForm({ ...form, instructions: e.target.value })}
           />
         </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="pm-notes">Notes</Label>
+          <Textarea
+            id="pm-notes"
+            rows={2}
+            value={form.notes}
+            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+          />
+        </div>
         <div className="flex items-center gap-2">
           <Switch
             id="pm-active"
@@ -172,19 +181,34 @@ export function PaymentMethodsCard() {
         {rows.length === 0 ? (
           <EmptyState title="No payment methods yet" description="Members cannot cash in until one is active." />
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {rows.map((m) => (
               <div
                 key={m.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3 text-xs"
+                className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-border p-3 text-xs"
               >
-                <div>
-                  <p className="text-sm font-medium">{m.name}</p>
-                  <p className="text-muted-foreground">
-                    {m.method_type}
-                    {m.account_name ? ` · ${m.account_name}` : ""}
-                    {m.account_number ? ` · ${m.account_number}` : ""}
-                  </p>
+                <div className="min-w-[14rem] flex-1 space-y-1.5">
+                  <p className="text-base font-semibold">{m.name}</p>
+                  <dl className="grid gap-1 sm:grid-cols-2">
+                    <div>
+                      <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Payment method</dt>
+                      <dd className="text-sm font-medium">
+                        {TYPES.find((t) => t.value === m.method_type)?.label ?? m.method_type}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Account name</dt>
+                      <dd className="text-sm font-medium">{m.account_name?.trim() || "—"}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Account number</dt>
+                      <dd className="text-sm font-medium">{m.account_number?.trim() || "—"}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Notes</dt>
+                      <dd className="text-sm font-medium whitespace-pre-line">{m.notes?.trim() || "—"}</dd>
+                    </div>
+                  </dl>
                 </div>
                 <div className="flex items-center gap-2">
                   <StatusBadge tone={m.active ? "success" : "muted"}>{m.active ? "Active" : "Inactive"}</StatusBadge>
