@@ -144,9 +144,10 @@ export interface MentionSuggestion {
 
 /** Public Universe profile — identity only, never wallets or messages. */
 export interface UniverseProfile {
-  user_id: string;
+  /** Null for the masked platform identity — there is no personal account to link to. */
+  user_id: string | null;
   full_name: string;
-  handle: string;
+  handle: string | null;
   avatar_path: string | null;
   bio: string | null;
   joined_at: string;
