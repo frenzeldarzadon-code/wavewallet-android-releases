@@ -26,7 +26,7 @@ import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-
 import { FacebookSupportCard } from "@/components/facebook-support-card";
 import { PaymentMethodCards } from "@/components/money/payment-method-cards";
 import { useSession } from "@/lib/session";
-import { shortDateTime } from "@/lib/wavewallet";
+import { peso, shortDateTime } from "@/lib/wavewallet";
 import { fetchCreditBalance } from "@/lib/wallet";
 import { fetchPlatformSettings, type PlatformSettings } from "@/lib/subscription";
 import {
@@ -40,7 +40,7 @@ import {
   MONEY_SETTINGS_FALLBACK,
   PAYMENT_MODES,
   paymentModeLabel,
-  quoteCashIn,
+  quoteCashInBreakdown,
   quoteWithdrawal,
   requestCashIn,
   requestWithdrawal,
@@ -120,7 +120,10 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
 
   const creditsNum = Number(credits);
   const quote = useMemo(() => quoteWithdrawal(creditsNum || 0, settings), [creditsNum, settings]);
-  const cashInCredits = useMemo(() => quoteCashIn(Number(amount) || 0, settings), [amount, settings]);
+  const cashInQuote = useMemo(
+    () => quoteCashInBreakdown(Number(amount) || 0, settings),
+    [amount, settings],
+  );
   const needsAccount = PAYMENT_MODES.find((m) => m.value === mode)?.needsAccount ?? false;
 
   if (!account) return null;
@@ -195,7 +198,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
     <>
       <PageSection
         title="Cash out & cash in"
-        description={`Withdrawal fee ${settings.feePercent}%. Balances and requests are shown in credits.`}
+        description={`Cash in fee ${settings.cashInFeePercent}% · cash out fee ${settings.feePercent}%. Balances and requests are shown in credits.`}
       >
         <div className="grid gap-3 sm:grid-cols-3">
           <StatCard
@@ -414,12 +417,30 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                     <Label htmlFor="ci-notes">Additional information</Label>
                     <Textarea id="ci-notes" rows={2} value={cashInNotes} onChange={(e) => setCashInNotes(e.target.value)} />
                   </div>
-                  <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs">
-                    <p className="font-medium">
-                      You will receive {cashInCredits.toLocaleString()} credits
-                    </p>
+                  <div className="space-y-1 rounded-lg border border-border bg-muted/40 p-3 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Amount you are paying</span>
+                      <span className="font-medium">{peso(cashInQuote.gross)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Cash in fee ({cashInQuote.feePercent}%)
+                      </span>
+                      <span className="font-medium text-destructive">-{peso(cashInQuote.fee)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Net amount converted</span>
+                      <span className="font-medium">{peso(cashInQuote.net)}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-border pt-1">
+                      <span className="text-muted-foreground">You will receive</span>
+                      <span className="font-semibold text-success">
+                        {cashInQuote.credits.toLocaleString()} credits
+                      </span>
+                    </div>
                     <p className="text-muted-foreground">
-                      Credits are issued only after the platform owner verifies your payment.
+                      Credits are issued only after the platform owner verifies your payment. This fee is locked
+                      in when you submit.
                     </p>
                   </div>
                   <Button onClick={submitCashIn} disabled={busy}>
@@ -444,6 +465,10 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                         </p>
                         <p className="text-muted-foreground">
                           {c.reference} · {c.method_name} · {shortDateTime(c.created_at)}
+                        </p>
+                        <p className="text-muted-foreground">
+                          Paid {peso(Number(c.amount_php))} · fee {Number(c.fee_percent ?? 0)}% (
+                          {peso(Number(c.fee_php ?? 0))}) · net {peso(Number(c.net_php ?? c.amount_php))}
                         </p>
                         {c.decision_reason ? <p className="text-muted-foreground">Note: {c.decision_reason}</p> : null}
                       </div>
