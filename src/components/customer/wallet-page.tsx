@@ -17,6 +17,7 @@ import { peso } from "@/lib/wavewallet";
 import { fetchCreditBalance } from "@/lib/wallet";
 import { fetchPointsAccount, type PointsAccount } from "@/lib/rewards";
 import { fetchEarnings, summariseEarnings } from "@/lib/earnings";
+import { PointsEarningsPanel } from "@/components/customer/points-earnings-panel";
 
 export interface WalletPageProps {
   /** Route prefix for the quick actions ("/app" or "/reseller"). */
@@ -102,6 +103,8 @@ export function WalletPage({ base, showSellerTotals = false }: WalletPageProps) 
           ) : null}
         </div>
       </PageSection>
+
+      {showSellerTotals ? null : <PointsEarningsPanel userId={account.id} />}
 
       <PageSection title="Quick actions">
         <div className="grid gap-2 sm:grid-cols-4">
