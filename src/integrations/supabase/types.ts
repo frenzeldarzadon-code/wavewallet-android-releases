@@ -3394,6 +3394,7 @@ export type Database = {
         Args: { _reason?: string; _user_id: string }
         Returns: undefined
       }
+      delete_payment_method: { Args: { _id: string }; Returns: undefined }
       delete_social_promotion_tier: {
         Args: { _tier_id: string }
         Returns: undefined
@@ -5131,6 +5132,38 @@ export type Database = {
       upline_commission_rate_for: {
         Args: { _ecosystem_id: string }
         Returns: number
+      }
+      upsert_payment_method: {
+        Args: {
+          _account_name?: string
+          _account_number?: string
+          _active?: boolean
+          _id?: string
+          _instructions?: string
+          _method_type: string
+          _name: string
+          _notes?: string
+          _sort_order?: number
+        }
+        Returns: {
+          account_name: string | null
+          account_number: string | null
+          active: boolean
+          created_at: string
+          id: string
+          instructions: string
+          method_type: string
+          name: string
+          notes: string | null
+          sort_order: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payment_methods"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       upsert_social_promotion_tier: {
         Args: {
