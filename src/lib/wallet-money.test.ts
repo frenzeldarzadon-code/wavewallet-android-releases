@@ -168,3 +168,11 @@ describe("queues", () => {
     expect(statusLabel("pending")).toBe("Pending");
   });
 });
+
+describe("credit-only presentation", () => {
+  it("derives the payout in credits from the fee percent snapshot", () => {
+    expect(creditsAfterFee(1000, 1)).toBe(990);
+    expect(creditsAfterFee(1000, 0)).toBe(1000);
+    expect(creditsAfterFee(0, 5)).toBe(0);
+  });
+});
