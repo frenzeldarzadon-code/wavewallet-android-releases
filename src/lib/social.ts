@@ -72,7 +72,14 @@ export interface SocialState {
 }
 
 
-export type PostAudience = "ecosystem" | "general";
+export type PostAudience = "ecosystem" | "general" | "shops";
+
+/** A shop the member may share a post into — approved, active memberships only. */
+export interface TargetShop {
+  ecosystem_id: string;
+  ecosystem_name: string;
+  is_current: boolean;
+}
 
 export interface FeedPost {
   id: string;
