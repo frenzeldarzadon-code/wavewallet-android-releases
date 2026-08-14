@@ -1390,6 +1390,38 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          disabled_kinds: string[]
+          push_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          disabled_kinds?: string[]
+          push_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          disabled_kinds?: string[]
+          push_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_methods: {
         Row: {
           account_name: string | null
@@ -2776,6 +2808,87 @@ export type Database = {
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_follows: {
+        Row: {
+          created_at: string
+          followee_id: string
+          follower_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          followee_id: string
+          follower_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          followee_id?: string
+          follower_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_follows_followee_id_fkey"
+            columns: ["followee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_friendships: {
+        Row: {
+          addressee_id: string
+          created_at: string
+          id: string
+          requester_id: string
+          responded_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          addressee_id: string
+          created_at?: string
+          id?: string
+          requester_id: string
+          responded_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          addressee_id?: string
+          created_at?: string
+          id?: string
+          requester_id?: string
+          responded_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_friendships_addressee_id_fkey"
+            columns: ["addressee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_friendships_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -4280,6 +4393,10 @@ export type Database = {
       expire_stale_invitations: { Args: never; Returns: undefined }
       expire_stale_member_invitations: { Args: never; Returns: number }
       expire_stale_subscriptions: { Args: never; Returns: number }
+      follow_member: {
+        Args: { _follow?: boolean; _user: string }
+        Returns: undefined
+      }
       freeze_credit_purchase_order: {
         Args: { _order_id: string; _reason: string }
         Returns: {
@@ -4579,6 +4696,7 @@ export type Database = {
           phone: string
         }[]
       }
+      mark_notifications_read: { Args: { _ids?: string[] }; Returns: undefined }
       member_email_taken: {
         Args: { _email: string; _exclude?: string }
         Returns: boolean
@@ -4645,6 +4763,18 @@ export type Database = {
           status: Database["public"]["Enums"]["account_status"]
         }[]
       }
+      my_notifications: {
+        Args: { _limit?: number }
+        Returns: {
+          body: string
+          created_at: string
+          id: string
+          kind: string
+          link: string
+          read_at: string
+          title: string
+        }[]
+      }
       my_operational_status: {
         Args: never
         Returns: {
@@ -4704,8 +4834,31 @@ export type Database = {
           ecosystem_name: string
         }[]
       }
+      my_social_graph: {
+        Args: never
+        Returns: {
+          avatar_path: string
+          created_at: string
+          full_name: string
+          handle: string
+          kind: string
+          relation_id: string
+          status: string
+          user_id: string
+        }[]
+      }
       new_tx_id: { Args: never; Returns: string }
       normalize_handle: { Args: { _handle: string }; Returns: string }
+      notify_handle_mentions: {
+        Args: {
+          _actor: string
+          _body: string
+          _kind: string
+          _link: string
+          _title: string
+        }
+        Returns: undefined
+      }
       notify_member: {
         Args: {
           _body: string
@@ -4714,6 +4867,16 @@ export type Database = {
           _link?: string
           _title: string
           _user_id: string
+        }
+        Returns: undefined
+      }
+      notify_universe: {
+        Args: {
+          _body: string
+          _kind: string
+          _link?: string
+          _title: string
+          _user: string
         }
         Returns: undefined
       }
@@ -4758,6 +4921,31 @@ export type Database = {
           subreseller_count: number
           subscription_state: Database["public"]["Enums"]["subscription_state"]
           suspended_customer_count: number
+        }[]
+      }
+      platform_unassigned_users: {
+        Args: { _search?: string }
+        Returns: {
+          avatar_path: string
+          credit_total: number
+          email: string
+          full_name: string
+          handle: string
+          joined_at: string
+          phone: string
+          points_total: number
+          user_id: string
+        }[]
+      }
+      platform_user_deletion_check: {
+        Args: { _user: string }
+        Returns: {
+          blockers: string[]
+          credit_total: number
+          eligible: boolean
+          points_total: number
+          reasons: string[]
+          social_purchased: number
         }[]
       }
       promote_to_reseller: {
@@ -4937,6 +5125,7 @@ export type Database = {
         Args: { _email: string }
         Returns: undefined
       }
+      remove_friend: { Args: { _user: string }; Returns: undefined }
       request_cash_in: {
         Args: {
           _amount_php: number
@@ -5048,6 +5237,10 @@ export type Database = {
       reset_ecosystem_test_data: {
         Args: { _dry_run?: boolean; _ecosystem_id: string; _reason: string }
         Returns: Json
+      }
+      respond_friend_request: {
+        Args: { _accept: boolean; _id: string }
+        Returns: undefined
       }
       respond_to_shop_invitation: {
         Args: { _accept: boolean; _invitation_id: string }
@@ -5346,6 +5539,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      send_friend_request: { Args: { _user: string }; Returns: string }
       set_admin_sale_commission: {
         Args: { _ecosystem_id: string; _percent: number }
         Returns: number
@@ -5551,6 +5745,10 @@ export type Database = {
           _status: Database["public"]["Enums"]["account_status"]
           _user_id: string
         }
+        Returns: undefined
+      }
+      set_notification_preferences: {
+        Args: { _disabled_kinds: string[]; _push_enabled: boolean }
         Returns: undefined
       }
       set_platform_money_settings: {
@@ -5987,6 +6185,14 @@ export type Database = {
           status: string
         }[]
       }
+      superadmin_assign_member_to_shop: {
+        Args: { _ecosystem_id: string; _user: string }
+        Returns: undefined
+      }
+      superadmin_delete_platform_user: {
+        Args: { _reason?: string; _user: string }
+        Returns: undefined
+      }
       superadmin_issue_credits: {
         Args: {
           _amount: number
@@ -6036,6 +6242,19 @@ export type Database = {
           user_id: string
         }[]
       }
+      universe_profile_posts: {
+        Args: { _handle: string; _limit?: number }
+        Returns: {
+          audience: string
+          body: string
+          comment_count: number
+          created_at: string
+          id: string
+          image_path: string
+          like_count: number
+        }[]
+      }
+      universe_relationship: { Args: { _user: string }; Returns: Json }
       update_credit_purchase_settings:
         | {
             Args: {

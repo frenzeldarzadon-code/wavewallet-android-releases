@@ -10,6 +10,7 @@ import type { LinkProps } from "@tanstack/react-router";
 import type { ComponentType } from "react";
 import {
   Banknote,
+  Globe,
   BarChart3,
   Building2,
   Coins,
@@ -294,6 +295,7 @@ export function superAdminNav(): Nav {
       items: [
         { to: "/super/admins", label: "Shops", icon: Building2 },
         { to: "/super/members", label: "Shop members", icon: Users },
+        { to: "/super/universe", label: "Universe users", icon: Globe },
       ],
     },
     {
