@@ -485,6 +485,10 @@ function AdminCustomers() {
         </Card>
       </PageSection>
 
+      <InviteMemberCard ecosystemId={ecosystemDbId} />
+
+
+
       <PageSection
         title="Customer directory"
         description="Scoped strictly to this shop by database row-level security."
