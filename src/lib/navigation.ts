@@ -294,6 +294,7 @@ export function superAdminNav(): Nav {
       items: [
         { to: "/super/admins", label: "Shops", icon: Building2 },
         { to: "/super/members", label: "Shop members", icon: Users },
+        { to: "/super/universe", label: "Universe users", icon: Globe },
       ],
     },
     {
