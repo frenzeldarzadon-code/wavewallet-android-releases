@@ -69,3 +69,48 @@ export function feePeriodTotals(rows: CashOutFeeRow[]): PeriodTotals {
 }
 
 export const totalFees = (rows: CashOutFeeRow[]) => rows.reduce((s, r) => s + r.fee_php, 0);
+
+/**
+ * Shop-to-shop transfer fees.
+ *
+ * The flat fee charged when a member moves credits between two of their own
+ * shop wallets is platform-owner earnings, denominated in CREDITS (not pesos),
+ * so it is reported separately from cash-out fees and never mixed into a peso
+ * total.
+ */
+export interface ShopTransferFeeRow {
+  id: string;
+  tx_id: string;
+  gross_credits: number;
+  fee_credits: number;
+  net_credits: number;
+  created_at: string;
+}
+
+export async function fetchShopTransferFees(opts?: {
+  from?: Date;
+  to?: Date;
+  limit?: number;
+}): Promise<ShopTransferFeeRow[]> {
+  let query = supabase
+    .from("shop_transfer_fees")
+    .select("id, tx_id, gross_credits, fee_credits, net_credits, created_at")
+    .order("created_at", { ascending: false })
+    .limit(opts?.limit ?? 1000);
+  if (opts?.from) query = query.gte("created_at", opts.from.toISOString());
+  if (opts?.to) query = query.lte("created_at", opts.to.toISOString());
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as unknown as ShopTransferFeeRow[]).map((r) => ({
+    id: r.id,
+    tx_id: r.tx_id,
+    gross_credits: Number(r.gross_credits ?? 0),
+    fee_credits: Number(r.fee_credits ?? 0),
+    net_credits: Number(r.net_credits ?? 0),
+    created_at: String(r.created_at),
+  }));
+}
+
+export function transferFeePeriodTotals(rows: ShopTransferFeeRow[]): PeriodTotals {
+  return periodTotalsOf(rows, (r) => r.created_at, (r) => r.fee_credits);
+}
