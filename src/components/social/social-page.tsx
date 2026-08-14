@@ -83,7 +83,6 @@ import {
   fetchSocialState,
   postCharge,
   relativeTime,
-  roleBadge,
   reportContent,
   setBlocked,
   socialImageUrl,
