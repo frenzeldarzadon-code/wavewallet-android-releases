@@ -128,16 +128,8 @@ export function SocialPage() {
   const [loading, setLoading] = useState(true);
 
   // composer
-  const [body, setBody] = useState("");
-  const [promote, setPromote] = useState(false);
-  const [audience, setAudience] = useState<PostAudience>("ecosystem");
+  const [composerOpen, setComposerOpen] = useState(false);
 
-  const [tierId, setTierId] = useState<string>("");
-  const [payWith, setPayWith] = useState<SocialCurrency>("social");
-  const [file, setFile] = useState<File | null>(null);
-  const [crop, setCrop] = useState<{ image: HTMLImageElement; crop: CropRect } | null>(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [posting, setPosting] = useState(false);
 
   // exchange
   const [exchangeOpen, setExchangeOpen] = useState(false);
