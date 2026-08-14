@@ -144,6 +144,8 @@ export function TransferPage() {
         </Card>
       </PageSection>
 
+      <ShopTransferCard onDone={() => void load()} />
+
       <PageSection title="Transfer history">
         {entries.length === 0 ? (
           <EmptyState title="No transfers yet" />
