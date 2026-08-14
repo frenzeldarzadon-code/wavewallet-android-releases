@@ -1,5 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AlertTriangle, RotateCcw, Search, UserCog, Wallet } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowDownLeft,
+  ArrowUpRight,
+  RotateCcw,
+  Search,
+  UserCog,
+  Wallet,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { EditMemberDialog, type EditableMember } from "@/components/edit-member-dialog";
 import { memberMatches } from "@/lib/member-admin";
@@ -270,18 +278,27 @@ function AdminWallets() {
         description="Load credits from your shop wallet to members, or post a correction. Every movement is audited."
       >
         <Card className="mb-3 border-primary/30 bg-primary/5 shadow-none">
-          <CardContent className="flex flex-wrap items-center justify-between gap-2 p-3">
+          <CardContent className="space-y-3 p-3">
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground">Your shop wallet</p>
               <p className="text-lg font-semibold text-success">{peso(shopBalance)}</p>
               <p className="mt-1 text-[11px] text-muted-foreground">
-                Loading a member moves credits out of this balance. Only the platform owner can
-                create new credits — buy an allocation to top up.
+                Loading a member moves credits out of this balance. Cash in and cash out are
+                requests — nothing moves until the platform owner approves and releases them.
               </p>
             </div>
-            <Button asChild size="sm">
-              <Link to="/admin/credits">Buy credits</Link>
-            </Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button asChild size="lg" className="w-full">
+                <Link to="/admin/money" search={{ tab: "in" }}>
+                  <ArrowDownLeft className="size-4" /> Cash In
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="w-full">
+                <Link to="/admin/money" search={{ tab: "out" }}>
+                  <ArrowUpRight className="size-4" /> Cash Out
+                </Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
