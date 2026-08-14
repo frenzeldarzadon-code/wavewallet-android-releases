@@ -18,8 +18,13 @@ import {
 type Field = keyof Omit<EcosystemSocialSettings, "social_enabled" | "promotion_enabled">;
 
 const FIELDS: { key: Field; label: string; hint: string }[] = [
-  { key: "daily_allowance", label: "Free social credits per day", hint: "Given once per day" },
-  { key: "post_cost", label: "Cost to post", hint: "Social credits per post" },
+  // The daily free-credit allowance is retired: members get free POSTS per day
+  // instead, and only the platform owner sets that.
+  {
+    key: "post_cost",
+    label: "Cost to post",
+    hint: "Paid social credits per post, once the free daily posts are used",
+  },
   {
     key: "credit_exchange_rate",
     label: "Credits per social credit",
