@@ -54,6 +54,7 @@ export function UniverseShell({
 }) {
   const session = useSession();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const unread = useUnread();
   const account = session.account;
   if (!account) return null;
 
@@ -96,7 +97,14 @@ export function UniverseShell({
                   : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
               )}
             >
-              <item.icon className="size-5" />
+              <span className="relative">
+                <item.icon className="size-5" />
+                {item.to === "/universe/notifications" && unread > 0 ? (
+                  <span className="absolute -right-1.5 -top-1 min-w-4 rounded-full bg-destructive px-1 text-[10px] font-semibold leading-4 text-destructive-foreground">
+                    {unread > 9 ? "9+" : unread}
+                  </span>
+                ) : null}
+              </span>
               {item.label}
             </Link>
           ))}
@@ -114,7 +122,7 @@ export function UniverseShell({
 
       <nav
         aria-label="Universe navigation"
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
       >
         {items.map((item) => (
           <Link
@@ -126,7 +134,14 @@ export function UniverseShell({
               active(item.to) ? "text-primary" : "text-muted-foreground",
             )}
           >
-            <item.icon className="size-5" />
+            <span className="relative">
+              <item.icon className="size-5" />
+              {item.to === "/universe/notifications" && unread > 0 ? (
+                <span className="absolute -right-2 -top-1 min-w-4 rounded-full bg-destructive px-1 text-[10px] font-semibold leading-4 text-destructive-foreground">
+                  {unread > 9 ? "9+" : unread}
+                </span>
+              ) : null}
+            </span>
             {item.label}
           </Link>
         ))}
