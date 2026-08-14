@@ -14,7 +14,6 @@ import {
   signInWithPassword,
   signUpCustomerAccount,
 } from "@/lib/auth";
-import { fetchMyApplication } from "@/lib/membership-applications";
 import { isRealEmail, validateGlobalSignup } from "@/lib/account-identifiers";
 import { supabase } from "@/integrations/supabase/client";
 import { DEMO_ECOSYSTEM_SLUG, DEMO_ROLES, isPreviewEnvironment } from "@/lib/demo";
