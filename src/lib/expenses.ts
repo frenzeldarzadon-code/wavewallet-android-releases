@@ -74,14 +74,23 @@ export function validateExpense(input: {
 export async function recordExpense(input: NewExpense): Promise<void> {
   const problem = validateExpense({ amount: input.amount, description: input.description });
   if (problem) throw new Error(problem);
-  const { error } = await supabase.rpc("record_expense", {
+  const args: {
+    _amount: number;
+    _description: string;
+    _scope: string;
+    _ecosystem_id?: string;
+    _category?: string;
+    _spent_at?: string;
+  } = {
     _amount: input.amount,
     _description: input.description.trim(),
     _scope: input.scope,
-    _ecosystem_id: input.scope === "ecosystem" ? (input.ecosystemId ?? undefined) : undefined,
-    _category: input.category?.trim() ? input.category.trim() : undefined,
-    _spent_at: input.spentAt ? input.spentAt.toISOString() : undefined,
-  });
+  };
+  if (input.scope === "ecosystem" && input.ecosystemId) args._ecosystem_id = input.ecosystemId;
+  if (input.category?.trim()) args._category = input.category.trim();
+  if (input.spentAt) args._spent_at = input.spentAt.toISOString();
+  const { error } = await supabase.rpc("record_expense", args);
+
   if (error) throw new Error(error.message);
 }
 
