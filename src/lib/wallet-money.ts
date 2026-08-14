@@ -215,7 +215,7 @@ export async function fetchMoneySettings(): Promise<MoneySettings> {
   const { data } = await supabase
     .from("platform_settings")
     .select(
-      "cash_out_credits_per_unit, cash_out_php_per_unit, withdrawal_fee_percent, cashback_reseller_percent, cashback_subreseller_percent, shop_transfer_fee_credits",
+      "cash_out_credits_per_unit, cash_out_php_per_unit, withdrawal_fee_percent, cash_in_fee_percent, cashback_reseller_percent, cashback_subreseller_percent, shop_transfer_fee_credits",
     )
     .eq("id", 1)
     .maybeSingle();
@@ -224,6 +224,7 @@ export async function fetchMoneySettings(): Promise<MoneySettings> {
     creditsPerUnit: Number(data.cash_out_credits_per_unit),
     phpPerUnit: Number(data.cash_out_php_per_unit),
     feePercent: Number(data.withdrawal_fee_percent),
+    cashInFeePercent: Number(data.cash_in_fee_percent ?? 0),
     cashbackReseller: Number(data.cashback_reseller_percent),
     cashbackSubreseller: Number(data.cashback_subreseller_percent),
     shopTransferFee: Number(data.shop_transfer_fee_credits ?? 5),
@@ -238,9 +239,11 @@ export async function saveMoneySettings(s: MoneySettings): Promise<void> {
     _php_per_unit: s.phpPerUnit,
     _withdrawal_fee: s.feePercent,
     _shop_transfer_fee: s.shopTransferFee,
+    _cash_in_fee: s.cashInFeePercent,
   }));
   if (error) throw new Error(error.message);
 }
+
 
 export async function fetchPaymentMethods(activeOnly = true): Promise<PaymentMethod[]> {
   let q = supabase.from("payment_methods").select("*").order("sort_order").order("name");
