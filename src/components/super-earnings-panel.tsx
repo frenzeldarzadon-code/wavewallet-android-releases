@@ -23,6 +23,8 @@ import {
 import { platformNetEarnings, type NetEarnings } from "@/lib/role-earnings";
 import { peso } from "@/lib/wavewallet";
 
+const EMPTY_TOTALS = EMPTY_PERIOD_TOTALS;
+
 const EMPTY: NetEarnings = {
   earnings: EMPTY_PERIOD_TOTALS,
   expenses: EMPTY_PERIOD_TOTALS,
@@ -31,6 +33,7 @@ const EMPTY: NetEarnings = {
 
 export function SuperEarningsPanel({ showLink = true }: { showLink?: boolean }) {
   const [totals, setTotals] = useState<NetEarnings>(EMPTY);
+  const [transferFees, setTransferFees] = useState(EMPTY_TOTALS);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -38,13 +41,16 @@ export function SuperEarningsPanel({ showLink = true }: { showLink?: boolean }) 
     from.setMonth(0, 1);
     from.setHours(0, 0, 0, 0);
     try {
-      const [fees, expenses] = await Promise.all([
+      const [fees, expenses, transfers] = await Promise.all([
         fetchCashOutFees({ from }),
         fetchExpenses({ scope: "platform", from }),
+        fetchShopTransferFees({ from }),
       ]);
       setTotals(platformNetEarnings(fees, expenses));
+      setTransferFees(transferFeePeriodTotals(transfers));
     } catch {
       setTotals(EMPTY);
+      setTransferFees(EMPTY_TOTALS);
     } finally {
       setLoading(false);
     }
@@ -84,6 +90,24 @@ export function SuperEarningsPanel({ showLink = true }: { showLink?: boolean }) 
           },
         ]}
       />
+      <div className="mt-4">
+        <p className="mb-2 text-xs text-muted-foreground">
+          Shop-to-shop transfer fees are collected in credits, so they are reported separately from peso
+          cash-out fees.
+        </p>
+        <PeriodEarningsTable
+          loading={loading}
+          format={(n) => `${n.toLocaleString()} credits`}
+          metrics={[
+            {
+              label: "Shop transfer fees collected",
+              hint: "Flat fee on member shop-to-shop credit transfers",
+              totals: transferFees,
+              tone: "positive",
+            },
+          ]}
+        />
+      </div>
       {showLink ? (
         <Button asChild variant="outline" size="sm" className="mt-3">
           <Link to="/super/reports">
