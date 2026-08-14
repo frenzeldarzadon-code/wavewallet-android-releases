@@ -1064,6 +1064,7 @@ export type Database = {
           frozen_reason: string | null
           grace_period_days: number
           id: string
+          is_test: boolean
           last_activity_at: string | null
           name: string
           operations_frozen: boolean
@@ -1114,6 +1115,7 @@ export type Database = {
           frozen_reason?: string | null
           grace_period_days?: number
           id?: string
+          is_test?: boolean
           last_activity_at?: string | null
           name: string
           operations_frozen?: boolean
@@ -1164,6 +1166,7 @@ export type Database = {
           frozen_reason?: string | null
           grace_period_days?: number
           id?: string
+          is_test?: boolean
           last_activity_at?: string | null
           name?: string
           operations_frozen?: boolean
@@ -4075,6 +4078,7 @@ export type Database = {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: boolean
       }
+      can_see_test_shop: { Args: { _ecosystem_id: string }; Returns: boolean }
       cancel_cash_in: {
         Args: { _id: string }
         Returns: {
@@ -4250,6 +4254,7 @@ export type Database = {
           frozen_reason: string | null
           grace_period_days: number
           id: string
+          is_test: boolean
           last_activity_at: string | null
           name: string
           operations_frozen: boolean
@@ -5606,6 +5611,7 @@ export type Database = {
           frozen_reason: string | null
           grace_period_days: number
           id: string
+          is_test: boolean
           last_activity_at: string | null
           name: string
           operations_frozen: boolean
@@ -5665,6 +5671,7 @@ export type Database = {
           frozen_reason: string | null
           grace_period_days: number
           id: string
+          is_test: boolean
           last_activity_at: string | null
           name: string
           operations_frozen: boolean
@@ -5731,6 +5738,7 @@ export type Database = {
           frozen_reason: string | null
           grace_period_days: number
           id: string
+          is_test: boolean
           last_activity_at: string | null
           name: string
           operations_frozen: boolean
@@ -6422,6 +6430,7 @@ export type Database = {
           frozen_reason: string | null
           grace_period_days: number
           id: string
+          is_test: boolean
           last_activity_at: string | null
           name: string
           operations_frozen: boolean
@@ -6486,6 +6495,7 @@ export type Database = {
           frozen_reason: string | null
           grace_period_days: number
           id: string
+          is_test: boolean
           last_activity_at: string | null
           name: string
           operations_frozen: boolean
