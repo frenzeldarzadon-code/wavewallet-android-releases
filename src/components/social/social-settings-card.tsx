@@ -16,7 +16,10 @@ import { PageSection } from "@/components/ui-kit";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SocialSettings {
+  /** Retired daily free-credit allowance. Kept at 0; free posts replaced it. */
   daily_allowance: number;
+  /** Free ORDINARY POSTS per member per day. Not a credit balance. */
+  free_posts_per_day: number;
   post_cost: number;
   comment_cost: number;
   credit_exchange_rate: number;
@@ -70,7 +73,8 @@ export function SocialSettingsCard() {
   const save = async () => {
     setSaving(true);
     const { data, error } = await supabase.rpc("update_social_settings", {
-      _daily_allowance: Number(form.daily_allowance),
+      _daily_allowance: 0,
+      _free_posts_per_day: Number(form.free_posts_per_day),
       _post_cost: Number(form.post_cost),
       _comment_cost: Number(form.comment_cost),
       _credit_exchange_rate: Number(form.credit_exchange_rate),
@@ -95,15 +99,22 @@ export function SocialSettingsCard() {
   return (
     <PageSection
       title="Community & social credits"
-      description="Daily allowance, exchange rates, promotion pricing and rewarded-ad limits for every shop."
+      description="Free daily posts, exchange rates, promotion pricing and rewarded-ad limits for every shop."
     >
       <Card className="shadow-[var(--shadow-card)]">
         <CardHeader>
           <CardTitle className="text-sm">Social credit economics</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2">
-          {num("daily_allowance", "Free social credits per day")}
-          {num("post_cost", "Cost of a post")}
+          <div className="space-y-1.5 sm:col-span-2">
+            {num("free_posts_per_day", "Free posts per member per day")}
+            <p className="text-xs text-muted-foreground">
+              A free POST allowance, not free social credits. Members post this many times a day
+              without spending anything; further posts cost paid social credits. There is no longer
+              a daily free social-credit balance, and promotional credits can never be gifted.
+            </p>
+          </div>
+          {num("post_cost", "Cost of a post beyond the free allowance")}
           {num("credit_exchange_rate", "Social credits per 1 wallet credit")}
           {num("points_exchange_rate", "Social credits per 1 point")}
 

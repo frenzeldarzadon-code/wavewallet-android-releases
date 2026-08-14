@@ -49,15 +49,23 @@ export interface PromotionTier {
 }
 
 export interface SocialState {
-  /** Spendable total: today's unused free allowance plus purchased credits. */
+  /** Everything the member could spend on a post. Never shown as one number. */
   balance: number;
-  /** Today's remaining free allowance. Resets each server day, never rolls over. */
+  /**
+   * Legacy promotional credits from the retired daily-allowance model. Still
+   * spendable on posts, but they can never be gifted or transferred.
+   */
   free_balance: number;
-  /** Purchased/earned credits. Never touched by the daily reset. */
+  /** Purchased credits. The only balance that may be gifted. */
   purchased_balance: number;
   ecosystem_id: string;
   social_enabled: boolean;
+  /** Retired: the daily free-credit allowance. Always 0. */
   daily_allowance: number;
+  /** Free ORDINARY POSTS per day (not credits). Platform-owner setting. */
+  free_posts_per_day: number;
+  free_posts_used_today: number;
+  free_posts_left: number;
   post_cost: number;
   /** Always 0 — replies and comments are free. Kept for historical settings rows. */
   comment_cost: number;
@@ -272,28 +280,42 @@ const fail = (message: string): never => {
 
 // ---------------------------------------------------------------- pure logic
 
-/** Cost and currency of the next post, given the caller's promote choice. */
+/**
+ * Cost and currency of the next post.
+ *
+ * An ordinary post is free while the member still has a free post left today —
+ * that is an allowance of POSTS, not of social credits. Promotions are always
+ * paid, because the free allowance covers normal posting only.
+ */
 export function postCharge(
   state: Pick<
     SocialState,
-    "post_cost" | "promotion_currency" | "promotion_cost_social" | "promotion_cost_points"
+    | "post_cost"
+    | "promotion_currency"
+    | "promotion_cost_social"
+    | "promotion_cost_points"
+    | "free_posts_left"
   >,
   promote: boolean,
   tier?: PromotionTier | null,
   currency?: SocialCurrency,
-): { amount: number; currency: SocialCurrency } {
-  if (!promote) return { amount: state.post_cost, currency: "social" };
+): { amount: number; currency: SocialCurrency; free: boolean } {
+  if (!promote) {
+    const free = (state.free_posts_left ?? 0) > 0;
+    return { amount: free ? 0 : state.post_cost, currency: "social", free };
+  }
   if (tier) {
     const cur: SocialCurrency =
       tier.currency === "both" ? (currency ?? "social") : (tier.currency as SocialCurrency);
     return {
       amount: cur === "points" ? tier.price_points : tier.price_social,
       currency: cur,
+      free: false,
     };
   }
   return state.promotion_currency === "points"
-    ? { amount: state.promotion_cost_points, currency: "points" }
-    : { amount: state.promotion_cost_social, currency: "social" };
+    ? { amount: state.promotion_cost_points, currency: "points", free: false }
+    : { amount: state.promotion_cost_social, currency: "social", free: false };
 }
 
 /** Tiers the member may actually buy right now. */
@@ -335,6 +357,57 @@ export function adsAvailable(
  */
 export function commentCharge(): number {
   return 0;
+}
+
+/** Likes and direct messages are free, always. Never make them chargeable. */
+export const LIKE_COST = 0;
+export const DM_COST = 0;
+
+/** The most a member may gift in one go — matches the database guard. */
+export const MAX_GIFT = 1000;
+
+/** Plain-language disclosure shown before the member writes a post. */
+export function freePostDisclosure(
+  state: Pick<SocialState, "free_posts_left" | "free_posts_per_day" | "post_cost">,
+): string[] {
+  const left = Math.max(0, state.free_posts_left ?? 0);
+  return [
+    `Free posts remaining today: ${left} of ${state.free_posts_per_day}`,
+    left > 0
+      ? `After your free posts are used, additional posts cost ${state.post_cost} paid social credit${state.post_cost === 1 ? "" : "s"}.`
+      : `You have used today's free posts — additional posts cost ${state.post_cost} paid social credit${state.post_cost === 1 ? "" : "s"}.`,
+    "Free promotional social credits cannot be gifted.",
+  ];
+}
+
+/**
+ * Whether a gift may be attempted, and why not when it may not.
+ * Only PURCHASED social credits can ever be gifted — a member holding nothing
+ * but legacy promotional credits can never gift, whatever their total says.
+ */
+export function giftIssue(input: {
+  purchased_balance: number;
+  amount: number;
+  isSelf: boolean;
+}): string | null {
+  if (input.isSelf) return "You cannot gift social credits to yourself";
+  if (input.purchased_balance <= 0)
+    return "You have no purchased social credits. Free promotional credits cannot be gifted.";
+  if (!Number.isFinite(input.amount) || input.amount <= 0)
+    return "Enter how many social credits to gift";
+  if (!Number.isInteger(input.amount)) return "Gift whole social credits only";
+  if (input.amount > MAX_GIFT) return `You can gift at most ${MAX_GIFT} social credits at a time`;
+  if (input.amount > input.purchased_balance)
+    return `You only have ${input.purchased_balance} purchased social credit${input.purchased_balance === 1 ? "" : "s"} to gift`;
+  return null;
+}
+
+/** True when the Gift action should be offered at all. */
+export function canGift(
+  state: Pick<SocialState, "purchased_balance"> | null,
+  isSelf: boolean,
+): boolean {
+  return !isSelf && (state?.purchased_balance ?? 0) > 0;
 }
 
 export function currencyLabel(currency: "social" | "points"): string {
@@ -625,6 +698,50 @@ export async function exchangeForSocialCredits(kind: "credit" | "points", amount
   const { data, error } = await supabase.rpc("social_exchange", { _kind: kind, _amount: amount });
   if (error) fail(error.message);
   return data as unknown as { granted: number; balance: number; tx_id: string };
+}
+
+export interface GiftResult {
+  amount: number;
+  recipient_name: string;
+  /** The sender's remaining PURCHASED balance after the gift. */
+  purchased_balance: number;
+  balance: number;
+  tx_id: string;
+}
+
+/**
+ * Gift PURCHASED social credits to a post's author.
+ * The database refuses to touch promotional balances and rejects self-gifts,
+ * over-spends and duplicate concurrent gifts, so a failure here is authoritative.
+ */
+export async function giftSocialCredits(input: {
+  postId: string;
+  amount: number;
+  note?: string;
+}): Promise<GiftResult> {
+  const { data, error } = await supabase.rpc("social_gift_credits", {
+    _post_id: input.postId,
+    _amount: input.amount,
+    ...(input.note ? { _note: input.note } : {}),
+  });
+  if (error) fail(error.message);
+  return data as unknown as GiftResult;
+}
+
+export interface GiftAuditRow {
+  created_at: string;
+  post_id: string | null;
+  sender_name: string;
+  recipient_name: string;
+  amount: number;
+  sender_balance_after: number;
+}
+
+/** Platform-owner audit of paid social-credit gifts and the balances they came from. */
+export async function fetchGiftAudit(limit = 100): Promise<GiftAuditRow[]> {
+  const { data, error } = await supabase.rpc("social_gift_audit", { _limit: limit });
+  if (error) fail(error.message);
+  return (data ?? []) as unknown as GiftAuditRow[];
 }
 
 /** Only ever succeeds for an ad event a trusted server already marked verified. */

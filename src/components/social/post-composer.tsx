@@ -54,6 +54,7 @@ import {
   createPost,
   fetchTargetShops,
   postCharge,
+  freePostDisclosure,
   postReadiness,
   tierDuration,
   uploadSocialImage,
@@ -297,6 +298,13 @@ export function PostComposer({
             <p className="text-right text-xs text-muted-foreground">
               {body.length}/{POST_MAX_CHARS}
             </p>
+            <ul className="space-y-1 rounded-2xl bg-muted/50 p-3 text-xs text-muted-foreground">
+              {freePostDisclosure(state).map((line, i) => (
+                <li key={line} className={i === 0 ? "font-medium text-foreground" : undefined}>
+                  {line}
+                </li>
+              ))}
+            </ul>
             {file ? (
               <div className="space-y-2">
                 <ImageCropper file={file} aspect={SOCIAL_IMAGE_ASPECT} onChange={setCrop} />
@@ -534,13 +542,19 @@ export function PostComposer({
               <div className="flex justify-between gap-3">
                 <dt className="text-muted-foreground">Cost</dt>
                 <dd className="text-right font-medium">
-                  {charge.amount} {charge.currency === "points" ? "points" : "social credits"}
+                  {charge.free
+                    ? "Free (uses 1 of today's free posts)"
+                    : `${charge.amount} ${charge.currency === "points" ? "points" : "paid social credits"}`}
                 </dd>
               </div>
               <div className="flex justify-between gap-3">
-                <dt className="text-muted-foreground">Remaining balance</dt>
+                <dt className="text-muted-foreground">
+                  {charge.free ? "Free posts left after this" : "Paid balance after this"}
+                </dt>
                 <dd className="text-right font-medium">
-                  {remaining} {charge.currency === "points" ? "points" : "social credits"}
+                  {charge.free
+                    ? Math.max(0, state.free_posts_left - 1)
+                    : `${remaining} ${charge.currency === "points" ? "points" : "social credits"}`}
                 </dd>
               </div>
             </dl>
@@ -551,8 +565,8 @@ export function PostComposer({
             </p>
             <p className="text-xs text-muted-foreground">
               {promote
-                ? `Only you pay this promotion. Likes are always free and replies to a promoted post cost the members replying nothing.`
-                : `Likes and replies are always free — only publishing a post uses social credits.`}
+                ? `Only you pay this promotion, and promotions always cost paid social credits. Likes, replies and messages stay free.`
+                : `Likes, replies and messages are always free. Only posts beyond your daily free allowance use paid social credits.`}
             </p>
             {!affordable ? (
               <p className="text-sm font-medium text-destructive">
@@ -564,9 +578,15 @@ export function PostComposer({
         ) : null}
 
         <div className="flex items-center gap-2 border-t border-border pt-3">
-          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Coins className="size-4 text-success" aria-hidden />
-            {state.balance} social credits
+          <span className="flex flex-col gap-0.5 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <Coins className="size-4 text-success" aria-hidden />
+              {state.purchased_balance} paid social credits
+            </span>
+            <span>
+              {Math.max(0, state.free_posts_left)} free post
+              {state.free_posts_left === 1 ? "" : "s"} left today
+            </span>
           </span>
           {step === "review" ? (
             <Button
