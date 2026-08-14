@@ -83,27 +83,7 @@ function AdminDashboard() {
 
   return (
     <>
-      {sub.status !== "active" ? (
-        <Card className="mb-5 border-destructive/30 bg-danger-soft shadow-none">
-          <CardContent className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="mt-0.5 size-4 text-destructive" />
-              <div>
-                <p className="text-sm font-medium text-destructive">
-                  Subscription {(statusLabel[sub.status] ?? sub.status).toLowerCase()}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Selling is restricted until the platform approves your payment. Your data is kept
-                  intact.
-                </p>
-              </div>
-            </div>
-            <Button asChild size="sm">
-              <Link to="/admin/subscription">Open subscription</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : null}
+
 
       <PageSection
         title={ecosystem.name}
