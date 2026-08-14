@@ -240,7 +240,22 @@ export function UniverseUsersCard({
               or mobile can be used to sign up again later.
             </DialogDescription>
           </DialogHeader>
-          {!check ? (
+          {checkError ? (
+            <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm">
+              <p className="flex items-center gap-2 font-medium">
+                <ShieldAlert className="size-4" /> The safety check failed
+              </p>
+              <p className="mt-1">{checkError}</p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-2"
+                onClick={() => removing && void openRemove(removing)}
+              >
+                Try again
+              </Button>
+            </div>
+          ) : !check ? (
             <p className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" /> Checking balances…
             </p>
