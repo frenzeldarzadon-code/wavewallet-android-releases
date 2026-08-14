@@ -1,17 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ApplicationsPanel } from "@/components/applications-panel";
+import { MemberInboxPanel } from "@/components/member-inbox-panel";
 import { useSession } from "@/lib/session";
 
 export const Route = createFileRoute("/admin/applications")({
   head: () => ({
     meta: [
-      { title: "Signup Applications — WaveWallet Admin" },
+      { title: "Applications & Invites — WaveWallet Admin" },
       {
         name: "description",
         content:
           "Review pending signup applications for your shop and approve or reject membership requests.",
       },
-      { property: "og:title", content: "Signup Applications — WaveWallet Admin" },
+      { property: "og:title", content: "Applications & Invites — WaveWallet Admin" },
       {
         property: "og:description",
         content: "Approve or reject pending membership applications for your shop.",
@@ -26,9 +27,12 @@ export const Route = createFileRoute("/admin/applications")({
 function AdminApplications() {
   const { ecosystemDbId } = useSession("admin");
   return (
-    <ApplicationsPanel
-      ecosystemId={ecosystemDbId}
-      description="New members who chose your shop. They cannot enter until approved."
-    />
+    <>
+      <MemberInboxPanel />
+      <ApplicationsPanel
+        ecosystemId={ecosystemDbId}
+        description="New members who chose your shop. They cannot enter until approved."
+      />
+    </>
   );
 }

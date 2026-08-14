@@ -1,7 +1,8 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { useSession } from "@/lib/session";
-import { adminBottomNav, adminNav } from "@/lib/navigation";
+import { adminBottomNav, adminNav, withBadges } from "@/lib/navigation";
+import { useMemberInbox } from "@/components/member-inbox-panel";
 
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
@@ -9,6 +10,7 @@ export const Route = createFileRoute("/admin")({
 
 function AdminLayout() {
   const session = useSession("admin");
+  const { pending } = useMemberInbox();
 
   // Never render a blank screen: the session resolves asynchronously, and an
   // admin whose active shop is not resolved yet gets a readable state instead.
@@ -24,7 +26,7 @@ function AdminLayout() {
   }
 
 
-  const nav = adminNav();
+  const nav = withBadges(adminNav(), { "/admin/applications": pending });
   return (
     <AppShell
       session={session}

@@ -40,6 +40,7 @@ import { Route as AdminTransactionsRouteImport } from './routes/admin.transactio
 import { Route as AdminVouchersRouteImport } from './routes/admin.vouchers'
 import { Route as AdminWalletsRouteImport } from './routes/admin.wallets'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppApplicationsRouteImport } from './routes/app.applications'
 import { Route as AppHistoryRouteImport } from './routes/app.history'
 import { Route as AppMessagesRouteImport } from './routes/app.messages'
 import { Route as AppMoneyRouteImport } from './routes/app.money'
@@ -241,6 +242,11 @@ const AdminWalletsRoute = AdminWalletsRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppApplicationsRoute = AppApplicationsRouteImport.update({
+  id: '/applications',
+  path: '/applications',
   getParentRoute: () => AppRoute,
 } as any)
 const AppHistoryRoute = AppHistoryRouteImport.update({
@@ -509,6 +515,7 @@ export interface FileRoutesByFullPath {
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/vouchers': typeof AdminVouchersRoute
   '/admin/wallets': typeof AdminWalletsRoute
+  '/app/applications': typeof AppApplicationsRoute
   '/app/history': typeof AppHistoryRoute
   '/app/messages': typeof AppMessagesRoute
   '/app/money': typeof AppMoneyRoute
@@ -584,6 +591,7 @@ export interface FileRoutesByTo {
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/vouchers': typeof AdminVouchersRoute
   '/admin/wallets': typeof AdminWalletsRoute
+  '/app/applications': typeof AppApplicationsRoute
   '/app/history': typeof AppHistoryRoute
   '/app/messages': typeof AppMessagesRoute
   '/app/money': typeof AppMoneyRoute
@@ -665,6 +673,7 @@ export interface FileRoutesById {
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/vouchers': typeof AdminVouchersRoute
   '/admin/wallets': typeof AdminWalletsRoute
+  '/app/applications': typeof AppApplicationsRoute
   '/app/history': typeof AppHistoryRoute
   '/app/messages': typeof AppMessagesRoute
   '/app/money': typeof AppMoneyRoute
@@ -747,6 +756,7 @@ export interface FileRouteTypes {
     | '/admin/transactions'
     | '/admin/vouchers'
     | '/admin/wallets'
+    | '/app/applications'
     | '/app/history'
     | '/app/messages'
     | '/app/money'
@@ -822,6 +832,7 @@ export interface FileRouteTypes {
     | '/admin/transactions'
     | '/admin/vouchers'
     | '/admin/wallets'
+    | '/app/applications'
     | '/app/history'
     | '/app/messages'
     | '/app/money'
@@ -902,6 +913,7 @@ export interface FileRouteTypes {
     | '/admin/transactions'
     | '/admin/vouchers'
     | '/admin/wallets'
+    | '/app/applications'
     | '/app/history'
     | '/app/messages'
     | '/app/money'
@@ -1185,6 +1197,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/applications': {
+      id: '/app/applications'
+      path: '/applications'
+      fullPath: '/app/applications'
+      preLoaderRoute: typeof AppApplicationsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/history': {
@@ -1568,6 +1587,7 @@ const AdminRouteChildren: AdminRouteChildren = {
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface AppRouteChildren {
+  AppApplicationsRoute: typeof AppApplicationsRoute
   AppHistoryRoute: typeof AppHistoryRoute
   AppMessagesRoute: typeof AppMessagesRoute
   AppMoneyRoute: typeof AppMoneyRoute
@@ -1581,6 +1601,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppApplicationsRoute: AppApplicationsRoute,
   AppHistoryRoute: AppHistoryRoute,
   AppMessagesRoute: AppMessagesRoute,
   AppMoneyRoute: AppMoneyRoute,
