@@ -25,13 +25,13 @@ import {
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { FacebookSupportCard } from "@/components/facebook-support-card";
 import { useSession } from "@/lib/session";
-import { peso, shortDateTime } from "@/lib/wavewallet";
+import { shortDateTime } from "@/lib/wavewallet";
 import { fetchCreditBalance } from "@/lib/wallet";
 import { fetchPlatformSettings, type PlatformSettings } from "@/lib/subscription";
 import {
   cancelCashIn,
   cancelWithdrawal,
-  describeRate,
+  creditsAfterFee,
   fetchMoneySettings,
   fetchMyCashIns,
   fetchMyWithdrawals,
@@ -131,7 +131,7 @@ export function MoneyPage() {
     }
     if (
       !window.confirm(
-        `Cash out ${creditsNum.toLocaleString()} credits?\n\nGross ${peso(quote.gross)} − fee ${quote.feePercent}% (${peso(quote.fee)}) = payout ${peso(quote.net)}.\n\n${WITHDRAWAL_SLA_NOTICE}`,
+        `Cash out ${creditsNum.toLocaleString()} credits?\n\nWithdrawal fee ${quote.feePercent}% · you receive ${creditsAfterFee(creditsNum, quote.feePercent).toLocaleString()} credits worth of payout.\n\n${WITHDRAWAL_SLA_NOTICE}`,
       )
     ) {
       return;
@@ -190,7 +190,7 @@ export function MoneyPage() {
     <>
       <PageSection
         title="Cash out & cash in"
-        description={`Current platform valuation: ${describeRate(settings)} · withdrawal fee ${settings.feePercent}%.`}
+        description={`Withdrawal fee ${settings.feePercent}%. Balances and requests are shown in credits.`}
       >
         <div className="grid gap-3 sm:grid-cols-3">
           <StatCard
@@ -199,12 +199,6 @@ export function MoneyPage() {
             icon={ArrowUpFromLine}
             tone="brand"
           />
-          <StatCard
-            label="Cash value of your credits"
-            value={peso(quoteWithdrawal(balance, settings).gross)}
-            hint="Reference only — the app holds credits, not money"
-          />
-
           <StatCard
             label="Pending requests"
             value={String(
@@ -282,11 +276,14 @@ export function MoneyPage() {
 
               <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs">
                 <p className="font-medium">
-                  {(creditsNum || 0).toLocaleString()} credits → gross {peso(quote.gross)}
+                  {(creditsNum || 0).toLocaleString()} credits requested
                 </p>
                 <p className="text-muted-foreground">
-                  Fee {quote.feePercent}% ({peso(quote.fee)}) · you receive{" "}
-                  <span className="font-semibold text-foreground">{peso(quote.net)}</span>
+                  Fee {quote.feePercent}% · you receive{" "}
+                  <span className="font-semibold text-foreground">
+                    {creditsAfterFee(creditsNum || 0, quote.feePercent).toLocaleString()} credits
+                  </span>{" "}
+                  worth of payout
                 </p>
                 <p className="mt-1 flex items-start gap-1 text-muted-foreground">
                   <Info className="mt-0.5 size-3 shrink-0" /> {WITHDRAWAL_SLA_NOTICE}
@@ -310,10 +307,12 @@ export function MoneyPage() {
                     <Card key={w.id} className="shadow-[var(--shadow-card)]">
                       <CardContent className="flex flex-wrap items-start justify-between gap-3 px-4 py-3 text-xs">
                         <div>
-                          <p className="text-sm font-semibold">{peso(q.net)} payout</p>
+                          <p className="text-sm font-semibold">
+                            {Number(w.credits).toLocaleString()} credits
+                          </p>
                           <p className="text-muted-foreground">
-                            {w.reference} · {Number(w.credits).toLocaleString()} credits · gross {peso(q.gross)} − fee{" "}
-                            {q.feePercent}% ({peso(q.fee)})
+                            {w.reference} · fee {q.feePercent}% · payout{" "}
+                            {creditsAfterFee(Number(w.credits), q.feePercent).toLocaleString()} credits
                           </p>
                           <p className="text-muted-foreground">
                             {paymentModeLabel(w.payment_mode)}
@@ -415,7 +414,7 @@ export function MoneyPage() {
                   </div>
                   <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs">
                     <p className="font-medium">
-                      {peso(Number(amount) || 0)} → {cashInCredits.toLocaleString()} credits
+                      You will receive {cashInCredits.toLocaleString()} credits
                     </p>
                     <p className="text-muted-foreground">
                       Credits are issued only after the platform owner verifies your payment.
@@ -439,7 +438,7 @@ export function MoneyPage() {
                     <CardContent className="flex flex-wrap items-start justify-between gap-3 px-4 py-3 text-xs">
                       <div>
                         <p className="text-sm font-semibold">
-                          {peso(Number(c.amount_php))} → {Number(c.credits).toLocaleString()} credits
+                          {Number(c.credits).toLocaleString()} credits
                         </p>
                         <p className="text-muted-foreground">
                           {c.reference} · {c.method_name} · {shortDateTime(c.created_at)}

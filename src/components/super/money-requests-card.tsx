@@ -17,6 +17,7 @@ import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
   fetchAllCashIns,
   fetchAllWithdrawals,
+  creditsAfterFee,
   filterByStatus,
   paymentModeLabel,
   pendingMoneyCount,
@@ -108,12 +109,13 @@ export function MoneyRequestsCard() {
                         {w.requester_name} · {w.requester_role}
                       </p>
                       <p className="text-muted-foreground">
-                        {w.reference} · {Number(w.credits).toLocaleString()} credits at{" "}
-                        {Number(w.rate_credits).toLocaleString()} credits = {peso(Number(w.rate_php))}
+                        {w.reference} · {Number(w.credits).toLocaleString()} credits
                       </p>
                       <p className="text-muted-foreground">
-                        Gross {peso(q.gross)} − fee {q.feePercent}% ({peso(q.fee)}) ={" "}
-                        <span className="font-semibold text-foreground">{peso(q.net)}</span> net payout
+                        Fee {q.feePercent}% · net payout{" "}
+                        <span className="font-semibold text-foreground">
+                          {creditsAfterFee(Number(w.credits), q.feePercent).toLocaleString()} credits
+                        </span>
                       </p>
                       <p className="text-muted-foreground">
                         {paymentModeLabel(w.payment_mode)}
@@ -200,7 +202,7 @@ export function MoneyRequestsCard() {
                       {c.requester_name} · {c.requester_role}
                     </p>
                     <p className="text-muted-foreground">
-                      {c.reference} · {peso(Number(c.amount_php))} → {Number(c.credits).toLocaleString()} credits
+                      {c.reference} · {Number(c.credits).toLocaleString()} credits
                     </p>
                     <p className="text-muted-foreground">
                       {c.method_name}
