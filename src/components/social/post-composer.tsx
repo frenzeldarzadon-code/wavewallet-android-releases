@@ -35,6 +35,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ImageCropper } from "@/components/image-cropper";
+import {
+  PROMOTION_NOTICE,
+  canPostAsRegular,
+  detectPromotion,
+  detectionExplanation,
+  promotionGate,
+} from "@/lib/promotion-detection";
 import type { CropRect } from "@/lib/image-optimize";
 import {
   POST_MAX_CHARS,
@@ -96,6 +103,7 @@ export function PostComposer({
   const [tierId, setTierId] = useState<string>("");
   const [payWith, setPayWith] = useState<SocialCurrency>("social");
   const [posting, setPosting] = useState(false);
+  const [ackRegular, setAckRegular] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -111,6 +119,15 @@ export function PostComposer({
     [state, promote, tier, payWith],
   );
   const affordable = canAfford(state, charge, pointsBalance);
+  // Detection is free and local: it never touches the network and never
+  // deducts anything. It only decides which notice the review step shows.
+  const detection = useMemo(() => detectPromotion(body, { hasImage: file !== null }), [body, file]);
+  const promotionBlocker = promotionGate({
+    detection,
+    promote,
+    acknowledgedRegular: ackRegular,
+    packagesAvailable: promotionAvailable,
+  });
   const blocker = postReadiness({
     body,
     audience,
@@ -118,7 +135,11 @@ export function PostComposer({
     promote,
     tierChosen: !promote || tier !== null,
     affordable,
-  });
+  }) ?? promotionBlocker;
+
+  useEffect(() => {
+    setAckRegular(false);
+  }, [body, file]);
 
   useEffect(() => {
     if (promote && !tierId && tiers.length > 0) setTierId(tiers[0]!.id);
@@ -134,6 +155,7 @@ export function PostComposer({
     setPromote(false);
     setTierId("");
     setPayWith("social");
+    setAckRegular(false);
   };
 
   const close = (next: boolean) => {
@@ -448,6 +470,52 @@ export function PostComposer({
               <p className="whitespace-pre-wrap break-words">{body}</p>
               {file ? <p className="mt-2 text-xs text-muted-foreground">1 photo attached</p> : null}
             </div>
+            {!promote && detection.level !== "none" && promotionAvailable ? (
+              <div className="space-y-3 rounded-2xl border-2 border-warning/60 bg-warning/5 p-4">
+                <div className="flex items-start gap-2">
+                  <Megaphone className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden />
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold">{PROMOTION_NOTICE}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {detectionExplanation(detection)} Checking costs nothing — nothing is
+                      deducted until you publish.
+                    </p>
+                  </div>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Button
+                    type="button"
+                    className="h-11"
+                    onClick={() => {
+                      setPromote(true);
+                      setStep("promote");
+                    }}
+                  >
+                    Choose a promotion package
+                  </Button>
+                  {canPostAsRegular(detection) ? (
+                    <Button
+                      type="button"
+                      variant={ackRegular ? "default" : "outline"}
+                      className="h-11"
+                      onClick={() => setAckRegular(true)}
+                    >
+                      {ackRegular ? (
+                        <>
+                          <Check className="size-4" /> Posting as regular content
+                        </>
+                      ) : (
+                        "Post as regular content"
+                      )}
+                    </Button>
+                  ) : (
+                    <p className="self-center text-xs text-muted-foreground">
+                      This reads as a clear commercial offer, so it needs a promotion package.
+                    </p>
+                  )}
+                </div>
+              </div>
+            ) : null}
             <dl className="space-y-2 rounded-2xl border border-border p-4 text-sm">
               <div className="flex justify-between gap-3">
                 <dt className="text-muted-foreground">Audience</dt>
