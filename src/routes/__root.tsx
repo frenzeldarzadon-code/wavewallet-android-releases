@@ -95,6 +95,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "WaveWallet — Voucher & Wallet Platform for Hotspot Operators" },
       { name: "twitter:description", content: "WaveWallet is a multi-tenant credit wallet, voucher marketplace and rewards platform for Omada hotspot operators, resellers and their customers." },
+      { name: "google-site-verification", content: "UnARDDxep_CFJhJiBRoKdtC14Xd_YQtLq2R6mtfyB-M" },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/81b0d65a2043abe4f2bcdf4ae733e17b/id-preview-a7c88392--c55ae295-3a69-4d32-ac4d-3325efdee786.lovable.app-1786539511713.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/81b0d65a2043abe4f2bcdf4ae733e17b/id-preview-a7c88392--c55ae295-3a69-4d32-ac4d-3325efdee786.lovable.app-1786539511713.png" },
     ],
