@@ -190,3 +190,27 @@ describe("benefit split", () => {
     expect(totals.reversed).toBe(40);
   });
 });
+
+describe("admin shop earnings type", () => {
+  it("counts only retained shop margin, never platform-minted credits", () => {
+    const rows = [
+      row({ earning_type: "admin_shop_margin", earning_amount: 7 }),
+      row({ earning_type: "credit_generation", earning_amount: 5000 }),
+      row({ earning_type: "sale_cashback", earning_amount: 2 }),
+      row({ earning_type: "upline_commission", earning_amount: 1 }),
+    ];
+    const t = summariseEarnings(rows);
+    expect(t.byType.admin_shop_margin).toBe(7);
+    expect(periodTotals(rows.map((r) => ({ ...r, occurred_at: new Date().toISOString() })), [
+      "admin_shop_margin",
+    ]).today).toBe(7);
+  });
+
+  it("drops a refunded sale from retained earnings", () => {
+    const t = summariseEarnings([
+      row({ earning_type: "admin_shop_margin", earning_amount: 7 }),
+      row({ earning_type: "admin_shop_margin", earning_amount: 7, status: "reversed" }),
+    ]);
+    expect(t.byType.admin_shop_margin).toBe(7);
+  });
+});

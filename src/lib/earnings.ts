@@ -19,6 +19,7 @@ export type EarningType =
   | "sale_cashback"
   | "upline_commission"
   | "wholesale_discount"
+  | "admin_shop_margin"
   | "credit_generation"
   | "platform_subscription";
 
@@ -26,7 +27,8 @@ export const EARNING_TYPE_LABEL: Record<EarningType, string> = {
   sale_cashback: "Sales cashback",
   upline_commission: "Upline commission",
   wholesale_discount: "Wholesale margin",
-  credit_generation: "Credits generated",
+  admin_shop_margin: "Shop retained earnings",
+  credit_generation: "Platform credits minted",
   platform_subscription: "Subscription revenue",
 };
 
@@ -35,6 +37,10 @@ export const SELLER_EARNING_TYPES: EarningType[] = [
   "upline_commission",
   "wholesale_discount",
 ];
+
+/** What an admin actually earns: the shop's retained share of completed sales. */
+export const ADMIN_EARNING_TYPES: EarningType[] = ["admin_shop_margin"];
+
 
 export interface EarningRow {
   id: string;
@@ -183,6 +189,7 @@ export function summariseEarnings(rows: EarningRow[]): EarningsTotals {
       sale_cashback: 0,
       upline_commission: 0,
       wholesale_discount: 0,
+      admin_shop_margin: 0,
       credit_generation: 0,
       platform_subscription: 0,
     },

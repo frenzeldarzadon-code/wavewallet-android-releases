@@ -251,17 +251,27 @@ export function summariseCredits(entries: CreditEntry[]): CreditSummary {
 /**
  * Current business model view of the credit ledger.
  *
- * Newly generated credits (a credit entry with no opposing debit in the same
- * transaction) are shop-owner earnings. Wallet-to-wallet transfers move
- * existing credits at face value and are never earnings. Cashback and upline
- * commission are only ever paid on voucher sales.
+ * Shop earnings are NEVER derived from credits appearing in a wallet. Credits
+ * minted by the platform owner (manual issuance, approved cash-in), wallet
+ * transfers and withdrawal holds all move credits without producing any shop
+ * earnings, so each gets its own bucket here and none of them feed `generated`.
  */
 export interface CreditFlowSummary {
-  /** New credits minted into wallets — counts as admin earnings. */
+  /** Credits minted inside the shop by an admin correction. Not shop earnings. */
   generated: number;
   generatedCount: number;
   /** Credits removed from wallets by an admin correction. */
   revoked: number;
+  /** Credits minted by the platform owner (manual issuance). Never shop earnings. */
+  platformIssued: number;
+  platformIssuedCount: number;
+  /** Credits released by an approved Cash In. Never shop earnings. */
+  cashIn: number;
+  cashInCount: number;
+  /** Credits reserved against a pending withdrawal — a hold, not a revocation. */
+  withdrawalHeld: number;
+  /** Held credits returned after a rejected/cancelled withdrawal. */
+  withdrawalReturned: number;
   /** Existing credits moved between wallets at face value (no earnings). */
   transferred: number;
   transferCount: number;
@@ -294,6 +304,12 @@ export function summariseCreditFlow(entries: CreditEntry[]): CreditFlowSummary {
     generated: 0,
     generatedCount: 0,
     revoked: 0,
+    platformIssued: 0,
+    platformIssuedCount: 0,
+    cashIn: 0,
+    cashInCount: 0,
+    withdrawalHeld: 0,
+    withdrawalReturned: 0,
     transferred: 0,
     transferCount: 0,
     spentOnVouchers: 0,
@@ -305,6 +321,24 @@ export function summariseCreditFlow(entries: CreditEntry[]): CreditFlowSummary {
     const kind = e.entry_kind ?? "general";
     if (kind === "purchase") {
       if (e.direction === "debit") out.spentOnVouchers += e.amount;
+      continue;
+    }
+    if (kind === "credit_issue") {
+      out.platformIssued += e.amount;
+      out.platformIssuedCount += 1;
+      continue;
+    }
+    if (kind === "cash_in") {
+      out.cashIn += e.amount;
+      out.cashInCount += 1;
+      continue;
+    }
+    if (kind === "withdrawal_hold") {
+      out.withdrawalHeld += e.amount;
+      continue;
+    }
+    if (kind === "withdrawal_return") {
+      out.withdrawalReturned += e.amount;
       continue;
     }
     if (kind === "sale_commission" || kind === "upline_commission") {
@@ -338,6 +372,70 @@ export function summariseCreditFlow(entries: CreditEntry[]): CreditFlowSummary {
   }
   return out;
 }
+
+/* ------------------------------------------------------------------ */
+/* Admin shop cashflow — retained earnings on completed sales          */
+/* ------------------------------------------------------------------ */
+
+export interface AdminShopEarnings {
+  /** Completed, credit-funded sales counted. */
+  saleCount: number;
+  /** Credits collected on those sales (after any wholesale discount). */
+  saleCollected: number;
+  /** Cashback paid to the selling reseller/subreseller on those sales. */
+  cashbackPaid: number;
+  /** Upline commission paid on those sales. */
+  uplinePaid: number;
+  /** What the shop keeps: collected less downline cashback. */
+  retained: number;
+  /** Sales refunded in range — excluded from every figure above. */
+  refundedCount: number;
+  refundedAmount: number;
+}
+
+/**
+ * The Admin's shop earnings, derived only from completed voucher sales and the
+ * cashback/commission rows attached to those exact sales. Refunded, pending and
+ * points-funded sales are excluded, so the same sale is never double counted
+ * and no credit issuance, cash-in, transfer or withdrawal can inflate it.
+ * Each row carries the percentages snapshotted at sale time, so changing the
+ * configured rates only affects future sales.
+ */
+export function adminShopEarnings(
+  sales: SaleReportRow[],
+  commissions: SaleCommissionReportRow[],
+): AdminShopEarnings {
+  const out: AdminShopEarnings = {
+    saleCount: 0,
+    saleCollected: 0,
+    cashbackPaid: 0,
+    uplinePaid: 0,
+    retained: 0,
+    refundedCount: 0,
+    refundedAmount: 0,
+  };
+  const counted = new Set<string>();
+  for (const s of sales) {
+    if (s.payment_method === "points") continue;
+    if (s.refunded_at) {
+      out.refundedCount += 1;
+      out.refundedAmount += s.sale_price;
+      continue;
+    }
+    counted.add(s.id);
+    out.saleCount += 1;
+    out.saleCollected += s.sale_price;
+  }
+  for (const c of commissions) {
+    if (c.reversed_at) continue;
+    if (!counted.has(c.sale_id)) continue;
+    if (c.kind === "upline") out.uplinePaid += c.commission_amount;
+    else out.cashbackPaid += c.commission_amount;
+  }
+  out.retained = out.saleCollected - out.cashbackPaid - out.uplinePaid;
+  return out;
+}
+
 
 /* ------------------------------------------------------------------ */
 /* Sale commissions (cashback + upline) paid inside an ecosystem       */
