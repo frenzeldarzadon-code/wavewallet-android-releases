@@ -19,6 +19,8 @@ import {
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { EcosystemSwitcher } from "@/components/ecosystem-switcher";
+
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -191,9 +193,15 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
           )}
         >
           <Brand ecosystem={session.ecosystem?.name} mini={collapsed} />
+          {session.account?.role === "super_admin" ? null : (
+            <div className="mt-3">
+              <EcosystemSwitcher mini={collapsed} />
+            </div>
+          )}
           <div className="mt-6 flex-1 overflow-y-auto">
             <NavLinks mini={collapsed} />
           </div>
+
           <Button
             variant="ghost"
             size="sm"
@@ -223,9 +231,15 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
               <SheetContent side="left" className="w-[17rem] overflow-y-auto bg-sidebar p-4">
                 <SheetTitle className="sr-only">Navigation</SheetTitle>
                 <Brand ecosystem={session.ecosystem?.name} />
+                {session.account?.role === "super_admin" ? null : (
+                  <div className="mt-3">
+                    <EcosystemSwitcher />
+                  </div>
+                )}
                 <div className="mt-6">
                   <NavLinks onNavigate={() => setDrawer(false)} />
                 </div>
+
                 <div className="mt-6">
                   <AccountBlock session={session} />
                 </div>
