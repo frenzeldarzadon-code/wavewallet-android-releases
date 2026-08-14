@@ -482,7 +482,7 @@ export function PostComposer({
             <p className="text-xs text-muted-foreground">
               {promote
                 ? `Only you pay this promotion. Likes are always free and replies to a promoted post cost the members replying nothing.`
-                : `Likes are free. Replies to this post cost ${state.comment_cost} social credit.`}
+                : `Likes and replies are always free — only publishing a post uses social credits.`}
             </p>
             {!affordable ? (
               <p className="text-sm font-medium text-destructive">

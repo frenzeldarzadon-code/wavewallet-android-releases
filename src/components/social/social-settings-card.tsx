@@ -104,7 +104,6 @@ export function SocialSettingsCard() {
         <CardContent className="grid gap-3 sm:grid-cols-2">
           {num("daily_allowance", "Free social credits per day")}
           {num("post_cost", "Cost of a post")}
-          {num("comment_cost", "Cost of a reply")}
           {num("credit_exchange_rate", "Social credits per 1 wallet credit")}
           {num("points_exchange_rate", "Social credits per 1 point")}
 
