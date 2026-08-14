@@ -1,16 +1,18 @@
 /**
  * Super Admin earnings.
  *
- * The platform owner earns from EXACTLY ONE source: the cash-out fee actually
- * collected when a withdrawal is released. Everything else the platform owner
- * touches — minting credits, approving cash in, member wallet balances, shop
- * credit supply, transfers, withdrawal holds — moves credits without earning
- * anything, and must never appear here.
+ * The platform owner earns from the fees it actually collects: the cash-out
+ * fee taken when a withdrawal is released, the cash-in fee taken when a cash
+ * in payment is verified, and the flat shop-to-shop transfer fee. Everything
+ * else the platform owner touches — minting credits, member wallet balances,
+ * shop credit supply, transfers, withdrawal holds — moves credits without
+ * earning anything, and must never appear here.
  *
- * Each released withdrawal already carries the fee snapshotted at submission
- * time (`fee_php`, `fee_percent`), so historical fees stay intact when the
- * platform fee setting changes later.
+ * Each request carries the fee snapshotted at submission time (`fee_php`,
+ * `fee_percent`), so historical fees stay intact when a fee setting changes
+ * later.
  */
+
 import { supabase } from "@/integrations/supabase/client";
 import { periodTotalsOf, type PeriodTotals } from "@/lib/earnings";
 
