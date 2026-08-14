@@ -129,51 +129,19 @@ function AdminDashboard() {
       <AdminEarningsPanel ecosystemId={ecosystemDbId} />
 
 
+      <PageSection title="Voucher sales" description="Voucher engine arrives in a later stage.">
+        <Card className="shadow-[var(--shadow-card)]">
+          <CardContent className="space-y-2 text-center">
+            <Ticket className="mx-auto size-6 text-muted-foreground" />
+            <p className="text-sm font-medium">Sales reporting not available yet</p>
+            <p className="text-xs text-muted-foreground">
+              Voucher dispensing, credit movement and revenue reporting are not implemented, so no
+              figures are shown here rather than estimated ones.
+            </p>
+          </CardContent>
+        </Card>
+      </PageSection>
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <PageSection title="Subscription">
-          <Card className="shadow-[var(--shadow-card)]">
-            <CardContent className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Status</span>
-                <StatusBadge tone={subscriptionTone(sub.status)}>
-                  {statusLabel[sub.status] ?? sub.status}
-                </StatusBadge>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Plan</span>
-                <span className="font-medium">
-                  {sub.planName} · {peso(sub.priceMonthly)}/mo
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Period ends</span>
-                <span className="font-medium">
-                  {sub.currentPeriodEnd ? shortDate(sub.currentPeriodEnd) : "Not set"}
-                </span>
-              </div>
-              <Button asChild variant="outline" size="sm" className="w-full">
-                <Link to="/admin/subscription">
-                  Manage subscription <ArrowRight className="size-3.5" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </PageSection>
-
-        <PageSection title="Voucher sales" description="Voucher engine arrives in a later stage.">
-          <Card className="shadow-[var(--shadow-card)]">
-            <CardContent className="space-y-2 text-center">
-              <Ticket className="mx-auto size-6 text-muted-foreground" />
-              <p className="text-sm font-medium">Sales reporting not available yet</p>
-              <p className="text-xs text-muted-foreground">
-                Voucher dispensing, credit movement and revenue reporting are not implemented, so no
-                figures are shown here rather than estimated ones.
-              </p>
-            </CardContent>
-          </Card>
-        </PageSection>
-      </div>
 
       <PageSection
         title="Recent activity"
