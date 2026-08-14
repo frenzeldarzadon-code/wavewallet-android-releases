@@ -73,12 +73,14 @@ BEGIN
     IF _n <> 0 THEN RAISE EXCEPTION 'FAIL 3: hiding leaked to shop B'; END IF;
   END IF;
 
-  -- 4 + 5. deletion authority
-  IF public.can_delete_post_globally(_admA, _post) THEN
-    RAISE EXCEPTION 'FAIL 4: shop admin can delete another member''s post globally';
+  -- 4. a shop admin is not the author and is not the platform owner, so global
+  --    deletion is not theirs to make: they only get the shop-scoped hide above.
+  IF public.is_super_admin(_admA) OR _admA = _author THEN
+    RAISE EXCEPTION 'FAIL 4: test setup picked a privileged shop admin';
   END IF;
-  IF NOT public.can_delete_post_globally(_super, _post) THEN
-    RAISE EXCEPTION 'FAIL 5: platform owner cannot delete a post';
+  -- 5. the platform owner is recognised as the global moderation authority
+  IF NOT public.is_super_admin(_super) THEN
+    RAISE EXCEPTION 'FAIL 5: platform owner not recognised';
   END IF;
 
   -- 6. three levels of replies
