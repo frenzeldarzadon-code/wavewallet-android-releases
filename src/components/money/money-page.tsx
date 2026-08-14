@@ -193,12 +193,18 @@ export function MoneyPage() {
         description={`Current platform valuation: ${describeRate(settings)} · withdrawal fee ${settings.feePercent}%.`}
       >
         <div className="grid gap-3 sm:grid-cols-3">
-          <StatCard label="Credit balance" value={peso(balance)} icon={ArrowUpFromLine} tone="brand" />
+          <StatCard
+            label="Credit balance"
+            value={`${balance.toLocaleString()} credits`}
+            icon={ArrowUpFromLine}
+            tone="brand"
+          />
           <StatCard
             label="Cash value of your credits"
             value={peso(quoteWithdrawal(balance, settings).gross)}
-            hint="Before the withdrawal fee"
+            hint="Reference only — the app holds credits, not money"
           />
+
           <StatCard
             label="Pending requests"
             value={String(

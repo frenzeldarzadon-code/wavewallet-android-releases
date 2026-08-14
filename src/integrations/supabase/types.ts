@@ -212,7 +212,7 @@ export type Database = {
         Row: {
           balance: number
           created_at: string
-          ecosystem_id: string
+          ecosystem_id: string | null
           id: string
           updated_at: string
           user_id: string
@@ -220,7 +220,7 @@ export type Database = {
         Insert: {
           balance?: number
           created_at?: string
-          ecosystem_id: string
+          ecosystem_id?: string | null
           id?: string
           updated_at?: string
           user_id: string
@@ -228,7 +228,7 @@ export type Database = {
         Update: {
           balance?: number
           created_at?: string
-          ecosystem_id?: string
+          ecosystem_id?: string | null
           id?: string
           updated_at?: string
           user_id?: string
@@ -254,7 +254,7 @@ export type Database = {
           commission_percent: number | null
           created_at: string
           direction: string
-          ecosystem_id: string
+          ecosystem_id: string | null
           entry_kind: string
           id: string
           reason: string
@@ -274,7 +274,7 @@ export type Database = {
           commission_percent?: number | null
           created_at?: string
           direction: string
-          ecosystem_id: string
+          ecosystem_id?: string | null
           entry_kind?: string
           id?: string
           reason: string
@@ -294,7 +294,7 @@ export type Database = {
           commission_percent?: number | null
           created_at?: string
           direction?: string
-          ecosystem_id?: string
+          ecosystem_id?: string | null
           entry_kind?: string
           id?: string
           reason?: string
@@ -3494,6 +3494,10 @@ export type Database = {
       }
       effective_uid: { Args: never; Returns: string }
       end_impersonation: { Args: never; Returns: undefined }
+      ensure_credit_account: {
+        Args: { _ecosystem_id?: string; _user_id: string }
+        Returns: string
+      }
       expire_stale_invitations: { Args: never; Returns: undefined }
       expire_stale_subscriptions: { Args: never; Returns: number }
       freeze_credit_purchase_order: {
