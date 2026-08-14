@@ -119,20 +119,34 @@ export const voucherCost = (list: number, discountPercent: number) => {
 /* Reads                                                               */
 /* ------------------------------------------------------------------ */
 
-export async function fetchCreditBalance(userId: string): Promise<number> {
-  const { data } = await supabase
-    .from("credit_accounts")
-    .select("balance")
-    .eq("user_id", userId)
-    .maybeSingle();
+/**
+ * Balance of ONE shop wallet. A member holds a separate wallet per shop, so the
+ * shop is never optional: `null` reads the global (Universe) wallet. Entering a
+ * shop only changes which wallet is read — it never moves credits.
+ */
+export async function fetchCreditBalance(
+  userId: string,
+  ecosystemId: string | null,
+): Promise<number> {
+  const q = supabase.from("credit_accounts").select("balance").eq("user_id", userId);
+  const { data } = await (ecosystemId
+    ? q.eq("ecosystem_id", ecosystemId)
+    : q.is("ecosystem_id", null)
+  ).maybeSingle();
   return Number(data?.balance ?? 0);
 }
 
-export async function fetchCreditLedger(userId: string, limit = 100): Promise<CreditEntry[]> {
-  const { data } = await supabase
-    .from("credit_ledger")
-    .select(LEDGER_COLUMNS)
-    .eq("user_id", userId)
+/** Credit movements inside ONE shop. History stays shop-scoped like the wallet. */
+export async function fetchCreditLedger(
+  userId: string,
+  ecosystemId: string | null,
+  limit = 100,
+): Promise<CreditEntry[]> {
+  const q = supabase.from("credit_ledger").select(LEDGER_COLUMNS).eq("user_id", userId);
+  const { data } = await (ecosystemId
+    ? q.eq("ecosystem_id", ecosystemId)
+    : q.is("ecosystem_id", null)
+  )
     .order("created_at", { ascending: false })
     .limit(limit);
   return ((data ?? []) as unknown as CreditEntry[]).map(normalizeEntry);
@@ -417,15 +431,17 @@ export async function fetchSales(ecosystemId: string, limit = 50): Promise<SaleR
 }
 
 /** Buyer-visible purchases (RLS returns only the caller's own rows). */
-export async function fetchMyPurchases(userId: string) {
+export async function fetchMyPurchases(userId: string, ecosystemId: string | null) {
+  const sold = supabase
+    .from("voucher_sales")
+    .select("*")
+    .eq("buyer_id", userId);
+  const owned = supabase.from("voucher_codes").select("code, sale_id").eq("sold_to", userId);
   const [{ data: sales }, { data: codes }] = await Promise.all([
-    supabase
-      .from("voucher_sales")
-      .select("*")
-      .eq("buyer_id", userId)
+    (ecosystemId ? sold.eq("ecosystem_id", ecosystemId) : sold)
       .order("created_at", { ascending: false })
       .limit(100),
-    supabase.from("voucher_codes").select("code, sale_id").eq("sold_to", userId),
+    ecosystemId ? owned.eq("ecosystem_id", ecosystemId) : owned,
   ]);
   const codeBySale = new Map((codes ?? []).map((c) => [c.sale_id, c.code]));
   return ((sales ?? []) as unknown as SaleRow[]).map((s) => ({
@@ -705,11 +721,16 @@ export interface CreditLot {
   source_name: string | null;
 }
 
-export async function fetchCreditLots(userId: string, limit = 50): Promise<CreditLot[]> {
-  const { data, error } = await supabase
+export async function fetchCreditLots(
+  userId: string,
+  ecosystemId: string | null,
+  limit = 50,
+): Promise<CreditLot[]> {
+  const q = supabase
     .from("credit_lots")
     .select("id, amount, remaining, created_at, source_kind, source_user_id")
-    .eq("user_id", userId)
+    .eq("user_id", userId);
+  const { data, error } = await (ecosystemId ? q.eq("ecosystem_id", ecosystemId) : q)
     .order("seq", { ascending: false })
     .limit(limit);
   if (error) throw error;

@@ -4716,6 +4716,15 @@ export type Database = {
         Args: { _email: string; _exclude?: string }
         Returns: boolean
       }
+      member_shop_wallets: {
+        Args: { _user_id: string }
+        Returns: {
+          balance: number
+          ecosystem_id: string
+          ecosystem_name: string
+          role: Database["public"]["Enums"]["app_role"]
+        }[]
+      }
       membership_role: {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -6221,6 +6230,7 @@ export type Database = {
         Args: {
           _amount: number
           _category?: string
+          _ecosystem_id?: string
           _reason: string
           _reference?: string
           _request_key?: string

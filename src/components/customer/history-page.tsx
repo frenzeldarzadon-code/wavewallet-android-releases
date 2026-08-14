@@ -22,7 +22,7 @@ import {
 type Purchase = Awaited<ReturnType<typeof fetchMyPurchases>>[number];
 
 export function HistoryPage() {
-  const { account } = useSession();
+  const { account, ecosystemDbId } = useSession();
   const [filter, setFilter] = useState("all");
   const [entries, setEntries] = useState<CreditEntry[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
@@ -34,15 +34,15 @@ export function HistoryPage() {
     if (!userId) return;
     setLoading(true);
     const [l, p, k] = await Promise.all([
-      fetchCreditLedger(userId, 100),
-      fetchMyPurchases(userId),
-      fetchCreditLots(userId),
+      fetchCreditLedger(userId, ecosystemDbId, 100),
+      fetchMyPurchases(userId, ecosystemDbId),
+      fetchCreditLots(userId, ecosystemDbId),
     ]);
     setEntries(l);
     setPurchases(p);
     setLots(k);
     setLoading(false);
-  }, [userId]);
+  }, [userId, ecosystemDbId]);
 
   useEffect(() => {
     void load();

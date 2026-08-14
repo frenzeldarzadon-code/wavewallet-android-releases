@@ -36,7 +36,7 @@ export const Route = createFileRoute("/reseller/")({
 });
 
 function ResellerDashboard() {
-  const { account, ecosystem } = useSession("reseller");
+  const { account, ecosystem, ecosystemDbId } = useSession("reseller");
   const [balance, setBalance] = useState(0);
   const [entries, setEntries] = useState<CreditEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,11 +45,14 @@ function ResellerDashboard() {
   const load = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
-    const [b, l] = await Promise.all([fetchCreditBalance(userId), fetchCreditLedger(userId, 50)]);
+    const [b, l] = await Promise.all([
+      fetchCreditBalance(userId, ecosystemDbId),
+      fetchCreditLedger(userId, ecosystemDbId, 50),
+    ]);
     setBalance(b);
     setEntries(l);
     setLoading(false);
-  }, [userId]);
+  }, [userId, ecosystemDbId]);
 
   useEffect(() => {
     void load();

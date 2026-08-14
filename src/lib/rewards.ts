@@ -78,22 +78,34 @@ export interface RedemptionRow {
 /* Reads                                                               */
 /* ------------------------------------------------------------------ */
 
-export async function fetchPointsAccount(userId: string): Promise<PointsAccount> {
-  const { data } = await supabase
-    .from("points_accounts")
-    .select("balance, held")
-    .eq("user_id", userId)
-    .maybeSingle();
+/** Points are shop-scoped exactly like credits — one account per membership. */
+export async function fetchPointsAccount(
+  userId: string,
+  ecosystemId: string | null,
+): Promise<PointsAccount> {
+  const q = supabase.from("points_accounts").select("balance, held").eq("user_id", userId);
+  const { data } = await (ecosystemId
+    ? q.eq("ecosystem_id", ecosystemId)
+    : q.is("ecosystem_id", null)
+  ).maybeSingle();
   const balance = Number(data?.balance ?? 0);
   const held = Number(data?.held ?? 0);
   return { balance, held, available: Math.max(balance - held, 0) };
 }
 
-export async function fetchPointsLedger(userId: string, limit = 100): Promise<PointsEntry[]> {
-  const { data } = await supabase
+export async function fetchPointsLedger(
+  userId: string,
+  ecosystemId: string | null,
+  limit = 100,
+): Promise<PointsEntry[]> {
+  const q = supabase
     .from("points_ledger")
     .select("id, direction, entry_type, amount, balance_after, reason, reference, tx_id, created_at")
-    .eq("user_id", userId)
+    .eq("user_id", userId);
+  const { data } = await (ecosystemId
+    ? q.eq("ecosystem_id", ecosystemId)
+    : q.is("ecosystem_id", null)
+  )
     .order("created_at", { ascending: false })
     .limit(limit);
   return (data ?? []) as unknown as PointsEntry[];

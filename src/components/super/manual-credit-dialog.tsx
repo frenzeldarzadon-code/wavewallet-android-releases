@@ -26,7 +26,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { MemberAvatar } from "@/components/member-avatar";
+import { ShopWalletSelect } from "@/components/super/shop-wallet-select";
 import {
+  type MemberShopWallet,
   CREDIT_ISSUANCE_CATEGORIES,
   issueCredits,
   issuanceFormIssue,
@@ -56,17 +58,24 @@ export function ManualCreditDialog({
   const [reason, setReason] = useState("");
   const [category, setCategory] = useState("");
   const [reference, setReference] = useState("");
+  const [shopId, setShopId] = useState<string | null>(null);
+  const [shopWallet, setShopWallet] = useState<MemberShopWallet | null>(null);
+  const [shopRequired, setShopRequired] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const credits = Number(amount);
   const issue = issuanceFormIssue({ userId: target?.id ?? null, amount: credits, reason });
-  const after = target ? previewBalance(target.credit_balance, credits) : 0;
+  /** Balance shown is the destination shop wallet, never a merged total. */
+  const currentBalance = shopWallet ? shopWallet.balance : (target?.credit_balance ?? 0);
+  const after = target ? previewBalance(currentBalance, credits) : 0;
 
   const reset = () => {
     setAmount("");
     setReason("");
     setCategory("");
     setReference("");
+    setShopId(null);
+    setShopWallet(null);
   };
 
   const submit = async () => {
@@ -79,6 +88,7 @@ export function ManualCreditDialog({
         reason: reason.trim(),
         ...(category ? { category } : {}),
         ...(reference.trim() ? { reference: reference.trim() } : {}),
+        ecosystemId: shopId,
       });
       toast.success("Credits issued", {
         description: `${credits.toLocaleString()} credits to ${target.full_name} · ${tx}`,
@@ -124,10 +134,22 @@ export function ManualCreditDialog({
                   {target.ecosystem_name ? ` · ${target.ecosystem_name}` : ""}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Current balance {target.credit_balance.toLocaleString()} credits
+                  Current balance {currentBalance.toLocaleString()} credits
+                  {shopWallet ? ` · ${shopWallet.ecosystemName}` : ""}
                 </p>
               </div>
             </div>
+
+            <ShopWalletSelect
+              userId={target.id}
+              value={shopId}
+              onChange={(id, wallet) => {
+                setShopId(id);
+                setShopWallet(wallet);
+              }}
+              onRequired={setShopRequired}
+              id="mc-shop"
+            />
 
             <div className="space-y-1.5">
               <Label htmlFor="mc-amount">Credits to issue</Label>
@@ -207,7 +229,7 @@ export function ManualCreditDialog({
           >
             Cancel
           </Button>
-          <Button disabled={!!issue || busy} onClick={() => void submit()}>
+          <Button disabled={!!issue || shopRequired || busy} onClick={() => void submit()}>
             {busy ? "Issuing…" : "Issue credits"}
           </Button>
         </DialogFooter>

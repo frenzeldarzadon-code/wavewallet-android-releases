@@ -27,7 +27,7 @@ export interface WalletPageProps {
 }
 
 export function WalletPage({ base, showSellerTotals = false }: WalletPageProps) {
-  const { account, ecosystem } = useSession();
+  const { account, ecosystem, ecosystemDbId } = useSession();
   const [balance, setBalance] = useState(0);
   const [points, setPoints] = useState<PointsAccount>({ balance: 0, held: 0, available: 0 });
   const [discountSaved, setDiscountSaved] = useState(0);
@@ -36,7 +36,10 @@ export function WalletPage({ base, showSellerTotals = false }: WalletPageProps) 
 
   const load = useCallback(async () => {
     if (!userId) return;
-    const [b, p] = await Promise.all([fetchCreditBalance(userId), fetchPointsAccount(userId)]);
+    const [b, p] = await Promise.all([
+      fetchCreditBalance(userId, ecosystemDbId),
+      fetchPointsAccount(userId, ecosystemDbId),
+    ]);
     setBalance(b);
     setPoints(p);
     if (!showSellerTotals) return;
@@ -51,7 +54,7 @@ export function WalletPage({ base, showSellerTotals = false }: WalletPageProps) 
       setDiscountSaved(0);
       setCashback(0);
     }
-  }, [userId, showSellerTotals]);
+  }, [userId, ecosystemDbId, showSellerTotals]);
 
   useEffect(() => {
     void load();
@@ -104,7 +107,7 @@ export function WalletPage({ base, showSellerTotals = false }: WalletPageProps) 
         </div>
       </PageSection>
 
-      {showSellerTotals ? null : <PointsEarningsPanel userId={account.id} />}
+      {showSellerTotals ? null : <PointsEarningsPanel userId={account.id} ecosystemId={ecosystemDbId} />}
 
       <PageSection title="Quick actions">
         <div className="grid gap-2 sm:grid-cols-4">

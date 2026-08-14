@@ -11,19 +11,29 @@ import type { ExpenseRow } from "./expenses";
 import type { CashOutFeeRow } from "./platform-earnings";
 
 const iso = (d: Date) => d.toISOString();
-const today = new Date();
-const daysAgo = (n: number) => {
-  const d = new Date(today);
-  d.setDate(d.getDate() - n);
-  d.setHours(12, 0, 0, 0);
-  return d;
+
+/**
+ * Reports bucket days in the shared reporting timezone (Asia/Manila), so the
+ * fixtures must be anchored there too. A machine-local noon drifts into the
+ * previous Manila day after 16:00 UTC and would make "today" totals flaky.
+ */
+const MANILA_OFFSET_HOURS = 8;
+const manilaParts = (d: Date) => {
+  const shifted = new Date(d.getTime() + MANILA_OFFSET_HOURS * 3_600_000);
+  return {
+    year: shifted.getUTCFullYear(),
+    month: shifted.getUTCMonth(),
+    day: shifted.getUTCDate(),
+  };
 };
-const startOfYear = () => {
-  const d = new Date(today);
-  d.setMonth(0, 2);
-  d.setHours(12, 0, 0, 0);
-  return d;
-};
+/** Midday in Manila on the requested Manila calendar day. */
+const manilaNoon = (year: number, month: number, day: number) =>
+  new Date(Date.UTC(year, month, day, 12 - MANILA_OFFSET_HOURS, 0, 0, 0));
+
+const now = manilaParts(new Date());
+const daysAgo = (n: number) => manilaNoon(now.year, now.month, now.day - n);
+const startOfYear = () => manilaNoon(now.year, 0, 2);
+
 
 const earning = (type: EarningType, amount: number, at: Date): EarningRow =>
   ({
@@ -101,7 +111,7 @@ describe("reseller / subreseller dashboard earnings", () => {
     const rows = [earning("sale_cashback", 100, jan)];
     const e = sellerEarnings(rows);
     expect(e.cashback.year).toBe(100);
-    if (jan.toDateString() !== today.toDateString()) expect(e.cashback.today).toBe(0);
+    if (jan.getTime() !== daysAgo(0).getTime()) expect(e.cashback.today).toBe(0);
   });
 });
 
