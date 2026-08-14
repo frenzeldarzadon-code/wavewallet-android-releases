@@ -92,8 +92,21 @@ async function findUserIdByEmail(email: string): Promise<string | null> {
     .select("id")
     .eq("email", email)
     .maybeSingle();
-  return data?.id ?? null;
+  if (data?.id) return data.id;
+
+  // The auth user can exist without (or ahead of) its profile mirror — for
+  // example after a partially completed provision. Fall back to the auth
+  // directory so we never try to create a duplicate account.
+  for (let page = 1; page <= 20; page++) {
+    const { data: list, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) return null;
+    const hit = list.users.find((u) => (u.email ?? "").toLowerCase() === email.toLowerCase());
+    if (hit) return hit.id;
+    if (list.users.length < 200) return null;
+  }
+  return null;
 }
+
 
 async function ensureUser(role: DemoRole, ecosystemId: string): Promise<string> {
   const spec = DEMO_USERS[role];
@@ -102,16 +115,31 @@ async function ensureUser(role: DemoRole, ecosystemId: string): Promise<string> 
 
   // Operator roles are granted the same way real operators are onboarded: through
   // a pending invitation the signup trigger validates. No special-case role write.
+  // A pending invite may already exist from an earlier, interrupted provision —
+  // refresh it instead of inserting a duplicate (a unique index forbids two).
   if (role === "admin" || role === "super_admin") {
-    await supabaseAdmin.from("admin_invitations").insert({
+    const invite = {
       email: spec.email,
       ecosystem_id: role === "admin" ? ecosystemId : null,
       role,
-      status: "pending",
+      status: "pending" as const,
       invited_by_name: "Preview demo",
       expires_at: new Date(Date.now() + 86_400_000).toISOString(),
-    });
+    };
+    const { data: pending } = await supabaseAdmin
+      .from("admin_invitations")
+      .select("id")
+      .eq("email", spec.email)
+      .eq("status", "pending")
+      .maybeSingle();
+    if (pending?.id) {
+      await supabaseAdmin.from("admin_invitations").update(invite).eq("id", pending.id);
+    } else {
+      const { error: inviteError } = await supabaseAdmin.from("admin_invitations").insert(invite);
+      if (inviteError) throw new Error(inviteError.message);
+    }
   }
+
 
   const { data, error } = await supabaseAdmin.auth.admin.createUser({
     email: spec.email,

@@ -16,7 +16,20 @@ const renewNav: NavItem = { to: "/admin/subscription", label: "Renew access", ic
 function AdminLayout() {
   const session = useSession("admin");
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  if (!session.account || !session.ecosystem) return null;
+
+  // Never render a blank screen: the session resolves asynchronously, and an
+  // admin whose active shop is not resolved yet gets a readable state instead.
+  if (!session.ready) return <ConsoleNotice title="Loading your console…" />;
+  if (!session.account) return null;
+  if (!session.ecosystem) {
+    return (
+      <ConsoleNotice
+        title="No active shop selected"
+        body="Your admin membership is not currently the active shop for this login. Open the Universe shops page to switch back into your shop."
+      />
+    );
+  }
+
 
   // Subscription gate: a lapsed tenant keeps read-only access (dashboard, reports)
   // and the subscription screen. Every write is refused by the database through
@@ -39,3 +52,16 @@ function AdminLayout() {
     </AppShell>
   );
 }
+
+/** Readable fallback while the console has no shop context to render yet. */
+function ConsoleNotice({ title, body }: { title: string; body?: string }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-app px-6">
+      <div className="max-w-sm text-center">
+        <p className="text-base font-semibold">{title}</p>
+        {body ? <p className="mt-2 text-sm text-muted-foreground">{body}</p> : null}
+      </div>
+    </div>
+  );
+}
+
