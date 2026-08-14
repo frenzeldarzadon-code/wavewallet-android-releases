@@ -417,61 +417,6 @@ export function SocialPage() {
         </div>
       )}
 
-      {/* Post confirmation — always states exactly what will be deducted. */}
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{promote ? "Publish a promoted post?" : "Publish this post?"}</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-2 text-sm">
-                <p>
-                  Audience: <strong>{audienceLabel(audience)}</strong> — {audienceHelp(audience)}
-                </p>
-                <p>{chargeSummary(charge.amount, charge.currency)}</p>
-                <p>
-
-                  Balance: {state?.balance ?? 0} social credits
-                  {charge.currency === "points" ? ` · ${account.pointsBalance ?? 0} points` : ""}
-                </p>
-                {promote ? (
-                  <>
-                    <p>
-                      Promotion: <strong>{tier?.name ?? "Promoted"}</strong> ·{" "}
-                      {tierDuration(tier?.duration_hours ?? 24)} · paid in{" "}
-                      {charge.currency === "points" ? "points" : "social credits"}.
-                    </p>
-                    <p>
-                      Your post will be labelled <strong>Promoted</strong>. Only you pay this fee —
-                      replies and comments on a promoted post do not consume social credits from the
-                      members replying.
-                    </p>
-                  </>
-                ) : (
-                  <p>Likes are free. Replies to this post cost {state?.comment_cost ?? 1} social credit.</p>
-                )}
-                {!affordable ? (
-                  <p className="font-medium text-destructive">
-                    You do not have enough {charge.currency === "points" ? "points" : "social credits"}.
-                  </p>
-                ) : null}
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Don't post</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={posting || !affordable}
-              onClick={(e) => {
-                e.preventDefault();
-                void submitPost();
-              }}
-            >
-              {posting ? <Loader2 className="size-4 animate-spin" /> : null}
-              {promote ? "Promote & publish" : "Publish"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Exchange */}
       <Dialog open={exchangeOpen} onOpenChange={setExchangeOpen}>
