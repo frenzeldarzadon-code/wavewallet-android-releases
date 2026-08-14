@@ -283,7 +283,11 @@ export function MessagesPage() {
                 disabled={(!body.trim() && !crop) || sending}
                 onClick={() => void send()}
               >
-                {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                {sending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Send className="size-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -352,7 +356,9 @@ export function MessagesPage() {
                       </span>
                     ) : null}
                   </div>
-                  <p className="truncate text-xs text-muted-foreground">{t.preview ?? "No messages yet"}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {t.preview ?? "No messages yet"}
+                  </p>
                 </div>
                 {t.unread > 0 ? (
                   <span className="ml-1 inline-flex size-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">

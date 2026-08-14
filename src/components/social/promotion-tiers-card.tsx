@@ -137,9 +137,7 @@ export function PromotionTiersCard({
                 variant="outline"
                 size="sm"
                 className="h-9"
-                onClick={() =>
-                  setDraft({ ...t, id: t.is_default && ecosystemId ? null : t.id })
-                }
+                onClick={() => setDraft({ ...t, id: t.is_default && ecosystemId ? null : t.id })}
               >
                 {t.is_default && ecosystemId ? "Customise" : "Edit"}
               </Button>

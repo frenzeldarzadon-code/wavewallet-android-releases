@@ -128,13 +128,7 @@ function PostImage({ path }: { path: string }) {
  * Members without a handle are not linkable (the database gives everyone one,
  * so this is only a safety net for legacy rows).
  */
-function AuthorLink({
-  handle,
-  children,
-}: {
-  handle: string | null;
-  children: React.ReactNode;
-}) {
+function AuthorLink({ handle, children }: { handle: string | null; children: React.ReactNode }) {
   if (!handle) return <>{children}</>;
   return (
     <Link to="/universe/u/$handle" params={{ handle }} className="min-w-0">
@@ -142,7 +136,6 @@ function AuthorLink({
     </Link>
   );
 }
-
 
 export function SocialPage() {
   const session = useSession();
@@ -541,7 +534,6 @@ function PostCard({
     }
   };
 
-
   const sendDm = async () => {
     try {
       await sendMessage(post.author_id, dm);
@@ -754,7 +746,6 @@ function PostCard({
             </div>
           </div>
         ) : null}
-
       </CardContent>
 
       <AlertDialog open={confirmReply} onOpenChange={setConfirmReply}>

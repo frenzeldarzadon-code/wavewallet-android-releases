@@ -12,8 +12,7 @@ const HANDLE_BODY = "[a-z0-9_.]{3,20}";
 const MENTION_RE = new RegExp(`@(${HANDLE_BODY})`, "gi");
 
 export type TextSegment =
-  | { kind: "text"; text: string }
-  | { kind: "mention"; text: string; handle: string };
+  { kind: "text"; text: string } | { kind: "mention"; text: string; handle: string };
 
 /** Splits a body into plain text and @mention segments, in order. */
 export function parseMentions(body: string): TextSegment[] {

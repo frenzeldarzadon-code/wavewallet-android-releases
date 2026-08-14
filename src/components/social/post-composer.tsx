@@ -129,14 +129,15 @@ export function PostComposer({
     acknowledgedRegular: ackRegular,
     packagesAvailable: promotionAvailable,
   });
-  const blocker = postReadiness({
-    body,
-    audience,
-    shopIds,
-    promote,
-    tierChosen: !promote || tier !== null,
-    affordable,
-  }) ?? promotionBlocker;
+  const blocker =
+    postReadiness({
+      body,
+      audience,
+      shopIds,
+      promote,
+      tierChosen: !promote || tier !== null,
+      affordable,
+    }) ?? promotionBlocker;
 
   useEffect(() => {
     setAckRegular(false);
@@ -478,8 +479,8 @@ export function PostComposer({
                   <div className="space-y-1">
                     <p className="text-sm font-semibold">{PROMOTION_NOTICE}</p>
                     <p className="text-xs text-muted-foreground">
-                      {detectionExplanation(detection)} Checking costs nothing — nothing is
-                      deducted until you publish.
+                      {detectionExplanation(detection)} Checking costs nothing — nothing is deducted
+                      until you publish.
                     </p>
                   </div>
                 </div>
