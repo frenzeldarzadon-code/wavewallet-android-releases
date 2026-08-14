@@ -24,10 +24,12 @@ import { Route as AdminCreditsRouteImport } from './routes/admin.credits'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
 import { Route as AdminMoneyRouteImport } from './routes/admin.money'
 import { Route as AdminOperatorLogRouteImport } from './routes/admin.operator-log'
+import { Route as AdminOrdersRouteImport } from './routes/admin.orders'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as AdminProfileRouteImport } from './routes/admin.profile'
 import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminResellersRouteImport } from './routes/admin.resellers'
+import { Route as AdminRetailRouteImport } from './routes/admin.retail'
 import { Route as AdminRewardsRouteImport } from './routes/admin.rewards'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminShopRouteImport } from './routes/admin.shop'
@@ -44,6 +46,7 @@ import { Route as AppProfileRouteImport } from './routes/app.profile'
 import { Route as AppRewardsRouteImport } from './routes/app.rewards'
 import { Route as AppShopRouteImport } from './routes/app.shop'
 import { Route as AppSocialRouteImport } from './routes/app.social'
+import { Route as AppStoreRouteImport } from './routes/app.store'
 import { Route as AppTransferRouteImport } from './routes/app.transfer'
 import { Route as JoinSlugRouteImport } from './routes/join.$slug'
 import { Route as ResellerIndexRouteImport } from './routes/reseller.index'
@@ -59,8 +62,10 @@ import { Route as ResellerReportsRouteImport } from './routes/reseller.reports'
 import { Route as ResellerRewardsRouteImport } from './routes/reseller.rewards'
 import { Route as ResellerShopRouteImport } from './routes/reseller.shop'
 import { Route as ResellerSocialRouteImport } from './routes/reseller.social'
+import { Route as ResellerStoreRouteImport } from './routes/reseller.store'
 import { Route as ResellerTransferRouteImport } from './routes/reseller.transfer'
 import { Route as ResellerWalletRouteImport } from './routes/reseller.wallet'
+import { Route as ShopSlugRouteImport } from './routes/shop.$slug'
 import { Route as SuperIndexRouteImport } from './routes/super.index'
 import { Route as SuperAdminsRouteImport } from './routes/super.admins'
 import { Route as SuperApplicationsRouteImport } from './routes/super.applications'
@@ -155,6 +160,11 @@ const AdminOperatorLogRoute = AdminOperatorLogRouteImport.update({
   path: '/operator-log',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminOrdersRoute = AdminOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminProductsRoute = AdminProductsRouteImport.update({
   id: '/products',
   path: '/products',
@@ -173,6 +183,11 @@ const AdminReportsRoute = AdminReportsRouteImport.update({
 const AdminResellersRoute = AdminResellersRouteImport.update({
   id: '/resellers',
   path: '/resellers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRetailRoute = AdminRetailRouteImport.update({
+  id: '/retail',
+  path: '/retail',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminRewardsRoute = AdminRewardsRouteImport.update({
@@ -255,6 +270,11 @@ const AppSocialRoute = AppSocialRouteImport.update({
   path: '/social',
   getParentRoute: () => AppRoute,
 } as any)
+const AppStoreRoute = AppStoreRouteImport.update({
+  id: '/store',
+  path: '/store',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppTransferRoute = AppTransferRouteImport.update({
   id: '/transfer',
   path: '/transfer',
@@ -330,6 +350,11 @@ const ResellerSocialRoute = ResellerSocialRouteImport.update({
   path: '/social',
   getParentRoute: () => ResellerRoute,
 } as any)
+const ResellerStoreRoute = ResellerStoreRouteImport.update({
+  id: '/store',
+  path: '/store',
+  getParentRoute: () => ResellerRoute,
+} as any)
 const ResellerTransferRoute = ResellerTransferRouteImport.update({
   id: '/transfer',
   path: '/transfer',
@@ -339,6 +364,11 @@ const ResellerWalletRoute = ResellerWalletRouteImport.update({
   id: '/wallet',
   path: '/wallet',
   getParentRoute: () => ResellerRoute,
+} as any)
+const ShopSlugRoute = ShopSlugRouteImport.update({
+  id: '/shop/$slug',
+  path: '/shop/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const SuperIndexRoute = SuperIndexRouteImport.update({
   id: '/',
@@ -446,10 +476,12 @@ export interface FileRoutesByFullPath {
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/money': typeof AdminMoneyRoute
   '/admin/operator-log': typeof AdminOperatorLogRoute
+  '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/profile': typeof AdminProfileRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/resellers': typeof AdminResellersRoute
+  '/admin/retail': typeof AdminRetailRoute
   '/admin/rewards': typeof AdminRewardsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/shop': typeof AdminShopRoute
@@ -465,6 +497,7 @@ export interface FileRoutesByFullPath {
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
   '/app/social': typeof AppSocialRoute
+  '/app/store': typeof AppStoreRoute
   '/app/transfer': typeof AppTransferRoute
   '/join/$slug': typeof JoinSlugRoute
   '/reseller/applications': typeof ResellerApplicationsRoute
@@ -479,8 +512,10 @@ export interface FileRoutesByFullPath {
   '/reseller/rewards': typeof ResellerRewardsRoute
   '/reseller/shop': typeof ResellerShopRoute
   '/reseller/social': typeof ResellerSocialRoute
+  '/reseller/store': typeof ResellerStoreRoute
   '/reseller/transfer': typeof ResellerTransferRoute
   '/reseller/wallet': typeof ResellerWalletRoute
+  '/shop/$slug': typeof ShopSlugRoute
   '/super/admins': typeof SuperAdminsRoute
   '/super/applications': typeof SuperApplicationsRoute
   '/super/approvals': typeof SuperApprovalsRoute
@@ -513,10 +548,12 @@ export interface FileRoutesByTo {
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/money': typeof AdminMoneyRoute
   '/admin/operator-log': typeof AdminOperatorLogRoute
+  '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/profile': typeof AdminProfileRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/resellers': typeof AdminResellersRoute
+  '/admin/retail': typeof AdminRetailRoute
   '/admin/rewards': typeof AdminRewardsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/shop': typeof AdminShopRoute
@@ -532,6 +569,7 @@ export interface FileRoutesByTo {
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
   '/app/social': typeof AppSocialRoute
+  '/app/store': typeof AppStoreRoute
   '/app/transfer': typeof AppTransferRoute
   '/join/$slug': typeof JoinSlugRoute
   '/reseller/applications': typeof ResellerApplicationsRoute
@@ -546,8 +584,10 @@ export interface FileRoutesByTo {
   '/reseller/rewards': typeof ResellerRewardsRoute
   '/reseller/shop': typeof ResellerShopRoute
   '/reseller/social': typeof ResellerSocialRoute
+  '/reseller/store': typeof ResellerStoreRoute
   '/reseller/transfer': typeof ResellerTransferRoute
   '/reseller/wallet': typeof ResellerWalletRoute
+  '/shop/$slug': typeof ShopSlugRoute
   '/super/admins': typeof SuperAdminsRoute
   '/super/applications': typeof SuperApplicationsRoute
   '/super/approvals': typeof SuperApprovalsRoute
@@ -586,10 +626,12 @@ export interface FileRoutesById {
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/money': typeof AdminMoneyRoute
   '/admin/operator-log': typeof AdminOperatorLogRoute
+  '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/profile': typeof AdminProfileRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/resellers': typeof AdminResellersRoute
+  '/admin/retail': typeof AdminRetailRoute
   '/admin/rewards': typeof AdminRewardsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/shop': typeof AdminShopRoute
@@ -605,6 +647,7 @@ export interface FileRoutesById {
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
   '/app/social': typeof AppSocialRoute
+  '/app/store': typeof AppStoreRoute
   '/app/transfer': typeof AppTransferRoute
   '/join/$slug': typeof JoinSlugRoute
   '/reseller/applications': typeof ResellerApplicationsRoute
@@ -619,8 +662,10 @@ export interface FileRoutesById {
   '/reseller/rewards': typeof ResellerRewardsRoute
   '/reseller/shop': typeof ResellerShopRoute
   '/reseller/social': typeof ResellerSocialRoute
+  '/reseller/store': typeof ResellerStoreRoute
   '/reseller/transfer': typeof ResellerTransferRoute
   '/reseller/wallet': typeof ResellerWalletRoute
+  '/shop/$slug': typeof ShopSlugRoute
   '/super/admins': typeof SuperAdminsRoute
   '/super/applications': typeof SuperApplicationsRoute
   '/super/approvals': typeof SuperApprovalsRoute
@@ -660,10 +705,12 @@ export interface FileRouteTypes {
     | '/admin/customers'
     | '/admin/money'
     | '/admin/operator-log'
+    | '/admin/orders'
     | '/admin/products'
     | '/admin/profile'
     | '/admin/reports'
     | '/admin/resellers'
+    | '/admin/retail'
     | '/admin/rewards'
     | '/admin/settings'
     | '/admin/shop'
@@ -679,6 +726,7 @@ export interface FileRouteTypes {
     | '/app/rewards'
     | '/app/shop'
     | '/app/social'
+    | '/app/store'
     | '/app/transfer'
     | '/join/$slug'
     | '/reseller/applications'
@@ -693,8 +741,10 @@ export interface FileRouteTypes {
     | '/reseller/rewards'
     | '/reseller/shop'
     | '/reseller/social'
+    | '/reseller/store'
     | '/reseller/transfer'
     | '/reseller/wallet'
+    | '/shop/$slug'
     | '/super/admins'
     | '/super/applications'
     | '/super/approvals'
@@ -727,10 +777,12 @@ export interface FileRouteTypes {
     | '/admin/customers'
     | '/admin/money'
     | '/admin/operator-log'
+    | '/admin/orders'
     | '/admin/products'
     | '/admin/profile'
     | '/admin/reports'
     | '/admin/resellers'
+    | '/admin/retail'
     | '/admin/rewards'
     | '/admin/settings'
     | '/admin/shop'
@@ -746,6 +798,7 @@ export interface FileRouteTypes {
     | '/app/rewards'
     | '/app/shop'
     | '/app/social'
+    | '/app/store'
     | '/app/transfer'
     | '/join/$slug'
     | '/reseller/applications'
@@ -760,8 +813,10 @@ export interface FileRouteTypes {
     | '/reseller/rewards'
     | '/reseller/shop'
     | '/reseller/social'
+    | '/reseller/store'
     | '/reseller/transfer'
     | '/reseller/wallet'
+    | '/shop/$slug'
     | '/super/admins'
     | '/super/applications'
     | '/super/approvals'
@@ -799,10 +854,12 @@ export interface FileRouteTypes {
     | '/admin/customers'
     | '/admin/money'
     | '/admin/operator-log'
+    | '/admin/orders'
     | '/admin/products'
     | '/admin/profile'
     | '/admin/reports'
     | '/admin/resellers'
+    | '/admin/retail'
     | '/admin/rewards'
     | '/admin/settings'
     | '/admin/shop'
@@ -818,6 +875,7 @@ export interface FileRouteTypes {
     | '/app/rewards'
     | '/app/shop'
     | '/app/social'
+    | '/app/store'
     | '/app/transfer'
     | '/join/$slug'
     | '/reseller/applications'
@@ -832,8 +890,10 @@ export interface FileRouteTypes {
     | '/reseller/rewards'
     | '/reseller/shop'
     | '/reseller/social'
+    | '/reseller/store'
     | '/reseller/transfer'
     | '/reseller/wallet'
+    | '/shop/$slug'
     | '/super/admins'
     | '/super/applications'
     | '/super/approvals'
@@ -868,6 +928,7 @@ export interface RootRouteChildren {
   SuperRoute: typeof SuperRouteWithChildren
   UniverseRoute: typeof UniverseRouteWithChildren
   JoinSlugRoute: typeof JoinSlugRoute
+  ShopSlugRoute: typeof ShopSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -977,6 +1038,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOperatorLogRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/orders': {
+      id: '/admin/orders'
+      path: '/orders'
+      fullPath: '/admin/orders'
+      preLoaderRoute: typeof AdminOrdersRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/products': {
       id: '/admin/products'
       path: '/products'
@@ -1003,6 +1071,13 @@ declare module '@tanstack/react-router' {
       path: '/resellers'
       fullPath: '/admin/resellers'
       preLoaderRoute: typeof AdminResellersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/retail': {
+      id: '/admin/retail'
+      path: '/retail'
+      fullPath: '/admin/retail'
+      preLoaderRoute: typeof AdminRetailRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/rewards': {
@@ -1117,6 +1192,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSocialRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/store': {
+      id: '/app/store'
+      path: '/store'
+      fullPath: '/app/store'
+      preLoaderRoute: typeof AppStoreRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/transfer': {
       id: '/app/transfer'
       path: '/transfer'
@@ -1222,6 +1304,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResellerSocialRouteImport
       parentRoute: typeof ResellerRoute
     }
+    '/reseller/store': {
+      id: '/reseller/store'
+      path: '/store'
+      fullPath: '/reseller/store'
+      preLoaderRoute: typeof ResellerStoreRouteImport
+      parentRoute: typeof ResellerRoute
+    }
     '/reseller/transfer': {
       id: '/reseller/transfer'
       path: '/transfer'
@@ -1235,6 +1324,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/reseller/wallet'
       preLoaderRoute: typeof ResellerWalletRouteImport
       parentRoute: typeof ResellerRoute
+    }
+    '/shop/$slug': {
+      id: '/shop/$slug'
+      path: '/shop/$slug'
+      fullPath: '/shop/$slug'
+      preLoaderRoute: typeof ShopSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/super/': {
       id: '/super/'
@@ -1371,10 +1467,12 @@ interface AdminRouteChildren {
   AdminCustomersRoute: typeof AdminCustomersRoute
   AdminMoneyRoute: typeof AdminMoneyRoute
   AdminOperatorLogRoute: typeof AdminOperatorLogRoute
+  AdminOrdersRoute: typeof AdminOrdersRoute
   AdminProductsRoute: typeof AdminProductsRoute
   AdminProfileRoute: typeof AdminProfileRoute
   AdminReportsRoute: typeof AdminReportsRoute
   AdminResellersRoute: typeof AdminResellersRoute
+  AdminRetailRoute: typeof AdminRetailRoute
   AdminRewardsRoute: typeof AdminRewardsRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminShopRoute: typeof AdminShopRoute
@@ -1392,10 +1490,12 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCustomersRoute: AdminCustomersRoute,
   AdminMoneyRoute: AdminMoneyRoute,
   AdminOperatorLogRoute: AdminOperatorLogRoute,
+  AdminOrdersRoute: AdminOrdersRoute,
   AdminProductsRoute: AdminProductsRoute,
   AdminProfileRoute: AdminProfileRoute,
   AdminReportsRoute: AdminReportsRoute,
   AdminResellersRoute: AdminResellersRoute,
+  AdminRetailRoute: AdminRetailRoute,
   AdminRewardsRoute: AdminRewardsRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminShopRoute: AdminShopRoute,
@@ -1417,6 +1517,7 @@ interface AppRouteChildren {
   AppRewardsRoute: typeof AppRewardsRoute
   AppShopRoute: typeof AppShopRoute
   AppSocialRoute: typeof AppSocialRoute
+  AppStoreRoute: typeof AppStoreRoute
   AppTransferRoute: typeof AppTransferRoute
   AppIndexRoute: typeof AppIndexRoute
 }
@@ -1429,6 +1530,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppRewardsRoute: AppRewardsRoute,
   AppShopRoute: AppShopRoute,
   AppSocialRoute: AppSocialRoute,
+  AppStoreRoute: AppStoreRoute,
   AppTransferRoute: AppTransferRoute,
   AppIndexRoute: AppIndexRoute,
 }
@@ -1448,6 +1550,7 @@ interface ResellerRouteChildren {
   ResellerRewardsRoute: typeof ResellerRewardsRoute
   ResellerShopRoute: typeof ResellerShopRoute
   ResellerSocialRoute: typeof ResellerSocialRoute
+  ResellerStoreRoute: typeof ResellerStoreRoute
   ResellerTransferRoute: typeof ResellerTransferRoute
   ResellerWalletRoute: typeof ResellerWalletRoute
   ResellerIndexRoute: typeof ResellerIndexRoute
@@ -1466,6 +1569,7 @@ const ResellerRouteChildren: ResellerRouteChildren = {
   ResellerRewardsRoute: ResellerRewardsRoute,
   ResellerShopRoute: ResellerShopRoute,
   ResellerSocialRoute: ResellerSocialRoute,
+  ResellerStoreRoute: ResellerStoreRoute,
   ResellerTransferRoute: ResellerTransferRoute,
   ResellerWalletRoute: ResellerWalletRoute,
   ResellerIndexRoute: ResellerIndexRoute,
@@ -1540,6 +1644,7 @@ const rootRouteChildren: RootRouteChildren = {
   SuperRoute: SuperRouteWithChildren,
   UniverseRoute: UniverseRouteWithChildren,
   JoinSlugRoute: JoinSlugRoute,
+  ShopSlugRoute: ShopSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

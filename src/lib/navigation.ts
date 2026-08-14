@@ -28,6 +28,8 @@ import {
   ShieldCheck,
   ShoppingBag,
   ShoppingCart,
+  Store,
+  ClipboardList,
   Ticket,
   User,
   UserCheck,
@@ -102,6 +104,7 @@ export function customerNav(): Nav {
       label: "Shop",
       items: [
         { to: "/app/shop", label: "Voucher shop", icon: ShoppingBag },
+        { to: "/app/store", label: "Retail store", icon: Store },
         { to: "/app/rewards", label: "Rewards", icon: Gift },
       ],
     },
@@ -162,6 +165,7 @@ export function resellerNav(role: Role = "reseller"): Nav {
       label: "Shop",
       items: [
         { to: "/reseller/shop", label: "Voucher shop", icon: ShoppingCart },
+        { to: "/reseller/store", label: "Retail store", icon: Store },
         { to: "/reseller/rewards", label: "Rewards", icon: Gift },
       ],
     },
@@ -218,6 +222,8 @@ export function adminNav(): Nav {
         { to: "/admin/products", label: "Voucher products", icon: Package },
         { to: "/admin/vouchers", label: "Code inventory", icon: Ticket },
         { to: "/admin/shop", label: "Voucher shop", icon: ShoppingBag },
+        { to: "/admin/retail", label: "Retail products", icon: Store },
+        { to: "/admin/orders", label: "Retail orders", icon: ClipboardList },
         { to: "/admin/rewards", label: "Rewards", icon: Gift },
       ],
     },
