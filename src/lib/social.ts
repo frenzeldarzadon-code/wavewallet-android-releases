@@ -722,14 +722,57 @@ export async function refundPromotion(postId: string, reason: string) {
 
 /** Plain-language name of the audience a member picked. */
 export function audienceLabel(audience: PostAudience): string {
-  return audience === "general" ? "General / All Ecosystems" : "My Ecosystem";
+  if (audience === "general") return "General / All Shops";
+  if (audience === "shops") return "Specific shops";
+  return "My shop";
 }
 
 /** What the member is told before publishing, per audience. */
 export function audienceHelp(audience: PostAudience): string {
-  return audience === "general"
-    ? "Shared with the wider WaveWallet network. Each other shop's admin must approve it before it shows in their community — it appears in your own shop right away."
-    : "Only members and admins of your own shop can see this post.";
+  if (audience === "general")
+    return "Shared with the wider WaveWallet Universe. Each other shop's admin must approve it before it appears in their community — it appears in your own shop right away.";
+  if (audience === "shops")
+    return "Shared only with the shop communities you pick. You can only pick shops you are an approved member of.";
+  return "Only members and admins of your own shop can see this post.";
+}
+
+/**
+ * Names of the chosen shops, for the review step. Ids that are not eligible are
+ * dropped, so the summary can never claim a shop the member cannot post into.
+ */
+export function selectedShopNames(shops: TargetShop[], ids: string[]): string[] {
+  return shops.filter((s) => ids.includes(s.ecosystem_id)).map((s) => s.ecosystem_name);
+}
+
+/** One-line audience summary shown on the review step. */
+export function audienceSummary(
+  audience: PostAudience,
+  shops: TargetShop[],
+  ids: string[],
+  ownShopName: string,
+): string {
+  if (audience === "general") return "General / All Shops";
+  if (audience === "ecosystem") return ownShopName;
+  const names = selectedShopNames(shops, ids);
+  return names.length > 0 ? names.join(", ") : "No shop selected yet";
+}
+
+/** Why the member cannot submit yet, or null when the post is ready to publish. */
+export function postReadiness(input: {
+  body: string;
+  audience: PostAudience;
+  shopIds: string[];
+  promote: boolean;
+  tierChosen: boolean;
+  affordable: boolean;
+}): string | null {
+  const bodyProblem = validatePostBody(input.body);
+  if (bodyProblem) return bodyProblem;
+  if (input.audience === "shops" && input.shopIds.length === 0)
+    return "Choose at least one shop to share with";
+  if (input.promote && !input.tierChosen) return "Choose a promotion type";
+  if (!input.affordable) return "You do not have enough to cover this";
+  return null;
 }
 
 /** One-line status of a General post for its author, e.g. "Live in 2 shops · 1 pending". */
