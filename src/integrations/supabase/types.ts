@@ -102,6 +102,112 @@ export type Database = {
           },
         ]
       }
+      cash_in_requests: {
+        Row: {
+          amount_php: number
+          created_at: string
+          credits: number
+          decision_reason: string | null
+          ecosystem_id: string | null
+          id: string
+          ledger_id: string | null
+          method_details: Json
+          method_id: string | null
+          method_name: string
+          method_type: string
+          notes: string | null
+          payer_reference: string | null
+          rate_credits: number
+          rate_php: number
+          reference: string
+          request_key: string | null
+          requester_name: string
+          requester_role: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_name: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_php: number
+          created_at?: string
+          credits: number
+          decision_reason?: string | null
+          ecosystem_id?: string | null
+          id?: string
+          ledger_id?: string | null
+          method_details?: Json
+          method_id?: string | null
+          method_name: string
+          method_type: string
+          notes?: string | null
+          payer_reference?: string | null
+          rate_credits: number
+          rate_php: number
+          reference: string
+          request_key?: string | null
+          requester_name: string
+          requester_role: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_name?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_php?: number
+          created_at?: string
+          credits?: number
+          decision_reason?: string | null
+          ecosystem_id?: string | null
+          id?: string
+          ledger_id?: string | null
+          method_details?: Json
+          method_id?: string | null
+          method_name?: string
+          method_type?: string
+          notes?: string | null
+          payer_reference?: string | null
+          rate_credits?: number
+          rate_php?: number
+          reference?: string
+          request_key?: string | null
+          requester_name?: string
+          requester_role?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_name?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_in_requests_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_in_requests_ledger_id_fkey"
+            columns: ["ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_in_requests_method_id_fkey"
+            columns: ["method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_accounts: {
         Row: {
           balance: number
@@ -1001,6 +1107,48 @@ export type Database = {
           },
         ]
       }
+      payment_methods: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          active: boolean
+          created_at: string
+          id: string
+          instructions: string
+          method_type: string
+          name: string
+          notes: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          active?: boolean
+          created_at?: string
+          id?: string
+          instructions?: string
+          method_type: string
+          name: string
+          notes?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          active?: boolean
+          created_at?: string
+          id?: string
+          instructions?: string
+          method_type?: string
+          name?: string
+          notes?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       platform_bootstrap: {
         Row: {
           claimed_at: string
@@ -1147,6 +1295,10 @@ export type Database = {
           admin_credit_discount_percent: number
           admin_voucher_discount_percent: number
           billing_period: string
+          cash_out_credits_per_unit: number
+          cash_out_php_per_unit: number
+          cashback_reseller_percent: number
+          cashback_subreseller_percent: number
           created_at: string
           credit_gcash_account_name: string
           credit_gcash_number: string
@@ -1166,11 +1318,16 @@ export type Database = {
           support_page_url: string
           updated_at: string
           updated_by: string | null
+          withdrawal_fee_percent: number
         }
         Insert: {
           admin_credit_discount_percent?: number
           admin_voucher_discount_percent?: number
           billing_period?: string
+          cash_out_credits_per_unit?: number
+          cash_out_php_per_unit?: number
+          cashback_reseller_percent?: number
+          cashback_subreseller_percent?: number
           created_at?: string
           credit_gcash_account_name?: string
           credit_gcash_number?: string
@@ -1190,11 +1347,16 @@ export type Database = {
           support_page_url?: string
           updated_at?: string
           updated_by?: string | null
+          withdrawal_fee_percent?: number
         }
         Update: {
           admin_credit_discount_percent?: number
           admin_voucher_discount_percent?: number
           billing_period?: string
+          cash_out_credits_per_unit?: number
+          cash_out_php_per_unit?: number
+          cashback_reseller_percent?: number
+          cashback_subreseller_percent?: number
           created_at?: string
           credit_gcash_account_name?: string
           credit_gcash_number?: string
@@ -1214,6 +1376,7 @@ export type Database = {
           support_page_url?: string
           updated_at?: string
           updated_by?: string | null
+          withdrawal_fee_percent?: number
         }
         Relationships: []
       }
@@ -2789,6 +2952,121 @@ export type Database = {
           },
         ]
       }
+      withdrawal_requests: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          created_at: string
+          credits: number
+          decision_reason: string | null
+          ecosystem_id: string | null
+          fee_percent: number
+          fee_php: number
+          gross_php: number
+          id: string
+          net_php: number
+          notes: string | null
+          payment_mode: string
+          rate_credits: number
+          rate_php: number
+          reference: string
+          refund_ledger_id: string | null
+          released_at: string | null
+          request_key: string | null
+          requester_name: string
+          requester_role: string
+          reserve_ledger_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_name: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          created_at?: string
+          credits: number
+          decision_reason?: string | null
+          ecosystem_id?: string | null
+          fee_percent: number
+          fee_php: number
+          gross_php: number
+          id?: string
+          net_php: number
+          notes?: string | null
+          payment_mode: string
+          rate_credits: number
+          rate_php: number
+          reference: string
+          refund_ledger_id?: string | null
+          released_at?: string | null
+          request_key?: string | null
+          requester_name: string
+          requester_role: string
+          reserve_ledger_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_name?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          created_at?: string
+          credits?: number
+          decision_reason?: string | null
+          ecosystem_id?: string | null
+          fee_percent?: number
+          fee_php?: number
+          gross_php?: number
+          id?: string
+          net_php?: number
+          notes?: string | null
+          payment_mode?: string
+          rate_credits?: number
+          rate_php?: number
+          reference?: string
+          refund_ledger_id?: string | null
+          released_at?: string | null
+          request_key?: string | null
+          requester_name?: string
+          requester_role?: string
+          reserve_ledger_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_name?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "withdrawal_requests_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "withdrawal_requests_refund_ledger_id_fkey"
+            columns: ["refund_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "withdrawal_requests_reserve_ledger_id_fkey"
+            columns: ["reserve_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       ecosystem_memberships: {
@@ -2913,6 +3191,81 @@ export type Database = {
       can_review_applications: {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: boolean
+      }
+      cancel_cash_in: {
+        Args: { _id: string }
+        Returns: {
+          amount_php: number
+          created_at: string
+          credits: number
+          decision_reason: string | null
+          ecosystem_id: string | null
+          id: string
+          ledger_id: string | null
+          method_details: Json
+          method_id: string | null
+          method_name: string
+          method_type: string
+          notes: string | null
+          payer_reference: string | null
+          rate_credits: number
+          rate_php: number
+          reference: string
+          request_key: string | null
+          requester_name: string
+          requester_role: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_name: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cash_in_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      cancel_withdrawal: {
+        Args: { _id: string }
+        Returns: {
+          account_name: string | null
+          account_number: string | null
+          created_at: string
+          credits: number
+          decision_reason: string | null
+          ecosystem_id: string | null
+          fee_percent: number
+          fee_php: number
+          gross_php: number
+          id: string
+          net_php: number
+          notes: string | null
+          payment_mode: string
+          rate_credits: number
+          rate_php: number
+          reference: string
+          refund_ledger_id: string | null
+          released_at: string | null
+          request_key: string | null
+          requester_name: string
+          requester_role: string
+          reserve_ledger_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_name: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "withdrawal_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       claim_super_admin_bootstrap: {
         Args: { _email: string; _source: string }
@@ -3041,6 +3394,7 @@ export type Database = {
         Args: { _reason?: string; _user_id: string }
         Returns: undefined
       }
+      delete_payment_method: { Args: { _id: string }; Returns: undefined }
       delete_social_promotion_tier: {
         Args: { _tier_id: string }
         Returns: undefined
@@ -3353,6 +3707,16 @@ export type Database = {
         Args: { _email: string; _exclude?: string }
         Returns: boolean
       }
+      money_settings: {
+        Args: never
+        Returns: {
+          cashback_reseller: number
+          cashback_subreseller: number
+          credits_per_unit: number
+          fee_percent: number
+          php_per_unit: number
+        }[]
+      }
       months_for_payment: {
         Args: { _amount: number; _rate: number }
         Returns: number
@@ -3505,6 +3869,48 @@ export type Database = {
         Args: { _email: string }
         Returns: undefined
       }
+      request_cash_in: {
+        Args: {
+          _amount_php: number
+          _method_id: string
+          _notes?: string
+          _payer_reference?: string
+          _request_key?: string
+        }
+        Returns: {
+          amount_php: number
+          created_at: string
+          credits: number
+          decision_reason: string | null
+          ecosystem_id: string | null
+          id: string
+          ledger_id: string | null
+          method_details: Json
+          method_id: string | null
+          method_name: string
+          method_type: string
+          notes: string | null
+          payer_reference: string | null
+          rate_credits: number
+          rate_php: number
+          reference: string
+          request_key: string | null
+          requester_name: string
+          requester_role: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_name: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cash_in_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       request_redemption: {
         Args: { _reward_id: string }
         Returns: {
@@ -3515,6 +3921,52 @@ export type Database = {
           status: string
           tx_id: string
         }[]
+      }
+      request_withdrawal: {
+        Args: {
+          _account_name?: string
+          _account_number?: string
+          _credits: number
+          _notes?: string
+          _payment_mode: string
+          _request_key?: string
+        }
+        Returns: {
+          account_name: string | null
+          account_number: string | null
+          created_at: string
+          credits: number
+          decision_reason: string | null
+          ecosystem_id: string | null
+          fee_percent: number
+          fee_php: number
+          gross_php: number
+          id: string
+          net_php: number
+          notes: string | null
+          payment_mode: string
+          rate_credits: number
+          rate_php: number
+          reference: string
+          refund_ledger_id: string | null
+          released_at: string | null
+          request_key: string | null
+          requester_name: string
+          requester_role: string
+          reserve_ledger_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_name: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "withdrawal_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       require_operational: { Args: never; Returns: undefined }
       reseller_load_credits: {
@@ -3551,6 +4003,42 @@ export type Database = {
       reverse_sale_points: {
         Args: { _reason: string; _sale_id: string }
         Returns: string
+      }
+      review_cash_in: {
+        Args: { _action: string; _id: string; _reason?: string }
+        Returns: {
+          amount_php: number
+          created_at: string
+          credits: number
+          decision_reason: string | null
+          ecosystem_id: string | null
+          id: string
+          ledger_id: string | null
+          method_details: Json
+          method_id: string | null
+          method_name: string
+          method_type: string
+          notes: string | null
+          payer_reference: string | null
+          rate_credits: number
+          rate_php: number
+          reference: string
+          request_key: string | null
+          requester_name: string
+          requester_role: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_name: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cash_in_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       review_credit_purchase_order: {
         Args: { _approve: boolean; _order_id: string; _reason?: string }
@@ -3633,6 +4121,45 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "subscription_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      review_withdrawal: {
+        Args: { _action: string; _id: string; _reason?: string }
+        Returns: {
+          account_name: string | null
+          account_number: string | null
+          created_at: string
+          credits: number
+          decision_reason: string | null
+          ecosystem_id: string | null
+          fee_percent: number
+          fee_php: number
+          gross_php: number
+          id: string
+          net_php: number
+          notes: string | null
+          payment_mode: string
+          rate_credits: number
+          rate_php: number
+          reference: string
+          refund_ledger_id: string | null
+          released_at: string | null
+          request_key: string | null
+          requester_name: string
+          requester_role: string
+          reserve_ledger_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_name: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "withdrawal_requests"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -3889,6 +4416,50 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      set_platform_money_settings: {
+        Args: {
+          _cashback_reseller: number
+          _cashback_subreseller: number
+          _credits_per_unit: number
+          _php_per_unit: number
+          _withdrawal_fee: number
+        }
+        Returns: {
+          admin_credit_discount_percent: number
+          admin_voucher_discount_percent: number
+          billing_period: string
+          cash_out_credits_per_unit: number
+          cash_out_php_per_unit: number
+          cashback_reseller_percent: number
+          cashback_subreseller_percent: number
+          created_at: string
+          credit_gcash_account_name: string
+          credit_gcash_number: string
+          credit_payment_instructions: string
+          credit_release_mode: string
+          currency: string
+          default_admin_sale_commission_percent: number
+          gcash_account_name: string
+          gcash_number: string
+          grace_period_days: number
+          id: number
+          payment_instructions: string
+          plan_name: string
+          plan_price: number
+          support_message: string
+          support_page_name: string
+          support_page_url: string
+          updated_at: string
+          updated_by: string | null
+          withdrawal_fee_percent: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "platform_settings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       set_points_rule: {
         Args: { _credits_per_point: number; _ecosystem_id: string }
@@ -4238,6 +4809,10 @@ export type Database = {
               admin_credit_discount_percent: number
               admin_voucher_discount_percent: number
               billing_period: string
+              cash_out_credits_per_unit: number
+              cash_out_php_per_unit: number
+              cashback_reseller_percent: number
+              cashback_subreseller_percent: number
               created_at: string
               credit_gcash_account_name: string
               credit_gcash_number: string
@@ -4257,6 +4832,7 @@ export type Database = {
               support_page_url: string
               updated_at: string
               updated_by: string | null
+              withdrawal_fee_percent: number
             }
             SetofOptions: {
               from: "*"
@@ -4279,6 +4855,10 @@ export type Database = {
               admin_credit_discount_percent: number
               admin_voucher_discount_percent: number
               billing_period: string
+              cash_out_credits_per_unit: number
+              cash_out_php_per_unit: number
+              cashback_reseller_percent: number
+              cashback_subreseller_percent: number
               created_at: string
               credit_gcash_account_name: string
               credit_gcash_number: string
@@ -4298,6 +4878,7 @@ export type Database = {
               support_page_url: string
               updated_at: string
               updated_by: string | null
+              withdrawal_fee_percent: number
             }
             SetofOptions: {
               from: "*"
@@ -4464,6 +5045,10 @@ export type Database = {
           admin_credit_discount_percent: number
           admin_voucher_discount_percent: number
           billing_period: string
+          cash_out_credits_per_unit: number
+          cash_out_php_per_unit: number
+          cashback_reseller_percent: number
+          cashback_subreseller_percent: number
           created_at: string
           credit_gcash_account_name: string
           credit_gcash_number: string
@@ -4483,6 +5068,7 @@ export type Database = {
           support_page_url: string
           updated_at: string
           updated_by: string | null
+          withdrawal_fee_percent: number
         }
         SetofOptions: {
           from: "*"
@@ -4546,6 +5132,38 @@ export type Database = {
       upline_commission_rate_for: {
         Args: { _ecosystem_id: string }
         Returns: number
+      }
+      upsert_payment_method: {
+        Args: {
+          _account_name?: string
+          _account_number?: string
+          _active?: boolean
+          _id?: string
+          _instructions?: string
+          _method_type: string
+          _name: string
+          _notes?: string
+          _sort_order?: number
+        }
+        Returns: {
+          account_name: string | null
+          account_number: string | null
+          active: boolean
+          created_at: string
+          id: string
+          instructions: string
+          method_type: string
+          name: string
+          notes: string | null
+          sort_order: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payment_methods"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       upsert_social_promotion_tier: {
         Args: {
