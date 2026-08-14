@@ -147,9 +147,9 @@ function AdminDashboard() {
       </PageSection>
 
       <EarningsSummaryCards
-        title="Credits generated / shop earnings"
-        description="Newly issued credits recorded as shop earnings. Moving existing credits between wallets is a transfer and is never counted here."
-        types={["credit_generation"]}
+        title="Shop earnings retained"
+        description="What this shop keeps from completed voucher sales after reseller and subreseller cashback. Platform-issued credits, cash-ins and wallet transfers are never counted here."
+        types={["admin_shop_margin"]}
         ecosystemId={ecosystemDbId}
         linkTo="/admin/reports"
         linkLabel="Open earnings & financial reports"
