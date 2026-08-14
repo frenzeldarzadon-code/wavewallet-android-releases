@@ -72,10 +72,7 @@ export function adminNetEarnings(rows: EarningRow[], expenses: ExpenseRow[]): Ne
 }
 
 /** Super Admin: collected cash-out fees only, less platform expenses. */
-export function platformNetEarnings(
-  fees: CashOutFeeRow[],
-  expenses: ExpenseRow[],
-): NetEarnings {
+export function platformNetEarnings(fees: CashOutFeeRow[], expenses: ExpenseRow[]): NetEarnings {
   const earnings = feePeriodTotals(fees);
   const spent = expensePeriodTotals(expenses);
   return { earnings, expenses: spent, net: subtractPeriods(earnings, spent) };

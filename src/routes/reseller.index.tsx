@@ -61,7 +61,10 @@ function ResellerDashboard() {
 
   return (
     <>
-      <PageSection title="Reseller wallet" description={`Closed-loop credits inside ${ecosystem.name}.`}>
+      <PageSection
+        title="Reseller wallet"
+        description={`Closed-loop credits inside ${ecosystem.name}.`}
+      >
         <div className="grid grid-cols-2 gap-3">
           <StatCard label="Credit balance" value={peso(balance)} icon={Wallet} tone="positive" />
           <StatCard
@@ -73,8 +76,9 @@ function ResellerDashboard() {
           />
         </div>
         <p className="mt-2 text-[11px] text-muted-foreground">
-          Your wholesale discount ({account.discountPercent ?? 0}%) is applied automatically at voucher
-          checkout. Credit transfers move exact amounts — no commission is added or deducted.
+          Your wholesale discount ({account.discountPercent ?? 0}%) is applied automatically at
+          voucher checkout. Credit transfers move exact amounts — no commission is added or
+          deducted.
         </p>
       </PageSection>
 
@@ -96,7 +100,9 @@ function ResellerDashboard() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{e.reason}</p>
                     {commissionBreakdown(e) ? (
-                      <p className="text-[11px] font-medium text-success">{commissionBreakdown(e)}</p>
+                      <p className="text-[11px] font-medium text-success">
+                        {commissionBreakdown(e)}
+                      </p>
                     ) : null}
                     <p className="text-[11px] text-muted-foreground">
                       {shortDateTime(e.created_at)} · {e.tx_id ?? "—"}
