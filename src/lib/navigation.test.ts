@@ -121,12 +121,10 @@ describe("badges and lockout", () => {
     expect(flattenNav(nav).find((i) => i.to === "/super/approvals")?.badge).toBeUndefined();
   });
 
-  it("keeps only read-only screens plus renewal while a shop is locked out", () => {
-    const renew = { to: "/admin/subscription", label: "Renew access", icon: () => null } as never;
-    const restricted = navPaths(restrictNav(adminNav(), adminGatedPaths, renew));
-    expect(restricted).toEqual(
-      expect.arrayContaining(["/admin", "/admin/reports", "/admin/subscription"]),
-    );
+  it("keeps only read-only screens while a shop is locked out", () => {
+    const restricted = navPaths(restrictNav(adminNav(), adminGatedPaths));
+    expect(restricted).toEqual(expect.arrayContaining(["/admin", "/admin/reports"]));
+    expect(restricted).not.toContain("/admin/subscription");
     expect(restricted).not.toContain("/admin/money");
     expect(restricted).not.toContain("/admin/wallets");
   });

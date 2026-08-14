@@ -250,7 +250,7 @@ export function adminNav(): Nav {
     {
       label: "Account",
       items: [
-        { to: "/admin/settings", label: "Ecosystem settings", icon: Settings },
+        { to: "/admin/settings", label: "Shop settings", icon: Settings },
         { to: "/admin/profile", label: "Profile", icon: User },
       ],
     },
@@ -265,8 +265,9 @@ export const adminBottomNav: NavItem[] = [
   { to: "/admin/profile", label: "Profile", icon: User },
 ];
 
-/** Read-only screens a lapsed shop keeps, plus the renewal screen. */
-export const adminGatedPaths = ["/admin", "/admin/reports", "/admin/subscription"];
+/** Read-only screens a lapsed shop keeps. Subscription billing is not part of
+ *  the Admin console — the database still refuses writes when a shop is locked. */
+export const adminGatedPaths = ["/admin", "/admin/reports"];
 
 /* ------------------------------------------------------------------ */
 /* Super Admin                                                         */
@@ -285,8 +286,8 @@ export function superAdminNav(): Nav {
     {
       label: "Directory",
       items: [
-        { to: "/super/admins", label: "Ecosystems", icon: Building2 },
-        { to: "/super/members", label: "Ecosystem members", icon: Users },
+        { to: "/super/admins", label: "Shops", icon: Building2 },
+        { to: "/super/members", label: "Shop members", icon: Users },
       ],
     },
     {
