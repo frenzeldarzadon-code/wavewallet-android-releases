@@ -246,9 +246,6 @@ export function SocialPage() {
     }
   };
 
-  const affordable = state
-    ? canAfford(state, charge, account.pointsBalance ?? 0)
-    : false;
 
   return (
     <>
