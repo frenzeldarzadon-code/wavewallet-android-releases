@@ -12,6 +12,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
+import { RatingStars } from "@/components/rating-stars";
+import { soldLabel } from "@/lib/ratings";
 import { useSession } from "@/lib/session";
 import { peso } from "@/lib/wavewallet";
 import {
@@ -188,6 +190,14 @@ export function VoucherShopView({
                       <div className="min-w-0">
                         <p className="font-medium">{p.name}</p>
                         <p className="text-xs text-muted-foreground">{p.description}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <RatingStars avg={p.rating_avg} count={p.rating_count} />
+                          {soldLabel(p.sold_count) ? (
+                            <span className="text-xs text-muted-foreground">
+                              · {soldLabel(p.sold_count)}
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
                       <StatusBadge tone={soldOut ? "danger" : p.available <= 10 ? "warning" : "success"}>
                         {soldOut ? "Sold out" : `${p.available} left`}
