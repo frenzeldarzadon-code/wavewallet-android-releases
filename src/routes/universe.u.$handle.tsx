@@ -8,6 +8,10 @@ import { MemberAvatar } from "@/components/member-avatar";
 import { UniverseShell } from "@/components/universe/universe-shell";
 import { displayHandle } from "@/lib/profile";
 import { fetchUniverseProfile, type UniverseProfile } from "@/lib/social";
+import { RelationshipActions } from "@/components/universe/relationship-actions";
+import { SocialImage } from "@/components/social/social-image";
+import { fetchProfilePosts, type ProfilePost } from "@/lib/universe-social";
+import { useSession } from "@/lib/session";
 
 export const Route = createFileRoute("/universe/u/$handle")({
   head: () => ({
@@ -37,12 +41,17 @@ export const Route = createFileRoute("/universe/u/$handle")({
  */
 function UniverseMemberProfile() {
   const { handle } = useParams({ from: "/universe/u/$handle" });
+  const session = useSession();
   const [profile, setProfile] = useState<UniverseProfile | null>(null);
+  const [posts, setPosts] = useState<ProfilePost[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
     setLoading(true);
+    void fetchProfilePosts(handle)
+      .then((rows) => active && setPosts(rows))
+      .catch(() => undefined);
     void fetchUniverseProfile(handle)
       .then((p) => active && setProfile(p))
       .catch((e: Error) => toast.error("Could not open that profile", { description: e.message }))
@@ -84,12 +93,40 @@ function UniverseMemberProfile() {
                 Public profiles show identity only. Wallets, credits, earnings, shop history and
                 private messages are never shown here.
               </p>
+              {session.account && session.account.id !== profile.user_id ? (
+                <RelationshipActions userId={profile.user_id} />
+              ) : null}
               <Button asChild variant="outline" size="sm">
                 <Link to="/universe">Back to the feed</Link>
               </Button>
             </CardContent>
           </Card>
         )}
+
+        {profile ? (
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold text-muted-foreground">Posts</h2>
+            {posts.length === 0 ? (
+              <EmptyState
+                title="No public posts yet"
+                description={`${profile.full_name} has not posted publicly.`}
+              />
+            ) : (
+              posts.map((post) => (
+                <Card key={post.id} className="shadow-[var(--shadow-card)]">
+                  <CardContent className="space-y-2 py-4">
+                    <p className="whitespace-pre-wrap text-sm">{post.body}</p>
+                    {post.image_path ? <SocialImage path={post.image_path} /> : null}
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(post.created_at).toLocaleString()} · {post.like_count} hearts ·{" "}
+                      {post.comment_count} replies
+                    </p>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </section>
+        ) : null}
       </div>
     </UniverseShell>
   );
