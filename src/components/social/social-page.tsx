@@ -578,7 +578,7 @@ function PostCard({
       const res = await giftSocialCredits({ postId: post.id, amount });
       setGiftOpen(false);
       toast.success(`Gifted ${res.amount} social credits to ${post.author_name}`, {
-        description: `You have ${res.sender_balance} purchased social credits left.`,
+        description: `You have ${res.purchased_balance} purchased social credits left.`,
       });
       await onChanged();
     } catch (e) {

@@ -702,8 +702,10 @@ export async function exchangeForSocialCredits(kind: "credit" | "points", amount
 
 export interface GiftResult {
   amount: number;
-  sender_balance: number;
-  recipient_balance: number;
+  recipient_name: string;
+  /** The sender's remaining PURCHASED balance after the gift. */
+  purchased_balance: number;
+  balance: number;
   tx_id: string;
 }
 
