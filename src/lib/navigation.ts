@@ -99,6 +99,7 @@ export function customerNav(): Nav {
       items: [
         { to: "/app/profile", label: "Profile", icon: User },
         { to: "/app", label: "Wallet", icon: Wallet },
+        { to: "/app/applications", label: "Applications & Invites", icon: UserPlus },
       ],
     },
     {
@@ -142,7 +143,7 @@ export const customerBottomNav: NavItem[] = [
 export function resellerNav(role: Role = "reseller"): Nav {
   const isReseller = role === "reseller" || role === "super_admin" || role === "admin";
   const business: NavItem[] = [
-    { to: "/reseller/applications", label: "Applications", icon: UserPlus },
+    { to: "/reseller/applications", label: "Applications & Invites", icon: UserPlus },
     ...(isReseller
       ? ([
           { to: "/reseller/customers", label: "Downlines", icon: Users },
@@ -213,7 +214,7 @@ export function adminNav(): Nav {
       items: [
         { to: "/admin/resellers", label: "Resellers", icon: Users },
         { to: "/admin/customers", label: "Customers", icon: UserSquare2 },
-        { to: "/admin/applications", label: "Applications", icon: UserPlus },
+        { to: "/admin/applications", label: "Applications & Invites", icon: UserPlus },
         { to: "/admin/signup-link", label: "Signup link", icon: Link2 },
       ],
     },
