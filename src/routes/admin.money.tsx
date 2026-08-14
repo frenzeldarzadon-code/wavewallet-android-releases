@@ -21,6 +21,3 @@ function AdminMoney() {
   const { tab } = Route.useSearch();
   return <MoneyPage initialTab={tab ?? "out"} />;
 }
-
-const _unused = () => ({
-});
