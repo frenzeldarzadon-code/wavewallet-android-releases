@@ -718,6 +718,22 @@ export async function refundPromotion(postId: string, reason: string) {
 
 // --------------------------------------------------- general-post presentation
 
+/** Operator badge shown on a post, or null for ordinary members. */
+export function roleBadge(role: string | null | undefined): string | null {
+  switch (role) {
+    case "super_admin":
+      return "Platform";
+    case "admin":
+      return "Shop admin";
+    case "reseller":
+      return "Reseller";
+    case "subreseller":
+      return "Subreseller";
+    default:
+      return null;
+  }
+}
+
 /** Plain-language name of the audience a member picked. */
 export function audienceLabel(audience: PostAudience): string {
   if (audience === "general") return "General / All Shops";

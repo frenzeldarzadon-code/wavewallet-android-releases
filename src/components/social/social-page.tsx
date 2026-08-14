@@ -76,6 +76,7 @@ import {
   fetchSocialState,
   postCharge,
   relativeTime,
+  roleBadge,
   reportContent,
   setBlocked,
   socialImageUrl,
@@ -537,7 +538,6 @@ function PostCard({
               {roleBadge(post.author_role) ? (
                 <Badge variant="secondary">{roleBadge(post.author_role)}</Badge>
               ) : null}
-
             </div>
             <p className="mt-1 whitespace-pre-wrap break-words text-sm">{post.body}</p>
             {post.audience === "general" && post.author_id === meId ? (
