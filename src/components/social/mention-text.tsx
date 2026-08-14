@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { parseMentions, profilePath } from "@/lib/mentions";
+import { parseMentions } from "@/lib/mentions";
 import { cn } from "@/lib/utils";
 
 /**
@@ -25,9 +25,4 @@ export function MentionText({ body, className }: { body: string; className?: str
       )}
     </p>
   );
-}
-
-/** Compact author row: avatar + name + clickable unique @handle. */
-export function handleHref(handle: string): string {
-  return profilePath(handle);
 }
