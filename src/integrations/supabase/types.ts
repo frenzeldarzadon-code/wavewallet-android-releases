@@ -4965,11 +4965,10 @@ export type Database = {
       platform_user_deletion_check: {
         Args: { _user: string }
         Returns: {
-          blockers: string[]
           credit_total: number
           eligible: boolean
           points_total: number
-          reasons: string[]
+          reason: string
           social_purchased: number
         }[]
       }
