@@ -141,7 +141,12 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
   );
 
   return (
+    // The collapsed sidebar renders tooltips for its icon-only links. Radix
+    // tooltips must sit inside a provider — without it the whole console throws
+    // on render for anyone whose sidebar is collapsed.
+    <TooltipProvider delayDuration={150}>
     <div className="min-h-screen bg-app">
+
       {isDemo ? (
         <div className="flex items-center justify-center gap-2 bg-warning px-4 py-1.5 text-center text-[11px] font-semibold uppercase tracking-wide text-warning-foreground sm:text-xs">
           <FlaskConical className="size-3.5 shrink-0" />
