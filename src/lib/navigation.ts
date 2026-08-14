@@ -9,6 +9,7 @@
 import type { LinkProps } from "@tanstack/react-router";
 import type { ComponentType } from "react";
 import {
+  Banknote,
   BarChart3,
   Building2,
   Coins,
@@ -108,6 +109,7 @@ export function customerNav(): Nav {
       label: "Money",
       items: [
         { to: "/app/transfer", label: "Transfer", icon: Send },
+        { to: "/app/money", label: "Cash out & cash in", icon: Banknote },
         { to: "/app/history", label: "Transaction history", icon: History },
       ],
     },
@@ -167,6 +169,7 @@ export function resellerNav(role: Role = "reseller"): Nav {
       label: "Money",
       items: [
         { to: "/reseller/transfer", label: "Transfer", icon: Send },
+        { to: "/reseller/money", label: "Cash out & cash in", icon: Banknote },
         { to: "/reseller/history", label: "Transaction history", icon: History },
       ],
     },
@@ -226,6 +229,7 @@ export function adminNav(): Nav {
       items: [
         { to: "/admin/credits", label: "Shop credits", icon: Coins },
         { to: "/admin/wallets", label: "Wallets & transfers", icon: Wallet },
+        { to: "/admin/money", label: "Cash out & cash in", icon: Banknote },
         { to: "/admin/transactions", label: "Transactions", icon: ReceiptText },
       ],
     },
