@@ -29,7 +29,7 @@ import {
   cleanupStatusLabel,
   cleanupStatusTone,
   type CleanupStatus,
-} from "@/lib/shop-cleanup";
+} from "@/lib/ecosystem-cleanup";
 import {
   PURGE_DELETION_ITEMS,
   PURGE_WARNING,
@@ -37,7 +37,7 @@ import {
   purgeEcosystem,
   summarizePurge,
   type PurgeStep,
-} from "@/lib/shop-purge";
+} from "@/lib/ecosystem-purge";
 
 
 type Overview = Database["public"]["Functions"]["platform_overview"]["Returns"][number];
@@ -778,7 +778,7 @@ function CreateDialog({
         </DialogHeader>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="cName">Shop / shop name</Label>
+            <Label htmlFor="cName">Shop name</Label>
             <Input
               id="cName"
               value={form.name}
