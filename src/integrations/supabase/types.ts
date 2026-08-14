@@ -4978,12 +4978,10 @@ export type Database = {
         Args: { _provider: string; _provider_event_id: string }
         Returns: Json
       }
-      social_create_comment:
-        | { Args: { _body: string; _post_id: string }; Returns: Json }
-        | {
-            Args: { _body: string; _parent_id?: string; _post_id: string }
-            Returns: Json
-          }
+      social_create_comment: {
+        Args: { _body: string; _parent_id?: string; _post_id: string }
+        Returns: Json
+      }
       social_create_post: {
         Args: {
           _audience?: string
