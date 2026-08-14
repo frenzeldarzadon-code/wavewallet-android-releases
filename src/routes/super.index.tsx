@@ -121,6 +121,8 @@ function SuperOverview() {
         </div>
       </PageSection>
 
+      <SuperEarningsPanel />
+
       <PageSection title="Ecosystems" description="Each Admin owns exactly one isolated tenant.">
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading live counters…</p>

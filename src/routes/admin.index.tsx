@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PageSection, StatCard, StatusBadge, subscriptionTone } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
 import { supabase } from "@/integrations/supabase/client";
-import { EarningsSummaryCards } from "@/components/earnings-summary-cards";
+import { AdminEarningsPanel } from "@/components/admin-earnings-panel";
 import { peso, shortDate, shortDateTime, statusLabel } from "@/lib/wavewallet";
 
 export const Route = createFileRoute("/admin/")({
@@ -146,14 +146,7 @@ function AdminDashboard() {
         </div>
       </PageSection>
 
-      <EarningsSummaryCards
-        title="Shop earnings retained"
-        description="What this shop keeps from completed voucher sales after reseller and subreseller cashback. Platform-issued credits, cash-ins and wallet transfers are never counted here."
-        types={["admin_shop_margin"]}
-        ecosystemId={ecosystemDbId}
-        linkTo="/admin/reports"
-        linkLabel="Open earnings & financial reports"
-      />
+      <AdminEarningsPanel ecosystemId={ecosystemDbId} />
 
 
 

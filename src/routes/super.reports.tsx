@@ -7,6 +7,8 @@ import { ReportRangePicker } from "@/components/report-range";
 import { supabase } from "@/integrations/supabase/client";
 import { EarningsHistory } from "@/components/earnings-history";
 import { useSession } from "@/lib/session";
+import { SuperEarningsPanel } from "@/components/super-earnings-panel";
+import { ExpensesCard } from "@/components/expenses-card";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
   csvStamp,
@@ -189,6 +191,16 @@ function SuperReports() {
           busy={loading}
         />
       </PageSection>
+
+      <SuperEarningsPanel showLink={false} />
+
+      <ExpensesCard
+        key={expenseVersion}
+        scope="platform"
+        title="Platform expenses"
+        format={peso}
+        onChange={() => setExpenseVersion((v) => v + 1)}
+      />
 
       <PageSection title="Platform totals">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

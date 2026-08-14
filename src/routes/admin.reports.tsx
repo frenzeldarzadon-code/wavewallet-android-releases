@@ -18,6 +18,8 @@ import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-
 import { ReportRangePicker } from "@/components/report-range";
 import { EarningsHistory } from "@/components/earnings-history";
 import { useSession } from "@/lib/session";
+import { AdminEarningsPanel } from "@/components/admin-earnings-panel";
+import { ExpensesCard } from "@/components/expenses-card";
 import { peso, roleLabel, shortDateTime, type Role } from "@/lib/wavewallet";
 import {
   csvStamp,
@@ -68,6 +70,7 @@ export const Route = createFileRoute("/admin/reports")({
 
 function AdminReports() {
   const { ecosystem, ecosystemDbId } = useSession("admin");
+  const [expenseVersion, setExpenseVersion] = useState(0);
   const [range, setRange] = useState("monthly");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -235,6 +238,17 @@ function AdminReports() {
           busy={loading}
         />
       </PageSection>
+
+      <AdminEarningsPanel ecosystemId={ecosystemDbId} showLink={false} />
+
+      <ExpensesCard
+        key={expenseVersion}
+        scope="ecosystem"
+        ecosystemId={ecosystemDbId}
+        title="Shop expenses"
+        format={peso}
+        onChange={() => setExpenseVersion((v) => v + 1)}
+      />
 
       <PageSection title="Revenue">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
