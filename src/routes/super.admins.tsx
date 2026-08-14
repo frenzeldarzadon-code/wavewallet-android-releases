@@ -1015,6 +1015,10 @@ function ManageDialog({
           </div>
         </div>
 
+        <ShopAdminCard ecosystemId={row.id} onChanged={onSaved} />
+
+
+
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="mName">Name</Label>
