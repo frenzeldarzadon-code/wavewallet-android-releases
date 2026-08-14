@@ -28,12 +28,23 @@ const startOfYear = () => {
 const earning = (type: EarningType, amount: number, at: Date): EarningRow =>
   ({
     id: `${type}-${amount}-${at.getTime()}`,
+    occurred_at: iso(at),
+    ecosystem_id: "eco",
     earning_type: type,
     recipient_id: "r1",
-    ecosystem_id: "eco",
-    amount,
-    created_at: iso(at),
-  }) as unknown as EarningRow;
+    recipient_name: "Member",
+    counterparty_id: null,
+    counterparty_name: null,
+    product_name: null,
+    quantity: null,
+    gross_amount: amount,
+    basis_amount: amount,
+    rate_percent: 0,
+    earning_amount: amount,
+    status: "settled",
+    tx_id: null,
+    sale_id: null,
+  }) satisfies EarningRow;
 
 const expense = (amount: number, at: Date): ExpenseRow => ({
   id: `x-${amount}-${at.getTime()}`,
