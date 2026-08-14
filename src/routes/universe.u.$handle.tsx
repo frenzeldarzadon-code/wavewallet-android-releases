@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui-kit";
 import { MemberAvatar } from "@/components/member-avatar";
 import { UniverseShell } from "@/components/universe/universe-shell";
 import { displayHandle } from "@/lib/profile";
+import { SuperAdminBadge } from "@/components/role-badge";
 import { fetchUniverseProfile, type UniverseProfile } from "@/lib/social";
 import { RelationshipActions } from "@/components/universe/relationship-actions";
 import { SocialImage } from "@/components/social/social-image";
@@ -82,20 +83,39 @@ function UniverseMemberProfile() {
                 />
                 <div className="min-w-0">
                   <h1 className="truncate text-lg font-semibold">{profile.full_name}</h1>
-                  <p className="truncate text-sm text-primary">{displayHandle(profile.handle)}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Joined {new Date(profile.joined_at).toLocaleDateString()}
-                  </p>
+                  {profile.is_platform ? (
+                    <SuperAdminBadge className="mt-1" />
+                  ) : (
+                    <>
+                      <p className="truncate text-sm text-primary">
+                        {displayHandle(profile.handle)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Joined {new Date(profile.joined_at).toLocaleDateString()}
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
-              {profile.bio ? <p className="text-sm">{profile.bio}</p> : null}
-              <p className="text-xs text-muted-foreground">
-                Public profiles show identity only. Wallets, credits, earnings, shop history and
-                private messages are never shown here.
-              </p>
-              {session.account && session.account.id !== profile.user_id ? (
+              {profile.is_platform ? (
+                <p className="text-sm text-muted-foreground">
+                  This is the WaveWallet platform identity used for platform announcements and
+                  moderation. The personal profile behind it is private.
+                </p>
+              ) : (
+                <>
+                  {profile.bio ? <p className="text-sm">{profile.bio}</p> : null}
+                  <p className="text-xs text-muted-foreground">
+                    Public profiles show identity only. Wallets, credits, earnings, shop history and
+                    private messages are never shown here.
+                  </p>
+                </>
+              )}
+              {!profile.is_platform && profile.user_id && session.account
+              && session.account.id !== profile.user_id ? (
                 <RelationshipActions userId={profile.user_id} />
               ) : null}
+
               <Button asChild variant="outline" size="sm">
                 <Link to="/universe">Back to the feed</Link>
               </Button>
@@ -103,7 +123,7 @@ function UniverseMemberProfile() {
           </Card>
         )}
 
-        {profile ? (
+        {profile && !profile.is_platform ? (
           <section className="space-y-3">
             <h2 className="text-sm font-semibold text-muted-foreground">Posts</h2>
             {posts.length === 0 ? (

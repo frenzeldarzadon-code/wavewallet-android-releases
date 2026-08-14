@@ -47,11 +47,14 @@ export const WITHDRAWAL_MAX_CREDITS = 10_000_000;
 export const WITHDRAWAL_SLA_NOTICE =
   "Cash outs are verified by the platform owner and may take up to 48 hours. Nothing is sent until it is marked released.";
 
-/** The live valuation + fee. Never assume a rate; always read this. */
+/** The live valuation + fees. Never assume a rate; always read this. */
 export interface MoneySettings {
   creditsPerUnit: number;
   phpPerUnit: number;
+  /** Cash OUT (withdrawal) fee percentage. */
   feePercent: number;
+  /** Cash IN fee percentage, charged on the peso amount paid. */
+  cashInFeePercent: number;
   cashbackReseller: number;
   cashbackSubreseller: number;
   /** Flat credits charged when a member moves credits between their shops. */
@@ -62,10 +65,12 @@ export const MONEY_SETTINGS_FALLBACK: MoneySettings = {
   creditsPerUnit: 1000,
   phpPerUnit: 1000,
   feePercent: 1,
+  cashInFeePercent: 0,
   cashbackReseller: 10,
   cashbackSubreseller: 20,
   shopTransferFee: 5,
 };
+
 
 /** Supabase RPC args are exact-optional: drop undefined keys before sending. */
 const rpcArgs = <T,>(o: Record<string, unknown>): T =>
@@ -90,7 +95,14 @@ export function validateCashback(reseller: number, subreseller: number): string 
 export function validateValuation(credits: number, php: number, fee: number): string | null {
   if (!Number.isFinite(credits) || credits <= 0) return "Credits per unit must be greater than zero.";
   if (!Number.isFinite(php) || php <= 0) return "Peso value must be greater than zero.";
-  if (!Number.isFinite(fee) || fee < 0 || fee >= 100) return "Withdrawal fee must be between 0% and 99.99%.";
+  if (!Number.isFinite(fee) || fee < 0 || fee >= 100) return "Cash out fee must be between 0% and 99.99%.";
+  return null;
+}
+
+/** Same rules as the database: zero or more, never a whole confiscation. */
+export function validateCashInFee(fee: number): string | null {
+  if (!Number.isFinite(fee) || fee < 0) return "Cash in fee cannot be negative.";
+  if (fee >= 100) return "Cash in fee must be less than 100%.";
   return null;
 }
 
@@ -109,10 +121,28 @@ export function quoteWithdrawal(credits: number, s: MoneySettings): Quote {
   return { credits: Number(credits) || 0, gross, feePercent: s.feePercent, fee, net: round2(gross - fee) };
 }
 
-/** Peso → credits for cash in. Mirrors `request_cash_in`. */
-export function quoteCashIn(php: number, s: MoneySettings): number {
-  return round2((Number(php) || 0) * s.creditsPerUnit / s.phpPerUnit);
+/** Peso paid → fee → net → credits. Mirrors `request_cash_in` to the centavo. */
+export interface CashInQuote {
+  gross: number;
+  feePercent: number;
+  fee: number;
+  net: number;
+  credits: number;
 }
+
+export function quoteCashInBreakdown(php: number, s: MoneySettings): CashInQuote {
+  const gross = round2(Number(php) || 0);
+  const feePercent = Number(s.cashInFeePercent) || 0;
+  const fee = round2(gross * feePercent / 100);
+  const net = round2(gross - fee);
+  return { gross, feePercent, fee, net, credits: round2(net * s.creditsPerUnit / s.phpPerUnit) };
+}
+
+/** Credits a member receives for a cash in. */
+export function quoteCashIn(php: number, s: MoneySettings): number {
+  return quoteCashInBreakdown(php, s).credits;
+}
+
 
 /** Re-derive a stored request's numbers from its own snapshot, never from live settings. */
 export function snapshotQuote(row: Pick<WithdrawalRequest, "credits" | "gross_php" | "fee_percent" | "fee_php" | "net_php">): Quote {
@@ -185,7 +215,7 @@ export async function fetchMoneySettings(): Promise<MoneySettings> {
   const { data } = await supabase
     .from("platform_settings")
     .select(
-      "cash_out_credits_per_unit, cash_out_php_per_unit, withdrawal_fee_percent, cashback_reseller_percent, cashback_subreseller_percent, shop_transfer_fee_credits",
+      "cash_out_credits_per_unit, cash_out_php_per_unit, withdrawal_fee_percent, cash_in_fee_percent, cashback_reseller_percent, cashback_subreseller_percent, shop_transfer_fee_credits",
     )
     .eq("id", 1)
     .maybeSingle();
@@ -194,6 +224,7 @@ export async function fetchMoneySettings(): Promise<MoneySettings> {
     creditsPerUnit: Number(data.cash_out_credits_per_unit),
     phpPerUnit: Number(data.cash_out_php_per_unit),
     feePercent: Number(data.withdrawal_fee_percent),
+    cashInFeePercent: Number(data.cash_in_fee_percent ?? 0),
     cashbackReseller: Number(data.cashback_reseller_percent),
     cashbackSubreseller: Number(data.cashback_subreseller_percent),
     shopTransferFee: Number(data.shop_transfer_fee_credits ?? 5),
@@ -208,9 +239,11 @@ export async function saveMoneySettings(s: MoneySettings): Promise<void> {
     _php_per_unit: s.phpPerUnit,
     _withdrawal_fee: s.feePercent,
     _shop_transfer_fee: s.shopTransferFee,
+    _cash_in_fee: s.cashInFeePercent,
   }));
   if (error) throw new Error(error.message);
 }
+
 
 export async function fetchPaymentMethods(activeOnly = true): Promise<PaymentMethod[]> {
   let q = supabase.from("payment_methods").select("*").order("sort_order").order("name");

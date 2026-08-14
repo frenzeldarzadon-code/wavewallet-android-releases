@@ -20,6 +20,8 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EcosystemSwitcher } from "@/components/ecosystem-switcher";
+import { SuperAdminBadge } from "@/components/role-badge";
+
 
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -337,9 +339,13 @@ function AccountBlock({ session, mini }: { session: ResolvedSession; mini?: bool
   return (
     <div className="rounded-xl border border-sidebar-border bg-card p-3">
       <p className="truncate text-sm font-medium">{session.account?.name}</p>
-      <p className="truncate text-xs capitalize text-muted-foreground">
-        {session.account?.role.replace("_", " ")}
-      </p>
+      {session.account?.role === "super_admin" ? (
+        <SuperAdminBadge className="mt-1" />
+      ) : (
+        <p className="truncate text-xs capitalize text-muted-foreground">
+          {session.account?.role.replace("_", " ")}
+        </p>
+      )}
       <Button variant="outline" size="sm" className="mt-3 w-full" onClick={session.signOut}>
         <LogOut className="size-3.5" /> Sign out
       </Button>

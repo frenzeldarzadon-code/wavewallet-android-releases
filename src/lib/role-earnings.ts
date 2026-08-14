@@ -23,7 +23,13 @@ import {
   type PeriodTotals,
 } from "@/lib/earnings";
 import { expensePeriodTotals, type ExpenseRow } from "@/lib/expenses";
-import { feePeriodTotals, type CashOutFeeRow } from "@/lib/platform-earnings";
+import {
+  cashInFeePeriodTotals,
+  feePeriodTotals,
+  type CashInFeeRow,
+  type CashOutFeeRow,
+} from "@/lib/platform-earnings";
+
 
 /** Cashback a reseller/subreseller actually earned from downline purchases. */
 export const CASHBACK_EARNING_TYPES: EarningType[] = ["sale_cashback", "upline_commission"];
@@ -71,9 +77,18 @@ export function adminNetEarnings(rows: EarningRow[], expenses: ExpenseRow[]): Ne
   return { earnings, expenses: spent, net: subtractPeriods(earnings, spent) };
 }
 
-/** Super Admin: collected cash-out fees only, less platform expenses. */
-export function platformNetEarnings(fees: CashOutFeeRow[], expenses: ExpenseRow[]): NetEarnings {
-  const earnings = feePeriodTotals(fees);
+/**
+ * Super Admin: peso fees actually collected — released cash-out fees plus
+ * verified cash-in fees — less platform expenses. Each fee uses the amount
+ * snapshotted on its own request, never the current setting.
+ */
+export function platformNetEarnings(
+  fees: CashOutFeeRow[],
+  expenses: ExpenseRow[],
+  cashInFees: CashInFeeRow[] = [],
+): NetEarnings {
+  const earnings = addPeriods(feePeriodTotals(fees), cashInFeePeriodTotals(cashInFees));
   const spent = expensePeriodTotals(expenses);
   return { earnings, expenses: spent, net: subtractPeriods(earnings, spent) };
 }
+

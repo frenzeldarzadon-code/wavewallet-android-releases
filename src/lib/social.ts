@@ -144,12 +144,20 @@ export interface MentionSuggestion {
 
 /** Public Universe profile — identity only, never wallets or messages. */
 export interface UniverseProfile {
-  user_id: string;
+  /** Null for the masked platform identity — there is no personal account to link to. */
+  user_id: string | null;
   full_name: string;
-  handle: string;
+  handle: string | null;
   avatar_path: string | null;
   bio: string | null;
   joined_at: string;
+  /**
+   * True when this identity is the platform owner seen by anyone else. The
+   * database masks the personal record: name becomes the platform identity and
+   * handle/avatar/bio are stripped, so no private detail can be reached
+   * through a handle or user id.
+   */
+  is_platform: boolean;
 }
 
 /** One shop's decision about a General post. */

@@ -13,13 +13,16 @@ import {
   adminCashbackPercent,
   describeRate,
   fetchMoneySettings,
+  quoteCashInBreakdown,
   quoteWithdrawal,
   saveMoneySettings,
   validateCashback,
+  validateCashInFee,
   validateValuation,
   type MoneySettings,
 } from "@/lib/wallet-money";
 import { peso } from "@/lib/wavewallet";
+
 
 export function MoneySettingsCard() {
   const [form, setForm] = useState<MoneySettings | null>(null);
@@ -39,6 +42,7 @@ export function MoneySettingsCard() {
   const save = async () => {
     const problem =
       validateValuation(form.creditsPerUnit, form.phpPerUnit, form.feePercent) ??
+      validateCashInFee(form.cashInFeePercent) ??
       validateCashback(form.cashbackReseller, form.cashbackSubreseller) ??
       (Number.isFinite(form.shopTransferFee) && form.shopTransferFee >= 0
         ? null
@@ -50,7 +54,7 @@ export function MoneySettingsCard() {
     setSaving(true);
     try {
       await saveMoneySettings(form);
-      toast.success("Money settings saved. Pending requests keep the rate they were submitted with.");
+      toast.success("Money settings saved. Pending and completed requests keep the rate they were submitted with.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save.");
     } finally {
@@ -59,14 +63,15 @@ export function MoneySettingsCard() {
   };
 
   const example = quoteWithdrawal(100, form);
+  const cashInExample = quoteCashInBreakdown(1000, form);
 
   return (
     <Card className="mb-6 shadow-[var(--shadow-card)]">
       <CardHeader>
-        <CardTitle className="text-sm">Credit valuation, withdrawal fee & cashback</CardTitle>
+        <CardTitle className="text-sm">Credit valuation, cash in / cash out fees & cashback</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="ms-credits">Credits per unit</Label>
             <Input
@@ -86,19 +91,53 @@ export function MoneySettingsCard() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="ms-fee">Withdrawal fee (%)</Label>
+            <Label htmlFor="ms-cash-in-fee">Cash in fee (%)</Label>
+            <Input
+              id="ms-cash-in-fee"
+              inputMode="decimal"
+              value={form.cashInFeePercent}
+              onChange={(e) => set("cashInFeePercent", Number(e.target.value))}
+            />
+            <p className="text-xs text-muted-foreground">
+              Charged on the peso amount a member pays in. Collected as platform earnings.
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="ms-fee">Cash out fee (%)</Label>
             <Input
               id="ms-fee"
               inputMode="decimal"
               value={form.feePercent}
               onChange={(e) => set("feePercent", Number(e.target.value))}
             />
+            <p className="text-xs text-muted-foreground">
+              Deducted from the payout when a withdrawal is released.
+            </p>
           </div>
         </div>
-        <p className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
-          Current valuation: <span className="font-medium text-foreground">{describeRate(form)}</span>. A 100 credit
-          cash out pays {peso(example.gross)} gross, {peso(example.fee)} fee, {peso(example.net)} net.
-        </p>
+        <div className="space-y-1 rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
+          <p>
+            Current valuation: <span className="font-medium text-foreground">{describeRate(form)}</span>
+          </p>
+          <p>
+            Example cash out — 100 credits pays {peso(example.gross)} gross, {peso(example.fee)} fee (
+            {example.feePercent}%), {peso(example.net)} net.
+          </p>
+          <p>
+            Example cash in — {peso(cashInExample.gross)} paid, {peso(cashInExample.fee)} fee (
+            {cashInExample.feePercent}%), {peso(cashInExample.net)} net ={" "}
+            <span className="font-medium text-foreground">
+              {cashInExample.credits.toLocaleString()} credits
+            </span>
+            .
+          </p>
+          <p>
+            Changing a fee affects future requests only. Every request stores the rate and fee in force when it
+            was submitted, so completed transactions and earnings reports never change.
+          </p>
+        </div>
+
+
 
         <div className="space-y-1.5">
           <Label htmlFor="ms-transfer-fee">Shop-to-shop transfer fee (credits)</Label>

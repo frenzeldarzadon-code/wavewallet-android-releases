@@ -16,8 +16,11 @@ import { PeriodEarningsTable } from "@/components/period-earnings-table";
 import { EMPTY_PERIOD_TOTALS } from "@/lib/earnings";
 import { fetchExpenses } from "@/lib/expenses";
 import {
+  cashInFeePeriodTotals,
+  fetchCashInFees,
   fetchCashOutFees,
   fetchShopTransferFees,
+  feePeriodTotals,
   transferFeePeriodTotals,
 } from "@/lib/platform-earnings";
 import { platformNetEarnings, type NetEarnings } from "@/lib/role-earnings";
@@ -34,6 +37,8 @@ const EMPTY: NetEarnings = {
 export function SuperEarningsPanel({ showLink = true }: { showLink?: boolean }) {
   const [totals, setTotals] = useState<NetEarnings>(EMPTY);
   const [transferFees, setTransferFees] = useState(EMPTY_TOTALS);
+  const [cashOutFees, setCashOutFees] = useState(EMPTY_TOTALS);
+  const [cashInFees, setCashInFees] = useState(EMPTY_TOTALS);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -41,16 +46,21 @@ export function SuperEarningsPanel({ showLink = true }: { showLink?: boolean }) 
     from.setMonth(0, 1);
     from.setHours(0, 0, 0, 0);
     try {
-      const [fees, expenses, transfers] = await Promise.all([
+      const [fees, expenses, transfers, cashIns] = await Promise.all([
         fetchCashOutFees({ from }),
         fetchExpenses({ scope: "platform", from }),
         fetchShopTransferFees({ from }),
+        fetchCashInFees({ from }).catch(() => []),
       ]);
-      setTotals(platformNetEarnings(fees, expenses));
+      setTotals(platformNetEarnings(fees, expenses, cashIns));
       setTransferFees(transferFeePeriodTotals(transfers));
+      setCashOutFees(feePeriodTotals(fees));
+      setCashInFees(cashInFeePeriodTotals(cashIns));
     } catch {
       setTotals(EMPTY);
       setTransferFees(EMPTY_TOTALS);
+      setCashOutFees(EMPTY_TOTALS);
+      setCashInFees(EMPTY_TOTALS);
     } finally {
       setLoading(false);
     }
@@ -63,7 +73,7 @@ export function SuperEarningsPanel({ showLink = true }: { showLink?: boolean }) 
   return (
     <PageSection
       title="Platform earnings"
-      description="Cash-out fees actually collected on released withdrawals, less recorded platform expenses. Credit issuance, cash in and other credit movements are not earnings."
+      description="Fees actually collected — cash-out fees on released withdrawals and cash-in fees on verified payments — less recorded platform expenses. Credit issuance and other credit movements are not earnings."
     >
       <PeriodEarningsTable
         loading={loading}
@@ -72,6 +82,18 @@ export function SuperEarningsPanel({ showLink = true }: { showLink?: boolean }) 
           {
             label: "Cash-out fees collected",
             hint: "Released withdrawals only",
+            totals: cashOutFees,
+            tone: "positive",
+          },
+          {
+            label: "Cash-in fees collected",
+            hint: "Verified cash in payments only",
+            totals: cashInFees,
+            tone: "positive",
+          },
+          {
+            label: "Total fees collected",
+            hint: "Cash out + cash in",
             totals: totals.earnings,
             tone: "positive",
           },
