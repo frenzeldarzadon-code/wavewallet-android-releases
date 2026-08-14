@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SocialPage } from "@/components/social/social-page";
 import { UniverseShell } from "@/components/universe/universe-shell";
+import { ShopInvitationsCard } from "@/components/universe/shop-invitations-card";
+
 
 export const Route = createFileRoute("/universe/")({
   head: () => ({
