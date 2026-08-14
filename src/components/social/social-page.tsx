@@ -2,6 +2,7 @@ import {
   Coins,
   EyeOff,
   Flag,
+  Gift,
   Globe2,
   Heart,
   ImagePlus,
@@ -57,6 +58,9 @@ import { displayHandle } from "@/lib/profile";
 import { useSession } from "@/lib/session";
 import type { CropRect } from "@/lib/image-optimize";
 import {
+  canGift,
+  giftIssue,
+  giftSocialCredits,
   COMMENT_MAX_CHARS,
   POST_MAX_CHARS,
   SOCIAL_IMAGE_ASPECT,
@@ -277,10 +281,16 @@ export function SocialPage() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-sm">
                 <Coins className="size-4 text-success" aria-hidden />
-                <span className="font-semibold">{state?.balance ?? "—"} social credits</span>
+                <span className="font-semibold">
+                  {state?.purchased_balance ?? "—"} paid social credits
+                </span>
                 <span className="text-muted-foreground">
-                  · {state?.free_balance ?? 0} free left today of {state?.daily_allowance ?? 5} ·{" "}
-                  {state?.purchased_balance ?? 0} purchased
+                  · {Math.max(0, state?.free_posts_left ?? 0)} free post
+                  {state?.free_posts_left === 1 ? "" : "s"} left today of{" "}
+                  {state?.free_posts_per_day ?? 1}
+                  {(state?.free_balance ?? 0) > 0
+                    ? ` · ${state?.free_balance} promotional (not giftable)`
+                    : ""}
                 </span>
               </div>
               <Button
@@ -477,6 +487,9 @@ function PostCard({
   const [dm, setDm] = useState("");
   const [dmOpen, setDmOpen] = useState(false);
   const [hideOpen, setHideOpen] = useState(false);
+  const [giftOpen, setGiftOpen] = useState(false);
+  const [giftAmount, setGiftAmount] = useState("5");
+  const [gifting, setGifting] = useState(false);
   const [hideReason, setHideReason] = useState("");
 
   const cost = commentCharge();
@@ -616,6 +629,20 @@ function PostCard({
             <>
               <Button variant="ghost" size="sm" className="h-10" onClick={() => setDmOpen(true)}>
                 <Send className="size-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-10 gap-1.5"
+                disabled={!canGift(state, false)}
+                title={
+                  canGift(state, false)
+                    ? `Gift paid social credits to ${post.author_name}`
+                    : "You have no purchased social credits. Free promotional credits cannot be gifted."
+                }
+                onClick={() => setGiftOpen(true)}
+              >
+                <Gift className="size-4" />
               </Button>
               <Button variant="ghost" size="sm" className="h-10" onClick={onReport}>
                 <Flag className="size-4" />
@@ -796,6 +823,62 @@ function PostCard({
               Cancel
             </Button>
             <Button onClick={() => void hideForShop()}>Hide for my shop</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={giftOpen} onOpenChange={setGiftOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Gift social credits to {post.author_name}</DialogTitle>
+            <DialogDescription>
+              Only purchased social credits can be gifted. Free promotional credits can never be
+              sent to anyone. This does not touch any shop wallet, cashback or earnings.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor={`gift-${post.id}`}>Amount</Label>
+            <Input
+              id={`gift-${post.id}`}
+              inputMode="numeric"
+              value={giftAmount}
+              onChange={(e) => setGiftAmount(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              You have {state?.purchased_balance ?? 0} purchased social credits.
+            </p>
+            {giftIssue({
+              purchased_balance: state?.purchased_balance ?? 0,
+              amount: Number(giftAmount),
+              isSelf: false,
+            }) ? (
+              <p className="text-xs font-medium text-destructive">
+                {giftIssue({
+                  purchased_balance: state?.purchased_balance ?? 0,
+                  amount: Number(giftAmount),
+                  isSelf: false,
+                })}
+              </p>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGiftOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={
+                gifting ||
+                giftIssue({
+                  purchased_balance: state?.purchased_balance ?? 0,
+                  amount: Number(giftAmount),
+                  isSelf: false,
+                }) !== null
+              }
+              onClick={() => void sendGift()}
+            >
+              {gifting ? <Loader2 className="size-4 animate-spin" /> : <Gift className="size-4" />}
+              Send gift
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
