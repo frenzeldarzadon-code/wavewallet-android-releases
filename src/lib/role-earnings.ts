@@ -23,7 +23,13 @@ import {
   type PeriodTotals,
 } from "@/lib/earnings";
 import { expensePeriodTotals, type ExpenseRow } from "@/lib/expenses";
-import { feePeriodTotals, type CashOutFeeRow } from "@/lib/platform-earnings";
+import {
+  cashInFeePeriodTotals,
+  feePeriodTotals,
+  type CashInFeeRow,
+  type CashOutFeeRow,
+} from "@/lib/platform-earnings";
+
 
 /** Cashback a reseller/subreseller actually earned from downline purchases. */
 export const CASHBACK_EARNING_TYPES: EarningType[] = ["sale_cashback", "upline_commission"];
