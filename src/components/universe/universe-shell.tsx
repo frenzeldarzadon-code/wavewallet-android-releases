@@ -8,19 +8,40 @@
  * Navigation is presentation only — the database authorizes every read/write.
  */
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, LogOut, Mail, Store, User, Wallet } from "lucide-react";
-import type { ReactNode } from "react";
+import { Bell, Home, LogOut, Mail, Store, User, Wallet } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { MemberAvatar } from "@/components/member-avatar";
 import { cn } from "@/lib/utils";
 import { homeFor, useSession } from "@/lib/session";
+import { fetchNotifications, unreadCount } from "@/lib/notifications";
 
 const items = [
   { to: "/universe", label: "Home", icon: Home },
+  { to: "/universe/notifications", label: "Alerts", icon: Bell },
   { to: "/universe/messages", label: "Messages", icon: Mail },
   { to: "/universe/shops", label: "Shops", icon: Store },
   { to: "/universe/profile", label: "Profile", icon: User },
 ] as const;
+
+/** Small unread badge; polls quietly so the count is never stale for long. */
+function useUnread() {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let active = true;
+    const load = () =>
+      fetchNotifications(50)
+        .then((rows) => active && setCount(unreadCount(rows)))
+        .catch(() => undefined);
+    void load();
+    const timer = setInterval(load, 60_000);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, []);
+  return count;
+}
 
 export function UniverseShell({
   title,
