@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { EmptyState, PageSection } from "@/components/ui-kit";
+import { ShopInvitationsCard } from "@/components/universe/shop-invitations-card";
 import { UniverseShell } from "@/components/universe/universe-shell";
 import { homeFor, useSession } from "@/lib/session";
 import {
@@ -76,6 +77,8 @@ function UniverseShops() {
   return (
     <UniverseShell title="Shops" subtitle="Your memberships and the directory">
       <div className="space-y-6 px-4 sm:px-0">
+        <ShopInvitationsCard onChanged={() => void load()} />
+
         <PageSection
           title="Your shops"
           description="Each membership keeps its own role, wallet and history. Switching only changes which one is active."

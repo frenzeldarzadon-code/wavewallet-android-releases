@@ -39,6 +39,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { peso, roleLabel, shortDate, shortDateTime, type Role } from "@/lib/wavewallet";
 import { EditMemberDialog, type EditableMember } from "@/components/edit-member-dialog";
 import { memberMatches } from "@/lib/member-admin";
+import { InviteMemberCard } from "@/components/invite-member-card";
 import { AccessAccountDialog, type AccessTarget } from "@/components/access-account-dialog";
 import { isImpersonatable } from "@/lib/impersonation";
 import {
@@ -484,6 +485,10 @@ function AdminCustomers() {
           </CardContent>
         </Card>
       </PageSection>
+
+      <InviteMemberCard ecosystemId={ecosystemDbId} />
+
+
 
       <PageSection
         title="Customer directory"

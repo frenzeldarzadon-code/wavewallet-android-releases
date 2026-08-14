@@ -816,6 +816,65 @@ export type Database = {
           },
         ]
       }
+      ecosystem_invitations: {
+        Row: {
+          cancelled_by: string | null
+          created_at: string
+          ecosystem_id: string
+          expires_at: string | null
+          id: string
+          invited_by: string | null
+          inviter_name: string
+          inviter_role: Database["public"]["Enums"]["app_role"] | null
+          message: string | null
+          responded_at: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancelled_by?: string | null
+          created_at?: string
+          ecosystem_id: string
+          expires_at?: string | null
+          id?: string
+          invited_by?: string | null
+          inviter_name?: string
+          inviter_role?: Database["public"]["Enums"]["app_role"] | null
+          message?: string | null
+          responded_at?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancelled_by?: string | null
+          created_at?: string
+          ecosystem_id?: string
+          expires_at?: string | null
+          id?: string
+          invited_by?: string | null
+          inviter_name?: string
+          inviter_role?: Database["public"]["Enums"]["app_role"] | null
+          message?: string | null
+          responded_at?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ecosystem_invitations_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ecosystem_memberships: {
         Row: {
           created_at: string
@@ -1422,6 +1481,7 @@ export type Database = {
           gcash_number: string
           grace_period_days: number
           id: number
+          member_invitation_expiry_days: number
           payment_instructions: string
           plan_name: string
           plan_price: number
@@ -1452,6 +1512,7 @@ export type Database = {
           gcash_number?: string
           grace_period_days?: number
           id?: number
+          member_invitation_expiry_days?: number
           payment_instructions?: string
           plan_name?: string
           plan_price?: number
@@ -1482,6 +1543,7 @@ export type Database = {
           gcash_number?: string
           grace_period_days?: number
           id?: number
+          member_invitation_expiry_days?: number
           payment_instructions?: string
           plan_name?: string
           plan_price?: number
@@ -3567,6 +3629,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      cancel_member_invitation: {
+        Args: { _invitation_id: string }
+        Returns: undefined
+      }
       cancel_withdrawal: {
         Args: { _id: string }
         Returns: {
@@ -3845,6 +3911,7 @@ export type Database = {
         Returns: undefined
       }
       expire_stale_invitations: { Args: never; Returns: undefined }
+      expire_stale_member_invitations: { Args: never; Returns: number }
       expire_stale_subscriptions: { Args: never; Returns: number }
       freeze_credit_purchase_order: {
         Args: { _order_id: string; _reason: string }
@@ -3924,6 +3991,10 @@ export type Database = {
         }
         Returns: string
       }
+      invite_universe_member: {
+        Args: { _ecosystem_id: string; _message?: string; _user_id: string }
+        Returns: string
+      }
       is_ecosystem_admin: {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: boolean
@@ -3959,6 +4030,23 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      list_ecosystem_invitations: {
+        Args: { _ecosystem_id: string; _status?: string }
+        Returns: {
+          avatar_path: string
+          created_at: string
+          expires_at: string
+          full_name: string
+          handle: string
+          id: string
+          inviter_name: string
+          inviter_role: Database["public"]["Enums"]["app_role"]
+          message: string
+          responded_at: string
+          status: string
+          user_id: string
+        }[]
       }
       list_ecosystem_redemptions: {
         Args: { _ecosystem_id: string }
@@ -4162,6 +4250,20 @@ export type Database = {
           my_rating: number
           transacted_at: string
           transaction_id: string
+        }[]
+      }
+      my_shop_invitations: {
+        Args: never
+        Returns: {
+          created_at: string
+          ecosystem_id: string
+          ecosystem_name: string
+          expires_at: string
+          id: string
+          inviter_name: string
+          inviter_role: Database["public"]["Enums"]["app_role"]
+          message: string
+          status: string
         }[]
       }
       my_shop_wallets: {
@@ -4445,6 +4547,10 @@ export type Database = {
         Args: { _dry_run?: boolean; _ecosystem_id: string; _reason: string }
         Returns: Json
       }
+      respond_to_shop_invitation: {
+        Args: { _accept: boolean; _invitation_id: string }
+        Returns: undefined
+      }
       restructure_member_role: {
         Args: {
           _child_reassignments?: Json
@@ -4705,6 +4811,20 @@ export type Database = {
           status: string
         }[]
       }
+      search_universe_members: {
+        Args: { _ecosystem_id: string; _limit?: number; _q: string }
+        Returns: {
+          already_member: boolean
+          avatar_path: string
+          full_name: string
+          handle: string
+          masked_email: string
+          pending_application: boolean
+          pending_invitation: boolean
+          phone: string
+          user_id: string
+        }[]
+      }
       set_admin_sale_commission: {
         Args: { _ecosystem_id: string; _percent: number }
         Returns: number
@@ -4913,6 +5033,7 @@ export type Database = {
           gcash_number: string
           grace_period_days: number
           id: number
+          member_invitation_expiry_days: number
           payment_instructions: string
           plan_name: string
           plan_price: number
@@ -5383,6 +5504,7 @@ export type Database = {
               gcash_number: string
               grace_period_days: number
               id: number
+              member_invitation_expiry_days: number
               payment_instructions: string
               plan_name: string
               plan_price: number
@@ -5430,6 +5552,7 @@ export type Database = {
               gcash_number: string
               grace_period_days: number
               id: number
+              member_invitation_expiry_days: number
               payment_instructions: string
               plan_name: string
               plan_price: number
@@ -5621,6 +5744,7 @@ export type Database = {
           gcash_number: string
           grace_period_days: number
           id: number
+          member_invitation_expiry_days: number
           payment_instructions: string
           plan_name: string
           plan_price: number
