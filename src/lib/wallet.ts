@@ -81,6 +81,10 @@ export interface ShopProduct {
   promo_price: number | null;
   promo_note: string | null;
   available: number;
+  rating_avg: number | null;
+  rating_count: number;
+  /** Completed, non-refunded voucher sales only. */
+  sold_count: number;
 }
 
 export interface SaleRow {
@@ -351,6 +355,9 @@ export async function fetchShopProducts(): Promise<ShopProduct[]> {
     ...p,
     credit_price: Number(p.credit_price),
     promo_price: p.promo_price === null ? null : Number(p.promo_price),
+    rating_avg: p.rating_avg === null ? null : Number(p.rating_avg),
+    rating_count: Number(p.rating_count ?? 0),
+    sold_count: Number(p.sold_count ?? 0),
   }));
 }
 

@@ -1605,6 +1605,64 @@ export type Database = {
           },
         ]
       }
+      product_ratings: {
+        Row: {
+          comment: string | null
+          created_at: string
+          ecosystem_id: string
+          id: string
+          product_id: string
+          rating: number
+          sale_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          ecosystem_id: string
+          id?: string
+          product_id: string
+          rating: number
+          sale_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          ecosystem_id?: string
+          id?: string
+          product_id?: string
+          rating?: number
+          sale_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_ratings_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_ratings_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_ratings_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: true
+            referencedRelation: "voucher_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active_ecosystem_id: string | null
@@ -1793,6 +1851,64 @@ export type Database = {
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reward_ratings: {
+        Row: {
+          comment: string | null
+          created_at: string
+          ecosystem_id: string
+          id: string
+          rating: number
+          redemption_id: string
+          reward_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          ecosystem_id: string
+          id?: string
+          rating: number
+          redemption_id: string
+          reward_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          ecosystem_id?: string
+          id?: string
+          rating?: number
+          redemption_id?: string
+          reward_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_ratings_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reward_ratings_redemption_id_fkey"
+            columns: ["redemption_id"]
+            isOneToOne: true
+            referencedRelation: "reward_redemptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reward_ratings_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "reward_products"
             referencedColumns: ["id"]
           },
         ]
@@ -3584,6 +3700,7 @@ export type Database = {
           suspended_customer_count: number
         }[]
       }
+      ecosystem_has_admin: { Args: { _ecosystem_id: string }; Returns: boolean }
       ecosystem_last_activity: {
         Args: { _ecosystem_id: string }
         Returns: string
@@ -3751,6 +3868,9 @@ export type Database = {
           image_path: string
           name: string
           points_price: number
+          rating_avg: number
+          rating_count: number
+          redeemed_count: number
         }[]
       }
       list_shop_products: {
@@ -3764,6 +3884,9 @@ export type Database = {
           points_price: number
           promo_note: string
           promo_price: number
+          rating_avg: number
+          rating_count: number
+          sold_count: number
         }[]
       }
       list_signup_ecosystems: {
@@ -3901,6 +4024,17 @@ export type Database = {
           subscription_state: Database["public"]["Enums"]["subscription_state"]
         }[]
       }
+      my_rating_eligibility: {
+        Args: never
+        Returns: {
+          item_id: string
+          item_name: string
+          kind: string
+          my_rating: number
+          transacted_at: string
+          transaction_id: string
+        }[]
+      }
       new_tx_id: { Args: never; Returns: string }
       normalize_handle: { Args: { _handle: string }; Returns: string }
       platform_credit_supply: {
@@ -3996,6 +4130,14 @@ export type Database = {
       purge_ecosystem: {
         Args: { _confirm_name: string; _ecosystem_id: string; _reason: string }
         Returns: Json
+      }
+      rate_reward_redemption: {
+        Args: { _comment?: string; _rating: number; _redemption_id: string }
+        Returns: string
+      }
+      rate_voucher_sale: {
+        Args: { _comment?: string; _rating: number; _sale_id: string }
+        Returns: string
       }
       real_super_admin_exists: { Args: never; Returns: boolean }
       record_expense: {

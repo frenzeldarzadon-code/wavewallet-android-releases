@@ -158,7 +158,7 @@ function LoginPage() {
         throw new Error(
           app
             ? `Your account is pending approval. You can enter ${app.ecosystem_name} after an authorized member approves your application.`
-            : "This account is not linked to an ecosystem yet. Contact your operator.",
+            : "This account is not linked to an shop yet. Contact your operator.",
         );
       }
       if (ctx.profile.status !== "active") {
@@ -182,7 +182,7 @@ function LoginPage() {
       shops.map((e) => e.slug),
     );
     if (problem || !shop) {
-      toast.error(problem ?? "Choose the ecosystem you are joining.");
+      toast.error(problem ?? "Choose the shop you are joining.");
       return;
     }
     setSignupBusy(true);
@@ -225,7 +225,7 @@ function LoginPage() {
           <p className="mt-3 max-w-md text-sm opacity-90">
             Closed-loop credit wallets, voucher inventory with duplicate-safe imports, reseller
             networks, points and physical rewards — each operator fully isolated in their own
-            ecosystem.
+            shop.
           </p>
           <ul className="mt-6 space-y-2 text-sm opacity-90">
             {[
@@ -290,7 +290,7 @@ function LoginPage() {
               </p>
               <SocialSignIn disabled={busy} />
               <p className="text-center text-[11px] text-muted-foreground">
-                Your role and ecosystem are resolved by the server after sign-in.
+                Your role and shop are resolved by the server after sign-in.
               </p>
             </CardContent>
           </Card>
@@ -373,15 +373,15 @@ function LoginPage() {
                 <div>
                   <h3 className="text-sm font-semibold">Create your account</h3>
                   <p className="text-xs text-muted-foreground">
-                    Pick the ecosystem you are joining. Access starts once an authorized member
+                    Pick the shop you are joining. Access starts once an authorized member
                     approves your application.
                   </p>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="su-shop">Which ecosystem are you joining?</Label>
+                  <Label htmlFor="su-shop">Which shop are you joining?</Label>
                   <Select value={form.slug} onValueChange={(v) => setForm({ ...form, slug: v })}>
                     <SelectTrigger id="su-shop">
-                      <SelectValue placeholder="Select an ecosystem" />
+                      <SelectValue placeholder="Select an shop" />
                     </SelectTrigger>
                     <SelectContent>
                       {shops.map((e) => (
@@ -393,7 +393,7 @@ function LoginPage() {
                   </Select>
                   {shops.length === 0 ? (
                     <p className="text-[11px] text-muted-foreground">
-                      No ecosystem is open for public membership right now.
+                      No shop is open for public membership right now.
                     </p>
                   ) : null}
                 </div>
@@ -467,7 +467,7 @@ function LoginPage() {
                 </Button>
                 <p className="text-center text-[11px] text-muted-foreground">
                   Self-signup always creates a normal customer account. Your role and access are
-                  granted by the ecosystem, never chosen here.
+                  granted by the shop, never chosen here.
                 </p>
               </div>
             )}

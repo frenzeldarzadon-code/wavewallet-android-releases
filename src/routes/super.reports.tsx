@@ -32,12 +32,12 @@ export const Route = createFileRoute("/super/reports")({
       {
         name: "description",
         content:
-          "Platform subscription revenue plus per-ecosystem voucher sales, credits generated and channel earnings, across daily to yearly and custom ranges.",
+          "Platform subscription revenue plus per-shop voucher sales, credits generated and channel earnings, across daily to yearly and custom ranges.",
       },
       { property: "og:title", content: "Cross-Tenant Reports — WaveWallet Super Admin" },
       {
         property: "og:description",
-        content: "Compare ecosystem performance from immutable ledger records across any time range.",
+        content: "Compare shop performance from immutable ledger records across any time range.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -139,7 +139,7 @@ function SuperReports() {
   const exportCsv = () => {
     const csv = toCsv(
       [
-        "Ecosystem",
+        "Shop",
         "Vouchers sold",
         "Points-funded",
         "Gross",
@@ -168,8 +168,8 @@ function SuperReports() {
   return (
     <>
       <EarningsHistory
-        title="Platform revenue & cross-ecosystem earnings"
-        description="Platform subscription revenue belongs to the platform; shop, reseller and subreseller earnings are listed separately per ecosystem and never counted as platform revenue."
+        title="Platform revenue & cross-shop earnings"
+        description="Platform subscription revenue belongs to the platform; shop, reseller and subreseller earnings are listed separately per shop and never counted as platform revenue."
         highlightTypes={["platform_subscription", "credit_generation", "sale_cashback"]}
         netTypes={["platform_subscription"]}
         netLabel="Platform revenue"
@@ -226,11 +226,11 @@ function SuperReports() {
             value={peso(creditFlow.transferred)}
             hint="Face value · no earnings"
           />
-          <StatCard label="Ecosystems with activity" value={String(perEcosystem.length)} />
+          <StatCard label="Shops with activity" value={String(perEcosystem.length)} />
         </div>
       </PageSection>
 
-      <PageSection title="Ecosystem performance">
+      <PageSection title="Shop performance">
         {perEcosystem.length === 0 ? (
           <EmptyState title="No tenant activity in this range" description="Try a wider time window." />
         ) : (
@@ -240,7 +240,7 @@ function SuperReports() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Ecosystem</TableHead>
+                      <TableHead>Shop</TableHead>
                       <TableHead>Vouchers</TableHead>
                       <TableHead className="hidden sm:table-cell">Gross</TableHead>
                       <TableHead>Net</TableHead>
@@ -283,7 +283,7 @@ function SuperReports() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Transaction</TableHead>
-                      <TableHead className="hidden sm:table-cell">Ecosystem</TableHead>
+                      <TableHead className="hidden sm:table-cell">Shop</TableHead>
                       <TableHead>Paid</TableHead>
                       <TableHead className="hidden md:table-cell text-right">Date</TableHead>
                     </TableRow>

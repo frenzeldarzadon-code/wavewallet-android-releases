@@ -122,7 +122,7 @@ function SuperExport() {
           <div className="space-y-1 text-muted-foreground">
             <p className="font-medium text-foreground">What is never exported</p>
             <p>
-              Passwords, authentication tokens, sessions, ecosystem signup tokens and uploaded
+              Passwords, authentication tokens, sessions, shop signup tokens and uploaded
               payment proof files are excluded by design. Every file is generated from an explicit
               column list and named with its scope and UTC timestamp.
             </p>
@@ -139,7 +139,7 @@ function SuperExport() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Entire platform (all ecosystems)</SelectItem>
+                <SelectItem value="all">Entire platform (all shops)</SelectItem>
                 {ecosystems.map((e) => (
                   <SelectItem key={e.id} value={e.id}>
                     {e.name}
@@ -148,7 +148,7 @@ function SuperExport() {
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              A single-ecosystem export only contains that tenant&apos;s rows.
+              A single-shop export only contains that tenant&apos;s rows.
             </p>
           </div>
 

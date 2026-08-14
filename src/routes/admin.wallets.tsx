@@ -382,7 +382,7 @@ function AdminWallets() {
       </PageSection>
 
       <PageSection
-        title="Ecosystem credit ledger"
+        title="Shop credit ledger"
         description="Latest 60 movements across all wallets. Transfers move exact amounts; sale earnings appear as their own entries."
       >
         <div className="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-3">

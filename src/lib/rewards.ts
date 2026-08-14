@@ -36,6 +36,10 @@ export interface RewardListing {
   points_price: number;
   available: number;
   image_path: string | null;
+  rating_avg: number | null;
+  rating_count: number;
+  /** Claimed redemptions only. */
+  redeemed_count: number;
 }
 
 export interface RewardProductRow {
@@ -98,7 +102,12 @@ export async function fetchPointsLedger(userId: string, limit = 100): Promise<Po
 export async function fetchRewards(): Promise<RewardListing[]> {
   const { data, error } = await supabase.rpc("list_rewards");
   if (error) throw new Error(friendlyWalletError(error.message));
-  return (data ?? []) as unknown as RewardListing[];
+  return ((data ?? []) as unknown as RewardListing[]).map((r) => ({
+    ...r,
+    rating_avg: r.rating_avg === null ? null : Number(r.rating_avg),
+    rating_count: Number(r.rating_count ?? 0),
+    redeemed_count: Number(r.redeemed_count ?? 0),
+  }));
 }
 
 export async function fetchRewardProducts(ecosystemId: string): Promise<RewardProductRow[]> {

@@ -7,9 +7,9 @@ export const Route = createFileRoute("/super/audit")({
   head: () => ({
     meta: [
       { title: "Audit Trail — WaveWallet Super Admin" },
-      { name: "description", content: "Immutable log of Super Admin ecosystem access and platform-level changes." },
+      { name: "description", content: "Immutable log of Super Admin shop access and platform-level changes." },
       { property: "og:title", content: "Audit Trail — WaveWallet Super Admin" },
-      { property: "og:description", content: "Immutable log of Super Admin ecosystem access and platform-level changes." },
+      { property: "og:description", content: "Immutable log of Super Admin shop access and platform-level changes." },
     ],
   }),
   component: SuperAudit,
@@ -19,7 +19,7 @@ function SuperAudit() {
   return (
     <PageSection
       title="Audit trail"
-      description="Every Super Admin ecosystem access and platform change is recorded."
+      description="Every Super Admin shop access and platform change is recorded."
     >
       <Card className="shadow-[var(--shadow-card)]">
         <CardContent className="divide-y divide-border px-0 py-0">

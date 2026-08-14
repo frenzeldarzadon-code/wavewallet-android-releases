@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { RedemptionQr } from "@/components/redemption-qr";
+import { RatingStars } from "@/components/rating-stars";
 import { RewardImage } from "@/components/reward-image";
 import { useSession } from "@/lib/session";
 import { shortDateTime } from "@/lib/wavewallet";
@@ -138,6 +139,7 @@ export function RewardsPage() {
                       <div className="min-w-0">
                         <p className="font-medium">{r.name}</p>
                         <p className="text-xs text-muted-foreground">{r.description}</p>
+                        <RatingStars avg={r.rating_avg} count={r.rating_count} className="mt-1" />
                       </div>
                       <StatusBadge tone={soldOut ? "danger" : r.available <= 5 ? "warning" : "success"}>
                         {soldOut ? "Out of stock" : `${r.available} left`}

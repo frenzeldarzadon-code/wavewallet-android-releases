@@ -15,13 +15,13 @@ export const Route = createFileRoute("/admin/resellers")({
       {
         name: "description",
         content:
-          "Reseller and subreseller network inside your ecosystem: wallets, wholesale discounts, sale cashback and sales.",
+          "Reseller and subreseller network inside your shop: wallets, wholesale discounts, sale cashback and sales.",
       },
       { property: "og:title", content: "Resellers — WaveWallet Admin" },
       {
         property: "og:description",
         content:
-          "Reseller and subreseller network inside your ecosystem: wallets, wholesale discounts, sale cashback and sales.",
+          "Reseller and subreseller network inside your shop: wallets, wholesale discounts, sale cashback and sales.",
       },
     ],
   }),

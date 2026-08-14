@@ -1,5 +1,5 @@
 /**
- * Super Admin "Ecosystem members" directory.
+ * Super Admin "Shop members" directory.
  *
  * Read-only listing across every shop with the two privileged actions the
  * platform owner already has — Access Account (audited delegation) and Manual
@@ -75,7 +75,7 @@ export function MembersDirectory() {
   return (
     <>
       <PageSection
-        title="Ecosystem members"
+        title="Shop members"
         description="Every account on the platform, grouped by shop. Search by name, @handle, email or phone."
       >
         <Card className="shadow-[var(--shadow-card)]">
@@ -92,11 +92,11 @@ export function MembersDirectory() {
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <Select value={ecosystem} onValueChange={setEcosystem}>
-                <SelectTrigger className="h-11" aria-label="Filter by ecosystem">
-                  <SelectValue placeholder="All ecosystems" />
+                <SelectTrigger className="h-11" aria-label="Filter by shop">
+                  <SelectValue placeholder="All shops" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={ALL}>All ecosystems</SelectItem>
+                  <SelectItem value={ALL}>All shops</SelectItem>
                   {shopOptions.map(([id, name]) => (
                     <SelectItem key={id} value={id}>
                       {name}
