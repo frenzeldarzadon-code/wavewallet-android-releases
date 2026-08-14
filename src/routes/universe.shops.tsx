@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { EmptyState, PageSection } from "@/components/ui-kit";
+import { ShopInvitationsCard } from "@/components/universe/shop-invitations-card";
 import { UniverseShell } from "@/components/universe/universe-shell";
 import { homeFor, useSession } from "@/lib/session";
 import {
