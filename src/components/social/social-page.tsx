@@ -103,6 +103,7 @@ import {
 } from "@/lib/social";
 import { canReplyTo, hidePostForShop, sendMessage, threadComments } from "@/lib/social";
 import { PostComposer } from "@/components/social/post-composer";
+import { RelationshipMenu } from "@/components/universe/relationship-actions";
 import { MentionText } from "@/components/social/mention-text";
 import { MentionInput } from "@/components/social/mention-input";
 
@@ -676,6 +677,7 @@ function PostCard({
               >
                 <Gift className="size-4" />
               </Button>
+              <RelationshipMenu userId={post.author_id} name={post.author_name} />
               <Button variant="ghost" size="sm" className="h-10" onClick={onReport}>
                 <Flag className="size-4" />
               </Button>

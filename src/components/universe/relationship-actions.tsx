@@ -9,6 +9,12 @@ import { useEffect, useState } from "react";
 import { UserPlus, UserCheck, Check, Loader2, Rss } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import {
   EMPTY_RELATIONSHIP,
@@ -136,5 +142,92 @@ export function RelationshipActions({
         {friendActionLabel(rel.friend_status)}
       </Button>
     </div>
+  );
+}
+
+/**
+ * Compact follow / add-friend menu for a post. The relationship is only looked
+ * up when the menu is opened, so a long feed stays light.
+ */
+export function RelationshipMenu({ userId, name }: { userId: string; name: string }) {
+  const [open, setOpen] = useState(false);
+  const [rel, setRel] = useState<Relationship | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const load = () =>
+    fetchRelationship(userId)
+      .then(setRel)
+      .catch(() => setRel(EMPTY_RELATIONSHIP));
+
+  const run = async (fn: () => Promise<void>, done: string) => {
+    setBusy(true);
+    try {
+      await fn();
+      await load();
+      toast.success(done);
+    } catch (e) {
+      toast.error("That did not work", { description: (e as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const kind = rel ? friendActionKind(rel.friend_status) : "none";
+
+  return (
+    <DropdownMenu
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (o && !rel) void load();
+      }}
+    >
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-10"
+          aria-label={`Follow or add ${name} as a friend`}
+        >
+          <UserPlus className="size-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {!rel ? (
+          <DropdownMenuItem disabled>Loading…</DropdownMenuItem>
+        ) : (
+          <>
+            <DropdownMenuItem
+              disabled={busy}
+              onSelect={(e) => {
+                e.preventDefault();
+                void run(
+                  () => setFollowing(userId, !rel.following),
+                  rel.following ? "Unfollowed" : "Following",
+                );
+              }}
+            >
+              {rel.following ? "Unfollow" : "Follow"}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={busy || kind === "none"}
+              onSelect={(e) => {
+                e.preventDefault();
+                if (kind === "send") return void run(() => sendFriendRequest(userId), "Request sent");
+                if (kind === "accept")
+                  return void run(
+                    () => respondFriendRequest(rel.friend_request_id ?? "", true),
+                    "You are now friends",
+                  );
+                if (kind === "remove")
+                  return void run(() => removeFriend(userId), "Friend removed");
+              }}
+            >
+              {friendActionLabel(rel.friend_status)}
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
