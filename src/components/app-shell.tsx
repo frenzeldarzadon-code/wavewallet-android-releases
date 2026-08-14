@@ -295,7 +295,9 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
         </div>
       </nav>
     </div>
+    </TooltipProvider>
   );
+
 }
 
 function Brand({ ecosystem, mini }: { ecosystem?: string | undefined; mini?: boolean }) {
