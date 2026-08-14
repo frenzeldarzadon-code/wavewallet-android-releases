@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { EcosystemSwitcher } from "@/components/ecosystem-switcher";
 
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { writeSession, type ResolvedSession } from "@/lib/session";
 import { DEMO_ECOSYSTEM_SLUG } from "@/lib/demo";
