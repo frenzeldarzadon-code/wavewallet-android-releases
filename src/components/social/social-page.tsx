@@ -456,7 +456,7 @@ function PostCard({
   const [dm, setDm] = useState("");
   const [dmOpen, setDmOpen] = useState(false);
 
-  const cost = state ? commentCharge(state, post.promoted) : 1;
+  const cost = commentCharge();
 
   const loadComments = async () => {
     try {

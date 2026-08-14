@@ -20,7 +20,6 @@ type Field = keyof Omit<EcosystemSocialSettings, "social_enabled" | "promotion_e
 const FIELDS: { key: Field; label: string; hint: string }[] = [
   { key: "daily_allowance", label: "Free social credits per day", hint: "Given once per day" },
   { key: "post_cost", label: "Cost to post", hint: "Social credits per post" },
-  { key: "comment_cost", label: "Cost to reply", hint: "Social credits per reply" },
   {
     key: "credit_exchange_rate",
     label: "Credits per social credit",

@@ -38,7 +38,7 @@ const tier = (over: Partial<PromotionTier> = {}): PromotionTier => ({
 const state = {
   balance: 5,
   post_cost: 1,
-  comment_cost: 1,
+  comment_cost: 0,
   credit_exchange_rate: 2,
   points_exchange_rate: 2,
   promotion_currency: "social" as const,
@@ -70,12 +70,8 @@ describe("post charges", () => {
 });
 
 describe("comment charges", () => {
-  it("charges a social credit on a normal post", () => {
-    expect(commentCharge(state, false)).toBe(1);
-  });
-
-  it("is free on a promoted post, as disclosed before publishing", () => {
-    expect(commentCharge(state, true)).toBe(0);
+  it("is always free, on normal and promoted posts alike", () => {
+    expect(commentCharge()).toBe(0);
   });
 });
 
