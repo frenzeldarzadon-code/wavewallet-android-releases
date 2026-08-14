@@ -1,0 +1,36 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { ProfilePage } from "@/components/profile-page";
+import { ConnectedLoginsCard } from "@/components/universe/connected-logins-card";
+import { UniverseShell } from "@/components/universe/universe-shell";
+
+export const Route = createFileRoute("/universe/profile")({
+  head: () => ({
+    meta: [
+      { title: "My Universe Profile — WaveWallet" },
+      {
+        name: "description",
+        content:
+          "Your global WaveWallet identity: display name, unique @handle, profile photo, links and connected sign-in methods.",
+      },
+      { property: "og:title", content: "My Universe Profile — WaveWallet" },
+      {
+        property: "og:description",
+        content: "Manage your global name, @handle, photo and connected logins.",
+      },
+      { property: "og:type", content: "profile" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: UniverseProfile,
+});
+
+function UniverseProfile() {
+  return (
+    <UniverseShell title="Profile" subtitle="Your global identity">
+      <div className="space-y-6 px-4 sm:px-0">
+        <ProfilePage />
+        <ConnectedLoginsCard />
+      </div>
+    </UniverseShell>
+  );
+}
