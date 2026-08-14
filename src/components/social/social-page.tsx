@@ -3,7 +3,6 @@ import {
   Flag,
   Globe2,
   Heart,
-
   ImagePlus,
   Loader2,
   MessageCircle,
@@ -13,7 +12,6 @@ import {
   Trash2,
   Users,
   X,
-
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -78,6 +76,7 @@ import {
   fetchSocialState,
   postCharge,
   relativeTime,
+  roleBadge,
   reportContent,
   setBlocked,
   socialImageUrl,
@@ -91,13 +90,12 @@ import {
   type FeedPost,
   type DistributionStatus,
   type PostAudience,
-
   type PromotionTier,
   type SocialCurrency,
   type SocialState,
 } from "@/lib/social";
 import { sendMessage } from "@/lib/social";
-
+import { PostComposer } from "@/components/social/post-composer";
 
 /** Signed-image thumbnail for a post. */
 function PostImage({ path }: { path: string }) {
@@ -128,16 +126,7 @@ export function SocialPage() {
   const [loading, setLoading] = useState(true);
 
   // composer
-  const [body, setBody] = useState("");
-  const [promote, setPromote] = useState(false);
-  const [audience, setAudience] = useState<PostAudience>("ecosystem");
-
-  const [tierId, setTierId] = useState<string>("");
-  const [payWith, setPayWith] = useState<SocialCurrency>("social");
-  const [file, setFile] = useState<File | null>(null);
-  const [crop, setCrop] = useState<{ image: HTMLImageElement; crop: CropRect } | null>(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [posting, setPosting] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
 
   // exchange
   const [exchangeOpen, setExchangeOpen] = useState(false);
@@ -167,90 +156,14 @@ export function SocialPage() {
   }, [account, refresh]);
 
   const tiers = useMemo<PromotionTier[]>(
-    () => (state ? availableTiers({ promotion_tiers: state.promotion_tiers, role: account?.role ?? null }) : []),
-    [state, account?.role],
-  );
-  const tier = useMemo(() => tiers.find((t) => t.id === tierId) ?? null, [tiers, tierId]);
-  const charge = useMemo(
     () =>
       state
-        ? postCharge(state, promote, tier, payWith)
-        : { amount: 0, currency: "social" as SocialCurrency },
-    [state, promote, tier, payWith],
+        ? availableTiers({ promotion_tiers: state.promotion_tiers, role: account?.role ?? null })
+        : [],
+    [state, account?.role],
   );
 
-  useEffect(() => {
-    if (promote && !tierId && tiers.length > 0) setTierId(tiers[0]!.id);
-  }, [promote, tierId, tiers]);
-
   if (!account) return null;
-
-  const pickFile = (f: File | null) => {
-    if (!f) {
-      setFile(null);
-      setCrop(null);
-      return;
-    }
-    const problem = validateSocialImage(f);
-    if (problem) {
-      toast.error(problem);
-      return;
-    }
-    setFile(f);
-  };
-
-  const submitPost = async () => {
-    if (!state) return;
-    const problem = validatePostBody(body);
-    if (problem) {
-      toast.error(problem);
-      return;
-    }
-    setPosting(true);
-    try {
-      let imagePath: string | null = null;
-      if (file && crop) {
-        imagePath = await uploadSocialImage({
-          ecosystemId: state.ecosystem_id,
-          userId: account.id,
-          file,
-          crop: crop.crop,
-          preloaded: crop.image,
-        });
-      }
-      const res = await createPost({
-        body,
-        imagePath,
-        promote,
-        tierId: promote ? (tier?.id ?? null) : null,
-        ...(promote ? { currency: charge.currency } : {}),
-        audience,
-      });
-      const deducted =
-        res.charged > 0
-          ? `${res.charged} ${res.currency === "points" ? "points" : "social credits"} deducted.`
-          : "Nothing was deducted.";
-      toast.success(promote ? "Promoted post published" : "Posted", {
-        description:
-          audience === "general"
-            ? `${deducted} Sent to ${res.pending_shops} other shop${res.pending_shops === 1 ? "" : "s"} for admin approval.`
-            : deducted,
-      });
-      setBody("");
-      setPromote(false);
-      setAudience("ecosystem");
-
-      setTierId("");
-      setFile(null);
-      setCrop(null);
-      setConfirmOpen(false);
-      await refresh();
-    } catch (e) {
-      toast.error("Could not publish", { description: (e as Error).message });
-    } finally {
-      setPosting(false);
-    }
-  };
 
   const like = async (post: FeedPost) => {
     // Optimistic: likes are always free.
@@ -291,7 +204,9 @@ export function SocialPage() {
   const block = async (memberId: string, name: string) => {
     try {
       await setBlocked(memberId, true);
-      toast.success(`${name} is blocked`, { description: "You will not see each other's content." });
+      toast.success(`${name} is blocked`, {
+        description: "You will not see each other's content.",
+      });
       await refresh();
     } catch (e) {
       toast.error("Could not block", { description: (e as Error).message });
@@ -332,15 +247,11 @@ export function SocialPage() {
     }
   };
 
-  const affordable = state
-    ? canAfford(state, charge, account.pointsBalance ?? 0)
-    : false;
-
   return (
     <>
       <PageSection
         title="Community"
-        description={`Share updates and promote your products with other ${session.ecosystem?.name ?? "shop"} members.`}
+        description={`Share updates and promote your products with the wider WaveWallet Universe.`}
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-3">
@@ -352,161 +263,44 @@ export function SocialPage() {
                   · {state?.daily_allowance ?? 5} free daily
                 </span>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9"
-                  onClick={() => setExchangeOpen(true)}
-                >
-                  Get more
-                </Button>
-              </div>
-            </div>
-
-            {/* Audience choice — mobile-first, always visible before writing. */}
-            <div className="space-y-1.5">
-              <Label>Who can see this?</Label>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {(["ecosystem", "general"] as PostAudience[]).map((a) => (
-                  <button
-                    key={a}
-                    type="button"
-                    onClick={() => setAudience(a)}
-                    aria-pressed={audience === a}
-                    className={
-                      audience === a
-                        ? "rounded-xl border-2 border-primary bg-primary/5 p-3 text-left"
-                        : "rounded-xl border border-border p-3 text-left"
-                    }
-                  >
-                    <span className="flex items-center gap-2 text-sm font-semibold">
-                      {a === "general" ? (
-                        <Globe2 className="size-4 text-primary" aria-hidden />
-                      ) : (
-                        <Users className="size-4 text-primary" aria-hidden />
-                      )}
-                      {audienceLabel(a)}
-                    </span>
-                    <span className="mt-1 block text-xs text-muted-foreground">
-                      {audienceHelp(a)}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <Textarea
-              value={body}
-              onChange={(e) => setBody(e.target.value.slice(0, POST_MAX_CHARS))}
-              rows={3}
-              placeholder={
-                audience === "general"
-                  ? "Share something with the whole WaveWallet network…"
-                  : "Share something with your shop…"
-              }
-              className="min-h-24 text-base"
-            />
-
-
-            {file ? (
-              <div className="space-y-2">
-                <ImageCropper file={file} aspect={SOCIAL_IMAGE_ASPECT} onChange={setCrop} />
-                <Button variant="ghost" size="sm" onClick={() => pickFile(null)}>
-                  <X className="size-4" /> Remove photo
-                </Button>
-              </div>
-            ) : null}
-
-            <div className="flex flex-wrap items-center gap-2">
-              <Label
-                htmlFor="socialPhoto"
-                className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-border px-3 text-sm font-medium"
-              >
-                <ImagePlus className="size-4" /> Photo
-              </Label>
-              <Input
-                id="socialPhoto"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
-              />
-
-              {state?.promotion_enabled && tiers.length > 0 ? (
-                <label className="inline-flex h-11 items-center gap-2 rounded-xl border border-border px-3 text-sm font-medium">
-                  <Megaphone className="size-4 text-primary" aria-hidden />
-                  Promote
-                  <Switch checked={promote} onCheckedChange={setPromote} aria-label="Promote this post" />
-                </label>
-              ) : null}
-
               <Button
-                className="ml-auto h-11"
-                disabled={!body.trim() || posting}
-                onClick={() => setConfirmOpen(true)}
+                variant="outline"
+                size="sm"
+                className="h-9"
+                onClick={() => setExchangeOpen(true)}
               >
-                <Send className="size-4" /> Post
+                Get more
               </Button>
             </div>
 
-            {promote && tiers.length > 0 ? (
-              <div className="grid gap-2 rounded-xl border border-primary/40 bg-primary/5 p-3 sm:grid-cols-2">
-                <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="promoTier">Promotion type</Label>
-                  <Select value={tierId} onValueChange={setTierId}>
-                    <SelectTrigger id="promoTier" className="h-11">
-                      <SelectValue placeholder="Choose a promotion" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tiers.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          {t.name} · {tierDuration(t.duration_hours)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {tier?.description ? (
-                    <p className="text-xs text-muted-foreground">{tier.description}</p>
-                  ) : null}
-                </div>
-                {tier?.currency === "both" ? (
-                  <div className="space-y-1.5 sm:col-span-2">
-                    <Label>Pay with</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        type="button"
-                        variant={payWith === "social" ? "default" : "outline"}
-                        className="h-11"
-                        onClick={() => setPayWith("social")}
-                      >
-                        {tier.price_social} social credits
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={payWith === "points" ? "default" : "outline"}
-                        className="h-11"
-                        onClick={() => setPayWith("points")}
-                      >
-                        {tier.price_points} points
-                      </Button>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-
-            <p className="text-xs text-muted-foreground">{audienceHelp(audience)}</p>
+            <Button
+              className="h-12 w-full text-base"
+              disabled={!state}
+              onClick={() => setComposerOpen(true)}
+            >
+              <Send className="size-4" /> Create post
+            </Button>
 
             <p className="text-xs text-muted-foreground">
-
-              {promote
-                ? `${tier?.name ?? "Promotion"} costs ${charge.amount} ${charge.currency === "points" ? "points" : "social credits"} and stays highlighted for ${tierDuration(tier?.duration_hours ?? 24)}. Replies to a promoted post are free for everyone — only you pay.`
-                : `A normal post costs ${state?.post_cost ?? 1} social credit. Likes are always free; replies cost ${state?.comment_cost ?? 1} social credit unless the post is promoted.`}
+              Write first — you choose where to share it and whether to promote it before anything
+              is deducted. A normal post costs {state?.post_cost ?? 1} social credit.
             </p>
           </CardContent>
         </Card>
       </PageSection>
+
+      {state ? (
+        <PostComposer
+          open={composerOpen}
+          onOpenChange={setComposerOpen}
+          state={state}
+          tiers={tiers}
+          userId={account.id}
+          pointsBalance={account.pointsBalance ?? 0}
+          ownShopName={session.ecosystem?.name ?? "My shop"}
+          onPosted={refresh}
+        />
+      ) : null}
 
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading the feed…</p>
@@ -532,62 +326,6 @@ export function SocialPage() {
           ))}
         </div>
       )}
-
-      {/* Post confirmation — always states exactly what will be deducted. */}
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{promote ? "Publish a promoted post?" : "Publish this post?"}</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-2 text-sm">
-                <p>
-                  Audience: <strong>{audienceLabel(audience)}</strong> — {audienceHelp(audience)}
-                </p>
-                <p>{chargeSummary(charge.amount, charge.currency)}</p>
-                <p>
-
-                  Balance: {state?.balance ?? 0} social credits
-                  {charge.currency === "points" ? ` · ${account.pointsBalance ?? 0} points` : ""}
-                </p>
-                {promote ? (
-                  <>
-                    <p>
-                      Promotion: <strong>{tier?.name ?? "Promoted"}</strong> ·{" "}
-                      {tierDuration(tier?.duration_hours ?? 24)} · paid in{" "}
-                      {charge.currency === "points" ? "points" : "social credits"}.
-                    </p>
-                    <p>
-                      Your post will be labelled <strong>Promoted</strong>. Only you pay this fee —
-                      replies and comments on a promoted post do not consume social credits from the
-                      members replying.
-                    </p>
-                  </>
-                ) : (
-                  <p>Likes are free. Replies to this post cost {state?.comment_cost ?? 1} social credit.</p>
-                )}
-                {!affordable ? (
-                  <p className="font-medium text-destructive">
-                    You do not have enough {charge.currency === "points" ? "points" : "social credits"}.
-                  </p>
-                ) : null}
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Don't post</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={posting || !affordable}
-              onClick={(e) => {
-                e.preventDefault();
-                void submitPost();
-              }}
-            >
-              {posting ? <Loader2 className="size-4 animate-spin" /> : null}
-              {promote ? "Promote & publish" : "Publish"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Exchange */}
       <Dialog open={exchangeOpen} onOpenChange={setExchangeOpen}>
@@ -641,8 +379,8 @@ export function SocialPage() {
             </p>
             {state?.ads_enabled ? (
               <p className="text-xs text-muted-foreground">
-                Rewarded ads grant {state.ad_reward_amount} social credits after a verified completed
-                ad ({state.ads_claimed_today}/{state.ad_daily_limit} claimed today).
+                Rewarded ads grant {state.ad_reward_amount} social credits after a verified
+                completed ad ({state.ads_claimed_today}/{state.ad_daily_limit} claimed today).
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
@@ -781,7 +519,9 @@ function PostCard({
                   {displayHandle(post.author_handle)}
                 </span>
               ) : null}
-              <span className="text-xs text-muted-foreground">· {relativeTime(post.created_at)}</span>
+              <span className="text-xs text-muted-foreground">
+                · {relativeTime(post.created_at)}
+              </span>
               {post.promoted ? (
                 <Badge className="bg-primary text-primary-foreground">
                   {post.promotion_tier_name ? `${post.promotion_tier_name} · Promoted` : "Promoted"}
@@ -792,13 +532,17 @@ function PostCard({
                   <Globe2 className="size-3" aria-hidden /> General
                   {post.origin_ecosystem_name ? ` · from ${post.origin_ecosystem_name}` : ""}
                 </Badge>
+              ) : post.origin_ecosystem_name ? (
+                <Badge variant="outline">{post.origin_ecosystem_name}</Badge>
+              ) : null}
+              {roleBadge(post.author_role) ? (
+                <Badge variant="secondary">{roleBadge(post.author_role)}</Badge>
               ) : null}
             </div>
             <p className="mt-1 whitespace-pre-wrap break-words text-sm">{post.body}</p>
             {post.audience === "general" && post.author_id === meId ? (
               <GeneralStatus postId={post.id} />
             ) : null}
-
           </div>
         </div>
 
@@ -806,10 +550,17 @@ function PostCard({
 
         <div className="flex flex-wrap items-center gap-1">
           <Button variant="ghost" size="sm" className="h-10 gap-1.5" onClick={onLike}>
-            <Heart className={post.liked_by_me ? "size-4 fill-destructive text-destructive" : "size-4"} />
+            <Heart
+              className={post.liked_by_me ? "size-4 fill-destructive text-destructive" : "size-4"}
+            />
             {post.like_count}
           </Button>
-          <Button variant="ghost" size="sm" className="h-10 gap-1.5" onClick={() => void openComments()}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-10 gap-1.5"
+            onClick={() => void openComments()}
+          >
             <MessageCircle className="size-4" />
             {post.comment_count}
           </Button>
@@ -954,7 +705,12 @@ function GeneralStatus({ postId }: { postId: string }) {
 
   if (!open) {
     return (
-      <Button variant="ghost" size="sm" className="mt-1 h-8 px-0 text-xs" onClick={() => void load()}>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="mt-1 h-8 px-0 text-xs"
+        onClick={() => void load()}
+      >
         Where is this shared?
       </Button>
     );

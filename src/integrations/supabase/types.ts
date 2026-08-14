@@ -4917,32 +4917,18 @@ export type Database = {
         Args: { _body: string; _post_id: string }
         Returns: Json
       }
-      social_create_post:
-        | {
-            Args: { _body: string; _image_path?: string; _promote?: boolean }
-            Returns: Json
-          }
-        | {
-            Args: {
-              _body: string
-              _currency?: string
-              _image_path?: string
-              _promote?: boolean
-              _tier_id?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              _audience?: string
-              _body: string
-              _currency?: string
-              _image_path?: string
-              _promote?: boolean
-              _tier_id?: string
-            }
-            Returns: Json
-          }
+      social_create_post: {
+        Args: {
+          _audience?: string
+          _body: string
+          _currency?: string
+          _image_path?: string
+          _promote?: boolean
+          _shop_ids?: string[]
+          _tier_id?: string
+        }
+        Returns: Json
+      }
       social_delete_comment: {
         Args: { _comment_id: string; _reason?: string }
         Returns: undefined
@@ -4964,6 +4950,7 @@ export type Database = {
           author_handle: string
           author_id: string
           author_name: string
+          author_role: string
           body: string
           can_delete: boolean
           comment_count: number
@@ -5064,6 +5051,14 @@ export type Database = {
         Returns: undefined
       }
       social_state: { Args: never; Returns: Json }
+      social_target_shops: {
+        Args: never
+        Returns: {
+          ecosystem_id: string
+          ecosystem_name: string
+          is_current: boolean
+        }[]
+      }
       social_tiers_for: {
         Args: { _eco: string }
         Returns: {

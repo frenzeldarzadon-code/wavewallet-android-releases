@@ -13,6 +13,10 @@ import {
   validateMessageBody,
   validatePostBody,
   type PromotionTier,
+  audienceSummary,
+  postReadiness,
+  roleBadge,
+  selectedShopNames,
 } from "@/lib/social";
 
 const tier = (over: Partial<PromotionTier> = {}): PromotionTier => ({
@@ -146,7 +150,6 @@ describe("presentation helpers", () => {
   });
 });
 
-
 describe("promotion tiers", () => {
   it("charges the tier price in the chosen currency", () => {
     expect(postCharge(state, true, tier(), "points")).toEqual({ amount: 15, currency: "points" });
@@ -183,5 +186,65 @@ describe("promotion tiers", () => {
     expect(tierDuration(1)).toBe("1 hour");
     expect(tierDuration(24)).toBe("1 day");
     expect(tierDuration(72)).toBe("3 days");
+  });
+});
+
+describe("universe composer flow", () => {
+  const shops = [
+    { ecosystem_id: "a", ecosystem_name: "Sagada Wave", is_current: true },
+    { ecosystem_id: "b", ecosystem_name: "Banaue Net", is_current: false },
+  ];
+
+  it("names only shops the member is approved in", () => {
+    expect(selectedShopNames(shops, ["b", "zzz"])).toEqual(["Banaue Net"]);
+  });
+
+  it("summarises each audience for the review step", () => {
+    expect(audienceSummary("general", shops, [], "Sagada Wave")).toBe("General / All Shops");
+    expect(audienceSummary("ecosystem", shops, [], "Sagada Wave")).toBe("Sagada Wave");
+    expect(audienceSummary("shops", shops, ["a", "b"], "Sagada Wave")).toBe(
+      "Sagada Wave, Banaue Net",
+    );
+  });
+
+  const ready = {
+    body: "Hello universe",
+    audience: "ecosystem" as const,
+    shopIds: [],
+    promote: false,
+    tierChosen: true,
+    affordable: true,
+  };
+
+  it("allows a plain post with no promotion", () => {
+    expect(postReadiness(ready)).toBeNull();
+  });
+
+  it("blocks a shop-targeted post with no shop chosen", () => {
+    expect(postReadiness({ ...ready, audience: "shops" })).toMatch(/at least one shop/i);
+  });
+
+  it("blocks promotion without a chosen tier and without funds", () => {
+    expect(postReadiness({ ...ready, promote: true, tierChosen: false })).toMatch(
+      /promotion type/i,
+    );
+    expect(postReadiness({ ...ready, affordable: false })).toMatch(/enough/i);
+  });
+
+  it("keeps promotion free until it is switched on", () => {
+    const state = {
+      post_cost: 1,
+      promotion_currency: "social" as const,
+      promotion_cost_social: 20,
+      promotion_cost_points: 200,
+    };
+    expect(postCharge(state, false)).toEqual({ amount: 1, currency: "social" });
+    expect(postCharge(state, true)).toEqual({ amount: 20, currency: "social" });
+  });
+
+  it("badges operators only", () => {
+    expect(roleBadge("super_admin")).toBe("Platform");
+    expect(roleBadge("admin")).toBe("Shop admin");
+    expect(roleBadge("customer")).toBeNull();
   });
 });

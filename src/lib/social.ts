@@ -71,8 +71,14 @@ export interface SocialState {
   promotion_tiers: PromotionTier[];
 }
 
+export type PostAudience = "ecosystem" | "general" | "shops";
 
-export type PostAudience = "ecosystem" | "general";
+/** A shop the member may share a post into — approved, active memberships only. */
+export interface TargetShop {
+  ecosystem_id: string;
+  ecosystem_name: string;
+  is_current: boolean;
+}
 
 export interface FeedPost {
   id: string;
@@ -93,6 +99,7 @@ export interface FeedPost {
   can_delete: boolean;
   audience: PostAudience;
   origin_ecosystem_name: string | null;
+  author_role: string | null;
 }
 
 /** One shop's decision about a General post. */
@@ -120,7 +127,6 @@ export interface DistributionStatus {
   status: "pending" | "approved" | "rejected";
   reviewed_at: string | null;
 }
-
 
 export interface FeedComment {
   id: string;
@@ -153,7 +159,6 @@ export interface DmMessage {
   created_at: string;
   mine: boolean;
 }
-
 
 export interface SocialActivityRow {
   created_at: string;
@@ -244,7 +249,6 @@ export function adsAvailable(
     state.ads_claimed_today < state.ad_daily_limit
   );
 }
-
 
 /** Replies to a promoted post are free — this is disclosed before publishing. */
 export function commentCharge(
@@ -358,14 +362,14 @@ export async function fetchComments(postId: string): Promise<FeedComment[]> {
 
 // ------------------------------------------------------------------ writes
 
-export async function createPost(input: {
-  body: string;
-  imagePath?: string | null;
-  promote: boolean;
-  tierId?: string | null;
-  currency?: SocialCurrency;
-  audience?: PostAudience;
-}): Promise<{
+/** Shops the member may target — approved, active memberships only. */
+export async function fetchTargetShops(): Promise<TargetShop[]> {
+  const { data, error } = await supabase.rpc("social_target_shops");
+  if (error) fail(error.message);
+  return (data ?? []) as TargetShop[];
+}
+
+export interface CreatePostResult {
   post_id: string;
   charged: number;
   currency: string;
@@ -374,26 +378,30 @@ export async function createPost(input: {
   balance: number;
   audience: PostAudience;
   pending_shops: number;
-}> {
+  live_shops: number;
+}
+
+export async function createPost(input: {
+  body: string;
+  imagePath?: string | null;
+  promote: boolean;
+  tierId?: string | null;
+  currency?: SocialCurrency;
+  audience?: PostAudience;
+  shopIds?: string[];
+}): Promise<CreatePostResult> {
+  const audience = input.audience ?? "ecosystem";
   const { data, error } = await supabase.rpc("social_create_post", {
     _body: input.body.trim(),
     ...(input.imagePath ? { _image_path: input.imagePath } : {}),
     _promote: input.promote,
     ...(input.tierId ? { _tier_id: input.tierId } : {}),
     ...(input.currency ? { _currency: input.currency } : {}),
-    _audience: input.audience ?? "ecosystem",
+    _audience: audience,
+    ...(audience === "shops" ? { _shop_ids: input.shopIds ?? [] } : {}),
   });
   if (error) fail(error.message);
-  return data as unknown as {
-    post_id: string;
-    charged: number;
-    currency: string;
-    tier: string | null;
-    expires_at: string | null;
-    balance: number;
-    audience: PostAudience;
-    pending_shops: number;
-  };
+  return data as unknown as CreatePostResult;
 }
 
 /** Queue of General posts awaiting (or already given) a decision in one shop. */
@@ -429,7 +437,6 @@ export async function fetchDistributionStatus(postId: string): Promise<Distribut
   if (error) fail(error.message);
   return (data ?? []) as DistributionStatus[];
 }
-
 
 export async function createComment(postId: string, body: string) {
   const { data, error } = await supabase.rpc("social_create_comment", {
@@ -640,7 +647,7 @@ export async function fetchEcosystemSocialOverride(
 export async function saveEcosystemSocialSettings(
   input: EcosystemSocialSettings & { ecosystemId?: string },
 ) {
-  const opt = <T,>(key: string, value: T | null) =>
+  const opt = <T>(key: string, value: T | null) =>
     value === null || value === undefined ? {} : { [key]: value };
   const { error } = await supabase.rpc("update_ecosystem_social_settings", {
     _social_enabled: input.social_enabled,
@@ -671,7 +678,10 @@ export async function fetchPromotionTiers(ecosystemId: string | null): Promise<P
 }
 
 export async function savePromotionTier(
-  tier: Omit<PromotionTier, "id" | "is_default"> & { id?: string | null; ecosystemId?: string | null },
+  tier: Omit<PromotionTier, "id" | "is_default"> & {
+    id?: string | null;
+    ecosystemId?: string | null;
+  },
 ): Promise<string> {
   const { data, error } = await supabase.rpc("upsert_social_promotion_tier", {
     _name: tier.name.trim(),
@@ -708,16 +718,75 @@ export async function refundPromotion(postId: string, reason: string) {
 
 // --------------------------------------------------- general-post presentation
 
+/** Operator badge shown on a post, or null for ordinary members. */
+export function roleBadge(role: string | null | undefined): string | null {
+  switch (role) {
+    case "super_admin":
+      return "Platform";
+    case "admin":
+      return "Shop admin";
+    case "reseller":
+      return "Reseller";
+    case "subreseller":
+      return "Subreseller";
+    default:
+      return null;
+  }
+}
+
 /** Plain-language name of the audience a member picked. */
 export function audienceLabel(audience: PostAudience): string {
-  return audience === "general" ? "General / All Ecosystems" : "My Ecosystem";
+  if (audience === "general") return "General / All Shops";
+  if (audience === "shops") return "Specific shops";
+  return "My shop";
 }
 
 /** What the member is told before publishing, per audience. */
 export function audienceHelp(audience: PostAudience): string {
-  return audience === "general"
-    ? "Shared with the wider WaveWallet network. Each other shop's admin must approve it before it shows in their community — it appears in your own shop right away."
-    : "Only members and admins of your own shop can see this post.";
+  if (audience === "general")
+    return "Shared with the wider WaveWallet Universe. Each other shop's admin must approve it before it appears in their community — it appears in your own shop right away.";
+  if (audience === "shops")
+    return "Shared only with the shop communities you pick. You can only pick shops you are an approved member of.";
+  return "Only members and admins of your own shop can see this post.";
+}
+
+/**
+ * Names of the chosen shops, for the review step. Ids that are not eligible are
+ * dropped, so the summary can never claim a shop the member cannot post into.
+ */
+export function selectedShopNames(shops: TargetShop[], ids: string[]): string[] {
+  return shops.filter((s) => ids.includes(s.ecosystem_id)).map((s) => s.ecosystem_name);
+}
+
+/** One-line audience summary shown on the review step. */
+export function audienceSummary(
+  audience: PostAudience,
+  shops: TargetShop[],
+  ids: string[],
+  ownShopName: string,
+): string {
+  if (audience === "general") return "General / All Shops";
+  if (audience === "ecosystem") return ownShopName;
+  const names = selectedShopNames(shops, ids);
+  return names.length > 0 ? names.join(", ") : "No shop selected yet";
+}
+
+/** Why the member cannot submit yet, or null when the post is ready to publish. */
+export function postReadiness(input: {
+  body: string;
+  audience: PostAudience;
+  shopIds: string[];
+  promote: boolean;
+  tierChosen: boolean;
+  affordable: boolean;
+}): string | null {
+  const bodyProblem = validatePostBody(input.body);
+  if (bodyProblem) return bodyProblem;
+  if (input.audience === "shops" && input.shopIds.length === 0)
+    return "Choose at least one shop to share with";
+  if (input.promote && !input.tierChosen) return "Choose a promotion type";
+  if (!input.affordable) return "You do not have enough to cover this";
+  return null;
 }
 
 /** One-line status of a General post for its author, e.g. "Live in 2 shops · 1 pending". */
