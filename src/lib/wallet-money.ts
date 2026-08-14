@@ -95,7 +95,14 @@ export function validateCashback(reseller: number, subreseller: number): string 
 export function validateValuation(credits: number, php: number, fee: number): string | null {
   if (!Number.isFinite(credits) || credits <= 0) return "Credits per unit must be greater than zero.";
   if (!Number.isFinite(php) || php <= 0) return "Peso value must be greater than zero.";
-  if (!Number.isFinite(fee) || fee < 0 || fee >= 100) return "Withdrawal fee must be between 0% and 99.99%.";
+  if (!Number.isFinite(fee) || fee < 0 || fee >= 100) return "Cash out fee must be between 0% and 99.99%.";
+  return null;
+}
+
+/** Same rules as the database: zero or more, never a whole confiscation. */
+export function validateCashInFee(fee: number): string | null {
+  if (!Number.isFinite(fee) || fee < 0) return "Cash in fee cannot be negative.";
+  if (fee >= 100) return "Cash in fee must be less than 100%.";
   return null;
 }
 
@@ -114,10 +121,28 @@ export function quoteWithdrawal(credits: number, s: MoneySettings): Quote {
   return { credits: Number(credits) || 0, gross, feePercent: s.feePercent, fee, net: round2(gross - fee) };
 }
 
-/** Peso → credits for cash in. Mirrors `request_cash_in`. */
-export function quoteCashIn(php: number, s: MoneySettings): number {
-  return round2((Number(php) || 0) * s.creditsPerUnit / s.phpPerUnit);
+/** Peso paid → fee → net → credits. Mirrors `request_cash_in` to the centavo. */
+export interface CashInQuote {
+  gross: number;
+  feePercent: number;
+  fee: number;
+  net: number;
+  credits: number;
 }
+
+export function quoteCashInBreakdown(php: number, s: MoneySettings): CashInQuote {
+  const gross = round2(Number(php) || 0);
+  const feePercent = Number(s.cashInFeePercent) || 0;
+  const fee = round2(gross * feePercent / 100);
+  const net = round2(gross - fee);
+  return { gross, feePercent, fee, net, credits: round2(net * s.creditsPerUnit / s.phpPerUnit) };
+}
+
+/** Credits a member receives for a cash in. */
+export function quoteCashIn(php: number, s: MoneySettings): number {
+  return quoteCashInBreakdown(php, s).credits;
+}
+
 
 /** Re-derive a stored request's numbers from its own snapshot, never from live settings. */
 export function snapshotQuote(row: Pick<WithdrawalRequest, "credits" | "gross_php" | "fee_percent" | "fee_php" | "net_php">): Quote {
