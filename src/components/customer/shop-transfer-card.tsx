@@ -126,7 +126,7 @@ export function ShopTransferCard({ onDone }: { onDone?: () => void }) {
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
               <Label>From shop</Label>
-              <Select value={from ?? undefined} onValueChange={(v) => { setFrom(v); if (v === to) setTo(null); }}>
+              <Select {...(from ? { value: from } : {})} onValueChange={(v) => { setFrom(v); if (v === to) setTo(null); }}>
                 <SelectTrigger className="h-11">
                   <SelectValue placeholder="Choose a shop" />
                 </SelectTrigger>
@@ -142,7 +142,7 @@ export function ShopTransferCard({ onDone }: { onDone?: () => void }) {
 
             <div className="space-y-1.5">
               <Label>To shop</Label>
-              <Select value={to ?? undefined} onValueChange={setTo}>
+              <Select {...(to ? { value: to } : {})} onValueChange={(v) => setTo(v)}>
                 <SelectTrigger className="h-11">
                   <SelectValue placeholder="Choose a shop" />
                 </SelectTrigger>
