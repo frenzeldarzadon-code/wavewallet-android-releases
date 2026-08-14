@@ -339,7 +339,7 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
-          ecosystem_id: string
+          ecosystem_id: string | null
           id: string
           ledger_id: string
           lot_id: string
@@ -348,7 +348,7 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
-          ecosystem_id: string
+          ecosystem_id?: string | null
           id?: string
           ledger_id: string
           lot_id: string
@@ -357,7 +357,7 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
-          ecosystem_id?: string
+          ecosystem_id?: string | null
           id?: string
           ledger_id?: string
           lot_id?: string
@@ -391,7 +391,7 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
-          ecosystem_id: string
+          ecosystem_id: string | null
           id: string
           ledger_id: string
           remaining: number
@@ -403,7 +403,7 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
-          ecosystem_id: string
+          ecosystem_id?: string | null
           id?: string
           ledger_id: string
           remaining: number
@@ -415,7 +415,7 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
-          ecosystem_id?: string
+          ecosystem_id?: string | null
           id?: string
           ledger_id?: string
           remaining?: number

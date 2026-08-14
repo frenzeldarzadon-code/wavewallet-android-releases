@@ -296,14 +296,37 @@ export async function cancelCashIn(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+/**
+ * Turn raw database failures from a cash in decision into wording the platform
+ * owner can act on. Cash in credits the member's SAME standard credit balance,
+ * so wallet/ecosystem plumbing problems must never surface as SQL text.
+ */
+export function cashInDecisionError(message: string): string {
+  const m = (message || "").toLowerCase();
+  if (m.includes("already approved") || m.includes("was already")) {
+    return "This request was already decided — refresh the queue to see its current status.";
+  }
+  if (m.includes("ecosystem_id") || m.includes("credit balance") || m.includes("credit account")) {
+    return "This member's credit balance could not be opened because their shop link is missing. Fix the member's shop, then approve again.";
+  }
+  if (m.includes("member") && m.includes("not")) {
+    return "This member account no longer exists, so credits cannot be released.";
+  }
+  if (m.includes("platform owner")) {
+    return "Only the platform owner can decide cash in requests.";
+  }
+  return message;
+}
+
 export async function reviewCashIn(
   id: string,
   action: "approve" | "reject",
   reason?: string | null,
 ): Promise<void> {
   const { error } = await supabase.rpc("review_cash_in", rpcArgs({ _id: id, _action: action, _reason: reason ?? undefined }));
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(cashInDecisionError(error.message));
 }
+
 
 export async function fetchMyWithdrawals(userId: string): Promise<WithdrawalRequest[]> {
   const { data, error } = await supabase
