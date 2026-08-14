@@ -52,6 +52,7 @@ export function UniverseUsersCard({
   const [shopId, setShopId] = useState("");
   const [removing, setRemoving] = useState<UnassignedUser | null>(null);
   const [check, setCheck] = useState<DeletionCheck | null>(null);
+  const [checkError, setCheckError] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -71,10 +72,13 @@ export function UniverseUsersCard({
   const openRemove = async (u: UnassignedUser) => {
     setRemoving(u);
     setCheck(null);
+    setCheckError(null);
     setReason("");
     try {
       setCheck(await fetchDeletionCheck(u.user_id));
     } catch (e) {
+      // Never leave the dialog spinning: show the reason inline and in a toast.
+      setCheckError((e as Error).message || "The safety check could not be completed.");
       toast.error("Could not check that account", { description: (e as Error).message });
     }
   };
