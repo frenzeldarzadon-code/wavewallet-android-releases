@@ -15,7 +15,11 @@ import { PageSection } from "@/components/ui-kit";
 import { PeriodEarningsTable } from "@/components/period-earnings-table";
 import { EMPTY_PERIOD_TOTALS } from "@/lib/earnings";
 import { fetchExpenses } from "@/lib/expenses";
-import { fetchCashOutFees } from "@/lib/platform-earnings";
+import {
+  fetchCashOutFees,
+  fetchShopTransferFees,
+  transferFeePeriodTotals,
+} from "@/lib/platform-earnings";
 import { platformNetEarnings, type NetEarnings } from "@/lib/role-earnings";
 import { peso } from "@/lib/wavewallet";
 
