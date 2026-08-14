@@ -303,6 +303,15 @@ export async function cancelCashIn(id: string): Promise<void> {
  */
 export function cashInDecisionError(message: string): string {
   const m = (message || "").toLowerCase();
+  if (m.includes("recipient mismatch") || m.includes("refusing to credit")) {
+    return "Blocked: the credits would not have gone to the member who submitted this request. Nothing was issued.";
+  }
+  if (m.includes("does not hold a member credit balance")) {
+    return "The platform owner has no member credit balance, so this request cannot be approved. Credits always go to the requesting member.";
+  }
+  if (m.includes("no member attached")) {
+    return "This request has no member attached, so no credits were issued.";
+  }
   if (m.includes("already approved") || m.includes("was already")) {
     return "This request was already decided — refresh the queue to see its current status.";
   }
@@ -317,6 +326,7 @@ export function cashInDecisionError(message: string): string {
   }
   return message;
 }
+
 
 export async function reviewCashIn(
   id: string,
