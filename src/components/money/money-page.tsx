@@ -397,17 +397,7 @@ export function MoneyPage() {
                     </div>
                   </div>
                   {selectedMethod ? (
-                    <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs">
-                      <p className="font-medium">{selectedMethod.name}</p>
-                      {selectedMethod.instructions ? (
-                        <p className="text-muted-foreground whitespace-pre-line">{selectedMethod.instructions}</p>
-                      ) : null}
-                      {selectedMethod.account_name || selectedMethod.account_number ? (
-                        <p className="text-muted-foreground">
-                          {selectedMethod.account_name} {selectedMethod.account_number}
-                        </p>
-                      ) : null}
-                    </div>
+                    <PaymentMethodCards methods={[selectedMethod]} selectedId={selectedMethod.id} />
                   ) : null}
                   <div className="space-y-1.5">
                     <Label htmlFor="ci-notes">Additional information</Label>
