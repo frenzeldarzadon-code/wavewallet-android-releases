@@ -20,6 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState, PageSection, StatusBadge, subscriptionTone } from "@/components/ui-kit";
+import { ShopAdminCard } from "@/components/super/shop-admin-card";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { writeSession } from "@/lib/session";
@@ -1014,6 +1015,10 @@ function ManageDialog({
             </Button>
           </div>
         </div>
+
+        <ShopAdminCard ecosystemId={row.id} onChanged={onSaved} />
+
+
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5 sm:col-span-2">
