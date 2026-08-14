@@ -75,7 +75,7 @@ describe("role sidebar visibility", () => {
         "/admin/applications",
         "/admin/products",
         "/admin/vouchers",
-        "/admin/credits",
+        "/admin/money",
         "/admin/wallets",
         "/admin/transactions",
         "/admin/reports",
@@ -84,6 +84,7 @@ describe("role sidebar visibility", () => {
       ]),
     );
     expect(paths).not.toContain("/admin/subscription");
+    expect(paths).not.toContain("/admin/credits");
   });
 
   it("groups every super admin approval queue behind one destination", () => {
@@ -126,7 +127,7 @@ describe("badges and lockout", () => {
     expect(restricted).toEqual(
       expect.arrayContaining(["/admin", "/admin/reports", "/admin/subscription"]),
     );
-    expect(restricted).not.toContain("/admin/credits");
+    expect(restricted).not.toContain("/admin/money");
     expect(restricted).not.toContain("/admin/wallets");
   });
 });

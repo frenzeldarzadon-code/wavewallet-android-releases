@@ -227,9 +227,8 @@ export function adminNav(): Nav {
     {
       label: "Money",
       items: [
-        { to: "/admin/credits", label: "Shop credits", icon: Coins },
+        { to: "/admin/money", label: "Cash in & cash out", icon: Banknote },
         { to: "/admin/wallets", label: "Wallets & transfers", icon: Wallet },
-        { to: "/admin/money", label: "Cash out & cash in", icon: Banknote },
         { to: "/admin/transactions", label: "Transactions", icon: ReceiptText },
       ],
     },
