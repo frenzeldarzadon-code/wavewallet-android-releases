@@ -473,8 +473,8 @@ export function MoneyPage() {
       </Tabs>
 
       <FacebookSupportCard
-        url={platform?.support_page_url}
-        pageName={platform?.support_page_name}
+        url={platform?.support_page_url ?? null}
+        pageName={platform?.support_page_name ?? null}
         title="Need this faster?"
         message="Message the platform owner's Facebook page for withdrawal and cash in inquiries."
       />
