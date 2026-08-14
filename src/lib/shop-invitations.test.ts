@@ -86,6 +86,6 @@ describe("invitationTone", () => {
     expect(invitationTone("pending")).toBe("warning");
     expect(invitationTone("declined")).toBe("danger");
     expect(invitationTone("cancelled")).toBe("danger");
-    expect(invitationTone("expired")).toBe("neutral");
+    expect(invitationTone("expired")).toBe("muted");
   });
 });

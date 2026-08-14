@@ -90,7 +90,7 @@ export const invitationTone = (s: InvitationStatus) =>
       ? "warning"
       : s === "declined" || s === "cancelled"
         ? "danger"
-        : "neutral";
+        : "muted";
 
 /** True when a pending invitation is past its expiry instant. */
 export function isExpired(inv: { status: InvitationStatus; expires_at: string | null }, now = new Date()): boolean {
