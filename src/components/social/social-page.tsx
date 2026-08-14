@@ -105,6 +105,7 @@ import { canReplyTo, hidePostForShop, sendMessage, threadComments } from "@/lib/
 import { PostComposer } from "@/components/social/post-composer";
 import { RelationshipMenu } from "@/components/universe/relationship-actions";
 import { MentionText } from "@/components/social/mention-text";
+import { RoleBadge } from "@/components/role-badge";
 import { MentionInput } from "@/components/social/mention-input";
 
 /** Signed-image thumbnail for a post. */
@@ -628,9 +629,7 @@ function PostCard({
               ) : post.origin_ecosystem_name ? (
                 <Badge variant="outline">{post.origin_ecosystem_name}</Badge>
               ) : null}
-              {roleBadge(post.author_role) ? (
-                <Badge variant="secondary">{roleBadge(post.author_role)}</Badge>
-              ) : null}
+              <RoleBadge role={post.author_role} />
             </div>
             <MentionText body={post.body} className="mt-1" />
 
