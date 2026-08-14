@@ -47,11 +47,14 @@ export const WITHDRAWAL_MAX_CREDITS = 10_000_000;
 export const WITHDRAWAL_SLA_NOTICE =
   "Cash outs are verified by the platform owner and may take up to 48 hours. Nothing is sent until it is marked released.";
 
-/** The live valuation + fee. Never assume a rate; always read this. */
+/** The live valuation + fees. Never assume a rate; always read this. */
 export interface MoneySettings {
   creditsPerUnit: number;
   phpPerUnit: number;
+  /** Cash OUT (withdrawal) fee percentage. */
   feePercent: number;
+  /** Cash IN fee percentage, charged on the peso amount paid. */
+  cashInFeePercent: number;
   cashbackReseller: number;
   cashbackSubreseller: number;
   /** Flat credits charged when a member moves credits between their shops. */
@@ -62,10 +65,12 @@ export const MONEY_SETTINGS_FALLBACK: MoneySettings = {
   creditsPerUnit: 1000,
   phpPerUnit: 1000,
   feePercent: 1,
+  cashInFeePercent: 0,
   cashbackReseller: 10,
   cashbackSubreseller: 20,
   shopTransferFee: 5,
 };
+
 
 /** Supabase RPC args are exact-optional: drop undefined keys before sending. */
 const rpcArgs = <T,>(o: Record<string, unknown>): T =>
