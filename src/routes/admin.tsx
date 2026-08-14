@@ -52,3 +52,16 @@ function AdminLayout() {
     </AppShell>
   );
 }
+
+/** Readable fallback while the console has no shop context to render yet. */
+function ConsoleNotice({ title, body }: { title: string; body?: string }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-app px-6">
+      <div className="max-w-sm text-center">
+        <p className="text-base font-semibold">{title}</p>
+        {body ? <p className="mt-2 text-sm text-muted-foreground">{body}</p> : null}
+      </div>
+    </div>
+  );
+}
+
