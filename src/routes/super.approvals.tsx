@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ApplicationsPanel } from "@/components/applications-panel";
 import { CreditRequestsCard } from "@/components/super/credit-requests-card";
+import { MoneyRequestsCard } from "@/components/super/money-requests-card";
 import { useSession } from "@/lib/session";
 
 export const Route = createFileRoute("/super/approvals")({
@@ -23,6 +24,7 @@ function SuperApprovals() {
   return (
     <>
       <CreditRequestsCard />
+      <MoneyRequestsCard />
       <ApplicationsPanel
         ecosystemId={null}
         showEcosystem
