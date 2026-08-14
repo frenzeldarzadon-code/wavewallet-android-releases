@@ -95,10 +95,9 @@ function LoginPage() {
     let active = true;
     loadAuthContext().then((ctx) => {
       if (!active || !ctx) return;
-      // A brand-new social sign-in has no shop membership yet — land them in
-      // the Universe directory instead of a console they cannot use.
+      // No shop membership yet — the Universe is still fully theirs.
       if (!ctx.ecosystem && ctx.role === "customer") {
-        navigate({ to: "/universe/shops", replace: true });
+        navigate({ to: "/universe", replace: true });
         return;
       }
       navigate({ to: homeFor(ctx.role), replace: true });
