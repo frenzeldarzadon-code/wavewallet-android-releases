@@ -188,6 +188,10 @@ function ResellerCustomers() {
         </Card>
       </PageSection>
 
+      <InviteMemberCard ecosystemId={ecosystemDbId} />
+
+
+
       <PageSection title="Load history">
         {history.length === 0 ? (
           <EmptyState title="No loads yet" />
