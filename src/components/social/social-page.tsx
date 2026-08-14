@@ -97,6 +97,7 @@ import {
   type SocialState,
 } from "@/lib/social";
 import { sendMessage } from "@/lib/social";
+import { PostComposer } from "@/components/social/post-composer";
 
 
 /** Signed-image thumbnail for a post. */
