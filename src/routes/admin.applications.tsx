@@ -30,8 +30,8 @@ function AdminApplications() {
     <>
       <MemberInboxPanel />
       <ApplicationsPanel
-      ecosystemId={ecosystemDbId}
-      description="New members who chose your shop. They cannot enter until approved."
+        ecosystemId={ecosystemDbId}
+        description="New members who chose your shop. They cannot enter until approved."
       />
     </>
   );

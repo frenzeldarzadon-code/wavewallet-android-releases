@@ -30,8 +30,8 @@ function ResellerApplications() {
     <>
       <MemberInboxPanel />
       <ApplicationsPanel
-      ecosystemId={ecosystemDbId}
-      description="New members who chose this shop. They cannot enter until approved."
+        ecosystemId={ecosystemDbId}
+        description="New members who chose this shop. They cannot enter until approved."
       />
     </>
   );
