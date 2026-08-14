@@ -122,28 +122,16 @@ function LoginPage() {
     try {
       const ctx = await signInWithPassword(email, password);
       if (!ctx) throw new Error("We could not load your account profile.");
-      // A self-signup only becomes a membership once an approver acts. Until
-      // then the database grants no ecosystem and no role — this is just the
-      // human-readable explanation.
-      if (!ctx.ecosystem && ctx.role === "customer") {
-        const app = await fetchMyApplication();
-        await supabase.auth.signOut();
-        if (app?.status === "rejected") {
-          throw new Error(
-            `Your application to ${app.ecosystem_name} was rejected${
-              app.decision_reason ? `: ${app.decision_reason}` : "."
-            }`,
-          );
-        }
-        throw new Error(
-          app
-            ? `Your account is pending approval. You can enter ${app.ecosystem_name} after an authorized member approves your application.`
-            : "This account is not linked to an shop yet. Contact your operator.",
-        );
-      }
       if (ctx.profile.status !== "active") {
         await supabase.auth.signOut();
         throw new Error("This account is suspended. Contact your operator.");
+      }
+      // Shop membership is separate from having an account. Someone who belongs
+      // to no shop still gets the whole Universe — feed, profile, messages and
+      // the shop directory — while any shop application stays pending.
+      if (!ctx.ecosystem && ctx.role === "customer") {
+        navigate({ to: "/universe", replace: true });
+        return;
       }
       // Role is resolved after authentication — never chosen by the visitor.
       navigate({ to: homeFor(ctx.role) });
@@ -169,12 +157,16 @@ function LoginPage() {
         phone: form.phone,
         password: form.password,
       });
-      // Creating the global account never grants shop access: sign out and let
-      // the person apply to a shop from the Universe directory.
-      await supabase.auth.signOut();
-      setApplied({ needsEmail: needsEmailConfirmation && isRealEmail(form.email) });
       setForm({ name: "", email: "", phone: "", password: "", confirm: "" });
-      toast.success("Your WaveWallet account is ready. Sign in to join a shop.");
+      // A new account belongs to no shop, and that is fine: the Universe is open
+      // to everyone straight away. Joining a shop stays a separate, approved step.
+      if (needsEmailConfirmation && isRealEmail(form.email)) {
+        await supabase.auth.signOut();
+        setApplied({ needsEmail: true });
+        return;
+      }
+      toast.success("Welcome to WaveWallet. You are in the Universe — join a shop any time.");
+      navigate({ to: "/universe", replace: true });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not create your account.");
     } finally {
