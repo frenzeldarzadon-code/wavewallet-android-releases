@@ -57,7 +57,8 @@ export async function setMemberCashbackRate(
     _user_id: userId,
     _ecosystem_id: ecosystemId,
     _percent: Math.trunc(percent),
-    _reason: reason?.trim() || null,
+    // `null` clears the reason; the generated type narrows it to string.
+    _reason: (reason?.trim() || null) as unknown as string,
   });
   if (error) throw new Error(error.message);
   return Number(data ?? percent);
