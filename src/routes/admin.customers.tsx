@@ -113,7 +113,6 @@ interface ActivityRow {
 }
 
 const MAX_DISCOUNT = 50;
-const MAX_COMMISSION = 100;
 
 function AdminCustomers() {
   const { ecosystem, ecosystemDbId } = useSession("admin");
