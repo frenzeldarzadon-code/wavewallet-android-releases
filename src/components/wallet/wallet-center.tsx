@@ -53,6 +53,9 @@ import { fetchEarnings, summariseEarnings } from "@/lib/earnings";
 import {
   emptyRecipientsHint,
   fetchShopRecipients,
+  filterRecipientsByTab,
+  recipientTabs,
+  tabEmptyHint,
   fetchWalletShops,
   projectedBalance,
   recipientRelationLabel,
@@ -60,6 +63,7 @@ import {
   transferInShop,
   transferSectionTitle,
   validateInShopTransfer,
+  type RecipientTab,
   type ShopRecipient,
   type WalletShop,
 } from "@/lib/wallet-center";
@@ -87,6 +91,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
   const [historyKey, setHistoryKey] = useState(0);
 
   // Send credits
+  const [tab, setTab] = useState<RecipientTab>("network");
   const [pick, setPick] = useState<ShopRecipient | null>(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
@@ -152,6 +157,11 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
 
   const isActiveShop = selected?.ecosystemId === ecosystemDbId;
   const multiShop = shops.length > 1;
+  const tabs = recipientTabs(selected?.role ?? null, multiShop);
+  const activeTab: RecipientTab = tabs.some((t) => t.key === tab)
+    ? tab
+    : (tabs[0]?.key ?? "peer");
+  const visibleRecipients = filterRecipientsByTab(recipients, activeTab);
   const value = Number(amount) || 0;
   const problem = validateInShopTransfer({
     ecosystemId: selected?.ecosystemId ?? null,
@@ -305,14 +315,14 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
                     key={t.key}
                     type="button"
                     role="tab"
-                    aria-selected={t.key === tab}
+                    aria-selected={t.key === activeTab}
                     onClick={() => {
                       setTab(t.key);
                       resetSend();
                     }}
                     className={cn(
                       "h-9 rounded-full border px-4 text-xs font-semibold transition-colors",
-                      t.key === tab
+                      t.key === activeTab
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-border bg-card text-muted-foreground hover:bg-muted",
                     )}
@@ -322,7 +332,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
                 ))}
               </div>
 
-              {tab === "shops" ? (
+              {activeTab === "shops" ? (
                 <ShopTransferCard
                   embedded
                   onDone={() => {
@@ -354,7 +364,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
                   <Info className="mt-0.5 size-3.5 shrink-0" />
                   {search.trim()
                     ? "No eligible recipient in this shop matches that search."
-                    : tabEmptyHint(tab, selected.role)}
+                    : tabEmptyHint(activeTab, selected.role)}
                 </p>
               ) : (
                 <ul className="max-h-80 space-y-1 overflow-y-auto rounded-xl border border-border bg-card p-1">
