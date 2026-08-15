@@ -9,6 +9,8 @@ import { EarningsHistory } from "@/components/earnings-history";
 import { useSession } from "@/lib/session";
 import { SuperEarningsPanel } from "@/components/super-earnings-panel";
 import { ExpensesCard } from "@/components/expenses-card";
+import { LovableCreditsCard } from "@/components/super/lovable-credits-card";
+
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
   csvStamp,
