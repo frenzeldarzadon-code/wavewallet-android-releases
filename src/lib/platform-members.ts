@@ -19,9 +19,15 @@ export interface PlatformMember {
   role: Role;
   ecosystem_id: string | null;
   ecosystem_name: string | null;
+  /** Total credits across every shop this one account belongs to. */
   credit_balance: number;
+  /** Total points across every shop this one account belongs to. */
   points_balance: number;
   joined_at: string;
+  /** How many shops the single authenticated identity belongs to. */
+  shop_count: number;
+  /** Comma-separated shop names, for the directory subtitle. */
+  shops: string | null;
 }
 
 export interface PlatformMemberFilters {
