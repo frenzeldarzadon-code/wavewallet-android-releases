@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Building2, Coins, CreditCard, TrendingUp, Users } from "lucide-react";
+import { Building2, Coins, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -9,11 +9,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { writeSession } from "@/lib/session";
 import {
   ecosystemCounts,
-  platformMrr,
   totalAccounts,
   type EcosystemOverviewRow,
 } from "@/lib/platform-overview";
-import { peso, shortDateTime, statusLabel } from "@/lib/wavewallet";
+import { shortDateTime, statusLabel } from "@/lib/wavewallet";
 import { MemberPicker } from "@/components/member-picker";
 import { EditMemberDialog, type EditableMember } from "@/components/edit-member-dialog";
 import { SuperEarningsPanel } from "@/components/super-earnings-panel";
@@ -22,9 +21,9 @@ export const Route = createFileRoute("/super/")({
   head: () => ({
     meta: [
       { title: "Platform Overview — WaveWallet Super Admin" },
-      { name: "description", content: "Cross-tenant overview of shops, subscriptions and platform revenue." },
+      { name: "description", content: "Cross-tenant overview of every WaveWallet shop, member accounts and platform earnings." },
       { property: "og:title", content: "Platform Overview — WaveWallet Super Admin" },
-      { property: "og:description", content: "Cross-tenant overview of shops, subscriptions and platform revenue." },
+      { property: "og:description", content: "Cross-tenant overview of every WaveWallet shop, member accounts and platform earnings." },
     ],
   }),
   component: SuperOverview,
@@ -38,38 +37,29 @@ interface AuditRow {
   created_at: string;
 }
 
-interface Settings {
-  plan_name: string;
-  plan_price: number;
-  grace_period_days: number;
-}
-
 function SuperOverview() {
   const navigate = useNavigate();
   const [rows, setRows] = useState<EcosystemOverviewRow[]>([]);
   const [audit, setAudit] = useState<AuditRow[]>([]);
   const [editingMember, setEditingMember] = useState<EditableMember | null>(null);
 
-  const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
     void (async () => {
-      const [{ data: overview, error }, { data: a }, { data: s }] = await Promise.all([
+      const [{ data: overview, error }, { data: a }] = await Promise.all([
         supabase.rpc("platform_overview"),
         supabase
           .from("audit_logs")
           .select("id, action, target, actor_name, created_at")
           .order("created_at", { ascending: false })
           .limit(6),
-        supabase.from("platform_settings").select("plan_name, plan_price, grace_period_days").maybeSingle(),
       ]);
       if (!active) return;
       if (error) toast.error("Could not load shops", { description: error.message });
       setRows((overview as EcosystemOverviewRow[] | null) ?? []);
       setAudit((a as AuditRow[] | null) ?? []);
-      setSettings((s as Settings | null) ?? null);
       setLoading(false);
     })();
     return () => {
@@ -78,8 +68,6 @@ function SuperOverview() {
   }, []);
 
   const live = useMemo(() => rows.filter((r) => !r.archived_at), [rows]);
-  const activeSubs = live.filter((e) => e.subscription_state === "active");
-  const mrr = platformMrr(rows);
   const accounts = totalAccounts(live);
 
   const accessEcosystem = (ecosystemId: string) => {
@@ -98,14 +86,7 @@ function SuperOverview() {
             value={dash(String(live.length))}
             icon={Building2}
             tone="brand"
-            hint={`${activeSubs.length} active`}
-          />
-          <StatCard
-            label="Platform MRR"
-            value={dash(peso(mrr))}
-            icon={TrendingUp}
-            tone="positive"
-            hint="Active subscriptions only"
+            hint="Live tenants"
           />
           <StatCard
             label="Accounts"
@@ -147,12 +128,6 @@ function SuperOverview() {
                       <div>
                         <dt className="text-muted-foreground">Admins</dt>
                         <dd className="font-medium">{c.admins}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground">Plan</dt>
-                        <dd className="font-medium">
-                          {eco.plan_name} · {peso(Number(eco.plan_price))}/mo
-                        </dd>
                       </div>
                       <div>
                         <dt className="text-muted-foreground">Resellers</dt>
@@ -238,32 +213,6 @@ function SuperOverview() {
         </Card>
       </PageSection>
 
-      <PageSection title="Plan configuration" description="Prices are configurable, never hard-coded.">
-        <Card className="shadow-[var(--shadow-card)]">
-          <CardContent className="grid gap-3 sm:grid-cols-3">
-            <div>
-              <p className="text-xs text-muted-foreground">Default plan</p>
-              <p className="text-sm font-medium">{settings?.plan_name ?? "—"}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Default price</p>
-              <p className="text-sm font-medium text-success">
-                {settings ? `${peso(Number(settings.plan_price))} / month` : "—"}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Grace period</p>
-              <p className="text-sm font-medium">
-                {settings ? `${settings.grace_period_days} days` : "—"}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </PageSection>
-
-      <p className="flex items-center gap-2 text-xs text-muted-foreground">
-        <CreditCard className="size-3.5" /> Subscription approvals are handled in the Subscriptions tab.
-      </p>
       <EditMemberDialog member={editingMember} onClose={() => setEditingMember(null)} />
     </>
   );
