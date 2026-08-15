@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/ui-kit";
 import { SocialSignIn } from "@/components/auth/social-sign-in";
+import { PasswordField } from "@/components/password-field";
 import { homeFor } from "@/lib/session";
 import {
   loadAuthContext,
@@ -15,6 +16,7 @@ import {
   signUpCustomerAccount,
 } from "@/lib/auth";
 import { isRealEmail, validateGlobalSignup } from "@/lib/account-identifiers";
+import { newPasswordIssue } from "@/lib/password-policy";
 import { supabase } from "@/integrations/supabase/client";
 import { DEMO_ECOSYSTEM_SLUG, DEMO_ROLES, isPreviewEnvironment } from "@/lib/demo";
 import { startDemoSession } from "@/lib/demo.functions";
@@ -61,6 +63,9 @@ function LoginPage() {
     confirm: "",
   });
   const [signupBusy, setSignupBusy] = useState(false);
+  // Live, precise feedback while typing — never a vague "incomplete password".
+  const signupIssue =
+    form.password || form.confirm ? newPasswordIssue(form.password, form.confirm) : null;
   const [applied, setApplied] = useState<{ needsEmail: boolean } | null>(null);
 
   useEffect(() => setPreview(isPreviewEnvironment()), []);
