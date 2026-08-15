@@ -171,3 +171,19 @@ export async function respondToInvitation(
   });
   if (error) throw new Error(error.message);
 }
+
+/**
+ * Invitations the signed-in member sent for one shop.
+ *
+ * Available to every approved member of that shop (customers included). It
+ * only ever returns the caller's own invitations — never the whole shop's.
+ */
+export async function fetchMySentInvitations(
+  ecosystemId: string,
+): Promise<ShopInvitation[]> {
+  const { data, error } = await supabase.rpc("my_sent_shop_invitations", {
+    _ecosystem_id: ecosystemId,
+  });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as ShopInvitation[];
+}

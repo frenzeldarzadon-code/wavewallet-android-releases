@@ -24,7 +24,9 @@ import {
   redundantInvitations,
   type MemberInbox,
 } from "@/lib/member-inbox";
+import { MemberInviteCard } from "@/components/universe/member-invite-card";
 import { applicationTone } from "@/lib/membership-applications";
+import { useSession } from "@/lib/session";
 import { daysLeft, respondToInvitation, type MyInvitation } from "@/lib/shop-invitations";
 import { roleLabel, shortDateTime } from "@/lib/wavewallet";
 
@@ -50,6 +52,7 @@ export function useMemberInbox() {
 }
 
 export function MemberInboxPanel() {
+  const session = useSession();
   const { inbox, loading, reload, pending } = useMemberInbox();
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -89,6 +92,15 @@ export function MemberInboxPanel() {
           </Button>
         </div>
       </div>
+
+      {/* Every approved member of a shop may invite someone from the Universe. */}
+      <MemberInviteCard
+        memberships={inbox.memberships}
+        myId={session.account?.id ?? null}
+        onSent={() => void reload()}
+      />
+
+
 
       {/* ---------------- Invites ---------------- */}
       <PageSection
