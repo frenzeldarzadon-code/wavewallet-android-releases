@@ -466,6 +466,8 @@ export async function adminAdjustCredits(input: {
   amount: number;
   reason: string;
   reference?: string;
+  /** Shop whose wallet is affected — never guessed from the member's last shop. */
+  ecosystemId?: string | null;
 }): Promise<string> {
   return unwrap(
     await supabase.rpc("admin_adjust_credits", {
@@ -473,19 +475,24 @@ export async function adminAdjustCredits(input: {
       _amount: input.amount,
       _reason: input.reason,
       ...(input.reference ? { _reference: input.reference } : {}),
+      ...(input.ecosystemId ? { _ecosystem_id: input.ecosystemId } : {}),
     }),
   ) as unknown as string;
 }
 
 /**
- * Shop admin hands credits to a member from the admin's OWN balance.
- * Credits are never created here — only the platform owner can do that.
+ * Hands credits to a member of the selected shop.
+ *
+ * A shop admin spends their OWN shop balance. The platform owner is the one
+ * global exception: the database mints the credits straight into the member's
+ * wallet in that shop, with no source balance and no fee.
  */
 export async function adminLoadCredits(input: {
   userId: string;
   amount: number;
   reason?: string;
   reference?: string;
+  ecosystemId?: string | null;
 }): Promise<string> {
   return unwrap(
     await supabase.rpc("admin_load_credits", {
@@ -493,6 +500,7 @@ export async function adminLoadCredits(input: {
       _amount: input.amount,
       ...(input.reason ? { _reason: input.reason } : {}),
       ...(input.reference ? { _reference: input.reference } : {}),
+      ...(input.ecosystemId ? { _ecosystem_id: input.ecosystemId } : {}),
     }),
   ) as unknown as string;
 }

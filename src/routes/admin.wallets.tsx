@@ -85,6 +85,11 @@ interface Member {
 
 function AdminWallets() {
   const { ecosystemDbId, account } = useSession("admin");
+  /**
+   * The platform owner issues credits from the platform mint in EVERY shop:
+   * no shop wallet, no source balance, no fee. The database enforces this.
+   */
+  const isPlatformOwner = account?.role === "super_admin";
   const [members, setMembers] = useState<Member[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -184,19 +189,22 @@ function AdminWallets() {
               ...(reference ? { reference } : {}),
             })
           : value > 0
-            ? // Positive amounts move credits out of the admin's own wallet;
-              // creating credits is a platform-owner power.
+            ? // Positive amounts move credits out of the admin's own wallet.
+              // The platform owner is the one exception: the database mints
+              // them into the member's wallet in this shop.
               await adminLoadCredits({
                 userId: target.id,
                 amount: value,
                 reason,
                 reference,
+                ecosystemId: ecosystemDbId,
               })
             : await adminAdjustCredits({
                 userId: target.id,
                 amount: value,
                 reason,
                 reference,
+                ecosystemId: ecosystemDbId,
               });
       toast.success(mode === "points" ? "Points updated" : "Wallet updated", {
         description: `${value > 0 ? "+" : "−"}${
@@ -656,11 +664,24 @@ function AdminWallets() {
             {mode === "credits" ? (
               <div className="space-y-2">
                 <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                  A positive amount is transferred from your shop wallet ({peso(shopBalance)}) — no
-                  new credits are created and no commission is charged. {target?.full_name} receives
-                  exactly {peso(Math.max(Number(amount) || 0, 0))}.
+                  {isPlatformOwner ? (
+                    <>
+                      A positive amount is issued from the platform mint straight into{" "}
+                      {target?.full_name}&apos;s wallet in this shop — nothing is taken from your own
+                      balance and no fee applies. A negative amount removes credits from that same
+                      shop wallet. Either way it is recorded with your name, the reason and the
+                      balance before and after, and it is never counted as a sale, cashback or
+                      earnings.
+                    </>
+                  ) : (
+                    <>
+                      A positive amount is transferred from your shop wallet ({peso(shopBalance)}) —
+                      no new credits are created and no commission is charged. {target?.full_name}{" "}
+                      receives exactly {peso(Math.max(Number(amount) || 0, 0))}.
+                    </>
+                  )}
                 </div>
-                {Number(amount) > shopBalance ? (
+                {!isPlatformOwner && Number(amount) > shopBalance ? (
                   <div className="flex gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
                     <AlertTriangle className="mt-0.5 size-4 shrink-0" />
                     <span>
@@ -696,7 +717,10 @@ function AdminWallets() {
             </Button>
             <Button
               onClick={() => void submit()}
-              disabled={busy || (mode === "credits" && Number(amount) > shopBalance)}
+              disabled={
+                busy ||
+                (!isPlatformOwner && mode === "credits" && Number(amount) > shopBalance)
+              }
             >
               {busy ? "Saving…" : mode === "credits" ? "Confirm credit movement" : "Apply adjustment"}
             </Button>
