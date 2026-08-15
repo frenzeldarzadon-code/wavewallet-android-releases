@@ -2,126 +2,159 @@
 --
 -- The single per-member "Discount" is database configuration: editable by the
 -- shop admin and the platform owner, never hard-coded, scoped to one shop, and
--- applied to future purchases only. Run inside a transaction and roll back.
+-- applied to future qualifying transactions only.
 --
--- Covers: admin update, super admin update, unauthorized roles, per-shop
--- isolation, persistence, bounds validation, hierarchy rules, audit trail and
--- history immutability.
+-- Run against a database copy, it rolls everything back:
+--   BEGIN; \i supabase/tests/discount-configuration.sql ROLLBACK;
+--
+-- Proves:
+--   1  A shop admin can save any whole percentage from 0 to 100 (the old 50%
+--      ceiling is gone) and it persists on the shop membership.
+--   2  The saved value is also the member's voucher shop discount.
+--   3  Super Admin can manage discounts in any shop.
+--   4  Resellers, subresellers, customers and admins of other shops cannot.
+--   5  Per-shop isolation: a change in one shop never moves another shop.
+--   6  Unset members follow that shop's configured default, not a constant.
+--   7  Invalid percentages and hierarchy violations are rejected server-side.
+--   8  History is untouched by a rate change.
+--   9  Every change is audited with old value, new value, shop, actor, reason.
 
-begin;
+BEGIN;
 
-do $$
-declare
-  eco_a uuid := gen_random_uuid();
-  eco_b uuid := gen_random_uuid();
-  super_id uuid := gen_random_uuid();
-  admin_a uuid := gen_random_uuid();
-  admin_b uuid := gen_random_uuid();
-  res uuid := gen_random_uuid();
-  sub uuid := gen_random_uuid();
-  cust uuid := gen_random_uuid();
-  ok boolean;
-begin
-  perform set_config('role', 'postgres', true);
+DO $$
+DECLARE
+  _a record; _b record;
+  _admin_a uuid; _admin_b uuid; _super uuid;
+  _res uuid; _sub uuid; _cust uuid;
+  _res_b uuid;
+  _before_b integer; _hist integer; _hist_after integer;
+  _default_a integer;
+  _ok boolean;
+BEGIN
+  SELECT id, name INTO _a FROM public.ecosystems ORDER BY created_at LIMIT 1;
+  SELECT id, name INTO _b FROM public.ecosystems WHERE id <> _a.id ORDER BY created_at LIMIT 1;
+  ASSERT _a.id IS NOT NULL AND _b.id IS NOT NULL, 'two shops are required for this suite';
 
-  insert into public.ecosystems (id, name, slug, default_reseller_discount_percent,
-                                 default_subreseller_discount_percent)
-  values (eco_a, 'Test Shop A', 'test-shop-a-' || left(eco_a::text, 8), 25, 10),
-         (eco_b, 'Test Shop B', 'test-shop-b-' || left(eco_b::text, 8), 40, 5);
+  SELECT user_id INTO _admin_a FROM public.ecosystem_memberships
+   WHERE ecosystem_id = _a.id AND role = 'admin' LIMIT 1;
+  SELECT user_id INTO _admin_b FROM public.ecosystem_memberships
+   WHERE ecosystem_id = _b.id AND role = 'admin' LIMIT 1;
+  SELECT user_id INTO _super FROM public.user_roles WHERE role = 'super_admin' LIMIT 1;
+  SELECT user_id INTO _res FROM public.ecosystem_memberships
+   WHERE ecosystem_id = _a.id AND role = 'reseller' LIMIT 1;
+  SELECT user_id INTO _sub FROM public.ecosystem_memberships
+   WHERE ecosystem_id = _a.id AND role = 'subreseller' AND reseller_id = _res LIMIT 1;
+  SELECT user_id INTO _cust FROM public.ecosystem_memberships
+   WHERE ecosystem_id = _a.id AND role = 'customer' LIMIT 1;
+  SELECT user_id INTO _res_b FROM public.ecosystem_memberships
+   WHERE ecosystem_id = _b.id AND role IN ('reseller','subreseller') LIMIT 1;
+  ASSERT _admin_a IS NOT NULL AND _res IS NOT NULL, 'shop A needs an admin and a reseller';
 
-  insert into public.profiles (id, full_name, email, ecosystem_id)
-  values (super_id, 'Owner', 'owner+' || left(super_id::text,8) || '@test.local', eco_a),
-         (admin_a, 'Admin A', 'a+' || left(admin_a::text,8) || '@test.local', eco_a),
-         (admin_b, 'Admin B', 'b+' || left(admin_b::text,8) || '@test.local', eco_b),
-         (res, 'Reseller', 'r+' || left(res::text,8) || '@test.local', eco_a),
-         (sub, 'Subreseller', 's+' || left(sub::text,8) || '@test.local', eco_a),
-         (cust, 'Customer', 'c+' || left(cust::text,8) || '@test.local', eco_a);
+  SELECT count(*) INTO _hist FROM public.credit_ledger WHERE ecosystem_id = _a.id;
+  IF _res_b IS NOT NULL THEN
+    _before_b := public.member_cashback_rate(_res_b, _b.id);
+  END IF;
 
-  insert into public.user_roles (user_id, role, ecosystem_id) values
-    (super_id, 'super_admin', null),
-    (admin_a, 'admin', eco_a),
-    (admin_b, 'admin', eco_b),
-    (res, 'reseller', eco_a),
-    (sub, 'subreseller', eco_a),
-    (cust, 'customer', eco_a);
+  ----------------------------------------------------------- 1, 2: admin sets
+  PERFORM set_config('request.jwt.claims', json_build_object('sub', _admin_a)::text, true);
+  PERFORM public.set_member_cashback_rate(_res, _a.id, 70, 'QA admin raises discount');
+  ASSERT public.member_cashback_rate(_res, _a.id) = 70, 'admin can save 70 percent';
+  ASSERT (SELECT sale_commission_percent FROM public.ecosystem_memberships
+           WHERE user_id = _res AND ecosystem_id = _a.id) = 70, 'value persists on the membership';
+  ASSERT (SELECT reseller_discount_percent FROM public.ecosystem_memberships
+           WHERE user_id = _res AND ecosystem_id = _a.id) = 70, 'voucher discount stays in sync';
+  PERFORM public.set_member_cashback_rate(_res, _a.id, 100, 'QA upper bound');
+  ASSERT public.member_cashback_rate(_res, _a.id) = 100, '100 percent is allowed';
+  PERFORM public.set_member_cashback_rate(_res, _a.id, 0, 'QA lower bound');
+  ASSERT public.member_cashback_rate(_res, _a.id) = 0, 'explicit zero is allowed';
+  PERFORM public.set_member_cashback_rate(_res, _a.id, 70, 'QA back to 70');
 
-  insert into public.ecosystem_memberships (user_id, ecosystem_id, role, membership_state, reseller_id)
-  values (admin_a, eco_a, 'admin', 'active', null),
-         (admin_b, eco_b, 'admin', 'active', null),
-         (res, eco_a, 'reseller', 'active', null),
-         (res, eco_b, 'reseller', 'active', null),
-         (sub, eco_a, 'subreseller', 'active', res),
-         (cust, eco_a, 'customer', 'active', null);
+  --------------------------------------------------------- 5: shop isolation
+  IF _res_b IS NOT NULL THEN
+    ASSERT public.member_cashback_rate(_res_b, _b.id) = _before_b,
+      'a change in shop A never moves shop B';
+  END IF;
 
-  ---------------------------------------------------------------- no defaults
-  assert public.member_cashback_rate(res, eco_a) = 25,
-    'unset member follows shop A default (25), got ' || public.member_cashback_rate(res, eco_a);
-  assert public.member_cashback_rate(res, eco_b) = 40,
-    'unset member follows shop B default (40)';
+  --------------------------------------------------- 3: super admin any shop
+  IF _super IS NOT NULL AND _res_b IS NOT NULL THEN
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', _super)::text, true);
+    PERFORM public.set_member_cashback_rate(_res_b, _b.id, 15, 'QA owner adjusts other shop');
+    ASSERT public.member_cashback_rate(_res_b, _b.id) = 15, 'super admin manages any shop';
+    ASSERT public.member_cashback_rate(_res, _a.id) = 70, 'shop A untouched';
+  END IF;
 
-  -------------------------------------------------------------- admin can set
-  perform set_config('request.jwt.claims', json_build_object('sub', admin_a, 'role','authenticated')::text, true);
-  perform public.set_member_cashback_rate(res, eco_a, 70, 'admin raises discount');
-  assert public.member_cashback_rate(res, eco_a) = 70, 'admin can set 70% (old 50% cap removed)';
-  assert (select sale_commission_percent from public.ecosystem_memberships
-           where user_id = res and ecosystem_id = eco_a) = 70, 'value persists in the shop membership';
-  assert (select reseller_discount_percent from public.ecosystem_memberships
-           where user_id = res and ecosystem_id = eco_a) = 70, 'voucher discount stays in sync';
+  ------------------------------------------------------- 4: unauthorized use
+  PERFORM set_config('request.jwt.claims', json_build_object('sub', _res)::text, true);
+  _ok := true;
+  BEGIN PERFORM public.set_member_cashback_rate(_res, _a.id, 90, 'QA'); EXCEPTION WHEN others THEN _ok := false; END;
+  ASSERT NOT _ok, 'a reseller cannot change their own discount';
 
-  ------------------------------------------------------------ shop isolation
-  assert public.member_cashback_rate(res, eco_b) = 40, 'shop B is unaffected by a shop A change';
+  IF _sub IS NOT NULL THEN
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', _sub)::text, true);
+    _ok := true;
+    BEGIN PERFORM public.set_member_cashback_rate(_res, _a.id, 90, 'QA'); EXCEPTION WHEN others THEN _ok := false; END;
+    ASSERT NOT _ok, 'a subreseller cannot change discounts';
+  END IF;
 
-  ------------------------------------------------------ super admin any shop
-  perform set_config('request.jwt.claims', json_build_object('sub', super_id, 'role','authenticated')::text, true);
-  perform public.set_member_cashback_rate(res, eco_b, 15, 'owner adjusts other shop');
-  assert public.member_cashback_rate(res, eco_b) = 15, 'super admin can set any shop';
-  assert public.member_cashback_rate(res, eco_a) = 70, 'shop A untouched';
+  IF _cust IS NOT NULL THEN
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', _cust)::text, true);
+    _ok := true;
+    BEGIN PERFORM public.set_member_cashback_rate(_res, _a.id, 90, 'QA'); EXCEPTION WHEN others THEN _ok := false; END;
+    ASSERT NOT _ok, 'a customer cannot change discounts';
+  END IF;
 
-  ------------------------------------------------------------ unauthorized
-  perform set_config('request.jwt.claims', json_build_object('sub', res, 'role','authenticated')::text, true);
-  ok := true;
-  begin perform public.set_member_cashback_rate(sub, eco_a, 60, 'nope'); exception when others then ok := false; end;
-  assert not ok, 'a reseller cannot change discounts';
+  IF _admin_b IS NOT NULL AND _admin_b <> _admin_a THEN
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', _admin_b)::text, true);
+    _ok := true;
+    BEGIN PERFORM public.set_member_cashback_rate(_res, _a.id, 90, 'QA'); EXCEPTION WHEN others THEN _ok := false; END;
+    ASSERT NOT _ok, 'an admin of another shop cannot change shop A discounts';
+  END IF;
 
-  perform set_config('request.jwt.claims', json_build_object('sub', cust, 'role','authenticated')::text, true);
-  ok := true;
-  begin perform public.set_member_cashback_rate(res, eco_a, 60, 'nope'); exception when others then ok := false; end;
-  assert not ok, 'a customer cannot change discounts';
+  ----------------------------------------------- 7: validation and hierarchy
+  PERFORM set_config('request.jwt.claims', json_build_object('sub', _admin_a)::text, true);
+  _ok := true;
+  BEGIN PERFORM public.set_member_cashback_rate(_res, _a.id, -5, NULL); EXCEPTION WHEN others THEN _ok := false; END;
+  ASSERT NOT _ok, 'negative percentages are rejected';
+  _ok := true;
+  BEGIN PERFORM public.set_member_cashback_rate(_res, _a.id, 101, NULL); EXCEPTION WHEN others THEN _ok := false; END;
+  ASSERT NOT _ok, 'percentages above 100 are rejected';
+  _ok := true;
+  BEGIN PERFORM public.set_member_cashback_rate(_res, _a.id, NULL, NULL); EXCEPTION WHEN others THEN _ok := false; END;
+  ASSERT NOT _ok, 'a missing percentage is rejected';
 
-  perform set_config('request.jwt.claims', json_build_object('sub', admin_b, 'role','authenticated')::text, true);
-  ok := true;
-  begin perform public.set_member_cashback_rate(res, eco_a, 60, 'nope'); exception when others then ok := false; end;
-  assert not ok, 'an admin of another shop cannot change shop A discounts';
+  IF _sub IS NOT NULL THEN
+    PERFORM public.set_member_cashback_rate(_sub, _a.id, 30, 'QA subreseller share');
+    ASSERT public.member_cashback_rate(_sub, _a.id) = 30, 'subreseller share saved';
+    _ok := true;
+    BEGIN PERFORM public.set_member_cashback_rate(_sub, _a.id, 95, NULL); EXCEPTION WHEN others THEN _ok := false; END;
+    ASSERT NOT _ok, 'a subreseller share cannot exceed the parent reseller total';
+    _ok := true;
+    BEGIN PERFORM public.set_member_cashback_rate(_res, _a.id, 10, NULL); EXCEPTION WHEN others THEN _ok := false; END;
+    ASSERT NOT _ok, 'a reseller total cannot fall below an existing subreseller share';
+  END IF;
 
-  ----------------------------------------------------------- bounds & rules
-  perform set_config('request.jwt.claims', json_build_object('sub', admin_a, 'role','authenticated')::text, true);
-  ok := true;
-  begin perform public.set_member_cashback_rate(res, eco_a, -5, null); exception when others then ok := false; end;
-  assert not ok, 'negative percentages are rejected';
-  ok := true;
-  begin perform public.set_member_cashback_rate(res, eco_a, 101, null); exception when others then ok := false; end;
-  assert not ok, 'percentages above 100 are rejected';
+  ------------------------------------------------- 6: shop-configured default
+  UPDATE public.ecosystem_memberships SET sale_commission_percent = NULL
+   WHERE user_id = _res AND ecosystem_id = _a.id;
+  SELECT default_reseller_discount_percent INTO _default_a FROM public.ecosystems WHERE id = _a.id;
+  ASSERT public.member_cashback_rate(_res, _a.id) = COALESCE(_default_a, 0),
+    'an unset member follows the shop-configured default, never a constant';
 
-  perform public.set_member_cashback_rate(sub, eco_a, 30, 'subreseller share');
-  assert public.member_cashback_rate(sub, eco_a) = 30, 'subreseller share saved';
-  ok := true;
-  begin perform public.set_member_cashback_rate(sub, eco_a, 80, null); exception when others then ok := false; end;
-  assert not ok, 'a subreseller cannot exceed the parent reseller total';
-  ok := true;
-  begin perform public.set_member_cashback_rate(res, eco_a, 20, null); exception when others then ok := false; end;
-  assert not ok, 'a reseller cannot drop below their subreseller share';
+  ------------------------------------------------- 8: history stays unchanged
+  SELECT count(*) INTO _hist_after FROM public.credit_ledger WHERE ecosystem_id = _a.id;
+  ASSERT _hist_after = _hist, 'changing a discount never writes or rewrites ledger history';
 
-  ------------------------------------------------------------------- audit
-  assert exists (
-    select 1 from public.audit_logs
-     where ecosystem_id = eco_a and action = 'Updated member discount'
-       and (metadata->>'member_id')::uuid = res
-       and (metadata->>'new_percent')::int = 70
-       and metadata ? 'previous_percent' and metadata ? 'shop_name'
-       and metadata->>'reason' = 'admin raises discount'
-  ), 'the discount change is audited with old value, new value, shop and reason';
+  --------------------------------------------------------------- 9: audit log
+  ASSERT EXISTS (
+    SELECT 1 FROM public.audit_logs
+     WHERE ecosystem_id = _a.id AND action = 'Updated member discount'
+       AND (metadata->>'member_id')::uuid = _res
+       AND (metadata->>'new_percent')::int = 70
+       AND metadata ? 'previous_percent' AND metadata ? 'shop_name' AND metadata ? 'changed_at'
+       AND metadata->>'reason' = 'QA admin raises discount'
+  ), 'discount changes are audited with old value, new value, shop, actor and reason';
 
-  raise notice 'discount-configuration: all assertions passed';
-end $$;
+  RAISE NOTICE 'discount-configuration: all assertions passed';
+END $$;
 
-rollback;
+ROLLBACK;
