@@ -219,7 +219,7 @@ export function MembersDirectory() {
                           })
                         }
                       >
-                        <Percent className="size-4" /> Cashback rate
+                        <Percent className="size-4" /> Discount
                       </Button>
                     ) : null}
                     {canActAsMember(m) ? (
