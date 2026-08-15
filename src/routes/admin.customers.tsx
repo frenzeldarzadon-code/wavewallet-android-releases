@@ -8,7 +8,6 @@ import {
   ShieldCheck,
   Trash2,
   UserCheck,
-  TrendingUp,
   UserCog,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -49,9 +48,7 @@ import {
 } from "@/lib/customer-cleanup";
 import { deleteCustomerAccount } from "@/lib/customer-cleanup.functions";
 import {
-  fetchEcosystemSaleCommission,
   setSubresellerParent,
-  type SaleCommissionDefaults,
 } from "@/lib/wallet";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -112,7 +109,7 @@ interface ActivityRow {
   created_at: string;
 }
 
-const MAX_DISCOUNT = 50;
+const MAX_DISCOUNT = 100;
 
 function AdminCustomers() {
   const { ecosystem, ecosystemDbId } = useSession("admin");
@@ -128,10 +125,6 @@ function AdminCustomers() {
   const [detail, setDetail] = useState<Member | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
   const [discount, setDiscount] = useState("10");
-  const [saleDefaults, setSaleDefaults] = useState<SaleCommissionDefaults>({
-    reseller: 0,
-    subreseller: 0,
-  });
   const [rateTarget, setRateTarget] = useState<CashbackTarget | null>(null);
   const [editingOwner, setEditingOwner] = useState<Member | null>(null);
   const [busy, setBusy] = useState(false);
@@ -212,7 +205,6 @@ function AdminCustomers() {
   // old loading-commission default no longer exists.
   useEffect(() => {
     if (!ecosystemDbId) return;
-    void fetchEcosystemSaleCommission(ecosystemDbId).then(setSaleDefaults);
   }, [ecosystemDbId]);
 
   const openDetail = async (m: Member) => {
