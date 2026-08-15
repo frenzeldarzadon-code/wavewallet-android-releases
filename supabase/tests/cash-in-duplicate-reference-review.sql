@@ -65,12 +65,40 @@ begin
   end if;
   raise notice 'PASS: older credited transaction marked CREDITED FIRST, newer held pending';
 
-  -- Neither credited: nothing may be assumed.
-  update public.cash_in_requests set ledger_id = null, status = 'pending' where id = _old;
+  -- Neither credited: nothing may be assumed. Two fresh pending requests share
+  -- a second reference, and no ledger entry exists for either.
+  _key := 'TESTDUP' || upper(encode(extensions.gen_random_bytes(4), 'hex'));
+  insert into public.cash_in_requests (
+    reference, request_key, user_id, ecosystem_id, requester_name, requester_role,
+    amount_php, rate_credits, rate_php, credits, fee_percent, fee_php, net_php,
+    method_id, method_name, method_type, payer_reference, payer_reference_key,
+    payer_number, payer_number_key, sender_number, sender_number_key,
+    proof_path, status, receipt_check)
+  values ('CI-TESTP1', gen_random_uuid()::text, _src.user_id, _src.ecosystem_id, _src.requester_name, 'customer',
+          100, _src.rate_credits, _src.rate_php, 100, 0, 0, 100,
+          _src.method_id, _src.method_name, _src.method_type, _key, _key,
+          '09541230072', '09541230072', '09541230072', '09541230072',
+          'proof/p1.jpg', 'pending', 'matched')
+  returning id into _old;
+  insert into public.cash_in_requests (
+    reference, request_key, user_id, ecosystem_id, requester_name, requester_role,
+    amount_php, rate_credits, rate_php, credits, fee_percent, fee_php, net_php,
+    method_id, method_name, method_type, payer_reference, payer_reference_key,
+    payer_number, payer_number_key, sender_number, sender_number_key,
+    proof_path, status, duplicate_reference, duplicate_of, receipt_check)
+  values ('CI-TESTP2', gen_random_uuid()::text, _src.user_id, _src.ecosystem_id, _src.requester_name, 'customer',
+          100, _src.rate_credits, _src.rate_php, 100, 0, 0, 100,
+          _src.method_id, _src.method_name, _src.method_type, _key, _key,
+          '09541230072', '09541230072', '09541230072', '09541230072',
+          'proof/p2.jpg', 'pending', true, _old, 'matched')
+  returning id into _new;
+
   perform public.record_cash_in_reference_conflict(_new);
   select * into _c from public.cash_in_reference_conflicts where new_request_id = _new;
   if _c.credited_first <> 'none' then raise exception 'FAIL: expected none, got %', _c.credited_first; end if;
+  if _c.credited_at is not null then raise exception 'FAIL: credited_at must be empty'; end if;
   raise notice 'PASS: with no credits released neither side is assumed legitimate';
+
 end $$;
 
 rollback;
