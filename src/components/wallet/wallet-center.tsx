@@ -21,7 +21,6 @@ import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -38,11 +37,12 @@ import { FacebookSupportCard } from "@/components/facebook-support-card";
 import { RecipientSearch } from "@/components/customer/recipient-search";
 import { ShopTransferCard } from "@/components/customer/shop-transfer-card";
 import { PointsEarningsPanel } from "@/components/customer/points-earnings-panel";
+import { HistoryPage } from "@/components/customer/history-page";
 import { useSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
-import { peso, roleLabel, shortDateTime } from "@/lib/wavewallet";
+import { peso, roleLabel } from "@/lib/wavewallet";
 import { recipientIdentityLine } from "@/lib/recipient-search";
-import { fetchCreditLedger, type CreditEntry, type RecipientMatch } from "@/lib/wallet";
+import type { RecipientMatch } from "@/lib/wallet";
 import { fetchPointsAccount, type PointsAccount } from "@/lib/rewards";
 import { fetchEarnings, summariseEarnings } from "@/lib/earnings";
 import {
@@ -73,7 +73,6 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
 
   const [shops, setShops] = useState<WalletShop[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [entries, setEntries] = useState<CreditEntry[]>([]);
   const [upward, setUpward] = useState<UpwardRecipient[]>([]);
   const [points, setPoints] = useState<PointsAccount>({ balance: 0, held: 0, available: 0 });
   const [discountSaved, setDiscountSaved] = useState(0);
@@ -108,12 +107,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
 
   const loadShopData = useCallback(async () => {
     if (!userId || !selectedId) return;
-    const [ledger, up] = await Promise.all([
-      fetchCreditLedger(userId, selectedId, 100),
-      fetchUpwardRecipients(selectedId),
-    ]);
-    setEntries(ledger);
-    setUpward(up);
+    setUpward(await fetchUpwardRecipients(selectedId));
   }, [userId, selectedId]);
 
   useEffect(() => {
