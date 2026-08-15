@@ -140,7 +140,6 @@ export function SubresellersPanel({
                     <MemberAvatar
                       name={r.full_name}
                       path={r.avatar_path}
-                      handle={r.handle}
                       className="size-10"
                     />
                     <div className="min-w-0 flex-1">
