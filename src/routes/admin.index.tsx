@@ -49,7 +49,7 @@ interface AuditRow {
 }
 
 function AdminDashboard() {
-  const { ecosystem, ecosystemDbId } = useSession("admin");
+  const { account, ecosystem, ecosystemDbId } = useSession("admin");
   const [dash, setDash] = useState<Dash | null>(null);
   const [audit, setAudit] = useState<AuditRow[]>([]);
   const [loading, setLoading] = useState(true);

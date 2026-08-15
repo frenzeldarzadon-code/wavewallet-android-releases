@@ -85,7 +85,7 @@ function ResellerDashboard() {
         </p>
       </PageSection>
 
-      <SellerEarningsPanel recipientId={account.id} ecosystemId={ecosystemDbId} />
+      <SellerEarningsPanel recipientId={account.id} ecosystemId={ecosystemDbId} showBalance={false} />
 
       <PageSection title="Wallet activity">
         {loading ? (
