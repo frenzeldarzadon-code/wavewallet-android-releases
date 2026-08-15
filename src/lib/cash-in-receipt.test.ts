@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   creditedFirstLabel,
+  maskAccountNumber,
+  verificationReason,
+  verificationStatus,
   decideReceiptCheck,
   parseReceiptReading,
   receiptSenderAgrees,
@@ -145,5 +148,35 @@ describe("duplicate reference comparison", () => {
   it("says plainly which transaction was credited first", () => {
     expect(creditedFirstLabel({ credited_first: "old", credited_at: null })).toContain("earlier transaction");
     expect(creditedFirstLabel({ credited_first: "none", credited_at: null })).toContain("Neither");
+  });
+});
+
+describe("reviewer verification status", () => {
+  it("passes a matched receipt", () => {
+    expect(verificationStatus({ receipt_check: "matched" })).toBe("VERIFIED");
+  });
+
+  it("flags a mismatch and explains why it is pending", () => {
+    expect(verificationStatus({ receipt_check: "mismatch" })).toBe("MISMATCH");
+    expect(verificationReason({ receipt_check: "mismatch" })).toContain("does not match the payment receipt");
+  });
+
+  it("flags an unreadable receipt without guessing", () => {
+    expect(verificationStatus({ receipt_check: "unreadable" })).toBe("UNREADABLE");
+    expect(verificationStatus({ receipt_check: "error" })).toBe("UNREADABLE");
+  });
+
+  it("lets a duplicate reference outrank a matched receipt", () => {
+    expect(verificationStatus({ receipt_check: "matched", duplicate_reference: true })).toBe("DUPLICATE_REFERENCE");
+    expect(verificationReason({ duplicate_reference: true })).toContain("Duplicate reference");
+  });
+
+  it("waits while the receipt has not been read yet", () => {
+    expect(verificationStatus({})).toBe("PENDING_REVIEW");
+  });
+
+  it("masks payment numbers for reviewers", () => {
+    expect(maskAccountNumber("09541230072")).toBe("0954••••072");
+    expect(maskAccountNumber(null)).toBe("not provided");
   });
 });
