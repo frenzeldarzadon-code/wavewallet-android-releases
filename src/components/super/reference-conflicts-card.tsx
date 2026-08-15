@@ -125,8 +125,9 @@ export function ReferenceConflictsCard() {
                 The newer request was held for manual investigation. The older transaction was not changed.
               </p>
               <div className="grid gap-2 md:grid-cols-2">
-                <Side title="Earlier transaction" snap={c.old_snapshot} />
-                <Side title="New transaction" snap={c.new_snapshot} />
+                <Side title="Earlier transaction" snap={c.old_snapshot} creditedFirst={c.credited_first === "old"} />
+                <Side title="New transaction" snap={c.new_snapshot} creditedFirst={c.credited_first === "new"} />
+
               </div>
               <Button
                 size="sm"
