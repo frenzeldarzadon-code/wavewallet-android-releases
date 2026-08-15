@@ -20,18 +20,57 @@ export function validateCashbackRate(value: number): string | null {
   return null;
 }
 
-/** The shop admin always receives whatever the chain does not take. */
-export function adminRemainder(resellerPct: number, subresellerPct: number): number {
-  return Math.max(0, 100 - Math.max(0, resellerPct) - Math.max(0, subresellerPct));
+/**
+ * The shop admin always receives everything outside the parent reseller's
+ * *total* configured share. A subreseller's share is carved out of that same
+ * total, so it never changes the admin's remainder.
+ */
+export function adminRemainder(resellerTotalPct: number, _subresellerPct = 0): number {
+  return Math.max(0, 100 - Math.max(0, Math.min(100, resellerTotalPct)));
 }
 
-/** Plain-language preview of a purchase split, used under the rate input. */
-export function describeSplit(amount: number, resellerPct: number, subresellerPct: number) {
-  const reseller = Math.round(amount * Math.max(0, resellerPct)) / 100;
-  const subreseller = Math.round(amount * Math.max(0, subresellerPct)) / 100;
+/** The parent reseller keeps whatever is left of their total share. */
+export function parentShare(resellerTotalPct: number, subresellerPct: number): number {
+  return Math.max(0, Math.max(0, resellerTotalPct) - Math.max(0, subresellerPct));
+}
+
+/**
+ * Plain-language preview of a purchase split.
+ * `resellerTotalPct` is the parent reseller's total configured share, and
+ * `subresellerPct` is the part of that total taken by the subreseller.
+ */
+export function describeSplit(amount: number, resellerTotalPct: number, subresellerPct: number) {
+  const total = Math.max(0, Math.min(100, resellerTotalPct));
+  const sub = Math.min(Math.max(0, subresellerPct), total);
+  const subreseller = Math.round(amount * sub) / 100;
+  const reseller = Math.round(amount * (total - sub)) / 100;
   const admin = Math.round((amount - reseller - subreseller) * 100) / 100;
   return { reseller, subreseller, admin: Math.max(0, admin) };
 }
+
+export interface CashbackSplitPreview {
+  role: string;
+  own: number;
+  parent_id: string | null;
+  parent_total: number;
+  parent_share: number;
+  admin_share: number;
+  max_subreseller?: number;
+}
+
+/** Server-resolved split for one member in one shop (chain-aware). */
+export async function fetchCashbackSplitPreview(
+  userId: string,
+  ecosystemId: string,
+): Promise<CashbackSplitPreview | null> {
+  const { data, error } = await supabase.rpc("cashback_split_preview", {
+    _user_id: userId,
+    _ecosystem_id: ecosystemId,
+  });
+  if (error || !data) return null;
+  return data as unknown as CashbackSplitPreview;
+}
+
 
 /** Current individual rate of one member in one shop. */
 export async function fetchMemberCashbackRate(
