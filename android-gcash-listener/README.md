@@ -112,3 +112,22 @@ displayed again.
 
 The listener is only operational once the app is installed, paired, Notification
 Access is granted, and a heartbeat has succeeded.
+
+## Getting an installable APK
+
+This project has not been compiled in Lovable (no JDK / Android SDK there).
+See **[BUILD-APK.md](./BUILD-APK.md)** for the exact click-by-click path:
+
+- **GitHub Actions (no tools needed):** push the project to GitHub, copy
+  `android-gcash-listener/.github/workflows/build-apk.yml` to the repo root
+  `.github/workflows/`, then Actions → *Build listener APK* → **Run workflow** →
+  download the **wavewallet-gcash-listener-debug-apk** artifact → unzip →
+  install `app-debug.apk`.
+- **Locally (JDK 17 + Android SDK):**
+
+  ```bash
+  cd android-gcash-listener
+  ./gradlew test
+  ./gradlew assembleDebug
+  # -> app/build/outputs/apk/debug/app-debug.apk
+  ```
