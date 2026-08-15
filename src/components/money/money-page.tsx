@@ -25,6 +25,7 @@ import {
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { FacebookSupportCard } from "@/components/facebook-support-card";
 import { PaymentMethodCards } from "@/components/money/payment-method-cards";
+import { CashInProofPicker, CashInProofViewer } from "@/components/money/cash-in-proof";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import { fetchCreditBalance } from "@/lib/wallet";
