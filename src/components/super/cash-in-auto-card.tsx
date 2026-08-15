@@ -36,6 +36,7 @@ export function CashInAutoCard() {
       amount_tolerance_php: Number(next.platform_rule?.amount_tolerance_php ?? 0),
       max_auto_amount_php: next.platform_rule?.max_auto_amount_php ?? null,
       expected_amount_php: next.platform_rule?.expected_amount_php ?? null,
+      require_listener_match: next.platform_rule?.require_listener_match ?? false,
     });
   };
 
@@ -46,6 +47,9 @@ export function CashInAutoCard() {
   if (!status) return null;
 
   const banner = matchingStatusLabel({ ...status, platform_rule: { ...rule, ecosystem_id: null } });
+  const listenerActive = status.listener_devices_active ?? 0;
+  const listenerProven = status.listener_devices_proven ?? 0;
+  const listenerReady = listenerProven > 0;
 
   const save = async (next: typeof rule) => {
     if (!Number.isFinite(next.amount_tolerance_php) || next.amount_tolerance_php < 0) {
@@ -60,6 +64,7 @@ export function CashInAutoCard() {
         tolerance: next.amount_tolerance_php,
         maxAmount: next.max_auto_amount_php,
         expectedAmount: next.expected_amount_php,
+        requireListener: next.require_listener_match ?? false,
       });
       setRule(next);
       toast.success(
@@ -108,6 +113,34 @@ export function CashInAutoCard() {
             disabled={saving}
             onCheckedChange={(v) => void save({ ...rule, enabled: v })}
           />
+        </div>
+
+        <div className="rounded-lg border border-border p-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <Label htmlFor="auto-listener">Also require a listener phone to confirm the payment</Label>
+              <p className="text-xs text-muted-foreground">
+                When this is on, a cash in is only settled automatically if a paired listener phone also saw a
+                matching GCash notification. Leave it off until the companion phone has been set up and tested —
+                otherwise nothing would be approved automatically.
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Paired phones ready: {listenerProven} of {listenerActive} active ·{" "}
+                {status.listener_matches_30d ?? 0} confirmed payments in the last 30 days
+              </p>
+              {!listenerReady ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Pair a phone and send one test notification first to unlock this.
+                </p>
+              ) : null}
+            </div>
+            <Switch
+              id="auto-listener"
+              checked={rule.require_listener_match ?? false}
+              disabled={saving || (!listenerReady && !(rule.require_listener_match ?? false))}
+              onCheckedChange={(v) => void save({ ...rule, require_listener_match: v })}
+            />
+          </div>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-3">
