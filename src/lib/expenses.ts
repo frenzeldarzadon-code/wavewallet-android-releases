@@ -13,6 +13,11 @@ import { periodTotalsOf, subtractPeriods, type PeriodTotals } from "@/lib/earnin
 
 export type ExpenseScope = "ecosystem" | "platform";
 
+/** Category used for every Lovable AI credit purchase recorded by the platform owner. */
+export const LOVABLE_CREDITS_CATEGORY = "Lovable AI Credits";
+/** Provider tag stored alongside those expenses. */
+export const LOVABLE_PROVIDER = "Lovable";
+
 export interface ExpenseRow {
   id: string;
   scope: ExpenseScope;
@@ -20,6 +25,9 @@ export interface ExpenseRow {
   amount: number;
   description: string;
   category: string | null;
+  provider: string | null;
+  provider_reference: string | null;
+  currency: string | null;
   created_by: string;
   created_by_name: string | null;
   spent_at: string;
@@ -38,7 +46,7 @@ export async function fetchExpenses(q: ExpenseQuery): Promise<ExpenseRow[]> {
   let query = supabase
     .from("business_expenses")
     .select(
-      "id, scope, ecosystem_id, amount, description, category, created_by, created_by_name, spent_at, created_at",
+      "id, scope, ecosystem_id, amount, description, category, provider, provider_reference, currency, created_by, created_by_name, spent_at, created_at",
     )
     .eq("scope", q.scope)
     .order("spent_at", { ascending: false })
@@ -50,6 +58,7 @@ export async function fetchExpenses(q: ExpenseQuery): Promise<ExpenseRow[]> {
   if (error) throw new Error(error.message);
   return ((data ?? []) as unknown as ExpenseRow[]).map((r) => ({ ...r, amount: Number(r.amount) }));
 }
+
 
 export interface NewExpense {
   amount: number;
