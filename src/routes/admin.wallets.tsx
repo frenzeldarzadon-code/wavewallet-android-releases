@@ -184,19 +184,22 @@ function AdminWallets() {
               ...(reference ? { reference } : {}),
             })
           : value > 0
-            ? // Positive amounts move credits out of the admin's own wallet;
-              // creating credits is a platform-owner power.
+            ? // Positive amounts move credits out of the admin's own wallet.
+              // The platform owner is the one exception: the database mints
+              // them into the member's wallet in this shop.
               await adminLoadCredits({
                 userId: target.id,
                 amount: value,
                 reason,
                 reference,
+                ecosystemId: ecosystemDbId,
               })
             : await adminAdjustCredits({
                 userId: target.id,
                 amount: value,
                 reason,
                 reference,
+                ecosystemId: ecosystemDbId,
               });
       toast.success(mode === "points" ? "Points updated" : "Wallet updated", {
         description: `${value > 0 ? "+" : "−"}${
