@@ -226,6 +226,11 @@ export function MoneyRequestsCard() {
                     ) : (
                       <p className="mt-1 text-muted-foreground">Payment screenshot: not attached</p>
                     )}
+                    <p className="text-muted-foreground">
+                      {c.listener_event_id
+                        ? "Listener phone confirmed a matching GCash notification"
+                        : "No listener confirmation for this payment"}
+                    </p>
                     {c.status === "approved" ? (
                       <p className="mt-1 text-muted-foreground">
                         {c.approval_method === "automatic"

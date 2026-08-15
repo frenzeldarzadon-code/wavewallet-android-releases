@@ -26,6 +26,8 @@ export interface AutoApprovalRule {
   max_auto_amount_php: number | null;
   /** Optional exact amount every automatic cash in must match. */
   expected_amount_php: number | null;
+  /** Also require a paired listener phone to have seen the payment. */
+  require_listener_match?: boolean;
 }
 
 export interface ShopAutoRule extends AutoApprovalRule {
@@ -39,6 +41,12 @@ export interface CashInAutoStatus {
   shops_with_number: number;
   duplicates_blocked_30d: number;
   auto_approved_30d: number;
+  /** Paired listener phones that are active. */
+  listener_devices_active?: number;
+  /** Active listener phones that have actually delivered a notification. */
+  listener_devices_proven?: number;
+  listener_matches_30d?: number;
+  listener_last_event_at?: string | null;
 }
 
 export const DEFAULT_AUTO_RULE: AutoApprovalRule = {
@@ -46,6 +54,7 @@ export const DEFAULT_AUTO_RULE: AutoApprovalRule = {
   amount_tolerance_php: 0,
   max_auto_amount_php: null,
   expected_amount_php: null,
+  require_listener_match: false,
 };
 
 /** Same normalisation as `public.normalize_payment_reference`. */
@@ -178,6 +187,7 @@ export async function setCashInAutoApproval(input: {
   tolerance?: number;
   maxAmount?: number | null;
   expectedAmount?: number | null;
+  requireListener?: boolean;
 }): Promise<void> {
   // The RPC treats a null shop as "platform default"; a null max/expected
   // amount means "no ceiling" / "any amount".
@@ -187,6 +197,7 @@ export async function setCashInAutoApproval(input: {
     _tolerance: input.tolerance ?? 0,
     _max_amount: input.maxAmount ?? null,
     _expected_amount: input.expectedAmount ?? null,
+    _require_listener: input.requireListener ?? false,
   } as unknown as Parameters<typeof supabase.rpc<"set_cash_in_auto_approval">>[1];
   const { error } = await supabase.rpc("set_cash_in_auto_approval", args);
 
