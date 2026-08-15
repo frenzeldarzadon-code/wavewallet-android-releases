@@ -342,21 +342,26 @@ export interface PeriodTotals {
   month: number;
   quarter: number;
   year: number;
+  /** Lifetime total over every record supplied, regardless of calendar year. */
+  total: number;
 }
 
 /**
- * Today / this month / this quarter / this year net totals for the given
- * earning types, using reporting-timezone calendar boundaries. Reversed rows
- * are excluded, so these cards reconcile with the ledger-backed history.
+ * Today / this month / this quarter / this year / lifetime net totals for the
+ * given earning types, using reporting-timezone calendar boundaries. Reversed
+ * rows are excluded, so these cards reconcile with the ledger-backed history.
+ * `total` covers every row handed in, so callers wanting a true lifetime figure
+ * must fetch a lifetime range.
  */
 export function periodTotals(rows: EarningRow[], types?: EarningType[]): PeriodTotals {
   const now = zonedParts(new Date());
   const q = Math.floor((now.month - 1) / 3);
-  const out: PeriodTotals = { today: 0, month: 0, quarter: 0, year: 0 };
+  const out: PeriodTotals = { today: 0, month: 0, quarter: 0, year: 0, total: 0 };
   for (const r of rows) {
     if (r.status === "reversed") continue;
     if (types && !types.includes(r.earning_type)) continue;
     const p = zonedParts(r.occurred_at);
+    out.total += r.earning_amount;
     if (p.year !== now.year) continue;
     out.year += r.earning_amount;
     if (Math.floor((p.month - 1) / 3) === q) out.quarter += r.earning_amount;
@@ -369,10 +374,10 @@ export function periodTotals(rows: EarningRow[], types?: EarningType[]): PeriodT
 }
 
 /**
- * Generic today / month / quarter / year rollup for any dated amount, using the
- * same reporting-timezone calendar boundaries as `periodTotals`. Shared by the
- * expense, points-earnings and cash-out-fee dashboards so every role's periods
- * are computed identically.
+ * Generic today / month / quarter / year / lifetime rollup for any dated
+ * amount, using the same reporting-timezone calendar boundaries as
+ * `periodTotals`. Shared by the expense, points-earnings and cash-out-fee
+ * dashboards so every role's periods are computed identically.
  */
 export function periodTotalsOf<T>(
   items: T[],
@@ -381,11 +386,12 @@ export function periodTotalsOf<T>(
 ): PeriodTotals {
   const now = zonedParts(new Date());
   const q = Math.floor((now.month - 1) / 3);
-  const out: PeriodTotals = { today: 0, month: 0, quarter: 0, year: 0 };
+  const out: PeriodTotals = { today: 0, month: 0, quarter: 0, year: 0, total: 0 };
   for (const item of items) {
     const value = amount(item);
     if (!value) continue;
     const p = zonedParts(at(item));
+    out.total += value;
     if (p.year !== now.year) continue;
     out.year += value;
     if (Math.floor((p.month - 1) / 3) === q) out.quarter += value;
@@ -397,24 +403,38 @@ export function periodTotalsOf<T>(
   return out;
 }
 
-/** Element-wise A − B for the four dashboard periods (earnings less expenses). */
+/** Element-wise A − B for the dashboard periods (earnings less expenses). */
 export function subtractPeriods(a: PeriodTotals, b: PeriodTotals): PeriodTotals {
   return {
     today: a.today - b.today,
     month: a.month - b.month,
     quarter: a.quarter - b.quarter,
     year: a.year - b.year,
+    total: a.total - b.total,
   };
 }
 
-/** Element-wise A + B for the four dashboard periods. */
+/** Element-wise A + B for the dashboard periods. */
 export function addPeriods(a: PeriodTotals, b: PeriodTotals): PeriodTotals {
   return {
     today: a.today + b.today,
     month: a.month + b.month,
     quarter: a.quarter + b.quarter,
     year: a.year + b.year,
+    total: a.total + b.total,
   };
 }
 
-export const EMPTY_PERIOD_TOTALS: PeriodTotals = { today: 0, month: 0, quarter: 0, year: 0 };
+export const EMPTY_PERIOD_TOTALS: PeriodTotals = {
+  today: 0,
+  month: 0,
+  quarter: 0,
+  year: 0,
+  total: 0,
+};
+
+/** Earliest instant dashboards query so "total" really means lifetime. */
+export function lifetimeFrom(): Date {
+  return new Date("2000-01-01T00:00:00.000Z");
+}
+
