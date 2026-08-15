@@ -143,16 +143,17 @@ export function ShopTransferCard({
   const Frame = ({ children }: { children: ReactNode }) =>
     embedded ? (
       <div className="space-y-4">
+        <p className="text-sm font-semibold">Transfer Credits to Another Shop</p>
         <p className="text-xs text-muted-foreground">
-          Move credits to your own wallet in another shop. Credits travel through your global
-          Universe wallet and stay in your name.
+          Move credits to your own wallet in another shop you are approved in. This is not Cash In
+          or Cash Out — credits travel through your global Universe wallet and stay in your name.
         </p>
         {children}
       </div>
     ) : (
       <PageSection
-        title="Move credits between your shops"
-        description="Credits travel through your global Universe wallet and stay in your name."
+        title="Transfer Credits to Another Shop"
+        description="Move credits between two of your own shop wallets. Credits stay in your name; a flat platform fee applies."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-4">{children}</CardContent>
