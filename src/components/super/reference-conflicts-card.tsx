@@ -14,7 +14,9 @@ import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
   creditedFirstLabel,
   fetchReferenceConflicts,
+  maskAccountNumber,
   resolveReferenceConflict,
+  verificationStatus,
   RECEIPT_CHECK_LABEL,
   type ConflictSnapshot,
   type ReceiptCheck,
@@ -29,7 +31,7 @@ const line = (label: string, value: string) => (
 
 const when = (value: string | null | undefined) => (value ? shortDateTime(value) : "not recorded");
 
-function Side({ title, snap }: { title: string; snap: ConflictSnapshot | null }) {
+function Side({ title, snap, creditedFirst }: { title: string; snap: ConflictSnapshot | null; creditedFirst: boolean }) {
   if (!snap) {
     return (
       <div className="rounded-lg border border-border p-3 text-xs">
@@ -39,35 +41,53 @@ function Side({ title, snap }: { title: string; snap: ConflictSnapshot | null })
     );
   }
   return (
-    <div className="rounded-lg border border-border p-3 text-xs">
-      <div className="mb-2 flex items-center justify-between gap-2">
+    <div className={`rounded-lg border p-3 text-xs ${creditedFirst ? "border-success" : "border-border"}`}>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-semibold">{title}</p>
-        <StatusBadge tone={snap.status === "approved" ? "success" : snap.status === "rejected" ? "danger" : "warning"}>
-          {snap.status ?? "unknown"}
-        </StatusBadge>
+        <div className="flex flex-wrap gap-1">
+          {creditedFirst ? <StatusBadge tone="success">CREDITED FIRST</StatusBadge> : null}
+          <StatusBadge tone={verificationStatus(snap) === "VERIFIED" ? "success" : "warning"}>
+            {verificationStatus(snap)}
+          </StatusBadge>
+          <StatusBadge tone={snap.status === "approved" ? "success" : snap.status === "rejected" ? "danger" : "warning"}>
+            {snap.status ?? "unknown"}
+          </StatusBadge>
+        </div>
       </div>
       {line("Cash in", snap.reference ?? snap.cash_in_id)}
-      {line("Payment reference", snap.payment_reference ?? "not provided")}
+      {line("Transaction id", snap.cash_in_id)}
+      {line("Submitted reference", snap.submitted_reference ?? snap.payment_reference ?? "not provided")}
       {line("Reference on receipt", snap.receipt_reference ?? "not read")}
       {line("Receipt check", RECEIPT_CHECK_LABEL[(snap.receipt_check as ReceiptCheck) ?? "pending"])}
+      {line("Receipt read", when(snap.receipt_read_at))}
       {line("Amount", snap.amount_php == null ? "unknown" : peso(Number(snap.amount_php)))}
       {line("Credits", snap.credits == null ? "unknown" : Number(snap.credits).toLocaleString())}
-      {line("Paid from", snap.sender_number ?? "not provided")}
+      {line("Paid from", maskAccountNumber(snap.sender_number))}
       {line("Payer name", snap.sender_name ?? "not reported")}
       {line("Receiving shop", snap.shop_name ?? "unknown")}
-      {line("Receiving number", snap.receiving_number ?? "not configured")}
+      {line("Receiving number", maskAccountNumber(snap.receiving_number))}
       {line("Credited to", snap.credited_to_name ?? snap.credited_to_user_id ?? "unknown")}
+      {line("Reseller involved", snap.reseller_name ?? "none")}
       {line("Approval", snap.approval_method ?? "not approved")}
+      {line("Approved by", snap.approved_by_name ?? "not approved")}
+      {line("Approved at", when(snap.approved_at))}
       {line("Payment notification seen", when(snap.payment_seen_at))}
       {line("Request submitted", when(snap.requested_at))}
       {line("Reviewed", when(snap.reviewed_at))}
-      {line("Credits released", when(snap.credits_released_at))}
-      {line("Screenshot", snap.has_screenshot ? "attached" : "not attached")}
+      {line(
+        "Credits released",
+        snap.credits_released
+          ? `${Number(snap.credits_released_amount ?? snap.credits ?? 0).toLocaleString()} credits on ${when(snap.credits_released_at)}`
+          : "no credits released",
+      )}
+      {line("Screenshot", snap.has_screenshot ? "attached to the transaction" : "not attached")}
       {line("Listener event", snap.listener_event_id ?? "none")}
+      {line("Ledger entry", snap.ledger_id ?? "none")}
       {line("Audit key", snap.request_key ?? snap.cash_in_id)}
     </div>
   );
 }
+
 
 export function ReferenceConflictsCard() {
   const [rows, setRows] = useState<ReferenceConflict[]>([]);
