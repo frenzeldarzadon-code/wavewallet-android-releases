@@ -6294,6 +6294,15 @@ export type Database = {
           tx_id: string
         }[]
       }
+      transfer_credits_in_shop: {
+        Args: {
+          _amount: number
+          _ecosystem_id: string
+          _note?: string
+          _recipient_id: string
+        }
+        Returns: string
+      }
       transfer_reversal_info: { Args: { _tx_id: string }; Returns: Json }
       unique_handle: {
         Args: { _base: string; _exclude?: string }
@@ -6817,6 +6826,16 @@ export type Database = {
           oldest_entry: string
           purge_explained: boolean
           user_id: string
+        }[]
+      }
+      wallet_upward_recipients: {
+        Args: { _ecosystem_id: string }
+        Returns: {
+          avatar_path: string
+          full_name: string
+          handle: string
+          id: string
+          relation: string
         }[]
       }
     }
