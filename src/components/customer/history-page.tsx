@@ -21,7 +21,14 @@ import {
 
 type Purchase = Awaited<ReturnType<typeof fetchMyPurchases>>[number];
 
-export function HistoryPage() {
+export interface HistoryPageProps {
+  /** Read another shop wallet the caller owns; defaults to the active shop. */
+  ecosystemId?: string | null;
+  /** Shop name, shown so it is clear which wallet the history belongs to. */
+  shopName?: string;
+}
+
+export function HistoryPage({ ecosystemId, shopName }: HistoryPageProps = {}) {
   const { account, ecosystemDbId } = useSession();
   const [filter, setFilter] = useState("all");
   const [entries, setEntries] = useState<CreditEntry[]>([]);
@@ -29,20 +36,21 @@ export function HistoryPage() {
   const [lots, setLots] = useState<CreditLot[]>([]);
   const [loading, setLoading] = useState(true);
   const userId = account?.id ?? null;
+  const scopeId = ecosystemId === undefined ? ecosystemDbId : ecosystemId;
 
   const load = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
     const [l, p, k] = await Promise.all([
-      fetchCreditLedger(userId, ecosystemDbId, 100),
-      fetchMyPurchases(userId, ecosystemDbId),
-      fetchCreditLots(userId, ecosystemDbId),
+      fetchCreditLedger(userId, scopeId, 100),
+      fetchMyPurchases(userId, scopeId),
+      fetchCreditLots(userId, scopeId),
     ]);
     setEntries(l);
     setPurchases(p);
     setLots(k);
     setLoading(false);
-  }, [userId, ecosystemDbId]);
+  }, [userId, scopeId]);
 
   useEffect(() => {
     void load();
@@ -51,7 +59,15 @@ export function HistoryPage() {
   if (!account) return null;
 
   return (
-    <PageSection title="Transaction history" description="Every movement carries a unique transaction ID.">
+    <PageSection
+      title="Transaction history"
+      description={
+        shopName
+          ? `${shopName} · every movement carries a unique transaction ID.`
+          : "Every movement carries a unique transaction ID."
+      }
+    >
+
       <Tabs value={filter} onValueChange={setFilter} className="mb-3">
         <TabsList className="flex w-full flex-wrap justify-start">
           <TabsTrigger value="all">Credits</TabsTrigger>
