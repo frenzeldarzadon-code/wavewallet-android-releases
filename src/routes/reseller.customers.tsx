@@ -13,8 +13,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState, PageSection } from "@/components/ui-kit";
 import { InviteMemberCard } from "@/components/invite-member-card";
+import { SubresellersPanel } from "@/components/reseller/subresellers-panel";
+
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
@@ -111,12 +114,27 @@ function ResellerCustomers() {
     }
   };
 
+  const isReseller = account.role === "reseller";
+
   return (
     <>
+      <Tabs defaultValue="customers">
+        {isReseller ? (
+          <TabsList className="mb-4 w-full">
+            <TabsTrigger value="customers" className="flex-1">
+              Customers
+            </TabsTrigger>
+            <TabsTrigger value="subresellers" className="flex-1">
+              Subresellers
+            </TabsTrigger>
+          </TabsList>
+        ) : null}
+        <TabsContent value="customers" className="mt-0">
       <PageSection
         title="Load customer credits"
         description={`Available in your wallet: ${peso(balance)} · any customer in ${ecosystem.name}, plus the subresellers you own.`}
       >
+
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-3">
             <div className="space-y-1.5">
@@ -218,6 +236,16 @@ function ResellerCustomers() {
           </Card>
         )}
       </PageSection>
+        </TabsContent>
+
+        {isReseller ? (
+          <TabsContent value="subresellers" className="mt-0">
+            <SubresellersPanel balance={balance} onTransferred={load} />
+          </TabsContent>
+        ) : null}
+      </Tabs>
+
+
 
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent className="sm:max-w-sm">
