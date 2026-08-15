@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WaveWallet Listener</string>
+    <string name="listener_service_label">WaveWallet GCash notification listener</string>
+    <string name="fg_channel_name">Listener running</string>
+    <string name="fg_notification_title">WaveWallet listener active</string>
+    <string name="fg_notification_text">Watching GCash payment notifications only.</string>
+</resources>
