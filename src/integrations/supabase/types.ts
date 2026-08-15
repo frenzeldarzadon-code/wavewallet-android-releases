@@ -4728,6 +4728,10 @@ export type Database = {
         }[]
       }
       mark_notifications_read: { Args: { _ids?: string[] }; Returns: undefined }
+      member_cashback_rate: {
+        Args: { _ecosystem_id: string; _user_id: string }
+        Returns: number
+      }
       member_email_taken: {
         Args: { _email: string; _exclude?: string }
         Returns: boolean
@@ -5857,6 +5861,15 @@ export type Database = {
           _subreseller_percent: number
         }
         Returns: undefined
+      }
+      set_member_cashback_rate: {
+        Args: {
+          _ecosystem_id: string
+          _percent: number
+          _reason?: string
+          _user_id: string
+        }
+        Returns: number
       }
       set_member_status: {
         Args: {
