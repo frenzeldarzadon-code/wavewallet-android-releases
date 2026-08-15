@@ -6,7 +6,7 @@
  * Credit — reachable per row. Both actions keep their existing server-side
  * authorization; this screen is only a launcher.
  */
-import { Coins, KeyRound, LifeBuoy, Percent, Search } from "lucide-react";
+import { Coins, KeyRound, Percent, Search, UserCog } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,7 @@ import { MemberAvatar } from "@/components/member-avatar";
 import { AccessAccountDialog, type AccessTarget } from "@/components/access-account-dialog";
 import { ManualCreditDialog } from "@/components/super/manual-credit-dialog";
 import { CashbackRateDialog, type CashbackTarget } from "@/components/cashback-rate-dialog";
+import { MemberAccountDialog } from "@/components/super/member-account-dialog";
 import { fetchEcosystemNames } from "@/lib/credit-management";
 import {
   DIRECTORY_ROLES,
@@ -34,11 +35,7 @@ import {
 } from "@/lib/platform-members";
 import { roleLabel } from "@/lib/wavewallet";
 import { RoleBadge } from "@/components/role-badge";
-import {
-  resetBlockedReason,
-  sendAccountRecovery,
-  visibleIdentifiers,
-} from "@/lib/account-assistance";
+import { visibleIdentifiers } from "@/lib/account-assistance";
 
 const ALL = "all";
 
@@ -51,27 +48,8 @@ export function MembersDirectory() {
   const [loading, setLoading] = useState(true);
   const [accessTarget, setAccessTarget] = useState<AccessTarget | null>(null);
   const [creditTarget, setCreditTarget] = useState<PlatformMember | null>(null);
-  const [recoveryBusy, setRecoveryBusy] = useState<string | null>(null);
+  const [accountTarget, setAccountTarget] = useState<PlatformMember | null>(null);
   const [rateTarget, setRateTarget] = useState<CashbackTarget | null>(null);
-
-  /** Sends the member their own reset link. No credential is ever revealed. */
-  const assist = async (m: PlatformMember) => {
-    setRecoveryBusy(m.id);
-    try {
-      await sendAccountRecovery({
-        id: m.id,
-        full_name: m.full_name,
-        email: m.email,
-        phone: m.phone,
-        ecosystem_id: m.ecosystem_id,
-      });
-      toast.success(`Recovery link sent to ${m.full_name}'s email.`);
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setRecoveryBusy(null);
-    }
-  };
 
   useEffect(() => {
     void fetchEcosystemNames().then(setShops).catch(() => undefined);
@@ -197,12 +175,9 @@ export function MembersDirectory() {
                       size="sm"
                       variant="outline"
                       className="h-9"
-                      disabled={recoveryBusy !== null || resetBlockedReason(m) !== null}
-                      title={resetBlockedReason(m) ?? "Email the member a secure reset link"}
-                      onClick={() => void assist(m)}
+                      onClick={() => setAccountTarget(m)}
                     >
-                      <LifeBuoy className="size-4" />
-                      {recoveryBusy === m.id ? "Sending…" : "Send reset link"}
+                      <UserCog className="size-4" /> Manage account
                     </Button>
                     {(m.role === "reseller" || m.role === "subreseller") && m.ecosystem_id ? (
                       <Button
@@ -245,6 +220,11 @@ export function MembersDirectory() {
       <CashbackRateDialog
         target={rateTarget}
         onClose={() => setRateTarget(null)}
+        onSaved={() => void load()}
+      />
+      <MemberAccountDialog
+        member={accountTarget}
+        onClose={() => setAccountTarget(null)}
         onSaved={() => void load()}
       />
       <AccessAccountDialog target={accessTarget} onClose={() => setAccessTarget(null)} />
