@@ -13,15 +13,13 @@ import {
 } from "@/lib/navigation";
 
 describe("role sidebar visibility", () => {
-  it("gives a customer wallet, shop, rewards, transfer, history and profile", () => {
+  it("gives a customer the wallet center, shop, rewards and profile", () => {
     const paths = navPaths(customerNav());
     expect(paths).toEqual(
       expect.arrayContaining([
         "/app",
         "/app/shop",
         "/app/rewards",
-        "/app/transfer",
-        "/app/history",
         "/app/profile",
       ]),
     );
@@ -41,8 +39,6 @@ describe("role sidebar visibility", () => {
         "/reseller/wallet",
         "/reseller/shop",
         "/reseller/rewards",
-        "/reseller/transfer",
-        "/reseller/history",
         "/reseller/profile",
         "/reseller/applications",
       ]),
