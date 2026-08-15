@@ -32,6 +32,19 @@ export interface UpwardRecipient {
   relation: "reseller" | "admin";
 }
 
+/** Anyone the caller may send credits to inside ONE shop, as decided by the database. */
+export interface ShopRecipient {
+  id: string;
+  full_name: string;
+  handle: string | null;
+  avatar_path: string | null;
+  /** Role held inside this shop. */
+  role: Role | null;
+  /** How they relate to the caller: admin / reseller (my parent) / subreseller (my downline) / customer. */
+  relation: string;
+}
+
+
 /* ------------------------------------------------------------------ */
 /* Pure helpers (unit-tested)                                          */
 /* ------------------------------------------------------------------ */
