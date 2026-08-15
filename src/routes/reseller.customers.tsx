@@ -111,12 +111,27 @@ function ResellerCustomers() {
     }
   };
 
+  const isReseller = account.role === "reseller";
+
   return (
     <>
+      <Tabs defaultValue="customers">
+        {isReseller ? (
+          <TabsList className="mb-4 w-full">
+            <TabsTrigger value="customers" className="flex-1">
+              Customers
+            </TabsTrigger>
+            <TabsTrigger value="subresellers" className="flex-1">
+              Subresellers
+            </TabsTrigger>
+          </TabsList>
+        ) : null}
+        <TabsContent value="customers" className="mt-0">
       <PageSection
         title="Load customer credits"
         description={`Available in your wallet: ${peso(balance)} · any customer in ${ecosystem.name}, plus the subresellers you own.`}
       >
+
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-3">
             <div className="space-y-1.5">
