@@ -222,7 +222,15 @@ export function MoneyRequestsCard() {
                     ) : (
                       <p className="mt-1 text-muted-foreground">Payment screenshot: not attached</p>
                     )}
+                    {c.status === "approved" ? (
+                      <p className="mt-1 text-muted-foreground">
+                        {c.approval_method === "automatic"
+                          ? `Approved automatically from a verified payment${c.auto_match_note ? ` · ${c.auto_match_note}` : ""}`
+                          : `Approved manually by ${c.reviewer_name ?? "the platform owner"}`}
+                      </p>
+                    ) : null}
                   </div>
+
                   <StatusBadge tone={tone(c.status)}>{statusLabel(c.status)}</StatusBadge>
                 </div>
                 {c.status === "pending" ? (

@@ -161,9 +161,59 @@ export type Database = {
           },
         ]
       }
+      cash_in_auto_rules: {
+        Row: {
+          amount_tolerance_php: number
+          ecosystem_id: string | null
+          enabled: boolean
+          id: string
+          max_auto_amount_php: number | null
+          require_reference_match: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          amount_tolerance_php?: number
+          ecosystem_id?: string | null
+          enabled?: boolean
+          id?: string
+          max_auto_amount_php?: number | null
+          require_reference_match?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          amount_tolerance_php?: number
+          ecosystem_id?: string | null
+          enabled?: boolean
+          id?: string
+          max_auto_amount_php?: number | null
+          require_reference_match?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_in_auto_rules_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_in_auto_rules_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cash_in_requests: {
         Row: {
           amount_php: number
+          approval_method: string
+          auto_match_note: string | null
           created_at: string
           credits: number
           decision_reason: string | null
@@ -179,6 +229,7 @@ export type Database = {
           net_php: number | null
           notes: string | null
           payer_reference: string | null
+          payer_reference_key: string | null
           proof_path: string | null
           rate_credits: number
           rate_php: number
@@ -192,9 +243,12 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string
+          verified_payment_id: string | null
         }
         Insert: {
           amount_php: number
+          approval_method?: string
+          auto_match_note?: string | null
           created_at?: string
           credits: number
           decision_reason?: string | null
@@ -210,6 +264,7 @@ export type Database = {
           net_php?: number | null
           notes?: string | null
           payer_reference?: string | null
+          payer_reference_key?: string | null
           proof_path?: string | null
           rate_credits: number
           rate_php: number
@@ -223,9 +278,12 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id: string
+          verified_payment_id?: string | null
         }
         Update: {
           amount_php?: number
+          approval_method?: string
+          auto_match_note?: string | null
           created_at?: string
           credits?: number
           decision_reason?: string | null
@@ -241,6 +299,7 @@ export type Database = {
           net_php?: number | null
           notes?: string | null
           payer_reference?: string | null
+          payer_reference_key?: string | null
           proof_path?: string | null
           rate_credits?: number
           rate_php?: number
@@ -254,6 +313,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+          verified_payment_id?: string | null
         }
         Relationships: [
           {
@@ -275,6 +335,13 @@ export type Database = {
             columns: ["method_id"]
             isOneToOne: false
             referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_in_requests_verified_payment_id_fkey"
+            columns: ["verified_payment_id"]
+            isOneToOne: false
+            referencedRelation: "verified_payments"
             referencedColumns: ["id"]
           },
         ]
@@ -1442,6 +1509,53 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_feed_sources: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          last_error: string | null
+          last_event_at: string | null
+          payment_method_id: string | null
+          provider: string
+          secret_name: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          last_error?: string | null
+          last_event_at?: string | null
+          payment_method_id?: string | null
+          provider: string
+          secret_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          last_error?: string | null
+          last_event_at?: string | null
+          payment_method_id?: string | null
+          provider?: string
+          secret_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_feed_sources_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
             referencedColumns: ["id"]
           },
         ]
@@ -3563,6 +3677,85 @@ export type Database = {
           },
         ]
       }
+      verified_payments: {
+        Row: {
+          account_ref: string | null
+          amount_php: number
+          consumed_at: string | null
+          consumed_cash_in_id: string | null
+          id: string
+          paid_at: string
+          payer_name: string | null
+          payer_reference: string | null
+          payer_reference_key: string | null
+          payment_method_id: string | null
+          provider: string
+          provider_txn_id: string
+          raw: Json
+          received_at: string
+          source_id: string | null
+          status: string
+        }
+        Insert: {
+          account_ref?: string | null
+          amount_php: number
+          consumed_at?: string | null
+          consumed_cash_in_id?: string | null
+          id?: string
+          paid_at?: string
+          payer_name?: string | null
+          payer_reference?: string | null
+          payer_reference_key?: string | null
+          payment_method_id?: string | null
+          provider: string
+          provider_txn_id: string
+          raw?: Json
+          received_at?: string
+          source_id?: string | null
+          status?: string
+        }
+        Update: {
+          account_ref?: string | null
+          amount_php?: number
+          consumed_at?: string | null
+          consumed_cash_in_id?: string | null
+          id?: string
+          paid_at?: string
+          payer_name?: string | null
+          payer_reference?: string | null
+          payer_reference_key?: string | null
+          payment_method_id?: string | null
+          provider?: string
+          provider_txn_id?: string
+          raw?: Json
+          received_at?: string
+          source_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verified_payments_consumed_cash_in_id_fkey"
+            columns: ["consumed_cash_in_id"]
+            isOneToOne: false
+            referencedRelation: "cash_in_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verified_payments_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verified_payments_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "payment_feed_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voucher_codes: {
         Row: {
           code: string
@@ -4101,6 +4294,8 @@ export type Database = {
         Args: { _id: string }
         Returns: {
           amount_php: number
+          approval_method: string
+          auto_match_note: string | null
           created_at: string
           credits: number
           decision_reason: string | null
@@ -4116,6 +4311,7 @@ export type Database = {
           net_php: number | null
           notes: string | null
           payer_reference: string | null
+          payer_reference_key: string | null
           proof_path: string | null
           rate_credits: number
           rate_php: number
@@ -4129,6 +4325,7 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string
+          verified_payment_id: string | null
         }
         SetofOptions: {
           from: "*"
@@ -4181,6 +4378,17 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      cash_in_auto_rule: {
+        Args: { _ecosystem: string }
+        Returns: {
+          amount_tolerance_php: number
+          enabled: boolean
+          max_auto_amount_php: number
+          require_reference_match: boolean
+          scope: string
+        }[]
+      }
+      cash_in_auto_status: { Args: never; Returns: Json }
       cashback_chain: {
         Args: { _ecosystem_id: string; _source: string }
         Returns: {
@@ -4931,6 +5139,7 @@ export type Database = {
       }
       new_tx_id: { Args: never; Returns: string }
       normalize_handle: { Args: { _handle: string }; Returns: string }
+      normalize_payment_reference: { Args: { _ref: string }; Returns: string }
       notify_handle_mentions: {
         Args: {
           _actor: string
@@ -5225,6 +5434,19 @@ export type Database = {
               isSetofReturn: false
             }
           }
+      record_verified_payment: {
+        Args: {
+          _account_ref?: string
+          _amount_php: number
+          _paid_at?: string
+          _payer_name?: string
+          _payer_reference?: string
+          _provider: string
+          _provider_txn_id: string
+          _raw?: Json
+        }
+        Returns: Json
+      }
       refund_voucher_sale: {
         Args: { _reason: string; _sale_id: string }
         Returns: {
@@ -5256,6 +5478,8 @@ export type Database = {
         }
         Returns: {
           amount_php: number
+          approval_method: string
+          auto_match_note: string | null
           created_at: string
           credits: number
           decision_reason: string | null
@@ -5271,6 +5495,7 @@ export type Database = {
           net_php: number | null
           notes: string | null
           payer_reference: string | null
+          payer_reference_key: string | null
           proof_path: string | null
           rate_credits: number
           rate_php: number
@@ -5284,6 +5509,7 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string
+          verified_payment_id: string | null
         }
         SetofOptions: {
           from: "*"
@@ -5451,6 +5677,8 @@ export type Database = {
         Args: { _action: string; _id: string; _reason?: string }
         Returns: {
           amount_php: number
+          approval_method: string
+          auto_match_note: string | null
           created_at: string
           credits: number
           decision_reason: string | null
@@ -5466,6 +5694,7 @@ export type Database = {
           net_php: number | null
           notes: string | null
           payer_reference: string | null
+          payer_reference_key: string | null
           proof_path: string | null
           rate_credits: number
           rate_php: number
@@ -5479,6 +5708,7 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string
+          verified_payment_id: string | null
         }
         SetofOptions: {
           from: "*"
@@ -5702,6 +5932,31 @@ export type Database = {
       set_admin_sale_commission: {
         Args: { _ecosystem_id: string; _percent: number }
         Returns: number
+      }
+      set_cash_in_auto_approval: {
+        Args: {
+          _ecosystem: string
+          _enabled: boolean
+          _max_amount?: number
+          _require_reference?: boolean
+          _tolerance?: number
+        }
+        Returns: {
+          amount_tolerance_php: number
+          ecosystem_id: string | null
+          enabled: boolean
+          id: string
+          max_auto_amount_php: number | null
+          require_reference_match: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cash_in_auto_rules"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       set_ecosystem_commission: {
         Args: { _ecosystem_id: string; _percent: number }
@@ -5990,6 +6245,58 @@ export type Database = {
       set_subreseller_parent: {
         Args: { _reseller_id: string; _user_id: string }
         Returns: undefined
+      }
+      settle_cash_in_approval: {
+        Args: {
+          _actor: string
+          _actor_name: string
+          _approval_method: string
+          _id: string
+          _note?: string
+          _payment?: string
+          _reason?: string
+        }
+        Returns: {
+          amount_php: number
+          approval_method: string
+          auto_match_note: string | null
+          created_at: string
+          credits: number
+          decision_reason: string | null
+          ecosystem_id: string | null
+          fee_percent: number
+          fee_php: number
+          id: string
+          ledger_id: string | null
+          method_details: Json
+          method_id: string | null
+          method_name: string
+          method_type: string
+          net_php: number | null
+          notes: string | null
+          payer_reference: string | null
+          payer_reference_key: string | null
+          proof_path: string | null
+          rate_credits: number
+          rate_php: number
+          reference: string
+          request_key: string | null
+          requester_name: string
+          requester_role: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_name: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          verified_payment_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cash_in_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       shop_store_settings: {
         Args: { _ecosystem_id: string }
@@ -6423,6 +6730,7 @@ export type Database = {
         Returns: string
       }
       transfer_reversal_info: { Args: { _tx_id: string }; Returns: Json }
+      try_auto_approve_cash_in: { Args: { _id: string }; Returns: string }
       unique_handle: {
         Args: { _base: string; _exclude?: string }
         Returns: string

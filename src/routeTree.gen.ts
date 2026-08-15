@@ -89,6 +89,7 @@ import { Route as UniverseNotificationsRouteImport } from './routes/universe.not
 import { Route as UniverseProfileRouteImport } from './routes/universe.profile'
 import { Route as UniverseShopsRouteImport } from './routes/universe.shops'
 import { Route as UniverseUHandleRouteImport } from './routes/universe.u.$handle'
+import { Route as ApiPublicPaymentsFeedRouteImport } from './routes/api/public/payments/feed'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -490,6 +491,11 @@ const UniverseUHandleRoute = UniverseUHandleRouteImport.update({
   path: '/u/$handle',
   getParentRoute: () => UniverseRoute,
 } as any)
+const ApiPublicPaymentsFeedRoute = ApiPublicPaymentsFeedRouteImport.update({
+  id: '/api/public/payments/feed',
+  path: '/api/public/payments/feed',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -572,6 +578,7 @@ export interface FileRoutesByFullPath {
   '/super/': typeof SuperIndexRoute
   '/universe/': typeof UniverseIndexRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
+  '/api/public/payments/feed': typeof ApiPublicPaymentsFeedRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -649,6 +656,7 @@ export interface FileRoutesByTo {
   '/super': typeof SuperIndexRoute
   '/universe': typeof UniverseIndexRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
+  '/api/public/payments/feed': typeof ApiPublicPaymentsFeedRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -732,6 +740,7 @@ export interface FileRoutesById {
   '/super/': typeof SuperIndexRoute
   '/universe/': typeof UniverseIndexRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
+  '/api/public/payments/feed': typeof ApiPublicPaymentsFeedRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -816,6 +825,7 @@ export interface FileRouteTypes {
     | '/super/'
     | '/universe/'
     | '/universe/u/$handle'
+    | '/api/public/payments/feed'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -893,6 +903,7 @@ export interface FileRouteTypes {
     | '/super'
     | '/universe'
     | '/universe/u/$handle'
+    | '/api/public/payments/feed'
   id:
     | '__root__'
     | '/'
@@ -975,6 +986,7 @@ export interface FileRouteTypes {
     | '/super/'
     | '/universe/'
     | '/universe/u/$handle'
+    | '/api/public/payments/feed'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -990,6 +1002,7 @@ export interface RootRouteChildren {
   UniverseRoute: typeof UniverseRouteWithChildren
   JoinSlugRoute: typeof JoinSlugRoute
   ShopSlugRoute: typeof ShopSlugRoute
+  ApiPublicPaymentsFeedRoute: typeof ApiPublicPaymentsFeedRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1554,6 +1567,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UniverseUHandleRouteImport
       parentRoute: typeof UniverseRoute
     }
+    '/api/public/payments/feed': {
+      id: '/api/public/payments/feed'
+      path: '/api/public/payments/feed'
+      fullPath: '/api/public/payments/feed'
+      preLoaderRoute: typeof ApiPublicPaymentsFeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1750,6 +1770,7 @@ const rootRouteChildren: RootRouteChildren = {
   UniverseRoute: UniverseRouteWithChildren,
   JoinSlugRoute: JoinSlugRoute,
   ShopSlugRoute: ShopSlugRoute,
+  ApiPublicPaymentsFeedRoute: ApiPublicPaymentsFeedRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

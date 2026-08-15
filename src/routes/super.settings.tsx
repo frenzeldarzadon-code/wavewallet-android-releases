@@ -9,6 +9,8 @@ import { PageSection } from "@/components/ui-kit";
 import { RetentionPolicyCard } from "@/components/retention-policy-card";
 import { CreditSupplyCard } from "@/components/super/credit-supply-card";
 import { MoneySettingsCard } from "@/components/super/money-settings-card";
+import { CashInAutoCard } from "@/components/super/cash-in-auto-card";
+
 import { PaymentMethodsCard } from "@/components/super/payment-methods-card";
 import { SocialSettingsCard } from "@/components/social/social-settings-card";
 import { PromotionTiersCard } from "@/components/social/promotion-tiers-card";
@@ -144,8 +146,10 @@ function SuperSettings() {
       </Button>
 
       <MoneySettingsCard />
+      <CashInAutoCard />
       <PaymentMethodsCard />
       <CreditSupplyCard />
+
 
       {SOCIAL_ENABLED ? (
         <>
