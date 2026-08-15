@@ -213,7 +213,7 @@ export function MoneyRequestsCard() {
                       Payment reference: {c.payer_reference ? c.payer_reference : "not provided"}
                     </p>
                     <p className="text-muted-foreground">
-                      GCash number paid: {c.payer_number ? c.payer_number : "not provided"} · amount{" "}
+                      Paid from: {c.sender_number ?? c.payer_number ?? "not provided"} · amount{" "}
                       {peso(Number(c.amount_php))}
                     </p>
                     {c.notes ? (
