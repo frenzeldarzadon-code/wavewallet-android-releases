@@ -7,6 +7,7 @@ import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-
 import { CashbackRateDialog, type CashbackTarget } from "@/components/cashback-rate-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
+import { fetchMyVoucherDiscount } from "@/lib/wallet";
 import { peso, roleLabel, shortDate, type Role } from "@/lib/wavewallet";
 
 export const Route = createFileRoute("/admin/resellers")({
@@ -100,26 +101,35 @@ function AdminResellers() {
       saleValue.set(s.reseller_id, (saleValue.get(s.reseller_id) ?? 0) + Number(s.sale_price));
     }
 
-    setRows(
-      (profiles ?? [])
-        .filter((p) => roleOf.has(p.id))
-        .map((p) => ({
-          id: p.id,
-          full_name: p.full_name,
-          email: p.email,
-          joined_at: p.joined_at,
-          status: p.status as ResellerRow["status"],
-          discount: rateOf.get(p.id) ?? 0,
-          cashback: rateOf.get(p.id) ?? 0,
-          role: roleOf.get(p.id)!,
-          credits: creditOf.get(p.id) ?? 0,
-          sales: saleCount.get(p.id) ?? 0,
-          revenue: saleValue.get(p.id) ?? 0,
-        }))
-        .sort((a, b) => b.credits - a.credits),
+    const base = (profiles ?? [])
+      .filter((p) => roleOf.has(p.id))
+      .map((p) => ({
+        id: p.id,
+        full_name: p.full_name,
+        email: p.email,
+        joined_at: p.joined_at,
+        status: p.status as ResellerRow["status"],
+        discount: rateOf.get(p.id) ?? 0,
+        cashback: rateOf.get(p.id) ?? 0,
+        role: roleOf.get(p.id)!,
+        credits: creditOf.get(p.id) ?? 0,
+        sales: saleCount.get(p.id) ?? 0,
+        revenue: saleValue.get(p.id) ?? 0,
+      }));
+
+    // The displayed percentage must be the one the purchase engine would use,
+    // including the shop-default fallback — never a locally computed value.
+    const resolved = await Promise.all(
+      base.map(async (r) => {
+        const pct = await fetchMyVoucherDiscount(r.id, ecosystemDbId);
+        return { ...r, discount: pct, cashback: pct };
+      }),
     );
+
+    setRows(resolved.sort((a, b) => b.credits - a.credits));
     setLoading(false);
   }, [ecosystemDbId]);
+
 
   useEffect(() => {
     void load();
@@ -181,24 +191,21 @@ function AdminResellers() {
                       <StatusBadge tone="brand">{roleLabel(r.role)}</StatusBadge>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted sm:grid-cols-4 px-3 py-2 text-center">
+                  <div className="grid grid-cols-3 gap-2 rounded-lg bg-muted px-3 py-2 text-center">
                     <div>
                       <p className="text-[11px] text-muted-foreground">Wallet</p>
                       <p className="text-sm font-semibold text-success">{peso(r.credits)}</p>
                     </div>
                     <div>
-                      <p className="text-[11px] text-muted-foreground">Discount</p>
+                      <p className="text-[11px] text-muted-foreground">Discount &amp; voucher price</p>
                       <p className="text-sm font-semibold text-primary">{r.cashback}%</p>
-                    </div>
-                    <div>
-                      <p className="text-[11px] text-muted-foreground">Voucher price</p>
-                      <p className="text-sm font-semibold">{100 - r.cashback}%</p>
                     </div>
                     <div>
                       <p className="text-[11px] text-muted-foreground">Sales</p>
                       <p className="text-sm font-semibold">{peso(r.revenue)}</p>
                     </div>
                   </div>
+
                   <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
                     <Percent className="size-3" /> Earnings come from voucher sales, not transfers.
                   </p>
