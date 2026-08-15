@@ -6828,6 +6828,17 @@ export type Database = {
           user_id: string
         }[]
       }
+      wallet_shop_recipients: {
+        Args: { _ecosystem_id: string; _limit?: number; _search?: string }
+        Returns: {
+          avatar_path: string
+          full_name: string
+          handle: string
+          id: string
+          relation: string
+          role: string
+        }[]
+      }
       wallet_upward_recipients: {
         Args: { _ecosystem_id: string }
         Returns: {

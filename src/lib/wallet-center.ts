@@ -32,6 +32,19 @@ export interface UpwardRecipient {
   relation: "reseller" | "admin";
 }
 
+/** Anyone the caller may send credits to inside ONE shop, as decided by the database. */
+export interface ShopRecipient {
+  id: string;
+  full_name: string;
+  handle: string | null;
+  avatar_path: string | null;
+  /** Role held inside this shop. */
+  role: Role | null;
+  /** How they relate to the caller: admin / reseller (my parent) / subreseller (my downline) / customer. */
+  relation: string;
+}
+
+
 /* ------------------------------------------------------------------ */
 /* Pure helpers (unit-tested)                                          */
 /* ------------------------------------------------------------------ */
@@ -119,4 +132,77 @@ export async function transferInShop(input: {
   });
   if (error) throw new Error(friendlyWalletError(error.message));
   return (data ?? "") as unknown as string;
+}
+
+/* ------------------------------------------------------------------ */
+/* Eligible recipients inside one shop                                 */
+/* ------------------------------------------------------------------ */
+
+/** Human label for how a recipient relates to the sender. */
+export function recipientRelationLabel(relation: string): string {
+  switch (relation) {
+    case "admin":
+      return "Shop admin";
+    case "reseller":
+      return "My reseller";
+    case "subreseller":
+      return "My subreseller";
+    case "customer":
+      return "Customer";
+    default:
+      return "Member";
+  }
+}
+
+/**
+ * The heading for the upline/downline section, given the caller's role in the
+ * selected shop. Purely cosmetic — the database decides who may receive.
+ */
+export function transferSectionTitle(role: Role | null): string {
+  switch (role) {
+    case "subreseller":
+      return "Send credits to my reseller, shop admin or customers";
+    case "reseller":
+      return "Send credits to my subresellers or customers";
+    case "admin":
+    case "super_admin":
+      return "Send credits to members of this shop";
+    default:
+      return "Send credits to another member of this shop";
+  }
+}
+
+/** Why the list can be empty, worded for the person looking at it. */
+export function emptyRecipientsHint(role: Role | null): string {
+  switch (role) {
+    case "subreseller":
+      return "No eligible upline or downline transfers for this shop yet — your reseller and shop admins appear here once they are active members of it.";
+    case "reseller":
+      return "No eligible downline transfers for this shop yet — your subresellers and this shop's customers appear here.";
+    case "admin":
+    case "super_admin":
+      return "No other active members in this shop yet.";
+    default:
+      return "No eligible recipients for this shop yet — customers of this shop appear here once they are approved.";
+  }
+}
+
+/** Every member the caller may send credits to in one shop. Database-authorized. */
+export async function fetchShopRecipients(
+  ecosystemId: string,
+  search?: string,
+): Promise<ShopRecipient[]> {
+  const { data, error } = await supabase.rpc("wallet_shop_recipients", {
+    _ecosystem_id: ecosystemId,
+    ...(search && search.trim() ? { _search: search.trim() } : {}),
+  });
+  if (error) return [];
+  return ((data ?? []) as unknown as ShopRecipient[]).map((r) => ({
+    id: r.id,
+    full_name: r.full_name,
+    handle: r.handle ?? null,
+    avatar_path: r.avatar_path ?? null,
+    role: (r.role ?? null) as Role | null,
+    relation: r.relation ?? "customer",
+  }));
 }

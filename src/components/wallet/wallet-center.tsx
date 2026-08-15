@@ -1,17 +1,24 @@
 /**
  * Wallet Center — every wallet action in one screen.
  *
- * Balances per shop, the history of the selected shop, sending credits to a
- * permitted recipient (including a subreseller's upward path to their own
- * reseller or a shop admin), and moving credits between the person's own
- * shops. Financial behaviour is unchanged: `transfer_credits_in_shop` moves
- * face value with no commission and the cross-shop move keeps the existing
- * flat platform fee. The database authorizes every action.
+ * Balances per shop, the transfer actions available for the selected shop
+ * wallet, and the full transaction history, all on one mobile-first page.
+ * Two transfer capabilities are always visible (never buried in a menu):
+ *
+ *  1. "Send credits" to an eligible member of the selected shop. The eligible
+ *     list comes from `wallet_shop_recipients`, which mirrors the permissions
+ *     `transfer_credits_in_shop` enforces — subresellers see their own reseller
+ *     and shop admins, resellers see their own subresellers, shop operators see
+ *     their shop's members, and everyone sees the shop's customers.
+ *  2. "Transfer between my shops" — only shown when the person actually owns
+ *     more than one shop wallet, with the flat platform fee shown up front.
+ *
+ * Nothing here is an authorization layer: the database re-checks every rule.
  */
 import {
-  ArrowLeftRight,
   Gift,
   Info,
+  Search,
   Send,
   ShoppingBag,
   Sparkles,
@@ -21,6 +28,7 @@ import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -34,27 +42,25 @@ import { Label } from "@/components/ui/label";
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { MemberAvatar } from "@/components/member-avatar";
 import { FacebookSupportCard } from "@/components/facebook-support-card";
-import { RecipientSearch } from "@/components/customer/recipient-search";
 import { ShopTransferCard } from "@/components/customer/shop-transfer-card";
 import { PointsEarningsPanel } from "@/components/customer/points-earnings-panel";
 import { HistoryPage } from "@/components/customer/history-page";
 import { useSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { peso, roleLabel } from "@/lib/wavewallet";
-import { recipientIdentityLine } from "@/lib/recipient-search";
-import type { RecipientMatch } from "@/lib/wallet";
 import { fetchPointsAccount, type PointsAccount } from "@/lib/rewards";
 import { fetchEarnings, summariseEarnings } from "@/lib/earnings";
 import {
-  canSendUpward,
-  fetchUpwardRecipients,
+  emptyRecipientsHint,
+  fetchShopRecipients,
   fetchWalletShops,
   projectedBalance,
+  recipientRelationLabel,
   totalWalletBalance,
   transferInShop,
-  upwardRelationLabel,
+  transferSectionTitle,
   validateInShopTransfer,
-  type UpwardRecipient,
+  type ShopRecipient,
   type WalletShop,
 } from "@/lib/wallet-center";
 
@@ -65,15 +71,15 @@ export interface WalletCenterProps {
   showSellerTotals?: boolean;
 }
 
-type Target = { id: string; name: string; detail: string; avatar: string | null };
-
 export function WalletCenter({ base, showSellerTotals = false }: WalletCenterProps) {
   const { account, ecosystem, ecosystemDbId } = useSession();
   const userId = account?.id ?? null;
 
   const [shops, setShops] = useState<WalletShop[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [upward, setUpward] = useState<UpwardRecipient[]>([]);
+  const [recipients, setRecipients] = useState<ShopRecipient[]>([]);
+  const [recipientsLoading, setRecipientsLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [points, setPoints] = useState<PointsAccount>({ balance: 0, held: 0, available: 0 });
   const [discountSaved, setDiscountSaved] = useState(0);
   const [cashback, setCashback] = useState(0);
@@ -81,10 +87,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
   const [historyKey, setHistoryKey] = useState(0);
 
   // Send credits
-  const [sendOpen, setSendOpen] = useState(false);
-  const [crossOpen, setCrossOpen] = useState(false);
-  const [match, setMatch] = useState<RecipientMatch | null>(null);
-  const [upwardPick, setUpwardPick] = useState<UpwardRecipient | null>(null);
+  const [pick, setPick] = useState<ShopRecipient | null>(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [confirming, setConfirming] = useState(false);
@@ -106,14 +109,23 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
     [shops, selectedId],
   );
 
-  const loadShopData = useCallback(async () => {
-    if (!userId || !selectedId) return;
-    setUpward(await fetchUpwardRecipients(selectedId));
-  }, [userId, selectedId]);
+  const loadRecipients = useCallback(async () => {
+    if (!userId || !selectedId) {
+      setRecipients([]);
+      setRecipientsLoading(false);
+      return;
+    }
+    setRecipientsLoading(true);
+    setRecipients(await fetchShopRecipients(selectedId, search));
+    setRecipientsLoading(false);
+  }, [userId, selectedId, search]);
 
   useEffect(() => {
-    void loadShopData();
-  }, [loadShopData]);
+    const t = window.setTimeout(() => {
+      void loadRecipients();
+    }, 200);
+    return () => window.clearTimeout(t);
+  }, [loadRecipients]);
 
   const loadExtras = useCallback(async () => {
     if (!userId) return;
@@ -139,53 +151,36 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
   if (!account) return null;
 
   const isActiveShop = selected?.ecosystemId === ecosystemDbId;
-  const target: Target | null = upwardPick
-    ? {
-        id: upwardPick.id,
-        name: upwardPick.full_name,
-        detail: `${upwardRelationLabel(upwardPick.relation)}${upwardPick.handle ? ` · @${upwardPick.handle}` : ""}`,
-        avatar: upwardPick.avatar_path,
-      }
-    : match
-      ? {
-          id: match.id,
-          name: match.full_name,
-          detail: recipientIdentityLine(match),
-          avatar: match.avatar_path ?? null,
-        }
-      : null;
-
+  const multiShop = shops.length > 1;
   const value = Number(amount) || 0;
   const problem = validateInShopTransfer({
     ecosystemId: selected?.ecosystemId ?? null,
-    recipientId: target?.id ?? null,
+    recipientId: pick?.id ?? null,
     amount: value,
     balance: selected?.balance ?? 0,
   });
 
   const resetSend = () => {
-    setMatch(null);
-    setUpwardPick(null);
+    setPick(null);
     setAmount("");
     setNote("");
   };
 
   const send = async () => {
-    if (!selected || !target) return;
+    if (!selected || !pick) return;
     setBusy(true);
     try {
       const tx = await transferInShop({
         ecosystemId: selected.ecosystemId,
-        recipientId: target.id,
+        recipientId: pick.id,
         amount: value,
         note,
       });
-      toast.success("Transfer sent", { description: `${peso(value)} to ${target.name} · ${tx}` });
+      toast.success("Transfer sent", { description: `${peso(value)} to ${pick.full_name} · ${tx}` });
       setConfirming(false);
-      setSendOpen(false);
       resetSend();
       setHistoryKey((k) => k + 1);
-      await Promise.all([loadShops(), loadShopData()]);
+      await Promise.all([loadShops(), loadRecipients()]);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -198,8 +193,8 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
       <PageSection
         title="My wallets"
         description={
-          shops.length > 1
-            ? `${shops.length} shop wallets · ${peso(totalWalletBalance(shops))} in total. Each shop keeps its own balance.`
+          multiShop
+            ? `${shops.length} shop wallets · ${peso(totalWalletBalance(shops))} in total. Tap a shop to work with that wallet.`
             : "Your shop wallet balance."
         }
       >
@@ -216,15 +211,24 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
               <button
                 key={s.ecosystemId}
                 type="button"
-                onClick={() => setSelectedId(s.ecosystemId)}
+                aria-pressed={s.ecosystemId === selectedId}
+                onClick={() => {
+                  setSelectedId(s.ecosystemId);
+                  resetSend();
+                }}
                 className={cn(
                   "rounded-xl border px-4 py-3 text-left transition-colors",
                   s.ecosystemId === selectedId
-                    ? "border-primary bg-brand-soft"
+                    ? "border-primary bg-brand-soft ring-2 ring-primary/40"
                     : "border-border bg-card hover:bg-muted",
                 )}
               >
-                <p className="truncate text-sm font-semibold">{s.ecosystemName}</p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate text-sm font-semibold">{s.ecosystemName}</p>
+                  {s.ecosystemId === selectedId ? (
+                    <StatusBadge tone="brand">Selected</StatusBadge>
+                  ) : null}
+                </div>
                 <p className="text-lg font-bold text-success">{peso(s.balance)}</p>
                 <p className="text-[11px] text-muted-foreground">
                   {s.role ? roleLabel(s.role) : "Member"}
@@ -238,8 +242,8 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
 
       {selected ? (
         <PageSection
-          title={selected.ecosystemName}
-          description={`Balances and actions for this shop wallet${selected.role ? ` · ${roleLabel(selected.role)}` : ""}.`}
+          title={`Selected wallet — ${selected.ecosystemName}`}
+          description={`Balances and transfer actions for this shop wallet${selected.role ? ` · you are ${roleLabel(selected.role)} here` : ""}.`}
         >
           <div
             className={
@@ -284,17 +288,130 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
               </>
             ) : null}
           </div>
-
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <Button className="h-11" onClick={() => setSendOpen(true)}>
-              <Send className="size-4" /> Send credits
-            </Button>
-            <Button variant="outline" className="h-11" onClick={() => setCrossOpen(true)}>
-              <ArrowLeftRight className="size-4" /> Transfer between my shops
-            </Button>
-          </div>
         </PageSection>
       ) : null}
+
+      {/* 1. Send credits inside the selected shop — always visible. */}
+      {selected ? (
+        <PageSection
+          title={transferSectionTitle(selected.role)}
+          description={`From your ${selected.ecosystemName} wallet · available ${peso(selected.balance)}. Only people you are allowed to send to are listed.`}
+        >
+          <Card className="shadow-[var(--shadow-card)]">
+            <CardContent className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="wc-search">Recipient</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="wc-search"
+                    className="h-11 pl-9"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search this shop by name or @handle"
+                    autoComplete="off"
+                  />
+                </div>
+              </div>
+
+              {recipientsLoading ? (
+                <p className="text-xs text-muted-foreground">Loading eligible recipients…</p>
+              ) : recipients.length === 0 ? (
+                <p className="flex items-start gap-2 rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                  <Info className="mt-0.5 size-3.5 shrink-0" />
+                  {search.trim()
+                    ? "No eligible recipient in this shop matches that search."
+                    : emptyRecipientsHint(selected.role)}
+                </p>
+              ) : (
+                <ul className="max-h-80 space-y-1 overflow-y-auto rounded-xl border border-border bg-card p-1">
+                  {recipients.map((r) => (
+                    <li key={r.id}>
+                      <button
+                        type="button"
+                        onClick={() => setPick(r)}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
+                          pick?.id === r.id ? "bg-brand-soft" : "hover:bg-muted",
+                        )}
+                      >
+                        <MemberAvatar path={r.avatar_path} name={r.full_name} />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium">{r.full_name}</span>
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {recipientRelationLabel(r.relation)}
+                            {r.handle ? ` · @${r.handle}` : ""} · {selected.ecosystemName}
+                          </span>
+                        </span>
+                        <StatusBadge tone="muted">{recipientRelationLabel(r.relation)}</StatusBadge>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {pick ? (
+                <div className="flex items-center gap-3 rounded-xl border border-primary bg-brand-soft px-3 py-2.5">
+                  <MemberAvatar path={pick.avatar_path} name={pick.full_name} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{pick.full_name}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {recipientRelationLabel(pick.relation)} · {selected.ecosystemName}
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={resetSend}>
+                    Change
+                  </Button>
+                </div>
+              ) : null}
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="wc-amount">Amount</Label>
+                  <Input
+                    id="wc-amount"
+                    type="number"
+                    inputMode="decimal"
+                    className="h-11"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="0"
+                  />
+                  {value > 0 ? (
+                    <p className="text-xs text-muted-foreground">
+                      Balance after: {peso(projectedBalance(selected.balance, value))}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="wc-note">Note (optional)</Label>
+                  <Input
+                    id="wc-note"
+                    className="h-11"
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder="Reference"
+                  />
+                </div>
+              </div>
+
+              {problem && (pick || value > 0) ? (
+                <p className="text-xs text-muted-foreground">{problem}</p>
+              ) : null}
+
+              <Button className="h-11 w-full" disabled={!!problem} onClick={() => setConfirming(true)}>
+                <Send className="size-4" /> Review transfer
+              </Button>
+            </CardContent>
+          </Card>
+        </PageSection>
+      ) : null}
+
+      {/* 2. Cross-shop move — only for people who really own more than one wallet. */}
+      {multiShop ? <ShopTransferCard onDone={() => {
+        setHistoryKey((k) => k + 1);
+        void loadShops();
+      }} /> : null}
 
       {showSellerTotals ? null : (
         <PointsEarningsPanel userId={account.id} ecosystemId={ecosystemDbId} />
@@ -304,8 +421,12 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
         key={`${selected?.ecosystemId ?? "none"}-${historyKey}`}
         ecosystemId={selected?.ecosystemId ?? null}
         {...(selected ? { shopName: selected.ecosystemName } : {})}
+        shopOptions={shops.map((s) => ({ ecosystemId: s.ecosystemId, ecosystemName: s.ecosystemName }))}
+        onShopChange={(id) => {
+          setSelectedId(id);
+          resetSend();
+        }}
       />
-
 
       <PageSection title="Quick links">
         <div className="grid gap-2 sm:grid-cols-3">
@@ -339,154 +460,14 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
         </PageSection>
       ) : null}
 
-      {/* Send credits */}
-      <Dialog
-        open={sendOpen}
-        onOpenChange={(o) => {
-          setSendOpen(o);
-          if (!o) resetSend();
-        }}
-      >
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Send credits</DialogTitle>
-            <DialogDescription>
-              From your {selected?.ecosystemName ?? "shop"} wallet · available{" "}
-              {peso(selected?.balance ?? 0)}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            {canSendUpward(selected) && upward.length > 0 ? (
-              <div className="space-y-2">
-                <Label>Send to my reseller or a shop admin</Label>
-                <ul className="space-y-1 rounded-xl border border-border bg-card p-1">
-                  {upward.map((r) => (
-                    <li key={`${r.id}-${r.relation}`}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setUpwardPick(r);
-                          setMatch(null);
-                        }}
-                        className={cn(
-                          "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
-                          upwardPick?.id === r.id ? "bg-brand-soft" : "hover:bg-muted",
-                        )}
-                      >
-                        <MemberAvatar path={r.avatar_path} name={r.full_name} />
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-medium">{r.full_name}</span>
-                          <span className="block truncate text-xs text-muted-foreground">
-                            {upwardRelationLabel(r.relation)}
-                            {r.handle ? ` · @${r.handle}` : ""}
-                          </span>
-                        </span>
-                        <StatusBadge tone="muted">{upwardRelationLabel(r.relation)}</StatusBadge>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-
-            {isActiveShop ? (
-              <RecipientSearch
-                selected={match}
-                onSelect={(m) => {
-                  setMatch(m);
-                  setUpwardPick(null);
-                }}
-              />
-            ) : (
-              <p className="flex items-start gap-2 rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                <Info className="mt-0.5 size-3.5 shrink-0" />
-                Member search runs in your current shop. Switch to {selected?.ecosystemName} to search
-                its members, or move credits with “Transfer between my shops”.
-              </p>
-            )}
-
-            {target ? (
-              <div className="flex items-center gap-3 rounded-xl border border-primary bg-brand-soft px-3 py-2.5">
-                <MemberAvatar path={target.avatar} name={target.name} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{target.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">{target.detail}</p>
-                </div>
-                <Button variant="ghost" size="sm" onClick={resetSend}>
-                  Change
-                </Button>
-              </div>
-            ) : null}
-
-            <div className="space-y-1.5">
-              <Label htmlFor="wc-amount">Amount</Label>
-              <Input
-                id="wc-amount"
-                type="number"
-                inputMode="decimal"
-                className="h-11"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0"
-              />
-              {value > 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  Balance after: {peso(projectedBalance(selected?.balance ?? 0, value))}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="wc-note">Note (optional)</Label>
-              <Input
-                id="wc-note"
-                className="h-11"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Reference"
-              />
-            </div>
-
-            {problem ? <p className="text-xs text-muted-foreground">{problem}</p> : null}
-          </div>
-
-          <DialogFooter>
-            <Button className="h-11 w-full" disabled={!!problem} onClick={() => setConfirming(true)}>
-              <Send className="size-4" /> Review transfer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Transfer between my shops */}
-      <Dialog open={crossOpen} onOpenChange={setCrossOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Transfer between my shops</DialogTitle>
-            <DialogDescription>
-              Only wallets in your own name. A flat platform fee applies and is shown before you
-              confirm.
-            </DialogDescription>
-          </DialogHeader>
-          <ShopTransferCard
-            onDone={() => {
-              setCrossOpen(false);
-              setHistoryKey((k) => k + 1);
-              void loadShops();
-              void loadShopData();
-            }}
-          />
-        </DialogContent>
-      </Dialog>
-
       {/* Confirmation */}
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Confirm transfer</DialogTitle>
             <DialogDescription>
-              {peso(value)} to {target?.name} from {selected?.ecosystemName}. Balance after:{" "}
+              {peso(value)} to {pick?.full_name} ({pick ? recipientRelationLabel(pick.relation) : ""})
+              from {selected?.ecosystemName}. Balance after:{" "}
               {peso(projectedBalance(selected?.balance ?? 0, value))}. This cannot be undone by you.
             </DialogDescription>
           </DialogHeader>
@@ -495,7 +476,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
               Cancel
             </Button>
             <Button onClick={() => void send()} disabled={busy}>
-              {busy ? "Sending…" : "Send credits"}
+              {busy ? "Sending…" : <><Send className="size-4" /> Send credits</>}
             </Button>
           </DialogFooter>
         </DialogContent>
