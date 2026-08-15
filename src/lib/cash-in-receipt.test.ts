@@ -158,7 +158,7 @@ describe("reviewer verification status", () => {
 
   it("flags a mismatch and explains why it is pending", () => {
     expect(verificationStatus({ receipt_check: "mismatch" })).toBe("MISMATCH");
-    expect(verificationReason({ receipt_check: "mismatch" })).toContain("does not match the payment receipt");
+    expect(verificationReason({ receipt_check: "mismatch" })).toBe("Reference does not match receipt.");
   });
 
   it("flags an unreadable receipt without guessing", () => {
@@ -178,5 +178,31 @@ describe("reviewer verification status", () => {
   it("masks payment numbers for reviewers", () => {
     expect(maskAccountNumber("09541230072")).toBe("0954••••072");
     expect(maskAccountNumber(null)).toBe("not provided");
+  });
+});
+
+describe("reference normalization boundaries", () => {
+  it("ignores spaces, punctuation and case when comparing", () => {
+    const reading = { reference: "9044-011 942642", amountPhp: 200, senderNumber: null, confidence: 0.95, readable: true };
+    expect(decideReceiptCheck("9044 011 942642", reading)).toBe("matched");
+    expect(decideReceiptCheck("9044011942642", reading)).toBe("matched");
+    expect(decideReceiptCheck("  9044.011.942642  ", reading)).toBe("matched");
+  });
+
+  it("still treats genuinely different references as different", () => {
+    const reading = { reference: "9044 011 942642", amountPhp: 200, senderNumber: null, confidence: 0.95, readable: true };
+    expect(decideReceiptCheck("9044 011 942643", reading)).toBe("mismatch");
+    expect(decideReceiptCheck("904401194264", reading)).toBe("mismatch");
+    expect(decideReceiptCheck("19044011942642", reading)).toBe("mismatch");
+  });
+
+  it("holds the request when the member typed nothing", () => {
+    const reading = { reference: "9044011942642", amountPhp: 200, senderNumber: null, confidence: 0.95, readable: true };
+    expect(decideReceiptCheck("", reading)).toBe("mismatch");
+  });
+
+  it("never guesses from a low-confidence read", () => {
+    const reading = { reference: "9044011942642", amountPhp: null, senderNumber: null, confidence: 0.4, readable: true };
+    expect(decideReceiptCheck("9044011942642", reading)).toBe("unreadable");
   });
 });
