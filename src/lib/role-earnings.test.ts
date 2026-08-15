@@ -63,6 +63,10 @@ const expense = (amount: number, at: Date): ExpenseRow => ({
   amount,
   description: "cost",
   category: null,
+  provider: null,
+  provider_reference: null,
+  currency: "PHP",
+
   created_by: "admin",
   created_by_name: "Admin",
   spent_at: iso(at),

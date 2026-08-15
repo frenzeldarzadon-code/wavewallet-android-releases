@@ -13,6 +13,11 @@ import { periodTotalsOf, subtractPeriods, type PeriodTotals } from "@/lib/earnin
 
 export type ExpenseScope = "ecosystem" | "platform";
 
+/** Category used for every Lovable AI credit purchase recorded by the platform owner. */
+export const LOVABLE_CREDITS_CATEGORY = "Lovable AI Credits";
+/** Provider tag stored alongside those expenses. */
+export const LOVABLE_PROVIDER = "Lovable";
+
 export interface ExpenseRow {
   id: string;
   scope: ExpenseScope;
@@ -20,6 +25,9 @@ export interface ExpenseRow {
   amount: number;
   description: string;
   category: string | null;
+  provider: string | null;
+  provider_reference: string | null;
+  currency: string | null;
   created_by: string;
   created_by_name: string | null;
   spent_at: string;
@@ -38,7 +46,7 @@ export async function fetchExpenses(q: ExpenseQuery): Promise<ExpenseRow[]> {
   let query = supabase
     .from("business_expenses")
     .select(
-      "id, scope, ecosystem_id, amount, description, category, created_by, created_by_name, spent_at, created_at",
+      "id, scope, ecosystem_id, amount, description, category, provider, provider_reference, currency, created_by, created_by_name, spent_at, created_at",
     )
     .eq("scope", q.scope)
     .order("spent_at", { ascending: false })
@@ -51,6 +59,7 @@ export async function fetchExpenses(q: ExpenseQuery): Promise<ExpenseRow[]> {
   return ((data ?? []) as unknown as ExpenseRow[]).map((r) => ({ ...r, amount: Number(r.amount) }));
 }
 
+
 export interface NewExpense {
   amount: number;
   description: string;
@@ -58,6 +67,10 @@ export interface NewExpense {
   ecosystemId?: string | null;
   category?: string | null;
   spentAt?: Date | null;
+  /** Billing provider, e.g. "Lovable". Optional. */
+  provider?: string | null;
+  /** Provider transaction / invoice reference. Enforced unique per provider. */
+  providerReference?: string | null;
 }
 
 /** Client-side mirror of the database validation, for instant form feedback. */
@@ -81,6 +94,8 @@ export async function recordExpense(input: NewExpense): Promise<void> {
     _ecosystem_id?: string;
     _category?: string;
     _spent_at?: string;
+    _provider?: string;
+    _provider_reference?: string;
   } = {
     _amount: input.amount,
     _description: input.description.trim(),
@@ -89,10 +104,92 @@ export async function recordExpense(input: NewExpense): Promise<void> {
   if (input.scope === "ecosystem" && input.ecosystemId) args._ecosystem_id = input.ecosystemId;
   if (input.category?.trim()) args._category = input.category.trim();
   if (input.spentAt) args._spent_at = input.spentAt.toISOString();
+  if (input.provider?.trim()) args._provider = input.provider.trim();
+  if (input.providerReference?.trim()) args._provider_reference = input.providerReference.trim();
   const { error } = await supabase.rpc("record_expense", args);
 
   if (error) throw new Error(error.message);
 }
+
+/* ------------------------------------------------------------------ */
+/* Lovable AI credit purchases (platform scope, Super Admin only)      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Lovable billing exposes no purchase webhook or API to the app, so these
+ * entries are recorded by the platform owner from the real receipt. Amounts are
+ * always the actual PHP amount paid — nothing is estimated here.
+ */
+export interface LovableCreditPurchase {
+  /** Actual PHP amount paid. */
+  amountPhp: number;
+  purchasedAt: Date;
+  /** Provider invoice / transaction reference, when the receipt has one. */
+  reference?: string | null;
+  note?: string | null;
+}
+
+export function validateLovablePurchase(input: {
+  amountPhp: string | number;
+  purchasedAt?: Date | null;
+}): string | null {
+  const amount =
+    typeof input.amountPhp === "number" ? input.amountPhp : Number(input.amountPhp);
+  if (!Number.isFinite(amount) || amount <= 0) return "Enter the actual PHP amount paid.";
+  if (input.purchasedAt && Number.isNaN(input.purchasedAt.getTime()))
+    return "Enter a valid purchase date.";
+  return null;
+}
+
+/** Description stored on the expense row, always naming the provider. */
+export function lovablePurchaseDescription(input: LovableCreditPurchase): string {
+  const base = `Lovable credit purchase${input.reference ? ` · ref ${input.reference.trim()}` : ""}`;
+  return input.note?.trim() ? `${base} — ${input.note.trim()}` : base;
+}
+
+/** Existing rows that look like the same purchase when no provider reference exists. */
+export function findLikelyDuplicates(
+  rows: ExpenseRow[],
+  input: LovableCreditPurchase,
+): ExpenseRow[] {
+  const day = input.purchasedAt.toISOString().slice(0, 10);
+  const ref = input.reference?.trim().toLowerCase();
+  return rows.filter((r) => {
+    if (r.category !== LOVABLE_CREDITS_CATEGORY) return false;
+    if (ref && r.provider_reference) return r.provider_reference.toLowerCase() === ref;
+    return (
+      Math.abs(r.amount - input.amountPhp) < 0.005 && r.spent_at.slice(0, 10) === day
+    );
+  });
+}
+
+export async function recordLovableCreditPurchase(
+  input: LovableCreditPurchase,
+): Promise<void> {
+  const problem = validateLovablePurchase({
+    amountPhp: input.amountPhp,
+    purchasedAt: input.purchasedAt,
+  });
+  if (problem) throw new Error(problem);
+  await recordExpense({
+    amount: input.amountPhp,
+    description: lovablePurchaseDescription(input),
+    scope: "platform",
+    category: LOVABLE_CREDITS_CATEGORY,
+    spentAt: input.purchasedAt,
+    provider: LOVABLE_PROVIDER,
+    providerReference: input.reference ?? null,
+  });
+}
+
+/** Total spent on Lovable credits within a set of platform expenses. */
+export const totalLovableCredits = (rows: ExpenseRow[]) =>
+  Math.round(
+    rows
+      .filter((r) => r.category === LOVABLE_CREDITS_CATEGORY)
+      .reduce((s, r) => s + r.amount, 0) * 100,
+  ) / 100;
+
 
 export async function deleteExpense(id: string): Promise<void> {
   const { error } = await supabase.rpc("delete_expense", { _id: id });

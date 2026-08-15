@@ -9,6 +9,8 @@ import { EarningsHistory } from "@/components/earnings-history";
 import { useSession } from "@/lib/session";
 import { SuperEarningsPanel } from "@/components/super-earnings-panel";
 import { ExpensesCard } from "@/components/expenses-card";
+import { LovableCreditsCard } from "@/components/super/lovable-credits-card";
+
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
   csvStamp,
@@ -202,6 +204,9 @@ function SuperReports() {
         format={peso}
         onChange={() => setExpenseVersion((v) => v + 1)}
       />
+
+      <LovableCreditsCard onChange={() => setExpenseVersion((v) => v + 1)} />
+
 
       <PageSection title="Platform totals">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
