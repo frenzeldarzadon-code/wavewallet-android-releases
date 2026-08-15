@@ -14,8 +14,7 @@ begin
   if _src.id is null then raise exception 'no approved cash in to clone'; end if;
 
   -- OLD: already credited, carries a ledger entry.
-  insert into public.cash_in_requests
-  select (_src).* into _old from (select 1) x limit 0; -- keep planner quiet; real insert below
+
 
   insert into public.cash_in_requests (
     reference, request_key, user_id, ecosystem_id, requester_name, requester_role,
