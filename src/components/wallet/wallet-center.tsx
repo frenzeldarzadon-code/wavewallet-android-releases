@@ -78,6 +78,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
   const [discountSaved, setDiscountSaved] = useState(0);
   const [cashback, setCashback] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [historyKey, setHistoryKey] = useState(0);
 
   // Send credits
   const [sendOpen, setSendOpen] = useState(false);
@@ -183,6 +184,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
       setConfirming(false);
       setSendOpen(false);
       resetSend();
+      setHistoryKey((k) => k + 1);
       await Promise.all([loadShops(), loadShopData()]);
     } catch (e) {
       toast.error((e as Error).message);
@@ -299,6 +301,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
       )}
 
       <HistoryPage
+        key={`${selected?.ecosystemId ?? "none"}-${historyKey}`}
         ecosystemId={selected?.ecosystemId ?? null}
         {...(selected ? { shopName: selected.ecosystemName } : {})}
       />
@@ -469,6 +472,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
           <ShopTransferCard
             onDone={() => {
               setCrossOpen(false);
+              setHistoryKey((k) => k + 1);
               void loadShops();
               void loadShopData();
             }}
