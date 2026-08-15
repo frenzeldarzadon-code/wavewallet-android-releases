@@ -19,11 +19,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   describeSplit,
+  fetchCashbackSplitPreview,
   fetchMemberCashbackRate,
   setMemberCashbackRate,
   validateCashbackRate,
+  type CashbackSplitPreview,
   type RateRole,
 } from "@/lib/cashback-rates";
+
 
 export interface CashbackTarget {
   id: string;
