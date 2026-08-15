@@ -414,7 +414,12 @@ export async function requestCashIn(input: {
 }
 
 /** What the member is told after submitting — never "GCash verified this". */
-export function cashInOutcomeMessage(row: Pick<CashInRequest, "status" | "approval_method" | "decision_reason">): {
+export function cashInOutcomeMessage(
+  row: Pick<CashInRequest, "status" | "approval_method" | "decision_reason"> & {
+    duplicate_reference?: boolean | null;
+    receipt_check?: string | null;
+  },
+): {
   tone: "success" | "error" | "info";
   message: string;
 } {
@@ -434,6 +439,26 @@ export function cashInOutcomeMessage(row: Pick<CashInRequest, "status" | "approv
       message: duplicate
         ? "Rejected as a duplicate reference — that GCash reference number was already used, so no credits were added."
         : row.decision_reason ?? "Rejected — the submitted details did not match. No credits were added.",
+    };
+  }
+  if (row.duplicate_reference) {
+    return {
+      tone: "error",
+      message:
+        "That GCash reference was already submitted. Held for manual investigation — no credits were added and the earlier transaction was left untouched.",
+    };
+  }
+  if (row.receipt_check === "mismatch") {
+    return {
+      tone: "error",
+      message: "Reference does not match receipt — held for manual review. No credits were added.",
+    };
+  }
+  if (row.receipt_check === "unreadable" || row.receipt_check === "error") {
+    return {
+      tone: "info",
+      message:
+        "We could not read the reference from your screenshot, so this is held for manual review rather than guessed.",
     };
   }
   return {
