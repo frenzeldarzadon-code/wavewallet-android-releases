@@ -100,26 +100,35 @@ function AdminResellers() {
       saleValue.set(s.reseller_id, (saleValue.get(s.reseller_id) ?? 0) + Number(s.sale_price));
     }
 
-    setRows(
-      (profiles ?? [])
-        .filter((p) => roleOf.has(p.id))
-        .map((p) => ({
-          id: p.id,
-          full_name: p.full_name,
-          email: p.email,
-          joined_at: p.joined_at,
-          status: p.status as ResellerRow["status"],
-          discount: rateOf.get(p.id) ?? 0,
-          cashback: rateOf.get(p.id) ?? 0,
-          role: roleOf.get(p.id)!,
-          credits: creditOf.get(p.id) ?? 0,
-          sales: saleCount.get(p.id) ?? 0,
-          revenue: saleValue.get(p.id) ?? 0,
-        }))
-        .sort((a, b) => b.credits - a.credits),
+    const base = (profiles ?? [])
+      .filter((p) => roleOf.has(p.id))
+      .map((p) => ({
+        id: p.id,
+        full_name: p.full_name,
+        email: p.email,
+        joined_at: p.joined_at,
+        status: p.status as ResellerRow["status"],
+        discount: rateOf.get(p.id) ?? 0,
+        cashback: rateOf.get(p.id) ?? 0,
+        role: roleOf.get(p.id)!,
+        credits: creditOf.get(p.id) ?? 0,
+        sales: saleCount.get(p.id) ?? 0,
+        revenue: saleValue.get(p.id) ?? 0,
+      }));
+
+    // The displayed percentage must be the one the purchase engine would use,
+    // including the shop-default fallback — never a locally computed value.
+    const resolved = await Promise.all(
+      base.map(async (r) => {
+        const pct = await fetchMyVoucherDiscount(r.id, ecosystemDbId);
+        return { ...r, discount: pct, cashback: pct };
+      }),
     );
+
+    setRows(resolved.sort((a, b) => b.credits - a.credits));
     setLoading(false);
   }, [ecosystemDbId]);
+
 
   useEffect(() => {
     void load();
