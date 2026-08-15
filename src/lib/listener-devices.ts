@@ -56,15 +56,22 @@ export async function registerListenerDevice(input: {
   windowMinutes?: number;
   offlineMinutes?: number;
 }) {
-  const { data, error } = await supabase.rpc("register_listener_device", {
+  const args: Record<string, unknown> = {
     _label: input.label,
-    _ecosystem: input.ecosystemId ?? undefined,
     _window_minutes: input.windowMinutes ?? 60,
     _offline_minutes: input.offlineMinutes ?? 15,
-  });
+  };
+  if (input.ecosystemId) args["_ecosystem"] = input.ecosystemId;
+  const { data, error } = await (
+    supabase.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ data: unknown; error: { message: string } | null }>
+  )("register_listener_device", args);
   if (error) throw error;
   return data as { device_id: string; label: string; pairing_secret: string; package_name: string };
 }
+
 
 export async function revokeListenerDevice(deviceId: string) {
   const { error } = await supabase.rpc("revoke_listener_device", { _device: deviceId });
