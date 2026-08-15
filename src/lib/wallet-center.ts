@@ -274,7 +274,10 @@ export function tabEmptyHint(tab: RecipientTab, role: Role | null): string {
         ? "No subresellers of yours are active in this shop yet."
         : role === "subreseller"
           ? "No upline transfers for this shop yet — your reseller and this shop's admins appear here once they are active members."
-          : "No other operators in this shop yet.";
+          : role === "admin" || role === "super_admin"
+            ? "No other operators in this shop yet."
+            : "No active upline in this shop yet — this shop's admin, resellers and subresellers appear here.";
+
     case "customer":
       return "No active customers in this shop yet.";
     case "peer":
