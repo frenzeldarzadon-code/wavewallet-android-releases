@@ -614,7 +614,7 @@ function AdminCustomers() {
                                   setPromoting(c);
                                   setPromoteTo("reseller");
                                   setParentId("");
-                                  setDiscount("10");
+                                  setDiscount(defaultDiscountFor("reseller"));
                                 }}
                               >
                                 <ShieldCheck className="size-4" /> Promote
@@ -655,7 +655,11 @@ function AdminCustomers() {
               <Label htmlFor="promoteRole">New role</Label>
               <Select
                 value={promoteTo}
-                onValueChange={(v) => setPromoteTo(v as "reseller" | "subreseller")}
+                onValueChange={(v) => {
+                  const role = v as "reseller" | "subreseller";
+                  setPromoteTo(role);
+                  setDiscount(defaultDiscountFor(role));
+                }}
               >
                 <SelectTrigger id="promoteRole">
                   <SelectValue />
