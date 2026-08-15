@@ -118,11 +118,11 @@ Access is granted, and a heartbeat has succeeded.
 This project has not been compiled in Lovable (no JDK / Android SDK there).
 See **[BUILD-APK.md](./BUILD-APK.md)** for the exact click-by-click path:
 
-- **GitHub Actions (no tools needed):** push the project to GitHub, copy
-  `android-gcash-listener/.github/workflows/build-apk.yml` to the repo root
-  `.github/workflows/`, then Actions → *Build listener APK* → **Run workflow** →
-  download the **wavewallet-gcash-listener-debug-apk** artifact → unzip →
-  install `app-debug.apk`.
+- **GitHub Actions (no tools needed):** the workflow is already at the repo root
+  (`.github/workflows/build-apk.yml`); once the project is synced to GitHub go to
+  Actions → *Build listener APK* → **Run workflow** → download the
+  **wavewallet-gcash-listener-debug-apk** artifact → unzip → install
+  `app-debug.apk`.
 - **Locally (JDK 17 + Android SDK):**
 
   ```bash
