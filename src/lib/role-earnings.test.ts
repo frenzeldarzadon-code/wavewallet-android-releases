@@ -234,3 +234,53 @@ describe("lifetime totals", () => {
     expect(totals.cashback.total).toBe(20);
   });
 });
+
+/**
+ * Admin income is the shop's retained remainder of a completed purchase — the
+ * admin cashback the purchase engine credits to the admin wallet. The ledger
+ * reports it as one `admin_shop_margin` row per sale, so it must be counted
+ * exactly once and never mixed into reseller/subreseller cashback.
+ *
+ * The splits below are configuration-driven examples, not fixed rates.
+ */
+describe("₱100 allocation across roles", () => {
+  const scenario = (subPct: number, resRemainderPct: number) => {
+    const sale = 100;
+    const subCashback = (sale * subPct) / 100;
+    const uplineShare = (sale * resRemainderPct) / 100;
+    const adminRemainder = sale - subCashback - uplineShare;
+    return {
+      sale,
+      sub: sellerEarnings([earning("sale_cashback", subCashback, daysAgo(0))]),
+      res: sellerEarnings([earning("upline_commission", uplineShare, daysAgo(0))]),
+      admin: adminNetEarnings([earning("admin_shop_margin", adminRemainder, daysAgo(0))], []),
+      adminRemainder,
+    };
+  };
+
+  it("20% subreseller under a 30% reseller: 20 / 10 / 70", () => {
+    const s = scenario(20, 10);
+    expect(s.sub.cashback.total).toBe(20);
+    expect(s.res.cashback.total).toBe(10);
+    expect(s.admin.earnings.total).toBe(70);
+    expect(s.sub.total.total + s.res.total.total + s.admin.earnings.total).toBe(s.sale);
+  });
+
+  it("follows a different configuration: 10% subreseller under a 40% reseller", () => {
+    const s = scenario(10, 30);
+    expect(s.sub.cashback.total).toBe(10);
+    expect(s.res.cashback.total).toBe(30);
+    expect(s.admin.earnings.total).toBe(60);
+    expect(s.sub.total.total + s.res.total.total + s.admin.earnings.total).toBe(s.sale);
+  });
+
+  it("counts admin cashback once and keeps it out of seller earnings", () => {
+    const adminRow = earning("admin_shop_margin", 70, daysAgo(0));
+    // The admin's own retained cashback must never show up as seller cashback.
+    expect(sellerEarnings([adminRow]).total.total).toBe(0);
+    // And it must not be added a second time alongside downline cashback.
+    const admin = adminNetEarnings([adminRow, earning("sale_cashback", 20, daysAgo(0))], []);
+    expect(admin.earnings.total).toBe(70);
+  });
+});
+
