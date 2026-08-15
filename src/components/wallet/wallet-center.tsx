@@ -386,11 +386,11 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium">{r.full_name}</span>
                           <span className="block truncate text-xs text-muted-foreground">
-                            {recipientRelationLabel(r.relation)}
+                            {recipientRelationLabel(r.relation, selected.role)}
                             {r.handle ? ` · @${r.handle}` : ""} · {selected.ecosystemName}
                           </span>
                         </span>
-                        <StatusBadge tone="muted">{recipientRelationLabel(r.relation)}</StatusBadge>
+                        <StatusBadge tone="muted">{recipientRelationLabel(r.relation, selected.role)}</StatusBadge>
                       </button>
                     </li>
                   ))}
@@ -404,7 +404,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold">{pick.full_name}</p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {recipientRelationLabel(pick.relation)} · {selected.ecosystemName}
+                        {recipientRelationLabel(pick.relation, selected.role)} · {selected.ecosystemName}
                       </p>
                     </div>
                     <Button variant="ghost" size="sm" onClick={resetSend}>
@@ -521,7 +521,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
           <DialogHeader>
             <DialogTitle>Confirm transfer</DialogTitle>
             <DialogDescription>
-              {peso(value)} to {pick?.full_name} ({pick ? recipientRelationLabel(pick.relation) : ""})
+              {peso(value)} to {pick?.full_name} ({pick ? recipientRelationLabel(pick.relation, selected?.role ?? null) : ""})
               from {selected?.ecosystemName}. Balance after:{" "}
               {peso(projectedBalance(selected?.balance ?? 0, value))}. This cannot be undone by you.
               {lineageNotice ? " " + lineageNotice : ""}
