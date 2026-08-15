@@ -10,6 +10,7 @@ import { PageSection } from "@/components/ui-kit";
 import { ImageCropper } from "@/components/image-cropper";
 import { MemberAvatar } from "@/components/member-avatar";
 import { SocialLinksCard } from "@/components/social-links-card";
+import { AccountSecurityCard } from "@/components/account-security-card";
 import type { CropRect } from "@/lib/image-optimize";
 import {
   deleteAvatar,
@@ -368,6 +369,8 @@ export function ProfilePage() {
           </CardContent>
         </Card>
       </PageSection>
+
+      <AccountSecurityCard username={profile?.handle ?? null} />
 
       {ecosystemDbId && userId ? (
         <SocialLinksCard ecosystemId={ecosystemDbId} userId={userId} />
