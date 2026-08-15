@@ -4007,6 +4007,7 @@ export type Database = {
       admin_adjust_credits: {
         Args: {
           _amount: number
+          _ecosystem_id?: string
           _reason: string
           _reference?: string
           _user_id: string
@@ -4025,6 +4026,7 @@ export type Database = {
       admin_load_credits: {
         Args: {
           _amount: number
+          _ecosystem_id?: string
           _reason?: string
           _reference?: string
           _user_id: string
@@ -5343,6 +5345,10 @@ export type Database = {
       reset_ecosystem_test_data: {
         Args: { _dry_run?: boolean; _ecosystem_id: string; _reason: string }
         Returns: Json
+      }
+      resolve_member_shop: {
+        Args: { _ecosystem_id?: string; _user_id: string }
+        Returns: string
       }
       respond_friend_request: {
         Args: { _accept: boolean; _id: string }
