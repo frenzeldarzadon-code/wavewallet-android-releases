@@ -1,5 +1,9 @@
 /**
- * Per-member cashback rate editor.
+ * Per-member Discount editor — the single configurable percentage.
+ *
+ * One value per reseller/subreseller per shop: it is both their share of a
+ * qualifying purchase and, automatically, their voucher shop discount. There is
+ * no separate voucher-discount field anywhere in the app.
  *
  * Used by shop admins (their own shop) and the platform owner (any shop). The
  * database enforces who may save; this dialog only explains the effect.
@@ -77,7 +81,7 @@ export function CashbackRateDialog({ target, onClose, onSaved }: Props) {
     setBusy(true);
     try {
       await setMemberCashbackRate(target.id, target.ecosystemId, pct, reason);
-      toast.success("Cashback rate saved — future purchases only.");
+      toast.success("Discount saved — future transactions only.");
       onSaved?.();
       onClose();
     } catch (e) {
@@ -91,18 +95,19 @@ export function CashbackRateDialog({ target, onClose, onSaved }: Props) {
     <Dialog open={Boolean(target)} onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Cashback rate</DialogTitle>
+          <DialogTitle>Discount</DialogTitle>
           <DialogDescription>
-            Set the individual share for {target?.name}
-            {target?.shopName ? ` in ${target.shopName}` : ""}. A subreseller's share is taken out
-            of their parent reseller's total share, and the shop admin always keeps the rest. Rate
-            changes apply to future purchases only.
+            One Discount for {target?.name}
+            {target?.shopName ? ` in ${target.shopName}` : ""}: their share of qualifying purchases
+            and their voucher shop discount. A subreseller's Discount is taken out of their parent
+            reseller's Discount, and the shop admin always keeps the rest. Changes apply to future
+            transactions only — history never changes.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="cashback-pct">
-              {isSub ? "Subreseller share (%)" : "Reseller total share (%)"}
+              {isSub ? "Subreseller Discount (%)" : "Reseller Discount (%)"}
             </Label>
             <Input
               id="cashback-pct"
@@ -113,18 +118,22 @@ export function CashbackRateDialog({ target, onClose, onSaved }: Props) {
             />
             {isSub ? (
               <p className="text-xs text-muted-foreground">
-                Parent reseller total share: {parentTotal}% — this cannot be higher.
+                Parent reseller Discount: {parentTotal}% — this cannot be higher.
               </p>
             ) : chain?.max_subreseller ? (
               <p className="text-xs text-muted-foreground">
-                Highest subreseller share under them: {chain.max_subreseller}% — this cannot be
-                lower.
+                Highest subreseller Discount under them: {chain.max_subreseller}% — this cannot
+                be lower.
               </p>
             ) : null}
           </div>
           <div className="space-y-1 rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
             <p className="font-medium text-foreground">On a 100-credit qualifying purchase:</p>
-            <p>Subreseller {split.subreseller} · Reseller {split.reseller} · Admin {split.admin}</p>
+            <p>
+              Subreseller {split.subreseller} · Reseller {split.reseller} · Admin {split.admin} ·
+              Total 100
+            </p>
+            <p>Voucher shop discount for this member: {pct || 0}%</p>
           </div>
 
           <div className="space-y-2">
@@ -143,7 +152,7 @@ export function CashbackRateDialog({ target, onClose, onSaved }: Props) {
             Cancel
           </Button>
           <Button onClick={submit} disabled={busy}>
-            {busy ? "Saving…" : "Save rate"}
+            {busy ? "Saving…" : "Save discount"}
           </Button>
         </DialogFooter>
       </DialogContent>
