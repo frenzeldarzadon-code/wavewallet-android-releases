@@ -322,11 +322,61 @@ export async function reviewWithdrawal(
   if (error) throw new Error(error.message);
 }
 
+/* ---------------------------------------------------------------------------
+ * Cash in payment screenshots (optional supporting proof)
+ * Objects live at `{auth user id}/{uuid}.{ext}` in a PRIVATE bucket. Storage RLS
+ * lets a member read only their own folder; the platform owner reads all of
+ * them so cash in requests can be reviewed. Nothing is ever public.
+ * ------------------------------------------------------------------------- */
+export const CASH_IN_PROOF_BUCKET = "cash-in-proofs";
+export const MAX_CASH_IN_PROOF_BYTES = 5 * 1024 * 1024; // 5 MB
+export const CASH_IN_PROOF_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
+export function validateCashInProof(file: { type: string; size: number }): string | null {
+  if (!CASH_IN_PROOF_TYPES.includes((file.type || "").toLowerCase())) {
+    return "Use a JPG, PNG or WEBP screenshot.";
+  }
+  if (file.size > MAX_CASH_IN_PROOF_BYTES) return "That image is larger than 5 MB. Pick a smaller screenshot.";
+  return null;
+}
+
+export async function uploadCashInProof(userId: string, file: File): Promise<string> {
+  const problem = validateCashInProof(file);
+  if (problem) throw new Error(problem);
+  const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+  const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage
+    .from(CASH_IN_PROOF_BUCKET)
+    .upload(path, file, { contentType: file.type, upsert: false });
+  if (error) throw new Error(error.message);
+  return path;
+}
+
+export async function removeCashInProof(path: string): Promise<void> {
+  await supabase.storage.from(CASH_IN_PROOF_BUCKET).remove([path]);
+}
+
+const proofUrlCache = new Map<string, { url: string; expires: number }>();
+
+/** Short-lived signed URL — screenshots are never served from a public URL. */
+export async function cashInProofUrl(path?: string | null): Promise<string | null> {
+  if (!path) return null;
+  const hit = proofUrlCache.get(path);
+  if (hit && hit.expires > Date.now()) return hit.url;
+  const { data, error } = await supabase.storage.from(CASH_IN_PROOF_BUCKET).createSignedUrl(path, 3600);
+  if (error || !data?.signedUrl) return null;
+  proofUrlCache.set(path, { url: data.signedUrl, expires: Date.now() + 55 * 60 * 1000 });
+  return data.signedUrl;
+}
+
 export async function requestCashIn(input: {
   methodId: string;
   amountPhp: number;
   payerReference?: string | null;
+  /** Optional — cash in never requires notes. */
   notes?: string | null;
+  /** Optional storage path of the payment screenshot. */
+  proofPath?: string | null;
   requestKey: string;
 }): Promise<CashInRequest> {
   const { data, error } = await supabase.rpc("request_cash_in", rpcArgs({
@@ -334,11 +384,13 @@ export async function requestCashIn(input: {
     _amount_php: input.amountPhp,
     _payer_reference: input.payerReference ?? undefined,
     _notes: input.notes ?? undefined,
+    _proof_path: input.proofPath ?? undefined,
     _request_key: input.requestKey,
   }));
   if (error) throw new Error(error.message);
   return data as unknown as CashInRequest;
 }
+
 
 export async function cancelCashIn(id: string): Promise<void> {
   const { error } = await supabase.rpc("cancel_cash_in", rpcArgs({ _id: id }));
