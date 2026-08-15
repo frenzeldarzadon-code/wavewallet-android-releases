@@ -184,7 +184,7 @@ export function ShopAdminCard({
                 {picked.handle ? `@${picked.handle}` : candidateIdentityLine(picked)}
               </p>
             </div>
-            <StatusBadge tone="info" className="ml-auto">
+            <StatusBadge tone="brand" className="ml-auto">
               Shop Admin
             </StatusBadge>
           </div>
