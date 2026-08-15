@@ -44,6 +44,7 @@ import {
   paymentModeLabel,
   quoteCashInBreakdown,
   quoteWithdrawal,
+  cashInOutcomeMessage,
   requestCashIn,
   requestWithdrawal,
   snapshotQuote,
@@ -99,8 +100,9 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
   const [methodId, setMethodId] = useState<string>("");
   const [amount, setAmount] = useState("");
   const [payerRef, setPayerRef] = useState("");
+  const [payerNumber, setPayerNumber] = useState("");
   const [cashInNotes, setCashInNotes] = useState("");
-  /** Optional supporting proof — a cash in never requires it. */
+  /** Required supporting evidence — kept for audit and manual review. */
   const [proofFile, setProofFile] = useState<File | null>(null);
 
   const load = useCallback(async () => {
@@ -173,55 +175,54 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
   };
 
   const submitCashIn = async () => {
-    const problem = validateCashIn(Number(amount), methodId || null);
+    const problem = validateCashIn(Number(amount), methodId || null, {
+      payerNumber,
+      payerReference: payerRef,
+      hasProof: Boolean(proofFile),
+    });
     if (problem) {
       toast.error(problem);
       return;
     }
-    if (proofFile) {
-      const badImage = validateCashInProof(proofFile);
-      if (badImage) {
-        toast.error(badImage);
-        return;
-      }
+    const badImage = proofFile ? validateCashInProof(proofFile) : "Attach your payment screenshot.";
+    if (badImage) {
+      toast.error(badImage);
+      return;
     }
     setBusy(true);
     let uploadedPath: string | null = null;
     try {
-      if (proofFile) {
-        // Storage RLS scopes the folder to the SIGNED IN user, which can differ
-        // from the acted-on member, so the real auth id owns the object.
-        const { data: authUser } = await supabase.auth.getUser();
-        const ownerId = authUser?.user?.id;
-        if (!ownerId) throw new Error("Your session expired. Sign in again to attach a screenshot.");
-        uploadedPath = await uploadCashInProof(ownerId, proofFile);
-      }
+      // Storage RLS scopes the folder to the SIGNED IN user, which can differ
+      // from the acted-on member, so the real auth id owns the object.
+      const { data: authUser } = await supabase.auth.getUser();
+      const ownerId = authUser?.user?.id;
+      if (!ownerId) throw new Error("Your session expired. Sign in again to attach a screenshot.");
+      uploadedPath = await uploadCashInProof(ownerId, proofFile as File);
+
       const submitted = await requestCashIn({
         methodId,
         amountPhp: Number(amount),
+        payerNumber,
         payerReference: payerRef,
         notes: cashInNotes,
         proofPath: uploadedPath,
         requestKey: newKey(),
       });
-      if (submitted.status === "rejected") {
-        // The database refuses a second live request on the same payment
-        // reference so one payment can never be credited twice.
-        toast.error(
-          submitted.decision_reason ??
-            "That payment reference is already used by another cash in request.",
-        );
-      } else if (submitted.status === "approved") {
-        toast.success("Payment verified automatically — your credits have been added.");
-      } else {
-        toast.success("Cash in submitted. Credits are added only after the payment is verified.");
-      }
-      setAmount("");
-      setPayerRef("");
-      setCashInNotes("");
-      setProofFile(null);
-      await load();
+      // The database refuses a second live request on the same GCash reference,
+      // so one payment can never be credited twice.
+      const outcome = cashInOutcomeMessage(submitted);
+      if (outcome.tone === "error") toast.error(outcome.message);
+      else if (outcome.tone === "success") toast.success(outcome.message);
+      else toast.info(outcome.message);
 
+      if (submitted.status !== "rejected") {
+        setAmount("");
+        setPayerRef("");
+        setPayerNumber("");
+        setCashInNotes("");
+        setProofFile(null);
+      }
+      await load();
     } catch (e) {
       // Never leave an orphan screenshot behind when the request itself failed.
       if (uploadedPath) await removeCashInProof(uploadedPath).catch(() => {});
@@ -418,6 +419,11 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              <p className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                Enter the amount you sent, the GCash number you paid, your GCash payment reference number, and upload
+                your payment screenshot. Matching Cash In requests may be approved automatically. Your screenshot is
+                kept as supporting evidence for review — it is not a verification from GCash.
+              </p>
               {methods.length === 0 ? (
                 <EmptyState
                   title="No payment methods available"
@@ -446,8 +452,18 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                       <Input id="ci-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="ci-ref">Payment reference</Label>
-                      <Input id="ci-ref" value={payerRef} onChange={(e) => setPayerRef(e.target.value)} placeholder="Receipt / transaction number" />
+                      <Label htmlFor="ci-number">GCash number you paid</Label>
+                      <Input
+                        id="ci-number"
+                        inputMode="tel"
+                        value={payerNumber}
+                        onChange={(e) => setPayerNumber(e.target.value)}
+                        placeholder="09171234567"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="ci-ref">GCash payment reference number</Label>
+                      <Input id="ci-ref" value={payerRef} onChange={(e) => setPayerRef(e.target.value)} placeholder="Reference / transaction number" />
                     </div>
                   </div>
                   <CashInProofPicker
@@ -522,6 +538,10 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                         <p className="text-muted-foreground">
                           Paid {peso(Number(c.amount_php))} · fee {Number(c.fee_percent ?? 0)}% (
                           {peso(Number(c.fee_php ?? 0))}) · net {peso(Number(c.net_php ?? c.amount_php))}
+                        </p>
+                        <p className="text-muted-foreground">
+                          Paid to {c.payer_number ?? "—"} · ref {c.payer_reference ?? "—"} ·{" "}
+                          {c.approval_method === "automatic" ? "automatic" : "manual"} review
                         </p>
                         {c.notes ? <p className="text-muted-foreground">Notes: {c.notes}</p> : null}
                         {c.decision_reason ? <p className="text-muted-foreground">Note: {c.decision_reason}</p> : null}

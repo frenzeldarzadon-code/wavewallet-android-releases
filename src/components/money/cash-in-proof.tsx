@@ -45,7 +45,7 @@ export function CashInProofPicker({
 
   return (
     <div className="space-y-1.5">
-      <Label htmlFor="ci-proof">Payment reference screenshot (optional)</Label>
+      <Label htmlFor="ci-proof">Payment screenshot (required)</Label>
       <input
         id="ci-proof"
         type="file"

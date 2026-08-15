@@ -166,6 +166,7 @@ export type Database = {
           amount_tolerance_php: number
           ecosystem_id: string | null
           enabled: boolean
+          expected_amount_php: number | null
           id: string
           max_auto_amount_php: number | null
           require_reference_match: boolean
@@ -176,6 +177,7 @@ export type Database = {
           amount_tolerance_php?: number
           ecosystem_id?: string | null
           enabled?: boolean
+          expected_amount_php?: number | null
           id?: string
           max_auto_amount_php?: number | null
           require_reference_match?: boolean
@@ -186,6 +188,7 @@ export type Database = {
           amount_tolerance_php?: number
           ecosystem_id?: string | null
           enabled?: boolean
+          expected_amount_php?: number | null
           id?: string
           max_auto_amount_php?: number | null
           require_reference_match?: boolean
@@ -228,6 +231,8 @@ export type Database = {
           method_type: string
           net_php: number | null
           notes: string | null
+          payer_number: string | null
+          payer_number_key: string | null
           payer_reference: string | null
           payer_reference_key: string | null
           proof_path: string | null
@@ -263,6 +268,8 @@ export type Database = {
           method_type: string
           net_php?: number | null
           notes?: string | null
+          payer_number?: string | null
+          payer_number_key?: string | null
           payer_reference?: string | null
           payer_reference_key?: string | null
           proof_path?: string | null
@@ -298,6 +305,8 @@ export type Database = {
           method_type?: string
           net_php?: number | null
           notes?: string | null
+          payer_number?: string | null
+          payer_number_key?: string | null
           payer_reference?: string | null
           payer_reference_key?: string | null
           proof_path?: string | null
@@ -1124,6 +1133,7 @@ export type Database = {
           archived_at: string | null
           archived_by: string | null
           archived_reason: string | null
+          cash_in_gcash_number: string | null
           contact_email: string | null
           contact_phone: string | null
           created_at: string
@@ -1175,6 +1185,7 @@ export type Database = {
           archived_at?: string | null
           archived_by?: string | null
           archived_reason?: string | null
+          cash_in_gcash_number?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -1226,6 +1237,7 @@ export type Database = {
           archived_at?: string | null
           archived_by?: string | null
           archived_reason?: string | null
+          cash_in_gcash_number?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -4310,6 +4322,8 @@ export type Database = {
           method_type: string
           net_php: number | null
           notes: string | null
+          payer_number: string | null
+          payer_number_key: string | null
           payer_reference: string | null
           payer_reference_key: string | null
           proof_path: string | null
@@ -4383,12 +4397,17 @@ export type Database = {
         Returns: {
           amount_tolerance_php: number
           enabled: boolean
+          expected_amount_php: number
           max_auto_amount_php: number
           require_reference_match: boolean
           scope: string
         }[]
       }
       cash_in_auto_status: { Args: never; Returns: Json }
+      cash_in_receiving_number: {
+        Args: { _ecosystem: string; _method: string }
+        Returns: string
+      }
       cashback_chain: {
         Args: { _ecosystem_id: string; _source: string }
         Returns: {
@@ -4474,6 +4493,7 @@ export type Database = {
           archived_at: string | null
           archived_by: string | null
           archived_reason: string | null
+          cash_in_gcash_number: string | null
           contact_email: string | null
           contact_phone: string | null
           created_at: string
@@ -5140,6 +5160,7 @@ export type Database = {
       new_tx_id: { Args: never; Returns: string }
       normalize_handle: { Args: { _handle: string }; Returns: string }
       normalize_payment_reference: { Args: { _ref: string }; Returns: string }
+      normalize_ph_mobile: { Args: { _n: string }; Returns: string }
       notify_handle_mentions: {
         Args: {
           _actor: string
@@ -5467,57 +5488,114 @@ export type Database = {
         Returns: undefined
       }
       remove_friend: { Args: { _user: string }; Returns: undefined }
-      request_cash_in: {
-        Args: {
-          _amount_php: number
-          _method_id: string
-          _notes?: string
-          _payer_reference?: string
-          _proof_path?: string
-          _request_key?: string
-        }
-        Returns: {
-          amount_php: number
-          approval_method: string
-          auto_match_note: string | null
-          created_at: string
-          credits: number
-          decision_reason: string | null
-          ecosystem_id: string | null
-          fee_percent: number
-          fee_php: number
-          id: string
-          ledger_id: string | null
-          method_details: Json
-          method_id: string | null
-          method_name: string
-          method_type: string
-          net_php: number | null
-          notes: string | null
-          payer_reference: string | null
-          payer_reference_key: string | null
-          proof_path: string | null
-          rate_credits: number
-          rate_php: number
-          reference: string
-          request_key: string | null
-          requester_name: string
-          requester_role: string
-          reviewed_at: string | null
-          reviewed_by: string | null
-          reviewer_name: string | null
-          status: string
-          updated_at: string
-          user_id: string
-          verified_payment_id: string | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "cash_in_requests"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+      request_cash_in:
+        | {
+            Args: {
+              _amount_php: number
+              _method_id: string
+              _notes?: string
+              _payer_reference?: string
+              _proof_path?: string
+              _request_key?: string
+            }
+            Returns: {
+              amount_php: number
+              approval_method: string
+              auto_match_note: string | null
+              created_at: string
+              credits: number
+              decision_reason: string | null
+              ecosystem_id: string | null
+              fee_percent: number
+              fee_php: number
+              id: string
+              ledger_id: string | null
+              method_details: Json
+              method_id: string | null
+              method_name: string
+              method_type: string
+              net_php: number | null
+              notes: string | null
+              payer_number: string | null
+              payer_number_key: string | null
+              payer_reference: string | null
+              payer_reference_key: string | null
+              proof_path: string | null
+              rate_credits: number
+              rate_php: number
+              reference: string
+              request_key: string | null
+              requester_name: string
+              requester_role: string
+              reviewed_at: string | null
+              reviewed_by: string | null
+              reviewer_name: string | null
+              status: string
+              updated_at: string
+              user_id: string
+              verified_payment_id: string | null
+            }
+            SetofOptions: {
+              from: "*"
+              to: "cash_in_requests"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: {
+              _amount_php: number
+              _method_id: string
+              _notes?: string
+              _payer_number?: string
+              _payer_reference?: string
+              _proof_path?: string
+              _request_key?: string
+            }
+            Returns: {
+              amount_php: number
+              approval_method: string
+              auto_match_note: string | null
+              created_at: string
+              credits: number
+              decision_reason: string | null
+              ecosystem_id: string | null
+              fee_percent: number
+              fee_php: number
+              id: string
+              ledger_id: string | null
+              method_details: Json
+              method_id: string | null
+              method_name: string
+              method_type: string
+              net_php: number | null
+              notes: string | null
+              payer_number: string | null
+              payer_number_key: string | null
+              payer_reference: string | null
+              payer_reference_key: string | null
+              proof_path: string | null
+              rate_credits: number
+              rate_php: number
+              reference: string
+              request_key: string | null
+              requester_name: string
+              requester_role: string
+              reviewed_at: string | null
+              reviewed_by: string | null
+              reviewer_name: string | null
+              status: string
+              updated_at: string
+              user_id: string
+              verified_payment_id: string | null
+            }
+            SetofOptions: {
+              from: "*"
+              to: "cash_in_requests"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       request_join_ecosystem: {
         Args: { _ecosystem_id: string }
         Returns: string
@@ -5693,6 +5771,8 @@ export type Database = {
           method_type: string
           net_php: number | null
           notes: string | null
+          payer_number: string | null
+          payer_number_key: string | null
           payer_reference: string | null
           payer_reference_key: string | null
           proof_path: string | null
@@ -5937,6 +6017,7 @@ export type Database = {
         Args: {
           _ecosystem: string
           _enabled: boolean
+          _expected_amount?: number
           _max_amount?: number
           _require_reference?: boolean
           _tolerance?: number
@@ -5945,6 +6026,7 @@ export type Database = {
           amount_tolerance_php: number
           ecosystem_id: string | null
           enabled: boolean
+          expected_amount_php: number | null
           id: string
           max_auto_amount_php: number | null
           require_reference_match: boolean
@@ -5957,6 +6039,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      set_ecosystem_cash_in_number: {
+        Args: { _ecosystem: string; _number: string }
+        Returns: string
       }
       set_ecosystem_commission: {
         Args: { _ecosystem_id: string; _percent: number }
@@ -5971,6 +6057,7 @@ export type Database = {
           archived_at: string | null
           archived_by: string | null
           archived_reason: string | null
+          cash_in_gcash_number: string | null
           contact_email: string | null
           contact_phone: string | null
           created_at: string
@@ -6031,6 +6118,7 @@ export type Database = {
           archived_at: string | null
           archived_by: string | null
           archived_reason: string | null
+          cash_in_gcash_number: string | null
           contact_email: string | null
           contact_phone: string | null
           created_at: string
@@ -6098,6 +6186,7 @@ export type Database = {
           archived_at: string | null
           archived_by: string | null
           archived_reason: string | null
+          cash_in_gcash_number: string | null
           contact_email: string | null
           contact_phone: string | null
           created_at: string
@@ -6274,6 +6363,8 @@ export type Database = {
           method_type: string
           net_php: number | null
           notes: string | null
+          payer_number: string | null
+          payer_number_key: string | null
           payer_reference: string | null
           payer_reference_key: string | null
           proof_path: string | null
@@ -6874,6 +6965,7 @@ export type Database = {
           archived_at: string | null
           archived_by: string | null
           archived_reason: string | null
+          cash_in_gcash_number: string | null
           contact_email: string | null
           contact_phone: string | null
           created_at: string
@@ -6939,6 +7031,7 @@ export type Database = {
           archived_at: string | null
           archived_by: string | null
           archived_reason: string | null
+          cash_in_gcash_number: string | null
           contact_email: string | null
           contact_phone: string | null
           created_at: string
