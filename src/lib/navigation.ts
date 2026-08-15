@@ -157,7 +157,7 @@ export function resellerNav(role: Role = "reseller"): Nav {
       items: [
         { to: "/reseller/profile", label: "Profile", icon: User },
         { to: "/reseller", label: "Dashboard", icon: LayoutDashboard },
-        { to: "/reseller/wallet", label: "Wallet", icon: Wallet },
+        { to: "/reseller/wallet", label: "Wallet Center", icon: Wallet },
       ],
     },
     {
@@ -170,12 +170,9 @@ export function resellerNav(role: Role = "reseller"): Nav {
     },
     {
       label: "Money",
-      items: [
-        { to: "/reseller/transfer", label: "Transfer", icon: Send },
-        { to: "/reseller/money", label: "Cash out & cash in", icon: Banknote },
-        { to: "/reseller/history", label: "Transaction history", icon: History },
-      ],
+      items: [{ to: "/reseller/money", label: "Cash out & cash in", icon: Banknote }],
     },
+
     { label: "Business", items: business },
     ...(SOCIAL_ENABLED
       ? [
