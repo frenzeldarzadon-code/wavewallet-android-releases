@@ -101,19 +101,31 @@ describe("emptyRecipientsHint", () => {
 
 describe("recipientTabs", () => {
   it("offers team + customers to shop operators", () => {
-    expect(recipientTabs("admin", false).map((t) => t.key)).toEqual(["network", "customer"]);
+    expect(recipientTabs("admin", false).map((t) => t.key)).toEqual([
+      "network",
+      "customer",
+      "shops",
+    ]);
   });
   it("offers upline/downline + customers to resellers and subresellers", () => {
     for (const role of ["reseller", "subreseller"] as const) {
-      expect(recipientTabs(role, false).map((t) => t.key)).toEqual(["network", "customer"]);
+      expect(recipientTabs(role, false).map((t) => t.key)).toEqual([
+        "network",
+        "customer",
+        "shops",
+      ]);
     }
   });
   it("offers upline + peer customers to a customer", () => {
-    expect(recipientTabs("customer", false).map((t) => t.key)).toEqual(["network", "peer"]);
+    expect(recipientTabs("customer", false).map((t) => t.key)).toEqual([
+      "network",
+      "peer",
+      "shops",
+    ]);
   });
-  it("adds my other shops only for multi-shop accounts", () => {
-    expect(recipientTabs("customer", true).map((t) => t.key)).toEqual(["network", "peer", "shops"]);
-    expect(recipientTabs(null, false).map((t) => t.key)).toEqual(["network", "peer"]);
+  it("always offers the cross-shop transfer, single-shop accounts included", () => {
+    expect(recipientTabs("customer", true).map((t) => t.key)).toContain("shops");
+    expect(recipientTabs(null, false).map((t) => t.key)).toEqual(["network", "peer", "shops"]);
   });
 });
 

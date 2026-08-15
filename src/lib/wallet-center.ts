@@ -228,8 +228,14 @@ export interface RecipientTabOption {
   label: string;
 }
 
-/** Which recipient modes make sense for this role in this shop. */
-export function recipientTabs(role: Role | null, multiShop: boolean): RecipientTabOption[] {
+/**
+ * Which recipient modes make sense for this role in this shop.
+ *
+ * The cross-shop mode is ALWAYS offered — it is a standing platform feature.
+ * When the member belongs to only one shop the panel itself explains that a
+ * second approved membership is required, instead of the action vanishing.
+ */
+export function recipientTabs(role: Role | null, _multiShop = false): RecipientTabOption[] {
   const tabs: RecipientTabOption[] = [];
   switch (role) {
     case "admin":
@@ -250,7 +256,7 @@ export function recipientTabs(role: Role | null, multiShop: boolean): RecipientT
       break;
 
   }
-  if (multiShop) tabs.push({ key: "shops", label: "My other shops" });
+  tabs.push({ key: "shops", label: "Another shop" });
   return tabs;
 }
 
