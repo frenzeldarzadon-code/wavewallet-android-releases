@@ -338,6 +338,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
               {activeTab === "shops" ? (
                 <ShopTransferCard
                   embedded
+                  sourceEcosystemId={selected.ecosystemId}
                   onDone={() => {
                     setHistoryKey((k) => k + 1);
                     void loadShops();
