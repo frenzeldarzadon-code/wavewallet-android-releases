@@ -286,3 +286,20 @@ export function tabEmptyHint(tab: RecipientTab, role: Role | null): string {
       return emptyRecipientsHint(role);
   }
 }
+
+/**
+ * Deliberate business rule: credits a CUSTOMER sends to an upline (shop admin,
+ * reseller or subreseller) arrive with no cashback lineage. The upline's later
+ * transfers and sales start a fresh, normal lineage. Enforced in the database
+ * by `transfer_credits_in_shop` / `track_credit_lots`; this is only the wording.
+ */
+export function lineageResetNotice(
+  senderRole: Role | null,
+  recipientRelation: string | null,
+): string | null {
+  const isCustomer = senderRole !== "admin" && senderRole !== "super_admin"
+    && senderRole !== "reseller" && senderRole !== "subreseller";
+  if (!isCustomer || !recipientRelation) return null;
+  if (!["admin", "reseller", "subreseller"].includes(recipientRelation)) return null;
+  return "Cashback lineage reset: these credits stop being traced to you once they arrive.";
+}

@@ -3,6 +3,7 @@ import {
   canSendUpward,
   emptyRecipientsHint,
   filterRecipientsByTab,
+  lineageResetNotice,
   recipientTabs,
   tabEmptyHint,
   recipientRelationLabel,
@@ -142,5 +143,21 @@ describe("tabEmptyHint", () => {
     }
     expect(tabEmptyHint("network", "reseller")).toMatch(/subresellers/);
     expect(tabEmptyHint("peer", "customer")).toMatch(/customers/);
+  });
+});
+
+describe("lineageResetNotice", () => {
+  it("warns a customer sending to any upline", () => {
+    for (const rel of ["admin", "reseller", "subreseller"]) {
+      expect(lineageResetNotice("customer", rel)).toContain("Cashback lineage reset");
+    }
+  });
+  it("stays silent for peer customers", () => {
+    expect(lineageResetNotice("customer", "customer")).toBeNull();
+  });
+  it("stays silent for operators — their lineage rules are unchanged", () => {
+    expect(lineageResetNotice("admin", "customer")).toBeNull();
+    expect(lineageResetNotice("reseller", "subreseller")).toBeNull();
+    expect(lineageResetNotice("subreseller", "admin")).toBeNull();
   });
 });
