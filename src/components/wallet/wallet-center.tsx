@@ -51,7 +51,6 @@ import { peso, roleLabel } from "@/lib/wavewallet";
 import { fetchPointsAccount, type PointsAccount } from "@/lib/rewards";
 import { fetchEarnings, summariseEarnings } from "@/lib/earnings";
 import {
-  emptyRecipientsHint,
   fetchShopRecipients,
   filterRecipientsByTab,
   recipientTabs,
