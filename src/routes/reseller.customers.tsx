@@ -13,8 +13,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState, PageSection } from "@/components/ui-kit";
 import { InviteMemberCard } from "@/components/invite-member-card";
+import { SubresellersPanel } from "@/components/reseller/subresellers-panel";
+
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
