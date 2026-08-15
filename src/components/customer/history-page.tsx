@@ -94,7 +94,7 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
 
       <div className="mb-3 grid gap-2 sm:grid-cols-2">
         {shopOptions && shopOptions.length > 1 && onShopChange ? (
-          <Select value={scopeId ?? undefined} onValueChange={onShopChange}>
+          <Select {...(scopeId ? { value: scopeId } : {})} onValueChange={onShopChange}>
             <SelectTrigger className="h-11" aria-label="Filter by shop">
               <SelectValue placeholder="All shops" />
             </SelectTrigger>
