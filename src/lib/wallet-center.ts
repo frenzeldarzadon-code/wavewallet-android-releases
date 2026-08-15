@@ -168,7 +168,8 @@ export function transferSectionTitle(role: Role | null): string {
     case "super_admin":
       return "Send credits to members of this shop";
     default:
-      return "Send credits to another member of this shop";
+      return "Send credits to this shop's admin, reseller, subreseller or another customer";
+
   }
 }
 

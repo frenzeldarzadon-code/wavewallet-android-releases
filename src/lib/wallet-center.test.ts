@@ -107,14 +107,15 @@ describe("recipientTabs", () => {
       expect(recipientTabs(role, false).map((t) => t.key)).toEqual(["network", "customer"]);
     }
   });
-  it("offers only peer customers to a customer", () => {
-    expect(recipientTabs("customer", false).map((t) => t.key)).toEqual(["peer"]);
+  it("offers upline + peer customers to a customer", () => {
+    expect(recipientTabs("customer", false).map((t) => t.key)).toEqual(["network", "peer"]);
   });
   it("adds my other shops only for multi-shop accounts", () => {
-    expect(recipientTabs("customer", true).map((t) => t.key)).toEqual(["peer", "shops"]);
-    expect(recipientTabs(null, false).map((t) => t.key)).toEqual(["peer"]);
+    expect(recipientTabs("customer", true).map((t) => t.key)).toEqual(["network", "peer", "shops"]);
+    expect(recipientTabs(null, false).map((t) => t.key)).toEqual(["network", "peer"]);
   });
 });
+
 
 describe("filterRecipientsByTab", () => {
   const list = [
