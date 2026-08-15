@@ -323,9 +323,15 @@ export function summariseCreditFlow(entries: CreditEntry[]): CreditFlowSummary {
       if (e.direction === "debit") out.spentOnVouchers += e.amount;
       continue;
     }
-    if (kind === "credit_issue") {
+    // Platform-minted credits — never a sale, never shop or platform earnings.
+    if (kind === "credit_issue" || kind === "superadmin_credit_issuance") {
       out.platformIssued += e.amount;
       out.platformIssuedCount += 1;
+      continue;
+    }
+    // Platform owner removing credits from a shop wallet.
+    if (kind === "credit_revocation") {
+      out.revoked += e.amount;
       continue;
     }
     if (kind === "cash_in") {
