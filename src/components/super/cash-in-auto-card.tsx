@@ -1,10 +1,11 @@
 /**
  * Platform-owner control for automatic Cash In approval.
  *
- * The switch is deliberately powerless on its own: automatic approval only ever
- * settles a request when an authorised payment feed has delivered a matching
- * verified transaction. With no feed connected, everything stays in the manual
- * queue — screenshots are never accepted as proof of payment.
+ * Automatic approval rests entirely on *configured* matching data: the amount,
+ * the shop's receiving GCash number, a never-used payment reference and an
+ * attached screenshot. Nothing here contacts GCash, and a screenshot is never
+ * treated as proof that a payment happened — it is kept as supporting evidence
+ * for audit and manual review.
  */
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -17,7 +18,7 @@ import { StatusBadge } from "@/components/ui-kit";
 import {
   DEFAULT_AUTO_RULE,
   fetchCashInAutoStatus,
-  feedStatusLabel,
+  matchingStatusLabel,
   setCashInAutoApproval,
   type CashInAutoStatus,
 } from "@/lib/cash-in-auto";
@@ -32,9 +33,9 @@ export function CashInAutoCard() {
     setStatus(next);
     setRule({
       enabled: next.platform_rule?.enabled ?? false,
-      require_reference_match: next.platform_rule?.require_reference_match ?? true,
       amount_tolerance_php: Number(next.platform_rule?.amount_tolerance_php ?? 0),
       max_auto_amount_php: next.platform_rule?.max_auto_amount_php ?? null,
+      expected_amount_php: next.platform_rule?.expected_amount_php ?? null,
     });
   };
 
@@ -44,7 +45,7 @@ export function CashInAutoCard() {
 
   if (!status) return null;
 
-  const banner = feedStatusLabel(status);
+  const banner = matchingStatusLabel({ ...status, platform_rule: { ...rule, ecosystem_id: null } });
 
   const save = async (next: typeof rule) => {
     if (!Number.isFinite(next.amount_tolerance_php) || next.amount_tolerance_php < 0) {
@@ -56,14 +57,14 @@ export function CashInAutoCard() {
       await setCashInAutoApproval({
         ecosystemId: null,
         enabled: next.enabled,
-        requireReference: next.require_reference_match,
         tolerance: next.amount_tolerance_php,
         maxAmount: next.max_auto_amount_php,
+        expectedAmount: next.expected_amount_php,
       });
       setRule(next);
       toast.success(
         next.enabled
-          ? "Automatic approval is on. Only verified payments from a connected feed can settle a request."
+          ? "Automatic approval is on. Only requests that match the configured details are settled."
           : "Automatic approval is off. Every cash in waits for manual review.",
       );
       await load();
@@ -84,27 +85,21 @@ export function CashInAutoCard() {
           <div className="flex items-center justify-between gap-2">
             <p className="font-semibold">{banner.title}</p>
             <StatusBadge tone={banner.tone === "success" ? "success" : "warning"}>
-              {status.connected ? "Connected" : "Not connected"}
+              {rule.enabled ? "On" : "Off"}
             </StatusBadge>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">{banner.detail}</p>
-          <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-            {status.sources.map((s) => (
-              <li key={s.provider}>
-                {s.label}: {s.status === "connected" ? "receiving payments" : "no authorised feed"}
-                {s.last_event_at ? ` · last payment ${new Date(s.last_event_at).toLocaleString()}` : ""}
-                {s.last_error ? ` · ${s.last_error}` : ""}
-              </li>
-            ))}
-          </ul>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Shops with a receiving GCash number configured: {status.shops_with_number}
+          </p>
         </div>
 
         <div className="flex items-start justify-between gap-3">
           <div>
             <Label htmlFor="auto-cash-in">Approve matching cash ins automatically</Label>
             <p className="text-xs text-muted-foreground">
-              A request settles only when a verified payment matches its amount and reference. Anything unmatched stays
-              pending for you.
+              A request settles only when the amount, the shop's receiving GCash number and a brand new payment
+              reference all match and a screenshot is attached. Anything else stays pending for you.
             </p>
           </div>
           <Switch
@@ -115,7 +110,21 @@ export function CashInAutoCard() {
           />
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div>
+            <Label htmlFor="auto-expected">Expected amount (₱, blank = any)</Label>
+            <Input
+              id="auto-expected"
+              type="number"
+              min={0}
+              step="0.01"
+              value={rule.expected_amount_php ?? ""}
+              onChange={(e) =>
+                setRule({ ...rule, expected_amount_php: e.target.value === "" ? null : Number(e.target.value) })
+              }
+            />
+            <p className="mt-1 text-xs text-muted-foreground">Set this to auto-approve one fixed amount only.</p>
+          </div>
           <div>
             <Label htmlFor="auto-tolerance">Amount tolerance (₱)</Label>
             <Input
@@ -144,28 +153,13 @@ export function CashInAutoCard() {
           </div>
         </div>
 
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <Label htmlFor="auto-ref">Require a matching payment reference</Label>
-            <p className="text-xs text-muted-foreground">
-              Strongly recommended. Without it, amount alone decides the match.
-            </p>
-          </div>
-          <Switch
-            id="auto-ref"
-            checked={rule.require_reference_match}
-            disabled={saving}
-            onCheckedChange={(v) => setRule({ ...rule, require_reference_match: v })}
-          />
-        </div>
-
         <div className="flex flex-wrap items-center gap-3">
           <Button size="sm" disabled={saving} onClick={() => void save(rule)}>
             {saving ? "Saving…" : "Save matching rules"}
           </Button>
           <p className="text-xs text-muted-foreground">
-            Auto-approved in the last 30 days: {status.auto_approved_30d} · unmatched verified payments:{" "}
-            {status.unmatched_payments}
+            Auto-approved in the last 30 days: {status.auto_approved_30d} · duplicate references blocked:{" "}
+            {status.duplicates_blocked_30d}
           </p>
         </div>
       </CardContent>
