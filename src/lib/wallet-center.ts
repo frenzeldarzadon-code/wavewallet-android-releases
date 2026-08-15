@@ -308,16 +308,19 @@ export function tabEmptyHint(tab: RecipientTab, role: Role | null): string {
           ? "No upline transfers for this shop yet — your reseller and this shop's admins appear here once they are active members."
           : role === "admin" || role === "super_admin"
             ? "No other operators in this shop yet."
-            : "No active upline in this shop yet — this shop's admin, resellers and subresellers appear here.";
+            : "Nobody in this shop can accept your credits yet — accounts that can accept transfers appear here once they are active.";
 
     case "customer":
       return "No active customers in this shop yet.";
     case "peer":
-      return "No other active customers in this shop yet — peers appear here once they are approved members.";
+      return isCustomerViewer(role)
+        ? "No other members of this shop are available yet."
+        : "No other active customers in this shop yet — peers appear here once they are approved members.";
     default:
       return emptyRecipientsHint(role);
   }
 }
+
 
 /**
  * Deliberate business rule: credits a CUSTOMER sends to an upline (shop admin,
