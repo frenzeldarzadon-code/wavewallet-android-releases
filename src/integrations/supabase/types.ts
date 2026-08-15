@@ -4950,6 +4950,7 @@ export type Database = {
           slug: string
         }[]
       }
+      link_cash_in_listener_event: { Args: { _id: string }; Returns: string }
       list_admin_invitations: {
         Args: never
         Returns: {
