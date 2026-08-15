@@ -24,6 +24,7 @@ const req: MatchableRequest = {
   payer_reference: "GC-1234",
   sender_number: SENDER,
   proof_path: "user/abc.jpg",
+  receipt_check: "matched",
   status: "pending",
   listener_event: seen,
 };
