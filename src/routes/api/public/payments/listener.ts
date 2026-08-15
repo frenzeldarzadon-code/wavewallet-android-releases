@@ -106,12 +106,12 @@ export const Route = createFileRoute("/api/public/payments/listener")({
           _device: deviceId,
           _event_uid: parsed.event_uid,
           _package: parsed.package_name,
-          _raw_text: parsed.raw_text ?? null,
-          _amount: parsed.amount_php ?? null,
-          _sender_number: parsed.sender_number ?? null,
-          _sender_name: parsed.sender_name ?? null,
-          _posted_at: parsed.posted_at ?? null,
-          _parser_version: parsed.parser_version ?? null,
+          _raw_text: parsed.raw_text ?? undefined,
+          _amount: parsed.amount_php ?? undefined,
+          _sender_number: parsed.sender_number ?? undefined,
+          _sender_name: parsed.sender_name ?? undefined,
+          _posted_at: parsed.posted_at ?? undefined,
+          _parser_version: parsed.parser_version ?? undefined,
         });
         if (error) return json({ accepted: false, error: error.message }, 400);
         return json(data);
