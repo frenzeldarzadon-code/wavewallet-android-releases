@@ -48,16 +48,24 @@ export function CashbackRateDialog({ target, onClose, onSaved }: Props) {
   const [value, setValue] = useState("0");
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const [chain, setChain] = useState<CashbackSplitPreview | null>(null);
 
   useEffect(() => {
     if (!target) return;
     setValue(String(target.percent ?? 0));
     setReason("");
+    setChain(null);
     void fetchMemberCashbackRate(target.id, target.ecosystemId).then((p) => setValue(String(p)));
+    void fetchCashbackSplitPreview(target.id, target.ecosystemId).then(setChain);
   }, [target]);
 
   const pct = Number(value);
-  const split = describeSplit(100, target?.role === "reseller" ? pct : 0, target?.role === "subreseller" ? pct : 0);
+  const isSub = target?.role === "subreseller";
+  // A subreseller's share is carved out of the parent reseller's total share.
+  const parentTotal = isSub ? Number(chain?.parent_total ?? 0) : pct;
+  const subPct = isSub ? pct : 0;
+  const split = describeSplit(100, parentTotal, subPct);
+
 
   const submit = async () => {
     if (!target) return;
