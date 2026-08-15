@@ -51,8 +51,10 @@ import { peso, roleLabel } from "@/lib/wavewallet";
 import { fetchPointsAccount, type PointsAccount } from "@/lib/rewards";
 import { fetchEarnings, summariseEarnings } from "@/lib/earnings";
 import {
-  emptyRecipientsHint,
   fetchShopRecipients,
+  filterRecipientsByTab,
+  recipientTabs,
+  tabEmptyHint,
   fetchWalletShops,
   projectedBalance,
   recipientRelationLabel,
@@ -60,6 +62,7 @@ import {
   transferInShop,
   transferSectionTitle,
   validateInShopTransfer,
+  type RecipientTab,
   type ShopRecipient,
   type WalletShop,
 } from "@/lib/wallet-center";
@@ -87,6 +90,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
   const [historyKey, setHistoryKey] = useState(0);
 
   // Send credits
+  const [tab, setTab] = useState<RecipientTab>("network");
   const [pick, setPick] = useState<ShopRecipient | null>(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
@@ -152,6 +156,11 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
 
   const isActiveShop = selected?.ecosystemId === ecosystemDbId;
   const multiShop = shops.length > 1;
+  const tabs = recipientTabs(selected?.role ?? null, multiShop);
+  const activeTab: RecipientTab = tabs.some((t) => t.key === tab)
+    ? tab
+    : (tabs[0]?.key ?? "peer");
+  const visibleRecipients = filterRecipientsByTab(recipients, activeTab);
   const value = Number(amount) || 0;
   const problem = validateInShopTransfer({
     ecosystemId: selected?.ecosystemId ?? null,
@@ -291,14 +300,47 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
         </PageSection>
       ) : null}
 
-      {/* 1. Send credits inside the selected shop — always visible. */}
+      {/* 1. Send credits — one area, recipient type tabs. Always visible. */}
       {selected ? (
         <PageSection
-          title={transferSectionTitle(selected.role)}
-          description={`From your ${selected.ecosystemName} wallet · available ${peso(selected.balance)}. Only people you are allowed to send to are listed.`}
+          title="Send credits"
+          description={`${transferSectionTitle(selected.role)} · from your ${selected.ecosystemName} wallet, available ${peso(selected.balance)}. Only people you are allowed to send to are listed.`}
         >
           <Card className="shadow-[var(--shadow-card)]">
             <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-2" role="tablist" aria-label="Recipient type">
+                {tabs.map((t) => (
+                  <button
+                    key={t.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={t.key === activeTab}
+                    onClick={() => {
+                      setTab(t.key);
+                      resetSend();
+                    }}
+                    className={cn(
+                      "h-9 rounded-full border px-4 text-xs font-semibold transition-colors",
+                      t.key === activeTab
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-card text-muted-foreground hover:bg-muted",
+                    )}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {activeTab === "shops" ? (
+                <ShopTransferCard
+                  embedded
+                  onDone={() => {
+                    setHistoryKey((k) => k + 1);
+                    void loadShops();
+                  }}
+                />
+              ) : (
+                <div className="space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="wc-search">Recipient</Label>
                 <div className="relative">
@@ -316,16 +358,16 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
 
               {recipientsLoading ? (
                 <p className="text-xs text-muted-foreground">Loading eligible recipients…</p>
-              ) : recipients.length === 0 ? (
+              ) : visibleRecipients.length === 0 ? (
                 <p className="flex items-start gap-2 rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
                   <Info className="mt-0.5 size-3.5 shrink-0" />
                   {search.trim()
                     ? "No eligible recipient in this shop matches that search."
-                    : emptyRecipientsHint(selected.role)}
+                    : tabEmptyHint(activeTab, selected.role)}
                 </p>
               ) : (
                 <ul className="max-h-80 space-y-1 overflow-y-auto rounded-xl border border-border bg-card p-1">
-                  {recipients.map((r) => (
+                  {visibleRecipients.map((r) => (
                     <li key={r.id}>
                       <button
                         type="button"
@@ -399,19 +441,19 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
                 <p className="text-xs text-muted-foreground">{problem}</p>
               ) : null}
 
-              <Button className="h-11 w-full" disabled={!!problem} onClick={() => setConfirming(true)}>
-                <Send className="size-4" /> Review transfer
-              </Button>
+                  <Button
+                    className="h-11 w-full"
+                    disabled={!!problem}
+                    onClick={() => setConfirming(true)}
+                  >
+                    <Send className="size-4" /> Review transfer
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </PageSection>
       ) : null}
-
-      {/* 2. Cross-shop move — only for people who really own more than one wallet. */}
-      {multiShop ? <ShopTransferCard onDone={() => {
-        setHistoryKey((k) => k + 1);
-        void loadShops();
-      }} /> : null}
 
       {showSellerTotals ? null : (
         <PointsEarningsPanel userId={account.id} ecosystemId={ecosystemDbId} />
