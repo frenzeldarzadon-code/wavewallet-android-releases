@@ -717,7 +717,10 @@ function AdminWallets() {
             </Button>
             <Button
               onClick={() => void submit()}
-              disabled={busy || (mode === "credits" && Number(amount) > shopBalance)}
+              disabled={
+                busy ||
+                (!isPlatformOwner && mode === "credits" && Number(amount) > shopBalance)
+              }
             >
               {busy ? "Saving…" : mode === "credits" ? "Confirm credit movement" : "Apply adjustment"}
             </Button>
