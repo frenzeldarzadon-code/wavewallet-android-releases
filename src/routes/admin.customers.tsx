@@ -288,28 +288,6 @@ function AdminCustomers() {
   };
 
 
-  const confirmDiscount = async () => {
-    if (!editing) return;
-    const value = Number(discount);
-    if (Number.isNaN(value) || value < 0 || value > MAX_DISCOUNT) {
-      toast.error(`Discount must be between 0% and ${MAX_DISCOUNT}%.`);
-      return;
-    }
-    setBusy(true);
-    const { error } = await supabase.rpc("set_reseller_discount", {
-      _user_id: editing.id,
-      _discount: value,
-    });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Discount updated — applies to future voucher purchases only.");
-    setEditing(null);
-    void load();
-  };
-
   const confirmOwner = async () => {
     if (!editingOwner || !parentId) return;
     setBusy(true);
@@ -542,16 +520,9 @@ function AdminCustomers() {
                         <TableCell>
                           {c.role === "reseller" || c.role === "subreseller" ? (
                             <div className="flex flex-wrap gap-1">
-                              <StatusBadge tone="success">
-                                {roleLabel(c.role)} · {c.reseller_discount_percent}% off
-                              </StatusBadge>
+                              <StatusBadge tone="success">{roleLabel(c.role)}</StatusBadge>
                               <StatusBadge tone="brand">
-                                {c.sale_commission_percent ??
-                                  (c.role === "reseller"
-                                    ? saleDefaults.reseller
-                                    : saleDefaults.subreseller)}
-                                % sales commission
-                                {c.sale_commission_percent === null ? " (default)" : ""}
+                                {c.sale_commission_percent ?? 0}% discount
                               </StatusBadge>
                               {c.role === "subreseller" ? (
                                 <StatusBadge tone="muted">
@@ -597,18 +568,6 @@ function AdminCustomers() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => {
-                                  setEditing(c);
-                                  setDiscount(String(c.reseller_discount_percent));
-                                }}
-                              >
-                                <TrendingUp className="size-4" /> Discount
-                              </Button>
-                            ) : null}
-                            {c.role === "reseller" || c.role === "subreseller" ? (
-                              <Button
-                                size="sm"
-                                variant="outline"
                                 onClick={() =>
                                   setRateTarget({
                                     id: c.id,
@@ -620,7 +579,7 @@ function AdminCustomers() {
                                   })
                                 }
                               >
-                                <Percent className="size-4" /> Cashback
+                                <Percent className="size-4" /> Discount
                               </Button>
                             ) : null}
                             {c.role === "subreseller" ? (
@@ -699,10 +658,10 @@ function AdminCustomers() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="reseller">
-                    Reseller — wholesale discount + sales commission
+                    Reseller — one Discount: their share and voucher discount
                   </SelectItem>
                   <SelectItem value="subreseller">
-                    Subreseller — wholesale discount + sales cashback, parent earns upline
+                    Subreseller — Discount taken out of their parent reseller's Discount
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -729,7 +688,7 @@ function AdminCustomers() {
               </div>
             ) : null}
             <div className="space-y-1.5">
-              <Label htmlFor="promoteDiscount">Voucher discount (%)</Label>
+              <Label htmlFor="promoteDiscount">Discount (%)</Label>
               <Input
                 id="promoteDiscount"
                 type="number"
@@ -740,8 +699,10 @@ function AdminCustomers() {
               />
             </div>
             <p className="text-[11px] text-muted-foreground">
-              They buy vouchers at {100 - (Number(discount) || 0)}% of the customer price and sell
-              at the normal customer price — the discount is their margin.
+              One value: they buy vouchers at {100 - (Number(discount) || 0)}% of the customer
+              price, and they receive {Number(discount) || 0}% of purchases funded by their
+              credits. A subreseller's Discount comes out of the parent reseller's Discount; the
+              shop admin always keeps the remainder.
             </p>
           </div>
           <DialogFooter>
@@ -750,37 +711,6 @@ function AdminCustomers() {
             </Button>
             <Button onClick={confirmPromote} disabled={busy}>
               Confirm promotion
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{roleLabel(editing?.role ?? "reseller")} discount</DialogTitle>
-            <DialogDescription>
-              Applies to future voucher purchases by {editing?.full_name || editing?.email} only.
-              Past purchases keep the price and discount they were made with.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-1.5">
-            <Label htmlFor="editDiscount">Discount (%)</Label>
-            <Input
-              id="editDiscount"
-              type="number"
-              min={0}
-              max={MAX_DISCOUNT}
-              value={discount}
-              onChange={(e) => setDiscount(e.target.value)}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setEditing(null)}>
-              Cancel
-            </Button>
-            <Button onClick={confirmDiscount} disabled={busy}>
-              Save discount
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1056,9 +986,9 @@ function AdminCustomers() {
                   }
                 >
                   {detail.role === "reseller"
-                    ? `Reseller · ${detail.reseller_discount_percent}% wholesale discount · ${detail.sale_commission_percent ?? saleDefaults.reseller}% sales commission${detail.sale_commission_percent === null ? " (shop default)" : ""}`
+                    ? `Reseller · ${detail.sale_commission_percent ?? 0}% Discount (share and voucher discount)`
                     : detail.role === "subreseller"
-                      ? `Subreseller · ${detail.reseller_discount_percent}% discount · ${detail.sale_commission_percent ?? saleDefaults.subreseller}% sales cashback${detail.sale_commission_percent === null ? " (shop default)" : ""} · parent reseller earns upline`
+                      ? `Subreseller · ${detail.sale_commission_percent ?? 0}% Discount, taken out of the parent reseller's Discount`
                       : "Customer"}
                 </StatusBadge>
                 <StatusBadge tone={detail.status === "active" ? "success" : "danger"}>
