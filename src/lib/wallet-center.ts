@@ -206,3 +206,76 @@ export async function fetchShopRecipients(
     relation: r.relation ?? "customer",
   }));
 }
+
+/* ------------------------------------------------------------------ */
+/* Recipient type tabs inside the one "Send credits" area              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The recipient modes offered in the Send credits area. They only slice the
+ * server-authorized list — no tab can widen who may receive credits.
+ *
+ *  - `network`  upline/downline members (shop admin, my reseller, my subreseller)
+ *  - `customer` customers of the selected shop (operators, resellers, subresellers)
+ *  - `peer`     the same customers, worded for a customer sending to a peer
+ *  - `shops`    my own wallets in other shops (cross-shop move, flat fee)
+ */
+export type RecipientTab = "network" | "customer" | "peer" | "shops";
+
+export interface RecipientTabOption {
+  key: RecipientTab;
+  label: string;
+}
+
+/** Which recipient modes make sense for this role in this shop. */
+export function recipientTabs(role: Role | null, multiShop: boolean): RecipientTabOption[] {
+  const tabs: RecipientTabOption[] = [];
+  switch (role) {
+    case "admin":
+    case "super_admin":
+      tabs.push({ key: "network", label: "Shop team" }, { key: "customer", label: "Customers" });
+      break;
+    case "reseller":
+    case "subreseller":
+      tabs.push(
+        { key: "network", label: "Upline & downline" },
+        { key: "customer", label: "Customers" },
+      );
+      break;
+    default:
+      tabs.push({ key: "peer", label: "Peer customer" });
+      break;
+  }
+  if (multiShop) tabs.push({ key: "shops", label: "My other shops" });
+  return tabs;
+}
+
+/** Slice the server-authorized recipient list for one tab. */
+export function filterRecipientsByTab(
+  recipients: ShopRecipient[],
+  tab: RecipientTab,
+): ShopRecipient[] {
+  if (tab === "shops") return [];
+  if (tab === "network") {
+    return recipients.filter((r) => r.relation !== "customer");
+  }
+  return recipients.filter((r) => r.relation === "customer");
+}
+
+/** Why one tab's list is empty, worded for the person looking at it. */
+export function tabEmptyHint(tab: RecipientTab, role: Role | null): string {
+  switch (tab) {
+    case "network":
+      return role === "reseller"
+        ? "No subresellers of yours are active in this shop yet."
+        : role === "subreseller"
+          ? "No upline transfers for this shop yet — your reseller and this shop's admins appear here once they are active members."
+          : "No other operators in this shop yet.";
+    case "customer":
+      return "No active customers in this shop yet.";
+    case "peer":
+      return "No other active customers in this shop yet — peers appear here once they are approved members.";
+    default:
+      return emptyRecipientsHint(role);
+  }
+}
