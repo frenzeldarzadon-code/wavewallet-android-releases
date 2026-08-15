@@ -10,13 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  adminCashbackPercent,
   describeRate,
   fetchMoneySettings,
   quoteCashInBreakdown,
   quoteWithdrawal,
   saveMoneySettings,
-  validateCashback,
   validateCashInFee,
   validateValuation,
   type MoneySettings,
@@ -37,13 +35,10 @@ export function MoneySettingsCard() {
   const set = (key: keyof MoneySettings, value: number) =>
     setForm((f) => (f ? { ...f, [key]: value } : f));
 
-  const adminShare = adminCashbackPercent(form.cashbackReseller, form.cashbackSubreseller);
-
   const save = async () => {
     const problem =
       validateValuation(form.creditsPerUnit, form.phpPerUnit, form.feePercent) ??
       validateCashInFee(form.cashInFeePercent) ??
-      validateCashback(form.cashbackReseller, form.cashbackSubreseller) ??
       (Number.isFinite(form.shopTransferFee) && form.shopTransferFee >= 0
         ? null
         : "The shop transfer fee must be zero or more credits.");
@@ -153,35 +148,10 @@ export function MoneySettingsCard() {
           </p>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="ms-sub">Subreseller cashback (%)</Label>
-            <Input
-              id="ms-sub"
-              inputMode="numeric"
-              value={form.cashbackSubreseller}
-              onChange={(e) => set("cashbackSubreseller", Number(e.target.value))}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="ms-res">Reseller cashback (%)</Label>
-            <Input
-              id="ms-res"
-              inputMode="numeric"
-              value={form.cashbackReseller}
-              onChange={(e) => set("cashbackReseller", Number(e.target.value))}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Shop admin remainder</Label>
-            <div className="flex h-9 items-center rounded-md border border-border bg-muted/40 px-3 text-sm font-semibold">
-              {adminShare}%
-            </div>
-          </div>
-        </div>
         <p className="text-xs text-muted-foreground">
-          Calculated automatically so the total never exceeds 100%. Cashback is released only for settled voucher
-          purchases and is always recorded in the ledger with purchaser, beneficiary, rate and source sale.
+          Cashback is no longer a single platform-wide percentage. Every reseller and subreseller has their own
+          rate, set on their member record by their shop admin or by you, and the shop admin always receives the
+          remainder of each purchase.
         </p>
 
         <Button onClick={save} disabled={saving}>

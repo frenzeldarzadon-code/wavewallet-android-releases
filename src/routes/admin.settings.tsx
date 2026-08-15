@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { Facebook } from "lucide-react";
 import { useEffect, useState } from "react";
 import { fetchPointsRule, setPointsRule } from "@/lib/rewards";
@@ -276,54 +276,18 @@ function AdminSettings() {
 
       <PageSection
         title="Voucher sale earnings"
-        description="Earnings happen when a voucher is bought — never when credits are transferred. Sending ₱1,000 always delivers exactly ₱1,000."
+        description="Cashback is set per member, not shop-wide. Open Resellers to give each reseller and subreseller their own rate — the shop always keeps the remainder of every purchase."
       >
         <Card className="shadow-[var(--shadow-card)]">
-          <CardContent className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="saleReseller">Reseller sale commission (%)</Label>
-              <Input
-                id="saleReseller"
-                type="number"
-                min={0}
-                max={100}
-                value={rates.resellerSale}
-                onChange={(e) => setRates({ ...rates, resellerSale: e.target.value })}
-              />
-              <p className="text-[11px] text-muted-foreground">
-                Paid to the reseller whose credits funded the customer's purchase.
-              </p>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="saleSub">Subreseller sale cashback (%)</Label>
-              <Input
-                id="saleSub"
-                type="number"
-                min={0}
-                max={100}
-                value={rates.subresellerSale}
-                onChange={(e) => setRates({ ...rates, subresellerSale: e.target.value })}
-              />
-              <p className="text-[11px] text-muted-foreground">
-                Paid to the subreseller whose credits funded the customer's purchase.
-              </p>
-            </div>
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="upline">Parent reseller (upline) commission (%)</Label>
-              <Input
-                id="upline"
-                type="number"
-                min={0}
-                max={100}
-                value={rates.upline}
-                onChange={(e) => setRates({ ...rates, upline: e.target.value })}
-              />
-              <p className="text-[11px] text-muted-foreground">
-                Paid to a subreseller's parent reseller on that subreseller's sales and on
-                vouchers the subreseller buys for their own use. A subreseller never earns on
-                their own purchase; a reseller has no upline.
-              </p>
-            </div>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p>
+              Each reseller and subreseller earns their own individual percentage of the credits
+              they supplied to a customer's purchase, and you receive everything that is left. A
+              rate change applies to future purchases only.
+            </p>
+            <Button size="sm" variant="outline" asChild>
+              <Link to="/admin/resellers">Set individual cashback rates</Link>
+            </Button>
           </CardContent>
         </Card>
       </PageSection>

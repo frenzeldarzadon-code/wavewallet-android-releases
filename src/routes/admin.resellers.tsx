@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
+import { CashbackRateDialog, type CashbackTarget } from "@/components/cashback-rate-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { peso, roleLabel, shortDate, type Role } from "@/lib/wavewallet";
@@ -36,6 +37,7 @@ interface ResellerRow {
   status: "active" | "suspended";
   discount: number;
   role: Extract<Role, "reseller" | "subreseller">;
+  cashback: number;
   credits: number;
   sales: number;
   revenue: number;
@@ -45,6 +47,7 @@ function AdminResellers() {
   const { ecosystem, ecosystemDbId } = useSession("admin");
   const [rows, setRows] = useState<ResellerRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rateTarget, setRateTarget] = useState<CashbackTarget | null>(null);
 
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
@@ -59,7 +62,7 @@ function AdminResellers() {
         supabase
           .from("profiles")
           .select(
-            "id, full_name, email, joined_at, status, reseller_discount_percent",
+            "id, full_name, email, joined_at, status, reseller_discount_percent, sale_commission_percent",
           )
           .eq("ecosystem_id", ecosystemDbId),
         supabase.from("credit_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
@@ -94,6 +97,7 @@ function AdminResellers() {
           joined_at: p.joined_at,
           status: p.status as ResellerRow["status"],
           discount: p.reseller_discount_percent ?? 0,
+          cashback: p.sale_commission_percent ?? 0,
           role: roleOf.get(p.id)!,
           credits: creditOf.get(p.id) ?? 0,
           sales: saleCount.get(p.id) ?? 0,
@@ -129,7 +133,7 @@ function AdminResellers() {
 
       <PageSection
         title="Reseller network"
-        description="Wholesale discounts and sales commissions are captured at transaction time. Credit transfers move exact amounts."
+        description="Every reseller and subreseller has their own cashback rate. The shop admin always receives the remainder of each purchase, and rate changes apply to future purchases only."
         action={
           <Button size="sm" asChild>
             <Link to="/admin/customers">
@@ -174,8 +178,8 @@ function AdminResellers() {
                       <p className="text-sm font-semibold">{r.discount}%</p>
                     </div>
                     <div>
-                      <p className="text-[11px] text-muted-foreground">Discount margin</p>
-                      <p className="text-sm font-semibold">{r.discount}%</p>
+                      <p className="text-[11px] text-muted-foreground">Cashback</p>
+                      <p className="text-sm font-semibold text-primary">{r.cashback}%</p>
                     </div>
                     <div>
                       <p className="text-[11px] text-muted-foreground">Sales</p>
@@ -191,8 +195,22 @@ function AdminResellers() {
                         <Wallet className="size-4" /> Add credit
                       </Link>
                     </Button>
-                    <Button size="sm" variant="outline" className="flex-1" asChild>
-                      <Link to="/admin/customers">Edit rates</Link>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() =>
+                        setRateTarget({
+                          id: r.id,
+                          name: r.full_name || r.email,
+                          role: r.role,
+                          ecosystemId: ecosystemDbId!,
+                          shopName: ecosystem.name,
+                          percent: r.cashback,
+                        })
+                      }
+                    >
+                      <Percent className="size-4" /> Set cashback
                     </Button>
                   </div>
                 </CardContent>
@@ -201,6 +219,12 @@ function AdminResellers() {
           </div>
         )}
       </PageSection>
+
+      <CashbackRateDialog
+        target={rateTarget}
+        onClose={() => setRateTarget(null)}
+        onSaved={() => void load()}
+      />
     </>
   );
 }
