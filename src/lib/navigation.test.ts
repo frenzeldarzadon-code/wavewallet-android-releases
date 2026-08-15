@@ -25,6 +25,16 @@ describe("role sidebar visibility", () => {
     );
   });
 
+  it("consolidates transfer and history into the wallet center", () => {
+    const customer = navPaths(customerNav());
+    expect(customer).not.toContain("/app/transfer");
+    expect(customer).not.toContain("/app/history");
+    const seller = navPaths(resellerNav("subreseller"));
+    expect(seller).not.toContain("/reseller/transfer");
+    expect(seller).not.toContain("/reseller/history");
+    expect(navPaths(adminNav())).toContain("/admin/wallet");
+  });
+
   it("never shows a customer any shop-staff or platform destination", () => {
     const paths = navPaths(customerNav());
     expect(paths.some((p) => p.startsWith("/admin"))).toBe(false);
