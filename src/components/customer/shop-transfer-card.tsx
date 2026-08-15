@@ -46,14 +46,17 @@ const credits = (n: number) => `${n.toLocaleString()} credits`;
 export function ShopTransferCard({
   onDone,
   embedded = false,
+  sourceEcosystemId = null,
 }: {
   onDone?: () => void;
   /** Rendered inside the Wallet Center "Send credits" card: no section/card chrome. */
   embedded?: boolean;
+  /** The wallet currently selected in Wallet Center — used as the default source shop. */
+  sourceEcosystemId?: string | null;
 }) {
   const [wallets, setWallets] = useState<ShopWallet[]>([]);
   const [fee, setFee] = useState(DEFAULT_SHOP_TRANSFER_FEE);
-  const [from, setFrom] = useState<string | null>(null);
+  const [from, setFrom] = useState<string | null>(sourceEcosystemId);
   const [to, setTo] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
@@ -65,31 +68,37 @@ export function ShopTransferCard({
     const [w, f] = await Promise.all([fetchMyShopWallets(), fetchShopTransferFee()]);
     setWallets(w);
     setFee(f);
-    setFrom((cur) => cur ?? w[0]?.ecosystemId ?? null);
+    setFrom((cur) => cur ?? sourceEcosystemId ?? w[0]?.ecosystemId ?? null);
     setLoading(false);
-  }, []);
+  }, [sourceEcosystemId]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
+  // Follow the wallet the member selected in Wallet Center.
+  useEffect(() => {
+    if (!sourceEcosystemId) return;
+    setFrom(sourceEcosystemId);
+    setTo((cur) => (cur === sourceEcosystemId ? null : cur));
+  }, [sourceEcosystemId]);
+
   if (loading) return null;
 
   if (wallets.length < 2) {
-    if (embedded) {
-      return (
-        <EmptyState
-          title="You belong to one shop"
-          description="Join and get approved in another shop to move credits between them."
-        />
-      );
-    }
+    const explain = (
+      <EmptyState
+        title="Another approved shop is needed"
+        description="Transfer Credits to Another Shop moves credits between two of your own shop wallets. You are currently an approved member of one shop only — join and get approved in a second shop from the Universe, and this transfer opens automatically."
+      />
+    );
+    if (embedded) return explain;
     return (
       <PageSection
-        title="Move credits between your shops"
+        title="Transfer Credits to Another Shop"
         description="Available once you are an approved member of more than one shop."
       >
-        <EmptyState title="You belong to one shop" description="Join and get approved in another shop to move credits between them." />
+        {explain}
       </PageSection>
     );
   }
