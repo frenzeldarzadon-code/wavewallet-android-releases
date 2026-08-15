@@ -187,12 +187,29 @@ export function validateWithdrawal(
   return null;
 }
 
-export function validateCashIn(php: number, methodId: string | null): string | null {
+/**
+ * Cash in now requires the amount, the GCash number paid, the GCash payment
+ * reference number and the payment screenshot. Notes stay optional. The same
+ * rules are enforced again inside `request_cash_in`.
+ */
+export function validateCashIn(
+  php: number,
+  methodId: string | null,
+  input?: { payerNumber?: string | null; payerReference?: string | null; hasProof?: boolean },
+): string | null {
   if (!methodId) return "Choose a payment method.";
   if (!Number.isFinite(php) || php <= 0) return "Enter how much you are paying.";
   if (php > 10_000_000) return "A single cash in is limited to ₱10,000,000.";
+  if (input) {
+    if (!normalizePhMobile(input.payerNumber ?? "")) return "Enter the GCash number you paid.";
+    if (!normalizePaymentReference(input.payerReference ?? "")) {
+      return "Enter your GCash payment reference number.";
+    }
+    if (!input.hasProof) return "Attach your payment screenshot.";
+  }
   return null;
 }
+
 
 export type MoneyStatus = string;
 
