@@ -33,8 +33,8 @@ export const RECEIPT_MIN_CONFIDENCE = 0.6;
 export const RECEIPT_CHECK_LABEL: Record<ReceiptCheck, string> = {
   pending: "Reading the receipt…",
   matched: "Reference matches the receipt.",
-  mismatch: "Reference does not match receipt",
-  unreadable: "The reference could not be read from the receipt — manual review.",
+  mismatch: "Reference does not match receipt.",
+  unreadable: "Reference could not be verified from payment screenshot.",
   error: "The receipt could not be checked — manual review.",
   skipped: "The receipt was not checked automatically.",
 };
@@ -114,9 +114,9 @@ export function parseReceiptReading(raw: string): ReceiptReading {
 export function receiptOutcomeMessage(check: ReceiptCheck): string {
   if (check === "matched") return RECEIPT_CHECK_LABEL.matched;
   if (check === "mismatch") {
-    return "Reference does not match receipt — held for manual review, no credits were added.";
+    return "Reference does not match receipt. Held for manual review — no credits were added.";
   }
-  return "We could not read the reference from your screenshot, so this is held for manual review.";
+  return "Reference could not be verified from payment screenshot. Held for manual review — no credits were added.";
 }
 
 /* ------------------------------------------------------------------ */
@@ -219,7 +219,7 @@ export function verificationReason(row: VerificationInput): string {
     case "DUPLICATE_REFERENCE":
       return "Duplicate reference — manual review required. The earlier transaction was not changed.";
     case "MISMATCH":
-      return "Reference mismatch — submitted reference does not match the payment receipt.";
+      return "Reference does not match receipt.";
     case "UNREADABLE":
       return "Reference could not be verified from payment screenshot.";
     case "VERIFIED":
