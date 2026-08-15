@@ -154,7 +154,10 @@ describe("tabEmptyHint", () => {
       expect(tabEmptyHint(tab, "customer")).toMatch(/\w/);
     }
     expect(tabEmptyHint("network", "reseller")).toMatch(/subresellers/);
-    expect(tabEmptyHint("peer", "customer")).toMatch(/customers/);
+    expect(tabEmptyHint("peer", "reseller")).toMatch(/customers/);
+    // A customer never reads another member's internal position.
+    expect(tabEmptyHint("peer", "customer")).not.toMatch(/reseller|admin/i);
+    expect(tabEmptyHint("network", "customer")).not.toMatch(/reseller|admin|upline/i);
   });
 });
 
@@ -171,5 +174,38 @@ describe("lineageResetNotice", () => {
     expect(lineageResetNotice("admin", "customer")).toBeNull();
     expect(lineageResetNotice("reseller", "subreseller")).toBeNull();
     expect(lineageResetNotice("subreseller", "admin")).toBeNull();
+  });
+});
+
+describe("recipientRelationLabel — customer privacy", () => {
+  it("never names an internal position to a customer", () => {
+    for (const rel of ["admin", "reseller", "subreseller"]) {
+      const label = recipientRelationLabel(rel, "customer");
+      expect(label).toBe("Can accept your credits");
+      expect(label).not.toMatch(/admin|reseller/i);
+    }
+    expect(recipientRelationLabel("customer", "customer")).toBe("Member of this shop");
+  });
+  it("keeps operational wording for operators and resellers", () => {
+    expect(recipientRelationLabel("admin", "reseller")).toBe("Shop admin");
+    expect(recipientRelationLabel("subreseller", "reseller")).toBe("My subreseller");
+    expect(recipientRelationLabel("customer", "admin")).toBe("Customer");
+  });
+});
+
+describe("customer recipient tabs", () => {
+  it("offers role-free tab wording and no single-upline framing", () => {
+    const labels = recipientTabs("customer").map((t) => t.label);
+    expect(labels).toContain("Credit recipients");
+    expect(labels.join(" ")).not.toMatch(/upline|reseller|admin/i);
+  });
+  it("keeps the network wording for resellers", () => {
+    expect(recipientTabs("reseller").map((t) => t.label)).toContain("Upline & downline");
+  });
+});
+
+describe("transferSectionTitle", () => {
+  it("does not expose recipient positions to a customer", () => {
+    expect(transferSectionTitle("customer")).not.toMatch(/admin|reseller/i);
   });
 });
