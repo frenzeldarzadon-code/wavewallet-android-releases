@@ -35,6 +35,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
+import { CashbackRateDialog, type CashbackTarget } from "@/components/cashback-rate-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { peso, roleLabel, shortDate, shortDateTime, type Role } from "@/lib/wavewallet";
 import { EditMemberDialog, type EditableMember } from "@/components/edit-member-dialog";
@@ -49,7 +50,6 @@ import {
 import { deleteCustomerAccount } from "@/lib/customer-cleanup.functions";
 import {
   fetchEcosystemSaleCommission,
-  setSaleCommission,
   setSubresellerParent,
   type SaleCommissionDefaults,
 } from "@/lib/wallet";
@@ -129,12 +129,11 @@ function AdminCustomers() {
   const [detail, setDetail] = useState<Member | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
   const [discount, setDiscount] = useState("10");
-  const [creditBack, setCreditBack] = useState("10");
   const [saleDefaults, setSaleDefaults] = useState<SaleCommissionDefaults>({
     reseller: 0,
     subreseller: 0,
   });
-  const [editingCreditBack, setEditingCreditBack] = useState<Member | null>(null);
+  const [rateTarget, setRateTarget] = useState<CashbackTarget | null>(null);
   const [editingOwner, setEditingOwner] = useState<Member | null>(null);
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState<Member | null>(null);
@@ -310,26 +309,6 @@ function AdminCustomers() {
     toast.success("Discount updated — applies to future voucher purchases only.");
     setEditing(null);
     void load();
-  };
-
-  const confirmCreditBack = async () => {
-    if (!editingCreditBack) return;
-    const value = Number(creditBack);
-    if (Number.isNaN(value) || value < 0 || value > MAX_COMMISSION) {
-      toast.error(`Sales commission must be between 0% and ${MAX_COMMISSION}%.`);
-      return;
-    }
-    setBusy(true);
-    try {
-      await setSaleCommission(editingCreditBack.id, value);
-      toast.success("Sales commission updated — applies to future purchases only.");
-      setEditingCreditBack(null);
-      void load();
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
   };
 
   const confirmOwner = async () => {
@@ -631,19 +610,18 @@ function AdminCustomers() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => {
-                                  setEditingCreditBack(c);
-                                  setCreditBack(
-                                    String(
-                                      c.sale_commission_percent ??
-                                        (c.role === "reseller"
-                                          ? saleDefaults.reseller
-                                          : saleDefaults.subreseller),
-                                    ),
-                                  );
-                                }}
+                                onClick={() =>
+                                  setRateTarget({
+                                    id: c.id,
+                                    name: c.full_name || c.email,
+                                    role: c.role as "reseller" | "subreseller",
+                                    ecosystemId: ecosystemDbId!,
+                                    shopName: ecosystem?.name ?? null,
+                                    percent: c.sale_commission_percent ?? 0,
+                                  })
+                                }
                               >
-                                <Percent className="size-4" /> Sales %
+                                <Percent className="size-4" /> Cashback
                               </Button>
                             ) : null}
                             {c.role === "subreseller" ? (
@@ -809,41 +787,11 @@ function AdminCustomers() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!editingCreditBack} onOpenChange={(o) => !o && setEditingCreditBack(null)}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Sales commission</DialogTitle>
-            <DialogDescription>
-              Paid to {editingCreditBack?.full_name || editingCreditBack?.email} when a customer
-              spends credits this member funded, and on their own voucher purchases. Separate from
-              the wholesale discount, and snapshotted on every sale — past sales never change.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-1.5">
-            <Label htmlFor="editCreditBack">Sales commission (%)</Label>
-            <Input
-              id="editCreditBack"
-              type="number"
-              min={0}
-              max={MAX_COMMISSION}
-              value={creditBack}
-              onChange={(e) => setCreditBack(e.target.value)}
-            />
-            <p className="text-[11px] text-muted-foreground">
-              Shop defaults: {saleDefaults.reseller}% for resellers, {saleDefaults.subreseller}% for
-              subresellers.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setEditingCreditBack(null)}>
-              Cancel
-            </Button>
-            <Button onClick={confirmCreditBack} disabled={busy}>
-              Save commission
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CashbackRateDialog
+        target={rateTarget}
+        onClose={() => setRateTarget(null)}
+        onSaved={() => void load()}
+      />
 
       <Dialog
         open={!!editingOwner}
