@@ -215,8 +215,8 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
           <EmptyState title="Loading wallets…" />
         ) : shops.length === 0 ? (
           <EmptyState
-            title="No shop wallet yet"
-            description="Join a shop from the Universe to open your first wallet."
+            title="No shop membership yet"
+            description="You are not an approved member of any shop yet. Every shop you are approved into opens its own wallet automatically — a zero balance still shows here as ₱0.00."
           />
         ) : (
           <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
