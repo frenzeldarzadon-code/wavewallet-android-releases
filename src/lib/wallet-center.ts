@@ -188,8 +188,7 @@ export function transferSectionTitle(role: Role | null): string {
     case "super_admin":
       return "Send credits to members of this shop";
     default:
-      return "Send credits to this shop's admin, reseller, subreseller or another customer";
-
+      return "Send credits to people in this shop who can accept your transfer";
   }
 }
 
@@ -204,7 +203,8 @@ export function emptyRecipientsHint(role: Role | null): string {
     case "super_admin":
       return "No other active members in this shop yet.";
     default:
-      return "No eligible recipients for this shop yet — customers of this shop appear here once they are approved.";
+      return "Nobody in this shop can accept your credits yet — recipients appear here once they are active members.";
+
   }
 }
 
