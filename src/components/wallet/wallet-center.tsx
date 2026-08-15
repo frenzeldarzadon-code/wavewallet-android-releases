@@ -331,12 +331,6 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
                   }}
                 />
               ) : (
-                <></>
-              )}
-              {tab === "shops" ? null : (
-                <></>
-              )}
-              {tab === "shops" ? null : (
                 <div className="space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="wc-search">Recipient</Label>
