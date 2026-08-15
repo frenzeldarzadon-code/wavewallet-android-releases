@@ -93,15 +93,17 @@ export function CashbackRateDialog({ target, onClose, onSaved }: Props) {
         <DialogHeader>
           <DialogTitle>Cashback rate</DialogTitle>
           <DialogDescription>
-            Set the individual rate for {target?.name}
-            {target?.shopName ? ` in ${target.shopName}` : ""}. It applies only to purchases funded
-            by credits that passed through them, and only from now on — past transactions keep the
-            rate they were made with.
+            Set the individual share for {target?.name}
+            {target?.shopName ? ` in ${target.shopName}` : ""}. A subreseller's share is taken out
+            of their parent reseller's total share, and the shop admin always keeps the rest. Rate
+            changes apply to future purchases only.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="cashback-pct">Cashback (%)</Label>
+            <Label htmlFor="cashback-pct">
+              {isSub ? "Subreseller share (%)" : "Reseller total share (%)"}
+            </Label>
             <Input
               id="cashback-pct"
               inputMode="numeric"
@@ -109,15 +111,22 @@ export function CashbackRateDialog({ target, onClose, onSaved }: Props) {
               value={value}
               onChange={(e) => setValue(e.target.value)}
             />
+            {isSub ? (
+              <p className="text-xs text-muted-foreground">
+                Parent reseller total share: {parentTotal}% — this cannot be higher.
+              </p>
+            ) : chain?.max_subreseller ? (
+              <p className="text-xs text-muted-foreground">
+                Highest subreseller share under them: {chain.max_subreseller}% — this cannot be
+                lower.
+              </p>
+            ) : null}
           </div>
-          <div className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
-            On a 100-credit customer purchase funded by this member:{" "}
-            <span className="font-medium text-foreground">
-              {(target?.role === "reseller" ? split.reseller : split.subreseller).toLocaleString()}{" "}
-              credits
-            </span>{" "}
-            to {target?.name || "them"}, the remainder to the shop admin.
+          <div className="space-y-1 rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground">On a 100-credit qualifying purchase:</p>
+            <p>Subreseller {split.subreseller} · Reseller {split.reseller} · Admin {split.admin}</p>
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="cashback-reason">Reason (optional)</Label>
             <Input
