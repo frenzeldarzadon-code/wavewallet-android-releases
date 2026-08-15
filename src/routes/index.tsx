@@ -379,30 +379,27 @@ function LoginPage() {
                     with. Only an email address can reset a forgotten password by itself.
                   </p>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="su-password">Password</Label>
-                    <Input
-                      id="su-password"
-                      type="password"
-                      value={form.password}
-                      onChange={(e) => setForm({ ...form, password: e.target.value })}
-                      placeholder="At least 8 characters"
-                      autoComplete="new-password"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="su-confirm">Confirm password</Label>
-                    <Input
-                      id="su-confirm"
-                      type="password"
-                      value={form.confirm}
-                      onChange={(e) => setForm({ ...form, confirm: e.target.value })}
-                      placeholder="Repeat your password"
-                      autoComplete="new-password"
-                      onKeyDown={(e) => e.key === "Enter" && signUp()}
-                    />
-                  </div>
+                <div className="space-y-3">
+                  <PasswordField
+                    id="su-password"
+                    label="Password"
+                    value={form.password}
+                    onChange={(v) => setForm({ ...form, password: v })}
+                    autoComplete="new-password"
+                    requirements
+                  />
+                  <PasswordField
+                    id="su-confirm"
+                    label="Confirm password"
+                    value={form.confirm}
+                    onChange={(v) => setForm({ ...form, confirm: v })}
+                    placeholder="Repeat your password"
+                    autoComplete="new-password"
+                    onEnter={() => void signUp()}
+                  />
+                  {signupIssue ? (
+                    <p className="text-xs text-destructive">{signupIssue}</p>
+                  ) : null}
                 </div>
                 <Button
                   className="w-full"
