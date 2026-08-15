@@ -11,6 +11,7 @@ import {
   commissionBreakdown,
   fetchCreditBalance,
   fetchCreditLedger,
+  fetchMyVoucherDiscount,
   type CreditEntry,
 } from "@/lib/wallet";
 
@@ -40,6 +41,9 @@ function ResellerDashboard() {
   const [balance, setBalance] = useState(0);
   const [entries, setEntries] = useState<CreditEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  // The one Discount configured for this member in THIS shop — also the
+  // percentage applied at voucher checkout. There is no second setting.
+  const [discount, setDiscount] = useState(account?.discountPercent ?? 0);
   const userId = account?.id ?? null;
 
   const load = useCallback(async () => {
@@ -57,6 +61,11 @@ function ResellerDashboard() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!userId) return;
+    void fetchMyVoucherDiscount(userId, ecosystemDbId).then(setDiscount);
+  }, [userId, ecosystemDbId]);
 
   if (!account || !ecosystem) return null;
 
@@ -79,7 +88,7 @@ function ResellerDashboard() {
           />
         </div>
         <p className="mt-2 text-[11px] text-muted-foreground">
-          Your wholesale discount ({account.discountPercent ?? 0}%) is applied automatically at
+          Your Discount ({discount}%) is applied automatically at
           voucher checkout. Credit transfers move exact amounts — no commission is added or
           deducted.
         </p>

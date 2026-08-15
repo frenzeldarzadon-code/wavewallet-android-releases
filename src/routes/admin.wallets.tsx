@@ -113,11 +113,17 @@ function AdminWallets() {
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
     setLoading(true);
-    const [{ data: profiles }, { data: roles }, { data: accounts }, { data: pointAccounts }, { data: entries }] =
-      await Promise.all([
+    const [
+      { data: profiles },
+      { data: roles },
+      { data: accounts },
+      { data: pointAccounts },
+      { data: entries },
+      { data: memberships },
+    ] = await Promise.all([
         supabase
           .from("profiles")
-          .select("id, full_name, email, phone, status, reseller_commission_percent, reseller_discount_percent")
+          .select("id, full_name, email, phone, status")
           .eq("ecosystem_id", ecosystemDbId),
         supabase.from("user_roles").select("user_id, role").eq("ecosystem_id", ecosystemDbId),
         supabase.from("credit_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
@@ -128,10 +134,18 @@ function AdminWallets() {
           .eq("ecosystem_id", ecosystemDbId)
           .order("created_at", { ascending: false })
           .limit(60),
+        supabase
+          .from("ecosystem_memberships")
+          .select("user_id, sale_commission_percent")
+          .eq("ecosystem_id", ecosystemDbId),
       ]);
     const roleBy = new Map((roles ?? []).map((r) => [r.user_id, r.role as string]));
     const balBy = new Map((accounts ?? []).map((a) => [a.user_id, Number(a.balance)]));
     const ptsBy = new Map((pointAccounts ?? []).map((a) => [a.user_id, Number(a.balance)]));
+    // One Discount per member, per shop — also their voucher shop discount.
+    const rateBy = new Map(
+      (memberships ?? []).map((m) => [m.user_id, Number(m.sale_commission_percent ?? 0)]),
+    );
     setShopBalance(account?.id ? (balBy.get(account.id) ?? 0) : 0);
     setMembers(
       (profiles ?? [])
@@ -140,9 +154,8 @@ function AdminWallets() {
           role: roleBy.get(p.id) ?? "customer",
           balance: balBy.get(p.id) ?? 0,
           points: ptsBy.get(p.id) ?? 0,
-          // null = no personal override; the shop default is resolved server-side.
-          commission: Number(p.reseller_commission_percent ?? 0),
-          discount: Number(p.reseller_discount_percent ?? 0),
+          commission: rateBy.get(p.id) ?? 0,
+          discount: rateBy.get(p.id) ?? 0,
         }))
         .filter((m) => m.role !== "admin" && m.role !== "super_admin")
         .sort((a, b) => a.full_name.localeCompare(b.full_name)),

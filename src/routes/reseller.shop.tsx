@@ -27,14 +27,14 @@ export const Route = createFileRoute("/reseller/shop")({
 });
 
 function ResellerShop() {
-  const { account } = useSession("reseller");
-  // The wholesale discount is resolved server-side (personal rate, else the
-  // shop default for the role) so the preview matches what checkout charges.
+  const { account, ecosystemDbId } = useSession("reseller");
+  // The voucher discount is the member's single configured Discount for THIS
+  // shop, resolved server-side so the preview matches what checkout charges.
   const [discount, setDiscount] = useState(account?.discountPercent ?? 0);
   useEffect(() => {
     if (!account?.id) return;
-    void fetchMyVoucherDiscount(account.id).then(setDiscount);
-  }, [account?.id]);
+    void fetchMyVoucherDiscount(account.id, ecosystemDbId).then(setDiscount);
+  }, [account?.id, ecosystemDbId]);
   return (
     <VoucherShopView
       role={account?.role === "subreseller" ? "subreseller" : "reseller"}

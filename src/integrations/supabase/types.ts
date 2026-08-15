@@ -6900,10 +6900,9 @@ export type Database = {
         }
         Returns: string
       }
-      voucher_discount_percent_for: {
-        Args: { _user_id: string }
-        Returns: number
-      }
+      voucher_discount_percent_for:
+        | { Args: { _user_id: string }; Returns: number }
+        | { Args: { _ecosystem_id: string; _user_id: string }; Returns: number }
       wallet_id_for: {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: string

@@ -328,13 +328,17 @@ export async function setEcosystemRates(
 }
 
 /**
- * Effective wholesale voucher discount for a member: their personal rate when
- * set, otherwise the shop default for their role. Resolved server-side so the
- * price shown before checkout matches the price charged.
+ * Effective voucher shop discount for a member in one shop. It is exactly that
+ * member's configured Discount — there is no second, editable percentage.
+ * Resolved server-side so the price shown before checkout matches the charge.
  */
-export async function fetchMyVoucherDiscount(userId: string): Promise<number> {
+export async function fetchMyVoucherDiscount(
+  userId: string,
+  ecosystemId?: string | null,
+): Promise<number> {
   const { data, error } = await supabase.rpc("voucher_discount_percent_for", {
     _user_id: userId,
+    _ecosystem_id: (ecosystemId ?? null) as unknown as string,
   });
   if (error) return 0;
   return Number(data ?? 0);

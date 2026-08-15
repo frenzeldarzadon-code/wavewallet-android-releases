@@ -31,14 +31,14 @@ export const Route = createFileRoute("/admin/shop")({
  * a voucher. The purchase is paid from the admin's own shop wallet.
  */
 function AdminShop() {
-  const { account } = useSession("admin");
+  const { account, ecosystemDbId } = useSession("admin");
   // The admin voucher shop discount is configured by the platform owner
-  // (default 100% off) and resolved server-side, so the price shown here is
-  // exactly what checkout charges.
+  // (default 100% off) and resolved server-side for the shop being viewed, so
+  // the price shown here is exactly what checkout charges.
   const [discount, setDiscount] = useState(0);
   useEffect(() => {
     if (!account?.id) return;
-    void fetchMyVoucherDiscount(account.id).then(setDiscount);
-  }, [account?.id]);
+    void fetchMyVoucherDiscount(account.id, ecosystemDbId).then(setDiscount);
+  }, [account?.id, ecosystemDbId]);
   return <VoucherShopView role="admin" discountPercent={discount} />;
 }
