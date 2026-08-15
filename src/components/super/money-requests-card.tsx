@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { EmptyState, StatusBadge } from "@/components/ui-kit";
 import { CashInProofViewer } from "@/components/money/cash-in-proof";
+import { RECEIPT_CHECK_LABEL, type ReceiptCheck } from "@/lib/cash-in-receipt";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
   fetchAllCashIns,
