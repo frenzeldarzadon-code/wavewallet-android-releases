@@ -291,14 +291,53 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
         </PageSection>
       ) : null}
 
-      {/* 1. Send credits inside the selected shop — always visible. */}
+      {/* 1. Send credits — one area, recipient type tabs. Always visible. */}
       {selected ? (
         <PageSection
-          title={transferSectionTitle(selected.role)}
-          description={`From your ${selected.ecosystemName} wallet · available ${peso(selected.balance)}. Only people you are allowed to send to are listed.`}
+          title="Send credits"
+          description={`${transferSectionTitle(selected.role)} · from your ${selected.ecosystemName} wallet, available ${peso(selected.balance)}. Only people you are allowed to send to are listed.`}
         >
           <Card className="shadow-[var(--shadow-card)]">
             <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-2" role="tablist" aria-label="Recipient type">
+                {tabs.map((t) => (
+                  <button
+                    key={t.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={t.key === tab}
+                    onClick={() => {
+                      setTab(t.key);
+                      resetSend();
+                    }}
+                    className={cn(
+                      "h-9 rounded-full border px-4 text-xs font-semibold transition-colors",
+                      t.key === tab
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-card text-muted-foreground hover:bg-muted",
+                    )}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {tab === "shops" ? (
+                <ShopTransferCard
+                  embedded
+                  onDone={() => {
+                    setHistoryKey((k) => k + 1);
+                    void loadShops();
+                  }}
+                />
+              ) : (
+                <></>
+              )}
+              {tab === "shops" ? null : (
+                <></>
+              )}
+              {tab === "shops" ? null : (
+                <div className="space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="wc-search">Recipient</Label>
                 <div className="relative">
