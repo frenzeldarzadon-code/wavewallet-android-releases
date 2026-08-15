@@ -206,6 +206,18 @@ function AdminCustomers() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (!ecosystemDbId) return;
+    void fetchEcosystemRates(ecosystemDbId).then(setShopRates);
+  }, [ecosystemDbId]);
+
+  /** Shop-configured starting discount for a role, or 0 when none is set. */
+  const defaultDiscountFor = (role: "reseller" | "subreseller") =>
+    String(
+      (role === "subreseller" ? shopRates?.subresellerDiscount : shopRates?.resellerDiscount) ?? 0,
+    );
+
+
 
   const openDetail = async (m: Member) => {
     setDetail(m);
