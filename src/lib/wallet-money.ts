@@ -189,7 +189,7 @@ export function validateWithdrawal(
 }
 
 /**
- * Cash in now requires the amount, the GCash number paid, the GCash payment
+ * Cash in now requires the amount, the GCash number the member paid FROM, the GCash payment
  * reference number and the payment screenshot. Notes stay optional. The same
  * rules are enforced again inside `request_cash_in`.
  */
@@ -202,7 +202,7 @@ export function validateCashIn(
   if (!Number.isFinite(php) || php <= 0) return "Enter how much you are paying.";
   if (php > 10_000_000) return "A single cash in is limited to ₱10,000,000.";
   if (input) {
-    if (!normalizePhMobile(input.payerNumber ?? "")) return "Enter the GCash number you paid.";
+    if (!normalizePhMobile(input.payerNumber ?? "")) return "Enter the GCash number you paid from.";
     if (!normalizePaymentReference(input.payerReference ?? "")) {
       return "Enter your GCash payment reference number.";
     }
@@ -390,7 +390,7 @@ export async function cashInProofUrl(path?: string | null): Promise<string | nul
 export async function requestCashIn(input: {
   methodId: string;
   amountPhp: number;
-  /** GCash number the member paid to — compared with the shop's configured number. */
+  /** GCash number the member paid FROM — matched against the real GCash notification. */
   payerNumber: string;
   /** GCash payment reference number — required and unique across all cash ins. */
   payerReference: string;

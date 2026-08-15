@@ -83,14 +83,29 @@ export function samePhMobile(a?: string | null, b?: string | null): boolean {
   return x !== null && y !== null && x === y;
 }
 
+/** The corroborating GCash notification seen by a paired listener phone. */
+export interface MatchableListenerEvent {
+  /** Number the money was sent FROM, as GCash reported it. */
+  sender_number?: string | null;
+  amount_php: number;
+  outcome?: string;
+  /** The paired phone is active and has checked in recently. */
+  device_online?: boolean;
+}
+
 export interface MatchableRequest {
   amount_php: number;
   payer_reference?: string | null;
+  /** The GCash number the member paid FROM. */
+  sender_number?: string | null;
+  /** Legacy alias kept for older rows: same meaning as sender_number. */
   payer_number?: string | null;
   proof_path?: string | null;
   status?: string;
   /** True when this reference was already used by an earlier request. */
   duplicate_reference?: boolean;
+  /** Linked notification, in either order: pay-then-submit or submit-then-pay. */
+  listener_event?: MatchableListenerEvent | null;
 }
 
 export type MatchOutcome =
@@ -103,25 +118,36 @@ export type MatchOutcome =
   | "above_auto_limit"
   | "amount_mismatch"
   | "no_receiving_number"
+  | "no_sender_number"
+  | "awaiting_listener"
+  | "listener_offline"
   | "number_mismatch";
 
 /** Human wording for a matching result, used in the UI and the audit trail. */
 export const MATCH_REASON: Record<MatchOutcome, string> = {
-  matched: "The submitted details match the configured cash in rules — approved automatically.",
+  matched: "A real GCash notification matches this request — approved automatically.",
   disabled: "Automatic approval is switched off for this shop.",
   not_pending: "This request was already decided.",
   no_reference: "No GCash payment reference number was submitted, so it cannot be matched.",
   duplicate_reference: "That payment reference was already used by another cash in.",
   no_proof: "No payment screenshot was attached.",
   above_auto_limit: "Above the automatic approval limit — left for manual review.",
-  amount_mismatch: "The amount does not match the configured cash in amount.",
+  amount_mismatch: "The amount does not match the payment that was received.",
   no_receiving_number: "No receiving GCash number is configured for this shop yet.",
-  number_mismatch: "The GCash number paid does not match the shop's receiving number.",
+  no_sender_number: "No sending GCash number was submitted, so the payment cannot be traced.",
+  awaiting_listener: "No matching GCash payment has been seen yet — waiting for the notification.",
+  listener_offline: "The paired listener phone is offline, so the payment cannot be confirmed.",
+  number_mismatch: "The GCash number that sent the money does not match this request.",
 };
 
 /**
  * Would this request be approved automatically? Mirrors the database.
- * `receivingNumber` is the number configured for the shop / payment method.
+ *
+ * The sending GCash number and the exact amount are the primary criteria and
+ * must match a real listener notification; the reference is a secondary
+ * uniqueness guard; the screenshot is supporting evidence only. The payment may
+ * arrive before or after the request, as long as both fall inside the paired
+ * device's matching window (checked in the database, not here).
  */
 export function evaluateMatch(
   request: MatchableRequest,
@@ -136,18 +162,27 @@ export function evaluateMatch(
   if (rule.max_auto_amount_php != null && Number(request.amount_php) > Number(rule.max_auto_amount_php)) {
     return "above_auto_limit";
   }
+  const tolerance = Number(rule.amount_tolerance_php || 0);
   if (
     rule.expected_amount_php != null &&
-    Math.abs(Number(request.amount_php) - Number(rule.expected_amount_php)) >
-      Number(rule.amount_tolerance_php || 0)
+    Math.abs(Number(request.amount_php) - Number(rule.expected_amount_php)) > tolerance
   ) {
     return "amount_mismatch";
   }
-  const expected = normalizePhMobile(receivingNumber);
-  if (!expected) return "no_receiving_number";
-  if (normalizePhMobile(request.payer_number) !== expected) return "number_mismatch";
+  if (!normalizePhMobile(receivingNumber)) return "no_receiving_number";
+  const sender = normalizePhMobile(request.sender_number ?? request.payer_number);
+  if (!sender) return "no_sender_number";
+
+  const event = request.listener_event;
+  if (!event || (event.outcome && event.outcome !== "accepted")) return "awaiting_listener";
+  if (normalizePhMobile(event.sender_number) !== sender) return "number_mismatch";
+  if (Math.abs(Number(event.amount_php) - Number(request.amount_php)) > tolerance) {
+    return "amount_mismatch";
+  }
+  if (event.device_online === false) return "listener_offline";
   return "matched";
 }
+
 
 /** Wording for the banner on the settings screen. */
 export function matchingStatusLabel(status: CashInAutoStatus | null): {
@@ -160,7 +195,7 @@ export function matchingStatusLabel(status: CashInAutoStatus | null): {
       tone: "success",
       title: "Automatic matching is on",
       detail:
-        "A cash in is approved automatically only when the amount, the shop's receiving GCash number and a never-used payment reference all match, and a screenshot is attached. GCash is never contacted.",
+        "A cash in is approved automatically only when a real GCash notification from the paired phone on the shop's receiving account matches the sending number and the exact amount, and the payment reference has never been used. The customer may pay before or after submitting. GCash itself is never contacted.",
     };
   }
   return {

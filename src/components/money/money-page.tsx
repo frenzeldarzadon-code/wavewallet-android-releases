@@ -420,8 +420,8 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-                Enter the amount you sent, the GCash number you paid, your GCash payment reference number, and upload
-                your payment screenshot. Matching Cash In requests may be approved automatically. Your screenshot is
+                Enter the amount you sent, the GCash number you paid from, your GCash payment reference number, and upload
+                your payment screenshot. You may pay first and submit this afterwards — matching Cash In requests may be approved automatically. Your screenshot is
                 kept as supporting evidence for review — it is not a verification from GCash.
               </p>
               {methods.length === 0 ? (
@@ -452,7 +452,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                       <Input id="ci-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="ci-number">GCash number you paid</Label>
+                      <Label htmlFor="ci-number">GCash number you paid from</Label>
                       <Input
                         id="ci-number"
                         inputMode="tel"
@@ -540,7 +540,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                           {peso(Number(c.fee_php ?? 0))}) · net {peso(Number(c.net_php ?? c.amount_php))}
                         </p>
                         <p className="text-muted-foreground">
-                          Paid to {c.payer_number ?? "—"} · ref {c.payer_reference ?? "—"} ·{" "}
+                          From {c.sender_number ?? c.payer_number ?? "—"} · ref {c.payer_reference ?? "—"} ·{" "}
                           {c.approval_method === "automatic" ? "automatic" : "manual"} review
                         </p>
                         {c.notes ? <p className="text-muted-foreground">Notes: {c.notes}</p> : null}
