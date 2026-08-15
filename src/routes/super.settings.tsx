@@ -72,7 +72,7 @@ function SuperSettings() {
 
   return (
     <>
-      <PageSection title="Collection details" description="Shown to operators on their subscription screen.">
+      <PageSection title="Collection details" description="The platform GCash account shop admins pay when buying a credit allocation.">
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">

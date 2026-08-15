@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CreditRequestsCard } from "@/components/super/credit-requests-card";
 import { ManualCreditCard } from "@/components/super/manual-credit-card";
 
 export const Route = createFileRoute("/super/credits")({
@@ -9,13 +8,13 @@ export const Route = createFileRoute("/super/credits")({
       {
         name: "description",
         content:
-          "Verify pending shop credit purchases and grant manual credits from the WaveWallet platform console.",
+          "Mint or remove credits in any WaveWallet shop from the platform console, with a full audit trail.",
       },
       { property: "og:title", content: "Credit Management — WaveWallet Super Admin" },
       {
         property: "og:description",
         content:
-          "Approve, reject or freeze admin credit purchase requests and issue audited manual credits.",
+          "Issue or remove audited manual credits in any shop.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -25,10 +24,5 @@ export const Route = createFileRoute("/super/credits")({
 });
 
 function SuperCredits() {
-  return (
-    <>
-      <CreditRequestsCard />
-      <ManualCreditCard />
-    </>
-  );
+  return <ManualCreditCard />;
 }
