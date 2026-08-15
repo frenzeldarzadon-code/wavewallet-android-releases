@@ -96,6 +96,8 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
   const [amount, setAmount] = useState("");
   const [payerRef, setPayerRef] = useState("");
   const [cashInNotes, setCashInNotes] = useState("");
+  /** Optional supporting proof — a cash in never requires it. */
+  const [proofFile, setProofFile] = useState<File | null>(null);
 
   const load = useCallback(async () => {
     if (!userId) return;
