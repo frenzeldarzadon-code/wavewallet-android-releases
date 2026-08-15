@@ -52,8 +52,13 @@ function AdminResellers() {
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
     setLoading(true);
-    const [{ data: roles }, { data: profiles }, { data: credits }, { data: sales }] =
-      await Promise.all([
+    const [
+      { data: roles },
+      { data: profiles },
+      { data: credits },
+      { data: sales },
+      { data: memberships },
+    ] = await Promise.all([
         supabase
           .from("user_roles")
           .select("user_id, role")
@@ -61,16 +66,24 @@ function AdminResellers() {
           .in("role", ["reseller", "subreseller"]),
         supabase
           .from("profiles")
-          .select(
-            "id, full_name, email, joined_at, status, reseller_discount_percent, sale_commission_percent",
-          )
+          .select("id, full_name, email, joined_at, status")
           .eq("ecosystem_id", ecosystemDbId),
         supabase.from("credit_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
         supabase
           .from("voucher_sales")
           .select("reseller_id, sale_price")
           .eq("ecosystem_id", ecosystemDbId),
+        // The single Discount lives on the shop membership: it is both the
+        // member's share and their voucher shop discount in THIS shop.
+        supabase
+          .from("ecosystem_memberships")
+          .select("user_id, sale_commission_percent")
+          .eq("ecosystem_id", ecosystemDbId),
       ]);
+
+    const rateOf = new Map(
+      (memberships ?? []).map((m) => [m.user_id, Number(m.sale_commission_percent ?? 0)]),
+    );
 
     const roleOf = new Map<string, ResellerRow["role"]>();
     for (const r of roles ?? []) {
@@ -96,8 +109,8 @@ function AdminResellers() {
           email: p.email,
           joined_at: p.joined_at,
           status: p.status as ResellerRow["status"],
-          discount: p.reseller_discount_percent ?? 0,
-          cashback: p.sale_commission_percent ?? 0,
+          discount: rateOf.get(p.id) ?? 0,
+          cashback: rateOf.get(p.id) ?? 0,
           role: roleOf.get(p.id)!,
           credits: creditOf.get(p.id) ?? 0,
           sales: saleCount.get(p.id) ?? 0,
