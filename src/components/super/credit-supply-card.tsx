@@ -326,19 +326,6 @@ export function CreditSupplyCard() {
                   No automatic GCash confirmation is connected, so verification stays manual.
                 </p>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="adminComm">Default shop commission on member purchases (%)</Label>
-                <Input
-                  id="adminComm"
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={String(settings.default_admin_sale_commission_percent)}
-                  onChange={(e) =>
-                    set("default_admin_sale_commission_percent", Number(e.target.value))
-                  }
-                />
-              </div>
               <div className="sm:col-span-2">
                 <Button
                   disabled={busy === "settings"}

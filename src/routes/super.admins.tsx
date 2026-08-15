@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Building2, Copy, Play, Plus, Search, Settings2, ShieldAlert, Snowflake, Trash2, UserPlus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { fetchEcosystemRates, setEcosystemRates } from "@/lib/wallet";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -911,27 +910,10 @@ function ManageDialog({
     planName: row.plan_name,
     planPrice: String(row.plan_price),
     gracePeriodDays: String(row.grace_period_days),
-    saleReseller: "0",
-    saleSub: "0",
-    upline: "0",
-    resDiscount: "0",
-    subDiscount: "0",
   });
   const [saving, setSaving] = useState(false);
   const url = `${origin()}/join/${row.slug}`;
 
-  useEffect(() => {
-    void fetchEcosystemRates(row.id).then((v) =>
-      setState((s) => ({
-        ...s,
-        saleReseller: String(v.resellerSale),
-        saleSub: String(v.subresellerSale),
-        upline: String(v.upline),
-        resDiscount: String(v.resellerDiscount),
-        subDiscount: String(v.subresellerDiscount),
-      })),
-    );
-  }, [row.id]);
 
   const save = async () => {
     setSaving(true);
@@ -954,29 +936,9 @@ function ManageDialog({
       _plan_price: Number(state.planPrice) || 0,
       _grace_period_days: Number(state.gracePeriodDays) || 0,
     });
-    let commissionErr: string | null = null;
-    const nums = {
-      resellerSale: Number(state.saleReseller),
-      subresellerSale: Number(state.saleSub),
-      upline: Number(state.upline),
-      resellerDiscount: Number(state.resDiscount),
-      subresellerDiscount: Number(state.subDiscount),
-    };
-    if (Object.values(nums).some((v) => Number.isNaN(v) || v < 0 || v > 100)) {
-      commissionErr = "Every percentage must be between 0 and 100";
-    } else {
-      try {
-        await setEcosystemRates(row.id, nums);
-      } catch (e) {
-        commissionErr = (e as Error).message;
-      }
-    }
-
     setSaving(false);
     if (planErr) {
       toast.error("Settings saved, plan update failed", { description: planErr.message });
-    } else if (commissionErr) {
-      toast.error("Settings saved, commission update failed", { description: commissionErr });
     } else {
       toast.success("Shop updated");
     }
@@ -1083,67 +1045,12 @@ function ManageDialog({
               onChange={(e) => setState({ ...state, gracePeriodDays: e.target.value })}
             />
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="mSaleReseller">Reseller sale commission (%)</Label>
-            <Input
-              id="mSaleReseller"
-              type="number"
-              min={0}
-              max={100}
-              value={state.saleReseller}
-              onChange={(e) => setState({ ...state, saleReseller: e.target.value })}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="mSaleSub">Subreseller sale cashback (%)</Label>
-            <Input
-              id="mSaleSub"
-              type="number"
-              min={0}
-              max={100}
-              value={state.saleSub}
-              onChange={(e) => setState({ ...state, saleSub: e.target.value })}
-            />
-          </div>
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="mUpline">Parent reseller (upline) commission (%)</Label>
-            <Input
-              id="mUpline"
-              type="number"
-              min={0}
-              max={100}
-              value={state.upline}
-              onChange={(e) => setState({ ...state, upline: e.target.value })}
-            />
+          <div className="space-y-1.5 sm:col-span-2 rounded-lg border border-border px-3 py-2">
+            <p className="text-sm font-medium">Reseller discounts</p>
             <p className="text-[11px] text-muted-foreground">
-              Earnings happen on voucher sales only — credit transfers now deliver the exact
-              amount sent. Upline goes to a subreseller's parent reseller, including on the
-              subreseller's own purchases.
-            </p>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="mResDisc">Reseller voucher discount (%)</Label>
-            <Input
-              id="mResDisc"
-              type="number"
-              min={0}
-              max={100}
-              value={state.resDiscount}
-              onChange={(e) => setState({ ...state, resDiscount: e.target.value })}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="mSubDisc">Subreseller voucher discount (%)</Label>
-            <Input
-              id="mSubDisc"
-              type="number"
-              min={0}
-              max={100}
-              value={state.subDiscount}
-              onChange={(e) => setState({ ...state, subDiscount: e.target.value })}
-            />
-            <p className="text-[11px] text-muted-foreground sm:col-span-2">
-              Wholesale purchase price, separate from commissions. Snapshotted per sale.
+              Each reseller and subreseller has ONE Discount, set individually from their member
+              record. It is both their purchase share and their voucher shop discount. There are no
+              shop-wide discount or commission percentages.
             </p>
           </div>
 

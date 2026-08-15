@@ -115,8 +115,8 @@ function AdminResellers() {
   if (!ecosystem) return null;
 
   const float = rows.reduce((s, r) => s + r.credits, 0);
-  const avgDiscount = rows.length
-    ? (rows.reduce((s, r) => s + r.discount, 0) / rows.length).toFixed(1)
+  const avgCashback = rows.length
+    ? (rows.reduce((s, r) => s + r.cashback, 0) / rows.length).toFixed(1)
     : "0.0";
   const totalSales = rows.reduce((s, r) => s + r.sales, 0);
 
@@ -126,14 +126,14 @@ function AdminResellers() {
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="Resellers" value={String(rows.length)} tone="brand" />
           <StatCard label="Total float" value={peso(float)} tone="positive" />
-          <StatCard label="Avg discount" value={`${avgDiscount}%`} />
+          <StatCard label="Avg discount" value={`${avgCashback}%`} />
           <StatCard label="Reseller sales" value={String(totalSales)} />
         </div>
       </PageSection>
 
       <PageSection
         title="Reseller network"
-        description="Every reseller and subreseller has their own cashback rate. The shop admin always receives the remainder of each purchase, and rate changes apply to future purchases only."
+        description="Every reseller and subreseller has ONE Discount: their share of qualifying purchases and, automatically, their voucher shop discount. The shop admin always receives the remainder, and changes apply to future transactions only."
         action={
           <Button size="sm" asChild>
             <Link to="/admin/customers">
@@ -175,11 +175,11 @@ function AdminResellers() {
                     </div>
                     <div>
                       <p className="text-[11px] text-muted-foreground">Discount</p>
-                      <p className="text-sm font-semibold">{r.discount}%</p>
+                      <p className="text-sm font-semibold text-primary">{r.cashback}%</p>
                     </div>
                     <div>
-                      <p className="text-[11px] text-muted-foreground">Cashback</p>
-                      <p className="text-sm font-semibold text-primary">{r.cashback}%</p>
+                      <p className="text-[11px] text-muted-foreground">Voucher price</p>
+                      <p className="text-sm font-semibold">{100 - r.cashback}%</p>
                     </div>
                     <div>
                       <p className="text-[11px] text-muted-foreground">Sales</p>
@@ -210,7 +210,7 @@ function AdminResellers() {
                         })
                       }
                     >
-                      <Percent className="size-4" /> Set cashback
+                      <Percent className="size-4" /> Set discount
                     </Button>
                   </div>
                 </CardContent>

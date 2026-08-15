@@ -2,7 +2,6 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { Facebook } from "lucide-react";
 import { useEffect, useState } from "react";
 import { fetchPointsRule, setPointsRule } from "@/lib/rewards";
-import { fetchEcosystemRates, setEcosystemRates } from "@/lib/wallet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -32,15 +31,6 @@ export const Route = createFileRoute("/admin/settings")({
   component: AdminSettings,
 });
 
-/** Percentage fields are held as strings so the inputs stay controlled. */
-type RateForm = {
-  resellerSale: string;
-  subresellerSale: string;
-  upline: string;
-  resellerDiscount: string;
-  subresellerDiscount: string;
-};
-
 function AdminSettings() {
   const { ecosystem, ecosystemDbId, reload } = useSession("admin");
   const [form, setForm] = useState({
@@ -52,14 +42,6 @@ function AdminSettings() {
   const [saving, setSaving] = useState(false);
   const [rule, setRule] = useState("10");
   const [savingRule, setSavingRule] = useState(false);
-  const [rates, setRates] = useState<RateForm>({
-    resellerSale: "0",
-    subresellerSale: "0",
-    upline: "0",
-    resellerDiscount: "0",
-    subresellerDiscount: "0",
-  });
-  const [savingRates, setSavingRates] = useState(false);
   // Own-shop Facebook support page — admins may edit their own ecosystem only.
   const [fb, setFb] = useState({
     url: ecosystem?.facebookPageUrl ?? "",
@@ -92,40 +74,7 @@ function AdminSettings() {
   useEffect(() => {
     if (!ecosystemDbId) return;
     void fetchPointsRule(ecosystemDbId).then((v) => setRule(String(v)));
-    void fetchEcosystemRates(ecosystemDbId).then((r) =>
-      setRates({
-        resellerSale: String(r.resellerSale),
-        subresellerSale: String(r.subresellerSale),
-        upline: String(r.upline),
-        resellerDiscount: String(r.resellerDiscount),
-        subresellerDiscount: String(r.subresellerDiscount),
-      }),
-    );
   }, [ecosystemDbId]);
-
-  const saveRates = async () => {
-    if (!ecosystemDbId) return;
-    const parsed = {
-      resellerSale: Number(rates.resellerSale),
-      subresellerSale: Number(rates.subresellerSale),
-      upline: Number(rates.upline),
-      resellerDiscount: Number(rates.resellerDiscount),
-      subresellerDiscount: Number(rates.subresellerDiscount),
-    };
-    if (Object.values(parsed).some((v) => Number.isNaN(v) || v < 0 || v > 100)) {
-      toast.error("Every percentage must be between 0% and 100%.");
-      return;
-    }
-    setSavingRates(true);
-    try {
-      await setEcosystemRates(ecosystemDbId, parsed);
-      toast.success("Rates and discounts saved — future transactions only.");
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setSavingRates(false);
-    }
-  };
 
   if (!ecosystem) return null;
 
@@ -276,68 +225,22 @@ function AdminSettings() {
 
       <PageSection
         title="Voucher sale earnings"
-        description="Cashback is set per member, not shop-wide. Open Resellers to give each reseller and subreseller their own rate — the shop always keeps the remainder of every purchase."
+        description="Each reseller and subreseller has ONE Discount, set on that member only. It is both their share of a purchase and their voucher shop discount — the shop keeps the remainder."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>
-              Each reseller and subreseller earns their own individual percentage of the credits
-              they supplied to a customer's purchase, and you receive everything that is left. A
-              rate change applies to future purchases only.
+              A member's Discount is their percentage of the credits they supplied to a purchase
+              and, automatically, the discount they pay when buying vouchers. A subreseller's
+              Discount comes out of their parent reseller's Discount, and you receive everything
+              that is left. Changes apply to future purchases only — history never changes.
             </p>
             <Button size="sm" variant="outline" asChild>
-              <Link to="/admin/resellers">Set individual cashback rates</Link>
+              <Link to="/admin/resellers">Set individual member discounts</Link>
             </Button>
           </CardContent>
         </Card>
       </PageSection>
-
-      <PageSection
-        title="Wholesale voucher discounts"
-        description="A discount is a lower purchase price, not an earning. Discount and sale commission are recorded separately on every sale."
-      >
-        <Card className="shadow-[var(--shadow-card)]">
-          <CardContent className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="resDisc">Reseller voucher discount (%)</Label>
-              <Input
-                id="resDisc"
-                type="number"
-                min={0}
-                max={100}
-                value={rates.resellerDiscount}
-                onChange={(e) => setRates({ ...rates, resellerDiscount: e.target.value })}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="subDisc">Subreseller voucher discount (%)</Label>
-              <Input
-                id="subDisc"
-                type="number"
-                min={0}
-                max={100}
-                value={rates.subresellerDiscount}
-                onChange={(e) => setRates({ ...rates, subresellerDiscount: e.target.value })}
-              />
-            </div>
-            <div className="flex items-end gap-2 sm:col-span-2">
-              <Button variant="outline" disabled={savingRates} onClick={saveRates}>
-                {savingRates ? "Saving…" : "Save rates & discounts"}
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground sm:col-span-2">
-              A member with a personal rate set in Customers overrides the shop default. Every
-              sale stores the list price, discount percent, discount amount, amount paid and the
-              commission rates used, so changing anything here affects future transactions only.
-              Historical loading commissions from the old model stay in history exactly as
-              recorded and no longer apply to transfers.
-            </p>
-          </CardContent>
-        </Card>
-      </PageSection>
-
-
-
 
       <PageSection title="Points rule" description="Points are earned on credit-funded voucher purchases only — never on credit loads or transfers.">
 
