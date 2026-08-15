@@ -393,19 +393,27 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
               )}
 
               {pick ? (
-                <div className="flex items-center gap-3 rounded-xl border border-primary bg-brand-soft px-3 py-2.5">
-                  <MemberAvatar path={pick.avatar_path} name={pick.full_name} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">{pick.full_name}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {recipientRelationLabel(pick.relation)} · {selected.ecosystemName}
-                    </p>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 rounded-xl border border-primary bg-brand-soft px-3 py-2.5">
+                    <MemberAvatar path={pick.avatar_path} name={pick.full_name} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">{pick.full_name}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {recipientRelationLabel(pick.relation)} · {selected.ecosystemName}
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={resetSend}>
+                      Change
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={resetSend}>
-                    Change
-                  </Button>
+                  {lineageNotice ? (
+                    <p className="flex items-start gap-2 text-xs text-muted-foreground">
+                      <Info className="mt-0.5 size-3.5 shrink-0" /> {lineageNotice}
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
+
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
