@@ -138,8 +138,27 @@ export async function transferInShop(input: {
 /* Eligible recipients inside one shop                                 */
 /* ------------------------------------------------------------------ */
 
-/** Human label for how a recipient relates to the sender. */
-export function recipientRelationLabel(relation: string): string {
+/**
+ * True when the viewer holds no operator/reseller position in the selected
+ * shop. Customers never see other members' internal positions — see
+ * `recipientRelationLabel`.
+ */
+export function isCustomerViewer(role: Role | null): boolean {
+  return role !== "admin" && role !== "super_admin" && role !== "reseller" && role !== "subreseller";
+}
+
+/**
+ * Human label for how a recipient relates to the sender.
+ *
+ * Business rule: a customer is NOT attached to one upline and must never be
+ * shown another member's internal platform position (Admin / Reseller /
+ * Subreseller). For a customer viewer every eligible recipient is simply
+ * someone who can accept their credits.
+ */
+export function recipientRelationLabel(relation: string, viewerRole: Role | null = null): string {
+  if (isCustomerViewer(viewerRole)) {
+    return relation === "customer" ? "Member of this shop" : "Can accept your credits";
+  }
   switch (relation) {
     case "admin":
       return "Shop admin";
@@ -153,6 +172,7 @@ export function recipientRelationLabel(relation: string): string {
       return "Member";
   }
 }
+
 
 /**
  * The heading for the upline/downline section, given the caller's role in the
