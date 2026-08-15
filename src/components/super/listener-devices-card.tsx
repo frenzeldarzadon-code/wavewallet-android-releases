@@ -153,7 +153,7 @@ export function ListenerDevicesCard() {
                         {device.ecosystem_name ?? "All shops"} · window {device.match_window_minutes} min
                       </p>
                     </div>
-                    <StatusBadge tone={state.tone} label={state.label} />
+                    <StatusBadge tone={state.tone}>{state.label}</StatusBadge>
                   </div>
                   <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
                     <div>
