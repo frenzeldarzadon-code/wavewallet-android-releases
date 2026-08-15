@@ -30,3 +30,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Android listener build outputs
+android-gcash-listener/.gradle/
+android-gcash-listener/.kotlin/
+android-gcash-listener/build/
+android-gcash-listener/app/build/
+android-gcash-listener/local.properties
