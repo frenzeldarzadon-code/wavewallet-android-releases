@@ -186,12 +186,13 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
             </CardContent>
           </Card>
         )
-      ) : entries.length === 0 ? (
+      ) : visibleEntries.length === 0 ? (
         <EmptyState title="Nothing here yet" description="Transactions will appear as you use your wallet." />
       ) : (
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="divide-y divide-border px-0 py-0">
-            {entries.map((e) => (
+            {visibleEntries.map((e) => (
+
               <div key={e.id} className="flex items-start justify-between gap-3 px-4 py-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{e.reason}</p>
