@@ -4046,6 +4046,10 @@ export type Database = {
         Args: { _eco: string }
         Returns: number
       }
+      admin_set_member_handle: {
+        Args: { _handle: string; _target: string }
+        Returns: string
+      }
       admin_update_member_profile: {
         Args: {
           _email?: string
@@ -6344,7 +6348,20 @@ export type Database = {
           phone: string
           points_balance: number
           role: string
+          shop_count: number
+          shops: string
           status: string
+        }[]
+      }
+      super_member_accounts: {
+        Args: { _user: string }
+        Returns: {
+          credit_balance: number
+          ecosystem_id: string
+          ecosystem_name: string
+          membership_state: string
+          points_balance: number
+          role: string
         }[]
       }
       superadmin_assign_member_to_shop: {

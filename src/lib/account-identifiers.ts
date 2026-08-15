@@ -8,6 +8,8 @@
  * the database to resolve a login, so no identifier can be enumerated.
  */
 
+import { newPasswordIssue } from "@/lib/password-policy";
+
 /** Reserved domain for phone-only accounts. Mail is never sent here. */
 export const PHONE_EMAIL_DOMAIN = "phone.wavewallet.local";
 
@@ -69,9 +71,7 @@ export function validateGlobalSignup(d: GlobalSignupDraft): string | null {
   if (!hasEmail && !hasPhone) return "Enter an email address or a mobile number — at least one.";
   if (hasEmail && !looksLikeEmail(d.email)) return "Enter a valid email address.";
   if (hasPhone && !isValidPhone(d.phone)) return "Enter a valid mobile number.";
-  if (d.password.length < 8) return "Use a password with at least 8 characters.";
-  if (d.password !== d.confirm) return "Passwords do not match.";
-  return null;
+  return newPasswordIssue(d.password, d.confirm);
 }
 
 /** The address the account will actually authenticate with. */

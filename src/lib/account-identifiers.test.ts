@@ -11,8 +11,8 @@ const draft = (over: Partial<Parameters<typeof validateGlobalSignup>[0]> = {}) =
   name: "Juan Dela Cruz",
   email: "juan@example.com",
   phone: "0917 000 0000",
-  password: "supersecret",
-  confirm: "supersecret",
+  password: "Supersecret1!",
+  confirm: "Supersecret1!",
   ...over,
 });
 
@@ -37,8 +37,8 @@ describe("global account identifiers", () => {
     expect(validateGlobalSignup(draft({ email: "nope" }))).toMatch(/email/i);
     expect(validateGlobalSignup(draft({ phone: "12" }))).toMatch(/mobile/i);
     expect(validateGlobalSignup(draft({ name: "  " }))).toMatch(/name/i);
-    expect(validateGlobalSignup(draft({ password: "short", confirm: "short" }))).toMatch(/8/);
-    expect(validateGlobalSignup(draft({ confirm: "other-pass" }))).toMatch(/match/i);
+    expect(validateGlobalSignup(draft({ password: "Short1!", confirm: "Short1!" }))).toMatch(/8/);
+    expect(validateGlobalSignup(draft({ confirm: "Other-pass1!" }))).toMatch(/match/i);
   });
 
   it("uses a deterministic address for phone-only accounts", () => {

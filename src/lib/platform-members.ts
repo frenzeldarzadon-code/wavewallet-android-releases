@@ -19,9 +19,15 @@ export interface PlatformMember {
   role: Role;
   ecosystem_id: string | null;
   ecosystem_name: string | null;
+  /** Total credits across every shop this one account belongs to. */
   credit_balance: number;
+  /** Total points across every shop this one account belongs to. */
   points_balance: number;
   joined_at: string;
+  /** How many shops the single authenticated identity belongs to. */
+  shop_count: number;
+  /** Comma-separated shop names, for the directory subtitle. */
+  shops: string | null;
 }
 
 export interface PlatformMemberFilters {
@@ -63,5 +69,21 @@ export async function listPlatformMembers(
 
   const { data, error } = await supabase.rpc("super_list_members", args);
   if (error) throw new Error(error.message);
-  return (data ?? []) as unknown as PlatformMember[];
+  // The database already returns one row per authenticated identity (wallets
+  // are summed across shops). This guard keeps the count honest even if a
+  // future join ever fans out again — grouping strictly on the account id,
+  // never on a display name.
+  const byAccount = new Map<string, PlatformMember>();
+  for (const row of (data ?? []) as unknown as PlatformMember[]) {
+    const existing = byAccount.get(row.id);
+    if (!existing) {
+      byAccount.set(row.id, {
+        ...row,
+        credit_balance: Number(row.credit_balance ?? 0),
+        points_balance: Number(row.points_balance ?? 0),
+        shop_count: Number(row.shop_count ?? 0),
+      });
+    }
+  }
+  return [...byAccount.values()];
 }

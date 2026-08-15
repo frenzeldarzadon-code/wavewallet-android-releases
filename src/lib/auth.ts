@@ -273,10 +273,12 @@ export function friendlyAuthError(message: string): string {
   if (m.includes("valid ecosystem invite link"))
     return "This signup link is no longer active. Ask your operator for their current link.";
   if (m.includes("password"))
-    return "Please choose a stronger password (at least 8 characters).";
+    return "That password does not meet the password policy — see the requirements listed under the field.";
   if (m.includes("rate limit") || m.includes("too many"))
     return "Too many attempts. Please wait a minute and try again.";
-  if (m.includes("invalid login credentials")) return "Wrong email/mobile number or password.";
+  // Deliberately generic: never reveal whether the identifier exists.
+  if (m.includes("invalid login credentials") || m.includes("invalid credentials"))
+    return "Those sign-in details are not correct. Check and try again.";
   return message;
 }
 

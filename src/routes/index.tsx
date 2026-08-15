@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/ui-kit";
 import { SocialSignIn } from "@/components/auth/social-sign-in";
+import { PasswordField } from "@/components/password-field";
 import { homeFor } from "@/lib/session";
 import {
   loadAuthContext,
@@ -15,6 +16,7 @@ import {
   signUpCustomerAccount,
 } from "@/lib/auth";
 import { isRealEmail, validateGlobalSignup } from "@/lib/account-identifiers";
+import { newPasswordIssue } from "@/lib/password-policy";
 import { supabase } from "@/integrations/supabase/client";
 import { DEMO_ECOSYSTEM_SLUG, DEMO_ROLES, isPreviewEnvironment } from "@/lib/demo";
 import { startDemoSession } from "@/lib/demo.functions";
@@ -61,6 +63,9 @@ function LoginPage() {
     confirm: "",
   });
   const [signupBusy, setSignupBusy] = useState(false);
+  // Live, precise feedback while typing — never a vague "incomplete password".
+  const signupIssue =
+    form.password || form.confirm ? newPasswordIssue(form.password, form.confirm) : null;
   const [applied, setApplied] = useState<{ needsEmail: boolean } | null>(null);
 
   useEffect(() => setPreview(isPreviewEnvironment()), []);
@@ -234,18 +239,14 @@ function LoginPage() {
                   autoComplete="username"
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                  onKeyDown={(e) => e.key === "Enter" && signIn()}
-                />
-              </div>
+              <PasswordField
+                id="password"
+                label="Password"
+                value={password}
+                onChange={setPassword}
+                autoComplete="current-password"
+                onEnter={() => void signIn()}
+              />
               <Button className="w-full" onClick={signIn} disabled={busy}>
                 <LogIn className="size-4" />
                 {busy ? "Signing in…" : "Continue"}
@@ -379,30 +380,27 @@ function LoginPage() {
                     with. Only an email address can reset a forgotten password by itself.
                   </p>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="su-password">Password</Label>
-                    <Input
-                      id="su-password"
-                      type="password"
-                      value={form.password}
-                      onChange={(e) => setForm({ ...form, password: e.target.value })}
-                      placeholder="At least 8 characters"
-                      autoComplete="new-password"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="su-confirm">Confirm password</Label>
-                    <Input
-                      id="su-confirm"
-                      type="password"
-                      value={form.confirm}
-                      onChange={(e) => setForm({ ...form, confirm: e.target.value })}
-                      placeholder="Repeat your password"
-                      autoComplete="new-password"
-                      onKeyDown={(e) => e.key === "Enter" && signUp()}
-                    />
-                  </div>
+                <div className="space-y-3">
+                  <PasswordField
+                    id="su-password"
+                    label="Password"
+                    value={form.password}
+                    onChange={(v) => setForm({ ...form, password: v })}
+                    autoComplete="new-password"
+                    requirements
+                  />
+                  <PasswordField
+                    id="su-confirm"
+                    label="Confirm password"
+                    value={form.confirm}
+                    onChange={(v) => setForm({ ...form, confirm: v })}
+                    placeholder="Repeat your password"
+                    autoComplete="new-password"
+                    onEnter={() => void signUp()}
+                  />
+                  {signupIssue ? (
+                    <p className="text-xs text-destructive">{signupIssue}</p>
+                  ) : null}
                 </div>
                 <Button
                   className="w-full"
