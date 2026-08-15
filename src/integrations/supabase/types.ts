@@ -4869,6 +4869,23 @@ export type Database = {
           total: number
         }[]
       }
+      my_sent_shop_invitations: {
+        Args: { _ecosystem_id: string }
+        Returns: {
+          avatar_path: string
+          created_at: string
+          expires_at: string
+          full_name: string
+          handle: string
+          id: string
+          inviter_name: string
+          inviter_role: Database["public"]["Enums"]["app_role"]
+          message: string
+          responded_at: string
+          status: string
+          user_id: string
+        }[]
+      }
       my_shop_invitations: {
         Args: never
         Returns: {
