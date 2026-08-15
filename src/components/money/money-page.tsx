@@ -196,7 +196,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
         if (!ownerId) throw new Error("Your session expired. Sign in again to attach a screenshot.");
         uploadedPath = await uploadCashInProof(ownerId, proofFile);
       }
-      await requestCashIn({
+      const submitted = await requestCashIn({
         methodId,
         amountPhp: Number(amount),
         payerReference: payerRef,
@@ -204,12 +204,24 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
         proofPath: uploadedPath,
         requestKey: newKey(),
       });
-      toast.success("Cash in submitted. Credits are added only after the payment is verified.");
+      if (submitted.status === "rejected") {
+        // The database refuses a second live request on the same payment
+        // reference so one payment can never be credited twice.
+        toast.error(
+          submitted.decision_reason ??
+            "That payment reference is already used by another cash in request.",
+        );
+      } else if (submitted.status === "approved") {
+        toast.success("Payment verified automatically — your credits have been added.");
+      } else {
+        toast.success("Cash in submitted. Credits are added only after the payment is verified.");
+      }
       setAmount("");
       setPayerRef("");
       setCashInNotes("");
       setProofFile(null);
       await load();
+
     } catch (e) {
       // Never leave an orphan screenshot behind when the request itself failed.
       if (uploadedPath) await removeCashInProof(uploadedPath).catch(() => {});
