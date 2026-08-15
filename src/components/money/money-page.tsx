@@ -26,6 +26,7 @@ import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-
 import { FacebookSupportCard } from "@/components/facebook-support-card";
 import { PaymentMethodCards } from "@/components/money/payment-method-cards";
 import { CashInProofPicker, CashInProofViewer } from "@/components/money/cash-in-proof";
+import { verifyCashInReceipt } from "@/lib/cash-in-receipt.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
