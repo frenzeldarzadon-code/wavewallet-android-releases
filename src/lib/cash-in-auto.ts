@@ -195,7 +195,7 @@ export function matchingStatusLabel(status: CashInAutoStatus | null): {
       tone: "success",
       title: "Automatic matching is on",
       detail:
-        "A cash in is approved automatically only when the amount, the shop's receiving GCash number and a never-used payment reference all match, and a screenshot is attached. GCash is never contacted.",
+        "A cash in is approved automatically only when a real GCash notification from the paired phone on the shop's receiving account matches the sending number and the exact amount, and the payment reference has never been used. The customer may pay before or after submitting. GCash itself is never contacted.",
     };
   }
   return {
