@@ -233,6 +233,16 @@ function ResellerCustomers() {
           </Card>
         )}
       </PageSection>
+        </TabsContent>
+
+        {isReseller ? (
+          <TabsContent value="subresellers" className="mt-0">
+            <SubresellersPanel balance={balance} onTransferred={load} />
+          </TabsContent>
+        ) : null}
+      </Tabs>
+
+
 
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent className="sm:max-w-sm">
