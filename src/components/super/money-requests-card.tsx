@@ -227,6 +227,15 @@ export function MoneyRequestsCard() {
                       <p className="mt-1 text-muted-foreground">Payment screenshot: not attached</p>
                     )}
                     <p className="text-muted-foreground">
+                      Receipt reference read: {c.receipt_reference ? c.receipt_reference : "not read"} ·{" "}
+                      {RECEIPT_CHECK_LABEL[(c.receipt_check as ReceiptCheck) ?? "pending"]}
+                    </p>
+                    {c.duplicate_reference ? (
+                      <p className="font-medium text-destructive">
+                        This GCash reference was already used — see the duplicate reference review below.
+                      </p>
+                    ) : null}
+                    <p className="text-muted-foreground">
                       {c.listener_event_id
                         ? "Listener phone confirmed a matching GCash notification"
                         : "No listener confirmation for this payment"}
