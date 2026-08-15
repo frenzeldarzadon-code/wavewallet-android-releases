@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { WalletPage } from "@/components/customer/wallet-page";
+import { WalletCenter } from "@/components/wallet/wallet-center";
 
 export const Route = createFileRoute("/reseller/wallet")({
   head: () => ({
     meta: [
-      { title: "Wallet — WaveWallet Reseller" },
-      { name: "description", content: "Your credit balance, points, discounts saved and cashback rewards in one place." },
-      { property: "og:title", content: "Wallet — WaveWallet Reseller" },
-      { property: "og:description", content: "Your credit balance, points, discounts saved and cashback rewards in one place." },
+      { title: "Wallet Center — WaveWallet Reseller" },
+      { name: "description", content: "Balances per shop, transaction history, credit transfers and shop-to-shop moves in one screen." },
+      { property: "og:title", content: "Wallet Center — WaveWallet Reseller" },
+      { property: "og:description", content: "Balances per shop, transaction history, credit transfers and shop-to-shop moves in one screen." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -16,5 +16,5 @@ export const Route = createFileRoute("/reseller/wallet")({
 });
 
 function ResellerWallet() {
-  return <WalletPage base="/reseller" showSellerTotals />;
+  return <WalletCenter base="/reseller" showSellerTotals />;
 }
