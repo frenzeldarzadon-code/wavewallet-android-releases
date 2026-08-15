@@ -53,6 +53,8 @@ import { fetchEarnings, summariseEarnings } from "@/lib/earnings";
 import {
   fetchShopRecipients,
   filterRecipientsByTab,
+  lineageResetNotice,
+
   recipientTabs,
   tabEmptyHint,
   fetchWalletShops,
@@ -161,6 +163,8 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
     ? tab
     : (tabs[0]?.key ?? "peer");
   const visibleRecipients = filterRecipientsByTab(recipients, activeTab);
+  const lineageNotice = lineageResetNotice(selected?.role ?? null, pick?.relation ?? null);
+
   const value = Number(amount) || 0;
   const problem = validateInShopTransfer({
     ecosystemId: selected?.ecosystemId ?? null,
@@ -393,19 +397,27 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
               )}
 
               {pick ? (
-                <div className="flex items-center gap-3 rounded-xl border border-primary bg-brand-soft px-3 py-2.5">
-                  <MemberAvatar path={pick.avatar_path} name={pick.full_name} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">{pick.full_name}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {recipientRelationLabel(pick.relation)} · {selected.ecosystemName}
-                    </p>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 rounded-xl border border-primary bg-brand-soft px-3 py-2.5">
+                    <MemberAvatar path={pick.avatar_path} name={pick.full_name} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">{pick.full_name}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {recipientRelationLabel(pick.relation)} · {selected.ecosystemName}
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={resetSend}>
+                      Change
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={resetSend}>
-                    Change
-                  </Button>
+                  {lineageNotice ? (
+                    <p className="flex items-start gap-2 text-xs text-muted-foreground">
+                      <Info className="mt-0.5 size-3.5 shrink-0" /> {lineageNotice}
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
+
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
@@ -511,6 +523,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
               {peso(value)} to {pick?.full_name} ({pick ? recipientRelationLabel(pick.relation) : ""})
               from {selected?.ecosystemName}. Balance after:{" "}
               {peso(projectedBalance(selected?.balance ?? 0, value))}. This cannot be undone by you.
+              {lineageNotice ? " " + lineageNotice : ""}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

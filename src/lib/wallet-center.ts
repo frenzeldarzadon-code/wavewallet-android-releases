@@ -168,7 +168,8 @@ export function transferSectionTitle(role: Role | null): string {
     case "super_admin":
       return "Send credits to members of this shop";
     default:
-      return "Send credits to another member of this shop";
+      return "Send credits to this shop's admin, reseller, subreseller or another customer";
+
   }
 }
 
@@ -243,8 +244,11 @@ export function recipientTabs(role: Role | null, multiShop: boolean): RecipientT
       );
       break;
     default:
-      tabs.push({ key: "peer", label: "Peer customer" });
+      // A customer may send to any active upline of the shop (admin, reseller,
+      // subreseller) and to peer customers. Upline transfers reset lineage.
+      tabs.push({ key: "network", label: "Upline" }, { key: "peer", label: "Peer customer" });
       break;
+
   }
   if (multiShop) tabs.push({ key: "shops", label: "My other shops" });
   return tabs;
@@ -270,7 +274,10 @@ export function tabEmptyHint(tab: RecipientTab, role: Role | null): string {
         ? "No subresellers of yours are active in this shop yet."
         : role === "subreseller"
           ? "No upline transfers for this shop yet — your reseller and this shop's admins appear here once they are active members."
-          : "No other operators in this shop yet.";
+          : role === "admin" || role === "super_admin"
+            ? "No other operators in this shop yet."
+            : "No active upline in this shop yet — this shop's admin, resellers and subresellers appear here.";
+
     case "customer":
       return "No active customers in this shop yet.";
     case "peer":
@@ -278,4 +285,21 @@ export function tabEmptyHint(tab: RecipientTab, role: Role | null): string {
     default:
       return emptyRecipientsHint(role);
   }
+}
+
+/**
+ * Deliberate business rule: credits a CUSTOMER sends to an upline (shop admin,
+ * reseller or subreseller) arrive with no cashback lineage. The upline's later
+ * transfers and sales start a fresh, normal lineage. Enforced in the database
+ * by `transfer_credits_in_shop` / `track_credit_lots`; this is only the wording.
+ */
+export function lineageResetNotice(
+  senderRole: Role | null,
+  recipientRelation: string | null,
+): string | null {
+  const isCustomer = senderRole !== "admin" && senderRole !== "super_admin"
+    && senderRole !== "reseller" && senderRole !== "subreseller";
+  if (!isCustomer || !recipientRelation) return null;
+  if (!["admin", "reseller", "subreseller"].includes(recipientRelation)) return null;
+  return "Cashback lineage reset: these credits stop being traced to you once they arrive.";
 }

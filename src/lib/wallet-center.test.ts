@@ -3,6 +3,7 @@ import {
   canSendUpward,
   emptyRecipientsHint,
   filterRecipientsByTab,
+  lineageResetNotice,
   recipientTabs,
   tabEmptyHint,
   recipientRelationLabel,
@@ -86,7 +87,7 @@ describe("transferSectionTitle", () => {
     expect(transferSectionTitle("subreseller")).toMatch(/reseller/);
     expect(transferSectionTitle("reseller")).toMatch(/subresellers/);
     expect(transferSectionTitle("admin")).toMatch(/members of this shop/);
-    expect(transferSectionTitle("customer")).toMatch(/another member/);
+    expect(transferSectionTitle("customer")).toMatch(/another customer/);
   });
 });
 
@@ -107,14 +108,15 @@ describe("recipientTabs", () => {
       expect(recipientTabs(role, false).map((t) => t.key)).toEqual(["network", "customer"]);
     }
   });
-  it("offers only peer customers to a customer", () => {
-    expect(recipientTabs("customer", false).map((t) => t.key)).toEqual(["peer"]);
+  it("offers upline + peer customers to a customer", () => {
+    expect(recipientTabs("customer", false).map((t) => t.key)).toEqual(["network", "peer"]);
   });
   it("adds my other shops only for multi-shop accounts", () => {
-    expect(recipientTabs("customer", true).map((t) => t.key)).toEqual(["peer", "shops"]);
-    expect(recipientTabs(null, false).map((t) => t.key)).toEqual(["peer"]);
+    expect(recipientTabs("customer", true).map((t) => t.key)).toEqual(["network", "peer", "shops"]);
+    expect(recipientTabs(null, false).map((t) => t.key)).toEqual(["network", "peer"]);
   });
 });
+
 
 describe("filterRecipientsByTab", () => {
   const list = [
@@ -141,5 +143,21 @@ describe("tabEmptyHint", () => {
     }
     expect(tabEmptyHint("network", "reseller")).toMatch(/subresellers/);
     expect(tabEmptyHint("peer", "customer")).toMatch(/customers/);
+  });
+});
+
+describe("lineageResetNotice", () => {
+  it("warns a customer sending to any upline", () => {
+    for (const rel of ["admin", "reseller", "subreseller"]) {
+      expect(lineageResetNotice("customer", rel)).toContain("Cashback lineage reset");
+    }
+  });
+  it("stays silent for peer customers", () => {
+    expect(lineageResetNotice("customer", "customer")).toBeNull();
+  });
+  it("stays silent for operators — their lineage rules are unchanged", () => {
+    expect(lineageResetNotice("admin", "customer")).toBeNull();
+    expect(lineageResetNotice("reseller", "subreseller")).toBeNull();
+    expect(lineageResetNotice("subreseller", "admin")).toBeNull();
   });
 });
