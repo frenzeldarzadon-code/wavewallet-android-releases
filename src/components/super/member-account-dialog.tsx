@@ -133,7 +133,7 @@ export function MemberAccountDialog({ member, onClose, onSaved }: Props) {
 
         {member ? (
           <div className="space-y-5">
-            <div className="flex items-center gap-3 rounded-lg border border-warning/40 bg-warning-soft/40 p-3">
+            <div className="flex items-center gap-3 rounded-lg border border-warning/40 bg-warning/10 p-3">
               <MemberAvatar
                 name={member.full_name}
                 path={member.avatar_path}
