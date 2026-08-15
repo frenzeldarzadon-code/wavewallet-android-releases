@@ -12,18 +12,11 @@ You do not need Android Studio, a JDK or the Android SDK for this route.
 
 ### One-time setup
 
-1. Connect this Lovable project to GitHub (Lovable top bar → **GitHub** →
-   **Connect / Push to GitHub**). Everything in `android-gcash-listener/`,
-   including the build workflow, is pushed with the rest of the project.
-2. In your GitHub repository, copy the workflow file to the repository root so
-   GitHub can see it:
-   - the file lives here: `android-gcash-listener/.github/workflows/build-apk.yml`
-   - GitHub only runs workflows found at `.github/workflows/` in the **repo root**
-   - so copy it to `.github/workflows/build-apk.yml` (the file itself already
-     knows the app is in the `android-gcash-listener` subfolder)
-   - easiest way, in the GitHub web UI: open the file → **Copy raw file** →
-     go to the repo root → **Add file → Create new file** → name it
-     `.github/workflows/build-apk.yml` → paste → **Commit changes**.
+Nothing to copy anymore. The workflow already lives at the repository root as
+`.github/workflows/build-apk.yml` (a duplicate is kept in
+`android-gcash-listener/.github/workflows/build-apk.yml` for reference only).
+Just make sure the Lovable project is synced to GitHub — the workflow is pushed
+with the rest of the project and GitHub picks it up automatically.
 
 ### Every time you want a fresh APK
 

@@ -1,0 +1,155 @@
+name: Build listener APK
+
+# Builds the WaveWallet GCash listener companion app and publishes the
+# installable debug APK as a downloadable workflow artifact.
+#
+# Note: this workflow file must sit at .github/workflows/build-apk.yml in the
+# repository ROOT to run. If the Android project lives in a subfolder of a
+# larger repo, copy this file to the repo root and keep `working-directory`
+# pointing at the Android project (see WORKING_DIR below).
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "android-gcash-listener/**"
+      - ".github/workflows/build-apk.yml"
+  workflow_dispatch:
+
+env:
+  # Path to the Android project inside the repository.
+  WORKING_DIR: android-gcash-listener
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use the Android project folder if it exists
+        id: locate
+        shell: bash
+        run: |
+          if [ -f "$WORKING_DIR/settings.gradle.kts" ]; then
+            echo "dir=$WORKING_DIR" >> "$GITHUB_OUTPUT"
+          else
+            echo "dir=." >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up the Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-34 build-tools;34.0.0 platform-tools"
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: Make the Gradle wrapper executable
+        working-directory: ${{ steps.locate.outputs.dir }}
+        run: chmod +x ./gradlew
+
+      - name: Unit tests
+        working-directory: ${{ steps.locate.outputs.dir }}
+        run: ./gradlew test --stacktrace
+
+      - name: Build debug APK
+        working-directory: ${{ steps.locate.outputs.dir }}
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: wavewallet-gcash-listener-debug-apk
+          path: ${{ steps.locate.outputs.dir }}/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports
+          path: ${{ steps.locate.outputs.dir }}/app/build/reports/tests/
+          if-no-files-found: ignore
+
+  # Optional. Runs ONLY when signing credentials are provided as repository
+  # secrets. No keystore or password is stored in this repository.
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for signing credentials
+        id: creds
+        shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.WW_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "No signing credentials configured — skipping the release build."
+          fi
+
+      - name: Set up JDK 17
+        if: steps.creds.outputs.available == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up the Android SDK
+        if: steps.creds.outputs.available == 'true'
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-34 build-tools;34.0.0 platform-tools"
+
+      - name: Restore the keystore from the secret
+        if: steps.creds.outputs.available == 'true'
+        working-directory: ${{ env.WORKING_DIR }}
+        env:
+          KEYSTORE_B64: ${{ secrets.WW_KEYSTORE_BASE64 }}
+        run: printf '%s' "$KEYSTORE_B64" | base64 -d > release.jks
+
+      - name: Build release APK
+        if: steps.creds.outputs.available == 'true'
+        working-directory: ${{ env.WORKING_DIR }}
+        env:
+          WW_KEYSTORE: release.jks
+          WW_KEYSTORE_PASSWORD: ${{ secrets.WW_KEYSTORE_PASSWORD }}
+          WW_KEY_ALIAS: ${{ secrets.WW_KEY_ALIAS }}
+          WW_KEY_PASSWORD: ${{ secrets.WW_KEY_PASSWORD }}
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleRelease --stacktrace
+
+      - name: Remove the keystore from the runner
+        if: always()
+        working-directory: ${{ env.WORKING_DIR }}
+        run: rm -f release.jks
+
+      - name: Upload release APK
+        if: steps.creds.outputs.available == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: wavewallet-gcash-listener-release-apk
+          path: ${{ env.WORKING_DIR }}/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+          retention-days: 30
