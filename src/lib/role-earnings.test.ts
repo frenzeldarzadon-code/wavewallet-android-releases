@@ -187,3 +187,50 @@ describe("super admin dashboard earnings", () => {
     expect(e.net.today).toBe(6);
   });
 });
+
+/**
+ * Dashboard "Total" column: lifetime, independent of the calendar year, while
+ * the period columns stay year-scoped. Non-purchase movements never appear
+ * because they are not earning rows at all.
+ */
+describe("lifetime totals", () => {
+  const lastYear = manilaNoon(now.year - 1, 5, 10);
+
+  it("counts prior-year purchases in the total but not in the yearly column", () => {
+    const rows = [
+      earning("sale_cashback", 20, daysAgo(0)),
+      earning("sale_cashback", 15, lastYear),
+    ];
+    const totals = sellerEarnings(rows);
+    expect(totals.cashback.year).toBe(20);
+    expect(totals.cashback.today).toBe(20);
+    expect(totals.cashback.total).toBe(35);
+    expect(totals.total.total).toBe(35);
+  });
+
+  it("nets lifetime admin earnings against lifetime expenses", () => {
+    const rows = [
+      earning("admin_shop_margin", 70, daysAgo(0)),
+      earning("admin_shop_margin", 70, lastYear),
+    ];
+    const net = adminNetEarnings(rows, [expense(40, lastYear)]);
+    expect(net.earnings.total).toBe(140);
+    expect(net.expenses.total).toBe(40);
+    expect(net.net.total).toBe(100);
+    expect(net.net.year).toBe(70);
+  });
+
+  it("keeps the 20 / 10 / 70 allocation split by recipient", () => {
+    const sub = sellerEarnings([earning("sale_cashback", 20, daysAgo(0))]);
+    const upline = sellerEarnings([earning("upline_commission", 10, daysAgo(0))]);
+    const admin = adminNetEarnings([earning("admin_shop_margin", 70, daysAgo(0))], []);
+    expect(sub.total.total + upline.total.total + admin.earnings.total).toBe(100);
+    expect(admin.earnings.total).toBe(70);
+  });
+
+  it("ignores reversed purchases everywhere, including the lifetime total", () => {
+    const reversed = { ...earning("sale_cashback", 50, daysAgo(1)), status: "reversed" as const };
+    const totals = sellerEarnings([reversed, earning("sale_cashback", 20, daysAgo(0))]);
+    expect(totals.cashback.total).toBe(20);
+  });
+});
