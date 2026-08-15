@@ -201,11 +201,6 @@ function AdminCustomers() {
     void load();
   }, [load]);
 
-  // Shop-wide sales commission defaults. Credit transfers pay nothing, so the
-  // old loading-commission default no longer exists.
-  useEffect(() => {
-    if (!ecosystemDbId) return;
-  }, [ecosystemDbId]);
 
   const openDetail = async (m: Member) => {
     setDetail(m);
