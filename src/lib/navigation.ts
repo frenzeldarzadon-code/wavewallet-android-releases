@@ -98,7 +98,7 @@ export function customerNav(): Nav {
       label: "Account",
       items: [
         { to: "/app/profile", label: "Profile", icon: User },
-        { to: "/app", label: "Wallet", icon: Wallet },
+        { to: "/app", label: "Wallet Center", icon: Wallet },
         { to: "/app/applications", label: "Applications & Invites", icon: UserPlus },
       ],
     },
@@ -112,11 +112,7 @@ export function customerNav(): Nav {
     },
     {
       label: "Money",
-      items: [
-        { to: "/app/transfer", label: "Transfer", icon: Send },
-        { to: "/app/money", label: "Cash out & cash in", icon: Banknote },
-        { to: "/app/history", label: "Transaction history", icon: History },
-      ],
+      items: [{ to: "/app/money", label: "Cash out & cash in", icon: Banknote }],
     },
     ...(SOCIAL_ENABLED ? [{ label: "Community", items: universeNav }] : []),
   ];
@@ -125,10 +121,11 @@ export function customerNav(): Nav {
 export const customerBottomNav: NavItem[] = [
   { to: "/app", label: "Wallet", icon: Wallet },
   { to: "/app/shop", label: "Shop", icon: ShoppingBag },
-  { to: "/app/transfer", label: "Send", icon: Send },
-  { to: "/app/history", label: "History", icon: History },
+  { to: "/app/money", label: "Cash", icon: Banknote },
+  { to: "/app/applications", label: "Apps", icon: UserPlus },
   { to: "/app/profile", label: "Profile", icon: User },
 ];
+
 
 /* ------------------------------------------------------------------ */
 /* Reseller / Subreseller                                              */
