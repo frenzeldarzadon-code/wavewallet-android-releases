@@ -26,6 +26,7 @@ import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-
 import { FacebookSupportCard } from "@/components/facebook-support-card";
 import { PaymentMethodCards } from "@/components/money/payment-method-cards";
 import { CashInProofPicker, CashInProofViewer } from "@/components/money/cash-in-proof";
+import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import { fetchCreditBalance } from "@/lib/wallet";
@@ -47,7 +48,10 @@ import {
   requestWithdrawal,
   snapshotQuote,
   statusLabel,
+  removeCashInProof,
+  uploadCashInProof,
   validateCashIn,
+  validateCashInProof,
   validateWithdrawal,
   WITHDRAWAL_SLA_NOTICE,
   type CashInRequest,
