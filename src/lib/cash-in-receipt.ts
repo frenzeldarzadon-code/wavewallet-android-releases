@@ -127,8 +127,11 @@ export interface ConflictSnapshot {
   cash_in_id: string;
   reference: string | null;
   payment_reference: string | null;
+  submitted_reference?: string | null;
   receipt_reference: string | null;
   receipt_check: ReceiptCheck | null;
+  receipt_read_at?: string | null;
+  duplicate_reference?: boolean | null;
   amount_php: number | null;
   credits: number | null;
   sender_number: string | null;
@@ -138,11 +141,17 @@ export interface ConflictSnapshot {
   shop_name: string | null;
   credited_to_user_id: string | null;
   credited_to_name: string | null;
+  reseller_name?: string | null;
   status: string | null;
   approval_method: string | null;
+  approved_by_name?: string | null;
+  approved_at?: string | null;
   decision_reason: string | null;
   requested_at: string | null;
   reviewed_at: string | null;
+  ledger_id?: string | null;
+  credits_released?: boolean | null;
+  credits_released_amount?: number | null;
   credits_released_at: string | null;
   listener_event_id: string | null;
   payment_seen_at: string | null;
@@ -176,8 +185,59 @@ export function creditedFirstLabel(conflict: Pick<ReferenceConflict, "credited_f
   if (conflict.credited_first === "new") {
     return `The newer transaction was credited first${when ? ` on ${when}` : ""}.`;
   }
-  return "Neither transaction has released credits yet.";
+  return "Neither transaction has released credits yet — do not assume which one is legitimate.";
 }
+
+/* ------------------------------------------------------------------ */
+/* Reviewer-facing verification status                                 */
+/* ------------------------------------------------------------------ */
+
+export type VerificationStatus = "VERIFIED" | "MISMATCH" | "UNREADABLE" | "DUPLICATE_REFERENCE" | "PENDING_REVIEW";
+
+export interface VerificationInput {
+  status?: string | null;
+  receipt_check?: string | null;
+  duplicate_reference?: boolean | null;
+}
+
+/**
+ * The single status a reviewer should act on. A duplicate reference outranks
+ * everything: nothing may be credited automatically while it is open.
+ */
+export function verificationStatus(row: VerificationInput): VerificationStatus {
+  if (row.duplicate_reference) return "DUPLICATE_REFERENCE";
+  const check = (row.receipt_check ?? "pending") as ReceiptCheck;
+  if (check === "mismatch") return "MISMATCH";
+  if (check === "unreadable" || check === "error") return "UNREADABLE";
+  if (check === "matched") return "VERIFIED";
+  return "PENDING_REVIEW";
+}
+
+/** Why this transaction is still waiting on a human. */
+export function verificationReason(row: VerificationInput): string {
+  switch (verificationStatus(row)) {
+    case "DUPLICATE_REFERENCE":
+      return "Duplicate reference — manual review required. The earlier transaction was not changed.";
+    case "MISMATCH":
+      return "Reference mismatch — submitted reference does not match the payment receipt.";
+    case "UNREADABLE":
+      return "Reference could not be verified from payment screenshot.";
+    case "VERIFIED":
+      return "Reference verified against the payment receipt.";
+    default:
+      return "Waiting for the receipt reference check.";
+  }
+}
+
+/** Mask a payment number for display; reviewers see enough to compare, not the whole account. */
+export function maskAccountNumber(value: string | null | undefined): string {
+  const v = (value ?? "").trim();
+  if (!v) return "not provided";
+  const digits = v.replace(/\D/g, "");
+  if (digits.length < 5) return v;
+  return `${digits.slice(0, 4)}••••${digits.slice(-3)}`;
+}
+
 
 export async function fetchReferenceConflicts(status: string | null = "open"): Promise<ReferenceConflict[]> {
   const { data, error } = await supabase.rpc("cash_in_reference_conflict_list", {
