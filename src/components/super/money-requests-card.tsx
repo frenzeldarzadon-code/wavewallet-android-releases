@@ -212,6 +212,10 @@ export function MoneyRequestsCard() {
                     <p className="text-muted-foreground">
                       Payment reference: {c.payer_reference ? c.payer_reference : "not provided"}
                     </p>
+                    <p className="text-muted-foreground">
+                      GCash number paid: {c.payer_number ? c.payer_number : "not provided"} · amount{" "}
+                      {peso(Number(c.amount_php))}
+                    </p>
                     {c.notes ? (
                       <p className="text-muted-foreground">Additional notes: {c.notes}</p>
                     ) : (
@@ -225,7 +229,7 @@ export function MoneyRequestsCard() {
                     {c.status === "approved" ? (
                       <p className="mt-1 text-muted-foreground">
                         {c.approval_method === "automatic"
-                          ? `Approved automatically from a verified payment${c.auto_match_note ? ` · ${c.auto_match_note}` : ""}`
+                          ? `Approved automatically from the configured matching rules${c.auto_match_note ? ` · ${c.auto_match_note}` : ""}`
                           : `Approved manually by ${c.reviewer_name ?? "the platform owner"}`}
                       </p>
                     ) : null}
