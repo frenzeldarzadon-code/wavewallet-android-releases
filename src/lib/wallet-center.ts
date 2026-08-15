@@ -243,8 +243,11 @@ export function recipientTabs(role: Role | null, multiShop: boolean): RecipientT
       );
       break;
     default:
-      tabs.push({ key: "peer", label: "Peer customer" });
+      // A customer may send to any active upline of the shop (admin, reseller,
+      // subreseller) and to peer customers. Upline transfers reset lineage.
+      tabs.push({ key: "network", label: "Upline" }, { key: "peer", label: "Peer customer" });
       break;
+
   }
   if (multiShop) tabs.push({ key: "shops", label: "My other shops" });
   return tabs;
