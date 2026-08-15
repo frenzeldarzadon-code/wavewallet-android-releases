@@ -7,6 +7,7 @@ import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-
 import { CashbackRateDialog, type CashbackTarget } from "@/components/cashback-rate-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
+import { fetchMyVoucherDiscount } from "@/lib/wallet";
 import { peso, roleLabel, shortDate, type Role } from "@/lib/wavewallet";
 
 export const Route = createFileRoute("/admin/resellers")({
