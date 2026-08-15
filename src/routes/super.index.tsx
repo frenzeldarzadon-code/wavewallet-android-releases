@@ -80,7 +80,7 @@ function SuperOverview() {
   return (
     <>
       <PageSection>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
           <StatCard
             label="Shops"
             value={dash(String(live.length))}
