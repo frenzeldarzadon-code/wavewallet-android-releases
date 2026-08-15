@@ -14,7 +14,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { EmptyState, StatusBadge } from "@/components/ui-kit";
 import { CashInProofViewer } from "@/components/money/cash-in-proof";
-import { RECEIPT_CHECK_LABEL, type ReceiptCheck } from "@/lib/cash-in-receipt";
+import {
+  maskAccountNumber,
+  verificationReason,
+  verificationStatus,
+  RECEIPT_CHECK_LABEL,
+  type ReceiptCheck,
+} from "@/lib/cash-in-receipt";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
   fetchAllCashIns,
@@ -211,10 +217,10 @@ export function MoneyRequestsCard() {
                       {c.payer_reference ? ` · ref ${c.payer_reference}` : ""} · {shortDateTime(c.created_at)}
                     </p>
                     <p className="text-muted-foreground">
-                      Payment reference: {c.payer_reference ? c.payer_reference : "not provided"}
+                      A. Customer-submitted reference: {c.payer_reference ? c.payer_reference : "not provided"}
                     </p>
                     <p className="text-muted-foreground">
-                      Paid from: {c.sender_number ?? c.payer_number ?? "not provided"} · amount{" "}
+                      Paid from: {maskAccountNumber(c.sender_number ?? c.payer_number)} · amount{" "}
                       {peso(Number(c.amount_php))}
                     </p>
                     {c.notes ? (
@@ -228,19 +234,26 @@ export function MoneyRequestsCard() {
                       <p className="mt-1 text-muted-foreground">Payment screenshot: not attached</p>
                     )}
                     <p className="text-muted-foreground">
-                      Receipt reference read: {c.receipt_reference ? c.receipt_reference : "not read"} ·{" "}
-                      {RECEIPT_CHECK_LABEL[(c.receipt_check as ReceiptCheck) ?? "pending"]}
+                      B. Screenshot-extracted reference: {c.receipt_reference ? c.receipt_reference : "not read"}
+                    </p>
+                    <p className="text-muted-foreground">
+                      C. Match result: {RECEIPT_CHECK_LABEL[(c.receipt_check as ReceiptCheck) ?? "pending"]}
                     </p>
                     {c.duplicate_reference ? (
                       <p className="font-medium text-destructive">
-                        This GCash reference was already used — see the duplicate reference review below.
+                        Duplicate reference — manual review required. See the duplicate reference review below; the
+                        earlier transaction was not changed.
                       </p>
+                    ) : null}
+                    {c.status === "pending" ? (
+                      <p className="text-muted-foreground">Why pending: {verificationReason(c)}</p>
                     ) : null}
                     <p className="text-muted-foreground">
                       {c.listener_event_id
                         ? "Listener phone confirmed a matching GCash notification"
                         : "No listener confirmation for this payment"}
                     </p>
+
                     {c.status === "approved" ? (
                       <p className="mt-1 text-muted-foreground">
                         {c.approval_method === "automatic"
@@ -250,7 +263,13 @@ export function MoneyRequestsCard() {
                     ) : null}
                   </div>
 
-                  <StatusBadge tone={tone(c.status)}>{statusLabel(c.status)}</StatusBadge>
+                  <div className="flex flex-col items-end gap-1">
+                    <StatusBadge tone={tone(c.status)}>{statusLabel(c.status)}</StatusBadge>
+                    <StatusBadge tone={verificationStatus(c) === "VERIFIED" ? "success" : "warning"}>
+                      {verificationStatus(c)}
+                    </StatusBadge>
+                  </div>
+
                 </div>
                 {c.status === "pending" ? (
                   <div className="mt-2 flex flex-wrap gap-2">
