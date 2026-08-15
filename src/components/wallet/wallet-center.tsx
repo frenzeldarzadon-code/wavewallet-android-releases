@@ -521,7 +521,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
               {peso(value)} to {pick?.full_name} ({pick ? recipientRelationLabel(pick.relation) : ""})
               from {selected?.ecosystemName}. Balance after:{" "}
               {peso(projectedBalance(selected?.balance ?? 0, value))}. This cannot be undone by you.
-              {lineageNotice ? ` ` : ""}
+              {lineageNotice ? " " + lineageNotice : ""}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
