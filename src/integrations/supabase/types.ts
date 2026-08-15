@@ -215,6 +215,89 @@ export type Database = {
           },
         ]
       }
+      cash_in_reference_conflicts: {
+        Row: {
+          created_at: string
+          credited_at: string | null
+          credited_first: string | null
+          ecosystem_id: string | null
+          id: string
+          new_request_id: string
+          new_snapshot: Json
+          old_request_id: string | null
+          old_snapshot: Json
+          reference: string | null
+          reference_key: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          credited_at?: string | null
+          credited_first?: string | null
+          ecosystem_id?: string | null
+          id?: string
+          new_request_id: string
+          new_snapshot?: Json
+          old_request_id?: string | null
+          old_snapshot?: Json
+          reference?: string | null
+          reference_key: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          credited_at?: string | null
+          credited_first?: string | null
+          ecosystem_id?: string | null
+          id?: string
+          new_request_id?: string
+          new_snapshot?: Json
+          old_request_id?: string | null
+          old_snapshot?: Json
+          reference?: string | null
+          reference_key?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_in_reference_conflicts_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_in_reference_conflicts_new_request_id_fkey"
+            columns: ["new_request_id"]
+            isOneToOne: true
+            referencedRelation: "cash_in_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_in_reference_conflicts_old_request_id_fkey"
+            columns: ["old_request_id"]
+            isOneToOne: false
+            referencedRelation: "cash_in_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_in_reference_conflicts_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cash_in_requests: {
         Row: {
           amount_php: number
@@ -223,6 +306,8 @@ export type Database = {
           created_at: string
           credits: number
           decision_reason: string | null
+          duplicate_of: string | null
+          duplicate_reference: boolean
           ecosystem_id: string | null
           fee_percent: number
           fee_php: number
@@ -242,6 +327,13 @@ export type Database = {
           proof_path: string | null
           rate_credits: number
           rate_php: number
+          receipt_amount_php: number | null
+          receipt_check: string
+          receipt_checked_at: string | null
+          receipt_details: Json | null
+          receipt_reference: string | null
+          receipt_reference_key: string | null
+          receipt_sender_number: string | null
           reference: string
           request_key: string | null
           requester_name: string
@@ -263,6 +355,8 @@ export type Database = {
           created_at?: string
           credits: number
           decision_reason?: string | null
+          duplicate_of?: string | null
+          duplicate_reference?: boolean
           ecosystem_id?: string | null
           fee_percent?: number
           fee_php?: number
@@ -282,6 +376,13 @@ export type Database = {
           proof_path?: string | null
           rate_credits: number
           rate_php: number
+          receipt_amount_php?: number | null
+          receipt_check?: string
+          receipt_checked_at?: string | null
+          receipt_details?: Json | null
+          receipt_reference?: string | null
+          receipt_reference_key?: string | null
+          receipt_sender_number?: string | null
           reference: string
           request_key?: string | null
           requester_name: string
@@ -303,6 +404,8 @@ export type Database = {
           created_at?: string
           credits?: number
           decision_reason?: string | null
+          duplicate_of?: string | null
+          duplicate_reference?: boolean
           ecosystem_id?: string | null
           fee_percent?: number
           fee_php?: number
@@ -322,6 +425,13 @@ export type Database = {
           proof_path?: string | null
           rate_credits?: number
           rate_php?: number
+          receipt_amount_php?: number | null
+          receipt_check?: string
+          receipt_checked_at?: string | null
+          receipt_details?: Json | null
+          receipt_reference?: string | null
+          receipt_reference_key?: string | null
+          receipt_sender_number?: string | null
           reference?: string
           request_key?: string | null
           requester_name?: string
@@ -337,6 +447,13 @@ export type Database = {
           verified_payment_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "cash_in_requests_duplicate_of_fkey"
+            columns: ["duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "cash_in_requests"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "cash_in_requests_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -4441,6 +4558,17 @@ export type Database = {
         Returns: Json
       }
       admin_voucher_discount_percent: { Args: never; Returns: number }
+      apply_cash_in_receipt_ocr: {
+        Args: {
+          _amount?: number
+          _details?: Json
+          _id: string
+          _readable?: boolean
+          _reference?: string
+          _sender?: string
+        }
+        Returns: string
+      }
       archive_ecosystem: {
         Args: { _ecosystem_id: string; _reason?: string }
         Returns: string
@@ -4484,6 +4612,8 @@ export type Database = {
           created_at: string
           credits: number
           decision_reason: string | null
+          duplicate_of: string | null
+          duplicate_reference: boolean
           ecosystem_id: string | null
           fee_percent: number
           fee_php: number
@@ -4503,6 +4633,13 @@ export type Database = {
           proof_path: string | null
           rate_credits: number
           rate_php: number
+          receipt_amount_php: number | null
+          receipt_check: string
+          receipt_checked_at: string | null
+          receipt_details: Json | null
+          receipt_reference: string | null
+          receipt_reference_key: string | null
+          receipt_sender_number: string | null
           reference: string
           request_key: string | null
           requester_name: string
@@ -4581,9 +4718,36 @@ export type Database = {
         }[]
       }
       cash_in_auto_status: { Args: never; Returns: Json }
+      cash_in_conflict_snapshot: { Args: { _id: string }; Returns: Json }
       cash_in_receiving_number: {
         Args: { _ecosystem: string; _method: string }
         Returns: string
+      }
+      cash_in_reference_conflict_list: {
+        Args: { _status?: string }
+        Returns: {
+          created_at: string
+          credited_at: string | null
+          credited_first: string | null
+          ecosystem_id: string | null
+          id: string
+          new_request_id: string
+          new_snapshot: Json
+          old_request_id: string | null
+          old_snapshot: Json
+          reference: string | null
+          reference_key: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "cash_in_reference_conflicts"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       cashback_chain: {
         Args: { _ecosystem_id: string; _source: string }
@@ -5598,6 +5762,10 @@ export type Database = {
         Returns: string
       }
       real_super_admin_exists: { Args: never; Returns: boolean }
+      record_cash_in_reference_conflict: {
+        Args: { _new: string }
+        Returns: string
+      }
       record_expense:
         | {
             Args: {
@@ -5739,6 +5907,8 @@ export type Database = {
               created_at: string
               credits: number
               decision_reason: string | null
+              duplicate_of: string | null
+              duplicate_reference: boolean
               ecosystem_id: string | null
               fee_percent: number
               fee_php: number
@@ -5758,6 +5928,13 @@ export type Database = {
               proof_path: string | null
               rate_credits: number
               rate_php: number
+              receipt_amount_php: number | null
+              receipt_check: string
+              receipt_checked_at: string | null
+              receipt_details: Json | null
+              receipt_reference: string | null
+              receipt_reference_key: string | null
+              receipt_sender_number: string | null
               reference: string
               request_key: string | null
               requester_name: string
@@ -5796,6 +5973,8 @@ export type Database = {
               created_at: string
               credits: number
               decision_reason: string | null
+              duplicate_of: string | null
+              duplicate_reference: boolean
               ecosystem_id: string | null
               fee_percent: number
               fee_php: number
@@ -5815,6 +5994,13 @@ export type Database = {
               proof_path: string | null
               rate_credits: number
               rate_php: number
+              receipt_amount_php: number | null
+              receipt_check: string
+              receipt_checked_at: string | null
+              receipt_details: Json | null
+              receipt_reference: string | null
+              receipt_reference_key: string | null
+              receipt_sender_number: string | null
               reference: string
               request_key: string | null
               requester_name: string
@@ -5933,6 +6119,32 @@ export type Database = {
         Args: { _dry_run?: boolean; _ecosystem_id: string; _reason: string }
         Returns: Json
       }
+      resolve_cash_in_reference_conflict: {
+        Args: { _id: string; _note?: string }
+        Returns: {
+          created_at: string
+          credited_at: string | null
+          credited_first: string | null
+          ecosystem_id: string | null
+          id: string
+          new_request_id: string
+          new_snapshot: Json
+          old_request_id: string | null
+          old_snapshot: Json
+          reference: string | null
+          reference_key: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cash_in_reference_conflicts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       resolve_member_shop: {
         Args: { _ecosystem_id?: string; _user_id: string }
         Returns: string
@@ -6000,6 +6212,8 @@ export type Database = {
           created_at: string
           credits: number
           decision_reason: string | null
+          duplicate_of: string | null
+          duplicate_reference: boolean
           ecosystem_id: string | null
           fee_percent: number
           fee_php: number
@@ -6019,6 +6233,13 @@ export type Database = {
           proof_path: string | null
           rate_credits: number
           rate_php: number
+          receipt_amount_php: number | null
+          receipt_check: string
+          receipt_checked_at: string | null
+          receipt_details: Json | null
+          receipt_reference: string | null
+          receipt_reference_key: string | null
+          receipt_sender_number: string | null
           reference: string
           request_key: string | null
           requester_name: string
@@ -6622,6 +6843,8 @@ export type Database = {
           created_at: string
           credits: number
           decision_reason: string | null
+          duplicate_of: string | null
+          duplicate_reference: boolean
           ecosystem_id: string | null
           fee_percent: number
           fee_php: number
@@ -6641,6 +6864,13 @@ export type Database = {
           proof_path: string | null
           rate_credits: number
           rate_php: number
+          receipt_amount_php: number | null
+          receipt_check: string
+          receipt_checked_at: string | null
+          receipt_details: Json | null
+          receipt_reference: string | null
+          receipt_reference_key: string | null
+          receipt_sender_number: string | null
           reference: string
           request_key: string | null
           requester_name: string

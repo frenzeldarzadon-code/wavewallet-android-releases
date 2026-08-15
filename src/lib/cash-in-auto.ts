@@ -104,6 +104,8 @@ export interface MatchableRequest {
   status?: string;
   /** True when this reference was already used by an earlier request. */
   duplicate_reference?: boolean;
+  /** Result of reading the reference off the uploaded receipt. */
+  receipt_check?: string | null;
   /** Linked notification, in either order: pay-then-submit or submit-then-pay. */
   listener_event?: MatchableListenerEvent | null;
 }
@@ -121,7 +123,10 @@ export type MatchOutcome =
   | "no_sender_number"
   | "awaiting_listener"
   | "listener_offline"
-  | "number_mismatch";
+  | "number_mismatch"
+  | "awaiting_receipt_check"
+  | "receipt_reference_mismatch"
+  | "receipt_unreadable";
 
 /** Human wording for a matching result, used in the UI and the audit trail. */
 export const MATCH_REASON: Record<MatchOutcome, string> = {
@@ -129,7 +134,8 @@ export const MATCH_REASON: Record<MatchOutcome, string> = {
   disabled: "Automatic approval is switched off for this shop.",
   not_pending: "This request was already decided.",
   no_reference: "No GCash payment reference number was submitted, so it cannot be matched.",
-  duplicate_reference: "That payment reference was already used by another cash in.",
+  duplicate_reference:
+    "That payment reference was already used by another cash in — held for manual investigation.",
   no_proof: "No payment screenshot was attached.",
   above_auto_limit: "Above the automatic approval limit — left for manual review.",
   amount_mismatch: "The amount does not match the payment that was received.",
@@ -138,6 +144,9 @@ export const MATCH_REASON: Record<MatchOutcome, string> = {
   awaiting_listener: "No matching GCash payment has been seen yet — waiting for the notification.",
   listener_offline: "The paired listener phone is offline, so the payment cannot be confirmed.",
   number_mismatch: "The GCash number that sent the money does not match this request.",
+  awaiting_receipt_check: "The uploaded receipt has not been read yet.",
+  receipt_reference_mismatch: "Reference does not match receipt — held for manual review.",
+  receipt_unreadable: "The reference could not be read from the receipt, so nothing is assumed.",
 };
 
 /**
@@ -180,6 +189,13 @@ export function evaluateMatch(
     return "amount_mismatch";
   }
   if (event.device_online === false) return "listener_offline";
+
+  // Secondary verification: the reference read off the receipt is authoritative
+  // and must agree with what the member typed.
+  const receipt = request.receipt_check ?? "pending";
+  if (receipt === "mismatch") return "receipt_reference_mismatch";
+  if (receipt === "unreadable" || receipt === "error") return "receipt_unreadable";
+  if (receipt !== "matched") return "awaiting_receipt_check";
   return "matched";
 }
 
