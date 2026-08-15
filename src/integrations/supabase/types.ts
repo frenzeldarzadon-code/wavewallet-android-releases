@@ -4173,6 +4173,18 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      cashback_chain: {
+        Args: { _ecosystem_id: string; _source: string }
+        Returns: {
+          kind: string
+          pct: number
+          recipient_id: string
+        }[]
+      }
+      cashback_split_preview: {
+        Args: { _ecosystem_id: string; _user_id: string }
+        Returns: Json
+      }
       claim_super_admin_bootstrap: {
         Args: { _email: string; _source: string }
         Returns: string
