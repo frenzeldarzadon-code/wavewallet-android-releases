@@ -90,6 +90,15 @@ export function MemberInboxPanel() {
         </div>
       </div>
 
+      {/* Every approved member of a shop may invite someone from the Universe. */}
+      <MemberInviteCard
+        memberships={inbox.memberships}
+        myId={session.account?.id ?? null}
+        onSent={() => void reload()}
+      />
+
+
+
       {/* ---------------- Invites ---------------- */}
       <PageSection
         title="Invites"
