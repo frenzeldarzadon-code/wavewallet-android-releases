@@ -332,8 +332,8 @@ export function lineageResetNotice(
   senderRole: Role | null,
   recipientRelation: string | null,
 ): string | null {
-  const isCustomer = senderRole !== "admin" && senderRole !== "super_admin"
-    && senderRole !== "reseller" && senderRole !== "subreseller";
+  const isCustomer = isCustomerViewer(senderRole);
+
   if (!isCustomer || !recipientRelation) return null;
   if (!["admin", "reseller", "subreseller"].includes(recipientRelation)) return null;
   return "Cashback lineage reset: these credits stop being traced to you once they arrive.";
