@@ -161,6 +161,8 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
     ? tab
     : (tabs[0]?.key ?? "peer");
   const visibleRecipients = filterRecipientsByTab(recipients, activeTab);
+  const lineageNotice = lineageResetNotice(selected?.role ?? null, pick?.relation ?? null);
+
   const value = Number(amount) || 0;
   const problem = validateInShopTransfer({
     ecosystemId: selected?.ecosystemId ?? null,
