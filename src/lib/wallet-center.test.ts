@@ -73,12 +73,15 @@ describe("upwardRelationLabel", () => {
 });
 
 describe("recipientRelationLabel", () => {
-  it("names every relation", () => {
-    expect(recipientRelationLabel("admin")).toBe("Shop admin");
-    expect(recipientRelationLabel("reseller")).toBe("My reseller");
-    expect(recipientRelationLabel("subreseller")).toBe("My subreseller");
-    expect(recipientRelationLabel("customer")).toBe("Customer");
-    expect(recipientRelationLabel("other")).toBe("Member");
+  it("names every relation for an operator viewer", () => {
+    expect(recipientRelationLabel("admin", "admin")).toBe("Shop admin");
+    expect(recipientRelationLabel("reseller", "subreseller")).toBe("My reseller");
+    expect(recipientRelationLabel("subreseller", "reseller")).toBe("My subreseller");
+    expect(recipientRelationLabel("customer", "admin")).toBe("Customer");
+    expect(recipientRelationLabel("other", "admin")).toBe("Member");
+  });
+  it("defaults to the privacy-safe wording when the viewer is unknown", () => {
+    expect(recipientRelationLabel("admin")).toBe("Can accept your credits");
   });
 });
 
@@ -87,8 +90,10 @@ describe("transferSectionTitle", () => {
     expect(transferSectionTitle("subreseller")).toMatch(/reseller/);
     expect(transferSectionTitle("reseller")).toMatch(/subresellers/);
     expect(transferSectionTitle("admin")).toMatch(/members of this shop/);
-    expect(transferSectionTitle("customer")).toMatch(/another customer/);
+    expect(transferSectionTitle("customer")).toMatch(/can accept your transfer/);
   });
+});
+
 });
 
 describe("emptyRecipientsHint", () => {
