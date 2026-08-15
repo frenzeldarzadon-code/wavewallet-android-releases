@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   canSendUpward,
+  emptyRecipientsHint,
+  recipientRelationLabel,
+  transferSectionTitle,
   projectedBalance,
   totalWalletBalance,
   upwardRelationLabel,
@@ -62,5 +65,32 @@ describe("upwardRelationLabel", () => {
   it("names the relationship", () => {
     expect(upwardRelationLabel("reseller")).toBe("My reseller");
     expect(upwardRelationLabel("admin")).toBe("Shop admin");
+  });
+});
+
+describe("recipientRelationLabel", () => {
+  it("names every relation", () => {
+    expect(recipientRelationLabel("admin")).toBe("Shop admin");
+    expect(recipientRelationLabel("reseller")).toBe("My reseller");
+    expect(recipientRelationLabel("subreseller")).toBe("My subreseller");
+    expect(recipientRelationLabel("customer")).toBe("Customer");
+    expect(recipientRelationLabel("other")).toBe("Member");
+  });
+});
+
+describe("transferSectionTitle", () => {
+  it("is role specific", () => {
+    expect(transferSectionTitle("subreseller")).toMatch(/reseller/);
+    expect(transferSectionTitle("reseller")).toMatch(/subresellers/);
+    expect(transferSectionTitle("admin")).toMatch(/members of this shop/);
+    expect(transferSectionTitle("customer")).toMatch(/another member/);
+  });
+});
+
+describe("emptyRecipientsHint", () => {
+  it("always explains why the list is empty", () => {
+    for (const role of ["subreseller", "reseller", "admin", "customer", null] as const) {
+      expect(emptyRecipientsHint(role)).toMatch(/\w/);
+    }
   });
 });
