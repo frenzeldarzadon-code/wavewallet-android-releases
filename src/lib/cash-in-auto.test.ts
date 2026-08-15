@@ -12,14 +12,20 @@ import {
   type MatchableRequest,
 } from "./cash-in-auto";
 
-const on: AutoApprovalRule = { ...DEFAULT_AUTO_RULE, enabled: true };
-const RECEIVING = "09171234567";
+const on: AutoApprovalRule = { ...DEFAULT_AUTO_RULE, enabled: true, require_listener_match: true };
+const RECEIVING = "09541230072";
+const SENDER = "09171234567";
+
+/** A real GCash notification seen by the paired phone on the receiving account. */
+const seen = { sender_number: "+639171234567", amount_php: 500, outcome: "accepted", device_online: true };
+
 const req: MatchableRequest = {
   amount_php: 500,
   payer_reference: "GC-1234",
-  payer_number: "+639171234567",
+  sender_number: SENDER,
   proof_path: "user/abc.jpg",
   status: "pending",
+  listener_event: seen,
 };
 
 describe("payment reference normalisation", () => {
@@ -50,12 +56,19 @@ describe("Philippine mobile normalisation", () => {
 });
 
 describe("automatic approval matching", () => {
-  it("approves when every configured detail matches", () => {
+  it("approves when a real payment matches the sender and the exact amount", () => {
     expect(evaluateMatch(req, on, RECEIVING)).toBe("matched");
   });
 
-  it("approves equivalent phone formats", () => {
-    expect(evaluateMatch({ ...req, payer_number: "09171234567" }, on, "+639171234567")).toBe("matched");
+  it("approves a payment that arrived before the request was submitted", () => {
+    // Order is irrelevant here: the request simply carries the linked event.
+    expect(evaluateMatch({ ...req, listener_event: { ...seen } }, on, RECEIVING)).toBe("matched");
+  });
+
+  it("compares equivalent phone formats", () => {
+    expect(
+      evaluateMatch({ ...req, sender_number: "+639171234567" }, on, "+63 954 123 0072"),
+    ).toBe("matched");
   });
 
   it("never approves while the feature is off", () => {
@@ -70,28 +83,56 @@ describe("automatic approval matching", () => {
     expect(evaluateMatch({ ...req, payer_reference: "" }, on, RECEIVING)).toBe("no_reference");
   });
 
-  it("requires the payment screenshot", () => {
+  it("requires the payment screenshot as supporting evidence", () => {
     expect(evaluateMatch({ ...req, proof_path: null }, on, RECEIVING)).toBe("no_proof");
   });
 
-  it("rejects a wrong receiving number", () => {
-    expect(evaluateMatch({ ...req, payer_number: "09181234567" }, on, RECEIVING)).toBe("number_mismatch");
+  it("never approves on the screenshot alone, without a real notification", () => {
+    expect(evaluateMatch({ ...req, listener_event: null }, on, RECEIVING)).toBe("awaiting_listener");
+  });
+
+  it("rejects a payment sent from a different GCash number", () => {
+    expect(
+      evaluateMatch({ ...req, listener_event: { ...seen, sender_number: "09181234567" } }, on, RECEIVING),
+    ).toBe("number_mismatch");
+  });
+
+  it("rejects a payment whose amount differs from the request", () => {
+    expect(
+      evaluateMatch({ ...req, listener_event: { ...seen, amount_php: 499 } }, on, RECEIVING),
+    ).toBe("amount_mismatch");
+  });
+
+  it("requires the sending number on the request", () => {
+    expect(evaluateMatch({ ...req, sender_number: null }, on, RECEIVING)).toBe("no_sender_number");
   });
 
   it("cannot approve when no receiving number is configured", () => {
     expect(evaluateMatch(req, on, null)).toBe("no_receiving_number");
   });
 
+  it("waits while the paired phone is offline", () => {
+    expect(
+      evaluateMatch({ ...req, listener_event: { ...seen, device_online: false } }, on, RECEIVING),
+    ).toBe("listener_offline");
+  });
+
   it("rejects a wrong amount against the configured expected amount", () => {
     const exact = { ...on, expected_amount_php: 500 };
     expect(evaluateMatch(req, exact, RECEIVING)).toBe("matched");
-    expect(evaluateMatch({ ...req, amount_php: 499 }, exact, RECEIVING)).toBe("amount_mismatch");
+    expect(
+      evaluateMatch({ ...req, amount_php: 499, listener_event: { ...seen, amount_php: 499 } }, exact, RECEIVING),
+    ).toBe("amount_mismatch");
   });
 
   it("accepts a small difference only within the configured tolerance", () => {
     const lenient = { ...on, expected_amount_php: 500, amount_tolerance_php: 1 };
-    expect(evaluateMatch({ ...req, amount_php: 499 }, lenient, RECEIVING)).toBe("matched");
-    expect(evaluateMatch({ ...req, amount_php: 497 }, lenient, RECEIVING)).toBe("amount_mismatch");
+    expect(
+      evaluateMatch({ ...req, amount_php: 499, listener_event: { ...seen, amount_php: 499 } }, lenient, RECEIVING),
+    ).toBe("matched");
+    expect(
+      evaluateMatch({ ...req, amount_php: 497, listener_event: { ...seen, amount_php: 497 } }, lenient, RECEIVING),
+    ).toBe("amount_mismatch");
   });
 
   it("leaves amounts above the automatic limit for manual review", () => {
