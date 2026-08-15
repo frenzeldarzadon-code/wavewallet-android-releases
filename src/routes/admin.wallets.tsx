@@ -85,6 +85,11 @@ interface Member {
 
 function AdminWallets() {
   const { ecosystemDbId, account } = useSession("admin");
+  /**
+   * The platform owner issues credits from the platform mint in EVERY shop:
+   * no shop wallet, no source balance, no fee. The database enforces this.
+   */
+  const isPlatformOwner = account?.role === "super_admin";
   const [members, setMembers] = useState<Member[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
