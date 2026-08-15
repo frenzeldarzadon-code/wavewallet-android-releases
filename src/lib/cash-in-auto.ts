@@ -1,24 +1,31 @@
 /**
  * Automatic Cash In approval — client helpers.
  *
- * Ground rule, enforced in the database and mirrored here: a screenshot is
- * NEVER evidence of payment. A cash in can only be approved automatically when
- * an authorised payment feed has delivered a *verified* transaction (a row in
- * `verified_payments`, written only by the signed webhook running server-side)
- * that matches the request. When nothing matches, the request stays pending for
- * the manual queue.
+ * Ground rule, enforced in the database and mirrored here: nothing in this app
+ * contacts GCash. A screenshot is supporting evidence for audit and manual
+ * review — it is NEVER treated as proof that the payment happened.
  *
- * The matching predicate below is a faithful copy of `try_auto_approve_cash_in`
- * so the settings screen can explain — and the tests can pin — exactly what the
+ * A cash in may be approved automatically only when the *configured* matching
+ * data lines up:
+ *   - the amount obeys the configured expected amount / automatic limit,
+ *   - the GCash number the member says they paid matches the receiving number
+ *     configured for their shop (or the payment method),
+ *   - a payment reference is present and has never been consumed before,
+ *   - a screenshot is attached,
+ *   - the request is still pending.
+ *
+ * The predicate below is a faithful copy of `try_auto_approve_cash_in` so the
+ * settings screen can explain — and the tests can pin — exactly what the
  * database will and will not accept. It is never the authority.
  */
 import { supabase } from "@/integrations/supabase/client";
 
 export interface AutoApprovalRule {
   enabled: boolean;
-  require_reference_match: boolean;
   amount_tolerance_php: number;
   max_auto_amount_php: number | null;
+  /** Optional exact amount every automatic cash in must match. */
+  expected_amount_php: number | null;
 }
 
 export interface ShopAutoRule extends AutoApprovalRule {
@@ -26,29 +33,19 @@ export interface ShopAutoRule extends AutoApprovalRule {
   ecosystem_name: string | null;
 }
 
-export interface PaymentFeedSource {
-  provider: string;
-  label: string;
-  status: "not_connected" | "connected" | "error";
-  secret_name: string | null;
-  last_event_at: string | null;
-  last_error: string | null;
-}
-
 export interface CashInAutoStatus {
-  sources: PaymentFeedSource[];
-  connected: boolean;
   platform_rule: (AutoApprovalRule & { ecosystem_id: string | null }) | null;
   shop_rules: ShopAutoRule[];
-  unmatched_payments: number;
+  shops_with_number: number;
+  duplicates_blocked_30d: number;
   auto_approved_30d: number;
 }
 
 export const DEFAULT_AUTO_RULE: AutoApprovalRule = {
   enabled: false,
-  require_reference_match: true,
   amount_tolerance_php: 0,
   max_auto_amount_php: null,
+  expected_amount_php: null,
 };
 
 /** Same normalisation as `public.normalize_payment_reference`. */
@@ -57,93 +54,111 @@ export function normalizePaymentReference(ref?: string | null): string | null {
   return key === "" ? null : key;
 }
 
+/**
+ * Same normalisation as `public.normalize_ph_mobile`: 09XXXXXXXXX,
+ * +639XXXXXXXXX, 639XXXXXXXXX and 9XXXXXXXXX all compare equal.
+ */
+export function normalizePhMobile(n?: string | null): string | null {
+  const v = (n ?? "").replace(/[^0-9]/g, "");
+  if (v === "") return null;
+  if (v.length === 11 && v.startsWith("09")) return `63${v.slice(1)}`;
+  if (v.length === 12 && v.startsWith("63")) return v;
+  if (v.length === 10 && v.startsWith("9")) return `63${v}`;
+  if (v.length === 13 && v.startsWith("639")) return v.slice(1);
+  return v;
+}
+
+export function samePhMobile(a?: string | null, b?: string | null): boolean {
+  const x = normalizePhMobile(a);
+  const y = normalizePhMobile(b);
+  return x !== null && y !== null && x === y;
+}
+
 export interface MatchableRequest {
   amount_php: number;
   payer_reference?: string | null;
-  method_id?: string | null;
-}
-
-export interface MatchablePayment {
-  amount_php: number;
-  payer_reference?: string | null;
-  payment_method_id?: string | null;
+  payer_number?: string | null;
+  proof_path?: string | null;
   status?: string;
-  consumed_cash_in_id?: string | null;
+  /** True when this reference was already used by an earlier request. */
+  duplicate_reference?: boolean;
 }
 
 export type MatchOutcome =
   | "matched"
   | "disabled"
-  | "no_feed"
-  | "above_auto_limit"
+  | "not_pending"
   | "no_reference"
-  | "already_consumed"
+  | "duplicate_reference"
+  | "no_proof"
+  | "above_auto_limit"
   | "amount_mismatch"
-  | "reference_mismatch"
-  | "method_mismatch";
+  | "no_receiving_number"
+  | "number_mismatch";
 
 /** Human wording for a matching result, used in the UI and the audit trail. */
 export const MATCH_REASON: Record<MatchOutcome, string> = {
-  matched: "Verified payment matched — approved automatically.",
+  matched: "The submitted details match the configured cash in rules — approved automatically.",
   disabled: "Automatic approval is switched off for this shop.",
-  no_feed: "No authorised payment feed is connected, so nothing can be verified.",
+  not_pending: "This request was already decided.",
+  no_reference: "No GCash payment reference number was submitted, so it cannot be matched.",
+  duplicate_reference: "That payment reference was already used by another cash in.",
+  no_proof: "No payment screenshot was attached.",
   above_auto_limit: "Above the automatic approval limit — left for manual review.",
-  no_reference: "No payment reference was submitted, so it cannot be matched.",
-  already_consumed: "That payment was already used to approve another cash in.",
-  amount_mismatch: "The received amount does not match the requested amount.",
-  reference_mismatch: "The payment reference does not match the received payment.",
-  method_mismatch: "The payment arrived on a different payment account.",
+  amount_mismatch: "The amount does not match the configured cash in amount.",
+  no_receiving_number: "No receiving GCash number is configured for this shop yet.",
+  number_mismatch: "The GCash number paid does not match the shop's receiving number.",
 };
 
 /**
- * Would this verified payment settle this request? Mirrors the database.
- * A screenshot plays no part: only a verified payment reaches this function.
+ * Would this request be approved automatically? Mirrors the database.
+ * `receivingNumber` is the number configured for the shop / payment method.
  */
 export function evaluateMatch(
   request: MatchableRequest,
-  payment: MatchablePayment | null,
   rule: AutoApprovalRule,
-  feedConnected: boolean,
+  receivingNumber: string | null,
 ): MatchOutcome {
+  if (request.status && request.status !== "pending") return "not_pending";
   if (!rule.enabled) return "disabled";
-  if (!feedConnected) return "no_feed";
+  if (request.duplicate_reference) return "duplicate_reference";
+  if (!normalizePaymentReference(request.payer_reference)) return "no_reference";
+  if (!request.proof_path) return "no_proof";
   if (rule.max_auto_amount_php != null && Number(request.amount_php) > Number(rule.max_auto_amount_php)) {
     return "above_auto_limit";
   }
-  const key = normalizePaymentReference(request.payer_reference);
-  if (rule.require_reference_match && !key) return "no_reference";
-  if (!payment) return "amount_mismatch";
-  if (payment.status === "consumed" || payment.consumed_cash_in_id) return "already_consumed";
-  if (Math.abs(Number(payment.amount_php) - Number(request.amount_php)) > Number(rule.amount_tolerance_php || 0)) {
+  if (
+    rule.expected_amount_php != null &&
+    Math.abs(Number(request.amount_php) - Number(rule.expected_amount_php)) >
+      Number(rule.amount_tolerance_php || 0)
+  ) {
     return "amount_mismatch";
   }
-  if (rule.require_reference_match && normalizePaymentReference(payment.payer_reference) !== key) {
-    return "reference_mismatch";
-  }
-  if (payment.payment_method_id && request.method_id && payment.payment_method_id !== request.method_id) {
-    return "method_mismatch";
-  }
+  const expected = normalizePhMobile(receivingNumber);
+  if (!expected) return "no_receiving_number";
+  if (normalizePhMobile(request.payer_number) !== expected) return "number_mismatch";
   return "matched";
 }
 
-/** Wording for the connection banner on the settings screen. */
-export function feedStatusLabel(status: CashInAutoStatus | null): {
+/** Wording for the banner on the settings screen. */
+export function matchingStatusLabel(status: CashInAutoStatus | null): {
   tone: "success" | "warning";
   title: string;
   detail: string;
 } {
-  if (status?.connected) {
+  if (status?.platform_rule?.enabled) {
     return {
       tone: "success",
-      title: "Payment feed connected",
-      detail: "Verified incoming payments are being received and can settle matching cash in requests.",
+      title: "Automatic matching is on",
+      detail:
+        "A cash in is approved automatically only when the amount, the shop's receiving GCash number and a never-used payment reference all match, and a screenshot is attached. GCash is never contacted.",
     };
   }
   return {
     tone: "warning",
-    title: "No payment feed connected",
+    title: "Automatic matching is off",
     detail:
-      "Automatic approval needs an authorised GCash/payment provider webhook. Until one is connected, every cash in stays pending for manual review — screenshots are never used as proof.",
+      "Every cash in waits in the manual queue. Screenshots are supporting evidence only — they are never treated as proof of payment.",
   };
 }
 
@@ -160,20 +175,39 @@ export async function fetchCashInAutoStatus(): Promise<CashInAutoStatus> {
 export async function setCashInAutoApproval(input: {
   ecosystemId: string | null;
   enabled: boolean;
-  requireReference?: boolean;
   tolerance?: number;
   maxAmount?: number | null;
+  expectedAmount?: number | null;
 }): Promise<void> {
-  // The RPC treats a null shop as "platform default"; a null max amount means
-  // "no ceiling". The generated arg types cannot express either nullable.
+  // The RPC treats a null shop as "platform default"; a null max/expected
+  // amount means "no ceiling" / "any amount".
   const args = {
     _ecosystem: input.ecosystemId,
     _enabled: input.enabled,
-    _require_reference: input.requireReference ?? true,
     _tolerance: input.tolerance ?? 0,
     _max_amount: input.maxAmount ?? null,
+    _expected_amount: input.expectedAmount ?? null,
   } as unknown as Parameters<typeof supabase.rpc<"set_cash_in_auto_approval">>[1];
   const { error } = await supabase.rpc("set_cash_in_auto_approval", args);
 
+  if (error) throw new Error(error.message);
+}
+
+/** The receiving GCash number configured for a shop (admins / platform owner). */
+export async function fetchShopCashInNumber(ecosystemId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("ecosystems")
+    .select("cash_in_gcash_number")
+    .eq("id", ecosystemId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data as { cash_in_gcash_number?: string | null } | null)?.cash_in_gcash_number ?? null;
+}
+
+export async function setShopCashInNumber(ecosystemId: string, number: string | null): Promise<void> {
+  const { error } = await supabase.rpc("set_ecosystem_cash_in_number", {
+    _ecosystem: ecosystemId,
+    _number: number,
+  } as never);
   if (error) throw new Error(error.message);
 }
