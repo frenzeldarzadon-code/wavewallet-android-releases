@@ -208,14 +208,25 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
         proofPath: uploadedPath,
         requestKey: newKey(),
       });
-      // The database refuses a second live request on the same GCash reference,
-      // so one payment can never be credited twice.
-      const outcome = cashInOutcomeMessage(submitted);
+      // Secondary check: read the reference off the uploaded receipt. Automatic
+      // approval stays blocked until this agrees with what was typed, and a
+      // reused reference is held for manual investigation instead of credited.
+      let decided = submitted;
+      if (submitted.status === "pending" && !submitted.duplicate_reference) {
+        try {
+          const verified = await verifyCashInReceipt({ data: { cashInId: submitted.id } });
+          decided = { ...submitted, status: verified.status, receipt_check: verified.check } as typeof submitted;
+        } catch {
+          // A reader outage must never approve or reject anything on its own.
+          decided = { ...submitted, receipt_check: "error" } as typeof submitted;
+        }
+      }
+      const outcome = cashInOutcomeMessage(decided);
       if (outcome.tone === "error") toast.error(outcome.message);
       else if (outcome.tone === "success") toast.success(outcome.message);
       else toast.info(outcome.message);
 
-      if (submitted.status !== "rejected") {
+      if (decided.status !== "rejected") {
         setAmount("");
         setPayerRef("");
         setPayerNumber("");
