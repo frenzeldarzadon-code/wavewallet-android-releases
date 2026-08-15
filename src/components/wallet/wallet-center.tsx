@@ -16,7 +16,6 @@
  * Nothing here is an authorization layer: the database re-checks every rule.
  */
 import {
-  ArrowLeftRight,
   Gift,
   Info,
   Search,
@@ -482,10 +481,6 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <div className="sr-only" aria-hidden>
-        <ArrowLeftRight className="size-4" />
-      </div>
     </>
   );
 }
