@@ -410,13 +410,26 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                       <Input id="ci-ref" value={payerRef} onChange={(e) => setPayerRef(e.target.value)} placeholder="Receipt / transaction number" />
                     </div>
                   </div>
+                  <CashInProofPicker
+                    file={proofFile}
+                    onPick={setProofFile}
+                    disabled={busy}
+                    onError={(m) => toast.error(m)}
+                  />
                   {selectedMethod ? (
                     <PaymentMethodCards methods={[selectedMethod]} selectedId={selectedMethod.id} />
                   ) : null}
                   <div className="space-y-1.5">
-                    <Label htmlFor="ci-notes">Additional information</Label>
-                    <Textarea id="ci-notes" rows={2} value={cashInNotes} onChange={(e) => setCashInNotes(e.target.value)} />
+                    <Label htmlFor="ci-notes">Additional notes (optional)</Label>
+                    <Textarea
+                      id="ci-notes"
+                      rows={2}
+                      value={cashInNotes}
+                      onChange={(e) => setCashInNotes(e.target.value)}
+                      placeholder="Anything the platform owner should know (optional)"
+                    />
                   </div>
+
                   <div className="space-y-1 rounded-lg border border-border bg-muted/40 p-3 text-xs">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Amount you are paying</span>
