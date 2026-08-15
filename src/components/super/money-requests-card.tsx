@@ -263,7 +263,13 @@ export function MoneyRequestsCard() {
                     ) : null}
                   </div>
 
-                  <StatusBadge tone={tone(c.status)}>{statusLabel(c.status)}</StatusBadge>
+                  <div className="flex flex-col items-end gap-1">
+                    <StatusBadge tone={tone(c.status)}>{statusLabel(c.status)}</StatusBadge>
+                    <StatusBadge tone={verificationStatus(c) === "VERIFIED" ? "success" : "warning"}>
+                      {verificationStatus(c)}
+                    </StatusBadge>
+                  </div>
+
                 </div>
                 {c.status === "pending" ? (
                   <div className="mt-2 flex flex-wrap gap-2">
