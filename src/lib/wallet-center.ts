@@ -270,10 +270,16 @@ export function recipientTabs(role: Role | null, _multiShop = false): RecipientT
       );
       break;
     default:
-      // A customer may send to any active upline of the shop (admin, reseller,
-      // subreseller) and to peer customers. Upline transfers reset lineage.
-      tabs.push({ key: "network", label: "Upline" }, { key: "peer", label: "Peer customer" });
+      // A customer is attached to NO single upline: every active operator,
+      // reseller and subreseller of the shop may accept their credits, and
+      // such a transfer resets cashback tracing. The wording never reveals
+      // the recipient's internal position.
+      tabs.push(
+        { key: "network", label: "Credit recipients" },
+        { key: "peer", label: "Other members" },
+      );
       break;
+
 
   }
   tabs.push({ key: "shops", label: "Another shop" });
