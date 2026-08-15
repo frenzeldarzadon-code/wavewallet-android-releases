@@ -138,8 +138,27 @@ export async function transferInShop(input: {
 /* Eligible recipients inside one shop                                 */
 /* ------------------------------------------------------------------ */
 
-/** Human label for how a recipient relates to the sender. */
-export function recipientRelationLabel(relation: string): string {
+/**
+ * True when the viewer holds no operator/reseller position in the selected
+ * shop. Customers never see other members' internal positions — see
+ * `recipientRelationLabel`.
+ */
+export function isCustomerViewer(role: Role | null): boolean {
+  return role !== "admin" && role !== "super_admin" && role !== "reseller" && role !== "subreseller";
+}
+
+/**
+ * Human label for how a recipient relates to the sender.
+ *
+ * Business rule: a customer is NOT attached to one upline and must never be
+ * shown another member's internal platform position (Admin / Reseller /
+ * Subreseller). For a customer viewer every eligible recipient is simply
+ * someone who can accept their credits.
+ */
+export function recipientRelationLabel(relation: string, viewerRole: Role | null = null): string {
+  if (isCustomerViewer(viewerRole)) {
+    return relation === "customer" ? "Member of this shop" : "Can accept your credits";
+  }
   switch (relation) {
     case "admin":
       return "Shop admin";
@@ -153,6 +172,7 @@ export function recipientRelationLabel(relation: string): string {
       return "Member";
   }
 }
+
 
 /**
  * The heading for the upline/downline section, given the caller's role in the
@@ -168,8 +188,7 @@ export function transferSectionTitle(role: Role | null): string {
     case "super_admin":
       return "Send credits to members of this shop";
     default:
-      return "Send credits to this shop's admin, reseller, subreseller or another customer";
-
+      return "Send credits to people in this shop who can accept your transfer";
   }
 }
 
@@ -184,7 +203,8 @@ export function emptyRecipientsHint(role: Role | null): string {
     case "super_admin":
       return "No other active members in this shop yet.";
     default:
-      return "No eligible recipients for this shop yet — customers of this shop appear here once they are approved.";
+      return "Nobody in this shop can accept your credits yet — recipients appear here once they are active members.";
+
   }
 }
 
@@ -250,10 +270,16 @@ export function recipientTabs(role: Role | null, _multiShop = false): RecipientT
       );
       break;
     default:
-      // A customer may send to any active upline of the shop (admin, reseller,
-      // subreseller) and to peer customers. Upline transfers reset lineage.
-      tabs.push({ key: "network", label: "Upline" }, { key: "peer", label: "Peer customer" });
+      // A customer is attached to NO single upline: every active operator,
+      // reseller and subreseller of the shop may accept their credits, and
+      // such a transfer resets cashback tracing. The wording never reveals
+      // the recipient's internal position.
+      tabs.push(
+        { key: "network", label: "Credit recipients" },
+        { key: "peer", label: "Other members" },
+      );
       break;
+
 
   }
   tabs.push({ key: "shops", label: "Another shop" });
@@ -282,16 +308,19 @@ export function tabEmptyHint(tab: RecipientTab, role: Role | null): string {
           ? "No upline transfers for this shop yet — your reseller and this shop's admins appear here once they are active members."
           : role === "admin" || role === "super_admin"
             ? "No other operators in this shop yet."
-            : "No active upline in this shop yet — this shop's admin, resellers and subresellers appear here.";
+            : "Nobody in this shop can accept your credits yet — accounts that can accept transfers appear here once they are active.";
 
     case "customer":
       return "No active customers in this shop yet.";
     case "peer":
-      return "No other active customers in this shop yet — peers appear here once they are approved members.";
+      return isCustomerViewer(role)
+        ? "No other members of this shop are available yet."
+        : "No other active customers in this shop yet — peers appear here once they are approved members.";
     default:
       return emptyRecipientsHint(role);
   }
 }
+
 
 /**
  * Deliberate business rule: credits a CUSTOMER sends to an upline (shop admin,
@@ -303,8 +332,8 @@ export function lineageResetNotice(
   senderRole: Role | null,
   recipientRelation: string | null,
 ): string | null {
-  const isCustomer = senderRole !== "admin" && senderRole !== "super_admin"
-    && senderRole !== "reseller" && senderRole !== "subreseller";
+  const isCustomer = isCustomerViewer(senderRole);
+
   if (!isCustomer || !recipientRelation) return null;
   if (!["admin", "reseller", "subreseller"].includes(recipientRelation)) return null;
   return "Cashback lineage reset: these credits stop being traced to you once they arrive.";

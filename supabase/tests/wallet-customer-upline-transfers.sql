@@ -221,4 +221,46 @@ begin
   end if;
 end $$;
 
+-- I. A customer is attached to NO permanent upline: their eligibility branch
+--    must be decided by the recipient's role in the SAME shop only, never by
+--    profiles.reseller_id / a stored parent association.
+do $$
+declare _def text;
+begin
+  select pg_get_functiondef(p.oid) into _def
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public' and p.proname = 'transfer_credits_in_shop';
+  if _def not like '%_allowed := (_their_role in (''customer'',''subreseller'',''reseller'')) or _their_admin;%' then
+    raise exception 'a customer must not be gated by a stored upline association';
+  end if;
+  if _def not like '%_lineage_reset := _their_admin or (_their_role in (''subreseller'',''reseller''))%' then
+    raise exception 'customer -> upline transfers must flag the cashback lineage reset';
+  end if;
+
+  select pg_get_functiondef(p.oid) into _def
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public' and p.proname = 'wallet_shop_recipients';
+  if _def not like '%(m.role in (''customer'',''subreseller'',''reseller''))%' then
+    raise exception 'the customer recipient list must offer every eligible member of the shop';
+  end if;
+end $$;
+
+-- J. The lineage reset is realised in the ledger: a customer_upline_transfer
+--    credit opens a lot with NO source account, so nothing is traced back to
+--    the customer, while ordinary transfers keep normal provenance.
+do $$
+declare _def text;
+begin
+  select pg_get_functiondef(p.oid) into _def
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public' and p.proname = 'track_credit_lots';
+  if _def not like '%new.entry_kind = ''customer_upline_transfer'' then%'
+     or _def not like '%_kind := ''system''; _src := null;%' then
+    raise exception 'customer -> upline credits must arrive with no cashback lineage';
+  end if;
+  if _def not like '%_srole = ''reseller'' then _kind := ''reseller''%' then
+    raise exception 'upline -> downline transfers must keep normal cashback provenance';
+  end if;
+end $$;
+
 rollback;
