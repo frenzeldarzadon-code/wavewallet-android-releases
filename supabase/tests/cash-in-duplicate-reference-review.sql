@@ -102,3 +102,24 @@ begin
 end $$;
 
 rollback;
+
+-- Tenant isolation: conflict records are readable only by the owning shop's
+-- admin or a Super Admin, and RLS is on.
+do $$
+begin
+  if not (select relrowsecurity from pg_class where oid = 'public.cash_in_reference_conflicts'::regclass) then
+    raise exception 'FAIL: RLS is off on cash_in_reference_conflicts';
+  end if;
+  if not exists (
+    select 1 from pg_policy
+    where polrelid = 'public.cash_in_reference_conflicts'::regclass
+      and pg_get_expr(polqual, polrelid) like '%is_ecosystem_admin%'
+      and pg_get_expr(polqual, polrelid) like '%is_super_admin%'
+  ) then
+    raise exception 'FAIL: conflict rows are not scoped to the owning shop';
+  end if;
+  if not (select relrowsecurity from pg_class where oid = 'public.cash_in_requests'::regclass) then
+    raise exception 'FAIL: RLS is off on cash_in_requests';
+  end if;
+  raise notice 'PASS: conflict and cash in rows stay inside their own shop';
+end $$;
