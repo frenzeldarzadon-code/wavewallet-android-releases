@@ -26,11 +26,16 @@ export interface HistoryPageProps {
   ecosystemId?: string | null;
   /** Shop name, shown so it is clear which wallet the history belongs to. */
   shopName?: string;
+  /** Optional shop filter — every wallet the caller owns. */
+  shopOptions?: { ecosystemId: string; ecosystemName: string }[];
+  /** Called when the shop filter changes. */
+  onShopChange?: (ecosystemId: string) => void;
 }
 
-export function HistoryPage({ ecosystemId, shopName }: HistoryPageProps = {}) {
+export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }: HistoryPageProps = {}) {
   const { account, ecosystemDbId } = useSession();
   const [filter, setFilter] = useState("all");
+  const [direction, setDirection] = useState<"all" | "credit" | "debit">("all");
   const [entries, setEntries] = useState<CreditEntry[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [lots, setLots] = useState<CreditLot[]>([]);
@@ -58,9 +63,12 @@ export function HistoryPage({ ecosystemId, shopName }: HistoryPageProps = {}) {
 
   if (!account) return null;
 
+  const visibleEntries =
+    direction === "all" ? entries : entries.filter((e) => e.direction === direction);
+
   return (
     <PageSection
-      title="Transaction history"
+      title="All wallet transactions"
       description={
         shopName
           ? `${shopName} · every movement carries a unique transaction ID.`
@@ -75,6 +83,36 @@ export function HistoryPage({ ecosystemId, shopName }: HistoryPageProps = {}) {
           <TabsTrigger value="sources">Sources</TabsTrigger>
         </TabsList>
       </Tabs>
+
+      <div className="mb-3 grid gap-2 sm:grid-cols-2">
+        {shopOptions && shopOptions.length > 1 && onShopChange ? (
+          <Select value={scopeId ?? undefined} onValueChange={onShopChange}>
+            <SelectTrigger className="h-11" aria-label="Filter by shop">
+              <SelectValue placeholder="All shops" />
+            </SelectTrigger>
+            <SelectContent>
+              {shopOptions.map((s) => (
+                <SelectItem key={s.ecosystemId} value={s.ecosystemId}>
+                  {s.ecosystemName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : null}
+        {filter === "all" ? (
+          <Select value={direction} onValueChange={(v) => setDirection(v as typeof direction)}>
+            <SelectTrigger className="h-11" aria-label="Filter by direction">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All directions</SelectItem>
+              <SelectItem value="credit">Money in</SelectItem>
+              <SelectItem value="debit">Money out</SelectItem>
+            </SelectContent>
+          </Select>
+        ) : null}
+      </div>
+
 
       {loading ? (
         <EmptyState title="Loading history…" />
