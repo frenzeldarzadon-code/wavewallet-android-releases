@@ -112,3 +112,42 @@ begin
 end $$;
 
 rollback;
+
+-- 6. Roles are scoped per shop: the same person may administer two shops.
+--    Regression: user_roles was unique on (user_id, role), so promoting an
+--    existing admin in a second shop silently wrote nothing.
+begin;
+do $$
+begin
+  if exists (
+    select 1 from pg_constraint
+     where conrelid = 'public.user_roles'::regclass
+       and pg_get_constraintdef(oid) = 'UNIQUE (user_id, role)'
+  ) then
+    raise exception 'user_roles uniqueness must include the shop';
+  end if;
+  if not exists (
+    select 1 from pg_constraint
+     where conrelid = 'public.user_roles'::regclass
+       and pg_get_constraintdef(oid) = 'UNIQUE (user_id, ecosystem_id, role)'
+  ) then
+    raise exception 'a role must be unique per member per shop';
+  end if;
+end $$;
+
+-- 7. The platform owner manages every shop by exception, never as a member.
+do $$
+declare _bad int;
+begin
+  select count(*) into _bad from public.ecosystem_memberships m
+   where public.is_super_admin(m.user_id);
+  if _bad > 0 then
+    raise exception 'the platform owner must not appear as a shop member';
+  end if;
+  select count(*) into _bad from public.credit_accounts a
+   where a.ecosystem_id is not null and public.is_super_admin(a.user_id);
+  if _bad > 0 then
+    raise exception 'the platform owner must not hold a shop wallet';
+  end if;
+end $$;
+rollback;
