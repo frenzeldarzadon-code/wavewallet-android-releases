@@ -13,6 +13,8 @@ import {
   snapshotQuote,
   statusLabel,
   validateCashback,
+  validateCashInProof,
+  MAX_CASH_IN_PROOF_BYTES,
   validateCashIn,
   validateValuation,
   validateWithdrawal,
