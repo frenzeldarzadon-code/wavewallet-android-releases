@@ -48,7 +48,9 @@ import {
 } from "@/lib/customer-cleanup";
 import { deleteCustomerAccount } from "@/lib/customer-cleanup.functions";
 import {
+  fetchEcosystemRates,
   setSubresellerParent,
+  type EcosystemRates,
 } from "@/lib/wallet";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -124,7 +126,10 @@ function AdminCustomers() {
   const [editing, setEditing] = useState<Member | null>(null);
   const [detail, setDetail] = useState<Member | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
-  const [discount, setDiscount] = useState("10");
+  // Never a hard-coded percentage: the promotion dialog starts from the shop's
+  // own configured default, which an admin can still change before confirming.
+  const [shopRates, setShopRates] = useState<EcosystemRates | null>(null);
+  const [discount, setDiscount] = useState("0");
   const [rateTarget, setRateTarget] = useState<CashbackTarget | null>(null);
   const [editingOwner, setEditingOwner] = useState<Member | null>(null);
   const [busy, setBusy] = useState(false);
