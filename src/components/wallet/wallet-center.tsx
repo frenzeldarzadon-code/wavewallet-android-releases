@@ -304,50 +304,11 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
         <PointsEarningsPanel userId={account.id} ecosystemId={ecosystemDbId} />
       )}
 
-      <PageSection
-        title="Transaction history"
-        description={
-          selected
-            ? `Every credit movement in ${selected.ecosystemName}, newest first.`
-            : "Select a shop wallet."
-        }
-      >
-        {entries.length === 0 ? (
-          <EmptyState title="No transactions yet" description="Movements in this shop appear here." />
-        ) : (
-          <Card className="shadow-[var(--shadow-card)]">
-            <CardContent className="divide-y divide-border px-0 py-0">
-              {entries.map((e) => (
-                <div key={e.id} className="flex items-start justify-between gap-3 px-4 py-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{e.reason}</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {shortDateTime(e.created_at)} · {selected?.ecosystemName ?? ""} ·{" "}
-                      {e.tx_id ?? "—"}
-                      {e.reference ? ` · ${e.reference}` : ""}
-                    </p>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <p
-                      className={
-                        e.direction === "credit"
-                          ? "text-sm font-semibold text-success"
-                          : "text-sm font-semibold text-destructive"
-                      }
-                    >
-                      {e.direction === "credit" ? "+" : "−"}
-                      {peso(e.amount)}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground">
-                      balance {peso(e.balance_after)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-      </PageSection>
+      <HistoryPage
+        ecosystemId={selected?.ecosystemId ?? null}
+        {...(selected ? { shopName: selected.ecosystemName } : {})}
+      />
+
 
       <PageSection title="Quick links">
         <div className="grid gap-2 sm:grid-cols-3">
