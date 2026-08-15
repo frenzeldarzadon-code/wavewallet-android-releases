@@ -390,24 +390,59 @@ export async function cashInProofUrl(path?: string | null): Promise<string | nul
 export async function requestCashIn(input: {
   methodId: string;
   amountPhp: number;
-  payerReference?: string | null;
+  /** GCash number the member paid to — compared with the shop's configured number. */
+  payerNumber: string;
+  /** GCash payment reference number — required and unique across all cash ins. */
+  payerReference: string;
   /** Optional — cash in never requires notes. */
   notes?: string | null;
-  /** Optional storage path of the payment screenshot. */
-  proofPath?: string | null;
+  /** Storage path of the payment screenshot (required supporting evidence). */
+  proofPath: string;
   requestKey: string;
 }): Promise<CashInRequest> {
   const { data, error } = await supabase.rpc("request_cash_in", rpcArgs({
     _method_id: input.methodId,
     _amount_php: input.amountPhp,
-    _payer_reference: input.payerReference ?? undefined,
+    _payer_reference: input.payerReference,
+    _payer_number: input.payerNumber,
     _notes: input.notes ?? undefined,
-    _proof_path: input.proofPath ?? undefined,
+    _proof_path: input.proofPath,
     _request_key: input.requestKey,
-  }));
+  }) as never);
   if (error) throw new Error(error.message);
   return data as unknown as CashInRequest;
 }
+
+/** What the member is told after submitting — never "GCash verified this". */
+export function cashInOutcomeMessage(row: Pick<CashInRequest, "status" | "approval_method" | "decision_reason">): {
+  tone: "success" | "error" | "info";
+  message: string;
+} {
+  if (row.status === "approved") {
+    return {
+      tone: "success",
+      message:
+        row.approval_method === "automatic"
+          ? "Automatically approved — your submitted details matched the shop's cash in rules and your credits have been added."
+          : "Approved — your credits have been added.",
+    };
+  }
+  if (row.status === "rejected") {
+    const duplicate = (row.decision_reason ?? "").toLowerCase().includes("duplicate");
+    return {
+      tone: "error",
+      message: duplicate
+        ? "Rejected as a duplicate reference — that GCash reference number was already used, so no credits were added."
+        : row.decision_reason ?? "Rejected — the submitted details did not match. No credits were added.",
+    };
+  }
+  return {
+    tone: "info",
+    message:
+      "Pending manual review — your details did not meet the automatic rules, so the platform owner will check your screenshot.",
+  };
+}
+
 
 
 export async function cancelCashIn(id: string): Promise<void> {
