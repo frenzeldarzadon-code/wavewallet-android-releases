@@ -10,6 +10,7 @@ import { RetentionPolicyCard } from "@/components/retention-policy-card";
 import { CreditSupplyCard } from "@/components/super/credit-supply-card";
 import { MoneySettingsCard } from "@/components/super/money-settings-card";
 import { CashInAutoCard } from "@/components/super/cash-in-auto-card";
+import { CashInNumbersCard } from "@/components/super/cash-in-numbers-card";
 import { ListenerDevicesCard } from "@/components/super/listener-devices-card";
 
 import { PaymentMethodsCard } from "@/components/super/payment-methods-card";
@@ -167,6 +168,7 @@ function SuperSettings() {
       </Button>
 
       <MoneySettingsCard />
+      <CashInNumbersCard />
       <CashInAutoCard />
       <PaymentMethodsCard />
       <CreditSupplyCard />
