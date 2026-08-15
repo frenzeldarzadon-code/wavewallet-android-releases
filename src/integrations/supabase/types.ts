@@ -169,6 +169,7 @@ export type Database = {
           expected_amount_php: number | null
           id: string
           max_auto_amount_php: number | null
+          require_listener_match: boolean
           require_reference_match: boolean
           updated_at: string
           updated_by: string | null
@@ -180,6 +181,7 @@ export type Database = {
           expected_amount_php?: number | null
           id?: string
           max_auto_amount_php?: number | null
+          require_listener_match?: boolean
           require_reference_match?: boolean
           updated_at?: string
           updated_by?: string | null
@@ -191,6 +193,7 @@ export type Database = {
           expected_amount_php?: number | null
           id?: string
           max_auto_amount_php?: number | null
+          require_listener_match?: boolean
           require_reference_match?: boolean
           updated_at?: string
           updated_by?: string | null
@@ -225,6 +228,7 @@ export type Database = {
           fee_php: number
           id: string
           ledger_id: string | null
+          listener_event_id: string | null
           method_details: Json
           method_id: string | null
           method_name: string
@@ -245,6 +249,8 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           reviewer_name: string | null
+          sender_number: string | null
+          sender_number_key: string | null
           status: string
           updated_at: string
           user_id: string
@@ -262,6 +268,7 @@ export type Database = {
           fee_php?: number
           id?: string
           ledger_id?: string | null
+          listener_event_id?: string | null
           method_details?: Json
           method_id?: string | null
           method_name: string
@@ -282,6 +289,8 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           reviewer_name?: string | null
+          sender_number?: string | null
+          sender_number_key?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -299,6 +308,7 @@ export type Database = {
           fee_php?: number
           id?: string
           ledger_id?: string | null
+          listener_event_id?: string | null
           method_details?: Json
           method_id?: string | null
           method_name?: string
@@ -319,6 +329,8 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           reviewer_name?: string | null
+          sender_number?: string | null
+          sender_number_key?: string | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -337,6 +349,13 @@ export type Database = {
             columns: ["ledger_id"]
             isOneToOne: false
             referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_in_requests_listener_event_id_fkey"
+            columns: ["listener_event_id"]
+            isOneToOne: false
+            referencedRelation: "listener_events"
             referencedColumns: ["id"]
           },
           {
@@ -1339,6 +1358,160 @@ export type Database = {
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listener_devices: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ecosystem_id: string | null
+          id: string
+          label: string
+          last_event_at: string | null
+          last_seen_at: string | null
+          match_window_minutes: number
+          offline_after_minutes: number
+          package_name: string
+          revoked_at: string | null
+          revoked_by: string | null
+          secret_key_hash: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ecosystem_id?: string | null
+          id?: string
+          label: string
+          last_event_at?: string | null
+          last_seen_at?: string | null
+          match_window_minutes?: number
+          offline_after_minutes?: number
+          package_name?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          secret_key_hash: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ecosystem_id?: string | null
+          id?: string
+          label?: string
+          last_event_at?: string | null
+          last_seen_at?: string | null
+          match_window_minutes?: number
+          offline_after_minutes?: number
+          package_name?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          secret_key_hash?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listener_devices_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listener_events: {
+        Row: {
+          amount_php: number | null
+          consumed_cash_in_id: string | null
+          created_at: string
+          device_id: string
+          event_uid: string
+          id: string
+          match_result: string | null
+          outcome: string
+          package_name: string | null
+          parser_version: string | null
+          posted_at: string | null
+          raw_text: string | null
+          sender_name: string | null
+          sender_number: string | null
+          sender_number_key: string | null
+        }
+        Insert: {
+          amount_php?: number | null
+          consumed_cash_in_id?: string | null
+          created_at?: string
+          device_id: string
+          event_uid: string
+          id?: string
+          match_result?: string | null
+          outcome?: string
+          package_name?: string | null
+          parser_version?: string | null
+          posted_at?: string | null
+          raw_text?: string | null
+          sender_name?: string | null
+          sender_number?: string | null
+          sender_number_key?: string | null
+        }
+        Update: {
+          amount_php?: number | null
+          consumed_cash_in_id?: string | null
+          created_at?: string
+          device_id?: string
+          event_uid?: string
+          id?: string
+          match_result?: string | null
+          outcome?: string
+          package_name?: string | null
+          parser_version?: string | null
+          posted_at?: string | null
+          raw_text?: string | null
+          sender_name?: string | null
+          sender_number?: string | null
+          sender_number_key?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listener_events_consumed_cash_in_id_fkey"
+            columns: ["consumed_cash_in_id"]
+            isOneToOne: false
+            referencedRelation: "cash_in_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listener_events_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "listener_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listener_nonces: {
+        Row: {
+          device_id: string
+          nonce: string
+          seen_at: string
+        }
+        Insert: {
+          device_id: string
+          nonce: string
+          seen_at?: string
+        }
+        Update: {
+          device_id?: string
+          nonce?: string
+          seen_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listener_nonces_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "listener_devices"
             referencedColumns: ["id"]
           },
         ]
@@ -4316,6 +4489,7 @@ export type Database = {
           fee_php: number
           id: string
           ledger_id: string | null
+          listener_event_id: string | null
           method_details: Json
           method_id: string | null
           method_name: string
@@ -4336,6 +4510,8 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           reviewer_name: string | null
+          sender_number: string | null
+          sender_number_key: string | null
           status: string
           updated_at: string
           user_id: string
@@ -4399,6 +4575,7 @@ export type Database = {
           enabled: boolean
           expected_amount_php: number
           max_auto_amount_php: number
+          require_listener_match: boolean
           require_reference_match: boolean
           scope: string
         }[]
@@ -4940,6 +5117,37 @@ export type Database = {
           unused_count: number
         }[]
       }
+      listener_auth_material: { Args: { _device: string }; Returns: Json }
+      listener_claim_nonce: {
+        Args: { _device: string; _nonce: string }
+        Returns: boolean
+      }
+      listener_device_status: { Args: never; Returns: Json }
+      listener_heartbeat: {
+        Args: { _device: string }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          ecosystem_id: string | null
+          id: string
+          label: string
+          last_event_at: string | null
+          last_seen_at: string | null
+          match_window_minutes: number
+          offline_after_minutes: number
+          package_name: string
+          revoked_at: string | null
+          revoked_by: string | null
+          secret_key_hash: string
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "listener_devices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       log_operator_action: {
         Args: {
           _action: string
@@ -4976,6 +5184,7 @@ export type Database = {
         }[]
       }
       mark_notifications_read: { Args: { _ids?: string[] }; Returns: undefined }
+      match_listener_event: { Args: { _event: string }; Returns: string }
       member_cashback_rate: {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: number
@@ -5455,6 +5664,20 @@ export type Database = {
               isSetofReturn: false
             }
           }
+      record_listener_event: {
+        Args: {
+          _amount?: number
+          _device: string
+          _event_uid: string
+          _package: string
+          _parser_version?: string
+          _posted_at?: string
+          _raw_text?: string
+          _sender_name?: string
+          _sender_number?: string
+        }
+        Returns: Json
+      }
       record_verified_payment: {
         Args: {
           _account_ref?: string
@@ -5483,6 +5706,16 @@ export type Database = {
         Args: { _ecosystem_id: string }
         Returns: string
       }
+      register_listener_device: {
+        Args: {
+          _ecosystem?: string
+          _label: string
+          _offline_minutes?: number
+          _package?: string
+          _window_minutes?: number
+        }
+        Returns: Json
+      }
       release_super_admin_bootstrap: {
         Args: { _email: string }
         Returns: undefined
@@ -5510,6 +5743,7 @@ export type Database = {
               fee_php: number
               id: string
               ledger_id: string | null
+              listener_event_id: string | null
               method_details: Json
               method_id: string | null
               method_name: string
@@ -5530,6 +5764,8 @@ export type Database = {
               reviewed_at: string | null
               reviewed_by: string | null
               reviewer_name: string | null
+              sender_number: string | null
+              sender_number_key: string | null
               status: string
               updated_at: string
               user_id: string
@@ -5564,6 +5800,7 @@ export type Database = {
               fee_php: number
               id: string
               ledger_id: string | null
+              listener_event_id: string | null
               method_details: Json
               method_id: string | null
               method_name: string
@@ -5584,6 +5821,8 @@ export type Database = {
               reviewed_at: string | null
               reviewed_by: string | null
               reviewer_name: string | null
+              sender_number: string | null
+              sender_number_key: string | null
               status: string
               updated_at: string
               user_id: string
@@ -5765,6 +6004,7 @@ export type Database = {
           fee_php: number
           id: string
           ledger_id: string | null
+          listener_event_id: string | null
           method_details: Json
           method_id: string | null
           method_name: string
@@ -5785,6 +6025,8 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           reviewer_name: string | null
+          sender_number: string | null
+          sender_number_key: string | null
           status: string
           updated_at: string
           user_id: string
@@ -5922,6 +6164,31 @@ export type Database = {
         }
       }
       revoke_admin_invitation: { Args: { _id: string }; Returns: undefined }
+      revoke_listener_device: {
+        Args: { _device: string }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          ecosystem_id: string | null
+          id: string
+          label: string
+          last_event_at: string | null
+          last_seen_at: string | null
+          match_window_minutes: number
+          offline_after_minutes: number
+          package_name: string
+          revoked_at: string | null
+          revoked_by: string | null
+          secret_key_hash: string
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "listener_devices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       role_restructure_check: { Args: { _user_id: string }; Returns: Json }
       run_ecosystem_cleanup: { Args: { _dry_run?: boolean }; Returns: Json }
       run_retention_purge: {
@@ -6019,6 +6286,7 @@ export type Database = {
           _enabled: boolean
           _expected_amount?: number
           _max_amount?: number
+          _require_listener?: boolean
           _require_reference?: boolean
           _tolerance?: number
         }
@@ -6029,6 +6297,7 @@ export type Database = {
           expected_amount_php: number | null
           id: string
           max_auto_amount_php: number | null
+          require_listener_match: boolean
           require_reference_match: boolean
           updated_at: string
           updated_by: string | null
@@ -6357,6 +6626,7 @@ export type Database = {
           fee_php: number
           id: string
           ledger_id: string | null
+          listener_event_id: string | null
           method_details: Json
           method_id: string | null
           method_name: string
@@ -6377,6 +6647,8 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           reviewer_name: string | null
+          sender_number: string | null
+          sender_number_key: string | null
           status: string
           updated_at: string
           user_id: string
