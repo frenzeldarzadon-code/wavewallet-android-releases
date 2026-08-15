@@ -246,20 +246,40 @@ export function ShopTransferCard({
             {problem && value > 0 ? <p className="text-xs text-destructive">{problem}</p> : null}
 
             <Button className="h-11 w-full" disabled={!!problem} onClick={() => setConfirming(true)}>
-              <ArrowLeftRight className="size-4" /> Review shop transfer
+              <ArrowLeftRight className="size-4" /> Transfer Credits to Another Shop
             </Button>
       </Frame>
 
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Confirm shop transfer</DialogTitle>
+            <DialogTitle>Confirm transfer to another shop</DialogTitle>
             <DialogDescription>
-              {credits(quote.amount)} leaves {source?.ecosystemName}. After the {credits(quote.fee)} fee,{" "}
-              {credits(quote.net)} arrives in {destination?.ecosystemName}. Transferred credits earn no cashback
-              and cannot be undone by you.
+              Transferred credits earn no cashback and cannot be undone by you.
             </DialogDescription>
           </DialogHeader>
+          <dl className="space-y-1.5 rounded-lg bg-muted/40 px-3 py-2 text-xs">
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted-foreground">From shop</dt>
+              <dd className="truncate font-medium">{source?.ecosystemName ?? "—"}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted-foreground">To shop</dt>
+              <dd className="truncate font-medium">{destination?.ecosystemName ?? "—"}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted-foreground">Credits sent</dt>
+              <dd className="font-medium">{credits(quote.amount)}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted-foreground">Transfer fee</dt>
+              <dd className="font-medium text-destructive">− {credits(quote.fee)}</dd>
+            </div>
+            <div className="flex justify-between gap-3 border-t border-border pt-1.5">
+              <dt className="text-muted-foreground">Credits received</dt>
+              <dd className="font-semibold text-success">{credits(quote.net)}</dd>
+            </div>
+          </dl>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirming(false)}>
               Cancel
