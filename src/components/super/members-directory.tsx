@@ -153,7 +153,13 @@ export function MembersDirectory() {
                     </p>
                     <div className="mt-1 flex flex-wrap items-center gap-1.5">
                       <RoleBadge role={m.role} showCustomer />
-                      {m.ecosystem_name ? <Badge variant="outline">{m.ecosystem_name}</Badge> : null}
+                      {m.shops ? (
+                        <Badge variant="outline">{m.shops}</Badge>
+                      ) : m.ecosystem_name ? (
+                        <Badge variant="outline">{m.ecosystem_name}</Badge>
+                      ) : (
+                        <Badge variant="outline">Universe only</Badge>
+                      )}
                       <Badge variant="outline">{m.status}</Badge>
                     </div>
                   </div>
@@ -163,6 +169,7 @@ export function MembersDirectory() {
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {m.points_balance.toLocaleString()} points
+                      {m.shop_count > 1 ? ` · ${m.shop_count} shops` : ""}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
