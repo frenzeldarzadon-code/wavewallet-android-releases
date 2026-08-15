@@ -276,68 +276,22 @@ function AdminSettings() {
 
       <PageSection
         title="Voucher sale earnings"
-        description="Cashback is set per member, not shop-wide. Open Resellers to give each reseller and subreseller their own rate — the shop always keeps the remainder of every purchase."
+        description="Each reseller and subreseller has ONE Discount, set on that member only. It is both their share of a purchase and their voucher shop discount — the shop keeps the remainder."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>
-              Each reseller and subreseller earns their own individual percentage of the credits
-              they supplied to a customer's purchase, and you receive everything that is left. A
-              rate change applies to future purchases only.
+              A member's Discount is their percentage of the credits they supplied to a purchase
+              and, automatically, the discount they pay when buying vouchers. A subreseller's
+              Discount comes out of their parent reseller's Discount, and you receive everything
+              that is left. Changes apply to future purchases only — history never changes.
             </p>
             <Button size="sm" variant="outline" asChild>
-              <Link to="/admin/resellers">Set individual cashback rates</Link>
+              <Link to="/admin/resellers">Set individual member discounts</Link>
             </Button>
           </CardContent>
         </Card>
       </PageSection>
-
-      <PageSection
-        title="Wholesale voucher discounts"
-        description="A discount is a lower purchase price, not an earning. Discount and sale commission are recorded separately on every sale."
-      >
-        <Card className="shadow-[var(--shadow-card)]">
-          <CardContent className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="resDisc">Reseller voucher discount (%)</Label>
-              <Input
-                id="resDisc"
-                type="number"
-                min={0}
-                max={100}
-                value={rates.resellerDiscount}
-                onChange={(e) => setRates({ ...rates, resellerDiscount: e.target.value })}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="subDisc">Subreseller voucher discount (%)</Label>
-              <Input
-                id="subDisc"
-                type="number"
-                min={0}
-                max={100}
-                value={rates.subresellerDiscount}
-                onChange={(e) => setRates({ ...rates, subresellerDiscount: e.target.value })}
-              />
-            </div>
-            <div className="flex items-end gap-2 sm:col-span-2">
-              <Button variant="outline" disabled={savingRates} onClick={saveRates}>
-                {savingRates ? "Saving…" : "Save rates & discounts"}
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground sm:col-span-2">
-              A member with a personal rate set in Customers overrides the shop default. Every
-              sale stores the list price, discount percent, discount amount, amount paid and the
-              commission rates used, so changing anything here affects future transactions only.
-              Historical loading commissions from the old model stay in history exactly as
-              recorded and no longer apply to transfers.
-            </p>
-          </CardContent>
-        </Card>
-      </PageSection>
-
-
-
 
       <PageSection title="Points rule" description="Points are earned on credit-funded voucher purchases only — never on credit loads or transfers.">
 
