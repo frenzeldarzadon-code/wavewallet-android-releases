@@ -31,7 +31,9 @@ const COLUMNS: { key: keyof PeriodTotals; label: string }[] = [
   { key: "month", label: "Monthly" },
   { key: "quarter", label: "Quarterly" },
   { key: "year", label: "Yearly" },
+  { key: "total", label: "Total" },
 ];
+
 
 export function PeriodEarningsTable({
   metrics,
@@ -47,7 +49,7 @@ export function PeriodEarningsTable({
     <Card className="overflow-hidden py-0 shadow-[var(--shadow-card)]">
       <CardContent className="px-0">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[34rem] text-sm">
             <thead>
               <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
                 <th className="px-4 py-2 text-left font-medium">Earnings</th>
@@ -61,10 +63,11 @@ export function PeriodEarningsTable({
             <tbody>
               {metrics.map((m) => (
                 <tr key={m.label} className={cn("border-b border-border last:border-0", m.emphasis && "bg-muted/40")}>
-                  <td className="px-4 py-3">
+                  <td className="w-[11rem] min-w-[11rem] px-4 py-3">
                     <p className={cn("font-medium", m.emphasis && "font-semibold")}>{m.label}</p>
                     {m.hint ? <p className="text-[11px] text-muted-foreground">{m.hint}</p> : null}
                   </td>
+
                   {COLUMNS.map((c) => (
                     <td
                       key={c.key}

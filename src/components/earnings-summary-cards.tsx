@@ -11,7 +11,7 @@ import {
   type PeriodTotals,
 } from "@/lib/earnings";
 
-const EMPTY: PeriodTotals = { today: 0, month: 0, quarter: 0, year: 0 };
+const EMPTY: PeriodTotals = { today: 0, month: 0, quarter: 0, year: 0, total: 0 };
 
 /**
  * Today / month / quarter / year rollup for one audience, computed from the

@@ -1,17 +1,22 @@
 /**
- * Reseller / subreseller dashboard earnings: cashback, discount savings and
- * their total, for daily / monthly / quarterly / yearly periods. Everything is
- * derived from the same ledger-backed earnings records as the earnings history
- * page; transfers, cash in and issued credits never appear.
+ * Reseller / subreseller wallet + earnings: their shop wallet balance shown
+ * separately from cashback earned, discount savings and the combined total,
+ * for daily / monthly / quarterly / yearly / lifetime periods.
+ *
+ * Everything is derived from the same ledger-backed earnings records as the
+ * earnings history page: cashback comes from the allocation recorded on each
+ * completed purchase, at the rates snapshotted then. Transfers, cash in and
+ * issued credits are wallet movements, never earnings.
  */
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PageSection } from "@/components/ui-kit";
+import { PageSection, StatCard } from "@/components/ui-kit";
 import { PeriodEarningsTable } from "@/components/period-earnings-table";
-import { fetchEarnings, EMPTY_PERIOD_TOTALS } from "@/lib/earnings";
+import { fetchEarnings, lifetimeFrom, EMPTY_PERIOD_TOTALS } from "@/lib/earnings";
 import { sellerEarnings, type SellerEarnings } from "@/lib/role-earnings";
+import { fetchCreditBalance } from "@/lib/wallet";
 import { peso } from "@/lib/wavewallet";
 
 const EMPTY: SellerEarnings = {
@@ -20,18 +25,30 @@ const EMPTY: SellerEarnings = {
   total: EMPTY_PERIOD_TOTALS,
 };
 
-export function SellerEarningsPanel({ recipientId }: { recipientId: string }) {
+export function SellerEarningsPanel({
+  recipientId,
+  ecosystemId = null,
+  showBalance = true,
+}: {
+  recipientId: string;
+  ecosystemId?: string | null;
+  showBalance?: boolean;
+}) {
   const [totals, setTotals] = useState<SellerEarnings>(EMPTY);
+  const [balance, setBalance] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let live = true;
-    const from = new Date();
-    from.setMonth(0, 1);
-    from.setHours(0, 0, 0, 0);
-    void fetchEarnings({ recipientId, from, to: new Date() })
-      .then((rows) => {
-        if (live) setTotals(sellerEarnings(rows));
+    const from = lifetimeFrom();
+    void Promise.all([
+      fetchEarnings({ recipientId, from, to: new Date() }),
+      showBalance ? fetchCreditBalance(recipientId, ecosystemId) : Promise.resolve(null),
+    ])
+      .then(([rows, walletBalance]) => {
+        if (!live) return;
+        setTotals(sellerEarnings(rows));
+        setBalance(walletBalance);
       })
       .catch(() => {
         if (live) setTotals(EMPTY);
@@ -42,38 +59,59 @@ export function SellerEarningsPanel({ recipientId }: { recipientId: string }) {
     return () => {
       live = false;
     };
-  }, [recipientId]);
+  }, [recipientId, ecosystemId, showBalance]);
 
   return (
     <PageSection
-      title="My earnings"
-      description="Cashback earned on completed downline purchases plus your wholesale discount savings. Open the full history for transaction-level detail."
+      title="Wallet & earnings"
+      description="Your shop wallet balance, plus cashback allocated to you on completed downline purchases and your own wholesale discount savings. Receiving or sending credits is never an earning."
     >
-      <PeriodEarningsTable
-        loading={loading}
-        format={peso}
-        metrics={[
-          {
-            label: "Cashback earnings",
-            hint: "From completed downline purchases",
-            totals: totals.cashback,
-            tone: "positive",
-          },
-          {
-            label: "Discount earnings",
-            hint: "Wholesale discount saved on your own purchases",
-            totals: totals.discount,
-            tone: "brand",
-          },
-          {
-            label: "Total earnings",
-            hint: "Cashback + discount",
-            totals: totals.total,
-            tone: "brand",
-            emphasis: true,
-          },
-        ]}
-      />
+      <div className="grid gap-3 sm:grid-cols-2">
+        {showBalance ? (
+          <StatCard
+            label="Shop wallet balance"
+            value={loading || balance === null ? "—" : peso(balance)}
+            icon={Wallet}
+            tone="brand"
+            hint="Credits held in your wallet for this shop"
+          />
+        ) : null}
+        <StatCard
+          label="Total earnings"
+          value={loading ? "—" : peso(totals.total.total)}
+          tone="positive"
+          hint="Lifetime cashback + discount savings"
+        />
+      </div>
+
+      <div className="mt-3">
+        <PeriodEarningsTable
+          loading={loading}
+          format={peso}
+          metrics={[
+            {
+              label: "Cashback earnings",
+              hint: "Allocated to you on completed downline purchases",
+              totals: totals.cashback,
+              tone: "positive",
+            },
+            {
+              label: "Discount earnings",
+              hint: "Wholesale discount saved on your own purchases",
+              totals: totals.discount,
+              tone: "brand",
+            },
+            {
+              label: "Total earnings",
+              hint: "Cashback + discount, counted once",
+              totals: totals.total,
+              tone: "brand",
+              emphasis: true,
+            },
+          ]}
+        />
+      </div>
+
       <Button asChild variant="outline" size="sm" className="mt-3">
         <Link to="/reseller/earnings">
           Open earnings history <ArrowRight className="size-4" />
