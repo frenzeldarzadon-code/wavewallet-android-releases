@@ -432,19 +432,19 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
                 <p className="text-xs text-muted-foreground">{problem}</p>
               ) : null}
 
-              <Button className="h-11 w-full" disabled={!!problem} onClick={() => setConfirming(true)}>
-                <Send className="size-4" /> Review transfer
-              </Button>
+                  <Button
+                    className="h-11 w-full"
+                    disabled={!!problem}
+                    onClick={() => setConfirming(true)}
+                  >
+                    <Send className="size-4" /> Review transfer
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </PageSection>
       ) : null}
-
-      {/* 2. Cross-shop move — only for people who really own more than one wallet. */}
-      {multiShop ? <ShopTransferCard onDone={() => {
-        setHistoryKey((k) => k + 1);
-        void loadShops();
-      }} /> : null}
 
       {showSellerTotals ? null : (
         <PointsEarningsPanel userId={account.id} ecosystemId={ecosystemDbId} />
