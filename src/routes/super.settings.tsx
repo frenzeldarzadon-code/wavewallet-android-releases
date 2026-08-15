@@ -144,8 +144,10 @@ function SuperSettings() {
       </Button>
 
       <MoneySettingsCard />
+      <CashInAutoCard />
       <PaymentMethodsCard />
       <CreditSupplyCard />
+
 
       {SOCIAL_ENABLED ? (
         <>
