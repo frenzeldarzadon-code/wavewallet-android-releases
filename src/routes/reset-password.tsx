@@ -7,6 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { PasswordField } from "@/components/password-field";
+import { newPasswordIssue } from "@/lib/password-policy";
 import { friendlyAuthError } from "@/lib/auth";
 import { supportContact } from "@/lib/credit-purchases";
 
@@ -91,12 +93,9 @@ function ResetPasswordPage() {
 
   const savePassword = async () => {
     if (busy) return;
-    if (password.length < 8) {
-      toast.error("Use a password of at least 8 characters.");
-      return;
-    }
-    if (password !== confirm) {
-      toast.error("The passwords do not match.");
+    const issue = newPasswordIssue(password, confirm);
+    if (issue) {
+      toast.error(issue);
       return;
     }
     setBusy(true);
@@ -132,29 +131,23 @@ function ResetPasswordPage() {
           <CardContent className="space-y-3">
             {recovery ? (
               <>
-                <div className="space-y-1.5">
-                  <Label htmlFor="new-password">New password</Label>
-                  <Input
-                    id="new-password"
-                    type="password"
-                    autoComplete="new-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="At least 8 characters"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="confirm-password">Confirm password</Label>
-                  <Input
-                    id="confirm-password"
-                    type="password"
-                    autoComplete="new-password"
-                    value={confirm}
-                    onChange={(e) => setConfirm(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && savePassword()}
-                    placeholder="Repeat the password"
-                  />
-                </div>
+                <PasswordField
+                  id="new-password"
+                  label="New password"
+                  value={password}
+                  onChange={setPassword}
+                  autoComplete="new-password"
+                  requirements
+                />
+                <PasswordField
+                  id="confirm-password"
+                  label="Confirm password"
+                  value={confirm}
+                  onChange={setConfirm}
+                  autoComplete="new-password"
+                  placeholder="Repeat the password"
+                  onEnter={() => void savePassword()}
+                />
                 <Button className="w-full" onClick={savePassword} disabled={busy}>
                   {busy ? "Saving…" : "Update password"}
                 </Button>
