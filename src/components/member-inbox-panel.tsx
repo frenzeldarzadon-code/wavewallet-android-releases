@@ -52,6 +52,7 @@ export function useMemberInbox() {
 }
 
 export function MemberInboxPanel() {
+  const session = useSession();
   const { inbox, loading, reload, pending } = useMemberInbox();
   const [busy, setBusy] = useState<string | null>(null);
 
