@@ -18,9 +18,17 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+/**
+ * Robolectric has no hardware-backed AndroidKeyStore, so the real
+ * [com.wavewallet.gcashlistener.WaveWalletApp] (which touches the encrypted
+ * pairing store on startup) is replaced by a plain Application here.
+ */
 @RunWith(RobolectricTestRunner::class)
+@Config(application = android.app.Application::class, sdk = [34])
 class QueueAndPairingTest {
+
 
     private lateinit var db: ListenerDb
     private val context: Context get() = ApplicationProvider.getApplicationContext()
