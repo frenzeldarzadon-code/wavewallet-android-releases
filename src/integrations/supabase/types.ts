@@ -5262,9 +5262,36 @@ export type Database = {
         }
       }
       require_operational: { Args: never; Returns: undefined }
+      reseller_list_subresellers: {
+        Args: never
+        Returns: {
+          avatar_path: string
+          balance: number
+          full_name: string
+          handle: string
+          id: string
+          joined_at: string
+          masked_email: string
+          phone: string
+          status: Database["public"]["Enums"]["account_status"]
+        }[]
+      }
       reseller_load_credits: {
         Args: { _amount: number; _customer_id: string; _reference?: string }
         Returns: string
+      }
+      reseller_subreseller_ledger: {
+        Args: { _limit?: number; _user_id: string }
+        Returns: {
+          amount: number
+          balance_after: number
+          created_at: string
+          direction: string
+          id: string
+          reason: string
+          reference: string
+          tx_id: string
+        }[]
       }
       reset_ecosystem_test_data: {
         Args: { _dry_run?: boolean; _ecosystem_id: string; _reason: string }
