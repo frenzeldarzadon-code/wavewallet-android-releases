@@ -102,17 +102,23 @@ export const Route = createFileRoute("/api/public/payments/listener")({
           return json({ accepted: true, kind: "heartbeat" });
         }
 
-        const { data, error } = await supabaseAdmin.rpc("record_listener_event", {
+        const args: Record<string, unknown> = {
           _device: deviceId,
           _event_uid: parsed.event_uid,
           _package: parsed.package_name,
-          _raw_text: parsed.raw_text ?? undefined,
-          _amount: parsed.amount_php ?? undefined,
-          _sender_number: parsed.sender_number ?? undefined,
-          _sender_name: parsed.sender_name ?? undefined,
-          _posted_at: parsed.posted_at ?? undefined,
-          _parser_version: parsed.parser_version ?? undefined,
-        });
+        };
+        if (parsed.raw_text) args["_raw_text"] = parsed.raw_text;
+        if (typeof parsed.amount_php === "number") args["_amount"] = parsed.amount_php;
+        if (parsed.sender_number) args["_sender_number"] = parsed.sender_number;
+        if (parsed.sender_name) args["_sender_name"] = parsed.sender_name;
+        if (parsed.posted_at) args["_posted_at"] = parsed.posted_at;
+        if (parsed.parser_version) args["_parser_version"] = parsed.parser_version;
+
+        const { data, error } = await supabaseAdmin.rpc(
+          "record_listener_event",
+          args as Parameters<typeof supabaseAdmin.rpc<"record_listener_event">>[1],
+        );
+
         if (error) return json({ accepted: false, error: error.message }, 400);
         return json(data);
       },
