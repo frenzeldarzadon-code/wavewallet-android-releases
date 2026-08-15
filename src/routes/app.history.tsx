@@ -1,20 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { HistoryPage } from "@/components/customer/history-page";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
+/** Consolidated into the Wallet Center — kept so old links keep working. */
 export const Route = createFileRoute("/app/history")({
-  head: () => ({
-    meta: [
-      { title: "Transaction History — WaveWallet" },
-      { name: "description", content: "Every credit movement, voucher purchase, transfer and reward in one categorized history." },
-      { property: "og:title", content: "Transaction History — WaveWallet" },
-      { property: "og:description", content: "Every credit movement, voucher purchase, transfer and reward in one categorized history." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
-  component: CustomerHistory,
+  beforeLoad: () => {
+    throw redirect({ to: "/app" });
+  },
 });
-
-function CustomerHistory() {
-  return <HistoryPage />;
-}

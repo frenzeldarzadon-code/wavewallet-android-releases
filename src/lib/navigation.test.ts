@@ -13,18 +13,26 @@ import {
 } from "@/lib/navigation";
 
 describe("role sidebar visibility", () => {
-  it("gives a customer wallet, shop, rewards, transfer, history and profile", () => {
+  it("gives a customer the wallet center, shop, rewards and profile", () => {
     const paths = navPaths(customerNav());
     expect(paths).toEqual(
       expect.arrayContaining([
         "/app",
         "/app/shop",
         "/app/rewards",
-        "/app/transfer",
-        "/app/history",
         "/app/profile",
       ]),
     );
+  });
+
+  it("consolidates transfer and history into the wallet center", () => {
+    const customer = navPaths(customerNav());
+    expect(customer).not.toContain("/app/transfer");
+    expect(customer).not.toContain("/app/history");
+    const seller = navPaths(resellerNav("subreseller"));
+    expect(seller).not.toContain("/reseller/transfer");
+    expect(seller).not.toContain("/reseller/history");
+    expect(navPaths(adminNav())).toContain("/admin/wallet");
   });
 
   it("never shows a customer any shop-staff or platform destination", () => {
@@ -41,8 +49,6 @@ describe("role sidebar visibility", () => {
         "/reseller/wallet",
         "/reseller/shop",
         "/reseller/rewards",
-        "/reseller/transfer",
-        "/reseller/history",
         "/reseller/profile",
         "/reseller/applications",
       ]),
