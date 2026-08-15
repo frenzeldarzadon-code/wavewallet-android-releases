@@ -128,7 +128,10 @@ export function MembersDirectory() {
         </Card>
       </PageSection>
 
-      <PageSection title={loading ? "Loading members…" : `${rows.length} member(s)`}>
+      <PageSection
+        title={loading ? "Loading members…" : `${rows.length} member(s)`}
+        description="One row per real account. Someone who belongs to several shops appears once, with their wallets totalled."
+      >
         {!loading && rows.length === 0 ? (
           <EmptyState title="No members match" description="Try a different search or filter." />
         ) : (
