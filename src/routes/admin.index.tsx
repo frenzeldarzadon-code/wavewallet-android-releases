@@ -125,7 +125,7 @@ function AdminDashboard() {
         </div>
       </PageSection>
 
-      <AdminEarningsPanel ecosystemId={ecosystemDbId} />
+      <AdminEarningsPanel ecosystemId={ecosystemDbId} adminId={account?.id ?? null} />
 
 
       <PageSection title="Voucher sales" description="Voucher engine arrives in a later stage.">
