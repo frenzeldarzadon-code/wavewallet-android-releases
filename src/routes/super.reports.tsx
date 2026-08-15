@@ -205,6 +205,9 @@ function SuperReports() {
         onChange={() => setExpenseVersion((v) => v + 1)}
       />
 
+      <LovableCreditsCard onChange={() => setExpenseVersion((v) => v + 1)} />
+
+
       <PageSection title="Platform totals">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="Gross sales" value={peso(salesTotals.gross)} tone="brand" />
