@@ -42,7 +42,19 @@ function SuperSettings() {
     void fetchPlatformSettings().then(setForm);
   }, []);
 
-  if (!form) return <p className="text-sm text-muted-foreground">Loading platform settings…</p>;
+  if (!form)
+    return (
+      <>
+        <p className="text-sm text-muted-foreground">Loading platform settings…</p>
+        <PageSection
+          title="GCash notification listener"
+          description="Register the paired Android phone and copy its one-time Device ID and pairing secret."
+        >
+          <ListenerDevicesCard />
+        </PageSection>
+      </>
+    );
+
 
   const set = <K extends keyof PlatformSettings>(key: K, value: PlatformSettings[K]) =>
     setForm((f) => (f ? { ...f, [key]: value } : f));
@@ -75,7 +87,15 @@ function SuperSettings() {
 
   return (
     <>
+      <PageSection
+        title="GCash notification listener"
+        description="Register the paired Android phone and copy its one-time Device ID and pairing secret."
+      >
+        <ListenerDevicesCard />
+      </PageSection>
+
       <PageSection title="Collection details" description="The platform GCash account shop admins pay when buying a credit allocation.">
+
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
@@ -148,7 +168,6 @@ function SuperSettings() {
 
       <MoneySettingsCard />
       <CashInAutoCard />
-      <ListenerDevicesCard />
       <PaymentMethodsCard />
       <CreditSupplyCard />
 

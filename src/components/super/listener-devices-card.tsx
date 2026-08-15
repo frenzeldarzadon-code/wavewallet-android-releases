@@ -44,7 +44,7 @@ export function ListenerDevicesCard() {
     void load();
   }, []);
 
-  if (!status) return null;
+  const view = status ?? { devices: [], recent_events: [] };
 
   const register = async () => {
     if (!label.trim()) {
@@ -81,7 +81,7 @@ export function ListenerDevicesCard() {
   };
 
   return (
-    <Card className="shadow-[var(--shadow-card)]">
+    <Card id="gcash-listener" className="shadow-[var(--shadow-card)] scroll-mt-24">
       <CardHeader>
         <CardTitle>GCash notification listener</CardTitle>
         <p className="text-sm text-muted-foreground">
@@ -139,14 +139,14 @@ export function ListenerDevicesCard() {
           </div>
         ) : null}
 
-        {status.devices.length === 0 ? (
+        {view.devices.length === 0 ? (
           <EmptyState
             title="No listener device paired"
             description="Cash In approval keeps using the configured amount, receiving number and reference."
           />
         ) : (
           <div className="space-y-3">
-            {status.devices.map((device) => {
+            {view.devices.map((device) => {
               const state = deviceStateLabel(device);
               return (
                 <div key={device.id} className="rounded-lg border p-3">
@@ -198,11 +198,11 @@ export function ListenerDevicesCard() {
 
         <div className="space-y-2">
           <p className="text-sm font-medium">Recent notifications</p>
-          {status.recent_events.length === 0 ? (
+          {view.recent_events.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nothing forwarded yet.</p>
           ) : (
             <ul className="space-y-2">
-              {status.recent_events.map((event) => (
+              {view.recent_events.map((event) => (
                 <li key={event.id} className="rounded-lg border p-2 text-sm">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-medium">
