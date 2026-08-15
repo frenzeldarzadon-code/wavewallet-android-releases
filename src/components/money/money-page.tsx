@@ -511,7 +511,9 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                           Paid {peso(Number(c.amount_php))} · fee {Number(c.fee_percent ?? 0)}% (
                           {peso(Number(c.fee_php ?? 0))}) · net {peso(Number(c.net_php ?? c.amount_php))}
                         </p>
+                        {c.notes ? <p className="text-muted-foreground">Notes: {c.notes}</p> : null}
                         {c.decision_reason ? <p className="text-muted-foreground">Note: {c.decision_reason}</p> : null}
+                        <CashInProofViewer path={c.proof_path} />
                       </div>
                       <div className="flex items-center gap-2">
                         <StatusBadge tone={tone(c.status)}>{statusLabel(c.status)}</StatusBadge>
