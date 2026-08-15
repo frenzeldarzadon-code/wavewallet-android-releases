@@ -129,6 +129,10 @@ export function ListenerDevicesCard() {
             <p className="mt-1 text-muted-foreground">
               Endpoint: <span className="font-mono">{LISTENER_ENDPOINT_PATH}</span>
             </p>
+            <p className="mt-1 text-muted-foreground">
+              Enter these in the companion app under “Pair device”, together with this site’s
+              address. The secret cannot be shown again — revoke and re-register if it is lost.
+            </p>
             <Button variant="outline" size="sm" className="mt-2" onClick={() => setSecret(null)}>
               I saved it
             </Button>
