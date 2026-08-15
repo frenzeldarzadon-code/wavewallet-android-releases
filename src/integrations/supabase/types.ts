@@ -179,6 +179,7 @@ export type Database = {
           net_php: number | null
           notes: string | null
           payer_reference: string | null
+          proof_path: string | null
           rate_credits: number
           rate_php: number
           reference: string
@@ -209,6 +210,7 @@ export type Database = {
           net_php?: number | null
           notes?: string | null
           payer_reference?: string | null
+          proof_path?: string | null
           rate_credits: number
           rate_php: number
           reference: string
@@ -239,6 +241,7 @@ export type Database = {
           net_php?: number | null
           notes?: string | null
           payer_reference?: string | null
+          proof_path?: string | null
           rate_credits?: number
           rate_php?: number
           reference?: string
@@ -4113,6 +4116,7 @@ export type Database = {
           net_php: number | null
           notes: string | null
           payer_reference: string | null
+          proof_path: string | null
           rate_credits: number
           rate_php: number
           reference: string
@@ -5247,6 +5251,7 @@ export type Database = {
           _method_id: string
           _notes?: string
           _payer_reference?: string
+          _proof_path?: string
           _request_key?: string
         }
         Returns: {
@@ -5266,6 +5271,7 @@ export type Database = {
           net_php: number | null
           notes: string | null
           payer_reference: string | null
+          proof_path: string | null
           rate_credits: number
           rate_php: number
           reference: string
@@ -5460,6 +5466,7 @@ export type Database = {
           net_php: number | null
           notes: string | null
           payer_reference: string | null
+          proof_path: string | null
           rate_credits: number
           rate_php: number
           reference: string

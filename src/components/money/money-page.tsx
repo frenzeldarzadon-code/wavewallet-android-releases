@@ -25,6 +25,8 @@ import {
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { FacebookSupportCard } from "@/components/facebook-support-card";
 import { PaymentMethodCards } from "@/components/money/payment-method-cards";
+import { CashInProofPicker, CashInProofViewer } from "@/components/money/cash-in-proof";
+import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import { fetchCreditBalance } from "@/lib/wallet";
@@ -46,7 +48,10 @@ import {
   requestWithdrawal,
   snapshotQuote,
   statusLabel,
+  removeCashInProof,
+  uploadCashInProof,
   validateCashIn,
+  validateCashInProof,
   validateWithdrawal,
   WITHDRAWAL_SLA_NOTICE,
   type CashInRequest,
@@ -95,6 +100,8 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
   const [amount, setAmount] = useState("");
   const [payerRef, setPayerRef] = useState("");
   const [cashInNotes, setCashInNotes] = useState("");
+  /** Optional supporting proof — a cash in never requires it. */
+  const [proofFile, setProofFile] = useState<File | null>(null);
 
   const load = useCallback(async () => {
     if (!userId) return;
@@ -171,26 +178,47 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
       toast.error(problem);
       return;
     }
+    if (proofFile) {
+      const badImage = validateCashInProof(proofFile);
+      if (badImage) {
+        toast.error(badImage);
+        return;
+      }
+    }
     setBusy(true);
+    let uploadedPath: string | null = null;
     try {
+      if (proofFile) {
+        // Storage RLS scopes the folder to the SIGNED IN user, which can differ
+        // from the acted-on member, so the real auth id owns the object.
+        const { data: authUser } = await supabase.auth.getUser();
+        const ownerId = authUser?.user?.id;
+        if (!ownerId) throw new Error("Your session expired. Sign in again to attach a screenshot.");
+        uploadedPath = await uploadCashInProof(ownerId, proofFile);
+      }
       await requestCashIn({
         methodId,
         amountPhp: Number(amount),
         payerReference: payerRef,
         notes: cashInNotes,
+        proofPath: uploadedPath,
         requestKey: newKey(),
       });
       toast.success("Cash in submitted. Credits are added only after the payment is verified.");
       setAmount("");
       setPayerRef("");
       setCashInNotes("");
+      setProofFile(null);
       await load();
     } catch (e) {
+      // Never leave an orphan screenshot behind when the request itself failed.
+      if (uploadedPath) await removeCashInProof(uploadedPath).catch(() => {});
       toast.error(e instanceof Error ? e.message : "Could not submit that request.");
     } finally {
       setBusy(false);
     }
   };
+
 
   const selectedMethod = methods.find((m) => m.id === methodId) ?? null;
 
@@ -410,13 +438,26 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                       <Input id="ci-ref" value={payerRef} onChange={(e) => setPayerRef(e.target.value)} placeholder="Receipt / transaction number" />
                     </div>
                   </div>
+                  <CashInProofPicker
+                    file={proofFile}
+                    onPick={setProofFile}
+                    disabled={busy}
+                    onError={(m) => toast.error(m)}
+                  />
                   {selectedMethod ? (
                     <PaymentMethodCards methods={[selectedMethod]} selectedId={selectedMethod.id} />
                   ) : null}
                   <div className="space-y-1.5">
-                    <Label htmlFor="ci-notes">Additional information</Label>
-                    <Textarea id="ci-notes" rows={2} value={cashInNotes} onChange={(e) => setCashInNotes(e.target.value)} />
+                    <Label htmlFor="ci-notes">Additional notes (optional)</Label>
+                    <Textarea
+                      id="ci-notes"
+                      rows={2}
+                      value={cashInNotes}
+                      onChange={(e) => setCashInNotes(e.target.value)}
+                      placeholder="Anything the platform owner should know (optional)"
+                    />
                   </div>
+
                   <div className="space-y-1 rounded-lg border border-border bg-muted/40 p-3 text-xs">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Amount you are paying</span>
@@ -470,7 +511,9 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                           Paid {peso(Number(c.amount_php))} · fee {Number(c.fee_percent ?? 0)}% (
                           {peso(Number(c.fee_php ?? 0))}) · net {peso(Number(c.net_php ?? c.amount_php))}
                         </p>
+                        {c.notes ? <p className="text-muted-foreground">Notes: {c.notes}</p> : null}
                         {c.decision_reason ? <p className="text-muted-foreground">Note: {c.decision_reason}</p> : null}
+                        <CashInProofViewer path={c.proof_path} />
                       </div>
                       <div className="flex items-center gap-2">
                         <StatusBadge tone={tone(c.status)}>{statusLabel(c.status)}</StatusBadge>

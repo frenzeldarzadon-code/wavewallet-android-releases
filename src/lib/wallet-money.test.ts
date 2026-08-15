@@ -13,6 +13,8 @@ import {
   snapshotQuote,
   statusLabel,
   validateCashback,
+  validateCashInProof,
+  MAX_CASH_IN_PROOF_BYTES,
   validateCashIn,
   validateValuation,
   validateWithdrawal,
@@ -175,5 +177,27 @@ describe("credit-only presentation", () => {
     expect(creditsAfterFee(1000, 1)).toBe(990);
     expect(creditsAfterFee(1000, 0)).toBe(1000);
     expect(creditsAfterFee(0, 5)).toBe(0);
+  });
+});
+
+describe("cash in payment screenshot", () => {
+  it("accepts jpg, png and webp under the size cap", () => {
+    for (const type of ["image/jpeg", "image/png", "image/webp"]) {
+      expect(validateCashInProof({ type, size: 1024 })).toBeNull();
+    }
+  });
+
+  it("rejects unsupported image types with a clear message", () => {
+    expect(validateCashInProof({ type: "application/pdf", size: 1024 })).toMatch(/JPG, PNG or WEBP/);
+    expect(validateCashInProof({ type: "image/gif", size: 1024 })).toMatch(/JPG, PNG or WEBP/);
+  });
+
+  it("rejects oversized screenshots", () => {
+    expect(validateCashInProof({ type: "image/png", size: MAX_CASH_IN_PROOF_BYTES + 1 })).toMatch(/5 MB/);
+    expect(validateCashInProof({ type: "image/png", size: MAX_CASH_IN_PROOF_BYTES })).toBeNull();
+  });
+
+  it("never requires notes or a screenshot to submit", () => {
+    expect(validateCashIn(500, "method-1")).toBeNull();
   });
 });

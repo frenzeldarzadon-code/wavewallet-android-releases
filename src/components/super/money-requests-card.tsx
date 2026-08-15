@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { EmptyState, StatusBadge } from "@/components/ui-kit";
+import { CashInProofViewer } from "@/components/money/cash-in-proof";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
   fetchAllCashIns,
@@ -208,7 +209,19 @@ export function MoneyRequestsCard() {
                       {c.method_name}
                       {c.payer_reference ? ` · ref ${c.payer_reference}` : ""} · {shortDateTime(c.created_at)}
                     </p>
-                    {c.notes ? <p className="text-muted-foreground">Notes: {c.notes}</p> : null}
+                    <p className="text-muted-foreground">
+                      Payment reference: {c.payer_reference ? c.payer_reference : "not provided"}
+                    </p>
+                    {c.notes ? (
+                      <p className="text-muted-foreground">Additional notes: {c.notes}</p>
+                    ) : (
+                      <p className="text-muted-foreground">Additional notes: none</p>
+                    )}
+                    {c.proof_path ? (
+                      <CashInProofViewer path={c.proof_path} />
+                    ) : (
+                      <p className="mt-1 text-muted-foreground">Payment screenshot: not attached</p>
+                    )}
                   </div>
                   <StatusBadge tone={tone(c.status)}>{statusLabel(c.status)}</StatusBadge>
                 </div>
