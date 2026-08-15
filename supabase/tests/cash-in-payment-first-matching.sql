@@ -15,8 +15,8 @@ begin;
 do $$
 declare _uid uuid; _eco uuid; _method uuid; _dev uuid; _row public.cash_in_requests;
         _ev uuid; _ev2 uuid; _res text; _before numeric; _after numeric;
-        _sender constant text := '09070321959';
-        _other  constant text := '09181234567';
+        _sender constant text := '09995550001';
+        _other  constant text := '09995550002';
         _recv   constant text := '09541230072';
         _ref text;
 begin
@@ -57,7 +57,7 @@ begin
 
   _ref := 'GC-' || gen_random_uuid()::text;
   _row := public.request_cash_in(_method, 100, _ref, null, gen_random_uuid()::text,
-                                 _uid::text || '/a.jpg', '+63 907 032 1959');
+                                 _uid::text || '/a.jpg', '+63 999 555 0001');
   if _row.status <> 'approved' or _row.approval_method <> 'automatic' then
     raise exception 'A: a request submitted after the payment must approve automatically (got % / %)',
       _row.status, _row.approval_method;
