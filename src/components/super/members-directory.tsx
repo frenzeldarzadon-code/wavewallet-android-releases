@@ -6,7 +6,7 @@
  * Credit — reachable per row. Both actions keep their existing server-side
  * authorization; this screen is only a launcher.
  */
-import { Coins, KeyRound, LifeBuoy, Search } from "lucide-react";
+import { Coins, KeyRound, LifeBuoy, Percent, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,7 @@ import { EmptyState, PageSection } from "@/components/ui-kit";
 import { MemberAvatar } from "@/components/member-avatar";
 import { AccessAccountDialog, type AccessTarget } from "@/components/access-account-dialog";
 import { ManualCreditDialog } from "@/components/super/manual-credit-dialog";
+import { CashbackRateDialog, type CashbackTarget } from "@/components/cashback-rate-dialog";
 import { fetchEcosystemNames } from "@/lib/credit-management";
 import {
   DIRECTORY_ROLES,
@@ -51,6 +52,7 @@ export function MembersDirectory() {
   const [accessTarget, setAccessTarget] = useState<AccessTarget | null>(null);
   const [creditTarget, setCreditTarget] = useState<PlatformMember | null>(null);
   const [recoveryBusy, setRecoveryBusy] = useState<string | null>(null);
+  const [rateTarget, setRateTarget] = useState<CashbackTarget | null>(null);
 
   /** Sends the member their own reset link. No credential is ever revealed. */
   const assist = async (m: PlatformMember) => {
@@ -202,6 +204,24 @@ export function MembersDirectory() {
                       <LifeBuoy className="size-4" />
                       {recoveryBusy === m.id ? "Sending…" : "Send reset link"}
                     </Button>
+                    {(m.role === "reseller" || m.role === "subreseller") && m.ecosystem_id ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-9"
+                        onClick={() =>
+                          setRateTarget({
+                            id: m.id,
+                            name: m.full_name,
+                            role: m.role as "reseller" | "subreseller",
+                            ecosystemId: m.ecosystem_id!,
+                            shopName: m.ecosystem_name,
+                          })
+                        }
+                      >
+                        <Percent className="size-4" /> Cashback rate
+                      </Button>
+                    ) : null}
                     {canActAsMember(m) ? (
                       <Button
                         size="sm"
@@ -222,6 +242,11 @@ export function MembersDirectory() {
         )}
       </PageSection>
 
+      <CashbackRateDialog
+        target={rateTarget}
+        onClose={() => setRateTarget(null)}
+        onSaved={() => void load()}
+      />
       <AccessAccountDialog target={accessTarget} onClose={() => setAccessTarget(null)} />
       <ManualCreditDialog
         target={
