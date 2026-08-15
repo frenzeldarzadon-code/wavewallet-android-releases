@@ -94,7 +94,7 @@ describe("transferSectionTitle", () => {
   });
 });
 
-});
+
 
 describe("emptyRecipientsHint", () => {
   it("always explains why the list is empty", () => {
