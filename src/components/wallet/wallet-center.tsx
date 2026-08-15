@@ -349,16 +349,16 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
 
               {recipientsLoading ? (
                 <p className="text-xs text-muted-foreground">Loading eligible recipients…</p>
-              ) : recipients.length === 0 ? (
+              ) : visibleRecipients.length === 0 ? (
                 <p className="flex items-start gap-2 rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
                   <Info className="mt-0.5 size-3.5 shrink-0" />
                   {search.trim()
                     ? "No eligible recipient in this shop matches that search."
-                    : emptyRecipientsHint(selected.role)}
+                    : tabEmptyHint(tab, selected.role)}
                 </p>
               ) : (
                 <ul className="max-h-80 space-y-1 overflow-y-auto rounded-xl border border-border bg-card p-1">
-                  {recipients.map((r) => (
+                  {visibleRecipients.map((r) => (
                     <li key={r.id}>
                       <button
                         type="button"
