@@ -114,10 +114,13 @@ export const Route = createFileRoute("/api/public/payments/listener")({
         if (parsed.posted_at) args["_posted_at"] = parsed.posted_at;
         if (parsed.parser_version) args["_parser_version"] = parsed.parser_version;
 
-        const { data, error } = await supabaseAdmin.rpc(
-          "record_listener_event",
-          args as Parameters<typeof supabaseAdmin.rpc<"record_listener_event">>[1],
-        );
+        const { data, error } = await (
+          supabaseAdmin.rpc as unknown as (
+            fn: string,
+            args: Record<string, unknown>,
+          ) => Promise<{ data: unknown; error: { message: string } | null }>
+        )("record_listener_event", args);
+
 
         if (error) return json({ accepted: false, error: error.message }, 400);
         return json(data);
