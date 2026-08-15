@@ -109,9 +109,12 @@ export type Database = {
           created_at: string
           created_by: string
           created_by_name: string | null
+          currency: string
           description: string
           ecosystem_id: string | null
           id: string
+          provider: string | null
+          provider_reference: string | null
           scope: string
           spent_at: string
           updated_at: string
@@ -122,9 +125,12 @@ export type Database = {
           created_at?: string
           created_by: string
           created_by_name?: string | null
+          currency?: string
           description: string
           ecosystem_id?: string | null
           id?: string
+          provider?: string | null
+          provider_reference?: string | null
           scope: string
           spent_at?: string
           updated_at?: string
@@ -135,9 +141,12 @@ export type Database = {
           created_at?: string
           created_by?: string
           created_by_name?: string | null
+          currency?: string
           description?: string
           ecosystem_id?: string | null
           id?: string
+          provider?: string | null
+          provider_reference?: string | null
           scope?: string
           spent_at?: string
           updated_at?: string
@@ -5106,35 +5115,73 @@ export type Database = {
         Returns: string
       }
       real_super_admin_exists: { Args: never; Returns: boolean }
-      record_expense: {
-        Args: {
-          _amount: number
-          _category?: string
-          _description: string
-          _ecosystem_id?: string
-          _scope?: string
-          _spent_at?: string
-        }
-        Returns: {
-          amount: number
-          category: string | null
-          created_at: string
-          created_by: string
-          created_by_name: string | null
-          description: string
-          ecosystem_id: string | null
-          id: string
-          scope: string
-          spent_at: string
-          updated_at: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "business_expenses"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+      record_expense:
+        | {
+            Args: {
+              _amount: number
+              _category?: string
+              _description: string
+              _ecosystem_id?: string
+              _scope?: string
+              _spent_at?: string
+            }
+            Returns: {
+              amount: number
+              category: string | null
+              created_at: string
+              created_by: string
+              created_by_name: string | null
+              currency: string
+              description: string
+              ecosystem_id: string | null
+              id: string
+              provider: string | null
+              provider_reference: string | null
+              scope: string
+              spent_at: string
+              updated_at: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "business_expenses"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: {
+              _amount: number
+              _category?: string
+              _description: string
+              _ecosystem_id?: string
+              _provider?: string
+              _provider_reference?: string
+              _scope?: string
+              _spent_at?: string
+            }
+            Returns: {
+              amount: number
+              category: string | null
+              created_at: string
+              created_by: string
+              created_by_name: string | null
+              currency: string
+              description: string
+              ecosystem_id: string | null
+              id: string
+              provider: string | null
+              provider_reference: string | null
+              scope: string
+              spent_at: string
+              updated_at: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "business_expenses"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       refund_voucher_sale: {
         Args: { _reason: string; _sale_id: string }
         Returns: {
