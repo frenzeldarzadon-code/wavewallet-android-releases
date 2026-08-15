@@ -87,7 +87,7 @@ describe("transferSectionTitle", () => {
     expect(transferSectionTitle("subreseller")).toMatch(/reseller/);
     expect(transferSectionTitle("reseller")).toMatch(/subresellers/);
     expect(transferSectionTitle("admin")).toMatch(/members of this shop/);
-    expect(transferSectionTitle("customer")).toMatch(/another member/);
+    expect(transferSectionTitle("customer")).toMatch(/another customer/);
   });
 });
 
