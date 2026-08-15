@@ -19,10 +19,7 @@ function SuperLayout() {
   }, [session.account]);
 
   if (!session.account) return null;
-  const nav = withBadges(superAdminNav(), {
-    "/super/approvals": pending,
-    "/super/credits": pending,
-  });
+  const nav = withBadges(superAdminNav(), { "/super/approvals": pending });
   return (
     <AppShell
       session={session}
