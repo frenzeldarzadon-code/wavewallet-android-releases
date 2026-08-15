@@ -42,7 +42,19 @@ function SuperSettings() {
     void fetchPlatformSettings().then(setForm);
   }, []);
 
-  if (!form) return <p className="text-sm text-muted-foreground">Loading platform settings…</p>;
+  if (!form)
+    return (
+      <>
+        <p className="text-sm text-muted-foreground">Loading platform settings…</p>
+        <PageSection
+          title="GCash notification listener"
+          description="Register the paired Android phone and copy its one-time Device ID and pairing secret."
+        >
+          <ListenerDevicesCard />
+        </PageSection>
+      </>
+    );
+
 
   const set = <K extends keyof PlatformSettings>(key: K, value: PlatformSettings[K]) =>
     setForm((f) => (f ? { ...f, [key]: value } : f));
