@@ -174,26 +174,47 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
       toast.error(problem);
       return;
     }
+    if (proofFile) {
+      const badImage = validateCashInProof(proofFile);
+      if (badImage) {
+        toast.error(badImage);
+        return;
+      }
+    }
     setBusy(true);
+    let uploadedPath: string | null = null;
     try {
+      if (proofFile) {
+        // Storage RLS scopes the folder to the SIGNED IN user, which can differ
+        // from the acted-on member, so the real auth id owns the object.
+        const { data: authUser } = await supabase.auth.getUser();
+        const ownerId = authUser?.user?.id;
+        if (!ownerId) throw new Error("Your session expired. Sign in again to attach a screenshot.");
+        uploadedPath = await uploadCashInProof(ownerId, proofFile);
+      }
       await requestCashIn({
         methodId,
         amountPhp: Number(amount),
         payerReference: payerRef,
         notes: cashInNotes,
+        proofPath: uploadedPath,
         requestKey: newKey(),
       });
       toast.success("Cash in submitted. Credits are added only after the payment is verified.");
       setAmount("");
       setPayerRef("");
       setCashInNotes("");
+      setProofFile(null);
       await load();
     } catch (e) {
+      // Never leave an orphan screenshot behind when the request itself failed.
+      if (uploadedPath) await removeCashInProof(uploadedPath).catch(() => {});
       toast.error(e instanceof Error ? e.message : "Could not submit that request.");
     } finally {
       setBusy(false);
     }
   };
+
 
   const selectedMethod = methods.find((m) => m.id === methodId) ?? null;
 
