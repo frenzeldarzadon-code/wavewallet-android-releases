@@ -87,7 +87,15 @@ function SuperSettings() {
 
   return (
     <>
+      <PageSection
+        title="GCash notification listener"
+        description="Register the paired Android phone and copy its one-time Device ID and pairing secret."
+      >
+        <ListenerDevicesCard />
+      </PageSection>
+
       <PageSection title="Collection details" description="The platform GCash account shop admins pay when buying a credit allocation.">
+
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
