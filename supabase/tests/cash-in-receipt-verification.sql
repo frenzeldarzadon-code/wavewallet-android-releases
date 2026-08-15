@@ -18,9 +18,6 @@ declare
   _state text;
   _row public.cash_in_requests;
 
-  -- Clones a real row (so every foreign key is satisfied) as a fresh pending
-  -- request whose typed reference is TYPED.
-  function_note text := 'clone helper is inlined below because plpgsql has no local functions';
 begin
   select * into _src from public.cash_in_requests order by created_at desc limit 1;
   if _src.id is null then
@@ -45,7 +42,7 @@ begin
   _state := public.apply_cash_in_receipt_ocr(_id, '9044 011 942642', 200, '09541230072', true, '{}'::jsonb);
   if _state <> 'matched' then raise exception 'FAIL 1: expected matched, got %', _state; end if;
   select * into _row from public.cash_in_requests where id = _id;
-  if _row.receipt_reference_key <> _row.payer_reference_key then
+  if _row.receipt_reference_key is distinct from _row.payer_reference_key then
     raise exception 'FAIL 1: the receipt reference was not stored';
   end if;
 
