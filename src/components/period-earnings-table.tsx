@@ -31,7 +31,9 @@ const COLUMNS: { key: keyof PeriodTotals; label: string }[] = [
   { key: "month", label: "Monthly" },
   { key: "quarter", label: "Quarterly" },
   { key: "year", label: "Yearly" },
+  { key: "total", label: "Total" },
 ];
+
 
 export function PeriodEarningsTable({
   metrics,
