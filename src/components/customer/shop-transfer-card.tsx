@@ -43,7 +43,14 @@ import {
 
 const credits = (n: number) => `${n.toLocaleString()} credits`;
 
-export function ShopTransferCard({ onDone }: { onDone?: () => void }) {
+export function ShopTransferCard({
+  onDone,
+  embedded = false,
+}: {
+  onDone?: () => void;
+  /** Rendered inside the Wallet Center "Send credits" card: no section/card chrome. */
+  embedded?: boolean;
+}) {
   const [wallets, setWallets] = useState<ShopWallet[]>([]);
   const [fee, setFee] = useState(DEFAULT_SHOP_TRANSFER_FEE);
   const [from, setFrom] = useState<string | null>(null);
@@ -69,6 +76,14 @@ export function ShopTransferCard({ onDone }: { onDone?: () => void }) {
   if (loading) return null;
 
   if (wallets.length < 2) {
+    if (embedded) {
+      return (
+        <EmptyState
+          title="You belong to one shop"
+          description="Join and get approved in another shop to move credits between them."
+        />
+      );
+    }
     return (
       <PageSection
         title="Move credits between your shops"
@@ -116,14 +131,29 @@ export function ShopTransferCard({ onDone }: { onDone?: () => void }) {
     }
   };
 
-  return (
-    <>
+  const Frame = ({ children }: { children: React.ReactNode }) =>
+    embedded ? (
+      <div className="space-y-4">
+        <p className="text-xs text-muted-foreground">
+          Move credits to your own wallet in another shop. Credits travel through your global
+          Universe wallet and stay in your name.
+        </p>
+        {children}
+      </div>
+    ) : (
       <PageSection
         title="Move credits between your shops"
         description="Credits travel through your global Universe wallet and stay in your name."
       >
         <Card className="shadow-[var(--shadow-card)]">
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4">{children}</CardContent>
+        </Card>
+      </PageSection>
+    );
+
+  return (
+    <>
+      <Frame>
             <div className="space-y-1.5">
               <Label>From shop</Label>
               <Select {...(from ? { value: from } : {})} onValueChange={(v) => { setFrom(v); if (v === to) setTo(null); }}>
@@ -208,9 +238,7 @@ export function ShopTransferCard({ onDone }: { onDone?: () => void }) {
             <Button className="h-11 w-full" disabled={!!problem} onClick={() => setConfirming(true)}>
               <ArrowLeftRight className="size-4" /> Review shop transfer
             </Button>
-          </CardContent>
-        </Card>
-      </PageSection>
+      </Frame>
 
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent className="sm:max-w-sm">
