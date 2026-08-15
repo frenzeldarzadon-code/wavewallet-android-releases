@@ -226,9 +226,11 @@ export function adminNav(): Nav {
     {
       label: "Money",
       items: [
+        { to: "/admin/wallet", label: "My wallet", icon: Wallet },
         { to: "/admin/money", label: "Cash in & cash out", icon: Banknote },
         { to: "/admin/wallets", label: "Wallets & transfers", icon: Wallet },
         { to: "/admin/transactions", label: "Transactions", icon: ReceiptText },
+
       ],
     },
     {
