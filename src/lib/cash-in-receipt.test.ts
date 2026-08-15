@@ -6,7 +6,7 @@ import {
   receiptSenderAgrees,
   type ReceiptReading,
 } from "./cash-in-receipt";
-import { evaluateMatch, type AutoRules, type MatchRequest, type ListenerEvent } from "./cash-in-auto";
+import { evaluateMatch, type AutoApprovalRule, type MatchableRequest } from "./cash-in-auto";
 
 const reading = (over: Partial<ReceiptReading> = {}): ReceiptReading => ({
   reference: "9044011942642",
@@ -64,57 +64,80 @@ describe("parsing what the reader returned", () => {
 });
 
 /* The primary payment match is unchanged; these guard the added gate. */
-const rules: AutoRules = {
+const rule: AutoApprovalRule = {
   enabled: true,
-  require_reference_match: true,
+  amount_tolerance_php: 0,
+  max_auto_amount_php: 200,
+  expected_amount_php: null,
   require_listener_match: true,
-  amount_tolerance: 0,
-  automatic_limit: 200,
-  expected_amount: null,
 };
 
-const request = (over: Partial<MatchRequest> = {}): MatchRequest => ({
+const RECEIVING = "09541230072";
+
+const request = (over: Partial<MatchableRequest> = {}): MatchableRequest => ({
   amount_php: 200,
   payer_reference: "9044011942642",
   sender_number: "09541230072",
-  receiving_number: "09541230072",
+  proof_path: "proofs/receipt.jpg",
+  status: "pending",
   duplicate_reference: false,
   receipt_check: "matched",
-  ...over,
-});
-
-const event = (over: Partial<ListenerEvent> = {}): ListenerEvent => ({
-  amount_php: 200,
-  sender_number: "09541230072",
-  receiving_number: "09541230072",
-  reference: "9044011942642",
-  device_online: true,
+  listener_event: {
+    sender_number: "09541230072",
+    amount_php: 200,
+    outcome: "accepted",
+    device_online: true,
+  },
   ...over,
 });
 
 describe("automatic approval gate", () => {
   it("approves only once the receipt check has matched", () => {
-    expect(evaluateMatch(request(), event(), rules)).toBe("matched");
+    expect(evaluateMatch(request(), rule, RECEIVING)).toBe("matched");
+  });
+
+  it("approves a payment that arrived before the request was submitted", () => {
+    // The linked notification is what proves payment; its order does not matter.
+    expect(evaluateMatch(request(), rule, RECEIVING)).toBe("matched");
   });
 
   it("holds a receipt mismatch for manual review", () => {
-    expect(evaluateMatch(request({ receipt_check: "mismatch" }), event(), rules)).toBe("receipt_reference_mismatch");
+    expect(evaluateMatch(request({ receipt_check: "mismatch" }), rule, RECEIVING)).toBe(
+      "receipt_reference_mismatch",
+    );
   });
 
   it("holds an unreadable receipt for manual review", () => {
-    expect(evaluateMatch(request({ receipt_check: "unreadable" }), event(), rules)).toBe("receipt_unreadable");
+    expect(evaluateMatch(request({ receipt_check: "unreadable" }), rule, RECEIVING)).toBe("receipt_unreadable");
+    expect(evaluateMatch(request({ receipt_check: "error" }), rule, RECEIVING)).toBe("receipt_unreadable");
   });
 
   it("waits while the receipt has not been read yet", () => {
-    expect(evaluateMatch(request({ receipt_check: "pending" }), event(), rules)).toBe("awaiting_receipt_check");
+    expect(evaluateMatch(request({ receipt_check: "pending" }), rule, RECEIVING)).toBe("awaiting_receipt_check");
   });
 
   it("holds a reused reference regardless of a clean receipt", () => {
-    expect(evaluateMatch(request({ duplicate_reference: true }), event(), rules)).toBe("duplicate_reference");
+    expect(evaluateMatch(request({ duplicate_reference: true }), rule, RECEIVING)).toBe("duplicate_reference");
   });
 
   it("still refuses a wrong sender even with a matched receipt", () => {
-    expect(evaluateMatch(request(), event({ sender_number: "09171234567" }), rules)).toBe("number_mismatch");
+    expect(
+      evaluateMatch(
+        request({ listener_event: { sender_number: "09171234567", amount_php: 200, outcome: "accepted" } }),
+        rule,
+        RECEIVING,
+      ),
+    ).toBe("number_mismatch");
+  });
+
+  it("still refuses a wrong amount even with a matched receipt", () => {
+    expect(
+      evaluateMatch(
+        request({ listener_event: { sender_number: "09541230072", amount_php: 150, outcome: "accepted" } }),
+        rule,
+        RECEIVING,
+      ),
+    ).toBe("amount_mismatch");
   });
 });
 
