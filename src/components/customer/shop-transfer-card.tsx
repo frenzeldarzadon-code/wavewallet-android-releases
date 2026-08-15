@@ -8,7 +8,7 @@
  * admin the full retained share.
  */
 import { ArrowLeftRight, Info } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -131,7 +131,7 @@ export function ShopTransferCard({
     }
   };
 
-  const Frame = ({ children }: { children: React.ReactNode }) =>
+  const Frame = ({ children }: { children: ReactNode }) =>
     embedded ? (
       <div className="space-y-4">
         <p className="text-xs text-muted-foreground">
