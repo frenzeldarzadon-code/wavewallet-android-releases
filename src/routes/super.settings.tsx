@@ -168,7 +168,6 @@ function SuperSettings() {
 
       <MoneySettingsCard />
       <CashInAutoCard />
-      <ListenerDevicesCard />
       <PaymentMethodsCard />
       <CreditSupplyCard />
 
