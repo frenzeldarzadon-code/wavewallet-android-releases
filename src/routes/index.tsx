@@ -234,18 +234,14 @@ function LoginPage() {
                   autoComplete="username"
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                  onKeyDown={(e) => e.key === "Enter" && signIn()}
-                />
-              </div>
+              <PasswordField
+                id="password"
+                label="Password"
+                value={password}
+                onChange={setPassword}
+                autoComplete="current-password"
+                onEnter={() => void signIn()}
+              />
               <Button className="w-full" onClick={signIn} disabled={busy}>
                 <LogIn className="size-4" />
                 {busy ? "Signing in…" : "Continue"}
