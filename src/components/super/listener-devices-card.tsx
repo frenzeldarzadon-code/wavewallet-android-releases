@@ -25,12 +25,21 @@ import {
 const when = (value: string | null) =>
   value ? new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "—";
 
-export function ListenerDevicesCard() {
+export function ListenerDevicesCard({
+  ecosystemId = null,
+  ecosystemName,
+}: {
+  /** Pair phones for one shop only (shop admin view). Null = platform owner. */
+  ecosystemId?: string | null;
+  ecosystemName?: string | null;
+} = {}) {
   const [status, setStatus] = useState<ListenerStatus | null>(null);
   const [label, setLabel] = useState("");
+  const [receivingNumber, setReceivingNumber] = useState("");
   const [windowMinutes, setWindowMinutes] = useState(60);
   const [busy, setBusy] = useState(false);
   const [secret, setSecret] = useState<{ deviceId: string; secret: string } | null>(null);
+  const shopScoped = ecosystemId !== null;
 
   const load = async () => {
     try {
@@ -51,11 +60,21 @@ export function ListenerDevicesCard() {
       toast.error("Give the phone a name so you can recognise it later.");
       return;
     }
+    if (!receivingNumber.trim()) {
+      toast.error("Enter the receiving GCash number this phone watches, so payments cannot be matched to another shop.");
+      return;
+    }
     setBusy(true);
     try {
-      const created = await registerListenerDevice({ label: label.trim(), windowMinutes });
+      const created = await registerListenerDevice({
+        label: label.trim(),
+        windowMinutes,
+        ecosystemId,
+        receivingNumber: receivingNumber.trim(),
+      });
       setSecret({ deviceId: created.device_id, secret: created.pairing_secret });
       setLabel("");
+      setReceivingNumber("");
       await load();
       toast.success("Listener device registered", {
         description: "Copy the pairing secret now — it is shown only once.",
@@ -85,14 +104,15 @@ export function ListenerDevicesCard() {
       <CardHeader>
         <CardTitle>GCash notification listener</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Pair an Android phone that receives the GCash notifications. It forwards the amount and
-          sender it read from the notification, which is matched against a single pending Cash In.
-          Nothing is approved when the match is unclear, and a notification alone never releases
-          credits.
+          Pair an Android phone that receives the GCash notifications for{" "}
+          {shopScoped ? (ecosystemName ?? "this shop") : "a receiving account"}. It forwards the amount
+          and sender it read, which is matched only against pending Cash Ins paid into the same
+          receiving GCash account. Nothing is approved when the match is unclear, and a notification
+          alone never releases credits.
         </p>
       </CardHeader>
       <CardContent className="space-y-5">
-        <div className="grid gap-3 sm:grid-cols-[1fr_140px_auto] sm:items-end">
+        <div className="grid gap-3 sm:grid-cols-[1fr_1fr_140px_auto] sm:items-end">
           <div className="space-y-1.5">
             <Label htmlFor="listener-label">Device name</Label>
             <Input
@@ -100,6 +120,16 @@ export function ListenerDevicesCard() {
               placeholder="Shop phone (Oppo A78)"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="listener-number">Receiving GCash number</Label>
+            <Input
+              id="listener-number"
+              inputMode="numeric"
+              placeholder="09XXXXXXXXX"
+              value={receivingNumber}
+              onChange={(e) => setReceivingNumber(e.target.value)}
             />
           </div>
           <div className="space-y-1.5">
@@ -116,6 +146,12 @@ export function ListenerDevicesCard() {
             Register device
           </Button>
         </div>
+        <p className="-mt-3 text-xs text-muted-foreground">
+          The receiving number is what makes matching safe: several shops may legitimately share one
+          GCash account, and a payment is only ever matched against Cash Ins for the shop it was
+          actually paid to.
+        </p>
+
 
         {secret ? (
           <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm">
