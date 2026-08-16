@@ -20,5 +20,10 @@ export const Route = createFileRoute("/admin/money")({
 
 function AdminMoney() {
   const { tab } = Route.useSearch();
-  return <MoneyPage initialTab={tab ?? "out"} />;
+  return (
+    <>
+      <ShopAdminQueue />
+      <MoneyPage initialTab={tab ?? "out"} />
+    </>
+  );
 }
