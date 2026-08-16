@@ -73,7 +73,7 @@ export function PasswordField({
 export function PasswordRequirements({ value }: { value: string }) {
   const list = passwordChecklist(value);
   return (
-    <ul className="mt-1 grid gap-1 text-xs sm:grid-cols-2">
+    <ul className="mt-1 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px]">
       {list.map(({ rule, ok }) => (
         <li
           key={rule.id}
