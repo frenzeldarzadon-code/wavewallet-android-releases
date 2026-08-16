@@ -148,7 +148,7 @@ export function buildTransactionFeed(input: {
   reversals: ReversalRecord[];
 }): TxRow[] {
   const byOriginalTx = groupReversals(input.reversals);
-  // A "<tx>-R" credit row is the receiving leg of "<tx>": pairing identifies a
+  // A "<tx>-R" coin row is the receiving leg of "<tx>": pairing identifies a
   // transfer regardless of how the ledger worded it.
   const receiveLegs = new Set(
     input.ledger

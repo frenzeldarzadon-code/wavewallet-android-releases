@@ -206,7 +206,7 @@ export function ProfilePage() {
     <div className="mx-auto w-full max-w-2xl space-y-4">
       <PageSection
         title="My profile"
-        description="Your display name, @handle and photo are visible to your shop when you send or receive credits."
+        description="Your display name, @handle and photo are visible to your shop when you send or receive coins."
       >
         <Card>
           <CardContent className="space-y-5 p-4 sm:p-5">
@@ -322,7 +322,7 @@ export function ProfilePage() {
               ) : (
                 <p className="text-xs text-muted-foreground">
                   3–20 letters, numbers, dots or underscores. Others can find you by @handle when
-                  sending credits.
+                  sending coins.
                 </p>
               )}
             </div>
@@ -354,7 +354,7 @@ export function ProfilePage() {
                 autoComplete="email"
               />
               <p className="text-xs text-muted-foreground">
-                This is also your sign-in address. Your phone and email are never shown in credit
+                This is also your sign-in address. Your phone and email are never shown in coin
                 recipient search results.
               </p>
             </div>

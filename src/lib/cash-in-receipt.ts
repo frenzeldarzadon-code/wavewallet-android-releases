@@ -114,9 +114,9 @@ export function parseReceiptReading(raw: string): ReceiptReading {
 export function receiptOutcomeMessage(check: ReceiptCheck): string {
   if (check === "matched") return RECEIPT_CHECK_LABEL.matched;
   if (check === "mismatch") {
-    return "Reference does not match receipt. Held for manual review — no credits were added.";
+    return "Reference does not match receipt. Held for manual review — no coins were added.";
   }
-  return "Reference could not be verified from payment screenshot. Held for manual review — no credits were added.";
+  return "Reference could not be verified from payment screenshot. Held for manual review — no coins were added.";
 }
 
 /* ------------------------------------------------------------------ */
@@ -185,7 +185,7 @@ export function creditedFirstLabel(conflict: Pick<ReferenceConflict, "credited_f
   if (conflict.credited_first === "new") {
     return `The newer transaction was credited first${when ? ` on ${when}` : ""}.`;
   }
-  return "Neither transaction has released credits yet — do not assume which one is legitimate.";
+  return "Neither transaction has released coins yet — do not assume which one is legitimate.";
 }
 
 /* ------------------------------------------------------------------ */

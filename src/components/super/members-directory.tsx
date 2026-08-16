@@ -179,7 +179,7 @@ export function MembersDirectory() {
                       onClick={() => setCreditTarget(m)}
                       className="h-9"
                     >
-                      <Coins className="size-4" /> Issue credits
+                      <Coins className="size-4" /> Issue coins
                     </Button>
                     <Button
                       size="sm"

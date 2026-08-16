@@ -50,7 +50,7 @@ import {
   type StoreSettings,
 } from "@/lib/retail";
 
-const credits = (n: number) => `${n.toLocaleString(undefined, { maximumFractionDigits: 2 })} credits`;
+const credits = (n: number) => `${n.toLocaleString(undefined, { maximumFractionDigits: 2 })} coins`;
 
 export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
   const { account, ecosystemDbId } = useSession(role);
@@ -112,7 +112,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
       toast.success(`Order ${placed.orderNo} sent for approval`, {
         description:
           draft.payment === "credit"
-            ? "Your credits are held until the shop admin approves or rejects."
+            ? "Your coins are held until the shop admin approves or rejects."
             : "Pay in cash — the shop admin confirms the order.",
       });
       setCart({});
@@ -384,7 +384,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                   className="flex-1"
                   onClick={() => setDraft({ ...draft, payment: "credit" })}
                 >
-                  Shop credits
+                  Shop coins
                 </Button>
               ) : null}
             </div>

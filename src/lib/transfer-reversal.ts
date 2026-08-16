@@ -27,7 +27,7 @@ export const REVERSAL_REASONS = [
 ] as const;
 
 export const SPENT_MESSAGE =
-  "Cannot reverse automatically because some credits have already been spent or transferred.";
+  "Cannot reverse automatically because some coins have already been spent or transferred.";
 
 export interface ReversalInfo {
   eligible: boolean;
@@ -56,7 +56,7 @@ export interface ReversalInfo {
  * Outgoing credit-transfer reasons written by `transfer_credits`.
  *
  * The database has labelled the sending leg differently across releases
- * ("Credit transfer sent", "Credit load to customer", "Credit released to
+ * ("Coin transfer sent", "Coin load to customer", "Credit released to
  * reseller", …). Matching one literal string hid the Reverse action for every
  * real transfer, so the sending leg is recognised by shape instead.
  */

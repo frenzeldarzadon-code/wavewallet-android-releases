@@ -85,12 +85,12 @@ export function ShopAdminQueue() {
     <>
       <PageSection
         title="Settled by you"
-        description="Cash you hand over in person, and payments made into your own GCash. No fee is charged on either — the credits simply move inside your shop."
+        description="Cash you hand over in person, and payments made into your own GCash. No fee is charged on either — the coins simply move inside your shop."
       >
         <div className="grid gap-3 sm:grid-cols-3">
           <StatCard
-            label="Credits you can still fund"
-            value={`${capacity.available.toLocaleString()} credits`}
+            label="Coins you can still fund"
+            value={`${capacity.available.toLocaleString()} coins`}
             icon={Wallet}
             tone="brand"
           />
@@ -134,7 +134,7 @@ export function ShopAdminQueue() {
                           onClick={() =>
                             decide(
                               () => reviewAdminCashout(w.id, "approve"),
-                              "Settled — the credits moved to your wallet.",
+                              "Settled — the coins moved to your wallet.",
                             )
                           }
                         >
@@ -149,7 +149,7 @@ export function ShopAdminQueue() {
                             if (!reason.trim()) return;
                             void decide(
                               () => reviewAdminCashout(w.id, "reject", reason),
-                              "Declined — the member's credits were returned.",
+                              "Declined — the member's coins were returned.",
                             );
                           }}
                         >
@@ -167,7 +167,7 @@ export function ShopAdminQueue() {
 
       <PageSection
         title="Cash in paid to your GCash"
-        description="Approve only after you can see the payment in your own GCash account. Approving moves your credits to the member."
+        description="Approve only after you can see the payment in your own GCash account. Approving moves your coins to the member."
       >
         {cashIns.length === 0 ? (
           <EmptyState
@@ -200,7 +200,7 @@ export function ShopAdminQueue() {
                             onClick={() =>
                               decide(
                                 () => reviewAdminCashIn(c.id, "approve"),
-                                "Approved — your credits moved to the member.",
+                                "Approved — your coins moved to the member.",
                               )
                             }
                           >
@@ -215,7 +215,7 @@ export function ShopAdminQueue() {
                               if (!reason.trim()) return;
                               void decide(
                                 () => reviewAdminCashIn(c.id, "reject", reason),
-                                "Declined — your reserved credits are spendable again.",
+                                "Declined — your reserved coins are spendable again.",
                               );
                             }}
                           >

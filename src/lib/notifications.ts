@@ -39,7 +39,7 @@ export const NOTIFICATION_CATEGORIES = [
   { kind: "friend_request", label: "Friend requests" },
   { kind: "friend_accept", label: "Accepted friend requests" },
   { kind: "follow", label: "New followers" },
-  { kind: "social_gift", label: "Social credit gifts" },
+  { kind: "social_gift", label: "Social coin gifts" },
   { kind: "cashback", label: "Cashback earned" },
   { kind: "shop_invitation", label: "Shop invitations and applications" },
   { kind: "shop_assignment", label: "Shop admin and membership assignments" },

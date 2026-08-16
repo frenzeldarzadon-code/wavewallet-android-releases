@@ -9,9 +9,9 @@ export const Route = createFileRoute("/super/approvals")({
   head: () => ({
     meta: [
       { title: "Approvals — WaveWallet Super Admin" },
-      { name: "description", content: "Every pending platform approval in one place: shop credit payments and self-service signup applications." },
+      { name: "description", content: "Every pending platform approval in one place: shop coin payments and self-service signup applications." },
       { property: "og:title", content: "Approvals — WaveWallet Super Admin" },
-      { property: "og:description", content: "Every pending platform approval in one place: shop credit payments and self-service signup applications." },
+      { property: "og:description", content: "Every pending platform approval in one place: shop coin payments and self-service signup applications." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

@@ -14,7 +14,7 @@ import { periodTotalsOf, subtractPeriods, type PeriodTotals } from "@/lib/earnin
 export type ExpenseScope = "ecosystem" | "platform";
 
 /** Category used for every Lovable AI credit purchase recorded by the platform owner. */
-export const LOVABLE_CREDITS_CATEGORY = "Lovable AI Credits";
+export const LOVABLE_CREDITS_CATEGORY = "Lovable AI Coins";
 /** Provider tag stored alongside those expenses. */
 export const LOVABLE_PROVIDER = "Lovable";
 

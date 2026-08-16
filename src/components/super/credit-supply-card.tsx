@@ -81,12 +81,12 @@ export function CreditSupplyCard() {
   return (
     <>
       <PageSection
-        title="Credit supply"
-        description="Only you can create credits. Each package is a shop allocation: the base rate is its complete value."
+        title="Coin supply"
+        description="Only you can create coins. Each package is a shop allocation: the base rate is its complete value."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardHeader>
-            <CardTitle className="text-sm">Credit packages</CardTitle>
+            <CardTitle className="text-sm">Coin packages</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {packages.map((p) => (
@@ -99,7 +99,7 @@ export function CreditSupplyCard() {
                   <div className="flex flex-wrap items-end gap-3">
                     <div className="space-y-1">
                       <Label htmlFor={`credits-${p.id}`} className="text-xs">
-                        Credits
+                        Coins
                       </Label>
                       <Input
                         id={`credits-${p.id}`}
@@ -208,12 +208,12 @@ export function CreditSupplyCard() {
                 <Input
                   id="pkgName"
                   value={draft.name}
-                  placeholder="Starter — 1,000 credits"
+                  placeholder="Starter — 1,000 coins"
                   onChange={(e) => setDraft({ ...draft, name: e.target.value })}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="pkgCredits">Credits</Label>
+                <Label htmlFor="pkgCredits">Coins</Label>
                 <Input
                   id="pkgCredits"
                   type="number"
@@ -262,13 +262,13 @@ export function CreditSupplyCard() {
       {settings ? (
         <PageSection
           title="Admin pricing settings"
-          description="Two separate settings: what an admin pays for a credit allocation, and the discount an admin gets when buying vouchers from their own uploaded inventory."
+          description="Two separate settings: what an admin pays for a coin allocation, and the discount an admin gets when buying vouchers from their own uploaded inventory."
         >
           <Card className="shadow-[var(--shadow-card)]">
             <CardContent className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="adminDiscount">
-                  Admin Credit Allocation Base Rate — discount (%)
+                  Admin Coin Allocation Base Rate — discount (%)
                 </Label>
                 <Input
                   id="adminDiscount"
@@ -281,7 +281,7 @@ export function CreditSupplyCard() {
                   }
                 />
                 <p className="text-xs text-muted-foreground">
-                  Base rates live on the packages above (default 1,000 credits = PHP 10.00).
+                  Base rates live on the packages above (default 1,000 coins = PHP 10.00).
                   100% means an admin pays nothing for their own allocation.
                 </p>
               </div>
@@ -299,13 +299,13 @@ export function CreditSupplyCard() {
                 />
                 <p className="text-xs text-muted-foreground">
                   Applies only to vouchers an admin takes from their own uploaded inventory.
-                  At 100% off a PHP 10 voucher costs the admin 0 credits and their shop wallet
+                  At 100% off a PHP 10 voucher costs the admin 0 coins and their shop wallet
                   is untouched. Separate from the allocation rate above.
                 </p>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="releaseMode">Credit release</Label>
+                <Label htmlFor="releaseMode">Coin release</Label>
                 <Select
                   value={settings.credit_release_mode}
                   onValueChange={(v) => set("credit_release_mode", v)}
@@ -333,7 +333,7 @@ export function CreditSupplyCard() {
                     void run(
                       "settings",
                       () => updateCreditPurchaseSettings(settings),
-                      "Credit purchase settings saved",
+                      "Coin purchase settings saved",
                     )
                   }
                 >

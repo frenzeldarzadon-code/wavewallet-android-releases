@@ -30,12 +30,12 @@ export const Route = createFileRoute("/admin/social")({
       {
         name: "description",
         content:
-          "Review reported posts and comments, remove content and monitor social credit activity in your shop.",
+          "Review reported posts and comments, remove content and monitor social coin activity in your shop.",
       },
       { property: "og:title", content: "Community Moderation — WaveWallet Admin" },
       {
         property: "og:description",
-        content: "Moderate your shop community and audit social credit activity.",
+        content: "Moderate your shop community and audit social coin activity.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -145,11 +145,11 @@ function AdminSocial() {
       </PageSection>
 
       <PageSection
-        title="Social credit activity"
+        title="Social coin activity"
         description="Immutable ledger of daily allowances, exchanges, promotions and spending in your shop."
       >
         {activity.length === 0 ? (
-          <EmptyState title="No social credit activity yet" />
+          <EmptyState title="No social coin activity yet" />
         ) : (
           <div className="space-y-2">
             {activity.map((row, i) => (

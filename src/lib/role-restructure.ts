@@ -150,7 +150,7 @@ export function evaluateRestructure(
     notes.push("The member becomes a top-level reseller with no upline.");
   }
 
-  notes.push("Wallet credits, points and all history are unchanged (financial impact: zero).");
+  notes.push("Wallet coins, points and all history are unchanged (financial impact: zero).");
 
   return { ok: blockers.length === 0, blockers, notes };
 }

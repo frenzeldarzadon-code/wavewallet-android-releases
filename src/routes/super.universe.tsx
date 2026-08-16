@@ -10,7 +10,7 @@ export const Route = createFileRoute("/super/universe")({
       {
         name: "description",
         content:
-          "Universe members who belong to no shop yet: assign them to a shop as a customer, or remove an account that holds no credits and no pending money.",
+          "Universe members who belong to no shop yet: assign them to a shop as a customer, or remove an account that holds no coins and no pending money.",
       },
       { property: "og:title", content: "Universe Users — WaveWallet Super Admin" },
       {

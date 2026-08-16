@@ -93,7 +93,7 @@ export function AdminEarningsPanel({
   return (
     <PageSection
       title="Wallet & earnings"
-      description="Your shop wallet balance and what the shop keeps from completed purchases after reseller and subreseller cashback, less recorded expenses. Platform-issued credits, cash-ins, transfers and withdrawal holds are never earnings."
+      description="Your shop wallet balance and what the shop keeps from completed purchases after reseller and subreseller cashback, less recorded expenses. Platform-issued coins, cash-ins, transfers and withdrawal holds are never earnings."
     >
       <div className="grid gap-3 sm:grid-cols-2">
         <StatCard
@@ -101,7 +101,7 @@ export function AdminEarningsPanel({
           value={loading || balance === null ? "—" : peso(balance)}
           icon={Wallet}
           tone="brand"
-          hint="Credits held in your wallet for this shop"
+          hint="Coins held in your wallet for this shop"
         />
         <StatCard
           label="Total earnings"

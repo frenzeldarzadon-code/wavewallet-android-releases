@@ -56,12 +56,12 @@ export const Route = createFileRoute("/admin/wallets")({
       {
         name: "description",
         content:
-          "Search customers and resellers, review credit balances and add credits with a reason, reference and audited transaction ID.",
+          "Search customers and resellers, review coin balances and add coins with a reason, reference and audited transaction ID.",
       },
       { property: "og:title", content: "Wallet Management — WaveWallet Admin" },
       {
         property: "og:description",
-        content: "Manage member credit balances and review the full ledger for your shop.",
+        content: "Manage member coin balances and review the full ledger for your shop.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -102,7 +102,7 @@ function AdminWallets() {
   const [busy, setBusy] = useState(false);
   const [ledger, setLedger] = useState<CreditEntry[]>([]);
   const [mode, setMode] = useState<"credits" | "points">("credits");
-  /** The admin's own wallet — the only source of credits they can hand out. */
+  /** The admin's own wallet — the only source of coins they can hand out. */
   const [shopBalance, setShopBalance] = useState(0);
   const [reversal, setReversal] = useState<ReversalInfo | null>(null);
   const [reversalAmount, setReversalAmount] = useState("");
@@ -296,7 +296,7 @@ function AdminWallets() {
     <>
       <PageSection
         title="Wallet management"
-        description="Load credits from your shop wallet to members, or post a correction. Every movement is audited."
+        description="Load coins from your shop wallet to members, or post a correction. Every movement is audited."
       >
         <Card className="mb-3 border-primary/30 bg-primary/5 shadow-none">
           <CardContent className="space-y-3 p-3">
@@ -304,7 +304,7 @@ function AdminWallets() {
               <p className="text-xs text-muted-foreground">Your shop wallet</p>
               <p className="text-lg font-semibold text-success">{peso(shopBalance)}</p>
               <p className="mt-1 text-[11px] text-muted-foreground">
-                Loading a member moves credits out of this balance. Cash in and cash out are
+                Loading a member moves coins out of this balance. Cash in and cash out are
                 requests — nothing moves until the platform owner approves and releases them.
               </p>
             </div>
@@ -376,7 +376,7 @@ function AdminWallets() {
                           setTarget(m);
                         }}
                       >
-                        <Wallet className="size-4" /> Credits
+                        <Wallet className="size-4" /> Coins
                       </Button>
                       <Button
                         size="sm"
@@ -403,12 +403,12 @@ function AdminWallets() {
       </PageSection>
 
       <PageSection
-        title="Shop credit ledger"
+        title="Shop coin ledger"
         description="Latest 60 movements across all wallets. Transfers move exact amounts; sale earnings appear as their own entries."
       >
         <div className="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-3">
           <StatCard
-            label="Credits released"
+            label="Coins released"
             value={peso(
               ledger
                 .filter((e) => e.direction === "debit")
@@ -438,7 +438,7 @@ function AdminWallets() {
           />
         </div>
         {ledger.length === 0 ? (
-          <EmptyState title="No credit movements yet" />
+          <EmptyState title="No coin movements yet" />
         ) : (
           <Card className="min-w-0 shadow-[var(--shadow-card)]">
             <CardContent className="divide-y divide-border px-0 py-0">
@@ -531,7 +531,7 @@ function AdminWallets() {
       <Dialog open={!!reversal} onOpenChange={(o) => !o && setReversal(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Reverse credit transfer</DialogTitle>
+            <DialogTitle>Reverse coin transfer</DialogTitle>
             <DialogDescription>
               This creates a linked correction entry. The original transaction stays in the ledger
               exactly as it is.
@@ -621,7 +621,7 @@ function AdminWallets() {
 
               <div className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs">
                 This cannot be undone automatically. To correct a mistaken reversal you must send a
-                new credit transfer. A transfer can only be reversed once. No commission, cashback,
+                new coin transfer. A transfer can only be reversed once. No commission, cashback,
                 points or earnings are generated.
               </div>
             </div>
@@ -649,7 +649,7 @@ function AdminWallets() {
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>
-              {mode === "points" ? "Adjust points" : "Load or correct credits"}
+              {mode === "points" ? "Adjust points" : "Load or correct coins"}
             </DialogTitle>
             <DialogDescription>
               {target?.full_name} ·{" "}
@@ -698,7 +698,7 @@ function AdminWallets() {
                   <div className="flex gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
                     <AlertTriangle className="mt-0.5 size-4 shrink-0" />
                     <span>
-                      Not enough credits in your shop wallet. Buy a credit allocation from the
+                      Not enough coins in your shop wallet. Buy a coin allocation from the
                       platform owner first.
                     </span>
                   </div>
@@ -735,7 +735,7 @@ function AdminWallets() {
                 (!isPlatformOwner && mode === "credits" && Number(amount) > shopBalance)
               }
             >
-              {busy ? "Saving…" : mode === "credits" ? "Confirm credit movement" : "Apply adjustment"}
+              {busy ? "Saving…" : mode === "credits" ? "Confirm coin movement" : "Apply adjustment"}
             </Button>
           </DialogFooter>
         </DialogContent>

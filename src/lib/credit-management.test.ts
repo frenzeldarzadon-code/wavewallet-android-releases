@@ -43,9 +43,9 @@ describe("issuance validation", () => {
   });
 
   it("requires a positive amount", () => {
-    expect(issuanceFormIssue({ userId: "u1", amount: 0 })).toMatch(/how many credits/);
-    expect(issuanceFormIssue({ userId: "u1", amount: -50 })).toMatch(/how many credits/);
-    expect(issuanceFormIssue({ userId: "u1", amount: Number.NaN })).toMatch(/how many credits/);
+    expect(issuanceFormIssue({ userId: "u1", amount: 0 })).toMatch(/how many coins/);
+    expect(issuanceFormIssue({ userId: "u1", amount: -50 })).toMatch(/how many coins/);
+    expect(issuanceFormIssue({ userId: "u1", amount: Number.NaN })).toMatch(/how many coins/);
   });
 
   it("refuses an absurd single issuance (overflow guard)", () => {

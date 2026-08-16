@@ -83,7 +83,7 @@ describe("credit valuation", () => {
   });
 
   it("describes the live rate without hard-coding it", () => {
-    expect(describeRate(settings({ creditsPerUnit: 1000, phpPerUnit: 10 }))).toBe("1,000 credits = ₱10");
+    expect(describeRate(settings({ creditsPerUnit: 1000, phpPerUnit: 10 }))).toBe("1,000 coins = ₱10");
   });
 
   it("validates valuation input", () => {

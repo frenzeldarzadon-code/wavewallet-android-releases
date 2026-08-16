@@ -212,7 +212,7 @@ function AdminResellers() {
                   <div className="flex gap-2">
                     <Button size="sm" className="flex-1" asChild>
                       <Link to="/admin/wallets">
-                        <Wallet className="size-4" /> Add credit
+                        <Wallet className="size-4" /> Add coin
                       </Link>
                     </Button>
                     <Button

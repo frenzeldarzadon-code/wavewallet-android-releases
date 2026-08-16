@@ -49,13 +49,13 @@ export const Route = createFileRoute("/admin/transactions")({
       {
         name: "description",
         content:
-          "Every credit transfer, voucher sale, earning, adjustment and reversal in your shop, with a safe one-click reversal for eligible transfers.",
+          "Every coin transfer, voucher sale, earning, adjustment and reversal in your shop, with a safe one-click reversal for eligible transfers.",
       },
       { property: "og:title", content: "Transaction History — WaveWallet Admin" },
       {
         property: "og:description",
         content:
-          "Audit every financial movement in your shop and reverse disputed credit transfers safely.",
+          "Audit every financial movement in your shop and reverse disputed coin transfers safely.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -267,7 +267,7 @@ function AdminTransactions() {
       <Dialog open={!!reversal} onOpenChange={(o) => !o && setReversal(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Reverse credit transfer</DialogTitle>
+            <DialogTitle>Reverse coin transfer</DialogTitle>
             <DialogDescription>
               The original transaction is never edited or deleted. A linked correction entry is
               created instead, and no commission, cashback or points are generated.

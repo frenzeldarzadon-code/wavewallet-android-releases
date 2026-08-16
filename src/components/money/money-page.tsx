@@ -176,11 +176,11 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
     }
     const payoutLine =
       cashOutPath === "admin"
-        ? `No fee · your shop admin hands you ${creditsNum.toLocaleString()} credits worth of cash.`
-        : `Cash out fee ${feePercent}% · you receive ${creditsAfterFee(creditsNum, feePercent).toLocaleString()} credits worth of payout.`;
+        ? `No fee · your shop admin hands you ${creditsNum.toLocaleString()} coins worth of cash.`
+        : `Cash out fee ${feePercent}% · you receive ${creditsAfterFee(creditsNum, feePercent).toLocaleString()} coins worth of payout.`;
     if (
       !window.confirm(
-        `Cash out ${creditsNum.toLocaleString()} credits via ${cashOutPathLabel(cashOutPath)}?\n\n${payoutLine}\n\n${WITHDRAWAL_SLA_NOTICE}`,
+        `Cash out ${creditsNum.toLocaleString()} coins via ${cashOutPathLabel(cashOutPath)}?\n\n${payoutLine}\n\n${WITHDRAWAL_SLA_NOTICE}`,
       )
     ) {
       return;
@@ -293,12 +293,12 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
     <>
       <PageSection
         title="Cash out & cash in"
-        description={`Cash in fee ${settings.cashInFeePercent}% · cash out fee ${settings.feePercent}%. Balances and requests are shown in credits.`}
+        description={`Cash in fee ${settings.cashInFeePercent}% · cash out fee ${settings.feePercent}%. Balances and requests are shown in coins.`}
       >
         <div className="grid gap-3 sm:grid-cols-3">
           <StatCard
-            label="Credit balance"
-            value={`${balance.toLocaleString()} credits`}
+            label="Coin balance"
+            value={`${balance.toLocaleString()} coins`}
             icon={ArrowUpFromLine}
             tone="brand"
           />
@@ -353,7 +353,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
               ) : null}
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="wd-credits">Credits to cash out</Label>
+                  <Label htmlFor="wd-credits">Coins to cash out</Label>
                   <Input
                     id="wd-credits"
                     inputMode="numeric"
@@ -427,7 +427,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                 <p className="mt-1 flex items-start gap-1 text-muted-foreground">
                   <Info className="mt-0.5 size-3 shrink-0" />{" "}
                   {cashOutPath === "admin"
-                    ? "Your shop admin reviews and settles this personally. Your credits are held until they approve it."
+                    ? "Your shop admin reviews and settles this personally. Your coins are held until they approve it."
                     : WITHDRAWAL_SLA_NOTICE}
                 </p>
               </div>
@@ -475,7 +475,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                                 setBusy(true);
                                 try {
                                   await cancelWithdrawal(w.id);
-                                  toast.success("Request cancelled — your credits were returned.");
+                                  toast.success("Request cancelled — your coins were returned.");
                                   await load();
                                 } catch (e) {
                                   toast.error(e instanceof Error ? e.message : "Could not cancel.");
@@ -629,7 +629,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                       </span>
                     </div>
                     <p className="text-muted-foreground">
-                      Credits are issued only after the platform owner verifies your payment. This fee is locked
+                      Coins are issued only after the platform owner verifies your payment. This fee is locked
                       in when you submit.
                     </p>
                   </div>

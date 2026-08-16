@@ -34,7 +34,7 @@ export const Route = createFileRoute("/super/reports")({
       {
         name: "description",
         content:
-          "Platform subscription revenue plus per-shop voucher sales, credits generated and channel earnings, across daily to yearly and custom ranges.",
+          "Platform subscription revenue plus per-shop voucher sales, coins generated and channel earnings, across daily to yearly and custom ranges.",
       },
       { property: "og:title", content: "Cross-Tenant Reports — WaveWallet Super Admin" },
       {
@@ -147,8 +147,8 @@ function SuperReports() {
         "Gross",
         "Net collected",
         "Wholesale discounts",
-        "Credits generated",
-        "Existing credits transferred",
+        "Coins generated",
+        "Existing coins transferred",
       ],
       perEcosystem.map(([id, r]) => [
         ecoName(id),
@@ -217,7 +217,7 @@ function SuperReports() {
             value={String(salesTotals.count)}
             hint={`${salesTotals.pointsCount} points-funded`}
           />
-          <StatCard label="Credits generated" value={peso(creditFlow.generated)} />
+          <StatCard label="Coins generated" value={peso(creditFlow.generated)} />
         </div>
         <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="Wholesale discounts given" value={peso(salesTotals.resellerMargin)} tone="negative" />
@@ -227,7 +227,7 @@ function SuperReports() {
             hint="Paid by tenant shops, not the platform"
           />
           <StatCard
-            label="Existing credits transferred"
+            label="Existing coins transferred"
             value={peso(creditFlow.transferred)}
             hint="Face value · no earnings"
           />
@@ -249,8 +249,8 @@ function SuperReports() {
                       <TableHead>Vouchers</TableHead>
                       <TableHead className="hidden sm:table-cell">Gross</TableHead>
                       <TableHead>Net</TableHead>
-                      <TableHead className="hidden lg:table-cell">Credits generated</TableHead>
-                      <TableHead className="text-right">Credits transferred</TableHead>
+                      <TableHead className="hidden lg:table-cell">Coins generated</TableHead>
+                      <TableHead className="text-right">Coins transferred</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

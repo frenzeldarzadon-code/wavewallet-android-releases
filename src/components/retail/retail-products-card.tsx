@@ -224,7 +224,7 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="rp-price">Price (credits)</Label>
+                  <Label htmlFor="rp-price">Price (coins)</Label>
                   <Input
                     id="rp-price"
                     type="number"

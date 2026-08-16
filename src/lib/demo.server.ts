@@ -208,7 +208,7 @@ async function seedSampleData(ecosystemId: string, ids: Record<DemoRole, string>
       tx_id: `DEMO-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
     });
   };
-  await seedCredit(ids.customer, 850, "DEMO — sample credit load");
+  await seedCredit(ids.customer, 850, "DEMO — sample coin load");
   await seedCredit(ids.reseller, 5000, "DEMO — sample reseller float");
   await seedCredit(ids.subreseller, 1500, "DEMO — sample subreseller float");
 
@@ -225,7 +225,7 @@ async function seedSampleData(ecosystemId: string, ids: Record<DemoRole, string>
       direction: "credit",
       amount: 12,
       balance_after: 0,
-      reason: "DEMO — sample points earned (10 credits = 1 pt)",
+      reason: "DEMO — sample points earned (10 coins = 1 pt)",
       reference: "DEMO",
       tx_id: `DEMO-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
       entry_type: "earn",

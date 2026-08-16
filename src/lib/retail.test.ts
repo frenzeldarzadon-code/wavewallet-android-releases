@@ -95,7 +95,7 @@ describe("checkoutProblem", () => {
 
   it("requires enough shop credits for a credit order", () => {
     expect(checkoutProblem(draft({ payment: "credit" }), total, settings, 10, 1)).toMatch(
-      /credits/i,
+      /coins/i,
     );
     expect(checkoutProblem(draft({ payment: "credit" }), total, settings, 100, 1)).toBeNull();
   });

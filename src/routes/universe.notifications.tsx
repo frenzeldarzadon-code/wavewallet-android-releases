@@ -9,7 +9,7 @@ export const Route = createFileRoute("/universe/notifications")({
       {
         name: "description",
         content:
-          "Your WaveWallet alerts: likes, replies, mentions, private messages, friend requests, follows, social credit gifts, cashback and shop updates.",
+          "Your WaveWallet alerts: likes, replies, mentions, private messages, friend requests, follows, social coin gifts, cashback and shop updates.",
       },
       { property: "og:title", content: "Notifications — WaveWallet Universe" },
       {

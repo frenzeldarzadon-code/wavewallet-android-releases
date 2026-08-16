@@ -81,7 +81,7 @@ describe("recipientRelationLabel", () => {
     expect(recipientRelationLabel("other", "admin")).toBe("Member");
   });
   it("defaults to the privacy-safe wording when the viewer is unknown", () => {
-    expect(recipientRelationLabel("admin")).toBe("Can accept your credits");
+    expect(recipientRelationLabel("admin")).toBe("Can accept your coins");
   });
 });
 
@@ -186,7 +186,7 @@ describe("recipientRelationLabel — customer privacy", () => {
   it("never names an internal position to a customer", () => {
     for (const rel of ["admin", "reseller", "subreseller"]) {
       const label = recipientRelationLabel(rel, "customer");
-      expect(label).toBe("Can accept your credits");
+      expect(label).toBe("Can accept your coins");
       expect(label).not.toMatch(/admin|reseller/i);
     }
     expect(recipientRelationLabel("customer", "customer")).toBe("Member of this shop");
@@ -201,7 +201,7 @@ describe("recipientRelationLabel — customer privacy", () => {
 describe("customer recipient tabs", () => {
   it("offers role-free tab wording and no single-upline framing", () => {
     const labels = recipientTabs("customer").map((t) => t.label);
-    expect(labels).toContain("Credit recipients");
+    expect(labels).toContain("Coin recipients");
     expect(labels.join(" ")).not.toMatch(/upline|reseller|admin/i);
   });
   it("keeps the network wording for resellers", () => {

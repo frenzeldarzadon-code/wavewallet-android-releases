@@ -71,7 +71,7 @@ function AdminSignupLink() {
   const share = async () => {
     const data = {
       title: `Join ${ecosystem.name}`,
-      text: `Create your ${ecosystem.name} account to buy WiFi vouchers, hold credits and earn points.`,
+      text: `Create your ${ecosystem.name} account to buy WiFi vouchers, hold coins and earn points.`,
       url,
     };
     if (typeof navigator !== "undefined" && navigator.share) {

@@ -33,16 +33,16 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/reseller/customers")({
   head: () => ({
     meta: [
-      { title: "Load Customer Credits — WaveWallet Reseller" },
+      { title: "Load Customer Coins — WaveWallet Reseller" },
       {
         name: "description",
         content:
-          "Find a customer in your shop and load credits from your reseller wallet with a confirmed transaction ID.",
+          "Find a customer in your shop and load coins from your reseller wallet with a confirmed transaction ID.",
       },
-      { property: "og:title", content: "Load Customer Credits — WaveWallet Reseller" },
+      { property: "og:title", content: "Load Customer Coins — WaveWallet Reseller" },
       {
         property: "og:description",
-        content: "Load credits to customers of your shop from your reseller wallet.",
+        content: "Load coins to customers of your shop from your reseller wallet.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -71,7 +71,7 @@ function ResellerCustomers() {
       fetchCreditLedger(userId, ecosystemDbId, 50),
     ]);
     setBalance(b);
-    setHistory(l.filter((e) => e.reason === "Credit load to customer"));
+    setHistory(l.filter((e) => e.reason === "Coin load to customer"));
   }, [userId, ecosystemDbId]);
 
   useEffect(() => {
@@ -102,7 +102,7 @@ function ResellerCustomers() {
         amount: value,
         reference,
       });
-      toast.success("Credits loaded", { description: `${peso(value)} to ${selected.full_name} · ${tx}` });
+      toast.success("Coins loaded", { description: `${peso(value)} to ${selected.full_name} · ${tx}` });
       setConfirming(false);
       setAmount("");
       setReference("");
@@ -131,7 +131,7 @@ function ResellerCustomers() {
         ) : null}
         <TabsContent value="customers" className="mt-0">
       <PageSection
-        title="Load customer credits"
+        title="Load customer coins"
         description={`Available in your wallet: ${peso(balance)} · any customer in ${ecosystem.name}, plus the subresellers you own.`}
       >
 
@@ -250,9 +250,9 @@ function ResellerCustomers() {
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Confirm credit load</DialogTitle>
+            <DialogTitle>Confirm coin load</DialogTitle>
             <DialogDescription>
-              This moves credits out of your reseller wallet into the customer's wallet.
+              This moves coins out of your reseller wallet into the customer's wallet.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1 rounded-xl border border-border px-3 py-3 text-sm">
@@ -274,7 +274,7 @@ function ResellerCustomers() {
               Cancel
             </Button>
             <Button onClick={() => void submit()} disabled={busy}>
-              {busy ? "Loading…" : "Load credits"}
+              {busy ? "Loading…" : "Load coins"}
             </Button>
           </DialogFooter>
         </DialogContent>

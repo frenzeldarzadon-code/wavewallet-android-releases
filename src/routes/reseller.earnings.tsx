@@ -31,7 +31,7 @@ function ResellerEarnings() {
     <EarningsHistory
       recipientId={account.id}
       title={`Earnings history · ${roleLabel(account.role)}`}
-      description="Only your own earnings. Sales cashback on credits you funded, upline commission from your downline's sales, and wholesale margin on your own purchases. Credit transfers are face value and never counted."
+      description="Only your own earnings. Sales cashback on coins you funded, upline commission from your downline's sales, and wholesale margin on your own purchases. Coin transfers are face value and never counted."
     />
   );
 }

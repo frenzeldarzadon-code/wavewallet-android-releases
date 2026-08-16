@@ -5,7 +5,7 @@
  * wallet, and the full transaction history, all on one mobile-first page.
  * Two transfer capabilities are always visible (never buried in a menu):
  *
- *  1. "Send credits" to an eligible member of the selected shop. The eligible
+ *  1. "Send coins" to an eligible member of the selected shop. The eligible
  *     list comes from `wallet_shop_recipients`, which mirrors the permissions
  *     `transfer_credits_in_shop` enforces — subresellers see their own reseller
  *     and shop admins, resellers see their own subresellers, shop operators see
@@ -264,7 +264,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
             }
           >
             <StatCard
-              label="Credit balance"
+              label="Coin balance"
               value={peso(selected.balance)}
               hint="Validated against your ledger"
               icon={Wallet}
@@ -307,7 +307,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
       {/* 1. Send credits — one area, recipient type tabs. Always visible. */}
       {selected ? (
         <PageSection
-          title="Send credits"
+          title="Send coins"
           description={`${transferSectionTitle(selected.role)} · from your ${selected.ecosystemName} wallet, available ${peso(selected.balance)}. Only people you are allowed to send to are listed.`}
         >
           <Card className="shadow-[var(--shadow-card)]">
@@ -509,7 +509,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
             url={ecosystem.facebookPageUrl}
             pageName={ecosystem.facebookPageName}
             title={`${ecosystem.name} support`}
-            message="Message your shop's Facebook page for help with credits, vouchers and rewards."
+            message="Message your shop's Facebook page for help with coins, vouchers and rewards."
             emptyHint="Your shop has not added a Facebook support page yet. Contact them directly for now."
           />
         </PageSection>
@@ -532,7 +532,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
               Cancel
             </Button>
             <Button onClick={() => void send()} disabled={busy}>
-              {busy ? "Sending…" : <><Send className="size-4" /> Send credits</>}
+              {busy ? "Sending…" : <><Send className="size-4" /> Send coins</>}
             </Button>
           </DialogFooter>
         </DialogContent>

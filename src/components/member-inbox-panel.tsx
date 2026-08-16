@@ -143,7 +143,7 @@ export function MemberInboxPanel() {
                   ) : null}
 
                   <p className="text-[11px] text-muted-foreground">
-                    Joining adds a membership in this shop only. No credits, points, cashback or
+                    Joining adds a membership in this shop only. No coins, points, cashback or
                     history move between shops.
                   </p>
 

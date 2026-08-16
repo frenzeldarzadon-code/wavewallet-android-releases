@@ -13,7 +13,7 @@ export const DEMO_ECOSYSTEM_SLUG = "demo-preview";
 
 export const DEMO_ROLES = [
   { role: "customer" as const, label: "Customer", hint: "Wallet, points, shop, rewards" },
-  { role: "reseller" as const, label: "Reseller", hint: "Load credits, redemptions, earnings" },
+  { role: "reseller" as const, label: "Reseller", hint: "Load coins, redemptions, earnings" },
   { role: "subreseller" as const, label: "Subreseller", hint: "Discounted vouchers, sale credit-back" },
   { role: "admin" as const, label: "Admin", hint: "Shop, vouchers, rewards, members" },
   { role: "super_admin" as const, label: "Super Admin", hint: "All ecosystems overview" },

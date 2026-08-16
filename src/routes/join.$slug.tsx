@@ -18,12 +18,12 @@ export const Route = createFileRoute("/join/$slug")({
       {
         name: "description",
         content:
-          "Join your hotspot operator's WaveWallet shop to buy vouchers, hold credits, earn points and redeem rewards.",
+          "Join your hotspot operator's WaveWallet shop to buy vouchers, hold coins, earn points and redeem rewards.",
       },
       { property: "og:title", content: "Create your customer account — WaveWallet" },
       {
         property: "og:description",
-        content: "Sign up with your operator's link and start buying vouchers with credits or points.",
+        content: "Sign up with your operator's link and start buying vouchers with coins or points.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -229,7 +229,7 @@ function JoinPage() {
             What you get
           </p>
           <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-            <li>Credit wallet for buying vouchers instantly</li>
+            <li>Coin wallet for buying vouchers instantly</li>
             <li>Points on qualifying spend, redeemable for rewards</li>
             <li>Full transaction history for every purchase and transfer</li>
           </ul>

@@ -25,9 +25,9 @@ export const Route = createFileRoute("/super/settings")({
   head: () => ({
     meta: [
       { title: "Platform Settings — WaveWallet Super Admin" },
-      { name: "description", content: "Configure GCash collection details, support channel, credit supply and platform-wide defaults." },
+      { name: "description", content: "Configure GCash collection details, support channel, coin supply and platform-wide defaults." },
       { property: "og:title", content: "Platform Settings — WaveWallet Super Admin" },
-      { property: "og:description", content: "Configure GCash collection details, support channel, credit supply and platform-wide defaults." },
+      { property: "og:description", content: "Configure GCash collection details, support channel, coin supply and platform-wide defaults." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -95,7 +95,7 @@ function SuperSettings() {
         <ListenerDevicesCard />
       </PageSection>
 
-      <PageSection title="Collection details" description="The platform GCash account shop admins pay when buying a credit allocation.">
+      <PageSection title="Collection details" description="The platform GCash account shop admins pay when buying a coin allocation.">
 
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">

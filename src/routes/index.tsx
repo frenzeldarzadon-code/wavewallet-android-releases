@@ -30,13 +30,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "WaveWallet is a multi-tenant credit wallet, voucher marketplace and rewards platform for Omada hotspot operators, resellers and their customers.",
+          "WaveWallet is a multi-tenant coin wallet, voucher marketplace and rewards platform for Omada hotspot operators, resellers and their customers.",
       },
       { property: "og:title", content: "WaveWallet — Voucher & Wallet Platform for Hotspot Operators" },
       {
         property: "og:description",
         content:
-          "WaveWallet is a multi-tenant credit wallet, voucher marketplace and rewards platform for Omada hotspot operators, resellers and their customers.",
+          "WaveWallet is a multi-tenant coin wallet, voucher marketplace and rewards platform for Omada hotspot operators, resellers and their customers.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -194,14 +194,14 @@ function LoginPage() {
             Run your hotspot shop like a real business.
           </h1>
           <p className="mt-3 max-w-md text-sm opacity-90">
-            Closed-loop credit wallets, voucher inventory with duplicate-safe imports, reseller
+            Closed-loop coin wallets, voucher inventory with duplicate-safe imports, reseller
             networks, points and physical rewards — each operator fully isolated in their own
             shop.
           </p>
           <ul className="mt-6 space-y-2 text-sm opacity-90">
             {[
               "Atomic voucher dispensing — a code is never sold twice",
-              "Immutable ledger for every credit and point movement",
+              "Immutable ledger for every coin and point movement",
               "Reseller discount and earnings captured at sale time",
               "Subscription gating with approval workflow",
             ].map((line) => (
@@ -290,7 +290,7 @@ function LoginPage() {
               </div>
               <p className="text-xs text-muted-foreground">
                 One-tap sign-in to a sandbox shop filled with clearly fake sample data. Only shown in
-                the Lovable preview — never on a published site. Real shops, codes, credits and
+                the Lovable preview — never on a published site. Real shops, codes, coins and
                 payments are untouched.
               </p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">

@@ -145,8 +145,8 @@ export const EXPORT_DATASETS: ExportDataset[] = [
   },
   {
     id: "credit_ledger",
-    label: "Credit ledger",
-    description: "Immutable credit movements with balances after each entry.",
+    label: "Coin ledger",
+    description: "Immutable coin movements with balances after each entry.",
     group: "Financial",
     table: "credit_ledger",
     columns: [
@@ -174,8 +174,8 @@ export const EXPORT_DATASETS: ExportDataset[] = [
   },
   {
     id: "credit_accounts",
-    label: "Credit balances",
-    description: "Current credit wallet balance per member.",
+    label: "Coin balances",
+    description: "Current coin wallet balance per member.",
     group: "Financial",
     table: "credit_accounts",
     columns: ["id", "ecosystem_id", "user_id", "balance", "created_at", "updated_at"],
@@ -208,7 +208,7 @@ export const EXPORT_DATASETS: ExportDataset[] = [
   },
   {
     id: "credit_lots",
-    label: "Credit lots (provenance)",
+    label: "Coin lots (provenance)",
     description: "FIFO funding lots that decide who earns commission.",
     group: "Financial",
     table: "credit_lots",
@@ -229,7 +229,7 @@ export const EXPORT_DATASETS: ExportDataset[] = [
   },
   {
     id: "credit_transfer_reversals",
-    label: "Credit reversals",
+    label: "Coin reversals",
     description: "Dispute reversals with reason, actor and linked entries.",
     group: "Financial",
     table: "credit_transfer_reversals",

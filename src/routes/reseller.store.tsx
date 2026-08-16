@@ -8,7 +8,7 @@ export const Route = createFileRoute("/reseller/store")({
       {
         name: "description",
         content:
-          "Order physical goods from your shop's retail store with pickup or delivery, paid in cash or shop credits.",
+          "Order physical goods from your shop's retail store with pickup or delivery, paid in cash or shop coins.",
       },
       { property: "og:title", content: "Retail Store — WaveWallet Reseller" },
       {

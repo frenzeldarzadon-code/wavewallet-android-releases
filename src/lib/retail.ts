@@ -150,8 +150,8 @@ export function checkoutProblem(
   if (draft.payment === "cash" && !settings.cashEnabled)
     return "This shop does not accept cash";
   if (draft.payment === "credit") {
-    if (!settings.creditEnabled) return "This shop does not accept credit payment";
-    if (total > creditBalance) return "Not enough credits in this shop's wallet";
+    if (!settings.creditEnabled) return "This shop does not accept coin payment";
+    if (total > creditBalance) return "Not enough coins in this shop's wallet";
   }
   return null;
 }

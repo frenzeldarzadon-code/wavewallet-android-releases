@@ -161,7 +161,7 @@ export function EarningsHistory({
         title={title}
         description={
           description ??
-          `Derived from finalized sales. Credit transfers are face value and never counted. Periods use ${EARNINGS_TZ} calendar dates.`
+          `Derived from finalized sales. Coin transfers are face value and never counted. Periods use ${EARNINGS_TZ} calendar dates.`
         }
       >
         <div className="space-y-3">

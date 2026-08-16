@@ -61,7 +61,7 @@ function Side({ title, snap, creditedFirst }: { title: string; snap: ConflictSna
       {line("Receipt check", RECEIPT_CHECK_LABEL[(snap.receipt_check as ReceiptCheck) ?? "pending"])}
       {line("Receipt read", when(snap.receipt_read_at))}
       {line("Amount", snap.amount_php == null ? "unknown" : peso(Number(snap.amount_php)))}
-      {line("Credits", snap.credits == null ? "unknown" : Number(snap.credits).toLocaleString())}
+      {line("Coins", snap.credits == null ? "unknown" : Number(snap.credits).toLocaleString())}
       {line("Paid from", maskAccountNumber(snap.sender_number))}
       {line("Payer name", snap.sender_name ?? "not reported")}
       {line("Receiving shop", snap.shop_name ?? "unknown")}
@@ -75,10 +75,10 @@ function Side({ title, snap, creditedFirst }: { title: string; snap: ConflictSna
       {line("Request submitted", when(snap.requested_at))}
       {line("Reviewed", when(snap.reviewed_at))}
       {line(
-        "Credits released",
+        "Coins released",
         snap.credits_released
-          ? `${Number(snap.credits_released_amount ?? snap.credits ?? 0).toLocaleString()} credits on ${when(snap.credits_released_at)}`
-          : "no credits released",
+          ? `${Number(snap.credits_released_amount ?? snap.credits ?? 0).toLocaleString()} coins on ${when(snap.credits_released_at)}`
+          : "no coins released",
       )}
       {line("Screenshot", snap.has_screenshot ? "attached to the transaction" : "not attached")}
       {line("Listener event", snap.listener_event_id ?? "none")}

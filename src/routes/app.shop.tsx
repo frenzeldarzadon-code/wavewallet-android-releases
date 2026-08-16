@@ -39,12 +39,12 @@ export const Route = createFileRoute("/app/shop")({
       {
         name: "description",
         content:
-          "Buy WiFi vouchers with your shop credits or points. One unused code is issued per purchase and marked sold instantly.",
+          "Buy WiFi vouchers with your shop coins or points. One unused code is issued per purchase and marked sold instantly.",
       },
       { property: "og:title", content: "Voucher Shop — WaveWallet" },
       {
         property: "og:description",
-        content: "Buy WiFi vouchers with credits or points — codes are issued atomically and never reused.",
+        content: "Buy WiFi vouchers with coins or points — codes are issued atomically and never reused.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -230,7 +230,7 @@ export function VoucherShopView({
                         onClick={() => openBuy(p, "credits")}
                       >
                         <Ticket className="size-4" />
-                        {soldOut ? "Out of stock" : affordable ? "Buy with credits" : "Not enough credits"}
+                        {soldOut ? "Out of stock" : affordable ? "Buy with coins" : "Not enough coins"}
                       </Button>
                       {pointsPrice > 0 ? (
                         <Button
@@ -322,7 +322,7 @@ export function VoucherShopView({
                   </p>
                   {role === "customer" ? (
                     <p className="text-[11px] text-muted-foreground">
-                      Whoever funded the credits you are spending earns their sales commission on
+                      Whoever funded the coins you are spending earns their sales commission on
                       this purchase — your price is unaffected.
                     </p>
                   ) : null}

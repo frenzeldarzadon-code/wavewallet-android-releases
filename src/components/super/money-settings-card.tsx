@@ -41,7 +41,7 @@ export function MoneySettingsCard() {
       validateCashInFee(form.cashInFeePercent) ??
       (Number.isFinite(form.shopTransferFee) && form.shopTransferFee >= 0
         ? null
-        : "The shop transfer fee must be zero or more credits.");
+        : "The shop transfer fee must be zero or more coins.");
     if (problem) {
       toast.error(problem);
       return;
@@ -63,12 +63,12 @@ export function MoneySettingsCard() {
   return (
     <Card className="mb-6 shadow-[var(--shadow-card)]">
       <CardHeader>
-        <CardTitle className="text-sm">Credit valuation, cash in / cash out fees & cashback</CardTitle>
+        <CardTitle className="text-sm">Coin valuation, cash in / cash out fees & cashback</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="ms-credits">Credits per unit</Label>
+            <Label htmlFor="ms-credits">Coins per unit</Label>
             <Input
               id="ms-credits"
               inputMode="decimal"
@@ -135,7 +135,7 @@ export function MoneySettingsCard() {
 
 
         <div className="space-y-1.5">
-          <Label htmlFor="ms-transfer-fee">Shop-to-shop transfer fee (credits)</Label>
+          <Label htmlFor="ms-transfer-fee">Shop-to-shop transfer fee (coins)</Label>
           <Input
             id="ms-transfer-fee"
             inputMode="decimal"

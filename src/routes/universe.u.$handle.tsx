@@ -106,7 +106,7 @@ function UniverseMemberProfile() {
                 <>
                   {profile.bio ? <p className="text-sm">{profile.bio}</p> : null}
                   <p className="text-xs text-muted-foreground">
-                    Public profiles show identity only. Wallets, credits, earnings, shop history and
+                    Public profiles show identity only. Wallets, coins, earnings, shop history and
                     private messages are never shown here.
                   </p>
                 </>

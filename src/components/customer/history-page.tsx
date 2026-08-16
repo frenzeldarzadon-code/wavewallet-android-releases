@@ -86,7 +86,7 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
 
       <Tabs value={filter} onValueChange={setFilter} className="mb-3">
         <TabsList className="flex w-full flex-wrap justify-start">
-          <TabsTrigger value="all">Credits</TabsTrigger>
+          <TabsTrigger value="all">Coins</TabsTrigger>
           <TabsTrigger value="vouchers">Vouchers</TabsTrigger>
           <TabsTrigger value="sources">Sources</TabsTrigger>
         </TabsList>
@@ -127,8 +127,8 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
       ) : filter === "sources" ? (
         lots.length === 0 ? (
           <EmptyState
-            title="No credits received yet"
-            description="Credits you receive are tracked by source and spent oldest-first."
+            title="No coins received yet"
+            description="Coins you receive are tracked by source and spent oldest-first."
           />
         ) : (
           <Card className="shadow-[var(--shadow-card)]">

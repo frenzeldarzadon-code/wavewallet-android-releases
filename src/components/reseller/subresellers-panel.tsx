@@ -88,7 +88,7 @@ export function SubresellersPanel({
         amount: value,
         ...(note.trim() ? { note: note.trim() } : {}),
       });
-      toast.success("Credits transferred", {
+      toast.success("Coins transferred", {
         description: `${peso(value)} to ${transferFor.full_name} · ${tx}`,
       });
       setConfirming(false);
@@ -111,7 +111,7 @@ export function SubresellersPanel({
     <>
       <PageSection
         title="Your subresellers"
-        description="Only the subresellers you own. Transfers move credits from your wallet with no commission."
+        description="Only the subresellers you own. Transfers move coins from your wallet with no commission."
       >
         <div className="mb-3 grid grid-cols-2 gap-3">
           <StatCard label="Subresellers" value={String(totals.count)} hint={`${totals.active} active`} />
@@ -178,7 +178,7 @@ export function SubresellersPanel({
                         setNote("");
                       }}
                     >
-                      <Send className="size-4" /> Transfer credits
+                      <Send className="size-4" /> Transfer coins
                     </Button>
                   </div>
                 </CardContent>
@@ -196,7 +196,7 @@ export function SubresellersPanel({
               <Users className="size-4" /> {historyFor?.full_name}
             </DialogTitle>
             <DialogDescription>
-              All credit movements in this shop, newest first. Read-only.
+              All coin movements in this shop, newest first. Read-only.
             </DialogDescription>
           </DialogHeader>
           {entries === null ? (
@@ -243,7 +243,7 @@ export function SubresellersPanel({
           <DialogHeader>
             <DialogTitle>Transfer to {transferFor?.full_name}</DialogTitle>
             <DialogDescription>
-              Moves credits from your wallet to your subreseller. No commission is added.
+              Moves coins from your wallet to your subreseller. No commission is added.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -295,7 +295,7 @@ export function SubresellersPanel({
           <DialogHeader>
             <DialogTitle>Confirm transfer</DialogTitle>
             <DialogDescription>
-              This debits your wallet and credits your subreseller in one step.
+              This debits your wallet and coins your subreseller in one step.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1 rounded-xl border border-border px-3 py-3 text-sm">
@@ -317,7 +317,7 @@ export function SubresellersPanel({
               Back
             </Button>
             <Button onClick={() => void send()} disabled={busy}>
-              {busy ? "Sending…" : "Send credits"}
+              {busy ? "Sending…" : "Send coins"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -57,7 +57,7 @@ export function validateShopTransfer(input: {
   if (!fromEcosystemId || !toEcosystemId) return "Choose both a source and a destination shop.";
   if (fromEcosystemId === toEcosystemId) return "Choose two different shops.";
   if (!Number.isFinite(amount) || amount <= 0) return "Enter a positive amount.";
-  if (amount <= fee) return `Send more than the ${fee} credit fee.`;
+  if (amount <= fee) return `Send more than the ${fee} coin fee.`;
   if (amount > balance) return "That is more than the source shop wallet holds.";
   return null;
 }
