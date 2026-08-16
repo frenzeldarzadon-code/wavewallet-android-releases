@@ -21,28 +21,50 @@ android {
         buildConfigField("String", "GCASH_PACKAGE", "\"com.globe.gcash.android\"")
     }
 
+    // Signing material never lives in this repository. The release signing
+    // config only exists when all four environment variables are supplied by
+    // GitHub Actions secrets (WW_KEYSTORE, WW_KEYSTORE_PASSWORD, WW_KEY_ALIAS,
+    // WW_KEY_PASSWORD). Without them the release build stays unsigned and the
+    // debug build path is unaffected.
+    val keystorePath = System.getenv("WW_KEYSTORE")
+    val keystorePassword = System.getenv("WW_KEYSTORE_PASSWORD")
+    val keyAlias = System.getenv("WW_KEY_ALIAS")
+    val keyPasswordEnv = System.getenv("WW_KEY_PASSWORD")
+    val hasSigningMaterial =
+        !keystorePath.isNullOrBlank() &&
+            !keystorePassword.isNullOrBlank() &&
+            !keyAlias.isNullOrBlank() &&
+            !keyPasswordEnv.isNullOrBlank() &&
+            file(keystorePath).exists()
+
+    if (hasSigningMaterial) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(keystorePath!!)
+                storePassword = keystorePassword
+                this.keyAlias = keyAlias
+                keyPassword = keyPasswordEnv
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Signing: create a keystore and uncomment the signingConfig below.
-            // signingConfig = signingConfigs.getByName("release")
+            if (hasSigningMaterial) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
         debug {
             applicationIdSuffix = ".debug"
         }
     }
 
-    // Uncomment and fill in to produce a signed release APK.
-    // signingConfigs {
-    //     create("release") {
-    //         storeFile = file(System.getenv("WW_KEYSTORE") ?: "release.jks")
-    //         storePassword = System.getenv("WW_KEYSTORE_PASSWORD")
-    //         keyAlias = System.getenv("WW_KEY_ALIAS")
-    //         keyPassword = System.getenv("WW_KEY_PASSWORD")
-    //     }
-    // }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

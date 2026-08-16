@@ -121,18 +121,24 @@ jobs:
         with:
           packages: "platforms;android-34 build-tools;34.0.0 platform-tools"
 
+      # Written outside the repository tree so it can never be committed, and
+      # referenced by absolute path because Gradle resolves file() relative to
+      # the :app module directory.
       - name: Restore the keystore from the secret
         if: steps.creds.outputs.available == 'true'
-        working-directory: ${{ env.WORKING_DIR }}
+        shell: bash
         env:
           KEYSTORE_B64: ${{ secrets.WW_KEYSTORE_BASE64 }}
-        run: printf '%s' "$KEYSTORE_B64" | base64 -d > release.jks
+        run: |
+          install -d -m 700 "$RUNNER_TEMP/signing"
+          printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/signing/release.jks"
+          chmod 600 "$RUNNER_TEMP/signing/release.jks"
 
-      - name: Build release APK
+      - name: Build signed release APK
         if: steps.creds.outputs.available == 'true'
         working-directory: ${{ env.WORKING_DIR }}
         env:
-          WW_KEYSTORE: release.jks
+          WW_KEYSTORE: ${{ runner.temp }}/signing/release.jks
           WW_KEYSTORE_PASSWORD: ${{ secrets.WW_KEYSTORE_PASSWORD }}
           WW_KEY_ALIAS: ${{ secrets.WW_KEY_ALIAS }}
           WW_KEY_PASSWORD: ${{ secrets.WW_KEY_PASSWORD }}
@@ -142,8 +148,36 @@ jobs:
 
       - name: Remove the keystore from the runner
         if: always()
-        working-directory: ${{ env.WORKING_DIR }}
-        run: rm -f release.jks
+        shell: bash
+        run: rm -rf "$RUNNER_TEMP/signing"
+
+      # Fails the job if the APK is unsigned or still carries the debug key.
+      - name: Verify the signature and report the fingerprint
+        if: steps.creds.outputs.available == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=$(ls "$WORKING_DIR"/app/build/outputs/apk/release/*.apk | head -n1)
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort | tail -n1)
+          "$APKSIGNER" verify --verbose --print-certs "$APK" | tee /tmp/apksigner.txt
+          grep -q "Verified using v2 scheme (APK Signature Scheme v2): true" /tmp/apksigner.txt
+          if grep -qi "CN=Android Debug" /tmp/apksigner.txt; then
+            echo "::error::APK is signed with the Android debug key, not the release keystore."
+            exit 1
+          fi
+          {
+            echo "### Signed release APK"
+            echo ""
+            echo "- File: \`$(basename "$APK")\`"
+            echo "- Size: $(stat -c%s "$APK") bytes"
+            echo "- SHA-256: \`$(sha256sum "$APK" | cut -d' ' -f1)\`"
+            echo "- Package: \`$("$ANDROID_HOME"/build-tools/*/aapt2 dump packagename "$APK" 2>/dev/null || echo com.wavewallet.gcashlistener)\`"
+            echo ""
+            echo "Signer certificate fingerprints:"
+            echo '```'
+            grep -E "Signer #1 certificate (SHA-256|SHA-1) digest" /tmp/apksigner.txt || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload release APK
         if: steps.creds.outputs.available == 'true'
@@ -153,3 +187,4 @@ jobs:
           path: ${{ env.WORKING_DIR }}/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
           retention-days: 30
+

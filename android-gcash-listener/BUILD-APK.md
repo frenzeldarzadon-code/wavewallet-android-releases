@@ -39,20 +39,33 @@ with the rest of the project and GitHub picks it up automatically.
 The debug build installs under the id `com.wavewallet.gcashlistener.debug`, so it
 can sit alongside a future signed release build.
 
-### Optional signed release build
+### Signed release build (now wired up)
 
-The workflow also has a `release` job. It runs only when you manually dispatch
-the workflow **and** these repository secrets exist (Settings → Secrets and
+The workflow's `release` job runs on a manual **Run workflow** dispatch and
+signs the APK when these repository secrets exist (Settings → Secrets and
 variables → Actions):
 
-- `WW_KEYSTORE_BASE64` — your keystore file, base64 encoded
+- `WW_KEYSTORE_BASE64` — the keystore file, base64 encoded
 - `WW_KEYSTORE_PASSWORD`, `WW_KEY_ALIAS`, `WW_KEY_PASSWORD`
 
-If they are absent the job simply skips. **No keystore, password or signing key
-is stored in this repository**, and nothing is created for you — a signed
-release is optional and only needed for Play Store style distribution. Sideloading
-the debug APK is enough for your own phone. To use it you must also uncomment the
-`signingConfigs` block in `app/build.gradle.kts`.
+The keystore is decoded into `$RUNNER_TEMP/signing/release.jks` (outside the
+repository tree, mode 600) and deleted again in an `always()` step. Gradle picks
+it up through the `WW_*` environment variables only; **no keystore, password or
+alias is stored in this repository**, and no secret is echoed to the log.
+
+After the build the job runs `apksigner verify --print-certs` and fails if the
+APK is unsigned or still carries the Android debug key. Filename, size, SHA-256
+and the signer certificate fingerprints are written to the run's job summary.
+
+If the secrets are absent the job skips and `app/build.gradle.kts` produces an
+unsigned release, leaving the debug build path untouched.
+
+Package ids: release is `com.wavewallet.gcashlistener`, debug is
+`com.wavewallet.gcashlistener.debug`. They are different apps, so the signed
+release installs alongside a previously sideloaded debug build rather than
+upgrading it — uninstall the debug app once the release is in use. Every future
+release signed with the same keystore updates the release install in place.
+
 
 ---
 
