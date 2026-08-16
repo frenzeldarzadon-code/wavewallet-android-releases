@@ -1316,6 +1316,7 @@ export type Database = {
           archived_reason: string | null
           cash_in_gcash_number: string | null
           contact_email: string | null
+          contact_name: string | null
           contact_phone: string | null
           created_at: string
           credits_per_point: number
@@ -1368,6 +1369,7 @@ export type Database = {
           archived_reason?: string | null
           cash_in_gcash_number?: string | null
           contact_email?: string | null
+          contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
           credits_per_point?: number
@@ -1420,6 +1422,7 @@ export type Database = {
           archived_reason?: string | null
           cash_in_gcash_number?: string | null
           contact_email?: string | null
+          contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
           credits_per_point?: number
@@ -4945,6 +4948,7 @@ export type Database = {
           archived_reason: string | null
           cash_in_gcash_number: string | null
           contact_email: string | null
+          contact_name: string | null
           contact_phone: string | null
           created_at: string
           credits_per_point: number
@@ -6737,6 +6741,7 @@ export type Database = {
           archived_reason: string | null
           cash_in_gcash_number: string | null
           contact_email: string | null
+          contact_name: string | null
           contact_phone: string | null
           created_at: string
           credits_per_point: number
@@ -6798,6 +6803,7 @@ export type Database = {
           archived_reason: string | null
           cash_in_gcash_number: string | null
           contact_email: string | null
+          contact_name: string | null
           contact_phone: string | null
           created_at: string
           credits_per_point: number
@@ -6866,6 +6872,7 @@ export type Database = {
           archived_reason: string | null
           cash_in_gcash_number: string | null
           contact_email: string | null
+          contact_name: string | null
           contact_phone: string | null
           created_at: string
           credits_per_point: number
@@ -7649,6 +7656,7 @@ export type Database = {
       update_ecosystem: {
         Args: {
           _contact_email?: string
+          _contact_name?: string
           _contact_phone?: string
           _description?: string
           _ecosystem_id: string
@@ -7664,6 +7672,7 @@ export type Database = {
           archived_reason: string | null
           cash_in_gcash_number: string | null
           contact_email: string | null
+          contact_name: string | null
           contact_phone: string | null
           created_at: string
           credits_per_point: number
@@ -7730,6 +7739,7 @@ export type Database = {
           archived_reason: string | null
           cash_in_gcash_number: string | null
           contact_email: string | null
+          contact_name: string | null
           contact_phone: string | null
           created_at: string
           credits_per_point: number

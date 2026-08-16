@@ -38,9 +38,17 @@ function AdminSettings() {
   const [form, setForm] = useState({
     name: ecosystem?.name ?? "",
     description: ecosystem?.description ?? "",
+    contactName: ecosystem?.contactName ?? "",
     contactPhone: ecosystem?.contactPhone ?? "",
     contactEmail: ecosystem?.contactEmail ?? "",
   });
+  // True once the admin edits a field — stops async session reloads from
+  // clobbering typing, and stops a stale form from overwriting the database.
+  const [dirty, setDirty] = useState(false);
+  const edit = (patch: Partial<typeof form>) => {
+    setDirty(true);
+    setForm((f) => ({ ...f, ...patch }));
+  };
   const [saving, setSaving] = useState(false);
   const [rule, setRule] = useState("10");
   const [savingRule, setSavingRule] = useState(false);
@@ -73,10 +81,43 @@ function AdminSettings() {
     });
   }, [ecosystem?.facebookPageUrl, ecosystem?.facebookPageName]);
 
+  // The session loads asynchronously, so the first render has empty fields.
+  // Mirror the saved values in whenever they change, unless the admin is
+  // mid-edit — that would both lose typing and risk saving stale values.
+  useEffect(() => {
+    if (!ecosystem || dirty) return;
+    setForm({
+      name: ecosystem.name ?? "",
+      description: ecosystem.description ?? "",
+      contactName: ecosystem.contactName ?? "",
+      contactPhone: ecosystem.contactPhone ?? "",
+      contactEmail: ecosystem.contactEmail ?? "",
+    });
+  }, [
+    dirty,
+    ecosystem,
+    ecosystem?.name,
+    ecosystem?.description,
+    ecosystem?.contactName,
+    ecosystem?.contactPhone,
+    ecosystem?.contactEmail,
+  ]);
+
   useEffect(() => {
     if (!ecosystemDbId) return;
     void fetchPointsRule(ecosystemDbId).then((v) => setRule(String(v)));
   }, [ecosystemDbId]);
+
+  // Warn before losing unsaved shop-identity/contact edits.
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
 
   if (!ecosystem) return null;
 
@@ -86,7 +127,10 @@ function AdminSettings() {
 
 
   const save = async () => {
-    if (!ecosystemDbId) return;
+    if (!ecosystemDbId) {
+      toast.error("Your shop is still loading — try again in a moment.");
+      return;
+    }
     if (!form.name.trim()) {
       toast.error("Your shop needs a name.");
       return;
@@ -96,6 +140,7 @@ function AdminSettings() {
       _ecosystem_id: ecosystemDbId,
       _name: form.name.trim(),
       _description: form.description.trim(),
+      _contact_name: form.contactName.trim(),
       _contact_email: form.contactEmail.trim(),
       _contact_phone: form.contactPhone.trim(),
     });
@@ -104,7 +149,10 @@ function AdminSettings() {
       toast.error("Could not save settings", { description: error.message });
       return;
     }
-    toast.success("Shop settings saved.");
+    setDirty(false);
+    toast.success("Shop settings saved.", {
+      description: "Shop name, description and contact details are stored in the database.",
+    });
     await reload?.();
   };
 
@@ -118,7 +166,7 @@ function AdminSettings() {
               <Input
                 id="name"
                 value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                onChange={(e) => edit({ name: e.target.value })}
               />
             </div>
             <div className="space-y-1.5">
@@ -134,7 +182,7 @@ function AdminSettings() {
                 id="desc"
                 rows={2}
                 value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                onChange={(e) => edit({ description: e.target.value })}
               />
             </div>
           </CardContent>
@@ -146,14 +194,18 @@ function AdminSettings() {
           <CardContent className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label htmlFor="cname">Contact person</Label>
-              <Input id="cname" defaultValue={ecosystem.contactName} />
+              <Input
+                id="cname"
+                value={form.contactName}
+                onChange={(e) => edit({ contactName: e.target.value })}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="cphone">Mobile number</Label>
               <Input
                 id="cphone"
                 value={form.contactPhone}
-                onChange={(e) => setForm({ ...form, contactPhone: e.target.value })}
+                onChange={(e) => edit({ contactPhone: e.target.value })}
               />
             </div>
             <div className="space-y-1.5">
@@ -161,7 +213,7 @@ function AdminSettings() {
               <Input
                 id="cemail"
                 value={form.contactEmail}
-                onChange={(e) => setForm({ ...form, contactEmail: e.target.value })}
+                onChange={(e) => edit({ contactEmail: e.target.value })}
               />
             </div>
           </CardContent>
@@ -275,10 +327,16 @@ function AdminSettings() {
                   }
                   setSavingRule(true);
                   try {
-                    await setPointsRule(ecosystemDbId, v);
-                    toast.success(`From now on, ${v} Coins = 1 Point. Past purchases are unchanged.`);
+                    const saved = await setPointsRule(ecosystemDbId, v);
+                    // Re-read what the database actually stored, so the field
+                    // never shows a value that was not persisted.
+                    const fresh = await fetchPointsRule(ecosystemDbId);
+                    setRule(String(fresh || saved || v));
+                    toast.success(`From now on, ${fresh || v} Coins = 1 Point. Past purchases are unchanged.`);
                   } catch (e) {
-                    toast.error((e as Error).message);
+                    toast.error("Could not save the points rule", {
+                      description: (e as Error).message,
+                    });
                   } finally {
                     setSavingRule(false);
                   }
@@ -298,9 +356,12 @@ function AdminSettings() {
 
 
       <div className="space-y-2">
-        <Button onClick={save} disabled={saving}>
-          {saving ? "Saving…" : "Save changes"}
+        <Button onClick={save} disabled={saving || !ecosystemDbId}>
+          {saving ? "Saving…" : dirty ? "Save changes*" : "Save changes"}
         </Button>
+        {dirty ? (
+          <p className="text-xs text-destructive">You have unsaved changes on this page.</p>
+        ) : null}
         <p className="text-xs text-muted-foreground">
           Shop name, description and contact details are stored in the database and audit-logged.
           Your Facebook support page is stored per shop and audit-logged on every change.
