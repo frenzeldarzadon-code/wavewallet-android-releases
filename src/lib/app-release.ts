@@ -63,7 +63,8 @@ export async function updateAppRelease(input: AppReleaseInput): Promise<AppRelea
     _android_enabled: input.enabled,
     _android_download_url: input.downloadUrl.trim(),
     _android_version: input.version.trim(),
-    ...(input.releaseDate.trim() ? { _android_release_date: input.releaseDate.trim() } : {}),
+    // A blank date must reach Postgres as NULL, which the generated types type as string.
+    _android_release_date: (input.releaseDate.trim() || null) as unknown as string,
     _android_size_bytes: Math.max(0, Math.round(input.sizeBytes)),
     _android_min_os: input.minOs.trim() || "Android 7.0+",
     _android_sha256: normalizeSha256(input.sha256),
