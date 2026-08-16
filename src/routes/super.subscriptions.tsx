@@ -85,7 +85,13 @@ function SuperSubscriptions() {
     // Flip lapsed tenants to "expired" before reading — retention is unaffected.
     await supabase.rpc("expire_stale_subscriptions");
     const [{ data, error }, reqs, adjs] = await Promise.all([
-      supabase.from("ecosystems").select("*").order("created_at", { ascending: false }),
+      // Legacy shops only — Subscription Shops have their own console area.
+      supabase
+        .from("ecosystems")
+        .select("*")
+        .eq("shop_kind", "legacy")
+        .order("created_at", { ascending: false }),
+
       fetchAllRequests().catch(() => [] as SubscriptionRequest[]),
       fetchAdjustments().catch(() => [] as SubscriptionAdjustment[]),
     ]);
