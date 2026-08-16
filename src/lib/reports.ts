@@ -272,6 +272,8 @@ export interface CreditFlowSummary {
   withdrawalHeld: number;
   /** Held credits returned after a rejected/cancelled withdrawal. */
   withdrawalReturned: number;
+  /** Held credits handed to the shop admin by a shop cash out (stay in the shop). */
+  adminCashoutSettled: number;
   /** Existing credits moved between wallets at face value (no earnings). */
   transferred: number;
   transferCount: number;
@@ -310,6 +312,7 @@ export function summariseCreditFlow(entries: CreditEntry[]): CreditFlowSummary {
     cashInCount: 0,
     withdrawalHeld: 0,
     withdrawalReturned: 0,
+    adminCashoutSettled: 0,
     transferred: 0,
     transferCount: 0,
     spentOnVouchers: 0,
