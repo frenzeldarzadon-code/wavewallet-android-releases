@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
+import { SubscriptionPlansCard } from "@/components/super/subscription-plans-card";
 import { peso, shortDate } from "@/lib/wavewallet";
 import {
   activateSubscription,
@@ -180,6 +181,8 @@ function SuperShops() {
           </div>
         )}
       </PageSection>
+
+      <SubscriptionPlansCard onSaved={() => void load()} />
 
       <ActivateDialog
         shop={target}
