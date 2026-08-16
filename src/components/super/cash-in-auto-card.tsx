@@ -124,16 +124,31 @@ export function CashInAutoCard() {
         <div className="rounded-lg border border-border p-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <Label htmlFor="auto-listener">Also require a listener phone to confirm the payment</Label>
+              <Label htmlFor="auto-listener">First layer — a listener phone must confirm the payment</Label>
               <p className="text-xs text-muted-foreground">
-                When this is on, a cash in is only settled automatically if a paired listener phone also saw a
-                matching GCash notification. Leave it off until the companion phone has been set up and tested —
-                otherwise nothing would be approved automatically.
+                A cash in is only settled automatically if a paired phone that monitors that shop's own receiving
+                GCash account saw a matching notification. A notification seen on a different receiving account
+                can never settle this shop's request, even when two shops share the same number.
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Paired phones ready: {listenerProven} of {listenerActive} active ·{" "}
                 {status.listener_matches_30d ?? 0} confirmed payments in the last 30 days
               </p>
+              {(status.listener_devices_unscoped ?? 0) > 0 ? (
+                <p className="mt-1 text-xs text-destructive">
+                  {status.listener_devices_unscoped} paired phone(s) have no receiving GCash account set — they
+                  will never match anything until you set one.
+                </p>
+              ) : null}
+              {(status.shared_numbers ?? []).length > 0 ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Shared receiving numbers:{" "}
+                  {(status.shared_numbers ?? [])
+                    .map((s) => `${s.number} (${s.shops} shops)`)
+                    .join(", ")}{" "}
+                  — matching stays per shop, and anything ambiguous goes to manual review.
+                </p>
+              ) : null}
               {!listenerReady ? (
                 <p className="mt-1 text-xs text-muted-foreground">
                   Pair a phone and send one test notification first to unlock this.
@@ -142,12 +157,54 @@ export function CashInAutoCard() {
             </div>
             <Switch
               id="auto-listener"
-              checked={rule.require_listener_match ?? false}
-              disabled={saving || (!listenerReady && !(rule.require_listener_match ?? false))}
+              checked={rule.require_listener_match ?? true}
+              disabled={saving || (!listenerReady && !(rule.require_listener_match ?? true))}
               onCheckedChange={(v) => void save({ ...rule, require_listener_match: v })}
             />
           </div>
         </div>
+
+        <div className="rounded-lg border border-border p-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <Label htmlFor="auto-receipt">Second layer — the reference must match the receipt</Label>
+              <p className="text-xs text-muted-foreground">
+                The reference read from the uploaded screenshot must agree with the reference the member typed. A
+                mismatch always blocks automatic approval; switching this off only relaxes the case where the
+                receipt could not be read at all.
+              </p>
+            </div>
+            <Switch
+              id="auto-receipt"
+              checked={rule.require_receipt_match ?? true}
+              disabled={saving}
+              onCheckedChange={(v) => void save({ ...rule, require_receipt_match: v })}
+            />
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-border p-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <Label htmlFor="auto-active">Verification mode — active settlement</Label>
+              <p className="text-xs text-muted-foreground">
+                Staged runs every check on live payments and records the result, but never settles a request.
+                Turn this on to let matching cash ins settle automatically.
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Currently {(rule.verification_mode ?? "staged") === "active" ? "active" : "staged"} ·{" "}
+                {status.staged_30d ?? 0} request(s) would have been approved while staged in the last 30 days.
+              </p>
+            </div>
+            <Switch
+              id="auto-active"
+              checked={(rule.verification_mode ?? "staged") === "active"}
+              disabled={saving}
+              onCheckedChange={(v) => void save({ ...rule, verification_mode: v ? "active" : "staged" })}
+            />
+          </div>
+        </div>
+
 
         <div className="grid gap-3 sm:grid-cols-3">
           <div>
