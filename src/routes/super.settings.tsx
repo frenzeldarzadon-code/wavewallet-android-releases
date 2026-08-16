@@ -173,6 +173,8 @@ function SuperSettings() {
       <CashInAutoCard />
       <PaymentMethodsCard />
       <CreditSupplyCard />
+      <AppReleaseCard />
+
 
 
       {SOCIAL_ENABLED ? (
