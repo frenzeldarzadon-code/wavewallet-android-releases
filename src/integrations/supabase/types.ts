@@ -5810,6 +5810,14 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      guide_questions_public: {
+        Args: { _limit?: number }
+        Returns: {
+          answer: string
+          id: string
+          question: string
+        }[]
+      }
       handle_available: {
         Args: { _ecosystem_id?: string; _handle: string }
         Returns: boolean
