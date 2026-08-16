@@ -112,7 +112,9 @@ export function ListenerDevicesCard({
         </p>
       </CardHeader>
       <CardContent className="space-y-5">
+        <ListenerAppDownload />
         <div className="grid gap-3 sm:grid-cols-[1fr_1fr_140px_auto] sm:items-end">
+
           <div className="space-y-1.5">
             <Label htmlFor="listener-label">Device name</Label>
             <Input
