@@ -13,6 +13,12 @@ export type ListenerDevice = {
   ecosystem_id: string | null;
   ecosystem_name: string | null;
   package_name: string;
+  /** Platform-owned phone, or a phone paired by a shop admin for their shop. */
+  owner_role?: "platform" | "admin";
+  /** The receiving GCash account this phone monitors. Matching is scoped to it. */
+  receiving_number?: string | null;
+  /** How many shops receive Cash In on that same account. */
+  shops_served?: number;
   match_window_minutes: number;
   offline_after_minutes: number;
   created_at: string;
@@ -25,6 +31,7 @@ export type ListenerDevice = {
   matched_cash_ins: number;
   last_match_at: string | null;
 };
+
 
 export type ListenerEvent = {
   id: string;
