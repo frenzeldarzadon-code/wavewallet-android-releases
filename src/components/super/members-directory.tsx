@@ -248,6 +248,11 @@ export function MembersDirectory() {
         onSaved={() => void load()}
       />
       <AccessAccountDialog target={accessTarget} onClose={() => setAccessTarget(null)} />
+      <PurgeMemberDialog
+        target={purgeTarget}
+        onClose={() => setPurgeTarget(null)}
+        onDeleted={() => void load()}
+      />
       <ManualCreditDialog
         target={
           creditTarget
