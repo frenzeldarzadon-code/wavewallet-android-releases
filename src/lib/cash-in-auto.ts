@@ -106,6 +106,11 @@ export interface MatchableListenerEvent {
   outcome?: string;
   /** The paired phone is active and has checked in recently. */
   device_online?: boolean;
+  /**
+   * The phone that saw this notification monitors the receiving GCash account
+   * this request pays into, and is allowed to serve this shop.
+   */
+  serves_destination?: boolean;
 }
 
 export interface MatchableRequest {
@@ -127,6 +132,7 @@ export interface MatchableRequest {
 
 export type MatchOutcome =
   | "matched"
+  | "staged"
   | "disabled"
   | "not_pending"
   | "no_reference"
@@ -138,6 +144,7 @@ export type MatchOutcome =
   | "no_sender_number"
   | "awaiting_listener"
   | "listener_offline"
+  | "wrong_destination"
   | "number_mismatch"
   | "awaiting_receipt_check"
   | "receipt_reference_mismatch"
@@ -146,6 +153,8 @@ export type MatchOutcome =
 /** Human wording for a matching result, used in the UI and the audit trail. */
 export const MATCH_REASON: Record<MatchOutcome, string> = {
   matched: "A real GCash notification matches this request — approved automatically.",
+  staged:
+    "Every check passed, but verification is staged: nothing was settled and a person still decides.",
   disabled: "Automatic approval is switched off for this shop.",
   not_pending: "This request was already decided.",
   no_reference: "No GCash payment reference number was submitted, so it cannot be matched.",
@@ -158,6 +167,8 @@ export const MATCH_REASON: Record<MatchOutcome, string> = {
   no_sender_number: "No sending GCash number was submitted, so the payment cannot be traced.",
   awaiting_listener: "No matching GCash payment has been seen yet — waiting for the notification.",
   listener_offline: "The paired listener phone is offline, so the payment cannot be confirmed.",
+  wrong_destination:
+    "That notification was seen on a different receiving GCash account, so it cannot settle this request.",
   number_mismatch: "The GCash number that sent the money does not match this request.",
   awaiting_receipt_check: "The uploaded receipt has not been read yet.",
   receipt_reference_mismatch: "Reference does not match receipt — held for manual review.",
@@ -168,10 +179,11 @@ export const MATCH_REASON: Record<MatchOutcome, string> = {
  * Would this request be approved automatically? Mirrors the database.
  *
  * The sending GCash number and the exact amount are the primary criteria and
- * must match a real listener notification; the reference is a secondary
- * uniqueness guard; the screenshot is supporting evidence only. The payment may
- * arrive before or after the request, as long as both fall inside the paired
- * device's matching window (checked in the database, not here).
+ * must match a real listener notification seen on the very receiving account
+ * this request pays into; the reference is a secondary uniqueness guard; the
+ * screenshot is supporting evidence only. The payment may arrive before or
+ * after the request, as long as both fall inside the paired device's matching
+ * window (checked in the database, not here).
  */
 export function evaluateMatch(
   request: MatchableRequest,
@@ -197,22 +209,33 @@ export function evaluateMatch(
   const sender = normalizePhMobile(request.sender_number ?? request.payer_number);
   if (!sender) return "no_sender_number";
 
+  // First layer — configurable, on by default.
+  const requireListener = rule.require_listener_match ?? true;
   const event = request.listener_event;
-  if (!event || (event.outcome && event.outcome !== "accepted")) return "awaiting_listener";
-  if (normalizePhMobile(event.sender_number) !== sender) return "number_mismatch";
-  if (Math.abs(Number(event.amount_php) - Number(request.amount_php)) > tolerance) {
-    return "amount_mismatch";
+  if (!event || (event.outcome && event.outcome !== "accepted")) {
+    if (requireListener) return "awaiting_listener";
+  } else {
+    if (normalizePhMobile(event.sender_number) !== sender) return "number_mismatch";
+    if (Math.abs(Number(event.amount_php) - Number(request.amount_php)) > tolerance) {
+      return "amount_mismatch";
+    }
+    if (event.serves_destination === false) return "wrong_destination";
+    if (event.device_online === false) return "listener_offline";
   }
-  if (event.device_online === false) return "listener_offline";
 
-  // Secondary verification: the reference read off the receipt is authoritative
-  // and must agree with what the member typed.
+  // Second layer: the reference read off the receipt. A mismatch always blocks;
+  // whether an unreadable receipt blocks is configurable.
   const receipt = request.receipt_check ?? "pending";
   if (receipt === "mismatch") return "receipt_reference_mismatch";
-  if (receipt === "unreadable" || receipt === "error") return "receipt_unreadable";
-  if (receipt !== "matched") return "awaiting_receipt_check";
+  if (rule.require_receipt_match ?? true) {
+    if (receipt === "unreadable" || receipt === "error") return "receipt_unreadable";
+    if (receipt !== "matched") return "awaiting_receipt_check";
+  }
+
+  if ((rule.verification_mode ?? "active") === "staged") return "staged";
   return "matched";
 }
+
 
 
 /** Wording for the banner on the settings screen. */
