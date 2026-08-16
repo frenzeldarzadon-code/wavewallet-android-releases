@@ -21,6 +21,7 @@ export interface DbEcosystem {
   description: string | null;
   contact_email: string | null;
   contact_phone: string | null;
+  contact_name?: string | null;
   signup_enabled: boolean;
   signup_token: string;
   plan_name: string;

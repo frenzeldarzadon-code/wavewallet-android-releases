@@ -98,6 +98,7 @@ function toEcosystem(row: DbEcosystem): Ecosystem {
     slug: row.slug,
     description: row.description ?? base.description,
     contactEmail: row.contact_email ?? base.contactEmail,
+    contactName: row.contact_name ?? "",
     contactPhone: row.contact_phone ?? base.contactPhone,
     // Configured by the platform owner per ecosystem — never hard-coded.
     facebookPageUrl: row.facebook_page_url ?? "",
