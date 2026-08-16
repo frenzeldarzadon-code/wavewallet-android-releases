@@ -1,46 +1,52 @@
-# Subscription Shops — architecture plan (no code changes yet)
+# Subscription Shops — architecture plan (approved decisions applied, no code changes yet)
 
-## What I verified first
+## What I verified in the current system
 
-- 4 shops exist today (Sagada Wave, DEMO — Preview Shop `is_test`, Lenas Giga Surf, Guesang GigaFlex). All would become **Legacy** shops; none is migrated.
-- Subscription today is a single global plan in `platform_settings` (`plan_name`, `plan_price`, `billing_period`) plus a per-shop `plan_name`/`plan_price`/`current_period_end` and manual GCash requests (`subscription_requests`, `submit_subscription_request`, `review_subscription_request`, `expire_stale_subscriptions`, `subscription_ok`, `my_operational_status`, `require_operational`). There is no plan catalog and no cashflow allocation concept.
-- Freeze already exists per shop (`operations_frozen`, `set_ecosystem_freeze`, `require_operational`) and is enforced server-side — the expiry/freeze requirement reuses this, it does not need a new mechanism.
-- Cash In/Cash Out already supports dual paths (`admin` internal 1:1, `superadmin` with fees) and destination-aware GCash listeners; verification rules are already Super-Admin-only and centralised.
-- Coin/cashback/points/voucher logic is already shop-scoped by `ecosystem_id`, so both shop types can share it unchanged.
-- **Cross-shop transfers exist today and work**: `transfer_credits_between_shops` (5-coin platform fee, transfer-provenance lots), UI in the wallet centre. This directly contradicts spec §5/§25.
+- 4 shops exist today (Sagada Wave, DEMO — Preview Shop `is_test`, Lenas Giga Surf, Guesang GigaFlex). All become **Legacy**; none is migrated.
+- Subscription today = one global plan in `platform_settings` + per-shop `plan_name`/`plan_price`/`current_period_end` with manual GCash requests (`subscription_requests`, `submit_subscription_request`, `review_subscription_request`, `expire_stale_subscriptions`, `subscription_ok`, `my_operational_status`, `require_operational`). No plan catalog, no allocation concept.
+- Per-shop freeze already exists and is enforced server-side (`operations_frozen`, `set_ecosystem_freeze`, `require_operational`) — expiry reuses it.
+- Cash In/Out already has dual paths (`admin` internal 1:1, `superadmin` with fees); listeners are destination-aware; verification rules are already Super-Admin-only and central.
+- Coins/cashback/points/vouchers are already `ecosystem_id`-scoped, so both shop types share them unchanged.
+- Cross-shop transfers exist and work (`transfer_credits_between_shops`, 5-coin fee, transfer-provenance lots) — kept for Legacy, blocked for Subscription per your decision.
 
-## Blocking questions (financial — I will not guess)
+## Final rules I will implement
 
-1. **Cross-shop transfers.** Should `transfer_credits_between_shops` be (a) removed platform-wide for everyone, (b) blocked only when either side is a Subscription Shop (Legacy↔Legacy keeps working), or (c) kept but disabled by a Super Admin switch? Option (a) contradicts the previously approved shop-to-shop feature; (b) is the only choice that satisfies "do not change Legacy behaviour".
-2. **Allocation semantics.** On activation the Admin receives the plan's coins as a platform issuance. Confirm: it is minted **once at activation**, **not re-minted on renewal**, and an upgrade mints only the difference (new allocation − previous allocation, never negative). Renewal therefore buys time, not coins. Correct?
-3. **Is the allocation a cap or a grant?** "Revolving capacity" can mean (i) a one-time mint that then circulates (no ceiling enforced afterwards), or (ii) a hard ceiling on total coins in the shop, enforced on every issuance. Which one? I plan (i) plus a reporting-only capacity indicator unless you say otherwise.
-4. **Proration on upgrade.** Confirm the formula: unused days of the current plan × (old monthly price / days in period) is credited against the new plan's price (money side only, never coins), configurable on/off by Super Admin.
-5. **Demo scope.** Today's demo signs into real sandbox accounts in the DEMO shop. §28–§39 ask for a public, no-login, fully simulated demo plus PWA offline. That is a large separate build. Ship it as Stage 6 after the subscription core, or earlier?
+1. **Cross-shop transfers**: Legacy↔Legacy unchanged. Any transfer where either side is a Subscription Shop is rejected inside `transfer_credits_between_shops` (server-side) and the destination is hidden/disabled in the wallet UI.
+2. **Allocation**: issued **once** at activation. Renewal extends time only, never re-mints. Upgrade mints only `new allocation − previous allocation` (never negative). No cap, no auto-refill; full allocation history kept for reporting.
+3. **Wording**: subscription expense vs one-time cashflow allocation vs circulating coin balances vs business profit, used consistently in plan cards, guide, contextual help. Never "pay ₱50 and get ₱1,000". Starter presented as a legitimate fit for small, low-movement WiFi voucher shops.
+4. **Upgrade proration (deterministic, 30-day month)**: `old daily = old monthly price / 30`; `unused = old daily × exact days remaining`; `first-month amount due = new plan price − unused` (floored at 0). Money only — the existing coin allocation is untouched and the upgrade still adds only the allocation difference. The calculation is shown to the Admin before payment and written to the subscription audit record.
+5. **No Super Admin anywhere public**: removed from the demo role selector and rejected server-side; never shown in the public guide, role selectors, or Q&A answers.
 
 ## Stages
 
-**Stage 0 — Super Admin hidden from demo (safe, immediate).** Remove `super_admin` from `DEMO_ROLES` (`src/lib/demo.ts`) and reject that role server-side in `src/lib/demo.server.ts`.
+**Stage 0 — Super Admin out of the demo selector.** Drop `super_admin` from `DEMO_ROLES` (`src/lib/demo.ts`), from the zod enum in `src/lib/demo.functions.ts`, and reject it in `src/lib/demo.server.ts`.
 
-**Stage 1 — Shop kind.** Add `ecosystems.shop_kind` enum `legacy | subscription`, default `subscription`, and backfill every existing row to `legacy` in the same migration. One column drives every branch below; nothing reads it for Legacy behaviour except to keep it unchanged.
+**Stage 1 — Shop kind.** Add `ecosystems.shop_kind` enum (`legacy` | `subscription`), default `subscription`, backfill all existing rows to `legacy` in the same migration. This single column gates every new rule.
 
-**Stage 2 — Plan catalog (configurable, never hard-coded).** New `subscription_plans` table: name, description, target business type, monthly price, coin allocation, billing period, recommended flag, active flag, display order. Seeded with Starter/Basic/Standard/Advanced/Large Deployment at the stated prices and allocations. Super Admin CRUD via SECURITY DEFINER RPCs + a new plans card in Super Admin settings. GRANTs + RLS: `anon`/`authenticated` read active plans only; writes Super Admin only.
+**Stage 2 — Plan catalog.** New `subscription_plans` table (name, description, WiFi-voucher use case, target business size, reseller suitability, upgrade guidance, monthly price, coin allocation, billing period, recommended, active, display order) + Super-Admin-only CRUD RPCs and a Super Admin plans card. Seeded: Starter ₱50/1,000, Basic ₱100/2,500, Standard ₱150/5,000, Advanced ₱200/10,000, Large Deployment configurable/500,000. GRANTs: active plans readable by `anon` and `authenticated`; writes Super Admin only.
 
-**Stage 3 — Subscription lifecycle + payments.** New `shop_subscriptions` (current plan, state ACTIVE/EXPIRING_SOON/EXPIRED/FROZEN/REACTIVATED/CLOSED, period start/end) and `subscription_events` audit table capturing shop, previous/new plan, amount, allocation, additional allocation, proration, payment reference, verification status, dates, transaction id, actor. Subscription payments are recorded as `SUBSCRIPTION_PAYMENT` — a separate record type that never touches a member wallet, never creates a Cash In/Out and never becomes a coin transfer. Verified payment → activate/renew/upgrade + apply allocation rules. Allocation is written to the credit ledger as a distinct `subscription_allocation` entry kind (non-earning, no cashback, no points), reusing the existing platform-issuance path so provenance stays intact. No manual "Add Cashflow" exists for Subscription Shops.
+**Stage 3 — Subscription lifecycle + payments.** New `shop_subscriptions` (plan, state ACTIVE / EXPIRING_SOON / EXPIRED / FROZEN / REACTIVATED / CLOSED / IN_REVIEW, period start/end, review-period end) and `subscription_events` audit (shop, previous/new plan, amount, allocation, additional allocation, proration inputs and result, payment reference, verification status, dates, transaction id, actor). Subscription payments are recorded as `SUBSCRIPTION_PAYMENT` — never a wallet credit, Cash In, Cash Out or coin transfer. Allocation posts to the credit ledger as a distinct non-earning `subscription_allocation` entry kind (no cashback, no points) via the existing platform-issuance path. No manual "Add Cashflow" for Subscription Shops.
 
-**Stage 4 — Enforcement (server-side, not UI).** Expiry job flips EXPIRED and sets `operations_frozen` via the existing freeze mechanism, so every money RPC already refuses. 7-day banner driven by `current_period_end`. Cross-shop transfer guard per the answer to question 1. `superadmin` cash-out path rejected for Subscription Shops in `request_withdrawal`/settlement, plus hidden in UI. Members and their other shop memberships are never touched by freeze, expiry or purge.
+**Stage 4 — Enforcement (server-side, not just UI).** Expiry job sets EXPIRED and flips the existing `operations_frozen`, so every money RPC already refuses. 7-day renewal reminder from `current_period_end`, cleared by a verified payment. Cross-shop guard from rule 1. `superadmin` cash-out path rejected for Subscription Shops in `request_withdrawal`/settlement and hidden in UI. Freeze/expiry/purge never touch the member's global account or other memberships. No backdated entries for frozen periods.
 
-**Stage 5 — Super Admin UI split.** Two areas: Legacy Shops (today's screens, untouched) and Subscription Shops (plan, state, period, allocation history, payment matching). Admin-facing plan selection and "+ Add another shop" with the business explanations (who it's for, capacity provided, when to upgrade), plus the cashflow-vs-expense-vs-profit wording.
+**Stage 5 — Public Guide page (`/guide`, no login).** Shareable, SEO- and OG-tagged landing page explaining the whole ecosystem: WiFi vouchers, Coins, revolving cashflow, plan comparison with who-each-plan-is-for, Admin/Reseller/Subreseller/Customer roles, cashback examples (100 coins → 5/2; 500 coins → 25/10), points (10 Coins = 1 Point → 10 points on a 100-coin purchase), Cash In/Out, shop isolation, digital-vs-printed-voucher comparison (stated as reduced reconciliation and receivable exposure, not eliminated risk), FAQ, and an "Ask a question" form. New `guide_questions` table: anyone may submit (rate-limited, no PII required beyond an optional contact), only Super Admin may answer, answers render in a distinct box labelled "Answered by WaveWallet Support" with no identity exposed. Only answered/approved questions are publicly readable.
 
-**Stage 6 — Public demo + PWA** (pending answer to question 5): guest-only simulated data, four roles, coin-flow/cashback/points education, reset/exit, service worker caching the demo shell; real money paths never available offline.
+**Stage 6 — Real 5-day review shop.** "Create your shop" from the guide creates a real Subscription Shop with the creator as Admin (never Super Admin), state IN_REVIEW with a 5-day end date and a visible countdown. Full Admin/Reseller/Subreseller/Customer workflows are available for evaluation; sample/simulated transactions are labelled as such and never touch real GCash. At day 5 the shop's financial operations freeze with a clear "subscription required to continue" screen — never a silent conversion to paid. Contextual "(i)" help on relevant screens plus a global Show/Hide Guide toggle (persisted per user; hiding never disables the help system).
 
-## Isolation strategy for shared code
+## Isolation strategy
 
-Wallets, ledger, vouchers, cashback, points, reseller hierarchy, GCash listener and verification stay exactly as they are. Every new rule is expressed as an extra guard keyed on `shop_kind = 'subscription'`; no existing branch is rewritten. Legacy shops take the identical code path they take today.
+Wallets, ledger, vouchers, cashback, points, discounts, reseller hierarchy, GCash listener and verification are untouched. Every new rule is an added guard keyed on `shop_kind = 'subscription'`; no existing branch is rewritten, so Legacy shops take today's exact code path.
 
 ## Migration safety
 
-Additive only: new tables, one new column with a backfill, new RPCs. No drops, no data deletion, no rewriting of existing ledger rows. Existing `subscription_requests` stays as the Legacy path; Subscription Shops use the new tables.
+Additive only: new tables, one new column with backfill, new RPCs. No drops, no deletions, no rewrite of existing ledger rows. `subscription_requests` remains the Legacy path.
+
+## Remaining concerns (flagging, not blocking)
+
+- **Review-shop abuse**: a real shop per visitor invites spam and duplicate shops. I intend to require a signed-in WaveWallet account, one review shop per member, and Super Admin visibility of all review shops. Say if you want a different limit.
+- **"Simulated" inside a real shop**: to avoid two economies, review shops use the real coin engine with a modest review allocation and no real GCash paths; the coins are real inside that shop and remain if the owner subscribes. Confirm that is acceptable rather than a throwaway sandbox.
+- **PWA/offline** from the earlier spec is not in these stages; the public guide will be cacheable, but real financial actions stay online-only. Tell me if PWA install should be added as Stage 7.
 
 ## Tests before publish
 
-Legacy regression (voucher purchase, coin transfer, cashback, points, cash in/out, listener, ledger) plus new coverage for plan CRUD, activation allocation, upgrade difference and proration, renewal without re-mint, expiry → freeze → renewal, cross-shop rejection, Super-Admin-cashout rejection for subscription shops, and member-universe preservation after freeze/purge. Full report delivered before any publish.
+Legacy regression (voucher purchase, coin transfer, cashback, points, cash in/out, listener, ledger, cross-shop transfer still works) plus new coverage: plan CRUD, activation allocation once, renewal without re-mint, upgrade difference, proration arithmetic, expiry → freeze → renewal, cross-shop rejection for subscription shops, Super-Admin-cashout rejection, review-shop expiry, guide question permissions, and member-universe preservation after freeze/purge. Full written report before any publish.
