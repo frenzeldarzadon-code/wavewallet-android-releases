@@ -16,5 +16,6 @@ export const DEMO_ROLES = [
   { role: "reseller" as const, label: "Reseller", hint: "Load coins, redemptions, earnings" },
   { role: "subreseller" as const, label: "Subreseller", hint: "Discounted vouchers, sale credit-back" },
   { role: "admin" as const, label: "Admin", hint: "Shop, vouchers, rewards, members" },
-  { role: "super_admin" as const, label: "Super Admin", hint: "All ecosystems overview" },
+  // Super Admin is the private platform-owner account and is never offered publicly.
+
 ];
