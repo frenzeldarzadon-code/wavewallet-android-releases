@@ -1,0 +1,1 @@
+UPDATE public.app_release SET android_download_url='https://github.com/frenzeldarzadon-code/wavewallet-android-releases/releases/latest/download/app-release.apk', android_size_bytes=2793501, android_sha256='b1681eb16b011f94ac4240b92151a705a9cb0c7801fadbbd47bea753c24da640', android_enabled=true, android_version='1.0.0' WHERE id=1;
