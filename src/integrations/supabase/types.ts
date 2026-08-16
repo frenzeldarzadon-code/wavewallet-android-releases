@@ -5015,6 +5015,33 @@ export type Database = {
     }
     Functions: {
       acting_as: { Args: never; Returns: string }
+      activate_subscription: {
+        Args: {
+          _amount_php?: number
+          _ecosystem_id: string
+          _months?: number
+          _plan_id: string
+          _reference?: string
+        }
+        Returns: {
+          allocation_total: number
+          created_at: string
+          demo_seed_credits: number
+          ecosystem_id: string
+          period_end: string | null
+          period_start: string | null
+          plan_id: string | null
+          review_ends_at: string | null
+          state: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "shop_subscriptions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       active_ecosystem: { Args: { _user_id: string }; Returns: string }
       adjust_ecosystem_expiration: {
         Args: {
@@ -5109,6 +5136,10 @@ export type Database = {
         Returns: Json
       }
       admin_voucher_discount_percent: { Args: never; Returns: number }
+      answer_guide_question: {
+        Args: { _answer: string; _id: string; _publish?: boolean }
+        Returns: undefined
+      }
       apply_cash_in_receipt_ocr: {
         Args: {
           _amount?: number
@@ -5390,6 +5421,71 @@ export type Database = {
           _signup_enabled?: boolean
           _slug?: string
         }
+        Returns: {
+          admin_assigned_at: string | null
+          admin_assigned_by: string | null
+          admin_sale_commission_percent: number
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          cash_in_gcash_number: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          credits_per_point: number
+          current_period_end: string | null
+          default_commission_percent: number
+          default_reseller_discount_percent: number
+          default_sale_commission_percent: number
+          default_subreseller_discount_percent: number
+          default_subreseller_sale_commission_percent: number
+          default_upline_commission_percent: number
+          description: string | null
+          facebook_page_name: string | null
+          facebook_page_url: string | null
+          frozen_at: string | null
+          frozen_by: string | null
+          frozen_reason: string | null
+          grace_period_days: number
+          id: string
+          is_review: boolean
+          is_test: boolean
+          last_activity_at: string | null
+          name: string
+          operations_frozen: boolean
+          payment_reference: string | null
+          plan_name: string
+          plan_price: number
+          points_rule_updated_at: string
+          points_rule_version: number
+          public_storefront_enabled: boolean
+          retail_cash_enabled: boolean
+          retail_credit_enabled: boolean
+          retail_delivery_enabled: boolean
+          retail_pickup_enabled: boolean
+          review_ends_at: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shop_kind: string
+          signup_enabled: boolean
+          signup_token: string
+          slug: string
+          store_retail_enabled: boolean
+          store_voucher_enabled: boolean
+          submitted_at: string | null
+          subscription_state: Database["public"]["Enums"]["subscription_state"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ecosystems"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_review_shop: {
+        Args: { _description?: string; _name: string }
         Returns: {
           admin_assigned_at: string | null
           admin_assigned_by: string | null
@@ -7076,6 +7172,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      run_subscription_expiry: {
+        Args: { _dry?: boolean }
+        Returns: {
+          expired: number
+          reviews_frozen: number
+          warned: number
+        }[]
+      }
       sale_commission_rate_for: {
         Args: { _recipient: string }
         Returns: number
@@ -7856,6 +7960,10 @@ export type Database = {
         Args: { _reason?: string; _target: string }
         Returns: string
       }
+      submit_guide_question: {
+        Args: { _contact?: string; _question: string }
+        Returns: string
+      }
       submit_subscription_request: {
         Args: {
           _amount_paid?: number
@@ -7898,6 +8006,24 @@ export type Database = {
         }
       }
       subscription_ok: { Args: { _ecosystem_id: string }; Returns: boolean }
+      subscription_quote: {
+        Args: { _ecosystem_id: string; _plan_id: string }
+        Returns: {
+          additional_allocation: number
+          amount_due: number
+          current_allocation: number
+          current_monthly_price: number
+          current_plan_id: string
+          current_plan_name: string
+          daily_value: number
+          days_remaining: number
+          is_first_activation: boolean
+          new_allocation: number
+          new_monthly_price: number
+          new_plan_name: string
+          unused_value: number
+        }[]
+      }
       super_admin_bootstrap_available: { Args: never; Returns: boolean }
       super_list_members: {
         Args: {
