@@ -236,8 +236,8 @@ describe("admin cash in capacity", () => {
 
   it("grosses the peso ceiling up when a cash in fee is configured", () => {
     const settings = { ...MONEY_SETTINGS_FALLBACK, cashInFeePercent: 10 };
-    // 700 credits arrive after a 10% fee, so ~777.77 pesos may be paid.
-    expect(maxAdminCashInPhp(cap(700), settings)).toBeCloseTo(777.77, 2);
+    // 700 credits arrive after a 10% fee, so ~777.78 pesos may be paid.
+    expect(maxAdminCashInPhp(cap(700), settings)).toBeCloseTo(777.78, 2);
   });
 
   it("labels the funding source and cash out path for members", () => {
