@@ -11,7 +11,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const deletePlatformUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { userId: string; reason?: string }) => {
+  .inputValidator((input: { userId: string; reason?: string; override?: boolean }) => {
     if (!input?.userId) throw new Error("A member is required");
     return input;
   })
@@ -24,10 +24,12 @@ export const deletePlatformUser = createServerFn({ method: "POST" })
     if (roleError) throw new Error(roleError.message);
     if (!isOwner) throw new Error("Only the platform owner can delete a platform account");
 
-    // Blocks on any non-zero balance or outstanding money movement.
+    // Blocks on any non-zero balance or outstanding money movement. With
+    // `override` the owner additionally waives the non-financial rules.
     const { error } = await supabase.rpc("superadmin_delete_platform_user", {
       _user: data.userId,
       ...(data.reason ? { _reason: data.reason } : {}),
+      ...(data.override ? { _override: true } : {}),
     });
     if (error) throw new Error(error.message);
 

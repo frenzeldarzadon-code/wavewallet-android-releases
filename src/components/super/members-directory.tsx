@@ -6,7 +6,7 @@
  * Credit — reachable per row. Both actions keep their existing server-side
  * authorization; this screen is only a launcher.
  */
-import { Coins, KeyRound, Percent, Search, UserCog } from "lucide-react";
+import { Coins, KeyRound, Percent, Search, Trash2, UserCog } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,7 @@ import { AccessAccountDialog, type AccessTarget } from "@/components/access-acco
 import { ManualCreditDialog } from "@/components/super/manual-credit-dialog";
 import { CashbackRateDialog, type CashbackTarget } from "@/components/cashback-rate-dialog";
 import { MemberAccountDialog } from "@/components/super/member-account-dialog";
+import { PurgeMemberDialog, type PurgeTarget } from "@/components/super/purge-member-dialog";
 import { fetchEcosystemNames } from "@/lib/credit-management";
 import {
   DIRECTORY_ROLES,
@@ -50,6 +51,7 @@ export function MembersDirectory() {
   const [creditTarget, setCreditTarget] = useState<PlatformMember | null>(null);
   const [accountTarget, setAccountTarget] = useState<PlatformMember | null>(null);
   const [rateTarget, setRateTarget] = useState<CashbackTarget | null>(null);
+  const [purgeTarget, setPurgeTarget] = useState<PurgeTarget | null>(null);
 
   useEffect(() => {
     void fetchEcosystemNames().then(setShops).catch(() => undefined);
@@ -219,6 +221,14 @@ export function MembersDirectory() {
                         <KeyRound className="size-4" /> Access account
                       </Button>
                     ) : null}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-9 text-destructive"
+                      onClick={() => setPurgeTarget({ id: m.id, name: m.full_name })}
+                    >
+                      <Trash2 className="size-4" /> Delete
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -238,6 +248,11 @@ export function MembersDirectory() {
         onSaved={() => void load()}
       />
       <AccessAccountDialog target={accessTarget} onClose={() => setAccessTarget(null)} />
+      <PurgeMemberDialog
+        target={purgeTarget}
+        onClose={() => setPurgeTarget(null)}
+        onDeleted={() => void load()}
+      />
       <ManualCreditDialog
         target={
           creditTarget

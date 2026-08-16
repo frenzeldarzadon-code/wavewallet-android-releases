@@ -6,7 +6,7 @@
  * membership and leaves the person's global Universe identity untouched.
  */
 import { useEffect, useState } from "react";
-import { Loader2, Search, ShieldAlert, Store, Trash2, UserPlus } from "lucide-react";
+import { Loader2, Search, Store, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,13 +30,10 @@ import {
 import { MemberAvatar } from "@/components/member-avatar";
 import { EmptyState } from "@/components/ui-kit";
 import { displayHandle } from "@/lib/profile";
-import { deletePlatformUser } from "@/lib/platform-users.functions";
+import { PurgeMemberDialog } from "@/components/super/purge-member-dialog";
 import {
   assignMemberToShop,
-  deletionSummary,
-  fetchDeletionCheck,
   fetchUnassignedUsers,
-  type DeletionCheck,
   type UnassignedUser,
 } from "@/lib/platform-users";
 
@@ -51,9 +48,6 @@ export function UniverseUsersCard({
   const [assignTo, setAssignTo] = useState<UnassignedUser | null>(null);
   const [shopId, setShopId] = useState("");
   const [removing, setRemoving] = useState<UnassignedUser | null>(null);
-  const [check, setCheck] = useState<DeletionCheck | null>(null);
-  const [checkError, setCheckError] = useState<string | null>(null);
-  const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
 
   const load = (q?: string) => {
@@ -69,22 +63,6 @@ export function UniverseUsersCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const openRemove = async (u: UnassignedUser) => {
-    setRemoving(u);
-    setCheck(null);
-    setCheckError(null);
-    setReason("");
-    try {
-      setCheck(await fetchDeletionCheck(u.user_id));
-    } catch (e) {
-      // Never leave the dialog spinning: show the reason inline and in a toast.
-      setCheckError("We couldn't complete the safety check. No changes were made.");
-      toast.error("Could not check that account", {
-        description: "We couldn't complete the safety check. No changes were made.",
-      });
-    }
-  };
-
   const confirmAssign = async () => {
     if (!assignTo || !shopId) return;
     setBusy(true);
@@ -96,29 +74,6 @@ export function UniverseUsersCard({
       await load();
     } catch (e) {
       toast.error("Could not add them", { description: (e as Error).message });
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const confirmRemove = async () => {
-    if (!removing) return;
-    setBusy(true);
-    try {
-      const result = await deletePlatformUser({
-        data: { userId: removing.user_id, ...(reason.trim() ? { reason: reason.trim() } : {}) },
-      });
-      toast.success("Account removed", {
-        description: result.loginReleased
-          ? "Financial history is kept. They can sign up again with the same email or mobile."
-          : `History kept, but the login could not be released: ${result.message}`,
-      });
-      setRemoving(null);
-      await load();
-    } catch (e) {
-      toast.error("Could not remove that account", {
-        description: (e as Error).message || "No changes were made.",
-      });
     } finally {
       setBusy(false);
     }
@@ -188,7 +143,7 @@ export function UniverseUsersCard({
                     size="sm"
                     variant="outline"
                     className="gap-1.5 text-destructive"
-                    onClick={() => void openRemove(u)}
+                    onClick={() => setRemoving(u)}
                   >
                     <Trash2 className="size-4" />
                   </Button>
@@ -235,78 +190,11 @@ export function UniverseUsersCard({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={removing !== null} onOpenChange={(o) => !o && setRemoving(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Remove {removing?.full_name}?</DialogTitle>
-            <DialogDescription>
-              Financial records stay intact and anonymised. The login is released so the same email
-              or mobile can be used to sign up again later.
-            </DialogDescription>
-          </DialogHeader>
-          {checkError ? (
-            <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm">
-              <p className="flex items-center gap-2 font-medium">
-                <ShieldAlert className="size-4" /> The safety check failed
-              </p>
-              <p className="mt-1">{checkError}</p>
-              <Button
-                size="sm"
-                variant="outline"
-                className="mt-2"
-                onClick={() => removing && void openRemove(removing)}
-              >
-                Try again
-              </Button>
-            </div>
-          ) : !check ? (
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" /> Checking balances…
-            </p>
-          ) : (
-            <div
-              className={`rounded-lg border p-3 text-sm ${
-                check.eligible
-                  ? "border-success/40 bg-success/10"
-                  : "border-destructive/40 bg-destructive/10"
-              }`}
-            >
-              <p className="flex items-center gap-2 font-medium">
-                <ShieldAlert className="size-4" />
-                {check.eligible ? "Safe to remove" : "Cannot be removed"}
-              </p>
-              <p className="mt-1">{deletionSummary(check)}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Credits {check.credit_total} · Points {check.points_total} · Paid social credits{" "}
-                {check.social_purchased}
-              </p>
-            </div>
-          )}
-          <div className="space-y-2">
-            <Label htmlFor="remove-reason">Reason (kept in the audit log)</Label>
-            <Input
-              id="remove-reason"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="Optional"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRemoving(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={!check?.eligible || busy}
-              onClick={() => void confirmRemove()}
-              className="gap-1.5"
-            >
-              {busy ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-              Remove account
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <PurgeMemberDialog
+        target={removing ? { id: removing.user_id, name: removing.full_name } : null}
+        onClose={() => setRemoving(null)}
+        onDeleted={() => void load()}
+      />
     </Card>
   );
 }
