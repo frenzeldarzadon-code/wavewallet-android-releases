@@ -34,7 +34,7 @@ import {
 } from "@/components/guide-body";
 import { supabase } from "@/integrations/supabase/client";
 import { loadGuide } from "@/lib/guide.functions";
-import logo from "@/assets/wavewallet-logo.png";
+import logo from "@/assets/wavewallet-logo.webp";
 import hero from "@/assets/guide-hero.jpg";
 
 const SITE = "https://wallet.sagadawave.com";

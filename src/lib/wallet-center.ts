@@ -9,6 +9,7 @@
  * relationship before moving a single credit. The helpers below simply keep
  * the UI honest so the button state matches what the database would accept.
  */
+import { requireOnline } from "@/lib/offline-guard";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchMyMemberships } from "@/lib/memberships";
 import { fetchMyShopWallets } from "@/lib/shop-transfers";
@@ -124,6 +125,7 @@ export async function transferInShop(input: {
   amount: number;
   note?: string;
 }): Promise<string> {
+  requireOnline();
   const { data, error } = await supabase.rpc("transfer_credits_in_shop", {
     _ecosystem_id: input.ecosystemId,
     _recipient_id: input.recipientId,

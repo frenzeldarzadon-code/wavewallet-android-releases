@@ -17,6 +17,7 @@
  * The pure helpers below exist so the numbers shown to a member before they
  * submit match, to the centavo, what the database will snapshot.
  */
+import { requireOnline } from "@/lib/offline-guard";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizePaymentReference, normalizePhMobile } from "@/lib/cash-in-auto";
 import type { Database } from "@/integrations/supabase/types";
@@ -332,6 +333,7 @@ export async function requestWithdrawal(input: {
   requestKey: string;
   path?: CashOutPath;
 }): Promise<WithdrawalRequest> {
+  requireOnline();
   const { data, error } = await supabase.rpc("request_withdrawal", rpcArgs({
     _credits: input.credits,
     _payment_mode: input.mode,
@@ -351,6 +353,7 @@ export async function reviewAdminCashout(
   action: "approve" | "reject",
   reason?: string | null,
 ): Promise<void> {
+  requireOnline();
   const { error } = await supabase.rpc("review_admin_cashout", rpcArgs({
     _id: id,
     _action: action,
@@ -360,6 +363,7 @@ export async function reviewAdminCashout(
 }
 
 export async function cancelWithdrawal(id: string): Promise<void> {
+  requireOnline();
   const { error } = await supabase.rpc("cancel_withdrawal", rpcArgs({ _id: id }));
   if (error) throw new Error(error.message);
 }
@@ -369,6 +373,7 @@ export async function reviewWithdrawal(
   action: "approve" | "reject" | "release",
   reason?: string | null,
 ): Promise<void> {
+  requireOnline();
   const { error } = await supabase.rpc("review_withdrawal", rpcArgs({
     _id: id,
     _action: action,
@@ -497,6 +502,7 @@ export async function requestCashIn(input: {
   requestKey: string;
   funding?: CashInFunding;
 }): Promise<CashInRequest> {
+  requireOnline();
   const { data, error } = await supabase.rpc("request_cash_in", rpcArgs({
     _method_id: input.methodId,
     _amount_php: input.amountPhp,
@@ -517,6 +523,7 @@ export async function reviewAdminCashIn(
   action: "approve" | "reject",
   reason?: string | null,
 ): Promise<void> {
+  requireOnline();
   const { error } = await supabase.rpc("review_admin_cash_in", rpcArgs({
     _id: id,
     _action: action,
@@ -583,6 +590,7 @@ export function cashInOutcomeMessage(
 
 
 export async function cancelCashIn(id: string): Promise<void> {
+  requireOnline();
   const { error } = await supabase.rpc("cancel_cash_in", rpcArgs({ _id: id }));
   if (error) throw new Error(error.message);
 }
@@ -624,6 +632,7 @@ export async function reviewCashIn(
   action: "approve" | "reject",
   reason?: string | null,
 ): Promise<void> {
+  requireOnline();
   const { error } = await supabase.rpc("review_cash_in", rpcArgs({ _id: id, _action: action, _reason: reason ?? undefined }));
   if (error) throw new Error(cashInDecisionError(error.message));
 }

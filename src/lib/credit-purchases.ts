@@ -11,6 +11,7 @@
  * design. The order status field is the abstraction an official payment API
  * would later drive, without touching the credit ledger logic.
  */
+import { requireOnline } from "@/lib/offline-guard";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -189,6 +190,7 @@ export async function createCreditPurchaseOrder(input: {
   paymentReference: string;
   note?: string;
 }): Promise<CreditPurchaseOrder> {
+  requireOnline();
   return unwrap(
     await supabase.rpc("create_credit_purchase_order", {
       _package_id: input.packageId,
@@ -204,6 +206,7 @@ export async function reviewCreditPurchaseOrder(
   approve: boolean,
   reason?: string,
 ): Promise<void> {
+  requireOnline();
   const { error } = await supabase.rpc("review_credit_purchase_order", {
     _order_id: orderId,
     _approve: approve,
@@ -216,6 +219,7 @@ export async function freezeCreditPurchaseOrder(
   orderId: string,
   reason: string,
 ): Promise<void> {
+  requireOnline();
   const { error } = await supabase.rpc("freeze_credit_purchase_order", {
     _order_id: orderId,
     _reason: reason,

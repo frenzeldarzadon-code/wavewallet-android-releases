@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { OfflineBanner } from "@/components/offline-banner";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { registerAppServiceWorker } from "@/lib/sw-register";
 
 function NotFoundComponent() {
   return (
@@ -144,6 +145,11 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  // Caches the app shell and branding only — never authenticated or money data.
+  useEffect(() => {
+    registerAppServiceWorker();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

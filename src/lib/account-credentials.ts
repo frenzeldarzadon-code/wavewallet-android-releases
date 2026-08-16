@@ -5,6 +5,7 @@
  * module. Passwords live only inside the authentication provider as salted
  * hashes; the only supported operation is *setting* a new one.
  */
+import { requireOnline } from "@/lib/offline-guard";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeHandle } from "@/lib/profile";
 import { newPasswordIssue } from "@/lib/password-policy";
@@ -64,6 +65,7 @@ export async function changeOwnPassword(
   newPassword: string,
   confirm: string,
 ): Promise<void> {
+  requireOnline();
   const problem = newPasswordIssue(newPassword, confirm);
   if (problem) throw new Error(problem);
   const { data: userData } = await supabase.auth.getUser();

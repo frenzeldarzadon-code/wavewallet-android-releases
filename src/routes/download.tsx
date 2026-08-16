@@ -6,8 +6,10 @@
  * No wallet, Coin, ledger or account action can be reached from here.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { QRCodeSVG } from "qrcode.react";
+import { Suspense, lazy, useEffect, useState } from "react";
+
+const QRCodeSVG = lazy(() => import("qrcode.react").then((m) => ({ default: m.QRCodeSVG })));
+
 import {
   Apple,
   CheckCircle2,
@@ -27,7 +29,7 @@ import {
   recordAppDownload,
   type AppRelease,
 } from "@/lib/app-release";
-import logo from "@/assets/wavewallet-logo.png";
+import logo from "@/assets/wavewallet-logo.webp";
 
 const SITE = "https://wallet.sagadawave.com";
 const URL = `${SITE}/download`;
@@ -166,7 +168,9 @@ function DownloadPage() {
         <Card className="mt-4 shadow-[var(--shadow-card)]">
           <CardContent className="flex flex-col items-center gap-4 px-5 py-5 sm:flex-row">
             <div className="rounded-xl bg-white p-3">
-              <QRCodeSVG value={URL} size={116} />
+              <Suspense fallback={<div className="size-[116px]" />}>
+                <QRCodeSVG value={URL} size={116} />
+              </Suspense>
             </div>
             <div>
               <h3 className="text-sm font-semibold tracking-tight">On a computer?</h3>

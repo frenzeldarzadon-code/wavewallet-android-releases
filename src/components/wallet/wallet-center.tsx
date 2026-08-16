@@ -15,6 +15,7 @@
  *
  * Nothing here is an authorization layer: the database re-checks every rule.
  */
+import { useOnline } from "@/lib/pwa";
 import {
   Gift,
   Info,
@@ -98,6 +99,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
   const [note, setNote] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
+  const online = useOnline();
 
   const loadShops = useCallback(async () => {
     const list = await fetchWalletShops();
@@ -456,7 +458,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
 
                   <Button
                     className="h-11 w-full"
-                    disabled={!!problem}
+                    disabled={!!problem || !online}
                     onClick={() => setConfirming(true)}
                   >
                     <Send className="size-4" /> Review transfer

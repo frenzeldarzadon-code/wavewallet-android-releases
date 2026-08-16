@@ -1,3 +1,4 @@
+import { useOnline } from "@/lib/pwa";
 import { createFileRoute } from "@tanstack/react-router";
 import { Sparkles, Ticket } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -72,6 +73,7 @@ export function VoucherShopView({
   const [buying, setBuying] = useState<{ product: ShopProduct; method: Method } | null>(null);
   const [qty, setQty] = useState(1);
   const [busy, setBusy] = useState(false);
+  const online = useOnline();
   const [issued, setIssued] = useState<{
     codes: string[];
     tx: string;
@@ -354,7 +356,7 @@ export function VoucherShopView({
             </Button>
             <Button
               onClick={() => void confirm()}
-              disabled={busy || (buying?.method === "credits" && (total > balance || qty > maxQty))}
+              disabled={busy || !online || (buying?.method === "credits" && (total > balance || qty > maxQty))}
             >
               {busy ? "Issuing…" : "Confirm purchase"}
             </Button>

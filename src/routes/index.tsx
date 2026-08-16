@@ -18,7 +18,7 @@ import {
 import { isRealEmail, validateGlobalSignup } from "@/lib/account-identifiers";
 import { newPasswordIssue } from "@/lib/password-policy";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/wavewallet-logo.png";
+import logo from "@/assets/wavewallet-logo.webp";
 import { DEMO_ECOSYSTEM_SLUG, DEMO_ROLES, isPreviewEnvironment } from "@/lib/demo";
 import { startDemoSession } from "@/lib/demo.functions";
 import { platformSettings } from "@/lib/wavewallet";

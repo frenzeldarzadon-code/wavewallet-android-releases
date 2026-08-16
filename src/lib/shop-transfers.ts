@@ -13,6 +13,7 @@
  *    100% retained share (resellers and subresellers earn 0), because the
  *    received credits are recorded as a `transfer` provenance lot.
  */
+import { requireOnline } from "@/lib/offline-guard";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ShopWallet {
@@ -100,6 +101,7 @@ export async function transferBetweenShops(input: {
   amount: number;
   note?: string;
 }): Promise<{ txId: string; fee: number; net: number }> {
+  requireOnline();
   const { data, error } = await supabase.rpc("transfer_credits_between_shops", {
     _from_ecosystem_id: input.fromEcosystemId,
     _to_ecosystem_id: input.toEcosystemId,

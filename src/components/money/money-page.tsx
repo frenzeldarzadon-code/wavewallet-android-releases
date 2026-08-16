@@ -6,6 +6,7 @@
  * database stored for each request. Money moves only when the platform owner
  * releases it.
  */
+import { useOnline } from "@/lib/pwa";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowDownToLine, ArrowUpFromLine, Clock, Info } from "lucide-react";
 import { toast } from "sonner";
@@ -101,6 +102,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
   const [cashIns, setCashIns] = useState<CashInRequest[]>([]);
   const [busy, setBusy] = useState(false);
+  const online = useOnline();
 
   /**
    * Only members below the shop admin can be settled by their admin — an admin
@@ -432,7 +434,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                 </p>
               </div>
 
-              <Button onClick={submitWithdrawal} disabled={busy}>
+              <Button onClick={submitWithdrawal} disabled={busy || !online}>
                 {busy ? "Submitting…" : "Request cash out"}
               </Button>
             </CardContent>
@@ -633,7 +635,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                       in when you submit.
                     </p>
                   </div>
-                  <Button onClick={submitCashIn} disabled={busy}>
+                  <Button onClick={submitCashIn} disabled={busy || !online}>
                     {busy ? "Submitting…" : "Submit cash in"}
                   </Button>
                 </>

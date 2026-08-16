@@ -16,6 +16,7 @@
  *     issuance supply record and one audit entry. It never touches voucher
  *     inventory, commissions or historical rows.
  */
+import { requireOnline } from "@/lib/offline-guard";
 import { supabase } from "@/integrations/supabase/client";
 import type { CreditPurchaseOrder, OrderStatus } from "@/lib/credit-purchases";
 
@@ -152,6 +153,7 @@ export async function issueCredits(input: {
   requestKey?: string;
   ecosystemId?: string | null;
 }): Promise<string> {
+  requireOnline();
   const issue = issuanceFormIssue(input);
   if (issue) throw new Error(issue);
   const { data, error } = await supabase.rpc("superadmin_issue_credits", {
