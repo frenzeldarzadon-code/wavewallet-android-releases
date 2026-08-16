@@ -141,7 +141,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
     <>
       <PageSection
         title="Retail store"
-        description={`Physical goods from this shop · wallet: ${coins(balance)}`}
+        description={`Physical goods from this shop · wallet: ${credits(balance)}`}
         action={
           count > 0 ? (
             <Button size="sm" onClick={() => setCheckout(true)}>
@@ -390,7 +390,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
             </div>
             <p className="text-[11px] text-muted-foreground">
               {draft.payment === "credit"
-                ? `${coins(total)} is held from this shop's wallet and returned in full if the order is rejected.`
+                ? `${credits(total)} is held from this shop's wallet and returned in full if the order is rejected.`
                 : "Cash orders stay pending until the shop admin confirms them."}
             </p>
           </div>

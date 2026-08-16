@@ -91,7 +91,7 @@ export function ManualCreditDialog({
         ecosystemId: shopId,
       });
       toast.success("Coins issued", {
-        description: `${coins.toLocaleString()} coins to ${target.full_name} · ${tx}`,
+        description: `${credits.toLocaleString()} coins to ${target.full_name} · ${tx}`,
       });
       reset();
       onClose();

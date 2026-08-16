@@ -51,7 +51,7 @@ function ResellerReports() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [sales, setSales] = useState<SaleReportRow[]>([]);
-  const [coins, setCredits] = useState<CreditEntry[]>([]);
+  const [credits, setCredits] = useState<CreditEntry[]>([]);
   const [creditBackRows, setCreditBackRows] = useState<SaleCommissionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const userId = account?.id ?? null;

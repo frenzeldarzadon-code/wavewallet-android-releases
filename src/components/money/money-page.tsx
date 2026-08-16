@@ -109,7 +109,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
   const shopPathsAvailable = account?.role !== "admin" && account?.role !== "super_admin";
 
   // cash out form
-  const [coins, setCredits] = useState("");
+  const [credits, setCredits] = useState("");
   const [mode, setMode] = useState<PaymentMode>("ewallet");
   const [accountName, setAccountName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");

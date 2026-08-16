@@ -65,7 +65,7 @@ function SuperReports() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [sales, setSales] = useState<SaleReportRow[]>([]);
-  const [coins, setCredits] = useState<CreditReportEntry[]>([]);
+  const [credits, setCredits] = useState<CreditReportEntry[]>([]);
   const [ecoNames, setEcoNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 

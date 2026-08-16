@@ -133,7 +133,7 @@ export interface ConflictSnapshot {
   receipt_read_at?: string | null;
   duplicate_reference?: boolean | null;
   amount_php: number | null;
-  coins: number | null;
+  credits: number | null;
   sender_number: string | null;
   sender_name: string | null;
   receiving_number: string | null;

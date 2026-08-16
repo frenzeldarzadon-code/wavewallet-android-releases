@@ -126,7 +126,7 @@ export function ShopTransferCard({
         note,
       });
       toast.success("Coins moved", {
-        description: `${coins(res.net)} arrived in ${destination?.ecosystemName ?? "the destination shop"} · fee ${coins(res.fee)} · ${res.txId}`,
+        description: `${credits(res.net)} arrived in ${destination?.ecosystemName ?? "the destination shop"} · fee ${credits(res.fee)} · ${res.txId}`,
       });
       setConfirming(false);
       setAmount("");

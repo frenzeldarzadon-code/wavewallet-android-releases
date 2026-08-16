@@ -77,7 +77,7 @@ function Side({ title, snap, creditedFirst }: { title: string; snap: ConflictSna
       {line(
         "Coins released",
         snap.credits_released
-          ? `${Number(snap.credits_released_amount ?? snap.coins ?? 0).toLocaleString()} coins on ${when(snap.credits_released_at)}`
+          ? `${Number(snap.credits_released_amount ?? snap.credits ?? 0).toLocaleString()} coins on ${when(snap.credits_released_at)}`
           : "no coins released",
       )}
       {line("Screenshot", snap.has_screenshot ? "attached to the transaction" : "not attached")}

@@ -82,7 +82,7 @@ export function ManualCreditCard() {
         ecosystemId: shopId,
       });
       toast.success("Coins issued", {
-        description: `${coins.toLocaleString()} coins to ${target.full_name}${
+        description: `${credits.toLocaleString()} coins to ${target.full_name}${
           shopWallet ? ` · ${shopWallet.ecosystemName}` : ""
         } · ${tx}`,
       });
@@ -154,7 +154,7 @@ export function ManualCreditCard() {
               </div>
             ) : (
               <div className="space-y-1.5">
-                <Label>Account to coin</Label>
+                <Label>Account to credit</Label>
                 <MemberPicker
                   showEcosystem
                   placeholder="Search any account by name, @handle, email or phone"

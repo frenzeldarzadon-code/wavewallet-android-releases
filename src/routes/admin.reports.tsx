@@ -75,7 +75,7 @@ function AdminReports() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [sales, setSales] = useState<SaleReportRow[]>([]);
-  const [coins, setCredits] = useState<CreditEntry[]>([]);
+  const [credits, setCredits] = useState<CreditEntry[]>([]);
   const [points, setPoints] = useState<PointsEntryRow[]>([]);
   const [commissions, setCommissions] = useState<SaleCommissionReportRow[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
