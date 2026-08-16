@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">WaveWallet</string>
+    <string name="about_title">About WaveWallet</string>
+    <string name="offline_banner">You are offline. Coin transfers, voucher purchases, cash in and cash out need internet.</string>
+    <string name="offline_title">No internet connection</string>
+    <string name="offline_body">WaveWallet needs internet for every Coin, voucher, cash in and cash out action. Reconnect and try again.</string>
+    <string name="retry">Retry</string>
+</resources>
