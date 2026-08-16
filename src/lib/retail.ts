@@ -222,29 +222,57 @@ export async function fetchRetailProducts(ecosystemId: string): Promise<RetailPr
   return ((data ?? []) as RetailProduct[]).map((p) => ({ ...p, price: Number(p.price) }));
 }
 
-export interface RetailProductRow extends RetailProduct {
+/** Catalog metadata shared by starter-catalog and manually added products. */
+export interface RetailProductDetails {
+  category: string | null;
+  brand: string | null;
+  variant: string | null;
+  size_label: string | null;
+  unit: string;
+  wholesale_price: number;
+  sku: string | null;
+  barcode: string | null;
+  /** "Ready to go live": only published products reach customers. */
+  published: boolean;
+  /** Set when the row came from the shared starter catalog. */
+  template_id: string | null;
+}
+
+export interface RetailProductRow extends RetailProduct, RetailProductDetails {
   active: boolean;
   archived: boolean;
 }
 
-/** Admin view: includes hidden and archived products. */
+/** Admin view: includes unpublished, hidden and archived products. */
 export async function fetchAllRetailProducts(ecosystemId: string): Promise<RetailProductRow[]> {
   const { data, error } = await supabase
     .from("retail_products")
     .select("*")
     .eq("ecosystem_id", ecosystemId)
     .order("archived")
+    .order("category", { nullsFirst: false })
     .order("name");
   if (error) throw new Error(error.message);
   return ((data ?? []) as unknown as RetailProductRow[]).map((p) => ({
     ...p,
     price: Number(p.price),
+    wholesale_price: Number(p.wholesale_price ?? 0),
     rating_avg: 0,
     rating_count: 0,
   }));
 }
 
-export interface RetailProductInput {
+/** Loads any missing starter-catalog products into this shop, unpublished. */
+export async function loadStarterCatalog(ecosystemId: string): Promise<number> {
+  requireOnline();
+  const { data, error } = await supabase.rpc("seed_retail_catalog", {
+    _ecosystem_id: ecosystemId,
+  });
+  if (error) throw new Error(error.message);
+  return Number(data ?? 0);
+}
+
+export interface RetailProductInput extends Partial<RetailProductDetails> {
   id?: string;
   name: string;
   description: string;
@@ -254,6 +282,11 @@ export interface RetailProductInput {
   public_visible: boolean;
   active: boolean;
 }
+
+const trimmed = (v: string | null | undefined) => {
+  const t = (v ?? "").trim();
+  return t === "" ? null : t;
+};
 
 export async function saveRetailProduct(
   ecosystemId: string,
@@ -268,6 +301,15 @@ export async function saveRetailProduct(
     image_path: input.image_path,
     public_visible: input.public_visible,
     active: input.active,
+    category: trimmed(input.category),
+    brand: trimmed(input.brand),
+    variant: trimmed(input.variant),
+    size_label: trimmed(input.size_label),
+    unit: trimmed(input.unit) ?? "piece",
+    wholesale_price: Math.max(0, input.wholesale_price ?? 0),
+    sku: trimmed(input.sku),
+    barcode: trimmed(input.barcode),
+    published: input.published ?? false,
   };
   const { error } = input.id
     ? await supabase.from("retail_products").update(payload).eq("id", input.id)
@@ -275,14 +317,69 @@ export async function saveRetailProduct(
   if (error) throw new Error(error.message);
 }
 
+/** Publishing is the only step that makes a product visible to customers. */
+export async function setRetailProductPublished(id: string, published: boolean): Promise<void> {
+  const { error } = await supabase.from("retail_products").update({ published }).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
 /** Archiving hides a product without deleting it or any past order. */
 export async function setRetailProductArchived(id: string, archived: boolean): Promise<void> {
   const { error } = await supabase
     .from("retail_products")
-    .update({ archived, ...(archived ? { active: false } : {}) })
+    .update({ archived, ...(archived ? { active: false, published: false } : {}) })
     .eq("id", id);
   if (error) throw new Error(error.message);
 }
+
+/* ------------------------------------------------------------------ */
+/* Admin catalog filtering — pure so it can be asserted in tests        */
+/* ------------------------------------------------------------------ */
+
+export type CatalogStatusFilter = "all" | "published" | "draft" | "archived";
+export type CatalogSourceFilter = "all" | "catalog" | "manual";
+
+export interface CatalogFilter {
+  search: string;
+  category: string;
+  status: CatalogStatusFilter;
+  source: CatalogSourceFilter;
+}
+
+export const EMPTY_CATALOG_FILTER: CatalogFilter = {
+  search: "",
+  category: "all",
+  status: "all",
+  source: "all",
+};
+
+/** Distinct categories present in a shop's own product listing. */
+export function productCategories(rows: RetailProductRow[]): string[] {
+  return [...new Set(rows.map((r) => r.category ?? "Uncategorised"))].sort((a, b) =>
+    a.localeCompare(b),
+  );
+}
+
+export function isProductReady(row: RetailProductRow): boolean {
+  return row.price > 0 && row.stock > 0;
+}
+
+export function filterProducts(rows: RetailProductRow[], f: CatalogFilter): RetailProductRow[] {
+  const q = f.search.trim().toLowerCase();
+  return rows.filter((r) => {
+    if (f.status === "archived" ? !r.archived : r.archived && f.status !== "all") return false;
+    if (f.status === "published" && !r.published) return false;
+    if (f.status === "draft" && r.published) return false;
+    if (f.category !== "all" && (r.category ?? "Uncategorised") !== f.category) return false;
+    if (f.source === "catalog" && !r.template_id) return false;
+    if (f.source === "manual" && r.template_id) return false;
+    if (!q) return true;
+    return [r.name, r.brand, r.variant, r.size_label, r.category, r.sku, r.barcode]
+      .filter(Boolean)
+      .some((v) => String(v).toLowerCase().includes(q));
+  });
+}
+
 
 export function validateRetailImage(file: File): string | null {
   return validateImageFile(file);
