@@ -327,7 +327,7 @@ export function CreditPurchasePage() {
 
       <PageSection
         title="Allocation history"
-        description="Kept separate from voucher transactions and linked to the coin entry each approval creates."
+        description="Kept separate from voucher transactions and linked to the ledger entry each approval creates."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardHeader>

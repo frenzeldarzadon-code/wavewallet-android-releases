@@ -89,7 +89,7 @@ export function issuanceFormIssue(input: {
   amount: number;
   reason?: string | null;
 }): string | null {
-  if (!input.userId) return "Choose the account to coin";
+  if (!input.userId) return "Choose the account to credit";
   if (!Number.isFinite(input.amount) || input.amount <= 0) {
     return "Enter how many coins to issue";
   }

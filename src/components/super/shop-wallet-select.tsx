@@ -77,7 +77,7 @@ export function ShopWalletSelect({
 
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id}>Shop wallet to coin</Label>
+      <Label htmlFor={id}>Shop wallet to credit</Label>
       <select
         id={id}
         value={value ?? ""}
