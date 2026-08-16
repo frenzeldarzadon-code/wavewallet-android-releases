@@ -221,6 +221,14 @@ export function MembersDirectory() {
                         <KeyRound className="size-4" /> Access account
                       </Button>
                     ) : null}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-9 text-destructive"
+                      onClick={() => setPurgeTarget({ id: m.id, name: m.full_name })}
+                    >
+                      <Trash2 className="size-4" /> Delete
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
