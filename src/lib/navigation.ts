@@ -101,6 +101,7 @@ export function customerNav(): Nav {
         { to: "/app/profile", label: "Profile", icon: User },
         { to: "/app", label: "Wallet Center", icon: Wallet },
         { to: "/app/applications", label: "Applications & Invites", icon: UserPlus },
+        { to: "/help", label: "Guide & Help", icon: BookOpen },
       ],
     },
     {
@@ -159,6 +160,7 @@ export function resellerNav(role: Role = "reseller"): Nav {
         { to: "/reseller/profile", label: "Profile", icon: User },
         { to: "/reseller", label: "Dashboard", icon: LayoutDashboard },
         { to: "/reseller/wallet", label: "Wallet Center", icon: Wallet },
+        { to: "/help", label: "Guide & Help", icon: BookOpen },
       ],
     },
     {
@@ -257,6 +259,7 @@ export function adminNav(): Nav {
       items: [
         { to: "/admin/settings", label: "Shop settings", icon: Settings },
         { to: "/admin/profile", label: "Profile", icon: User },
+        { to: "/help", label: "Guide & Help", icon: BookOpen },
       ],
     },
   ];
@@ -323,6 +326,7 @@ export function superAdminNav(): Nav {
       items: [
         { to: "/super/settings", label: "Platform", icon: Settings },
         { to: "/super/profile", label: "Profile", icon: User },
+        { to: "/help", label: "Guide & Help", icon: BookOpen },
       ],
     },
   ];
