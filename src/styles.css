@@ -181,3 +181,51 @@
     oklch(0.5 0.15 205) 100%
   );
 }
+
+/*
+ * Authentication screen surface.
+ * Always the premium navy identity, independent of light/dark app theme,
+ * so the first screen is consistent on every device.
+ */
+:root {
+  --auth-bg: oklch(0.18 0.045 258);
+  --auth-bg-deep: oklch(0.13 0.035 258);
+  --auth-card: oklch(0.24 0.035 258 / 0.72);
+  --auth-border: oklch(0.75 0.06 240 / 0.18);
+  --auth-fg: oklch(0.97 0.008 250);
+  --auth-muted: oklch(0.76 0.02 250);
+  --auth-cyan: oklch(0.72 0.13 210);
+}
+
+@theme inline {
+  --color-auth-bg: var(--auth-bg);
+  --color-auth-card: var(--auth-card);
+  --color-auth-border: var(--auth-border);
+  --color-auth-fg: var(--auth-fg);
+  --color-auth-muted: var(--auth-muted);
+  --color-auth-cyan: var(--auth-cyan);
+}
+
+@utility auth-surface {
+  background-color: var(--auth-bg-deep);
+  background-image:
+    radial-gradient(120% 70% at 12% -10%, oklch(0.5 0.16 256 / 0.55) 0%, transparent 60%),
+    radial-gradient(100% 60% at 100% 0%, oklch(0.6 0.12 210 / 0.35) 0%, transparent 55%),
+    radial-gradient(140% 80% at 50% 120%, oklch(0.45 0.12 230 / 0.4) 0%, transparent 60%),
+    linear-gradient(180deg, var(--auth-bg) 0%, var(--auth-bg-deep) 100%);
+  color: var(--auth-fg);
+}
+
+@utility auth-card {
+  background-color: var(--auth-card);
+  border: 1px solid var(--auth-border);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 18px 50px oklch(0.1 0.04 258 / 0.55);
+}
+
+@utility auth-field {
+  background-color: oklch(1 0 0 / 0.06);
+  border-color: var(--auth-border);
+  color: var(--auth-fg);
+}
+
