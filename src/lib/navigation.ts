@@ -296,9 +296,17 @@ export function superAdminNav(): Nav {
       ],
     },
     {
+      label: "Subscriptions",
+      items: [
+        { to: "/super/shops", label: "Subscription Shops", icon: Store },
+        { to: "/super/guide", label: "Guide content", icon: BookOpen },
+      ],
+    },
+    {
       label: "Money",
       items: [{ to: "/super/credits", label: "Coin management", icon: Coins }],
     },
+
     {
       label: "Insights",
       items: [
