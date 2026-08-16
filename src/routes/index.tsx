@@ -18,6 +18,7 @@ import {
 import { isRealEmail, validateGlobalSignup } from "@/lib/account-identifiers";
 import { newPasswordIssue } from "@/lib/password-policy";
 import { supabase } from "@/integrations/supabase/client";
+import logo from "@/assets/wavewallet-logo.png";
 import { DEMO_ECOSYSTEM_SLUG, DEMO_ROLES, isPreviewEnvironment } from "@/lib/demo";
 import { startDemoSession } from "@/lib/demo.functions";
 import { platformSettings } from "@/lib/wavewallet";
@@ -47,6 +48,7 @@ export const Route = createFileRoute("/")({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
