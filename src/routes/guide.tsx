@@ -282,6 +282,22 @@ function GuidePage() {
 
       <section id="install" className="mb-12 scroll-mt-20">
         <h2 className="mb-3 text-lg font-semibold tracking-tight">Get the app</h2>
+        <Card className="mb-3 shadow-[var(--shadow-card)]">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 px-4">
+            <div>
+              <h3 className="text-sm font-semibold tracking-tight">
+                WaveWallet for Android — official app
+              </h3>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                Install the official WaveWallet Android app directly from this site. No Play Store
+                needed. iPhone and iPad users can add the web app to the Home Screen instead.
+              </p>
+            </div>
+            <Button asChild>
+              <Link to="/download">Download the app</Link>
+            </Button>
+          </CardContent>
+        </Card>
         <InstallAppCard className="shadow-[var(--shadow-card)]" />
       </section>
 
