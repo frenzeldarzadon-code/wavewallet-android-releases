@@ -38,9 +38,17 @@ function AdminSettings() {
   const [form, setForm] = useState({
     name: ecosystem?.name ?? "",
     description: ecosystem?.description ?? "",
+    contactName: ecosystem?.contactName ?? "",
     contactPhone: ecosystem?.contactPhone ?? "",
     contactEmail: ecosystem?.contactEmail ?? "",
   });
+  // True once the admin edits a field — stops async session reloads from
+  // clobbering typing, and stops a stale form from overwriting the database.
+  const [dirty, setDirty] = useState(false);
+  const edit = (patch: Partial<typeof form>) => {
+    setDirty(true);
+    setForm((f) => ({ ...f, ...patch }));
+  };
   const [saving, setSaving] = useState(false);
   const [rule, setRule] = useState("10");
   const [savingRule, setSavingRule] = useState(false);
