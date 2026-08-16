@@ -143,7 +143,7 @@ export function validateLovablePurchase(input: {
 
 /** Description stored on the expense row, always naming the provider. */
 export function lovablePurchaseDescription(input: LovableCreditPurchase): string {
-  const base = `Lovable coin purchase${input.reference ? ` · ref ${input.reference.trim()}` : ""}`;
+  const base = `Lovable credit purchase${input.reference ? ` · ref ${input.reference.trim()}` : ""}`;
   return input.note?.trim() ? `${base} — ${input.note.trim()}` : base;
 }
 

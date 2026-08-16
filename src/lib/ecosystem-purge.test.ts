@@ -55,7 +55,7 @@ describe("purge disclosure", () => {
     for (const needle of [
       "member accounts",
       "relationships",
-      "credit",
+      "coin",
       "points",
       "voucher",
       "transaction",

@@ -37,12 +37,12 @@ describe("recipient is never the approver", () => {
       cashInDecisionError(
         "The platform owner does not hold a member credit balance, so this request cannot be approved",
       ),
-    ).toMatch(/no member credit balance/i);
+    ).toMatch(/no member coin balance/i);
   });
 
   it("explains a request with no member attached", () => {
     expect(cashInDecisionError("This request has no member attached, so credits cannot be released")).toMatch(
-      /no credits were issued/i,
+      /no coins were issued/i,
     );
   });
 

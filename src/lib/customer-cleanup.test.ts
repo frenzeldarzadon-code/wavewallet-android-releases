@@ -31,7 +31,7 @@ describe("customer deletion eligibility", () => {
   it("blocks customers holding credits", () => {
     const v = evaluateCustomerDeletion({ ...base, credits: 10 }, NOW);
     expect(v.eligible).toBe(false);
-    expect(v.blockers.join(" ")).toContain("Credit balance is not zero");
+    expect(v.blockers.join(" ")).toContain("Coin balance is not zero");
   });
 
   it("blocks customers holding points", () => {
