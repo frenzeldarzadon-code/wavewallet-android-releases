@@ -5744,6 +5744,24 @@ export type Database = {
           slug: string
         }[]
       }
+      guide_questions_admin: {
+        Args: never
+        Returns: {
+          answer: string | null
+          answered_at: string | null
+          contact: string | null
+          created_at: string
+          id: string
+          question: string
+          status: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "guide_questions"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       handle_available: {
         Args: { _ecosystem_id?: string; _handle: string }
         Returns: boolean
