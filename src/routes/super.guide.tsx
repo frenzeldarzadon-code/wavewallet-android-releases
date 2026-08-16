@@ -44,7 +44,7 @@ function SuperGuide() {
     const [s, f, q] = await Promise.all([
       supabase.from("guide_sections").select("*").order("display_order"),
       supabase.from("guide_faqs").select("*").order("display_order"),
-      supabase.from("guide_questions").select("*").order("created_at", { ascending: false }).limit(100),
+      supabase.rpc("guide_questions_admin"),
     ]);
     setSections(s.data ?? []);
     setFaqs(f.data ?? []);
