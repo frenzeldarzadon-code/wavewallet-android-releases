@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/ui-kit";
 import { SocialSignIn } from "@/components/auth/social-sign-in";
 import { PasswordField } from "@/components/password-field";
 import { homeFor } from "@/lib/session";
+import { useOnline } from "@/lib/pwa";
 import {
   loadAuthContext,
   signInWithPassword,
@@ -116,6 +117,8 @@ function LoginPage() {
       active = false;
     };
   }, [navigate]);
+
+  const online = useOnline();
 
   const signIn = async () => {
     if (busy) return;
@@ -272,7 +275,7 @@ function LoginPage() {
                   autoComplete="current-password"
                   onEnter={() => void signIn()}
                 />
-                <Button className="h-11 w-full" onClick={signIn} disabled={busy}>
+                <Button className="h-11 w-full" onClick={signIn} disabled={busy || !online}>
                   <LogIn className="size-4" />
                   {busy ? "Signing in…" : "Sign In"}
                 </Button>
@@ -282,7 +285,7 @@ function LoginPage() {
                   </Link>
                 </div>
 
-                <SocialSignIn disabled={busy} />
+                <SocialSignIn disabled={busy || !online} />
                 <Button
                   variant="outline"
                   className="h-11 w-full"
@@ -357,7 +360,7 @@ function LoginPage() {
                   onEnter={() => void signUp()}
                 />
                 {signupIssue ? <p className="text-xs text-destructive">{signupIssue}</p> : null}
-                <Button className="h-11 w-full" onClick={signUp} disabled={signupBusy}>
+                <Button className="h-11 w-full" onClick={signUp} disabled={signupBusy || !online}>
                   <UserPlus className="size-4" />
                   {signupBusy ? "Creating…" : "Create Account"}
                 </Button>
