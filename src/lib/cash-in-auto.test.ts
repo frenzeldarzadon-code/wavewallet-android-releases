@@ -173,3 +173,59 @@ describe("settings banner", () => {
     expect(label.detail).toMatch(/never contacted/i);
   });
 });
+
+describe("destination-aware and configurable verification layers", () => {
+  const on = { ...DEFAULT_AUTO_RULE, enabled: true };
+  const request: MatchableRequest = {
+    amount_php: 500,
+    payer_reference: "GC-1234",
+    sender_number: "0917 555 1234",
+    proof_path: "user/abc.jpg",
+    receipt_check: "matched",
+    status: "pending",
+    listener_event: {
+      sender_number: "09175551234",
+      amount_php: 500,
+      outcome: "accepted",
+      device_online: true,
+      serves_destination: true,
+    },
+  };
+  const RECEIVING = "09541230072";
+
+  it("approves when both layers pass and verification is active", () => {
+    expect(evaluateMatch(request, { ...on, verification_mode: "active" }, RECEIVING)).toBe("matched");
+  });
+
+  it("never settles while staged, even when every check passes", () => {
+    expect(evaluateMatch(request, { ...on, verification_mode: "staged" }, RECEIVING)).toBe("staged");
+  });
+
+  it("refuses a notification seen on another shop's receiving account", () => {
+    const other = {
+      ...request,
+      listener_event: { ...request.listener_event!, serves_destination: false },
+    };
+    expect(evaluateMatch(other, { ...on, verification_mode: "active" }, RECEIVING)).toBe("wrong_destination");
+  });
+
+  it("can run without the listener layer but still blocks a wrong sender when one is linked", () => {
+    const noEvent = { ...request, listener_event: null };
+    expect(
+      evaluateMatch(noEvent, { ...on, require_listener_match: false, verification_mode: "active" }, RECEIVING),
+    ).toBe("matched");
+    expect(evaluateMatch(noEvent, { ...on, require_listener_match: true }, RECEIVING)).toBe("awaiting_listener");
+  });
+
+  it("always blocks a receipt mismatch, even with the second layer relaxed", () => {
+    const mismatch = { ...request, receipt_check: "mismatch" };
+    expect(evaluateMatch(mismatch, { ...on, require_receipt_match: false }, RECEIVING)).toBe(
+      "receipt_reference_mismatch",
+    );
+    const unreadable = { ...request, receipt_check: "unreadable" };
+    expect(evaluateMatch(unreadable, { ...on, require_receipt_match: true }, RECEIVING)).toBe("receipt_unreadable");
+    expect(
+      evaluateMatch(unreadable, { ...on, require_receipt_match: false, verification_mode: "active" }, RECEIVING),
+    ).toBe("matched");
+  });
+});

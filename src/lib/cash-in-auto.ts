@@ -20,14 +20,20 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 
+export type VerificationMode = "staged" | "active";
+
 export interface AutoApprovalRule {
   enabled: boolean;
   amount_tolerance_php: number;
   max_auto_amount_php: number | null;
   /** Optional exact amount every automatic cash in must match. */
   expected_amount_php: number | null;
-  /** Also require a paired listener phone to have seen the payment. */
+  /** First layer: require a paired listener phone to have seen the payment. */
   require_listener_match?: boolean;
+  /** Second layer: require the reference read off the receipt to match. */
+  require_receipt_match?: boolean;
+  /** Staged evaluates every rule but never settles a request. */
+  verification_mode?: VerificationMode;
 }
 
 export interface ShopAutoRule extends AutoApprovalRule {
@@ -45,8 +51,14 @@ export interface CashInAutoStatus {
   listener_devices_active?: number;
   /** Active listener phones that have actually delivered a notification. */
   listener_devices_proven?: number;
+  /** Paired phones with no receiving GCash account set — they can never match. */
+  listener_devices_unscoped?: number;
   listener_matches_30d?: number;
   listener_last_event_at?: string | null;
+  /** Receiving numbers shared by more than one shop. */
+  shared_numbers?: { number: string; shops: number }[];
+  /** Requests that would have been approved while staged. */
+  staged_30d?: number;
 }
 
 export const DEFAULT_AUTO_RULE: AutoApprovalRule = {
@@ -54,8 +66,11 @@ export const DEFAULT_AUTO_RULE: AutoApprovalRule = {
   amount_tolerance_php: 0,
   max_auto_amount_php: null,
   expected_amount_php: null,
-  require_listener_match: false,
+  require_listener_match: true,
+  require_receipt_match: true,
+  verification_mode: "active",
 };
+
 
 /** Same normalisation as `public.normalize_payment_reference`. */
 export function normalizePaymentReference(ref?: string | null): string | null {
@@ -91,6 +106,11 @@ export interface MatchableListenerEvent {
   outcome?: string;
   /** The paired phone is active and has checked in recently. */
   device_online?: boolean;
+  /**
+   * The phone that saw this notification monitors the receiving GCash account
+   * this request pays into, and is allowed to serve this shop.
+   */
+  serves_destination?: boolean;
 }
 
 export interface MatchableRequest {
@@ -112,6 +132,7 @@ export interface MatchableRequest {
 
 export type MatchOutcome =
   | "matched"
+  | "staged"
   | "disabled"
   | "not_pending"
   | "no_reference"
@@ -123,6 +144,7 @@ export type MatchOutcome =
   | "no_sender_number"
   | "awaiting_listener"
   | "listener_offline"
+  | "wrong_destination"
   | "number_mismatch"
   | "awaiting_receipt_check"
   | "receipt_reference_mismatch"
@@ -131,6 +153,8 @@ export type MatchOutcome =
 /** Human wording for a matching result, used in the UI and the audit trail. */
 export const MATCH_REASON: Record<MatchOutcome, string> = {
   matched: "A real GCash notification matches this request — approved automatically.",
+  staged:
+    "Every check passed, but verification is staged: nothing was settled and a person still decides.",
   disabled: "Automatic approval is switched off for this shop.",
   not_pending: "This request was already decided.",
   no_reference: "No GCash payment reference number was submitted, so it cannot be matched.",
@@ -143,6 +167,8 @@ export const MATCH_REASON: Record<MatchOutcome, string> = {
   no_sender_number: "No sending GCash number was submitted, so the payment cannot be traced.",
   awaiting_listener: "No matching GCash payment has been seen yet — waiting for the notification.",
   listener_offline: "The paired listener phone is offline, so the payment cannot be confirmed.",
+  wrong_destination:
+    "That notification was seen on a different receiving GCash account, so it cannot settle this request.",
   number_mismatch: "The GCash number that sent the money does not match this request.",
   awaiting_receipt_check: "The uploaded receipt has not been read yet.",
   receipt_reference_mismatch: "Reference does not match receipt — held for manual review.",
@@ -153,10 +179,11 @@ export const MATCH_REASON: Record<MatchOutcome, string> = {
  * Would this request be approved automatically? Mirrors the database.
  *
  * The sending GCash number and the exact amount are the primary criteria and
- * must match a real listener notification; the reference is a secondary
- * uniqueness guard; the screenshot is supporting evidence only. The payment may
- * arrive before or after the request, as long as both fall inside the paired
- * device's matching window (checked in the database, not here).
+ * must match a real listener notification seen on the very receiving account
+ * this request pays into; the reference is a secondary uniqueness guard; the
+ * screenshot is supporting evidence only. The payment may arrive before or
+ * after the request, as long as both fall inside the paired device's matching
+ * window (checked in the database, not here).
  */
 export function evaluateMatch(
   request: MatchableRequest,
@@ -182,22 +209,33 @@ export function evaluateMatch(
   const sender = normalizePhMobile(request.sender_number ?? request.payer_number);
   if (!sender) return "no_sender_number";
 
+  // First layer — configurable, on by default.
+  const requireListener = rule.require_listener_match ?? true;
   const event = request.listener_event;
-  if (!event || (event.outcome && event.outcome !== "accepted")) return "awaiting_listener";
-  if (normalizePhMobile(event.sender_number) !== sender) return "number_mismatch";
-  if (Math.abs(Number(event.amount_php) - Number(request.amount_php)) > tolerance) {
-    return "amount_mismatch";
+  if (!event || (event.outcome && event.outcome !== "accepted")) {
+    if (requireListener) return "awaiting_listener";
+  } else {
+    if (normalizePhMobile(event.sender_number) !== sender) return "number_mismatch";
+    if (Math.abs(Number(event.amount_php) - Number(request.amount_php)) > tolerance) {
+      return "amount_mismatch";
+    }
+    if (event.serves_destination === false) return "wrong_destination";
+    if (event.device_online === false) return "listener_offline";
   }
-  if (event.device_online === false) return "listener_offline";
 
-  // Secondary verification: the reference read off the receipt is authoritative
-  // and must agree with what the member typed.
+  // Second layer: the reference read off the receipt. A mismatch always blocks;
+  // whether an unreadable receipt blocks is configurable.
   const receipt = request.receipt_check ?? "pending";
   if (receipt === "mismatch") return "receipt_reference_mismatch";
-  if (receipt === "unreadable" || receipt === "error") return "receipt_unreadable";
-  if (receipt !== "matched") return "awaiting_receipt_check";
+  if (rule.require_receipt_match ?? true) {
+    if (receipt === "unreadable" || receipt === "error") return "receipt_unreadable";
+    if (receipt !== "matched") return "awaiting_receipt_check";
+  }
+
+  if ((rule.verification_mode ?? "active") === "staged") return "staged";
   return "matched";
 }
+
 
 
 /** Wording for the banner on the settings screen. */
@@ -206,12 +244,21 @@ export function matchingStatusLabel(status: CashInAutoStatus | null): {
   title: string;
   detail: string;
 } {
-  if (status?.platform_rule?.enabled) {
+  const rule = status?.platform_rule;
+  if (rule?.enabled && (rule.verification_mode ?? "active") === "staged") {
+    return {
+      tone: "warning",
+      title: "Automatic matching is staged",
+      detail:
+        "Every verification layer runs and the result is recorded, but nothing is settled automatically. Use this to prove the rules on live payments before switching to active.",
+    };
+  }
+  if (rule?.enabled) {
     return {
       tone: "success",
       title: "Automatic matching is on",
       detail:
-        "A cash in is approved automatically only when a real GCash notification from the paired phone on the shop's receiving account matches the sending number and the exact amount, and the payment reference has never been used. The customer may pay before or after submitting. GCash itself is never contacted.",
+        "A cash in is approved automatically only when a real GCash notification from a paired phone monitoring that shop's own receiving account matches the sending number and the exact amount, and the payment reference has never been used. The customer may pay before or after submitting. GCash itself is never contacted.",
     };
   }
   return {
@@ -239,6 +286,8 @@ export async function setCashInAutoApproval(input: {
   maxAmount?: number | null;
   expectedAmount?: number | null;
   requireListener?: boolean;
+  requireReceipt?: boolean;
+  verificationMode?: VerificationMode;
 }): Promise<void> {
   // The RPC treats a null shop as "platform default"; a null max/expected
   // amount means "no ceiling" / "any amount".
@@ -248,12 +297,15 @@ export async function setCashInAutoApproval(input: {
     _tolerance: input.tolerance ?? 0,
     _max_amount: input.maxAmount ?? null,
     _expected_amount: input.expectedAmount ?? null,
-    _require_listener: input.requireListener ?? false,
+    _require_listener: input.requireListener ?? true,
+    _require_receipt: input.requireReceipt ?? true,
+    _verification_mode: input.verificationMode ?? "active",
   } as unknown as Parameters<typeof supabase.rpc<"set_cash_in_auto_approval">>[1];
   const { error } = await supabase.rpc("set_cash_in_auto_approval", args);
 
   if (error) throw new Error(error.message);
 }
+
 
 /** The receiving GCash number configured for a shop (admins / platform owner). */
 export async function fetchShopCashInNumber(ecosystemId: string): Promise<string | null> {

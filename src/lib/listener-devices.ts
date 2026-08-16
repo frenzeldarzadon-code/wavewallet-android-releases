@@ -13,6 +13,12 @@ export type ListenerDevice = {
   ecosystem_id: string | null;
   ecosystem_name: string | null;
   package_name: string;
+  /** Platform-owned phone, or a phone paired by a shop admin for their shop. */
+  owner_role?: "platform" | "admin";
+  /** The receiving GCash account this phone monitors. Matching is scoped to it. */
+  receiving_number?: string | null;
+  /** How many shops receive Cash In on that same account. */
+  shops_served?: number;
   match_window_minutes: number;
   offline_after_minutes: number;
   created_at: string;
@@ -25,6 +31,7 @@ export type ListenerDevice = {
   matched_cash_ins: number;
   last_match_at: string | null;
 };
+
 
 export type ListenerEvent = {
   id: string;
@@ -55,6 +62,8 @@ export async function registerListenerDevice(input: {
   ecosystemId?: string | null;
   windowMinutes?: number;
   offlineMinutes?: number;
+  /** Receiving GCash account the phone monitors. Required by the database. */
+  receivingNumber?: string | null;
 }) {
   const args: Record<string, unknown> = {
     _label: input.label,
@@ -62,6 +71,7 @@ export async function registerListenerDevice(input: {
     _offline_minutes: input.offlineMinutes ?? 15,
   };
   if (input.ecosystemId) args["_ecosystem"] = input.ecosystemId;
+  if (input.receivingNumber) args["_receiving_number"] = input.receivingNumber;
   const { data, error } = await (
     supabase.rpc as unknown as (
       fn: string,
@@ -69,8 +79,15 @@ export async function registerListenerDevice(input: {
     ) => Promise<{ data: unknown; error: { message: string } | null }>
   )("register_listener_device", args);
   if (error) throw error;
-  return data as { device_id: string; label: string; pairing_secret: string; package_name: string };
+  return data as {
+    device_id: string;
+    label: string;
+    pairing_secret: string;
+    package_name: string;
+    receiving_number: string | null;
+  };
 }
+
 
 
 export async function revokeListenerDevice(deviceId: string) {
@@ -91,8 +108,13 @@ export function eventResultLabel(event: ListenerEvent) {
   if (event.outcome === "unparsed") return "Could not read an amount — kept for review";
   const result = event.match_result ?? "";
   if (result.startsWith("matched:approved")) return "Matched and approved automatically";
+  if (result.startsWith("matched:staged")) return "Matched — staged mode, nothing was settled";
   if (result.startsWith("matched:")) return `Matched, not approved (${result.slice(8).replace(/_/g, " ")})`;
   if (result === "ambiguous") return "Several possible Cash Ins — left for manual review";
   if (result === "no_pending_match") return "No pending Cash In matched";
+  if (result === "device_without_receiving_number") {
+    return "This phone has no receiving GCash account set — nothing was matched";
+  }
   return "Recorded";
 }
+

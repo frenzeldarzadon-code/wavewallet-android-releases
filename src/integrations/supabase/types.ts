@@ -170,9 +170,11 @@ export type Database = {
           id: string
           max_auto_amount_php: number | null
           require_listener_match: boolean
+          require_receipt_match: boolean
           require_reference_match: boolean
           updated_at: string
           updated_by: string | null
+          verification_mode: string
         }
         Insert: {
           amount_tolerance_php?: number
@@ -182,9 +184,11 @@ export type Database = {
           id?: string
           max_auto_amount_php?: number | null
           require_listener_match?: boolean
+          require_receipt_match?: boolean
           require_reference_match?: boolean
           updated_at?: string
           updated_by?: string | null
+          verification_mode?: string
         }
         Update: {
           amount_tolerance_php?: number
@@ -194,9 +198,11 @@ export type Database = {
           id?: string
           max_auto_amount_php?: number | null
           require_listener_match?: boolean
+          require_receipt_match?: boolean
           require_reference_match?: boolean
           updated_at?: string
           updated_by?: string | null
+          verification_mode?: string
         }
         Relationships: [
           {
@@ -347,6 +353,8 @@ export type Database = {
           reviewer_name: string | null
           sender_number: string | null
           sender_number_key: string | null
+          staged_at: string | null
+          staged_result: string | null
           status: string
           updated_at: string
           user_id: string
@@ -400,6 +408,8 @@ export type Database = {
           reviewer_name?: string | null
           sender_number?: string | null
           sender_number_key?: string | null
+          staged_at?: string | null
+          staged_result?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -453,6 +463,8 @@ export type Database = {
           reviewer_name?: string | null
           sender_number?: string | null
           sender_number_key?: string | null
+          staged_at?: string | null
+          staged_result?: string | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -1523,7 +1535,10 @@ export type Database = {
           last_seen_at: string | null
           match_window_minutes: number
           offline_after_minutes: number
+          owner_role: string
           package_name: string
+          receiving_number: string | null
+          receiving_number_key: string | null
           revoked_at: string | null
           revoked_by: string | null
           secret_key_hash: string
@@ -1539,7 +1554,10 @@ export type Database = {
           last_seen_at?: string | null
           match_window_minutes?: number
           offline_after_minutes?: number
+          owner_role?: string
           package_name?: string
+          receiving_number?: string | null
+          receiving_number_key?: string | null
           revoked_at?: string | null
           revoked_by?: string | null
           secret_key_hash: string
@@ -1555,7 +1573,10 @@ export type Database = {
           last_seen_at?: string | null
           match_window_minutes?: number
           offline_after_minutes?: number
+          owner_role?: string
           package_name?: string
+          receiving_number?: string | null
+          receiving_number_key?: string | null
           revoked_at?: string | null
           revoked_by?: string | null
           secret_key_hash?: string
@@ -4729,6 +4750,8 @@ export type Database = {
           reviewer_name: string | null
           sender_number: string | null
           sender_number_key: string | null
+          staged_at: string | null
+          staged_result: string | null
           status: string
           updated_at: string
           user_id: string
@@ -4797,8 +4820,10 @@ export type Database = {
           expected_amount_php: number
           max_auto_amount_php: number
           require_listener_match: boolean
+          require_receipt_match: boolean
           require_reference_match: boolean
           scope: string
+          verification_mode: string
         }[]
       }
       cash_in_auto_status: { Args: never; Returns: Json }
@@ -5384,7 +5409,10 @@ export type Database = {
           last_seen_at: string | null
           match_window_minutes: number
           offline_after_minutes: number
+          owner_role: string
           package_name: string
+          receiving_number: string | null
+          receiving_number_key: string | null
           revoked_at: string | null
           revoked_by: string | null
           secret_key_hash: string
@@ -5396,6 +5424,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      listener_serves_destination: {
+        Args: { _device: string; _ecosystem: string; _method: string }
+        Returns: boolean
       }
       log_operator_action: {
         Args: {
@@ -5965,6 +5997,7 @@ export type Database = {
           _label: string
           _offline_minutes?: number
           _package?: string
+          _receiving_number?: string
           _window_minutes?: number
         }
         Returns: Json
@@ -6033,6 +6066,8 @@ export type Database = {
           reviewer_name: string | null
           sender_number: string | null
           sender_number_key: string | null
+          staged_at: string | null
+          staged_result: string | null
           status: string
           updated_at: string
           user_id: string
@@ -6281,6 +6316,8 @@ export type Database = {
           reviewer_name: string | null
           sender_number: string | null
           sender_number_key: string | null
+          staged_at: string | null
+          staged_result: string | null
           status: string
           updated_at: string
           user_id: string
@@ -6386,6 +6423,8 @@ export type Database = {
           reviewer_name: string | null
           sender_number: string | null
           sender_number_key: string | null
+          staged_at: string | null
+          staged_result: string | null
           status: string
           updated_at: string
           user_id: string
@@ -6539,7 +6578,10 @@ export type Database = {
           last_seen_at: string | null
           match_window_minutes: number
           offline_after_minutes: number
+          owner_role: string
           package_name: string
+          receiving_number: string | null
+          receiving_number_key: string | null
           revoked_at: string | null
           revoked_by: string | null
           secret_key_hash: string
@@ -6650,8 +6692,10 @@ export type Database = {
           _expected_amount?: number
           _max_amount?: number
           _require_listener?: boolean
+          _require_receipt?: boolean
           _require_reference?: boolean
           _tolerance?: number
+          _verification_mode?: string
         }
         Returns: {
           amount_tolerance_php: number
@@ -6661,9 +6705,11 @@ export type Database = {
           id: string
           max_auto_amount_php: number | null
           require_listener_match: boolean
+          require_receipt_match: boolean
           require_reference_match: boolean
           updated_at: string
           updated_by: string | null
+          verification_mode: string
         }
         SetofOptions: {
           from: "*"
@@ -7025,6 +7071,8 @@ export type Database = {
           reviewer_name: string | null
           sender_number: string | null
           sender_number_key: string | null
+          staged_at: string | null
+          staged_result: string | null
           status: string
           updated_at: string
           user_id: string
