@@ -26,6 +26,7 @@ import { AccessAccountDialog, type AccessTarget } from "@/components/access-acco
 import { ManualCreditDialog } from "@/components/super/manual-credit-dialog";
 import { CashbackRateDialog, type CashbackTarget } from "@/components/cashback-rate-dialog";
 import { MemberAccountDialog } from "@/components/super/member-account-dialog";
+import { PurgeMemberDialog, type PurgeTarget } from "@/components/super/purge-member-dialog";
 import { fetchEcosystemNames } from "@/lib/credit-management";
 import {
   DIRECTORY_ROLES,
