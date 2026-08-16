@@ -1274,6 +1274,76 @@ export type Database = {
           },
         ]
       }
+      earnings_reconciliation_adjustments: {
+        Row: {
+          actor_id: string | null
+          corrected_amount: number
+          corrected_percent: number | null
+          correction_tx_id: string
+          created_at: string
+          delta: number
+          id: string
+          kind: string
+          previous_amount: number
+          previous_percent: number | null
+          reason: string
+          recipient_id: string
+          sale_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          corrected_amount: number
+          corrected_percent?: number | null
+          correction_tx_id: string
+          created_at?: string
+          delta: number
+          id?: string
+          kind: string
+          previous_amount: number
+          previous_percent?: number | null
+          reason: string
+          recipient_id: string
+          sale_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          corrected_amount?: number
+          corrected_percent?: number | null
+          correction_tx_id?: string
+          created_at?: string
+          delta?: number
+          id?: string
+          kind?: string
+          previous_amount?: number
+          previous_percent?: number | null
+          reason?: string
+          recipient_id?: string
+          sale_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "earnings_reconciliation_adjustments_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "earnings_reconciliation_adjustments_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "earnings_reconciliation_adjustments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ecosystem_invitations: {
         Row: {
           cancelled_by: string | null
@@ -2766,6 +2836,54 @@ export type Database = {
           },
         ]
       }
+      retail_catalog_templates: {
+        Row: {
+          active: boolean
+          brand: string | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          size_label: string | null
+          sku: string | null
+          sort_order: number
+          unit: string
+          updated_at: string
+          variant: string | null
+        }
+        Insert: {
+          active?: boolean
+          brand?: string | null
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          size_label?: string | null
+          sku?: string | null
+          sort_order?: number
+          unit?: string
+          updated_at?: string
+          variant?: string | null
+        }
+        Update: {
+          active?: boolean
+          brand?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          size_label?: string | null
+          sku?: string | null
+          sort_order?: number
+          unit?: string
+          updated_at?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
       retail_order_items: {
         Row: {
           created_at: string
@@ -2947,6 +3065,9 @@ export type Database = {
         Row: {
           active: boolean
           archived: boolean
+          barcode: string | null
+          brand: string | null
+          category: string | null
           created_at: string
           description: string | null
           ecosystem_id: string
@@ -2955,13 +3076,23 @@ export type Database = {
           name: string
           price: number
           public_visible: boolean
+          published: boolean
+          size_label: string | null
+          sku: string | null
           sold_count: number
           stock: number
+          template_id: string | null
+          unit: string
           updated_at: string
+          variant: string | null
+          wholesale_price: number
         }
         Insert: {
           active?: boolean
           archived?: boolean
+          barcode?: string | null
+          brand?: string | null
+          category?: string | null
           created_at?: string
           description?: string | null
           ecosystem_id: string
@@ -2970,13 +3101,23 @@ export type Database = {
           name: string
           price: number
           public_visible?: boolean
+          published?: boolean
+          size_label?: string | null
+          sku?: string | null
           sold_count?: number
           stock?: number
+          template_id?: string | null
+          unit?: string
           updated_at?: string
+          variant?: string | null
+          wholesale_price?: number
         }
         Update: {
           active?: boolean
           archived?: boolean
+          barcode?: string | null
+          brand?: string | null
+          category?: string | null
           created_at?: string
           description?: string | null
           ecosystem_id?: string
@@ -2985,9 +3126,16 @@ export type Database = {
           name?: string
           price?: number
           public_visible?: boolean
+          published?: boolean
+          size_label?: string | null
+          sku?: string | null
           sold_count?: number
           stock?: number
+          template_id?: string | null
+          unit?: string
           updated_at?: string
+          variant?: string | null
+          wholesale_price?: number
         }
         Relationships: [
           {
@@ -2995,6 +3143,13 @@ export type Database = {
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "retail_products_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "retail_catalog_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -7340,6 +7495,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      seed_retail_catalog: { Args: { _ecosystem_id: string }; Returns: number }
       send_friend_request: { Args: { _user: string }; Returns: string }
       set_admin_sale_commission: {
         Args: { _ecosystem_id: string; _percent: number }

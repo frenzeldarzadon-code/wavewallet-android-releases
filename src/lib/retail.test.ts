@@ -1,16 +1,21 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_STORE_SETTINGS,
+  EMPTY_CATALOG_FILTER,
   cartCount,
   cartLines,
   cartTotal,
   changeQuantity,
   checkoutProblem,
   enabledStores,
+  filterProducts,
+  isProductReady,
   orderTone,
+  productCategories,
   type Cart,
   type CheckoutDraft,
   type RetailProduct,
+  type RetailProductRow,
   type StoreSettings,
 } from "@/lib/retail";
 
@@ -128,5 +133,53 @@ describe("orderTone", () => {
     expect(orderTone("approved")).toBe("success");
     expect(orderTone("rejected")).toBe("danger");
     expect(orderTone("cancelled")).toBe("muted");
+  });
+});
+
+describe("admin catalog filtering", () => {
+  const row = (over: Partial<RetailProductRow>): RetailProductRow => ({
+    ...product("x", 10, 5),
+    active: true,
+    archived: false,
+    category: "Instant Noodles",
+    brand: "Lucky Me",
+    variant: null,
+    size_label: "55 g",
+    unit: "piece",
+    wholesale_price: 8,
+    sku: null,
+    barcode: null,
+    published: true,
+    template_id: "t1",
+    ...over,
+  });
+
+  const rows = [
+    row({ id: "a", name: "Pancit Canton" }),
+    row({ id: "b", name: "Sagada Coffee", category: "Coffee", template_id: null, published: false }),
+    row({ id: "c", name: "Old Stock", archived: true, published: false }),
+  ];
+
+  it("hides archived products unless asked for", () => {
+    expect(filterProducts(rows, { ...EMPTY_CATALOG_FILTER, status: "published" }).map((r) => r.id)).toEqual(["a"]);
+    expect(filterProducts(rows, { ...EMPTY_CATALOG_FILTER, status: "draft" }).map((r) => r.id)).toEqual(["b"]);
+    expect(filterProducts(rows, { ...EMPTY_CATALOG_FILTER, status: "archived" }).map((r) => r.id)).toEqual(["c"]);
+  });
+
+  it("separates starter-catalog products from manually added ones", () => {
+    expect(filterProducts(rows, { ...EMPTY_CATALOG_FILTER, source: "manual" }).map((r) => r.id)).toEqual(["b"]);
+    expect(filterProducts(rows, { ...EMPTY_CATALOG_FILTER, source: "catalog" }).map((r) => r.id)).toEqual(["a", "c"]);
+  });
+
+  it("searches names, brands and sizes and filters by category", () => {
+    expect(filterProducts(rows, { ...EMPTY_CATALOG_FILTER, search: "sagada" }).map((r) => r.id)).toEqual(["b"]);
+    expect(filterProducts(rows, { ...EMPTY_CATALOG_FILTER, category: "Coffee" }).map((r) => r.id)).toEqual(["b"]);
+    expect(productCategories(rows)).toEqual(["Coffee", "Instant Noodles"]);
+  });
+
+  it("only calls a product ready when it has a price and stock", () => {
+    expect(isProductReady(row({ price: 0 }))).toBe(false);
+    expect(isProductReady(row({ stock: 0 }))).toBe(false);
+    expect(isProductReady(row({}))).toBe(true);
   });
 });
