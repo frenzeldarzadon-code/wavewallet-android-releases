@@ -1,45 +1,46 @@
-# Admin APK distribution — findings first, then the build plan
+# Subscription Shops — architecture plan (no code changes yet)
 
-## Finding: no APK can be produced inside this project environment
+## What I verified first
 
-Inspection results:
+- 4 shops exist today (Sagada Wave, DEMO — Preview Shop `is_test`, Lenas Giga Surf, Guesang GigaFlex). All would become **Legacy** shops; none is migrated.
+- Subscription today is a single global plan in `platform_settings` (`plan_name`, `plan_price`, `billing_period`) plus a per-shop `plan_name`/`plan_price`/`current_period_end` and manual GCash requests (`subscription_requests`, `submit_subscription_request`, `review_subscription_request`, `expire_stale_subscriptions`, `subscription_ok`, `my_operational_status`, `require_operational`). There is no plan catalog and no cashflow allocation concept.
+- Freeze already exists per shop (`operations_frozen`, `set_ecosystem_freeze`, `require_operational`) and is enforced server-side — the expiry/freeze requirement reuses this, it does not need a new mechanism.
+- Cash In/Cash Out already supports dual paths (`admin` internal 1:1, `superadmin` with fees) and destination-aware GCash listeners; verification rules are already Super-Admin-only and centralised.
+- Coin/cashback/points/voucher logic is already shop-scoped by `ecosystem_id`, so both shop types can share it unchanged.
+- **Cross-shop transfers exist today and work**: `transfer_credits_between_shops` (5-coin platform fee, transfer-provenance lots), UI in the wallet centre. This directly contradicts spec §5/§25.
 
-- `android-gcash-listener/` contains complete Kotlin source only. There is no `app/build/` output and no `.apk` file anywhere in the project.
-- The environment has **no JDK, no Gradle, no Android SDK** (`java`, `javac`, `gradle`, `sdkmanager` all absent). An Android compile cannot run here.
-- `app/build.gradle.kts` has `versionCode = 1`, `versionName = "1.0.0"`, `applicationId = com.wavewallet.gcashlistener`, and the `signingConfigs` block is still commented out. No keystore exists in the repo (correctly — none should).
+## Blocking questions (financial — I will not guess)
 
-So: **a signed release APK cannot be generated here today**, and I will not fabricate signing material. The debug APK you already built is usable for controlled sideloading (it installs as `com.wavewallet.gcashlistener.debug`), but it is signed with the throwaway Android debug key, so future updates cannot be signed consistently and Play Protect warns harder. Recommended path is a release build, but the mechanics of producing the binary must happen where a JDK + Android SDK exists (your GitHub Actions runner or Android Studio).
+1. **Cross-shop transfers.** Should `transfer_credits_between_shops` be (a) removed platform-wide for everyone, (b) blocked only when either side is a Subscription Shop (Legacy↔Legacy keeps working), or (c) kept but disabled by a Super Admin switch? Option (a) contradicts the previously approved shop-to-shop feature; (b) is the only choice that satisfies "do not change Legacy behaviour".
+2. **Allocation semantics.** On activation the Admin receives the plan's coins as a platform issuance. Confirm: it is minted **once at activation**, **not re-minted on renewal**, and an upgrade mints only the difference (new allocation − previous allocation, never negative). Renewal therefore buys time, not coins. Correct?
+3. **Is the allocation a cap or a grant?** "Revolving capacity" can mean (i) a one-time mint that then circulates (no ceiling enforced afterwards), or (ii) a hard ceiling on total coins in the shop, enforced on every issuance. Which one? I plan (i) plus a reporting-only capacity indicator unless you say otherwise.
+4. **Proration on upgrade.** Confirm the formula: unused days of the current plan × (old monthly price / days in period) is credited against the new plan's price (money side only, never coins), configurable on/off by Super Admin.
+5. **Demo scope.** Today's demo signs into real sandbox accounts in the DEMO shop. §28–§39 ask for a public, no-login, fully simulated demo plus PWA offline. That is a large separate build. Ship it as Stage 6 after the subscription core, or earlier?
 
-## What is required for a proper signed release APK
+## Stages
 
-You (not me, and never pasted into chat) create these repository secrets in GitHub → Settings → Secrets and variables → Actions:
+**Stage 0 — Super Admin hidden from demo (safe, immediate).** Remove `super_admin` from `DEMO_ROLES` (`src/lib/demo.ts`) and reject that role server-side in `src/lib/demo.server.ts`.
 
-- `WW_KEYSTORE_BASE64` — base64 of a keystore you generate locally with `keytool`
-- `WW_KEYSTORE_PASSWORD`, `WW_KEY_ALIAS`, `WW_KEY_PASSWORD`
+**Stage 1 — Shop kind.** Add `ecosystems.shop_kind` enum `legacy | subscription`, default `subscription`, and backfill every existing row to `legacy` in the same migration. One column drives every branch below; nothing reads it for Legacy behaviour except to keep it unchanged.
 
-The existing `release` job in `.github/workflows/build-apk.yml` already consumes exactly those and skips when absent. One code change is needed on my side: uncomment the `signingConfigs` block and the `signingConfig` line in `app/build.gradle.kts` so the release job actually signs. Keep the keystore file backed up — losing it means future builds cannot upgrade installs in place.
+**Stage 2 — Plan catalog (configurable, never hard-coded).** New `subscription_plans` table: name, description, target business type, monthly price, coin allocation, billing period, recommended flag, active flag, display order. Seeded with Starter/Basic/Standard/Advanced/Large Deployment at the stated prices and allocations. Super Admin CRUD via SECURITY DEFINER RPCs + a new plans card in Super Admin settings. GRANTs + RLS: `anon`/`authenticated` read active plans only; writes Super Admin only.
 
-## The distribution mechanism I will build now (no fake download)
+**Stage 3 — Subscription lifecycle + payments.** New `shop_subscriptions` (current plan, state ACTIVE/EXPIRING_SOON/EXPIRED/FROZEN/REACTIVATED/CLOSED, period start/end) and `subscription_events` audit table capturing shop, previous/new plan, amount, allocation, additional allocation, proration, payment reference, verification status, dates, transaction id, actor. Subscription payments are recorded as `SUBSCRIPTION_PAYMENT` — a separate record type that never touches a member wallet, never creates a Cash In/Out and never becomes a coin transfer. Verified payment → activate/renew/upgrade + apply allocation rules. Allocation is written to the credit ledger as a distinct `subscription_allocation` entry kind (non-earning, no cashback, no points), reusing the existing platform-issuance path so provenance stays intact. No manual "Add Cashflow" exists for Subscription Shops.
 
-Rather than link a GitHub artifact or repo, the APK binary is stored once in the project's own private storage bucket and served to Admins through a short-lived signed URL. No GitHub login, works for every authorised Admin.
+**Stage 4 — Enforcement (server-side, not UI).** Expiry job flips EXPIRED and sets `operations_frozen` via the existing freeze mechanism, so every money RPC already refuses. 7-day banner driven by `current_period_end`. Cross-shop transfer guard per the answer to question 1. `superadmin` cash-out path rejected for Subscription Shops in `request_withdrawal`/settlement, plus hidden in UI. Members and their other shop memberships are never touched by freeze, expiry or purge.
 
-1. **Storage + registry**
-   - New private bucket `listener-apk`.
-   - New table `public.listener_app_releases`: `id`, `version_name`, `version_code`, `build_type` (`debug` | `release`), `storage_path`, `size_bytes`, `sha256`, `notes`, `is_current`, `uploaded_by`, `created_at`. GRANTs + RLS: `SELECT` for authenticated members who are shop admin or super admin; writes restricted to super admin only.
-2. **Super Admin upload** — a new panel inside the existing GCash notification listener card on the Super Admin platform settings page. Super Admin picks the `.apk` file; the browser computes the SHA-256 from the actual bytes (`crypto.subtle.digest`), uploads to the bucket, and records size/version/hash. The stored hash is always derived from the uploaded binary — never typed in.
-3. **Admin download** — a new "Android GCash Listener" section inside the existing `ListenerDevicesCard` (already rendered on `admin.settings.tsx` and reused by Super Admin). It shows version name/code, build type, file size, the full SHA-256 with a copy button, and a Download button that fetches a signed URL on click. Until a release row exists, the section states plainly that the app has not been published yet and shows no button — no placeholder link.
-4. **Install guidance** — collapsible instructions rendered next to the download: enable install from unknown sources, grant **Notification access**, allow **Restricted settings** on Android 13+ (Settings → Apps → app info → three dots → Allow restricted settings), disable battery optimisation / allow background activity (ColorOS: also lock the app in Recents), keep GCash notifications unmuted, then pair with the Device ID + one-time pairing secret from this same card. Play Protect note: for a self-distributed APK "Install anyway" may be required — verify the SHA-256 shown here against the downloaded file before installing, and never install a listener APK obtained from anywhere else.
+**Stage 5 — Super Admin UI split.** Two areas: Legacy Shops (today's screens, untouched) and Subscription Shops (plan, state, period, allocation history, payment matching). Admin-facing plan selection and "+ Add another shop" with the business explanations (who it's for, capacity provided, when to upgrade), plus the cashflow-vs-expense-vs-profit wording.
 
-## Explicitly not changed
+**Stage 6 — Public demo + PWA** (pending answer to question 5): guest-only simulated data, four roles, coin-flow/cashback/points education, reset/exit, service worker caching the demo shell; real money paths never available offline.
 
-- Super Admin listener behaviour, pairing, destination-aware matching, verification layers, Cash In/Cash Out, fees, wallets, reservations, and RLS all stay exactly as they are. This work only adds a release registry, a bucket, and UI inside the existing listener card.
-- Nothing is published separately; this rides along with the final master-spec publish after tests, typecheck and build pass.
+## Isolation strategy for shared code
 
-## Decision needed from you
+Wallets, ledger, vouchers, cashback, points, reseller hierarchy, GCash listener and verification stay exactly as they are. Every new rule is expressed as an extra guard keyed on `shop_kind = 'subscription'`; no existing branch is rewritten. Legacy shops take the identical code path they take today.
 
-Pick one before I implement step 1–4:
+## Migration safety
 
-- **A (preferred)** — you add the four signing secrets, I uncomment the signing config, you dispatch the workflow, then upload the signed release APK through the new Super Admin panel.
-- **B (interim)** — you upload the debug APK you already built through the same panel; it is recorded as `build_type = debug` and the UI labels it as a test build. The mechanism is identical, so swapping in a signed release later is just another upload.
+Additive only: new tables, one new column with a backfill, new RPCs. No drops, no data deletion, no rewriting of existing ledger rows. Existing `subscription_requests` stays as the Legacy path; Subscription Shops use the new tables.
 
-Either way the mechanism gets built now and stays empty-but-honest until a real binary is uploaded.
+## Tests before publish
+
+Legacy regression (voucher purchase, coin transfer, cashback, points, cash in/out, listener, ledger) plus new coverage for plan CRUD, activation allocation, upgrade difference and proration, renewal without re-mint, expiry → freeze → renewal, cross-shop rejection, Super-Admin-cashout rejection for subscription shops, and member-universe preservation after freeze/purge. Full report delivered before any publish.
