@@ -61,6 +61,54 @@ export type Database = {
           },
         ]
       }
+      app_release: {
+        Row: {
+          android_download_count: number
+          android_download_url: string
+          android_enabled: boolean
+          android_min_os: string
+          android_release_date: string | null
+          android_release_notes: string
+          android_sha256: string
+          android_size_bytes: number
+          android_version: string
+          created_at: string
+          id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          android_download_count?: number
+          android_download_url?: string
+          android_enabled?: boolean
+          android_min_os?: string
+          android_release_date?: string | null
+          android_release_notes?: string
+          android_sha256?: string
+          android_size_bytes?: number
+          android_version?: string
+          created_at?: string
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          android_download_count?: number
+          android_download_url?: string
+          android_enabled?: boolean
+          android_min_os?: string
+          android_release_date?: string | null
+          android_release_notes?: string
+          android_sha256?: string
+          android_size_bytes?: number
+          android_version?: string
+          created_at?: string
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -6473,6 +6521,7 @@ export type Database = {
         Returns: string
       }
       real_super_admin_exists: { Args: never; Returns: boolean }
+      record_app_download: { Args: never; Returns: number }
       record_cash_in_reference_conflict: {
         Args: { _new: string }
         Returns: string
@@ -8185,6 +8234,39 @@ export type Database = {
         }[]
       }
       universe_relationship: { Args: { _user: string }; Returns: Json }
+      update_app_release: {
+        Args: {
+          _android_download_url: string
+          _android_enabled: boolean
+          _android_min_os: string
+          _android_release_date: string
+          _android_release_notes: string
+          _android_sha256: string
+          _android_size_bytes: number
+          _android_version: string
+        }
+        Returns: {
+          android_download_count: number
+          android_download_url: string
+          android_enabled: boolean
+          android_min_os: string
+          android_release_date: string | null
+          android_release_notes: string
+          android_sha256: string
+          android_size_bytes: number
+          android_version: string
+          created_at: string
+          id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "app_release"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       update_credit_purchase_settings:
         | {
             Args: {

@@ -104,6 +104,20 @@ function HelpPage() {
       </PageSection>
 
       <PageSection title="Install the app">
+        <Card className="mb-3 shadow-[var(--shadow-card)]">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 px-4">
+            <div>
+              <p className="text-sm font-medium">WaveWallet for Android — official app</p>
+              <p className="text-xs text-muted-foreground">
+                Download the official APK straight from WaveWallet. On iPhone or iPad, keep using
+                the web app.
+              </p>
+            </div>
+            <Button asChild size="sm">
+              <Link to="/download">Get the app</Link>
+            </Button>
+          </CardContent>
+        </Card>
         <InstallAppCard className="shadow-[var(--shadow-card)]" />
       </PageSection>
 

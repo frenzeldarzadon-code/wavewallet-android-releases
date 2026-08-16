@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteImport } from './routes/app'
+import { Route as DownloadRouteImport } from './routes/download'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as InviteRouteImport } from './routes/invite'
@@ -110,6 +111,11 @@ const AdminRoute = AdminRouteImport.update({
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DownloadRoute = DownloadRouteImport.update({
+  id: '/download',
+  path: '/download',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GuideRoute = GuideRouteImport.update({
@@ -538,6 +544,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
+  '/download': typeof DownloadRoute
   '/guide': typeof GuideRoute
   '/help': typeof HelpRoute
   '/invite': typeof InviteRoute
@@ -625,6 +632,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/download': typeof DownloadRoute
   '/guide': typeof GuideRoute
   '/help': typeof HelpRoute
   '/invite': typeof InviteRoute
@@ -712,6 +720,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
+  '/download': typeof DownloadRoute
   '/guide': typeof GuideRoute
   '/help': typeof HelpRoute
   '/invite': typeof InviteRoute
@@ -803,6 +812,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/app'
+    | '/download'
     | '/guide'
     | '/help'
     | '/invite'
@@ -890,6 +900,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/download'
     | '/guide'
     | '/help'
     | '/invite'
@@ -976,6 +987,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/app'
+    | '/download'
     | '/guide'
     | '/help'
     | '/invite'
@@ -1066,6 +1078,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   AppRoute: typeof AppRouteWithChildren
+  DownloadRoute: typeof DownloadRoute
   GuideRoute: typeof GuideRoute
   HelpRoute: typeof HelpRoute
   InviteRoute: typeof InviteRoute
@@ -1103,6 +1116,13 @@ declare module '@tanstack/react-router' {
       path: '/app'
       fullPath: '/app'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/download': {
+      id: '/download'
+      path: '/download'
+      fullPath: '/download'
+      preLoaderRoute: typeof DownloadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/guide': {
@@ -1884,6 +1904,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AppRoute: AppRouteWithChildren,
+  DownloadRoute: DownloadRoute,
   GuideRoute: GuideRoute,
   HelpRoute: HelpRoute,
   InviteRoute: InviteRoute,
