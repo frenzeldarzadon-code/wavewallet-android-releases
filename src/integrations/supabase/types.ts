@@ -6391,7 +6391,7 @@ export type Database = {
         }[]
       }
       platform_user_deletion_check: {
-        Args: { _user: string }
+        Args: { _override?: boolean; _user: string }
         Returns: {
           credit_total: number
           eligible: boolean
@@ -8165,7 +8165,7 @@ export type Database = {
         Returns: undefined
       }
       superadmin_delete_platform_user: {
-        Args: { _reason?: string; _user: string }
+        Args: { _override?: boolean; _reason?: string; _user: string }
         Returns: undefined
       }
       superadmin_issue_credits: {
