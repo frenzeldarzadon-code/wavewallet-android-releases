@@ -79,7 +79,7 @@ export function WalletIntegrityCard() {
                     >
                       <p className="font-medium">{r.member_name ?? r.user_id}</p>
                       <p className="text-muted-foreground">
-                        {r.kind === "points" ? "Points" : "Credits"} wallet · balance {r.balance} vs history{" "}
+                        {r.kind === "points" ? "Points" : "Coins"} wallet · balance {r.balance} vs history{" "}
                         {r.ledger_sum} (difference {r.difference})
                       </p>
                     </li>

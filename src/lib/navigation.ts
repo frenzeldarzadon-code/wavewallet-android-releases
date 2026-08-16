@@ -323,7 +323,7 @@ export const superBottomNav: NavItem[] = [
   { to: "/super", label: "Home", icon: LayoutDashboard },
   { to: "/super/approvals", label: "Approvals", icon: ShieldCheck },
   { to: "/super/members", label: "Members", icon: Users },
-  { to: "/super/credits", label: "Credits", icon: Coins },
+  { to: "/super/credits", label: "Coins", icon: Coins },
   { to: "/super/profile", label: "Profile", icon: User },
 ];
 
