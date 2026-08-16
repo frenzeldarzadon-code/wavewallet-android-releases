@@ -127,7 +127,10 @@ function AdminSettings() {
 
 
   const save = async () => {
-    if (!ecosystemDbId) return;
+    if (!ecosystemDbId) {
+      toast.error("Your shop is still loading — try again in a moment.");
+      return;
+    }
     if (!form.name.trim()) {
       toast.error("Your shop needs a name.");
       return;
@@ -137,6 +140,7 @@ function AdminSettings() {
       _ecosystem_id: ecosystemDbId,
       _name: form.name.trim(),
       _description: form.description.trim(),
+      _contact_name: form.contactName.trim(),
       _contact_email: form.contactEmail.trim(),
       _contact_phone: form.contactPhone.trim(),
     });
@@ -145,7 +149,10 @@ function AdminSettings() {
       toast.error("Could not save settings", { description: error.message });
       return;
     }
-    toast.success("Shop settings saved.");
+    setDirty(false);
+    toast.success("Shop settings saved.", {
+      description: "Shop name, description and contact details are stored in the database.",
+    });
     await reload?.();
   };
 
