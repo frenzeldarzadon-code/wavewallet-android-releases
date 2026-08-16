@@ -55,7 +55,7 @@ export interface TxRow {
   detail: string | null;
   txId: string | null;
   amount: number;
-  direction: "coin" | "debit";
+  direction: "credit" | "debit";
   balanceAfter: number | null;
   /** Present only for reversible credit-transfer rows. */
   transfer: TransferReversalState | null;
@@ -134,7 +134,7 @@ function ledgerKind(e: CreditEntry, hasReceiveLeg = false): TxKind {
   }
   if (
     (e.direction === "debit" && (hasReceiveLeg || isTransferDebitReason(e.reason))) ||
-    (e.direction === "coin" && isTransferCreditReason(e.reason))
+    (e.direction === "credit" && isTransferCreditReason(e.reason))
   ) {
     return "transfer";
   }
@@ -152,7 +152,7 @@ export function buildTransactionFeed(input: {
   // transfer regardless of how the ledger worded it.
   const receiveLegs = new Set(
     input.ledger
-      .filter((e) => e.direction === "coin" && e.tx_id?.endsWith("-R"))
+      .filter((e) => e.direction === "credit" && e.tx_id?.endsWith("-R"))
       .map((e) => e.tx_id!.slice(0, -2)),
   );
   const rows: TxRow[] = [];

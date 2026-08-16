@@ -83,7 +83,7 @@ function ResellerReports() {
 
   const salesTotals = useMemo(() => summariseSales(sales), [sales]);
   const commissionEntries = useMemo(
-    () => credits.filter((c) => c.direction === "coin" && Number(c.commission_amount ?? 0) > 0),
+    () => credits.filter((c) => c.direction === "credit" && Number(c.commission_amount ?? 0) > 0),
     [credits],
   );
   const customerLoads = useMemo(

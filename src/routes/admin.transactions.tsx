@@ -229,12 +229,12 @@ function AdminTransactions() {
                   <div className="shrink-0 text-right">
                     <p
                       className={
-                        r.direction === "coin"
+                        r.direction === "credit"
                           ? "text-sm font-semibold text-success"
                           : "text-sm font-semibold text-destructive"
                       }
                     >
-                      {r.direction === "coin" ? "+" : "−"}
+                      {r.direction === "credit" ? "+" : "−"}
                       {peso(r.amount)}
                     </p>
                     {r.balanceAfter !== null ? (

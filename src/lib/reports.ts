@@ -225,10 +225,10 @@ export function summariseCredits(entries: CreditEntry[]): CreditSummary {
   let commissionBonus = 0;
   let commissionCount = 0;
   for (const e of entries) {
-    if (e.direction === "coin") issued += e.amount;
+    if (e.direction === "credit") issued += e.amount;
     else spent += e.amount;
     const bonus = Number(e.commission_amount ?? 0);
-    if (e.direction === "coin" && bonus > 0) {
+    if (e.direction === "credit" && bonus > 0) {
       commissionBonus += bonus;
       commissionBase += Number(e.base_amount ?? e.amount - bonus);
       commissionCount += 1;
@@ -357,7 +357,7 @@ export function summariseCreditFlow(entries: CreditEntry[]): CreditFlowSummary {
       continue;
     }
     if (kind === "sale_commission" || kind === "upline_commission") {
-      if (e.direction === "coin") {
+      if (e.direction === "credit") {
         if (kind === "upline_commission") out.uplinePaid += e.amount;
         else out.cashbackPaid += e.amount;
       } else {
@@ -378,7 +378,7 @@ export function summariseCreditFlow(entries: CreditEntry[]): CreditFlowSummary {
       }
       continue;
     }
-    if (e.direction === "coin") {
+    if (e.direction === "credit") {
       out.generated += e.amount;
       out.generatedCount += 1;
     } else {
@@ -522,7 +522,7 @@ export interface PointsEntryRow {
   id: string;
   user_id: string;
   ecosystem_id: string;
-  direction: "coin" | "debit";
+  direction: "credit" | "debit";
   amount: number;
   entry_type: string;
   reason: string;

@@ -163,12 +163,12 @@ function AdminSocial() {
                   </div>
                   <span
                     className={
-                      row.direction === "coin"
+                      row.direction === "credit"
                         ? "text-sm font-semibold text-success"
                         : "text-sm font-semibold text-destructive"
                     }
                   >
-                    {row.direction === "coin" ? "+" : "−"}
+                    {row.direction === "credit" ? "+" : "−"}
                     {row.amount}
                   </span>
                 </CardContent>

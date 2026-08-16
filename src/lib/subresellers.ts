@@ -23,7 +23,7 @@ export interface SubresellerRow {
 
 export interface SubresellerLedgerEntry {
   id: string;
-  direction: "coin" | "debit";
+  direction: "credit" | "debit";
   amount: number;
   balance_after: number;
   reason: string;

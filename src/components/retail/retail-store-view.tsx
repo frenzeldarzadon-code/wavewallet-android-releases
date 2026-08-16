@@ -111,7 +111,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
       const placed = await placeRetailOrder(ecosystemDbId, cart, draft);
       toast.success(`Order ${placed.orderNo} sent for approval`, {
         description:
-          draft.payment === "coin"
+          draft.payment === "credit"
             ? "Your coins are held until the shop admin approves or rejects."
             : "Pay in cash — the shop admin confirms the order.",
       });
@@ -380,16 +380,16 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
               {settings.creditEnabled ? (
                 <Button
                   type="button"
-                  variant={draft.payment === "coin" ? "default" : "outline"}
+                  variant={draft.payment === "credit" ? "default" : "outline"}
                   className="flex-1"
-                  onClick={() => setDraft({ ...draft, payment: "coin" })}
+                  onClick={() => setDraft({ ...draft, payment: "credit" })}
                 >
                   Shop coins
                 </Button>
               ) : null}
             </div>
             <p className="text-[11px] text-muted-foreground">
-              {draft.payment === "coin"
+              {draft.payment === "credit"
                 ? `${coins(total)} is held from this shop's wallet and returned in full if the order is rejected.`
                 : "Cash orders stay pending until the shop admin confirms them."}
             </p>

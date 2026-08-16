@@ -124,12 +124,12 @@ function ResellerDashboard() {
                   <div className="shrink-0 text-right">
                     <p
                       className={
-                        e.direction === "coin"
+                        e.direction === "credit"
                           ? "text-sm font-semibold text-success"
                           : "text-sm font-semibold text-destructive"
                       }
                     >
-                      {e.direction === "coin" ? "+" : "−"}
+                      {e.direction === "credit" ? "+" : "−"}
                       {peso(e.amount)}
                     </p>
                     <p className="text-[11px] text-muted-foreground">Bal {peso(e.balance_after)}</p>

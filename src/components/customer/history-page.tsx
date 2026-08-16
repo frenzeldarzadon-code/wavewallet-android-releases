@@ -43,7 +43,7 @@ export interface HistoryPageProps {
 export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }: HistoryPageProps = {}) {
   const { account, ecosystemDbId } = useSession();
   const [filter, setFilter] = useState("all");
-  const [direction, setDirection] = useState<"all" | "coin" | "debit">("all");
+  const [direction, setDirection] = useState<"all" | "credit" | "debit">("all");
   const [entries, setEntries] = useState<CreditEntry[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [lots, setLots] = useState<CreditLot[]>([]);
@@ -114,7 +114,7 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All directions</SelectItem>
-              <SelectItem value="coin">Money in</SelectItem>
+              <SelectItem value="credit">Money in</SelectItem>
               <SelectItem value="debit">Money out</SelectItem>
             </SelectContent>
           </Select>
@@ -204,12 +204,12 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
                 <div className="shrink-0 text-right">
                   <p
                     className={
-                      e.direction === "coin"
+                      e.direction === "credit"
                         ? "text-sm font-semibold text-success"
                         : "text-sm font-semibold text-destructive"
                     }
                   >
-                    {e.direction === "coin" ? "+" : "−"}
+                    {e.direction === "credit" ? "+" : "−"}
                     {peso(e.amount)}
                   </p>
                   <p className="text-[11px] text-muted-foreground">Bal {peso(e.balance_after)}</p>

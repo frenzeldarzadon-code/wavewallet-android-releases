@@ -107,7 +107,7 @@ const PRIVILEGES: Array<{ label: string; hint: string; icon: LucideIcon; to?: st
   { label: "Manage admins", hint: "Create, invite and restructure shop owners", icon: UserCheck, to: "/super/admins" },
   { label: "Access shops", hint: "Enter any tenant with a full audit trail", icon: Building2, to: "/super/admins" },
   { label: "Platform settings", hint: "Pricing, payments and platform defaults", icon: Settings, to: "/super/settings" },
-  { label: "Coin management", hint: "Mint or remove coins in any shop", icon: Coins, to: "/super/coins" },
+  { label: "Coin management", hint: "Mint or remove coins in any shop", icon: Coins, to: "/super/credits" },
   { label: "Reports", hint: "Cross-tenant financial reporting", icon: TrendingUp, to: "/super/reports" },
   { label: "Audit trail", hint: "Every privileged action, permanently recorded", icon: ScrollText, to: "/super/audit" },
 ];

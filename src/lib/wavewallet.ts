@@ -40,7 +40,7 @@ export type SubscriptionStatus =
 
 export type VoucherCodeState = "unused" | "reserved" | "sold";
 
-export type PaymentMethod = "coins" | "points";
+export type PaymentMethod = "credits" | "points";
 
 export type RedemptionStatus = "pending" | "approved" | "rejected" | "cancelled";
 
@@ -616,7 +616,7 @@ export const ledger: LedgerEntry[] = [
     resellerId: "acc_res_1",
     productName: "1 Hour Surf",
     voucherCode: "SW1H-2M77-QWE1",
-    method: "coins",
+    method: "credits",
     amount: -10,
     grossPrice: 10,
     resellerCost: 8.5,
@@ -643,7 +643,7 @@ export const ledger: LedgerEntry[] = [
     resellerId: "acc_res_2",
     productName: "5 Hours Surf",
     voucherCode: "SW5H-9911-AAZ4",
-    method: "coins",
+    method: "credits",
     amount: -35,
     grossPrice: 35,
     resellerCost: 30.8,
@@ -670,7 +670,7 @@ export const ledger: LedgerEntry[] = [
     accountId: "acc_cus_1",
     accountName: "Ana Lopez",
     counterpartyName: "Rey Balingit",
-    method: "coins",
+    method: "credits",
     amount: -50,
     createdAt: day(2),
     note: "Transfers do not earn points",
@@ -682,7 +682,7 @@ export const ledger: LedgerEntry[] = [
     accountId: "acc_cus_2",
     accountName: "Rey Balingit",
     counterpartyName: "Ana Lopez",
-    method: "coins",
+    method: "credits",
     amount: 50,
     createdAt: day(2),
   },
@@ -720,7 +720,7 @@ export const ledger: LedgerEntry[] = [
     resellerId: null,
     productName: "1 Day Unli",
     voucherCode: "SWDY-6612-OIU2",
-    method: "coins",
+    method: "credits",
     amount: -70,
     grossPrice: 70,
     createdAt: day(5),
@@ -734,7 +734,7 @@ export const ledger: LedgerEntry[] = [
     resellerId: "acc_res_3",
     productName: "Dorm Daily",
     voucherCode: "HLDD-4410-PPQ1",
-    method: "coins",
+    method: "credits",
     amount: -50,
     grossPrice: 50,
     resellerCost: 45,

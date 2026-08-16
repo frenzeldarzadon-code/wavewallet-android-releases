@@ -10,7 +10,7 @@ import { peso } from "@/lib/wavewallet";
 
 export interface CreditEntry {
   id: string;
-  direction: "coin" | "debit";
+  direction: "credit" | "debit";
   amount: number;
   balance_after: number;
   reason: string;

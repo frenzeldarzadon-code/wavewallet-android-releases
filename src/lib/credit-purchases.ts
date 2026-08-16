@@ -117,7 +117,7 @@ export function formatPhp(amount: number, currency = "PHP"): string {
 /* ------------------------------------------------------------------ packages */
 
 export async function fetchCreditPackages(activeOnly = false): Promise<CreditPackage[]> {
-  let q = supabase.from("credit_packages").select("*").order("sort_order").order("coins");
+  let q = supabase.from("credit_packages").select("*").order("sort_order").order("credits");
   if (activeOnly) q = q.eq("active", true);
   const { data, error } = await q;
   if (error) throw new Error(error.message);

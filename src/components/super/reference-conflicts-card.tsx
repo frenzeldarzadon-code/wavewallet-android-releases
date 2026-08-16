@@ -61,7 +61,7 @@ function Side({ title, snap, creditedFirst }: { title: string; snap: ConflictSna
       {line("Receipt check", RECEIPT_CHECK_LABEL[(snap.receipt_check as ReceiptCheck) ?? "pending"])}
       {line("Receipt read", when(snap.receipt_read_at))}
       {line("Amount", snap.amount_php == null ? "unknown" : peso(Number(snap.amount_php)))}
-      {line("Coins", snap.credits == null ? "unknown" : Number(snap.credits).toLocaleString())}
+      {line("Credits", snap.credits == null ? "unknown" : Number(snap.credits).toLocaleString())}
       {line("Paid from", maskAccountNumber(snap.sender_number))}
       {line("Payer name", snap.sender_name ?? "not reported")}
       {line("Receiving shop", snap.shop_name ?? "unknown")}

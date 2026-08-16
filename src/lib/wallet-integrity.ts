@@ -15,7 +15,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export interface WalletIntegrityRow {
-  kind: "coins" | "points";
+  kind: "credits" | "points";
   account_id: string;
   user_id: string;
   ecosystem_id: string | null;

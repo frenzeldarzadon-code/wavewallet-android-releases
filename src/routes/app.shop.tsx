@@ -53,7 +53,7 @@ export const Route = createFileRoute("/app/shop")({
   component: CustomerShop,
 });
 
-type Method = "coins" | "points";
+type Method = "credits" | "points";
 
 export function VoucherShopView({
   role,
@@ -227,7 +227,7 @@ export function VoucherShopView({
                       <Button
                         className="w-full"
                         disabled={soldOut || !affordable}
-                        onClick={() => openBuy(p, "coins")}
+                        onClick={() => openBuy(p, "credits")}
                       >
                         <Ticket className="size-4" />
                         {soldOut ? "Out of stock" : affordable ? "Buy with coins" : "Not enough coins"}
@@ -261,7 +261,7 @@ export function VoucherShopView({
           <DialogHeader>
             <DialogTitle>Confirm purchase</DialogTitle>
             <DialogDescription>
-              {buying?.method === "coins"
+              {buying?.method === "credits"
                 ? "Unused codes are assigned to you and marked sold immediately."
                 : "One unused code will be assigned to you and marked sold immediately."}
             </DialogDescription>
@@ -272,7 +272,7 @@ export function VoucherShopView({
                 <span className="text-muted-foreground">Voucher</span>
                 <span className="font-medium">{buying.product.name}</span>
               </p>
-              {buying.method === "coins" ? (
+              {buying.method === "credits" ? (
                 <>
                   <div className="flex items-center justify-between gap-2 py-1">
                     <span className="text-muted-foreground">Quantity</span>
@@ -354,7 +354,7 @@ export function VoucherShopView({
             </Button>
             <Button
               onClick={() => void confirm()}
-              disabled={busy || (buying?.method === "coins" && (total > balance || qty > maxQty))}
+              disabled={busy || (buying?.method === "credits" && (total > balance || qty > maxQty))}
             >
               {busy ? "Issuing…" : "Confirm purchase"}
             </Button>

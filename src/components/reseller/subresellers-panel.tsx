@@ -217,10 +217,10 @@ export function SubresellersPanel({
                   <div className="text-right">
                     <p
                       className={`text-sm font-semibold ${
-                        e.direction === "coin" ? "text-success" : "text-destructive"
+                        e.direction === "credit" ? "text-success" : "text-destructive"
                       }`}
                     >
-                      {e.direction === "coin" ? "+" : "−"}
+                      {e.direction === "credit" ? "+" : "−"}
                       {peso(e.amount)}
                     </p>
                     <p className="text-[11px] text-muted-foreground">

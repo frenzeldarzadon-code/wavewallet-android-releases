@@ -101,7 +101,7 @@ function AdminWallets() {
   const [reference, setReference] = useState("");
   const [busy, setBusy] = useState(false);
   const [ledger, setLedger] = useState<CreditEntry[]>([]);
-  const [mode, setMode] = useState<"coins" | "points">("coins");
+  const [mode, setMode] = useState<"credits" | "points">("credits");
   /** The admin's own wallet — the only source of coins they can hand out. */
   const [shopBalance, setShopBalance] = useState(0);
   const [reversal, setReversal] = useState<ReversalInfo | null>(null);
@@ -372,7 +372,7 @@ function AdminWallets() {
                         size="sm"
                         variant="outline"
                         onClick={() => {
-                          setMode("coins");
+                          setMode("credits");
                           setTarget(m);
                         }}
                       >
@@ -432,7 +432,7 @@ function AdminWallets() {
           <StatCard
             label="Total received by members"
             value={peso(
-              ledger.filter((e) => e.direction === "coin").reduce((s, e) => s + e.amount, 0),
+              ledger.filter((e) => e.direction === "credit").reduce((s, e) => s + e.amount, 0),
             )}
             tone="brand"
           />
@@ -459,12 +459,12 @@ function AdminWallets() {
                   <div className="shrink-0 text-right">
                     <p
                       className={
-                        e.direction === "coin"
+                        e.direction === "credit"
                           ? "text-sm font-semibold text-success"
                           : "text-sm font-semibold text-destructive"
                       }
                     >
-                      {e.direction === "coin" ? "+" : "−"}
+                      {e.direction === "credit" ? "+" : "−"}
                       {peso(e.amount)}
                     </p>
                     <p className="text-[11px] text-muted-foreground">Bal {peso(e.balance_after)}</p>
@@ -661,7 +661,7 @@ function AdminWallets() {
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="wamt">
-                {mode === "coins"
+                {mode === "credits"
                   ? "Amount to load (negative to correct/deduct)"
                   : "Amount (negative to deduct)"}
               </Label>
@@ -674,7 +674,7 @@ function AdminWallets() {
                 placeholder="0"
               />
             </div>
-            {mode === "coins" ? (
+            {mode === "credits" ? (
               <div className="space-y-2">
                 <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
                   {isPlatformOwner ? (
@@ -732,10 +732,10 @@ function AdminWallets() {
               onClick={() => void submit()}
               disabled={
                 busy ||
-                (!isPlatformOwner && mode === "coins" && Number(amount) > shopBalance)
+                (!isPlatformOwner && mode === "credits" && Number(amount) > shopBalance)
               }
             >
-              {busy ? "Saving…" : mode === "coins" ? "Confirm coin movement" : "Apply adjustment"}
+              {busy ? "Saving…" : mode === "credits" ? "Confirm coin movement" : "Apply adjustment"}
             </Button>
           </DialogFooter>
         </DialogContent>

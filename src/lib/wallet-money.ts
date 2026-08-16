@@ -146,7 +146,7 @@ export function quoteCashIn(php: number, s: MoneySettings): number {
 
 
 /** Re-derive a stored request's numbers from its own snapshot, never from live settings. */
-export function snapshotQuote(row: Pick<WithdrawalRequest, "coins" | "gross_php" | "fee_percent" | "fee_php" | "net_php">): Quote {
+export function snapshotQuote(row: Pick<WithdrawalRequest, "credits" | "gross_php" | "fee_percent" | "fee_php" | "net_php">): Quote {
   return {
     credits: Number(row.credits),
     gross: Number(row.gross_php),

@@ -19,7 +19,7 @@ export interface PointsAccount {
 
 export interface PointsEntry {
   id: string;
-  direction: "coin" | "debit";
+  direction: "credit" | "debit";
   entry_type: PointsEntryType;
   amount: number;
   balance_after: number;
