@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as GuideRouteImport } from './routes/guide'
+import { Route as HelpRouteImport } from './routes/help'
 import { Route as InviteRouteImport } from './routes/invite'
 import { Route as ResellerRouteImport } from './routes/reseller'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -113,6 +114,11 @@ const AppRoute = AppRouteImport.update({
 const GuideRoute = GuideRouteImport.update({
   id: '/guide',
   path: '/guide',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InviteRoute = InviteRouteImport.update({
@@ -527,6 +533,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
   '/guide': typeof GuideRoute
+  '/help': typeof HelpRoute
   '/invite': typeof InviteRoute
   '/reseller': typeof ResellerRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
@@ -612,6 +619,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/guide': typeof GuideRoute
+  '/help': typeof HelpRoute
   '/invite': typeof InviteRoute
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
@@ -697,6 +705,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
   '/guide': typeof GuideRoute
+  '/help': typeof HelpRoute
   '/invite': typeof InviteRoute
   '/reseller': typeof ResellerRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
@@ -786,6 +795,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/guide'
+    | '/help'
     | '/invite'
     | '/reseller'
     | '/reset-password'
@@ -871,6 +881,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/guide'
+    | '/help'
     | '/invite'
     | '/reset-password'
     | '/setup'
@@ -955,6 +966,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/guide'
+    | '/help'
     | '/invite'
     | '/reseller'
     | '/reset-password'
@@ -1043,6 +1055,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AppRoute: typeof AppRouteWithChildren
   GuideRoute: typeof GuideRoute
+  HelpRoute: typeof HelpRoute
   InviteRoute: typeof InviteRoute
   ResellerRoute: typeof ResellerRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -1084,6 +1097,13 @@ declare module '@tanstack/react-router' {
       path: '/guide'
       fullPath: '/guide'
       preLoaderRoute: typeof GuideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/invite': {
@@ -1845,6 +1865,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AppRoute: AppRouteWithChildren,
   GuideRoute: GuideRoute,
+  HelpRoute: HelpRoute,
   InviteRoute: InviteRoute,
   ResellerRoute: ResellerRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
