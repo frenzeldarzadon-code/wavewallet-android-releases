@@ -50,7 +50,7 @@ export function sellerEarnings(rows: EarningRow[]): SellerEarnings {
 
 export interface PointsEarningRow {
   entry_type: string;
-  direction: "credit" | "debit";
+  direction: "coin" | "debit";
   amount: number;
   created_at: string;
 }
@@ -58,7 +58,7 @@ export interface PointsEarningRow {
 /** Customer dashboards show points earned only — no credit/cash derivations. */
 export function pointsEarnings(rows: PointsEarningRow[]): PeriodTotals {
   return periodTotalsOf(
-    rows.filter((r) => r.entry_type === "earn" && r.direction === "credit"),
+    rows.filter((r) => r.entry_type === "earn" && r.direction === "coin"),
     (r) => r.created_at,
     (r) => r.amount,
   );

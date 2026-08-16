@@ -43,7 +43,7 @@ export interface HistoryPageProps {
 export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }: HistoryPageProps = {}) {
   const { account, ecosystemDbId } = useSession();
   const [filter, setFilter] = useState("all");
-  const [direction, setDirection] = useState<"all" | "credit" | "debit">("all");
+  const [direction, setDirection] = useState<"all" | "coin" | "debit">("all");
   const [entries, setEntries] = useState<CreditEntry[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [lots, setLots] = useState<CreditLot[]>([]);
@@ -86,7 +86,7 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
 
       <Tabs value={filter} onValueChange={setFilter} className="mb-3">
         <TabsList className="flex w-full flex-wrap justify-start">
-          <TabsTrigger value="all">Credits</TabsTrigger>
+          <TabsTrigger value="all">Coins</TabsTrigger>
           <TabsTrigger value="vouchers">Vouchers</TabsTrigger>
           <TabsTrigger value="sources">Sources</TabsTrigger>
         </TabsList>
@@ -114,7 +114,7 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All directions</SelectItem>
-              <SelectItem value="credit">Money in</SelectItem>
+              <SelectItem value="coin">Money in</SelectItem>
               <SelectItem value="debit">Money out</SelectItem>
             </SelectContent>
           </Select>
@@ -127,8 +127,8 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
       ) : filter === "sources" ? (
         lots.length === 0 ? (
           <EmptyState
-            title="No credits received yet"
-            description="Credits you receive are tracked by source and spent oldest-first."
+            title="No coins received yet"
+            description="Coins you receive are tracked by source and spent oldest-first."
           />
         ) : (
           <Card className="shadow-[var(--shadow-card)]">
@@ -204,12 +204,12 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
                 <div className="shrink-0 text-right">
                   <p
                     className={
-                      e.direction === "credit"
+                      e.direction === "coin"
                         ? "text-sm font-semibold text-success"
                         : "text-sm font-semibold text-destructive"
                     }
                   >
-                    {e.direction === "credit" ? "+" : "−"}
+                    {e.direction === "coin" ? "+" : "−"}
                     {peso(e.amount)}
                   </p>
                   <p className="text-[11px] text-muted-foreground">Bal {peso(e.balance_after)}</p>

@@ -62,9 +62,9 @@ export function evaluateCustomerDeletion(
   }
 
   if (candidate.credits !== 0) {
-    blockers.push(`Credit balance is not zero (${candidate.credits}).`);
+    blockers.push(`Coin balance is not zero (${candidate.coins}).`);
   } else {
-    reasons.push("Credit balance is exactly 0.");
+    reasons.push("Coin balance is exactly 0.");
   }
 
   if (candidate.points !== 0) blockers.push(`Points balance is not zero (${candidate.points}).`);

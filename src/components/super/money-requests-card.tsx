@@ -166,7 +166,7 @@ export function MoneyRequestsCard() {
                         variant="outline"
                         disabled={busy === w.id}
                         onClick={() =>
-                          act(w.id, () => reviewWithdrawal(w.id, "reject", reason), "Rejected — credits returned.")
+                          act(w.id, () => reviewWithdrawal(w.id, "reject", reason), "Rejected — coins returned.")
                         }
                       >
                         Reject
@@ -279,10 +279,10 @@ export function MoneyRequestsCard() {
                       onClick={() => {
                         if (!window.confirm(`Confirm you RECEIVED ${peso(Number(c.amount_php))} from ${c.requester_name}.`))
                           return;
-                        void act(c.id, () => reviewCashIn(c.id, "approve", reason), "Credits issued.");
+                        void act(c.id, () => reviewCashIn(c.id, "approve", reason), "Coins issued.");
                       }}
                     >
-                      Approve & issue credits
+                      Approve & issue coins
                     </Button>
                     <Button
                       size="sm"

@@ -60,7 +60,7 @@ export function ShopWalletSelect({
   if (wallets.length === 0) {
     return (
       <p className="text-xs text-muted-foreground">
-        This member belongs to no shop yet — credits go to their Universe wallet.
+        This member belongs to no shop yet — coins go to their Universe wallet.
       </p>
     );
   }
@@ -69,7 +69,7 @@ export function ShopWalletSelect({
     const only = wallets[0]!;
     return (
       <p className="text-xs text-muted-foreground">
-        Credits land in the <span className="font-medium text-foreground">{only.ecosystemName}</span>{" "}
+        Coins land in the <span className="font-medium text-foreground">{only.ecosystemName}</span>{" "}
         wallet (currently {only.balance.toLocaleString()} credits).
       </p>
     );
@@ -77,7 +77,7 @@ export function ShopWalletSelect({
 
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id}>Shop wallet to credit</Label>
+      <Label htmlFor={id}>Shop wallet to coin</Label>
       <select
         id={id}
         value={value ?? ""}
@@ -96,7 +96,7 @@ export function ShopWalletSelect({
         ))}
       </select>
       <p className="text-xs text-muted-foreground">
-        This member has a separate wallet in each shop. Credits never move between them.
+        This member has a separate wallet in each shop. Coins never move between them.
       </p>
     </div>
   );

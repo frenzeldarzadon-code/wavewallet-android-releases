@@ -31,12 +31,12 @@ export const Route = createFileRoute("/reseller/reports")({
       {
         name: "description",
         content:
-          "Track your voucher margins, commission credits, customer credit loads and transaction history across daily, monthly, quarterly, yearly and custom ranges.",
+          "Track your voucher margins, commission coins, customer coin loads and transaction history across daily, monthly, quarterly, yearly and custom ranges.",
       },
       { property: "og:title", content: "Earnings & Reports — WaveWallet Reseller" },
       {
         property: "og:description",
-        content: "Your own earnings, commission credits and customer credit loads — nobody else's.",
+        content: "Your own earnings, commission coins and customer coin loads — nobody else's.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -51,7 +51,7 @@ function ResellerReports() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [sales, setSales] = useState<SaleReportRow[]>([]);
-  const [credits, setCredits] = useState<CreditEntry[]>([]);
+  const [coins, setCredits] = useState<CreditEntry[]>([]);
   const [creditBackRows, setCreditBackRows] = useState<SaleCommissionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const userId = account?.id ?? null;
@@ -83,11 +83,11 @@ function ResellerReports() {
 
   const salesTotals = useMemo(() => summariseSales(sales), [sales]);
   const commissionEntries = useMemo(
-    () => credits.filter((c) => c.direction === "credit" && Number(c.commission_amount ?? 0) > 0),
+    () => credits.filter((c) => c.direction === "coin" && Number(c.commission_amount ?? 0) > 0),
     [credits],
   );
   const customerLoads = useMemo(
-    () => credits.filter((c) => c.direction === "debit" && c.reason === "Credit load to customer"),
+    () => credits.filter((c) => c.direction === "debit" && c.reason === "Coin load to customer"),
     [credits],
   );
   const loadTotal = customerLoads.reduce((s, c) => s + c.amount, 0);
@@ -112,7 +112,7 @@ function ResellerReports() {
       ["Type", "Date", "Reference", "Detail", "List price", "I paid", "My margin", "Cashback / upline", "Points"],
       [
         ...sales.map((s) => [
-          s.payment_method === "points" ? "Voucher purchase (points)" : "Voucher purchase (credits)",
+          s.payment_method === "points" ? "Voucher purchase (points)" : "Voucher purchase (coins)",
           s.created_at,
           s.tx_id,
           s.product_name,
@@ -123,7 +123,7 @@ function ResellerReports() {
           s.payment_method === "points" ? -s.points_spent : s.points_earned,
         ]),
         ...credits.map((c) => [
-          `Credit ${c.direction}`,
+          `Coin ${c.direction}`,
           c.created_at,
           c.tx_id ?? "",
           c.reason,
@@ -147,8 +147,8 @@ function ResellerReports() {
         title={`My earnings${account?.role ? ` · ${roleLabel(account.role)}` : ""}`}
         description={
           isSubreseller
-            ? `${resolved.label}. You earn your wholesale discount plus sales cashback when customers spend credits you funded. Credit transfers pay nothing.`
-            : `${resolved.label}. You earn your wholesale discount, sales cashback on credits you funded, and upline commission on your subresellers' sales. Every rate is snapshotted per transaction.`
+            ? `${resolved.label}. You earn your wholesale discount plus sales cashback when customers spend coins you funded. Coin transfers pay nothing.`
+            : `${resolved.label}. You earn your wholesale discount, sales cashback on coins you funded, and upline commission on your subresellers' sales. Every rate is snapshotted per transaction.`
         }
       >
 
@@ -171,7 +171,7 @@ function ResellerReports() {
           <StatCard
             label="Vouchers bought"
             value={String(salesTotals.count)}
-            hint={`${salesTotals.creditCount} credits · ${salesTotals.pointsCount} points`}
+            hint={`${salesTotals.creditCount} coins · ${salesTotals.pointsCount} points`}
           />
           <StatCard
             label="Sales cashback"
@@ -209,7 +209,7 @@ function ResellerReports() {
 
       <PageSection
         title="Sales cashback & upline commission"
-        description="Cashback is paid on credits you personally funded when they are spent on vouchers; upline is paid on your subresellers' sales. Historical credit-loading commissions stay visible but no longer occur."
+        description="Cashback is paid on coins you personally funded when they are spent on vouchers; upline is paid on your subresellers' sales. Historical credit-loading commissions stay visible but no longer occur."
       >
         {commissionEntries.length === 0 ? (
           <EmptyState title="No sales cashback or upline commission in this range" />
@@ -236,10 +236,10 @@ function ResellerReports() {
 
       <PageSection
         title="Credit-back by customer purchase"
-        description="Each line shows whose purchase paid you, how much of your funded credits it consumed, and the rate used."
+        description="Each line shows whose purchase paid you, how much of your funded coins it consumed, and the rate used."
       >
         {creditBackRows.length === 0 ? (
-          <EmptyState title="No credit-back yet" description="You earn when customers spend credits you loaded." />
+          <EmptyState title="No credit-back yet" description="You earn when customers spend coins you loaded." />
         ) : (
           <Card className="overflow-hidden py-0 shadow-[var(--shadow-card)]">
             <CardContent className="px-0">
@@ -248,7 +248,7 @@ function ResellerReports() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Customer purchase</TableHead>
-                      <TableHead>Your credits used</TableHead>
+                      <TableHead>Your coins used</TableHead>
                       <TableHead>Rate</TableHead>
                       <TableHead className="text-right">Credit-back</TableHead>
                     </TableRow>
@@ -335,9 +335,9 @@ function ResellerReports() {
         )}
       </PageSection>
 
-      <PageSection title="Credit movements">
+      <PageSection title="Coin movements">
         {credits.length === 0 ? (
-          <EmptyState title="No credit activity in this range" />
+          <EmptyState title="No coin activity in this range" />
         ) : (
           <Card className="shadow-[var(--shadow-card)]">
             <CardContent className="divide-y divide-border px-0 py-0">

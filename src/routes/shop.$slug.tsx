@@ -48,7 +48,7 @@ export const Route = createFileRoute("/shop/$slug")({
   component: PublicStorefront,
 });
 
-const credits = (n: number) => `${n.toLocaleString(undefined, { maximumFractionDigits: 2 })} credits`;
+const credits = (n: number) => `${n.toLocaleString(undefined, { maximumFractionDigits: 2 })} coins`;
 
 function PublicStorefront() {
   const { slug } = Route.useParams();

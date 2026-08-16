@@ -35,7 +35,7 @@ export const Route = createFileRoute("/super/export")({
       {
         name: "description",
         content:
-          "Download timestamped CSV backups of voucher inventory, credit and points ledgers, sales, earnings and member records for recovery and audit.",
+          "Download timestamped CSV backups of voucher inventory, coin and points ledgers, sales, earnings and member records for recovery and audit.",
       },
       { property: "og:title", content: "Data Export & Backup — WaveWallet Super Admin" },
       {

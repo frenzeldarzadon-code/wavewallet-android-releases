@@ -99,8 +99,8 @@ export function CreditRequestsCard({ onCountChange }: { onCountChange?: (n: numb
   return (
     <>
       <PageSection
-        title="Shop credit requests"
-        description="Admins pay the platform GCash account, then submit the reference here. Approving releases the credits exactly once; rejecting releases nothing; freezing pulls released credits back with a recorded reversal."
+        title="Shop coin requests"
+        description="Admins pay the platform GCash account, then submit the reference here. Approving releases the coins exactly once; rejecting releases nothing; freezing pulls released coins back with a recorded reversal."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-4">
@@ -132,11 +132,11 @@ export function CreditRequestsCard({ onCountChange }: { onCountChange?: (n: numb
             </div>
 
             {loading && orders.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Loading credit requests…</p>
+              <p className="text-sm text-muted-foreground">Loading coin requests…</p>
             ) : visible.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 {filter === "pending"
-                  ? "No credit requests are waiting for verification."
+                  ? "No coin requests are waiting for verification."
                   : "Nothing to show for this filter."}
               </p>
             ) : (
@@ -156,7 +156,7 @@ export function CreditRequestsCard({ onCountChange }: { onCountChange?: (n: numb
 
                   <dl className="mt-3 grid gap-1.5 text-xs sm:grid-cols-2">
                     <div className="flex justify-between gap-3">
-                      <dt className="text-muted-foreground">Credits requested</dt>
+                      <dt className="text-muted-foreground">Coins requested</dt>
                       <dd className="font-medium text-success">
                         {Number(o.credits).toLocaleString()}
                       </dd>
@@ -210,7 +210,7 @@ export function CreditRequestsCard({ onCountChange }: { onCountChange?: (n: numb
                           void run(
                             o.id,
                             () => reviewCreditPurchaseOrder(o.id, true),
-                            "Payment verified — credits released once",
+                            "Payment verified — coins released once",
                           )
                         }
                       >
@@ -246,7 +246,7 @@ export function CreditRequestsCard({ onCountChange }: { onCountChange?: (n: numb
                           setDialog({ order: o, kind: "freeze" });
                         }}
                       >
-                        <Snowflake className="size-4" /> Freeze released credits
+                        <Snowflake className="size-4" /> Freeze released coins
                       </Button>
                     </div>
                   ) : null}
@@ -261,12 +261,12 @@ export function CreditRequestsCard({ onCountChange }: { onCountChange?: (n: numb
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {dialog?.kind === "freeze" ? "Freeze released credits" : "Reject credit request"}
+              {dialog?.kind === "freeze" ? "Freeze released coins" : "Reject coin request"}
             </DialogTitle>
             <DialogDescription>
               {dialog?.kind === "freeze"
-                ? "The credits are pulled back with a recorded reversal entry and the reason is stored on the order and in the audit log."
-                : "No credits are released. The reason is shown to the admin and stored in the audit log."}
+                ? "The coins are pulled back with a recorded reversal entry and the reason is stored on the order and in the audit log."
+                : "No coins are released. The reason is shown to the admin and stored in the audit log."}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">
@@ -299,12 +299,12 @@ export function CreditRequestsCard({ onCountChange }: { onCountChange?: (n: numb
                     target.kind === "freeze"
                       ? freezeCreditPurchaseOrder(target.order.id, text)
                       : reviewCreditPurchaseOrder(target.order.id, false, text),
-                  target.kind === "freeze" ? "Released credits frozen" : "Request rejected",
+                  target.kind === "freeze" ? "Released coins frozen" : "Request rejected",
                 );
               }}
             >
               {busy !== null ? <Loader2 className="size-4 animate-spin" /> : null}
-              {dialog?.kind === "freeze" ? "Freeze credits" : "Reject request"}
+              {dialog?.kind === "freeze" ? "Freeze coins" : "Reject request"}
             </Button>
           </DialogFooter>
         </DialogContent>

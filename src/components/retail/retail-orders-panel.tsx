@@ -31,7 +31,7 @@ import {
 } from "@/lib/retail";
 import { notifyRetailOrder } from "@/lib/retail-notify.functions";
 
-const credits = (n: number) => `${n.toLocaleString(undefined, { maximumFractionDigits: 2 })} credits`;
+const credits = (n: number) => `${n.toLocaleString(undefined, { maximumFractionDigits: 2 })} coins`;
 
 export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null }) {
   const [orders, setOrders] = useState<RetailOrder[]>([]);
@@ -72,7 +72,7 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
       toast.success(approve ? `Order ${order.order_no} approved` : `Order ${order.order_no} rejected`, {
         description: approve
           ? "Stock is finalised and the payment is confirmed."
-          : "Stock is back and any held credits were returned in full.",
+          : "Stock is back and any held coins were returned in full.",
       });
       await load();
     } catch (e) {

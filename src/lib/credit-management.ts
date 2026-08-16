@@ -23,10 +23,10 @@ import type { CreditPurchaseOrder, OrderStatus } from "@/lib/credit-purchases";
 export const ISSUANCE_ENTRY_KIND = "superadmin_credit_issuance";
 
 /** Marker that identifies a minted credit forever after. */
-export const CREDIT_ISSUANCE_ACTION = "Super Admin Credit Issuance";
+export const CREDIT_ISSUANCE_ACTION = "Super Admin Coin Issuance";
 
 /** Legacy label used by wallet-style manual grants written before issuance. */
-export const LEGACY_MANUAL_CREDIT_ACTION = "Superadmin Manual Credit";
+export const LEGACY_MANUAL_CREDIT_ACTION = "Superadmin Manual Coin";
 
 /** Largest single issuance the UI will submit. Mirrored in the database. */
 export const CREDIT_ISSUANCE_MAX = 10_000_000;
@@ -89,15 +89,15 @@ export function issuanceFormIssue(input: {
   amount: number;
   reason?: string | null;
 }): string | null {
-  if (!input.userId) return "Choose the account to credit";
+  if (!input.userId) return "Choose the account to coin";
   if (!Number.isFinite(input.amount) || input.amount <= 0) {
-    return "Enter how many credits to issue";
+    return "Enter how many coins to issue";
   }
   if (!Number.isInteger(input.amount)) {
-    return "Credits must be a whole number";
+    return "Coins must be a whole number";
   }
   if (input.amount > CREDIT_ISSUANCE_MAX) {
-    return `A single issuance is limited to ${CREDIT_ISSUANCE_MAX.toLocaleString()} credits`;
+    return `A single issuance is limited to ${CREDIT_ISSUANCE_MAX.toLocaleString()} coins`;
   }
   if (input.reason !== undefined && (input.reason ?? "").trim().length < 5) {
     return "Give a reason of at least 5 characters";

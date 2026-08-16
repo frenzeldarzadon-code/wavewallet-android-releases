@@ -110,7 +110,7 @@ export function ExpensesCard({
       title={title}
       description={
         description ??
-        "Recorded as audited entries with the operator, timestamp, amount and description. Expenses reduce net earnings only — no wallet or credit balance changes."
+        "Recorded as audited entries with the operator, timestamp, amount and description. Expenses reduce net earnings only — no wallet or coin balance changes."
       }
     >
       <Card className="shadow-[var(--shadow-card)]">

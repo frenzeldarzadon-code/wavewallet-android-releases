@@ -18,7 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const PURGE_DELETION_ITEMS = [
   "Member accounts and profiles (admins, resellers, subresellers, customers)",
   "Reseller / subreseller / customer relationships",
-  "Credit wallets, balances and the full credit ledger",
+  "Coin wallets, balances and the full coin ledger",
   "Points wallets, points history and reward claims",
   "Voucher products, batches, codes and inventory",
   "Voucher sales and every transaction record",

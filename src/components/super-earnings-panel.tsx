@@ -73,7 +73,7 @@ export function SuperEarningsPanel({ showLink = true }: { showLink?: boolean }) 
   return (
     <PageSection
       title="Platform earnings"
-      description="Fees actually collected — cash-out fees on released withdrawals and cash-in fees on verified payments — less recorded platform expenses. Credit issuance and other credit movements are not earnings."
+      description="Fees actually collected — cash-out fees on released withdrawals and cash-in fees on verified payments — less recorded platform expenses. Coin issuance and other coin movements are not earnings."
     >
       <PeriodEarningsTable
         loading={loading}
@@ -114,16 +114,16 @@ export function SuperEarningsPanel({ showLink = true }: { showLink?: boolean }) 
       />
       <div className="mt-4">
         <p className="mb-2 text-xs text-muted-foreground">
-          Shop-to-shop transfer fees are collected in credits, so they are reported separately from peso
+          Shop-to-shop transfer fees are collected in coins, so they are reported separately from peso
           cash-out fees.
         </p>
         <PeriodEarningsTable
           loading={loading}
-          format={(n) => `${n.toLocaleString()} credits`}
+          format={(n) => `${n.toLocaleString()} coins`}
           metrics={[
             {
               label: "Shop transfer fees collected",
-              hint: "Flat fee on member shop-to-shop credit transfers",
+              hint: "Flat fee on member shop-to-shop coin transfers",
               totals: transferFees,
               tone: "positive",
             },

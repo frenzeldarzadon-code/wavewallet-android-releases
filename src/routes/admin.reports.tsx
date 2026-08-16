@@ -53,13 +53,13 @@ export const Route = createFileRoute("/admin/reports")({
       {
         name: "description",
         content:
-          "Daily, monthly, quarterly, yearly and custom-range reporting on voucher sales, credits issued, reseller commission and points activity.",
+          "Daily, monthly, quarterly, yearly and custom-range reporting on voucher sales, coins issued, reseller commission and points activity.",
       },
       { property: "og:title", content: "Earnings & Reports — WaveWallet Admin" },
       {
         property: "og:description",
         content:
-          "Shop revenue, reseller commission and credit activity built from immutable ledger records.",
+          "Shop revenue, reseller commission and coin activity built from immutable ledger records.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -75,7 +75,7 @@ function AdminReports() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [sales, setSales] = useState<SaleReportRow[]>([]);
-  const [credits, setCredits] = useState<CreditEntry[]>([]);
+  const [coins, setCredits] = useState<CreditEntry[]>([]);
   const [points, setPoints] = useState<PointsEntryRow[]>([]);
   const [commissions, setCommissions] = useState<SaleCommissionReportRow[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
@@ -179,7 +179,7 @@ function AdminReports() {
       ],
       [
         ...sales.map((s) => [
-          s.payment_method === "points" ? "Voucher sale (points)" : "Voucher sale (credits)",
+          s.payment_method === "points" ? "Voucher sale (points)" : "Voucher sale (coins)",
           s.created_at,
           s.tx_id,
           nameOf(s.buyer_id),
@@ -191,7 +191,7 @@ function AdminReports() {
           s.payment_method === "points" ? -s.points_spent : s.points_earned,
         ]),
         ...credits.map((c) => [
-          `Credit ${c.direction}`,
+          `Coin ${c.direction}`,
           c.created_at,
           c.tx_id ?? "",
           nameOf(c.user_id),
@@ -215,7 +215,7 @@ function AdminReports() {
       <EarningsHistory
         ecosystemId={ecosystemDbId}
         title="Shop earnings & financial reports"
-        description="Shop earnings are the credits this shop keeps from completed voucher sales after reseller and subreseller cashback, using each sale's own snapshotted rates. Credits issued by the platform, approved cash-ins, wallet transfers and withdrawal holds are never shop earnings."
+        description="Shop earnings are the coins this shop keeps from completed voucher sales after reseller and subreseller cashback, using each sale's own snapshotted rates. Coins issued by the platform, approved cash-ins, wallet transfers and withdrawal holds are never shop earnings."
         highlightTypes={["admin_shop_margin", "sale_cashback", "upline_commission"]}
         netTypes={["admin_shop_margin"]}
         netLabel="Net shop earnings"
@@ -263,14 +263,14 @@ function AdminReports() {
           <StatCard
             label="Vouchers sold"
             value={String(salesTotals.count)}
-            hint={`${salesTotals.creditCount} credits · ${salesTotals.pointsCount} points`}
+            hint={`${salesTotals.creditCount} coins · ${salesTotals.pointsCount} points`}
           />
         </div>
       </PageSection>
 
       <PageSection
-        title="Credit activity & earnings"
-        description="Cashflow of this shop: completed sales in, downline cashback out, and what the shop keeps. Credits issued by the platform, approved cash-ins, wallet transfers and withdrawal holds move credits but are never shop earnings."
+        title="Coin activity & earnings"
+        description="Cashflow of this shop: completed sales in, downline cashback out, and what the shop keeps. Coins issued by the platform, approved cash-ins, wallet transfers and withdrawal holds move coins but are never shop earnings."
       >
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard
@@ -300,17 +300,17 @@ function AdminReports() {
         </div>
         <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard
-            label="Credits spent on vouchers"
+            label="Coins spent on vouchers"
             value={peso(creditFlow.spentOnVouchers)}
             hint="Buyer wallets · not earnings"
           />
           <StatCard
-            label="Existing credits transferred"
+            label="Existing coins transferred"
             value={peso(creditFlow.transferred)}
             hint={`${creditFlow.transferCount} transfers · no earnings`}
           />
           <StatCard
-            label="Platform credits received"
+            label="Platform coins received"
             value={peso(creditFlow.platformIssued + creditFlow.cashIn)}
             hint="Issuance & approved cash-in · no earnings"
           />
@@ -334,7 +334,7 @@ function AdminReports() {
             hint={`${shopEarnings.refundedCount} reversed · excluded`}
           />
           <StatCard
-            label="Credits revoked"
+            label="Coins revoked"
             value={peso(creditFlow.revoked)}
             tone="negative"
             hint="Admin corrections"
@@ -360,7 +360,7 @@ function AdminReports() {
 
       <PageSection
         title="Reseller & subreseller performance"
-        description="Margins use the discount captured at sale time; commission uses the rate snapshotted on each credit release."
+        description="Margins use the discount captured at sale time; commission uses the rate snapshotted on each coin release."
       >
         {resellerRows.length === 0 ? (
           <EmptyState title="No reseller or subreseller activity in this range" />
@@ -478,9 +478,9 @@ function AdminReports() {
         )}
       </PageSection>
 
-      <PageSection title="Credit movements in range">
+      <PageSection title="Coin movements in range">
         {credits.length === 0 ? (
-          <EmptyState title="No credit movements in this range" />
+          <EmptyState title="No coin movements in this range" />
         ) : (
           <Card className="overflow-hidden py-0 shadow-[var(--shadow-card)]">
             <CardContent className="px-0">

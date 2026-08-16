@@ -15,12 +15,12 @@ export const Route = createFileRoute("/admin/")({
       { title: "Admin Dashboard — WaveWallet" },
       {
         name: "description",
-        content: "Shop overview: members, resellers, outstanding credits and points, ratings and recent activity.",
+        content: "Shop overview: members, resellers, outstanding coins and points, ratings and recent activity.",
       },
       { property: "og:title", content: "Admin Dashboard — WaveWallet" },
       {
         property: "og:description",
-        content: "Shop overview: members, resellers, outstanding credits and points, ratings and recent activity.",
+        content: "Shop overview: members, resellers, outstanding coins and points, ratings and recent activity.",
       },
     ],
   }),
@@ -110,7 +110,7 @@ function AdminDashboard() {
           />
 
           <StatCard
-            label="Credits outstanding"
+            label="Coins outstanding"
             value={loading ? "—" : peso(Number(dash?.credits_outstanding ?? 0))}
             icon={Coins}
             tone="positive"
@@ -134,7 +134,7 @@ function AdminDashboard() {
             <Ticket className="mx-auto size-6 text-muted-foreground" />
             <p className="text-sm font-medium">Sales reporting not available yet</p>
             <p className="text-xs text-muted-foreground">
-              Voucher dispensing, credit movement and revenue reporting are not implemented, so no
+              Voucher dispensing, coin movement and revenue reporting are not implemented, so no
               figures are shown here rather than estimated ones.
             </p>
           </CardContent>

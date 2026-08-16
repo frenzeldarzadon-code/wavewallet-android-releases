@@ -127,7 +127,7 @@ export function CreditPurchasePage() {
         ...(note.trim() ? { note: note.trim() } : {}),
       });
       toast.success("Allocation requested", {
-        description: "Credits are released once the platform owner approves the payment.",
+        description: "Coins are released once the platform owner approves the payment.",
       });
       setReference("");
       setNote("");
@@ -140,19 +140,19 @@ export function CreditPurchasePage() {
     }
   };
 
-  if (loading) return <p className="text-sm text-muted-foreground">Loading credit allocations…</p>;
+  if (loading) return <p className="text-sm text-muted-foreground">Loading coin allocations…</p>;
 
   return (
     <>
       <PageSection
-        title="Get credits for your shop"
-        description="Credits are created only by the platform owner. Request an allocation here — approved credits land in your own shop wallet, ready to spend on vouchers or to load to your resellers and customers."
+        title="Get coins for your shop"
+        description="Coins are created only by the platform owner. Request an allocation here — approved coins land in your own shop wallet, ready to spend on vouchers or to load to your resellers and customers."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-4">
             {packages.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No credit allocations are available right now. Please contact the platform owner.
+                No coin allocations are available right now. Please contact the platform owner.
               </p>
             ) : (
               <>
@@ -327,15 +327,15 @@ export function CreditPurchasePage() {
 
       <PageSection
         title="Allocation history"
-        description="Kept separate from voucher transactions and linked to the credit entry each approval creates."
+        description="Kept separate from voucher transactions and linked to the coin entry each approval creates."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardHeader>
-            <CardTitle className="text-sm">Shop credit allocations</CardTitle>
+            <CardTitle className="text-sm">Shop coin allocations</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {orders.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No credit allocations yet.</p>
+              <p className="text-sm text-muted-foreground">No coin allocations yet.</p>
             ) : (
               orders.map((o) => (
                 <div key={o.id} className="rounded-xl border border-border p-3 text-sm">
@@ -375,7 +375,7 @@ export function CreditPurchasePage() {
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Request this shop credit allocation?</AlertDialogTitle>
+            <AlertDialogTitle>Request this shop coin allocation?</AlertDialogTitle>
             <AlertDialogDescription>
               {credits.toLocaleString()} credits into your shop wallet for{" "}
               {formatPhp(payable, currency)} (base rate {formatPhp(listPhp, currency)}, {discount}%

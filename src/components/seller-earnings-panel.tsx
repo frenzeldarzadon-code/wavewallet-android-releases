@@ -64,7 +64,7 @@ export function SellerEarningsPanel({
   return (
     <PageSection
       title="Wallet & earnings"
-      description="Your shop wallet balance, plus cashback allocated to you on completed downline purchases and your own wholesale discount savings. Receiving or sending credits is never an earning."
+      description="Your shop wallet balance, plus cashback allocated to you on completed downline purchases and your own wholesale discount savings. Receiving or sending coins is never an earning."
     >
       <div className="grid gap-3 sm:grid-cols-2">
         {showBalance ? (
@@ -73,7 +73,7 @@ export function SellerEarningsPanel({
             value={loading || balance === null ? "—" : peso(balance)}
             icon={Wallet}
             tone="brand"
-            hint="Credits held in your wallet for this shop"
+            hint="Coins held in your wallet for this shop"
           />
         ) : null}
         <StatCard

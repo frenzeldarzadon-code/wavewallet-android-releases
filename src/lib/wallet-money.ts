@@ -94,7 +94,7 @@ export function validateCashback(reseller: number, subreseller: number): string 
 }
 
 export function validateValuation(credits: number, php: number, fee: number): string | null {
-  if (!Number.isFinite(credits) || credits <= 0) return "Credits per unit must be greater than zero.";
+  if (!Number.isFinite(credits) || credits <= 0) return "Coins per unit must be greater than zero.";
   if (!Number.isFinite(php) || php <= 0) return "Peso value must be greater than zero.";
   if (!Number.isFinite(fee) || fee < 0 || fee >= 100) return "Cash out fee must be between 0% and 99.99%.";
   return null;
@@ -146,7 +146,7 @@ export function quoteCashIn(php: number, s: MoneySettings): number {
 
 
 /** Re-derive a stored request's numbers from its own snapshot, never from live settings. */
-export function snapshotQuote(row: Pick<WithdrawalRequest, "credits" | "gross_php" | "fee_percent" | "fee_php" | "net_php">): Quote {
+export function snapshotQuote(row: Pick<WithdrawalRequest, "coins" | "gross_php" | "fee_percent" | "fee_php" | "net_php">): Quote {
   return {
     credits: Number(row.credits),
     gross: Number(row.gross_php),
@@ -168,7 +168,7 @@ export function creditsAfterFee(credits: number, feePercent: number): number {
 }
 
 export function describeRate(s: MoneySettings): string {
-  return `${s.creditsPerUnit.toLocaleString()} credits = ₱${s.phpPerUnit.toLocaleString()}`;
+  return `${s.creditsPerUnit.toLocaleString()} coins = ₱${s.phpPerUnit.toLocaleString()}`;
 }
 
 export function validateWithdrawal(
@@ -176,10 +176,10 @@ export function validateWithdrawal(
   balance: number,
 ): string | null {
   const { credits, mode } = input;
-  if (!Number.isFinite(credits) || credits <= 0) return "Enter how many credits to cash out.";
-  if (!Number.isInteger(credits)) return "Credits must be a whole number.";
-  if (credits > WITHDRAWAL_MAX_CREDITS) return "A single withdrawal is limited to 10,000,000 credits.";
-  if (credits > balance) return "You do not have that many credits available.";
+  if (!Number.isFinite(credits) || credits <= 0) return "Enter how many coins to cash out.";
+  if (!Number.isInteger(credits)) return "Coins must be a whole number.";
+  if (credits > WITHDRAWAL_MAX_CREDITS) return "A single withdrawal is limited to 10,000,000 coins.";
+  if (credits > balance) return "You do not have that many coins available.";
   const spec = PAYMENT_MODES.find((m) => m.value === mode);
   if (!spec) return "Choose a payment mode.";
   if (spec.needsAccount && (!input.accountName?.trim() || !input.accountNumber?.trim())) {
@@ -433,7 +433,7 @@ export async function cashInProofUrl(path?: string | null): Promise<string | nul
 export type CashInFunding = "platform" | "admin";
 
 export const CASH_IN_FUNDINGS: { value: CashInFunding; label: string; hint: string }[] = [
-  { value: "admin", label: "My shop admin's GCash", hint: "Limited by the credits your shop admin has available." },
+  { value: "admin", label: "My shop admin's GCash", hint: "Limited by the coins your shop admin has available." },
   { value: "platform", label: "Platform GCash", hint: "No shop limit." },
 ];
 
@@ -540,8 +540,8 @@ export function cashInOutcomeMessage(
       tone: "success",
       message:
         row.approval_method === "automatic"
-          ? "Automatically approved — your submitted details matched the shop's cash in rules and your credits have been added."
-          : "Approved — your credits have been added.",
+          ? "Automatically approved — your submitted details matched the shop's cash in rules and your coins have been added."
+          : "Approved — your coins have been added.",
     };
   }
   if (row.status === "rejected") {
@@ -549,21 +549,21 @@ export function cashInOutcomeMessage(
     return {
       tone: "error",
       message: duplicate
-        ? "Rejected as a duplicate reference — that GCash reference number was already used, so no credits were added."
-        : row.decision_reason ?? "Rejected — the submitted details did not match. No credits were added.",
+        ? "Rejected as a duplicate reference — that GCash reference number was already used, so no coins were added."
+        : row.decision_reason ?? "Rejected — the submitted details did not match. No coins were added.",
     };
   }
   if (row.duplicate_reference) {
     return {
       tone: "error",
       message:
-        "That GCash reference was already submitted. Held for manual investigation — no credits were added and the earlier transaction was left untouched.",
+        "That GCash reference was already submitted. Held for manual investigation — no coins were added and the earlier transaction was left untouched.",
     };
   }
   if (row.receipt_check === "mismatch") {
     return {
       tone: "error",
-      message: "Reference does not match receipt — held for manual review. No credits were added.",
+      message: "Reference does not match receipt — held for manual review. No coins were added.",
     };
   }
   if (row.receipt_check === "unreadable" || row.receipt_check === "error") {
@@ -594,23 +594,23 @@ export async function cancelCashIn(id: string): Promise<void> {
  */
 export function cashInDecisionError(message: string): string {
   const m = (message || "").toLowerCase();
-  if (m.includes("recipient mismatch") || m.includes("refusing to credit")) {
-    return "Blocked: the credits would not have gone to the member who submitted this request. Nothing was issued.";
+  if (m.includes("recipient mismatch") || m.includes("refusing to coin")) {
+    return "Blocked: the coins would not have gone to the member who submitted this request. Nothing was issued.";
   }
-  if (m.includes("does not hold a member credit balance")) {
-    return "The platform owner has no member credit balance, so this request cannot be approved. Credits always go to the requesting member.";
+  if (m.includes("does not hold a member coin balance")) {
+    return "The platform owner has no member coin balance, so this request cannot be approved. Coins always go to the requesting member.";
   }
   if (m.includes("no member attached")) {
-    return "This request has no member attached, so no credits were issued.";
+    return "This request has no member attached, so no coins were issued.";
   }
   if (m.includes("already approved") || m.includes("was already")) {
     return "This request was already decided — refresh the queue to see its current status.";
   }
-  if (m.includes("ecosystem_id") || m.includes("credit balance") || m.includes("credit account")) {
-    return "This member's credit balance could not be opened because their shop link is missing. Fix the member's shop, then approve again.";
+  if (m.includes("ecosystem_id") || m.includes("coin balance") || m.includes("coin account")) {
+    return "This member's coin balance could not be opened because their shop link is missing. Fix the member's shop, then approve again.";
   }
   if (m.includes("member") && m.includes("not")) {
-    return "This member account no longer exists, so credits cannot be released.";
+    return "This member account no longer exists, so coins cannot be released.";
   }
   if (m.includes("platform owner")) {
     return "Only the platform owner can decide cash in requests.";

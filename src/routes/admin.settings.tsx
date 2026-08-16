@@ -232,7 +232,7 @@ function AdminSettings() {
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>
-              A member's Discount is their percentage of the credits they supplied to a purchase
+              A member's Discount is their percentage of the coins they supplied to a purchase
               and, automatically, the discount they pay when buying vouchers. A subreseller's
               Discount comes out of their parent reseller's Discount, and you receive everything
               that is left. Changes apply to future purchases only — history never changes.
@@ -244,7 +244,7 @@ function AdminSettings() {
         </Card>
       </PageSection>
 
-      <PageSection title="Points rule" description="Points are earned on credit-funded voucher purchases only — never on credit loads or transfers.">
+      <PageSection title="Points rule" description="Points are earned on credit-funded voucher purchases only — never on coin loads or transfers.">
 
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">

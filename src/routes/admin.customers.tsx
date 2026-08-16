@@ -955,7 +955,7 @@ function AdminCustomers() {
             ))}
           </ul>
           <p className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
-            The login is disabled and the identity is anonymised. Voucher sales, credit and points
+            The login is disabled and the identity is anonymised. Voucher sales, coin and points
             history, commissions, discounts and redemptions stay intact under the normal one-year
             retention policy. The action is written to the audit trail.
           </p>
@@ -984,7 +984,7 @@ function AdminCustomers() {
           {detail ? (
             <>
               <div className="grid grid-cols-2 gap-3">
-                <StatCard label="Credit balance" value={peso(detail.credits)} tone="positive" />
+                <StatCard label="Coin balance" value={peso(detail.credits)} tone="positive" />
                 <StatCard label="Points balance" value={`${detail.points} pts`} tone="brand" />
               </div>
               <div className="flex flex-wrap items-center gap-2">

@@ -81,8 +81,8 @@ export function ManualCreditCard() {
         ...(reference.trim() ? { reference: reference.trim() } : {}),
         ecosystemId: shopId,
       });
-      toast.success("Credits issued", {
-        description: `${credits.toLocaleString()} credits to ${target.full_name}${
+      toast.success("Coins issued", {
+        description: `${coins.toLocaleString()} coins to ${target.full_name}${
           shopWallet ? ` · ${shopWallet.ecosystemName}` : ""
         } · ${tx}`,
       });
@@ -105,14 +105,14 @@ export function ManualCreditCard() {
   return (
     <>
       <PageSection
-        title="Issue credits"
-        description="Super Admin Credit Issuance: new credits are minted from the platform issuance authority straight into an account. Nothing is deducted from your own wallet — you can issue with a zero balance. Recorded with your name, the amount, the reason and the resulting balance. It creates no vouchers and no commission."
+        title="Issue coins"
+        description="Super Admin Coin Issuance: new coins are minted from the platform issuance authority straight into an account. Nothing is deducted from your own wallet — you can issue with a zero balance. Recorded with your name, the amount, the reason and the resulting balance. It creates no vouchers and no commission."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-4">
             {supply ? (
               <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm">
-                <span className="text-muted-foreground">Platform credits issued to date</span>
+                <span className="text-muted-foreground">Platform coins issued to date</span>
                 <span className="font-semibold">
                   {supply.total_issued.toLocaleString()} credits
                   <span className="ml-2 font-normal text-muted-foreground">
@@ -154,7 +154,7 @@ export function ManualCreditCard() {
               </div>
             ) : (
               <div className="space-y-1.5">
-                <Label>Account to credit</Label>
+                <Label>Account to coin</Label>
                 <MemberPicker
                   showEcosystem
                   placeholder="Search any account by name, @handle, email or phone"
@@ -175,7 +175,7 @@ export function ManualCreditCard() {
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="manualAmount">Credits to issue</Label>
+                <Label htmlFor="manualAmount">Coins to issue</Label>
                 <Input
                   id="manualAmount"
                   type="number"
@@ -237,7 +237,7 @@ export function ManualCreditCard() {
                     <dd>{currentBalance.toLocaleString()}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Credits issued</dt>
+                    <dt className="text-muted-foreground">Coins issued</dt>
                     <dd className="text-success">+{credits.toLocaleString()}</dd>
                   </div>
                   <div className="flex justify-between font-semibold">
@@ -258,14 +258,14 @@ export function ManualCreditCard() {
               {issue ? <p className="text-xs text-muted-foreground">{issue}</p> : null}
               {!issue && shopRequired ? (
                 <p className="text-xs text-muted-foreground">
-                  Choose which shop wallet receives the credits.
+                  Choose which shop wallet receives the coins.
                 </p>
               ) : null}
             </div>
 
             <p className="flex items-start gap-2 text-xs text-muted-foreground">
               <ShieldAlert className="mt-0.5 size-3.5 shrink-0 text-warning" />
-              Issued credits increase the platform credit supply and never debit your wallet. They
+              Issued coins increase the platform coin supply and never debit your wallet. They
               are permanent ledger entries — corrections are made with a new adjustment, never by
               editing history.
             </p>

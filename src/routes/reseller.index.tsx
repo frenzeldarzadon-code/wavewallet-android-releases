@@ -22,12 +22,12 @@ export const Route = createFileRoute("/reseller/")({
       {
         name: "description",
         content:
-          "Reseller credit wallet: live balance, credits loaded to customers and discounted voucher purchases.",
+          "Reseller coin wallet: live balance, coins loaded to customers and discounted voucher purchases.",
       },
       { property: "og:title", content: "Reseller Wallet — WaveWallet" },
       {
         property: "og:description",
-        content: "Track your reseller credit balance and every load you make to customers.",
+        content: "Track your reseller coin balance and every load you make to customers.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -69,16 +69,16 @@ function ResellerDashboard() {
 
   if (!account || !ecosystem) return null;
 
-  const loadsOut = entries.filter((e) => e.reason === "Credit load to customer");
+  const loadsOut = entries.filter((e) => e.reason === "Coin load to customer");
 
   return (
     <>
       <PageSection
         title="Reseller wallet"
-        description={`Closed-loop credits inside ${ecosystem.name}.`}
+        description={`Closed-loop coins inside ${ecosystem.name}.`}
       >
         <div className="grid grid-cols-2 gap-3">
-          <StatCard label="Credit balance" value={peso(balance)} icon={Wallet} tone="positive" />
+          <StatCard label="Coin balance" value={peso(balance)} icon={Wallet} tone="positive" />
           <StatCard
             label="Loaded to customers"
             value={peso(loadsOut.reduce((s, e) => s + e.amount, 0))}
@@ -101,8 +101,8 @@ function ResellerDashboard() {
           <EmptyState title="Loading wallet…" />
         ) : entries.length === 0 ? (
           <EmptyState
-            title="No credit movements yet"
-            description="Ask your shop admin to load credits into your reseller wallet."
+            title="No coin movements yet"
+            description="Ask your shop admin to load coins into your reseller wallet."
           />
         ) : (
           <Card className="shadow-[var(--shadow-card)]">
@@ -124,12 +124,12 @@ function ResellerDashboard() {
                   <div className="shrink-0 text-right">
                     <p
                       className={
-                        e.direction === "credit"
+                        e.direction === "coin"
                           ? "text-sm font-semibold text-success"
                           : "text-sm font-semibold text-destructive"
                       }
                     >
-                      {e.direction === "credit" ? "+" : "−"}
+                      {e.direction === "coin" ? "+" : "−"}
                       {peso(e.amount)}
                     </p>
                     <p className="text-[11px] text-muted-foreground">Bal {peso(e.balance_after)}</p>
@@ -143,7 +143,7 @@ function ResellerDashboard() {
 
       <PageSection
         title="Support"
-        description={`Questions about credits, vouchers or payouts go to ${ecosystem.name}.`}
+        description={`Questions about coins, vouchers or payouts go to ${ecosystem.name}.`}
       >
         <FacebookSupportCard
           url={ecosystem.facebookPageUrl}

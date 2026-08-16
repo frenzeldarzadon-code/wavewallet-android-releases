@@ -157,7 +157,7 @@ export function isCustomerViewer(role: Role | null): boolean {
  */
 export function recipientRelationLabel(relation: string, viewerRole: Role | null = null): string {
   if (isCustomerViewer(viewerRole)) {
-    return relation === "customer" ? "Member of this shop" : "Can accept your credits";
+    return relation === "customer" ? "Member of this shop" : "Can accept your coins";
   }
   switch (relation) {
     case "admin":
@@ -181,14 +181,14 @@ export function recipientRelationLabel(relation: string, viewerRole: Role | null
 export function transferSectionTitle(role: Role | null): string {
   switch (role) {
     case "subreseller":
-      return "Send credits to my reseller, shop admin or customers";
+      return "Send coins to my reseller, shop admin or customers";
     case "reseller":
-      return "Send credits to my subresellers or customers";
+      return "Send coins to my subresellers or customers";
     case "admin":
     case "super_admin":
-      return "Send credits to members of this shop";
+      return "Send coins to members of this shop";
     default:
-      return "Send credits to people in this shop who can accept your transfer";
+      return "Send coins to people in this shop who can accept your transfer";
   }
 }
 
@@ -203,7 +203,7 @@ export function emptyRecipientsHint(role: Role | null): string {
     case "super_admin":
       return "No other active members in this shop yet.";
     default:
-      return "Nobody in this shop can accept your credits yet — recipients appear here once they are active members.";
+      return "Nobody in this shop can accept your coins yet — recipients appear here once they are active members.";
 
   }
 }
@@ -229,7 +229,7 @@ export async function fetchShopRecipients(
 }
 
 /* ------------------------------------------------------------------ */
-/* Recipient type tabs inside the one "Send credits" area              */
+/* Recipient type tabs inside the one "Send coins" area              */
 /* ------------------------------------------------------------------ */
 
 /**
@@ -275,7 +275,7 @@ export function recipientTabs(role: Role | null, _multiShop = false): RecipientT
       // such a transfer resets cashback tracing. The wording never reveals
       // the recipient's internal position.
       tabs.push(
-        { key: "network", label: "Credit recipients" },
+        { key: "network", label: "Coin recipients" },
         { key: "peer", label: "Other members" },
       );
       break;
@@ -308,7 +308,7 @@ export function tabEmptyHint(tab: RecipientTab, role: Role | null): string {
           ? "No upline transfers for this shop yet — your reseller and this shop's admins appear here once they are active members."
           : role === "admin" || role === "super_admin"
             ? "No other operators in this shop yet."
-            : "Nobody in this shop can accept your credits yet — accounts that can accept transfers appear here once they are active.";
+            : "Nobody in this shop can accept your coins yet — accounts that can accept transfers appear here once they are active.";
 
     case "customer":
       return "No active customers in this shop yet.";
@@ -336,5 +336,5 @@ export function lineageResetNotice(
 
   if (!isCustomer || !recipientRelation) return null;
   if (!["admin", "reseller", "subreseller"].includes(recipientRelation)) return null;
-  return "Cashback lineage reset: these credits stop being traced to you once they arrive.";
+  return "Cashback lineage reset: these coins stop being traced to you once they arrive.";
 }

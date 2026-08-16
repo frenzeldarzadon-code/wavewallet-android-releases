@@ -10,7 +10,7 @@ import { peso } from "@/lib/wavewallet";
 
 export interface CreditEntry {
   id: string;
-  direction: "credit" | "debit";
+  direction: "coin" | "debit";
   amount: number;
   balance_after: number;
   reason: string;
@@ -638,7 +638,7 @@ export async function purchaseVoucher(productId: string, quantity = 1): Promise<
 
 export function friendlyWalletError(message: string): string {
   const m = message.toLowerCase();
-  if (m.includes("insufficient credits")) return "Not enough credits for this transaction.";
+  if (m.includes("insufficient coins")) return "Not enough coins for this transaction.";
   if (m.includes("no voucher codes are available"))
     return "This voucher is out of stock. Nothing was charged.";
   if (m.includes("row-level security") || m.includes("permission denied"))
@@ -690,7 +690,7 @@ export async function parseCodeFile(file: File): Promise<string[]> {
 
 /**
  * Human-readable breakdown of a commission-bearing credit entry, e.g.
- * "Credit received: 1,000 + 200 commission = 1,200".
+ * "Coin received: 1,000 + 200 commission = 1,200".
  * Values come from the snapshot stored on the ledger row, so historical
  * entries keep the rate that was in force when they were created.
  */
@@ -700,7 +700,7 @@ export function commissionBreakdown(e: CreditEntry): string | null {
   const base = Number(e.base_amount ?? e.amount);
   const pct = Number(e.commission_percent ?? 0);
   if (e.entry_kind === "sale_commission") {
-    return `Sales cashback on ${peso(base)} of credits you supplied, spent at ${pct}% = ${peso(bonus)}`;
+    return `Sales cashback on ${peso(base)} of coins you supplied, spent at ${pct}% = ${peso(bonus)}`;
   }
   if (e.entry_kind === "upline_commission") {
     return `Upline commission — ${pct}% of ${peso(base)} from your downline's sale = ${peso(bonus)}`;

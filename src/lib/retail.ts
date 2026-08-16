@@ -22,7 +22,7 @@ export const RETAIL_IMAGE_BUCKET = "retail-images";
 export const MAX_RETAIL_IMAGE_BYTES = MAX_UPLOAD_BYTES;
 
 export type Fulfillment = "pickup" | "delivery";
-export type PaymentMethod = "cash" | "credit";
+export type PaymentMethod = "cash" | "coin";
 export type OrderStatus = "pending" | "approved" | "rejected" | "cancelled";
 
 export interface StoreSettings {
@@ -149,9 +149,9 @@ export function checkoutProblem(
   if (!draft.payment) return "Choose a payment method";
   if (draft.payment === "cash" && !settings.cashEnabled)
     return "This shop does not accept cash";
-  if (draft.payment === "credit") {
-    if (!settings.creditEnabled) return "This shop does not accept credit payment";
-    if (total > creditBalance) return "Not enough credits in this shop's wallet";
+  if (draft.payment === "coin") {
+    if (!settings.creditEnabled) return "This shop does not accept coin payment";
+    if (total > creditBalance) return "Not enough coins in this shop's wallet";
   }
   return null;
 }

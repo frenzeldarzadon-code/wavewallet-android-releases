@@ -6,9 +6,9 @@ export const Route = createFileRoute("/admin/money")({
   head: () => ({
     meta: [
       { title: "Cash Out & Cash In — WaveWallet Shop Admin" },
-      { name: "description", content: "Request a real-money withdrawal of shop credits or cash in through a platform payment method." },
+      { name: "description", content: "Request a real-money withdrawal of shop coins or cash in through a platform payment method." },
       { property: "og:title", content: "Cash Out & Cash In — WaveWallet Shop Admin" },
-      { property: "og:description", content: "Request a real-money withdrawal of shop credits or cash in through a platform payment method." },
+      { property: "og:description", content: "Request a real-money withdrawal of shop coins or cash in through a platform payment method." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

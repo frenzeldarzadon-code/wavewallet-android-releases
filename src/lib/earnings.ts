@@ -28,7 +28,7 @@ export const EARNING_TYPE_LABEL: Record<EarningType, string> = {
   upline_commission: "Upline commission",
   wholesale_discount: "Wholesale margin",
   admin_shop_margin: "Shop retained earnings",
-  credit_generation: "Platform credits minted",
+  credit_generation: "Platform coins minted",
   platform_subscription: "Subscription revenue",
 };
 

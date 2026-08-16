@@ -87,13 +87,13 @@ export function supportContact(
 
 
 export const RELEASE_WARNING =
-  "Credits may reflect immediately as pending/held, but Superadmins have the right to freeze or withhold released credits if the GCash transaction cannot be verified or is disputed.";
+  "Coins may reflect immediately as pending/held, but Superadmins have the right to freeze or withhold released coins if the GCash transaction cannot be verified or is disputed.";
 
 export const STATUS_LABEL: Record<OrderStatus, string> = {
   pending: "Pending verification",
-  approved: "Approved — credits released",
+  approved: "Approved — coins released",
   rejected: "Rejected",
-  frozen: "Frozen — credits pulled back",
+  frozen: "Frozen — coins pulled back",
 };
 
 function unwrap<T>(res: { data: T; error: { message: string } | null }): T {
@@ -117,7 +117,7 @@ export function formatPhp(amount: number, currency = "PHP"): string {
 /* ------------------------------------------------------------------ packages */
 
 export async function fetchCreditPackages(activeOnly = false): Promise<CreditPackage[]> {
-  let q = supabase.from("credit_packages").select("*").order("sort_order").order("credits");
+  let q = supabase.from("credit_packages").select("*").order("sort_order").order("coins");
   if (activeOnly) q = q.eq("active", true);
   const { data, error } = await q;
   if (error) throw new Error(error.message);

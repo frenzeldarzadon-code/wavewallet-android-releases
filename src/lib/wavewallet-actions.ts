@@ -163,7 +163,7 @@ export function promoteToReseller(
   logAudit({
     actor: actor.name,
     action: `Promoted customer to reseller (${discount}% discount)`,
-    target: `${target.name} — balances preserved: ₱${target.creditBalance} credits, ${target.pointsBalance} pts`,
+    target: `${target.name} — balances preserved: ₱${target.creditBalance} coins, ${target.pointsBalance} pts`,
     ecosystemId: target.ecosystemId,
   });
   notify();

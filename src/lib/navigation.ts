@@ -297,7 +297,7 @@ export function superAdminNav(): Nav {
     },
     {
       label: "Money",
-      items: [{ to: "/super/credits", label: "Credit management", icon: Coins }],
+      items: [{ to: "/super/coins", label: "Coin management", icon: Coins }],
     },
     {
       label: "Insights",
@@ -323,7 +323,7 @@ export const superBottomNav: NavItem[] = [
   { to: "/super", label: "Home", icon: LayoutDashboard },
   { to: "/super/approvals", label: "Approvals", icon: ShieldCheck },
   { to: "/super/members", label: "Members", icon: Users },
-  { to: "/super/credits", label: "Credits", icon: Coins },
+  { to: "/super/coins", label: "Coins", icon: Coins },
   { to: "/super/profile", label: "Profile", icon: User },
 ];
 

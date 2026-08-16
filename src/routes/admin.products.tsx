@@ -35,7 +35,7 @@ export const Route = createFileRoute("/admin/products")({
       {
         name: "description",
         content:
-          "Create, price and archive text-only voucher products for your shop. Credit price, points placeholder and promo pricing.",
+          "Create, price and archive text-only voucher products for your shop. Coin price, points placeholder and promo pricing.",
       },
       { property: "og:title", content: "Voucher Products — WaveWallet Admin" },
       {
@@ -270,7 +270,7 @@ function AdminProducts() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="pcredit">Credit price</Label>
+                  <Label htmlFor="pcredit">Coin price</Label>
                   <Input
                     id="pcredit"
                     type="number"

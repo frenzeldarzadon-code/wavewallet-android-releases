@@ -19,7 +19,7 @@ export interface PointsAccount {
 
 export interface PointsEntry {
   id: string;
-  direction: "credit" | "debit";
+  direction: "coin" | "debit";
   entry_type: PointsEntryType;
   amount: number;
   balance_after: number;
@@ -288,7 +288,7 @@ export const redemptionTone = (status: RedemptionStatus) =>
 export const statusLabel = (status: RedemptionStatus) =>
   status === "claimed" ? "claimed" : status;
 
-/** Fetches the ecosystem's configurable earning ratio (credits of spend per point). */
+/** Fetches the ecosystem's configurable earning ratio (coins of spend per point). */
 export async function fetchPointsRule(ecosystemId: string): Promise<number> {
   const { data } = await supabase
     .from("ecosystems")

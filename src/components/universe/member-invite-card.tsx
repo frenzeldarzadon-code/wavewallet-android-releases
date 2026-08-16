@@ -247,7 +247,7 @@ export function MemberInviteCard({
 
             <p className="text-[11px] text-muted-foreground">
               You cannot approve anyone yourself. The person you invite decides, and nothing moves
-              between shops — no credits, points, cashback or history.
+              between shops — no coins, points, cashback or history.
             </p>
           </CardContent>
         </Card>

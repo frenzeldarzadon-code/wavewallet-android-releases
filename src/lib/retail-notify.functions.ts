@@ -61,7 +61,7 @@ export const notifyRetailOrder = createServerFn({ method: "POST" })
     }
 
     const lines = (items ?? [])
-      .map((i) => `- ${i.quantity} x ${i.product_name} = ${i.line_total} credits`)
+      .map((i) => `- ${i.quantity} x ${i.product_name} = ${i.line_total} coins`)
       .join("\n");
     const body = [
       `New retail order ${order.order_no} for ${shop?.name ?? "your shop"}.`,
@@ -74,7 +74,7 @@ export const notifyRetailOrder = createServerFn({ method: "POST" })
       ``,
       lines,
       ``,
-      `Order total: ${order.total} credits`,
+      `Order total: ${order.total} coins`,
       `Status: ${order.status} — approve or reject it in your admin console.`,
     ]
       .filter((l) => l !== null)

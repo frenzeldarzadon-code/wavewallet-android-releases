@@ -47,9 +47,9 @@ export async function runRetentionPurge(dryRun: boolean): Promise<RetentionRun> 
 }
 
 export const RETENTION_PURGED_LABELS: Record<string, string> = {
-  credit_ledger: "Wallet credit history",
-  credit_lots: "Spent credit sources",
-  credit_lot_consumptions: "Credit source usage",
+  credit_ledger: "Wallet coin history",
+  credit_lots: "Spent coin sources",
+  credit_lot_consumptions: "Coin source usage",
   sale_commissions: "Credit-back breakdowns",
   points_ledger: "Points history",
   voucher_sales: "Voucher sales",

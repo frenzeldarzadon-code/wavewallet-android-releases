@@ -41,7 +41,7 @@ import {
   type ShopWallet,
 } from "@/lib/shop-transfers";
 
-const credits = (n: number) => `${n.toLocaleString()} credits`;
+const credits = (n: number) => `${n.toLocaleString()} coins`;
 
 export function ShopTransferCard({
   onDone,
@@ -49,7 +49,7 @@ export function ShopTransferCard({
   sourceEcosystemId = null,
 }: {
   onDone?: () => void;
-  /** Rendered inside the Wallet Center "Send credits" card: no section/card chrome. */
+  /** Rendered inside the Wallet Center "Send coins" card: no section/card chrome. */
   embedded?: boolean;
   /** The wallet currently selected in Wallet Center — used as the default source shop. */
   sourceEcosystemId?: string | null;
@@ -89,13 +89,13 @@ export function ShopTransferCard({
     const explain = (
       <EmptyState
         title="Another approved shop is needed"
-        description="Transfer Credits to Another Shop moves credits between two of your own shop wallets. You are currently an approved member of one shop only — join and get approved in a second shop from the Universe, and this transfer opens automatically."
+        description="Transfer Coins to Another Shop moves coins between two of your own shop wallets. You are currently an approved member of one shop only — join and get approved in a second shop from the Universe, and this transfer opens automatically."
       />
     );
     if (embedded) return explain;
     return (
       <PageSection
-        title="Transfer Credits to Another Shop"
+        title="Transfer Coins to Another Shop"
         description="Available once you are an approved member of more than one shop."
       >
         {explain}
@@ -125,8 +125,8 @@ export function ShopTransferCard({
         amount: value,
         note,
       });
-      toast.success("Credits moved", {
-        description: `${credits(res.net)} arrived in ${destination?.ecosystemName ?? "the destination shop"} · fee ${credits(res.fee)} · ${res.txId}`,
+      toast.success("Coins moved", {
+        description: `${coins(res.net)} arrived in ${destination?.ecosystemName ?? "the destination shop"} · fee ${coins(res.fee)} · ${res.txId}`,
       });
       setConfirming(false);
       setAmount("");
@@ -143,17 +143,17 @@ export function ShopTransferCard({
   const Frame = ({ children }: { children: ReactNode }) =>
     embedded ? (
       <div className="space-y-4">
-        <p className="text-sm font-semibold">Transfer Credits to Another Shop</p>
+        <p className="text-sm font-semibold">Transfer Coins to Another Shop</p>
         <p className="text-xs text-muted-foreground">
-          Move credits to your own wallet in another shop you are approved in. This is not Cash In
-          or Cash Out — credits travel through your global Universe wallet and stay in your name.
+          Move coins to your own wallet in another shop you are approved in. This is not Cash In
+          or Cash Out — coins travel through your global Universe wallet and stay in your name.
         </p>
         {children}
       </div>
     ) : (
       <PageSection
-        title="Transfer Credits to Another Shop"
-        description="Move credits between two of your own shop wallets. Credits stay in your name; a flat platform fee applies."
+        title="Transfer Coins to Another Shop"
+        description="Move coins between two of your own shop wallets. Coins stay in your name; a flat platform fee applies."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-4">{children}</CardContent>
@@ -246,7 +246,7 @@ export function ShopTransferCard({
             {problem && value > 0 ? <p className="text-xs text-destructive">{problem}</p> : null}
 
             <Button className="h-11 w-full" disabled={!!problem} onClick={() => setConfirming(true)}>
-              <ArrowLeftRight className="size-4" /> Transfer Credits to Another Shop
+              <ArrowLeftRight className="size-4" /> Transfer Coins to Another Shop
             </Button>
       </Frame>
 
@@ -255,7 +255,7 @@ export function ShopTransferCard({
           <DialogHeader>
             <DialogTitle>Confirm transfer to another shop</DialogTitle>
             <DialogDescription>
-              Transferred credits earn no cashback and cannot be undone by you.
+              Transferred coins earn no cashback and cannot be undone by you.
             </DialogDescription>
           </DialogHeader>
           <dl className="space-y-1.5 rounded-lg bg-muted/40 px-3 py-2 text-xs">
@@ -268,7 +268,7 @@ export function ShopTransferCard({
               <dd className="truncate font-medium">{destination?.ecosystemName ?? "—"}</dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-muted-foreground">Credits sent</dt>
+              <dt className="text-muted-foreground">Coins sent</dt>
               <dd className="font-medium">{credits(quote.amount)}</dd>
             </div>
             <div className="flex justify-between gap-3">
@@ -276,7 +276,7 @@ export function ShopTransferCard({
               <dd className="font-medium text-destructive">− {credits(quote.fee)}</dd>
             </div>
             <div className="flex justify-between gap-3 border-t border-border pt-1.5">
-              <dt className="text-muted-foreground">Credits received</dt>
+              <dt className="text-muted-foreground">Coins received</dt>
               <dd className="font-semibold text-success">{credits(quote.net)}</dd>
             </div>
           </dl>
@@ -285,7 +285,7 @@ export function ShopTransferCard({
               Cancel
             </Button>
             <Button onClick={() => void send()} disabled={busy}>
-              {busy ? "Moving…" : "Move credits"}
+              {busy ? "Moving…" : "Move coins"}
             </Button>
           </DialogFooter>
         </DialogContent>

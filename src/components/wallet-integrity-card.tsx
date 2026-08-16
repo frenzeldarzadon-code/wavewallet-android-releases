@@ -38,7 +38,7 @@ export function WalletIntegrityCard() {
   return (
     <PageSection
       title="Wallet integrity"
-      description="Compares every credit and points wallet against its remaining transaction history. Differences caused by the 12-month history cleanup are listed separately and are expected."
+      description="Compares every coin and points wallet against its remaining transaction history. Differences caused by the 12-month history cleanup are listed separately and are expected."
     >
       <Card>
         <CardContent className="space-y-4 pt-6">
@@ -79,7 +79,7 @@ export function WalletIntegrityCard() {
                     >
                       <p className="font-medium">{r.member_name ?? r.user_id}</p>
                       <p className="text-muted-foreground">
-                        {r.kind === "points" ? "Points" : "Credits"} wallet · balance {r.balance} vs history{" "}
+                        {r.kind === "points" ? "Points" : "Coins"} wallet · balance {r.balance} vs history{" "}
                         {r.ledger_sum} (difference {r.difference})
                       </p>
                     </li>
