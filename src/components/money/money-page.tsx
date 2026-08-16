@@ -173,9 +173,13 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
       toast.error(problem);
       return;
     }
+    const payoutLine =
+      cashOutPath === "admin"
+        ? `No fee · your shop admin hands you ${creditsNum.toLocaleString()} credits worth of cash.`
+        : `Cash out fee ${feePercent}% · you receive ${creditsAfterFee(creditsNum, feePercent).toLocaleString()} credits worth of payout.`;
     if (
       !window.confirm(
-        `Cash out ${creditsNum.toLocaleString()} credits?\n\nWithdrawal fee ${quote.feePercent}% · you receive ${creditsAfterFee(creditsNum, quote.feePercent).toLocaleString()} credits worth of payout.\n\n${WITHDRAWAL_SLA_NOTICE}`,
+        `Cash out ${creditsNum.toLocaleString()} credits via ${cashOutPathLabel(cashOutPath)}?\n\n${payoutLine}\n\n${WITHDRAWAL_SLA_NOTICE}`,
       )
     ) {
       return;
@@ -189,8 +193,13 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
         accountNumber: needsAccount ? accountNumber : null,
         notes,
         requestKey: newKey(),
+        path: cashOutPath,
       });
-      toast.success("Cash out request submitted for platform owner review.");
+      toast.success(
+        cashOutPath === "admin"
+          ? "Cash out request submitted for your shop admin to settle."
+          : "Cash out request submitted for platform owner review.",
+      );
       setCredits("");
       setNotes("");
       await load();
