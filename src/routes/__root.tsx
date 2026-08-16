@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
+import { OfflineBanner } from "@/components/offline-banner";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -96,6 +97,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:title", content: "WaveWallet — Voucher & Wallet Platform for Hotspot Operators" },
       { name: "twitter:description", content: "WaveWallet is a multi-tenant coin wallet, voucher marketplace and rewards platform for Omada hotspot operators, resellers and their customers." },
       { name: "google-site-verification", content: "UnARDDxep_CFJhJiBRoKdtC14Xd_YQtLq2R6mtfyB-M" },
+      { name: "theme-color", content: "#1d4ed8" },
+      { name: "application-name", content: "WaveWallet" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: "WaveWallet" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "mobile-web-app-capable", content: "yes" },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/81b0d65a2043abe4f2bcdf4ae733e17b/id-preview-a7c88392--c55ae295-3a69-4d32-ac4d-3325efdee786.lovable.app-1786539511713.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/81b0d65a2043abe4f2bcdf4ae733e17b/id-preview-a7c88392--c55ae295-3a69-4d32-ac4d-3325efdee786.lovable.app-1786539511713.png" },
     ],
@@ -105,6 +112,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -140,6 +149,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <OfflineBanner />
       <Toaster position="top-center" richColors />
     </QueryClientProvider>
   );

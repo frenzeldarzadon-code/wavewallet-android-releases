@@ -17,6 +17,7 @@ import {
   GuideSections,
 } from "@/components/guide-body";
 import { useHelpVisible } from "@/components/help-tip";
+import { InstallAppCard } from "@/components/install-app-card";
 import { loadGuide } from "@/lib/guide.functions";
 
 const TITLE = "Guide & Help — WaveWallet";
@@ -100,6 +101,10 @@ function HelpPage() {
         description="The Coin allocation is granted once. Upgrading mints only the difference, and the unused value of your current month is deducted from the first month of the new plan."
       >
         <GuidePlans plans={plans} />
+      </PageSection>
+
+      <PageSection title="Install the app">
+        <InstallAppCard className="shadow-[var(--shadow-card)]" />
       </PageSection>
 
       <PageSection title="Frequently asked questions">
