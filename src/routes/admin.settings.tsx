@@ -327,10 +327,16 @@ function AdminSettings() {
                   }
                   setSavingRule(true);
                   try {
-                    await setPointsRule(ecosystemDbId, v);
-                    toast.success(`From now on, ${v} Coins = 1 Point. Past purchases are unchanged.`);
+                    const saved = await setPointsRule(ecosystemDbId, v);
+                    // Re-read what the database actually stored, so the field
+                    // never shows a value that was not persisted.
+                    const fresh = await fetchPointsRule(ecosystemDbId);
+                    setRule(String(fresh || saved || v));
+                    toast.success(`From now on, ${fresh || v} Coins = 1 Point. Past purchases are unchanged.`);
                   } catch (e) {
-                    toast.error((e as Error).message);
+                    toast.error("Could not save the points rule", {
+                      description: (e as Error).message,
+                    });
                   } finally {
                     setSavingRule(false);
                   }
@@ -350,9 +356,12 @@ function AdminSettings() {
 
 
       <div className="space-y-2">
-        <Button onClick={save} disabled={saving}>
-          {saving ? "Saving…" : "Save changes"}
+        <Button onClick={save} disabled={saving || !ecosystemDbId}>
+          {saving ? "Saving…" : dirty ? "Save changes*" : "Save changes"}
         </Button>
+        {dirty ? (
+          <p className="text-xs text-destructive">You have unsaved changes on this page.</p>
+        ) : null}
         <p className="text-xs text-muted-foreground">
           Shop name, description and contact details are stored in the database and audit-logged.
           Your Facebook support page is stored per shop and audit-logged on every change.
