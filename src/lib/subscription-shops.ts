@@ -128,7 +128,7 @@ export function subscriptionStateLabel(state: string | null | undefined): string
 
 export function subscriptionStateTone(
   state: string | null | undefined,
-): "success" | "warning" | "danger" | "neutral" {
+): "success" | "warning" | "danger" | "muted" {
   switch (state) {
     case "active":
       return "success";
@@ -139,7 +139,7 @@ export function subscriptionStateTone(
     case "frozen":
       return "danger";
     default:
-      return "neutral";
+      return "muted";
   }
 }
 
