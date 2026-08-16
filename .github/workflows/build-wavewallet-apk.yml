@@ -115,6 +115,23 @@ jobs:
           printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/signing/wavewallet-release.jks"
           chmod 600 "$RUNNER_TEMP/signing/wavewallet-release.jks"
 
+      - name: Verify the keystore contains the expected alias
+        if: steps.creds.outputs.available == 'true'
+        shell: bash
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.WW_APP_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.WW_APP_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          if ! keytool -list -keystore "$RUNNER_TEMP/signing/wavewallet-release.jks" \
+              -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" > /dev/null 2>&1; then
+            echo "::error::The keystore does not contain the alias supplied in WW_APP_KEY_ALIAS."
+            exit 1
+          fi
+          echo "Alias found in keystore."
+
+
+
       - name: Build signed release APK
         if: steps.creds.outputs.available == 'true'
         working-directory: ${{ env.WORKING_DIR }}
