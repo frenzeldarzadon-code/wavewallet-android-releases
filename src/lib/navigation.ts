@@ -10,6 +10,7 @@ import type { LinkProps } from "@tanstack/react-router";
 import type { ComponentType } from "react";
 import {
   Banknote,
+  BookOpen,
   Globe,
   BarChart3,
   Building2,
