@@ -321,7 +321,7 @@ export const cashOutPathLabel = (p?: string | null) =>
 
 /** Fee only ever applies to the platform cash out path. */
 export const cashOutFeePercent = (path: CashOutPath, s: MoneySettings) =>
-  path === "admin" ? 0 : s.withdrawalFeePercent;
+  path === "admin" ? 0 : s.feePercent;
 
 export async function requestWithdrawal(input: {
   credits: number;
