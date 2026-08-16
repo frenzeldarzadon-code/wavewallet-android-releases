@@ -524,6 +524,34 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                 />
               ) : (
                 <>
+                  {canUseAdminFunding ? (
+                    <div className="space-y-1.5">
+                      <Label>Who you paid</Label>
+                      <RadioGroup
+                        value={funding}
+                        onValueChange={(v) => setFunding(v as CashInFunding)}
+                        className="gap-2"
+                      >
+                        {CASH_IN_FUNDINGS.map((f) => (
+                          <label
+                            key={f.value}
+                            htmlFor={`ci-funding-${f.value}`}
+                            className="flex cursor-pointer items-start gap-2 rounded-lg border border-border p-3 text-xs"
+                          >
+                            <RadioGroupItem id={`ci-funding-${f.value}`} value={f.value} className="mt-0.5" />
+                            <span>
+                              <span className="block text-sm font-medium">{f.label}</span>
+                              <span className="text-muted-foreground">
+                                {f.value === "admin"
+                                  ? `Up to ${peso(adminMaxPhp)} right now${capacity.adminName ? ` · ${capacity.adminName}` : ""}`
+                                  : f.hint}
+                              </span>
+                            </span>
+                          </label>
+                        ))}
+                      </RadioGroup>
+                    </div>
+                  ) : null}
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-1.5">
                       <Label htmlFor="ci-method">Payment method</Label>
