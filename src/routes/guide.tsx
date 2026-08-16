@@ -20,6 +20,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { InstallAppCard } from "@/components/install-app-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -277,6 +278,11 @@ function GuidePage() {
             </Button>
           </CardContent>
         </Card>
+      </section>
+
+      <section id="install" className="mb-12 scroll-mt-20">
+        <h2 className="mb-3 text-lg font-semibold tracking-tight">Get the app</h2>
+        <InstallAppCard className="shadow-[var(--shadow-card)]" />
       </section>
 
       <section className="mb-12">
