@@ -276,18 +276,12 @@ function LoginPage() {
                   <LogIn className="size-4" />
                   {busy ? "Signing in…" : "Sign In"}
                 </Button>
-                <div className="flex items-center justify-between text-xs">
+                <div className="text-center text-xs">
                   <Link to="/reset-password" className="text-auth-muted hover:underline">
                     Forgot password?
                   </Link>
-                  <button
-                    type="button"
-                    className="font-semibold text-auth-cyan hover:underline"
-                    onClick={() => setMode("signup")}
-                  >
-                    Create free account
-                  </button>
                 </div>
+
                 <SocialSignIn disabled={busy} />
                 <Button
                   variant="outline"
