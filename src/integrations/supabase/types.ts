@@ -1274,6 +1274,76 @@ export type Database = {
           },
         ]
       }
+      earnings_reconciliation_adjustments: {
+        Row: {
+          actor_id: string | null
+          corrected_amount: number
+          corrected_percent: number | null
+          correction_tx_id: string
+          created_at: string
+          delta: number
+          id: string
+          kind: string
+          previous_amount: number
+          previous_percent: number | null
+          reason: string
+          recipient_id: string
+          sale_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          corrected_amount: number
+          corrected_percent?: number | null
+          correction_tx_id: string
+          created_at?: string
+          delta: number
+          id?: string
+          kind: string
+          previous_amount: number
+          previous_percent?: number | null
+          reason: string
+          recipient_id: string
+          sale_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          corrected_amount?: number
+          corrected_percent?: number | null
+          correction_tx_id?: string
+          created_at?: string
+          delta?: number
+          id?: string
+          kind?: string
+          previous_amount?: number
+          previous_percent?: number | null
+          reason?: string
+          recipient_id?: string
+          sale_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "earnings_reconciliation_adjustments_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "earnings_reconciliation_adjustments_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "earnings_reconciliation_adjustments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ecosystem_invitations: {
         Row: {
           cancelled_by: string | null
