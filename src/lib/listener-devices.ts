@@ -62,6 +62,8 @@ export async function registerListenerDevice(input: {
   ecosystemId?: string | null;
   windowMinutes?: number;
   offlineMinutes?: number;
+  /** Receiving GCash account the phone monitors. Required by the database. */
+  receivingNumber?: string | null;
 }) {
   const args: Record<string, unknown> = {
     _label: input.label,
@@ -69,6 +71,7 @@ export async function registerListenerDevice(input: {
     _offline_minutes: input.offlineMinutes ?? 15,
   };
   if (input.ecosystemId) args["_ecosystem"] = input.ecosystemId;
+  if (input.receivingNumber) args["_receiving_number"] = input.receivingNumber;
   const { data, error } = await (
     supabase.rpc as unknown as (
       fn: string,
@@ -76,8 +79,15 @@ export async function registerListenerDevice(input: {
     ) => Promise<{ data: unknown; error: { message: string } | null }>
   )("register_listener_device", args);
   if (error) throw error;
-  return data as { device_id: string; label: string; pairing_secret: string; package_name: string };
+  return data as {
+    device_id: string;
+    label: string;
+    pairing_secret: string;
+    package_name: string;
+    receiving_number: string | null;
+  };
 }
+
 
 
 export async function revokeListenerDevice(deviceId: string) {
