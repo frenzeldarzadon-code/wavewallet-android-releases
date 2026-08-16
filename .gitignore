@@ -37,3 +37,15 @@ android-gcash-listener/.kotlin/
 android-gcash-listener/build/
 android-gcash-listener/app/build/
 android-gcash-listener/local.properties
+
+# WaveWallet Android app build outputs
+android-app/.gradle/
+android-app/.kotlin/
+android-app/build/
+android-app/app/build/
+android-app/local.properties
+
+# Signing material must never be committed
+*.jks
+*.keystore
+*.jks.b64

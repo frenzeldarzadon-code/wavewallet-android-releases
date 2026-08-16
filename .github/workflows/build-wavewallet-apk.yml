@@ -76,13 +76,21 @@ jobs:
         shell: bash
         env:
           KEYSTORE_B64: ${{ secrets.WW_APP_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.WW_APP_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.WW_APP_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.WW_APP_KEY_PASSWORD }}
         run: |
-          if [ -n "$KEYSTORE_B64" ]; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::No WW_APP_KEYSTORE_BASE64 secret — skipping the signed release build."
+          missing=""
+          [ -n "$KEYSTORE_B64" ]     || missing="$missing WW_APP_KEYSTORE_BASE64"
+          [ -n "$KEYSTORE_PASSWORD" ]|| missing="$missing WW_APP_KEYSTORE_PASSWORD"
+          [ -n "$KEY_ALIAS" ]        || missing="$missing WW_APP_KEY_ALIAS"
+          [ -n "$KEY_PASSWORD" ]     || missing="$missing WW_APP_KEY_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing signing secret(s):$missing"
+            exit 1
           fi
+          echo "available=true" >> "$GITHUB_OUTPUT"
+
 
       - name: Set up JDK 17
         if: steps.creds.outputs.available == 'true'
@@ -106,6 +114,23 @@ jobs:
           install -d -m 700 "$RUNNER_TEMP/signing"
           printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/signing/wavewallet-release.jks"
           chmod 600 "$RUNNER_TEMP/signing/wavewallet-release.jks"
+
+      - name: Verify the keystore contains the expected alias
+        if: steps.creds.outputs.available == 'true'
+        shell: bash
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.WW_APP_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.WW_APP_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          if ! keytool -list -keystore "$RUNNER_TEMP/signing/wavewallet-release.jks" \
+              -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" > /dev/null 2>&1; then
+            echo "::error::The keystore does not contain the alias supplied in WW_APP_KEY_ALIAS."
+            exit 1
+          fi
+          echo "Alias found in keystore."
+
+
 
       - name: Build signed release APK
         if: steps.creds.outputs.available == 'true'
