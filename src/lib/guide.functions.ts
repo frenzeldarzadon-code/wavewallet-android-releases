@@ -39,12 +39,8 @@ export const loadGuide = createServerFn({ method: "GET" }).handler(async (): Pro
       client.from("guide_sections").select("*").eq("published", true).order("display_order"),
       client.from("guide_faqs").select("*").eq("published", true).order("display_order"),
       client.from("subscription_plans").select("*").eq("active", true).order("display_order"),
-      client
-        .from("guide_questions")
-        .select("id, question, answer")
-        .eq("status", "published")
-        .order("answered_at", { ascending: false })
-        .limit(20),
+      client.rpc("guide_questions_public", { _limit: 20 }),
+
     ]);
     return {
       sections: sections.data ?? [],
