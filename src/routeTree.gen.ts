@@ -83,6 +83,7 @@ import { Route as SuperOperatorLogRouteImport } from './routes/super.operator-lo
 import { Route as SuperProfileRouteImport } from './routes/super.profile'
 import { Route as SuperReportsRouteImport } from './routes/super.reports'
 import { Route as SuperSettingsRouteImport } from './routes/super.settings'
+import { Route as SuperShopsRouteImport } from './routes/super.shops'
 import { Route as SuperSubscriptionsRouteImport } from './routes/super.subscriptions'
 import { Route as SuperUniverseRouteImport } from './routes/super.universe'
 import { Route as UniverseIndexRouteImport } from './routes/universe.index'
@@ -463,6 +464,11 @@ const SuperSettingsRoute = SuperSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => SuperRoute,
 } as any)
+const SuperShopsRoute = SuperShopsRouteImport.update({
+  id: '/shops',
+  path: '/shops',
+  getParentRoute: () => SuperRoute,
+} as any)
 const SuperSubscriptionsRoute = SuperSubscriptionsRouteImport.update({
   id: '/subscriptions',
   path: '/subscriptions',
@@ -581,6 +587,7 @@ export interface FileRoutesByFullPath {
   '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
+  '/super/shops': typeof SuperShopsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
   '/super/universe': typeof SuperUniverseRoute
   '/universe/messages': typeof UniverseMessagesRoute
@@ -661,6 +668,7 @@ export interface FileRoutesByTo {
   '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
+  '/super/shops': typeof SuperShopsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
   '/super/universe': typeof SuperUniverseRoute
   '/universe/messages': typeof UniverseMessagesRoute
@@ -747,6 +755,7 @@ export interface FileRoutesById {
   '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
+  '/super/shops': typeof SuperShopsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
   '/super/universe': typeof SuperUniverseRoute
   '/universe/messages': typeof UniverseMessagesRoute
@@ -834,6 +843,7 @@ export interface FileRouteTypes {
     | '/super/profile'
     | '/super/reports'
     | '/super/settings'
+    | '/super/shops'
     | '/super/subscriptions'
     | '/super/universe'
     | '/universe/messages'
@@ -914,6 +924,7 @@ export interface FileRouteTypes {
     | '/super/profile'
     | '/super/reports'
     | '/super/settings'
+    | '/super/shops'
     | '/super/subscriptions'
     | '/super/universe'
     | '/universe/messages'
@@ -999,6 +1010,7 @@ export interface FileRouteTypes {
     | '/super/profile'
     | '/super/reports'
     | '/super/settings'
+    | '/super/shops'
     | '/super/subscriptions'
     | '/super/universe'
     | '/universe/messages'
@@ -1552,6 +1564,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperSettingsRouteImport
       parentRoute: typeof SuperRoute
     }
+    '/super/shops': {
+      id: '/super/shops'
+      path: '/shops'
+      fullPath: '/super/shops'
+      preLoaderRoute: typeof SuperShopsRouteImport
+      parentRoute: typeof SuperRoute
+    }
     '/super/subscriptions': {
       id: '/super/subscriptions'
       path: '/subscriptions'
@@ -1752,6 +1771,7 @@ interface SuperRouteChildren {
   SuperProfileRoute: typeof SuperProfileRoute
   SuperReportsRoute: typeof SuperReportsRoute
   SuperSettingsRoute: typeof SuperSettingsRoute
+  SuperShopsRoute: typeof SuperShopsRoute
   SuperSubscriptionsRoute: typeof SuperSubscriptionsRoute
   SuperUniverseRoute: typeof SuperUniverseRoute
   SuperIndexRoute: typeof SuperIndexRoute
@@ -1769,6 +1789,7 @@ const SuperRouteChildren: SuperRouteChildren = {
   SuperProfileRoute: SuperProfileRoute,
   SuperReportsRoute: SuperReportsRoute,
   SuperSettingsRoute: SuperSettingsRoute,
+  SuperShopsRoute: SuperShopsRoute,
   SuperSubscriptionsRoute: SuperSubscriptionsRoute,
   SuperUniverseRoute: SuperUniverseRoute,
   SuperIndexRoute: SuperIndexRoute,
