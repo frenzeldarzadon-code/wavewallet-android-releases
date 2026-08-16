@@ -108,6 +108,11 @@ dependencies {
 
     implementation("androidx.work:work-runtime-ktx:2.9.1")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    // Google Tink (pulled in by security-crypto) references Error Prone
+    // annotations at compile/shrink time; they are not published as a
+    // transitive runtime dependency, so R8 fails the release build with
+    // "missing class com.google.errorprone.annotations.*" without this.
+    implementation("com.google.errorprone:error_prone_annotations:2.23.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
