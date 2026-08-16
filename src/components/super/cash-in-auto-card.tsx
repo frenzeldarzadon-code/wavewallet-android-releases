@@ -36,8 +36,11 @@ export function CashInAutoCard() {
       amount_tolerance_php: Number(next.platform_rule?.amount_tolerance_php ?? 0),
       max_auto_amount_php: next.platform_rule?.max_auto_amount_php ?? null,
       expected_amount_php: next.platform_rule?.expected_amount_php ?? null,
-      require_listener_match: next.platform_rule?.require_listener_match ?? false,
+      require_listener_match: next.platform_rule?.require_listener_match ?? true,
+      require_receipt_match: next.platform_rule?.require_receipt_match ?? true,
+      verification_mode: next.platform_rule?.verification_mode ?? "staged",
     });
+
   };
 
   useEffect(() => {
