@@ -671,6 +671,39 @@ export async function fetchAllCashIns(): Promise<CashInRequest[]> {
   return data ?? [];
 }
 
+/* ---------------------------------------------------------------------------
+ * Shop admin queues — only the admin's own shop, and only the requests the
+ * admin is responsible for settling out of their own pocket/wallet.
+ * ------------------------------------------------------------------------- */
+
+export async function fetchShopCashouts(ecosystemId?: string | null): Promise<WithdrawalRequest[]> {
+  if (!ecosystemId) return [];
+  const { data, error } = await supabase
+    .from("withdrawal_requests")
+    .select("*")
+    .eq("ecosystem_id", ecosystemId)
+    .eq("cashout_path", "admin")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function fetchShopCashIns(ecosystemId?: string | null): Promise<CashInRequest[]> {
+  if (!ecosystemId) return [];
+  const { data, error } = await supabase
+    .from("cash_in_requests")
+    .select("*")
+    .eq("ecosystem_id", ecosystemId)
+    .eq("funding_source", "admin")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+
+
 export const pendingMoneyCount = (rows: { status: string }[]) =>
   rows.filter((r) => r.status === "pending").length;
 
