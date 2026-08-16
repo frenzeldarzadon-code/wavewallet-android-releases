@@ -10,6 +10,7 @@
  * until the platform owner approves it, and only that approval writes a single
  * credit entry. The warning below is shown before every submission.
  */
+import { useOnline } from "@/lib/pwa";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
@@ -79,6 +80,7 @@ export function CreditPurchasePage() {
   const [note, setNote] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
+  const online = useOnline();
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -314,7 +316,7 @@ export function CreditPurchasePage() {
 
                 <Button
                   className="w-full sm:w-auto"
-                  disabled={!selected || !reference.trim() || busy}
+                  disabled={!selected || !reference.trim() || busy || !online}
                   onClick={() => setConfirming(true)}
                 >
                   Request allocation

@@ -1,4 +1,7 @@
-import { QRCodeSVG } from "qrcode.react";
+import { Suspense, lazy } from "react";
+
+// The QR renderer is only pulled in when a code is actually shown.
+const QRCodeSVG = lazy(() => import("qrcode.react").then((m) => ({ default: m.QRCodeSVG })));
 import { cn } from "@/lib/utils";
 
 /**
@@ -22,7 +25,9 @@ export function RedemptionQr({
       )}
     >
       <div className="rounded-lg bg-white p-3">
-        <QRCodeSVG value={code} size={size} level="M" />
+        <Suspense fallback={<div style={{ width: size, height: size }} />}>
+          <QRCodeSVG value={code} size={size} level="M" />
+        </Suspense>
       </div>
       <p className="font-mono text-base font-semibold tracking-widest">{code}</p>
     </div>

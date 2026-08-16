@@ -7,6 +7,7 @@
  * an order is placed and returned in full when it is rejected or cancelled,
  * so an unconfirmed order never permanently consumes a wallet.
  */
+import { requireOnline } from "@/lib/offline-guard";
 import { supabase } from "@/integrations/supabase/client";
 import {
   MAX_UPLOAD_BYTES,
@@ -334,6 +335,7 @@ export async function placeRetailOrder(
   cart: Cart,
   draft: CheckoutDraft,
 ): Promise<PlacedOrder> {
+  requireOnline();
   const items = Object.entries(cart)
     .filter(([, q]) => q > 0)
     .map(([product_id, quantity]) => ({ product_id, quantity }));

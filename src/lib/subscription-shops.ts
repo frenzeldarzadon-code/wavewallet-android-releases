@@ -1,3 +1,4 @@
+import { requireOnline } from "@/lib/offline-guard";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -80,6 +81,7 @@ export async function activateSubscription(input: {
   reference: string | null;
   months: number;
 }): Promise<void> {
+  requireOnline();
   const { error } = await supabase.rpc("activate_subscription", {
     _ecosystem_id: input.ecosystemId,
     _plan_id: input.planId,
@@ -99,6 +101,7 @@ export async function runSubscriptionExpiry(dryRun: boolean) {
 
 /** One 5-day review shop per member, with simulated coins only. */
 export async function createReviewShop(name: string, description?: string) {
+  requireOnline();
   const { data, error } = await supabase.rpc("create_review_shop", {
     _name: name,
     ...(description ? { _description: description } : {}),

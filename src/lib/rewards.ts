@@ -5,6 +5,7 @@
  * their ecosystem and role inside the database. Balances and holds are always
  * read back from the ledger-maintained points_accounts row.
  */
+import { requireOnline } from "@/lib/offline-guard";
 import { supabase } from "@/integrations/supabase/client";
 import { friendlyWalletError } from "@/lib/wallet";
 
@@ -181,6 +182,7 @@ export interface RequestedRedemption {
 }
 
 export async function requestRedemption(rewardId: string): Promise<RequestedRedemption> {
+  requireOnline();
   const { data, error } = await supabase.rpc("request_redemption", { _reward_id: rewardId });
   if (error) throw new Error(friendlyWalletError(error.message));
   const row = (data as unknown as RequestedRedemption[])[0];
@@ -193,6 +195,7 @@ export async function reviewRedemption(
   decision: "approve" | "reject" | "cancel",
   note?: string,
 ): Promise<string> {
+  requireOnline();
   const { data, error } = await supabase.rpc("review_redemption", {
     _id: id,
     _decision: decision,
@@ -211,6 +214,7 @@ export interface PointsPurchaseResult {
 }
 
 export async function purchaseVoucherWithPoints(productId: string): Promise<PointsPurchaseResult> {
+  requireOnline();
   const { data, error } = await supabase.rpc("purchase_voucher_with_points", {
     _product_id: productId,
   });
@@ -226,6 +230,7 @@ export async function adminAdjustPoints(input: {
   reason: string;
   reference?: string;
 }): Promise<string> {
+  requireOnline();
   const { data, error } = await supabase.rpc("admin_adjust_points", {
     _user_id: input.userId,
     _amount: Math.trunc(input.amount),

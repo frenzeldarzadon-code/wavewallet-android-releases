@@ -13,6 +13,7 @@
  *    be reversed — never credits already spent or passed onward.
  *  - Reversals generate no commission, cashback, points, discounts or earnings.
  */
+import { requireOnline } from "@/lib/offline-guard";
 import { supabase } from "@/integrations/supabase/client";
 import type { CreditEntry } from "@/lib/wallet";
 
@@ -177,6 +178,7 @@ export async function reverseCreditTransfer(input: {
   reason: string;
   note?: string;
 }): Promise<{ reversal_tx_id: string; kind: "full" | "partial"; amount: number }> {
+  requireOnline();
   const { data, error } = await supabase.rpc("reverse_credit_transfer", {
     _tx_id: input.txId,
     _amount: input.amount,

@@ -8,6 +8,7 @@
  *
  * There is no payment gateway here on purpose: approval is manual.
  */
+import { requireOnline } from "@/lib/offline-guard";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { peso, shortDate } from "@/lib/wavewallet";
@@ -92,6 +93,7 @@ export async function submitSubscriptionRequest(input: {
   amountPaid?: number | null;
   proofPath?: string | null;
 }) {
+  requireOnline();
   const { error } = await supabase.rpc("submit_subscription_request", {
     _ecosystem_id: input.ecosystemId,
     _reference: input.reference,
@@ -106,6 +108,7 @@ export async function reviewSubscriptionRequest(
   decision: "approved" | "rejected",
   reason?: string | null,
 ) {
+  requireOnline();
   const { error } = await supabase.rpc("review_subscription_request", {
     _request_id: requestId,
     _decision: decision,
@@ -257,6 +260,7 @@ export async function adjustExpiration(input: {
   note?: string | null;
   confirmShorten?: boolean;
 }) {
+  requireOnline();
   const note = input.note?.trim();
   const { data, error } = await supabase.rpc("adjust_ecosystem_expiration", {
     _ecosystem_id: input.ecosystemId,

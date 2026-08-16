@@ -5,6 +5,7 @@
  * Everything here is read-only convenience for the UI: the client can never
  * grant itself a role, pick an ecosystem, or read another tenant's rows.
  */
+import { requireOnline } from "@/lib/offline-guard";
 import { supabase } from "@/integrations/supabase/client";
 import {
   normalizePhone,
@@ -203,6 +204,7 @@ export async function loadAuthContext(): Promise<AuthContext | null> {
  * probed from the login form.
  */
 export async function signInWithPassword(identifier: string, password: string) {
+  requireOnline();
   const authEmail = resolveLoginEmail(identifier);
   if (!authEmail) throw new Error("Enter your email address or mobile number.");
   const { error } = await supabase.auth.signInWithPassword({ email: authEmail, password });
@@ -227,6 +229,7 @@ export interface CustomerSignupInput {
  * deterministic, non-deliverable address.
  */
 export async function signUpCustomerAccount(input: CustomerSignupInput) {
+  requireOnline();
   const { data, error } = await supabase.auth.signUp({
     email: signupAuthEmail({ email: input.email, phone: input.phone }),
     password: input.password,
@@ -254,6 +257,7 @@ export async function signUpInvitedOperator(input: {
   phone?: string;
   password: string;
 }) {
+  requireOnline();
   const { data, error } = await supabase.auth.signUp({
     email: input.email.trim().toLowerCase(),
     password: input.password,

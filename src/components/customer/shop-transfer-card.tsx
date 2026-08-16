@@ -7,6 +7,7 @@
  * way earn NO cashback: any purchase they later fund pays the destination shop
  * admin the full retained share.
  */
+import { useOnline } from "@/lib/pwa";
 import { ArrowLeftRight, Info } from "lucide-react";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -62,6 +63,7 @@ export function ShopTransferCard({
   const [note, setNote] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
+  const online = useOnline();
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -284,7 +286,7 @@ export function ShopTransferCard({
             <Button variant="outline" onClick={() => setConfirming(false)}>
               Cancel
             </Button>
-            <Button onClick={() => void send()} disabled={busy}>
+            <Button onClick={() => void send()} disabled={busy || !online}>
               {busy ? "Moving…" : "Move coins"}
             </Button>
           </DialogFooter>

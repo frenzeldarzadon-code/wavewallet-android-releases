@@ -5,6 +5,7 @@
  * against their ecosystem and role in the database. Nothing here is trusted:
  * balances are always read back from the ledger-maintained account rows.
  */
+import { requireOnline } from "@/lib/offline-guard";
 import { supabase } from "@/integrations/supabase/client";
 import { peso } from "@/lib/wavewallet";
 
@@ -473,6 +474,7 @@ export async function adminAdjustCredits(input: {
   /** Shop whose wallet is affected — never guessed from the member's last shop. */
   ecosystemId?: string | null;
 }): Promise<string> {
+  requireOnline();
   return unwrap(
     await supabase.rpc("admin_adjust_credits", {
       _user_id: input.userId,
@@ -498,6 +500,7 @@ export async function adminLoadCredits(input: {
   reference?: string;
   ecosystemId?: string | null;
 }): Promise<string> {
+  requireOnline();
   return unwrap(
     await supabase.rpc("admin_load_credits", {
       _user_id: input.userId,
@@ -514,6 +517,7 @@ export async function resellerLoadCredits(input: {
   amount: number;
   reference?: string;
 }): Promise<string> {
+  requireOnline();
   return unwrap(
     await supabase.rpc("reseller_load_credits", {
       _customer_id: input.customerId,
@@ -528,6 +532,7 @@ export async function transferCredits(input: {
   amount: number;
   note?: string;
 }): Promise<string> {
+  requireOnline();
   return unwrap(
     await supabase.rpc("transfer_credits", {
       _recipient_id: input.recipientId,
@@ -617,6 +622,7 @@ export interface PurchaseResult {
 }
 
 export async function purchaseVoucher(productId: string, quantity = 1): Promise<PurchaseResult> {
+  requireOnline();
   const { data, error } = await supabase.rpc("purchase_voucher", {
     _product_id: productId,
     _quantity: quantity,
