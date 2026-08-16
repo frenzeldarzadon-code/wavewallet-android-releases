@@ -13,9 +13,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as GuideRouteImport } from './routes/guide'
+import { Route as HelpRouteImport } from './routes/help'
 import { Route as InviteRouteImport } from './routes/invite'
 import { Route as ResellerRouteImport } from './routes/reseller'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as ReviewRouteImport } from './routes/review'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StartShopRouteImport } from './routes/start-shop'
@@ -115,6 +117,11 @@ const GuideRoute = GuideRouteImport.update({
   path: '/guide',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InviteRoute = InviteRouteImport.update({
   id: '/invite',
   path: '/invite',
@@ -128,6 +135,11 @@ const ResellerRoute = ResellerRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReviewRoute = ReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SetupRoute = SetupRouteImport.update({
@@ -527,9 +539,11 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
   '/guide': typeof GuideRoute
+  '/help': typeof HelpRoute
   '/invite': typeof InviteRoute
   '/reseller': typeof ResellerRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
+  '/review': typeof ReviewRoute
   '/setup': typeof SetupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/start-shop': typeof StartShopRoute
@@ -612,8 +626,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/guide': typeof GuideRoute
+  '/help': typeof HelpRoute
   '/invite': typeof InviteRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/review': typeof ReviewRoute
   '/setup': typeof SetupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/start-shop': typeof StartShopRoute
@@ -697,9 +713,11 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
   '/guide': typeof GuideRoute
+  '/help': typeof HelpRoute
   '/invite': typeof InviteRoute
   '/reseller': typeof ResellerRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
+  '/review': typeof ReviewRoute
   '/setup': typeof SetupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/start-shop': typeof StartShopRoute
@@ -786,9 +804,11 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/guide'
+    | '/help'
     | '/invite'
     | '/reseller'
     | '/reset-password'
+    | '/review'
     | '/setup'
     | '/sitemap.xml'
     | '/start-shop'
@@ -871,8 +891,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/guide'
+    | '/help'
     | '/invite'
     | '/reset-password'
+    | '/review'
     | '/setup'
     | '/sitemap.xml'
     | '/start-shop'
@@ -955,9 +977,11 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/guide'
+    | '/help'
     | '/invite'
     | '/reseller'
     | '/reset-password'
+    | '/review'
     | '/setup'
     | '/sitemap.xml'
     | '/start-shop'
@@ -1043,9 +1067,11 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AppRoute: typeof AppRouteWithChildren
   GuideRoute: typeof GuideRoute
+  HelpRoute: typeof HelpRoute
   InviteRoute: typeof InviteRoute
   ResellerRoute: typeof ResellerRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ReviewRoute: typeof ReviewRoute
   SetupRoute: typeof SetupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StartShopRoute: typeof StartShopRoute
@@ -1086,6 +1112,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuideRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/invite': {
       id: '/invite'
       path: '/invite'
@@ -1105,6 +1138,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/review': {
+      id: '/review'
+      path: '/review'
+      fullPath: '/review'
+      preLoaderRoute: typeof ReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/setup': {
@@ -1845,9 +1885,11 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AppRoute: AppRouteWithChildren,
   GuideRoute: GuideRoute,
+  HelpRoute: HelpRoute,
   InviteRoute: InviteRoute,
   ResellerRoute: ResellerRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
+  ReviewRoute: ReviewRoute,
   SetupRoute: SetupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StartShopRoute: StartShopRoute,
