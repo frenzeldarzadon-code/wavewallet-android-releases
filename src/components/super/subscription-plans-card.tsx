@@ -73,7 +73,7 @@ export function SubscriptionPlansCard({ onSaved }: { onSaved?: () => void }) {
                       <StatusBadge tone={p.active ? "success" : "muted"}>
                         {p.active ? "Active" : "Hidden"}
                       </StatusBadge>
-                      {p.recommended ? <StatusBadge tone="info">Recommended</StatusBadge> : null}
+                      {p.recommended ? <StatusBadge tone="brand">Recommended</StatusBadge> : null}
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {peso(Number(p.monthly_price))}/month ·{" "}
@@ -142,9 +142,18 @@ function EditPlanDialog({
     if (!plan) return;
     const monthly = Number(price);
     const coins = Number(allocation);
-    if (!name.trim()) return toast.error("Give the plan a name.");
-    if (!Number.isFinite(monthly) || monthly < 0) return toast.error("Enter a valid monthly rate.");
-    if (!Number.isFinite(coins) || coins < 0) return toast.error("Enter a valid Coin allocation.");
+    if (!name.trim()) {
+      toast.error("Give the plan a name.");
+      return;
+    }
+    if (!Number.isFinite(monthly) || monthly < 0) {
+      toast.error("Enter a valid monthly rate.");
+      return;
+    }
+    if (!Number.isFinite(coins) || coins < 0) {
+      toast.error("Enter a valid Coin allocation.");
+      return;
+    }
     setBusy(true);
     try {
       await updatePlan(plan.id, {
