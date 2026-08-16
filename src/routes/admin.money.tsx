@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MoneyPage } from "@/components/money/money-page";
+import { ShopAdminQueue } from "@/components/money/shop-admin-queue";
 
 export const Route = createFileRoute("/admin/money")({
   head: () => ({
