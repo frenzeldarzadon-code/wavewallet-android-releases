@@ -311,6 +311,10 @@ export type Database = {
           ecosystem_id: string | null
           fee_percent: number
           fee_php: number
+          funding_account_id: string | null
+          funding_admin_id: string | null
+          funding_ledger_id: string | null
+          funding_source: string
           id: string
           ledger_id: string | null
           listener_event_id: string | null
@@ -360,6 +364,10 @@ export type Database = {
           ecosystem_id?: string | null
           fee_percent?: number
           fee_php?: number
+          funding_account_id?: string | null
+          funding_admin_id?: string | null
+          funding_ledger_id?: string | null
+          funding_source?: string
           id?: string
           ledger_id?: string | null
           listener_event_id?: string | null
@@ -409,6 +417,10 @@ export type Database = {
           ecosystem_id?: string | null
           fee_percent?: number
           fee_php?: number
+          funding_account_id?: string | null
+          funding_admin_id?: string | null
+          funding_ledger_id?: string | null
+          funding_source?: string
           id?: string
           ledger_id?: string | null
           listener_event_id?: string | null
@@ -459,6 +471,27 @@ export type Database = {
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_in_requests_funding_account_id_fkey"
+            columns: ["funding_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_in_requests_funding_admin_id_fkey"
+            columns: ["funding_admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_in_requests_funding_ledger_id_fkey"
+            columns: ["funding_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
             referencedColumns: ["id"]
           },
           {
@@ -4554,6 +4587,16 @@ export type Database = {
         }
         Returns: string
       }
+      admin_cash_in_capacity: {
+        Args: { _ecosystem: string }
+        Returns: {
+          admin_id: string
+          admin_name: string
+          available: number
+          balance: number
+          reserved: number
+        }[]
+      }
       admin_load_credits: {
         Args: {
           _amount: number
@@ -4650,6 +4693,10 @@ export type Database = {
           ecosystem_id: string | null
           fee_percent: number
           fee_php: number
+          funding_account_id: string | null
+          funding_admin_id: string | null
+          funding_ledger_id: string | null
+          funding_source: string
           id: string
           ledger_id: string | null
           listener_event_id: string | null
@@ -5927,138 +5974,77 @@ export type Database = {
         Returns: undefined
       }
       remove_friend: { Args: { _user: string }; Returns: undefined }
-      request_cash_in:
-        | {
-            Args: {
-              _amount_php: number
-              _method_id: string
-              _notes?: string
-              _payer_reference?: string
-              _proof_path?: string
-              _request_key?: string
-            }
-            Returns: {
-              amount_php: number
-              approval_method: string
-              auto_match_note: string | null
-              created_at: string
-              credits: number
-              decision_reason: string | null
-              duplicate_of: string | null
-              duplicate_reference: boolean
-              ecosystem_id: string | null
-              fee_percent: number
-              fee_php: number
-              id: string
-              ledger_id: string | null
-              listener_event_id: string | null
-              method_details: Json
-              method_id: string | null
-              method_name: string
-              method_type: string
-              net_php: number | null
-              notes: string | null
-              payer_number: string | null
-              payer_number_key: string | null
-              payer_reference: string | null
-              payer_reference_key: string | null
-              proof_path: string | null
-              rate_credits: number
-              rate_php: number
-              receipt_amount_php: number | null
-              receipt_check: string
-              receipt_checked_at: string | null
-              receipt_details: Json | null
-              receipt_reference: string | null
-              receipt_reference_key: string | null
-              receipt_sender_number: string | null
-              reference: string
-              request_key: string | null
-              requester_name: string
-              requester_role: string
-              reviewed_at: string | null
-              reviewed_by: string | null
-              reviewer_name: string | null
-              sender_number: string | null
-              sender_number_key: string | null
-              status: string
-              updated_at: string
-              user_id: string
-              verified_payment_id: string | null
-            }
-            SetofOptions: {
-              from: "*"
-              to: "cash_in_requests"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: {
-              _amount_php: number
-              _method_id: string
-              _notes?: string
-              _payer_number?: string
-              _payer_reference?: string
-              _proof_path?: string
-              _request_key?: string
-            }
-            Returns: {
-              amount_php: number
-              approval_method: string
-              auto_match_note: string | null
-              created_at: string
-              credits: number
-              decision_reason: string | null
-              duplicate_of: string | null
-              duplicate_reference: boolean
-              ecosystem_id: string | null
-              fee_percent: number
-              fee_php: number
-              id: string
-              ledger_id: string | null
-              listener_event_id: string | null
-              method_details: Json
-              method_id: string | null
-              method_name: string
-              method_type: string
-              net_php: number | null
-              notes: string | null
-              payer_number: string | null
-              payer_number_key: string | null
-              payer_reference: string | null
-              payer_reference_key: string | null
-              proof_path: string | null
-              rate_credits: number
-              rate_php: number
-              receipt_amount_php: number | null
-              receipt_check: string
-              receipt_checked_at: string | null
-              receipt_details: Json | null
-              receipt_reference: string | null
-              receipt_reference_key: string | null
-              receipt_sender_number: string | null
-              reference: string
-              request_key: string | null
-              requester_name: string
-              requester_role: string
-              reviewed_at: string | null
-              reviewed_by: string | null
-              reviewer_name: string | null
-              sender_number: string | null
-              sender_number_key: string | null
-              status: string
-              updated_at: string
-              user_id: string
-              verified_payment_id: string | null
-            }
-            SetofOptions: {
-              from: "*"
-              to: "cash_in_requests"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
+      request_cash_in: {
+        Args: {
+          _amount_php: number
+          _funding_source?: string
+          _method_id: string
+          _notes?: string
+          _payer_number?: string
+          _payer_reference?: string
+          _proof_path?: string
+          _request_key?: string
+        }
+        Returns: {
+          amount_php: number
+          approval_method: string
+          auto_match_note: string | null
+          created_at: string
+          credits: number
+          decision_reason: string | null
+          duplicate_of: string | null
+          duplicate_reference: boolean
+          ecosystem_id: string | null
+          fee_percent: number
+          fee_php: number
+          funding_account_id: string | null
+          funding_admin_id: string | null
+          funding_ledger_id: string | null
+          funding_source: string
+          id: string
+          ledger_id: string | null
+          listener_event_id: string | null
+          method_details: Json
+          method_id: string | null
+          method_name: string
+          method_type: string
+          net_php: number | null
+          notes: string | null
+          payer_number: string | null
+          payer_number_key: string | null
+          payer_reference: string | null
+          payer_reference_key: string | null
+          proof_path: string | null
+          rate_credits: number
+          rate_php: number
+          receipt_amount_php: number | null
+          receipt_check: string
+          receipt_checked_at: string | null
+          receipt_details: Json | null
+          receipt_reference: string | null
+          receipt_reference_key: string | null
+          receipt_sender_number: string | null
+          reference: string
+          request_key: string | null
+          requester_name: string
+          requester_role: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_name: string | null
+          sender_number: string | null
+          sender_number_key: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          verified_payment_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cash_in_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       request_join_ecosystem: {
         Args: { _ecosystem_id: string }
         Returns: string
@@ -6302,6 +6288,10 @@ export type Database = {
           ecosystem_id: string | null
           fee_percent: number
           fee_php: number
+          funding_account_id: string | null
+          funding_admin_id: string | null
+          funding_ledger_id: string | null
+          funding_source: string
           id: string
           ledger_id: string | null
           listener_event_id: string | null
@@ -6937,6 +6927,10 @@ export type Database = {
           ecosystem_id: string | null
           fee_percent: number
           fee_php: number
+          funding_account_id: string | null
+          funding_admin_id: string | null
+          funding_ledger_id: string | null
+          funding_source: string
           id: string
           ledger_id: string | null
           listener_event_id: string | null
@@ -6981,6 +6975,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      shop_funding_admin: { Args: { _ecosystem: string }; Returns: string }
       shop_store_settings: {
         Args: { _ecosystem_id: string }
         Returns: {
