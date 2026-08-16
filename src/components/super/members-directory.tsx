@@ -6,7 +6,7 @@
  * Credit — reachable per row. Both actions keep their existing server-side
  * authorization; this screen is only a launcher.
  */
-import { Coins, KeyRound, Percent, Search, UserCog } from "lucide-react";
+import { Coins, KeyRound, Percent, Search, Trash2, UserCog } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
