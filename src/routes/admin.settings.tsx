@@ -166,7 +166,7 @@ function AdminSettings() {
               <Input
                 id="name"
                 value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                onChange={(e) => edit({ name: e.target.value })}
               />
             </div>
             <div className="space-y-1.5">
@@ -182,7 +182,7 @@ function AdminSettings() {
                 id="desc"
                 rows={2}
                 value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                onChange={(e) => edit({ description: e.target.value })}
               />
             </div>
           </CardContent>
@@ -194,14 +194,18 @@ function AdminSettings() {
           <CardContent className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label htmlFor="cname">Contact person</Label>
-              <Input id="cname" defaultValue={ecosystem.contactName} />
+              <Input
+                id="cname"
+                value={form.contactName}
+                onChange={(e) => edit({ contactName: e.target.value })}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="cphone">Mobile number</Label>
               <Input
                 id="cphone"
                 value={form.contactPhone}
-                onChange={(e) => setForm({ ...form, contactPhone: e.target.value })}
+                onChange={(e) => edit({ contactPhone: e.target.value })}
               />
             </div>
             <div className="space-y-1.5">
@@ -209,7 +213,7 @@ function AdminSettings() {
               <Input
                 id="cemail"
                 value={form.contactEmail}
-                onChange={(e) => setForm({ ...form, contactEmail: e.target.value })}
+                onChange={(e) => edit({ contactEmail: e.target.value })}
               />
             </div>
           </CardContent>
