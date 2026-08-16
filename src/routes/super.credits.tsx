@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ManualCreditCard } from "@/components/super/manual-credit-card";
 
-export const Route = createFileRoute("/super/coins")({
+export const Route = createFileRoute("/super/credits")({
   head: () => ({
     meta: [
       { title: "Coin Management — WaveWallet Super Admin" },

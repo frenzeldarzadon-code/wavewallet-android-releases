@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CreditPurchasePage } from "@/components/credit-purchase-page";
 
-export const Route = createFileRoute("/admin/coins")({
+export const Route = createFileRoute("/admin/credits")({
   head: () => ({
     meta: [
       { title: "Shop Coin Allocation — WaveWallet Admin" },
