@@ -4355,8 +4355,11 @@ export type Database = {
       }
       withdrawal_requests: {
         Row: {
+          account_id: string | null
           account_name: string | null
           account_number: string | null
+          admin_id: string | null
+          cashout_path: string
           created_at: string
           credits: number
           decision_reason: string | null
@@ -4380,13 +4383,17 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           reviewer_name: string | null
+          settlement_ledger_id: string | null
           status: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          account_id?: string | null
           account_name?: string | null
           account_number?: string | null
+          admin_id?: string | null
+          cashout_path?: string
           created_at?: string
           credits: number
           decision_reason?: string | null
@@ -4410,13 +4417,17 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           reviewer_name?: string | null
+          settlement_ledger_id?: string | null
           status?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          account_id?: string | null
           account_name?: string | null
           account_number?: string | null
+          admin_id?: string | null
+          cashout_path?: string
           created_at?: string
           credits?: number
           decision_reason?: string | null
@@ -4440,11 +4451,26 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           reviewer_name?: string | null
+          settlement_ledger_id?: string | null
           status?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "withdrawal_requests_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "withdrawal_requests_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "withdrawal_requests_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -4462,6 +4488,13 @@ export type Database = {
           {
             foreignKeyName: "withdrawal_requests_reserve_ledger_id_fkey"
             columns: ["reserve_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "withdrawal_requests_settlement_ledger_id_fkey"
+            columns: ["settlement_ledger_id"]
             isOneToOne: false
             referencedRelation: "credit_ledger"
             referencedColumns: ["id"]
@@ -4669,8 +4702,11 @@ export type Database = {
       cancel_withdrawal: {
         Args: { _id: string }
         Returns: {
+          account_id: string | null
           account_name: string | null
           account_number: string | null
+          admin_id: string | null
+          cashout_path: string
           created_at: string
           credits: number
           decision_reason: string | null
@@ -4694,6 +4730,7 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           reviewer_name: string | null
+          settlement_ledger_id: string | null
           status: string
           updated_at: string
           user_id: string
@@ -6041,14 +6078,18 @@ export type Database = {
         Args: {
           _account_name?: string
           _account_number?: string
+          _cashout_path?: string
           _credits: number
           _notes?: string
           _payment_mode: string
           _request_key?: string
         }
         Returns: {
+          account_id: string | null
           account_name: string | null
           account_number: string | null
+          admin_id: string | null
+          cashout_path: string
           created_at: string
           credits: number
           decision_reason: string | null
@@ -6072,6 +6113,7 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           reviewer_name: string | null
+          settlement_ledger_id: string | null
           status: string
           updated_at: string
           user_id: string
@@ -6202,6 +6244,49 @@ export type Database = {
       reverse_sale_points: {
         Args: { _reason: string; _sale_id: string }
         Returns: string
+      }
+      review_admin_cashout: {
+        Args: { _action: string; _id: string; _reason?: string }
+        Returns: {
+          account_id: string | null
+          account_name: string | null
+          account_number: string | null
+          admin_id: string | null
+          cashout_path: string
+          created_at: string
+          credits: number
+          decision_reason: string | null
+          ecosystem_id: string | null
+          fee_percent: number
+          fee_php: number
+          gross_php: number
+          id: string
+          net_php: number
+          notes: string | null
+          payment_mode: string
+          rate_credits: number
+          rate_php: number
+          reference: string
+          refund_ledger_id: string | null
+          released_at: string | null
+          request_key: string | null
+          requester_name: string
+          requester_role: string
+          reserve_ledger_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_name: string | null
+          settlement_ledger_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "withdrawal_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       review_cash_in: {
         Args: { _action: string; _id: string; _reason?: string }
@@ -6349,8 +6434,11 @@ export type Database = {
       review_withdrawal: {
         Args: { _action: string; _id: string; _reason?: string }
         Returns: {
+          account_id: string | null
           account_name: string | null
           account_number: string | null
+          admin_id: string | null
+          cashout_path: string
           created_at: string
           credits: number
           decision_reason: string | null
@@ -6374,6 +6462,7 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           reviewer_name: string | null
+          settlement_ledger_id: string | null
           status: string
           updated_at: string
           user_id: string
