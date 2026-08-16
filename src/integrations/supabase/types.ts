@@ -5570,6 +5570,28 @@ export type Database = {
       }
       delete_voucher_batch: { Args: { _import_id: string }; Returns: number }
       delete_voucher_code: { Args: { _code_id: string }; Returns: undefined }
+      demo_guard: { Args: { _ecosystem_id: string }; Returns: undefined }
+      demo_reset: { Args: { _ecosystem_id: string }; Returns: undefined }
+      demo_sell_voucher: {
+        Args: {
+          _ecosystem_id: string
+          _quantity?: number
+          _reseller_rate?: number
+          _subreseller_rate?: number
+          _voucher_id: string
+        }
+        Returns: Json
+      }
+      demo_shop_state: { Args: { _ecosystem_id: string }; Returns: Json }
+      demo_transfer: {
+        Args: {
+          _amount: number
+          _ecosystem_id: string
+          _from: string
+          _to: string
+        }
+        Returns: Json
+      }
       dm_messages_for: {
         Args: { _thread_id: string }
         Returns: {
@@ -6149,6 +6171,7 @@ export type Database = {
           total: number
         }[]
       }
+      my_review_shop: { Args: never; Returns: Json }
       my_sent_shop_invitations: {
         Args: { _ecosystem_id: string }
         Returns: {
