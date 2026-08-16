@@ -244,18 +244,23 @@ function AdminSettings() {
         </Card>
       </PageSection>
 
-      <PageSection title="Points rule" description="Points are earned on credit-funded voucher purchases only — never on coin loads or transfers.">
+      <PageSection title="Points rule" description="Points are earned on coin-funded voucher purchases only — never on coin loads or transfers.">
 
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="rate">Qualifying spend per 1 point (PHP)</Label>
+              <Label htmlFor="rate">Coins required per 1 point</Label>
               <Input
                 id="rate"
                 type="number"
                 value={rule}
                 onChange={(e) => setRule(e.target.value)}
               />
+              <p className="text-[11px] text-muted-foreground">
+                {Number(rule) > 0
+                  ? `${Number(rule)} Coins = 1 Point`
+                  : "Enter how many Coins a member must spend to earn 1 point."}
+              </p>
             </div>
             <div className="flex items-end gap-2">
               <Button
@@ -265,13 +270,13 @@ function AdminSettings() {
                   if (!ecosystemDbId) return;
                   const v = Number(rule);
                   if (!v || v <= 0) {
-                    toast.error("Enter a spend amount greater than zero");
+                    toast.error("Enter a coin amount greater than zero");
                     return;
                   }
                   setSavingRule(true);
                   try {
                     await setPointsRule(ecosystemDbId, v);
-                    toast.success(`From now on, every ₱${v} of qualifying spend earns 1 point. Past purchases are unchanged.`);
+                    toast.success(`From now on, ${v} Coins = 1 Point. Past purchases are unchanged.`);
                   } catch (e) {
                     toast.error((e as Error).message);
                   } finally {
@@ -289,6 +294,7 @@ function AdminSettings() {
           </CardContent>
         </Card>
       </PageSection>
+
 
 
       <div className="space-y-2">
