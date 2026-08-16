@@ -18,6 +18,7 @@ import { Route as ResellerRouteImport } from './routes/reseller'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as StartShopRouteImport } from './routes/start-shop'
 import { Route as SuperRouteImport } from './routes/super'
 import { Route as UniverseRouteImport } from './routes/universe'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -135,6 +136,11 @@ const SetupRoute = SetupRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StartShopRoute = StartShopRouteImport.update({
+  id: '/start-shop',
+  path: '/start-shop',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SuperRoute = SuperRouteImport.update({
@@ -514,6 +520,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/start-shop': typeof StartShopRoute
   '/super': typeof SuperRouteWithChildren
   '/universe': typeof UniverseRouteWithChildren
   '/admin/applications': typeof AdminApplicationsRoute
@@ -595,6 +602,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/start-shop': typeof StartShopRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -678,6 +686,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/start-shop': typeof StartShopRoute
   '/super': typeof SuperRouteWithChildren
   '/universe': typeof UniverseRouteWithChildren
   '/admin/applications': typeof AdminApplicationsRoute
@@ -764,6 +773,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/setup'
     | '/sitemap.xml'
+    | '/start-shop'
     | '/super'
     | '/universe'
     | '/admin/applications'
@@ -845,6 +855,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/setup'
     | '/sitemap.xml'
+    | '/start-shop'
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
@@ -927,6 +938,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/setup'
     | '/sitemap.xml'
+    | '/start-shop'
     | '/super'
     | '/universe'
     | '/admin/applications'
@@ -1012,6 +1024,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SetupRoute: typeof SetupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  StartShopRoute: typeof StartShopRoute
   SuperRoute: typeof SuperRouteWithChildren
   UniverseRoute: typeof UniverseRouteWithChildren
   JoinSlugRoute: typeof JoinSlugRoute
@@ -1082,6 +1095,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/start-shop': {
+      id: '/start-shop'
+      path: '/start-shop'
+      fullPath: '/start-shop'
+      preLoaderRoute: typeof StartShopRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/super': {
@@ -1788,6 +1808,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SetupRoute: SetupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  StartShopRoute: StartShopRoute,
   SuperRoute: SuperRouteWithChildren,
   UniverseRoute: UniverseRouteWithChildren,
   JoinSlugRoute: JoinSlugRoute,
