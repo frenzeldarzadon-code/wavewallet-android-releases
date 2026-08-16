@@ -81,10 +81,43 @@ function AdminSettings() {
     });
   }, [ecosystem?.facebookPageUrl, ecosystem?.facebookPageName]);
 
+  // The session loads asynchronously, so the first render has empty fields.
+  // Mirror the saved values in whenever they change, unless the admin is
+  // mid-edit — that would both lose typing and risk saving stale values.
+  useEffect(() => {
+    if (!ecosystem || dirty) return;
+    setForm({
+      name: ecosystem.name ?? "",
+      description: ecosystem.description ?? "",
+      contactName: ecosystem.contactName ?? "",
+      contactPhone: ecosystem.contactPhone ?? "",
+      contactEmail: ecosystem.contactEmail ?? "",
+    });
+  }, [
+    dirty,
+    ecosystem,
+    ecosystem?.name,
+    ecosystem?.description,
+    ecosystem?.contactName,
+    ecosystem?.contactPhone,
+    ecosystem?.contactEmail,
+  ]);
+
   useEffect(() => {
     if (!ecosystemDbId) return;
     void fetchPointsRule(ecosystemDbId).then((v) => setRule(String(v)));
   }, [ecosystemDbId]);
+
+  // Warn before losing unsaved shop-identity/contact edits.
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
 
   if (!ecosystem) return null;
 
