@@ -36,6 +36,43 @@ export async function fetchPlans(): Promise<SubscriptionPlan[]> {
   return data ?? [];
 }
 
+/**
+ * Super Admin view of the single source of truth for Subscription Shop plans,
+ * including inactive ones. RLS restricts writes to the platform owner.
+ */
+export async function fetchAllPlans(): Promise<SubscriptionPlan[]> {
+  const { data, error } = await supabase
+    .from("subscription_plans")
+    .select("*")
+    .order("display_order");
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export type SubscriptionPlanEdit = Partial<
+  Pick<
+    SubscriptionPlan,
+    | "name"
+    | "tagline"
+    | "description"
+    | "monthly_price"
+    | "coin_allocation"
+    | "display_order"
+    | "active"
+    | "recommended"
+    | "who_for"
+    | "wifi_use_case"
+    | "upgrade_hint"
+  >
+>;
+
+/** Edits the existing plan row — no separate pricing store exists. */
+export async function updatePlan(id: string, patch: SubscriptionPlanEdit): Promise<void> {
+  requireOnline();
+  const { error } = await supabase.from("subscription_plans").update(patch).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
 /** Subscription Shops only — Legacy shops keep their own console area. */
 export async function fetchSubscriptionShops(): Promise<SubscriptionShop[]> {
   const [{ data: shops, error }, { data: subs }] = await Promise.all([
