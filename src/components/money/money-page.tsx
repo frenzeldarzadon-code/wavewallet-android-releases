@@ -225,6 +225,11 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
       toast.error(badImage);
       return;
     }
+    // The server re-checks this under a lock; this is only a friendlier warning.
+    if (funding === "admin" && Number(amount) > adminMaxPhp) {
+      toast.error(`Your shop admin can only fund up to ${peso(adminMaxPhp)} right now.`);
+      return;
+    }
     setBusy(true);
     let uploadedPath: string | null = null;
     try {
