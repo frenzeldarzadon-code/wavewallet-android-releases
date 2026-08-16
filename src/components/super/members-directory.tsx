@@ -51,6 +51,7 @@ export function MembersDirectory() {
   const [creditTarget, setCreditTarget] = useState<PlatformMember | null>(null);
   const [accountTarget, setAccountTarget] = useState<PlatformMember | null>(null);
   const [rateTarget, setRateTarget] = useState<CashbackTarget | null>(null);
+  const [purgeTarget, setPurgeTarget] = useState<PurgeTarget | null>(null);
 
   useEffect(() => {
     void fetchEcosystemNames().then(setShops).catch(() => undefined);
