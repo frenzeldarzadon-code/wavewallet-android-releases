@@ -3,8 +3,10 @@ import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 
 const roleSchema = z.object({
-  role: z.enum(["customer", "reseller", "subreseller", "admin", "super_admin"]),
+  // Super Admin is the private platform-owner account: never demo-provisionable.
+  role: z.enum(["customer", "reseller", "subreseller", "admin"]),
 });
+
 
 /** Preview-only: returns one-time credentials for a seeded demo account. */
 export const startDemoSession = createServerFn({ method: "POST" })

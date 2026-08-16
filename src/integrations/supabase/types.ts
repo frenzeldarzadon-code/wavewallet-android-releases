@@ -1005,6 +1005,138 @@ export type Database = {
           },
         ]
       }
+      demo_ledger: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          direction: string
+          ecosystem_id: string
+          entry_kind: string
+          id: string
+          member_key: string
+          reason: string
+          tx_id: string | null
+        }
+        Insert: {
+          amount: number
+          balance_after?: number
+          created_at?: string
+          direction: string
+          ecosystem_id: string
+          entry_kind?: string
+          id?: string
+          member_key: string
+          reason?: string
+          tx_id?: string | null
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          direction?: string
+          ecosystem_id?: string
+          entry_kind?: string
+          id?: string
+          member_key?: string
+          reason?: string
+          tx_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_ledger_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      demo_vouchers: {
+        Row: {
+          created_at: string
+          description: string
+          display_order: number
+          ecosystem_id: string
+          id: string
+          name: string
+          price: number
+          stock: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          display_order?: number
+          ecosystem_id: string
+          id?: string
+          name: string
+          price: number
+          stock?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          display_order?: number
+          ecosystem_id?: string
+          id?: string
+          name?: string
+          price?: number
+          stock?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_vouchers_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      demo_wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          display_name: string
+          ecosystem_id: string
+          id: string
+          member_key: string
+          parent_key: string | null
+          points: number
+          role: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          display_name: string
+          ecosystem_id: string
+          id?: string
+          member_key: string
+          parent_key?: string | null
+          points?: number
+          role: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          display_name?: string
+          ecosystem_id?: string
+          id?: string
+          member_key?: string
+          parent_key?: string | null
+          points?: number
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_wallets_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dm_messages: {
         Row: {
           body: string
@@ -1335,6 +1467,7 @@ export type Database = {
           frozen_reason: string | null
           grace_period_days: number
           id: string
+          is_review: boolean
           is_test: boolean
           last_activity_at: string | null
           name: string
@@ -1349,8 +1482,10 @@ export type Database = {
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
           retail_pickup_enabled: boolean
+          review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          shop_kind: string
           signup_enabled: boolean
           signup_token: string
           slug: string
@@ -1388,6 +1523,7 @@ export type Database = {
           frozen_reason?: string | null
           grace_period_days?: number
           id?: string
+          is_review?: boolean
           is_test?: boolean
           last_activity_at?: string | null
           name: string
@@ -1402,8 +1538,10 @@ export type Database = {
           retail_credit_enabled?: boolean
           retail_delivery_enabled?: boolean
           retail_pickup_enabled?: boolean
+          review_ends_at?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          shop_kind?: string
           signup_enabled?: boolean
           signup_token?: string
           slug: string
@@ -1441,6 +1579,7 @@ export type Database = {
           frozen_reason?: string | null
           grace_period_days?: number
           id?: string
+          is_review?: boolean
           is_test?: boolean
           last_activity_at?: string | null
           name?: string
@@ -1455,8 +1594,10 @@ export type Database = {
           retail_credit_enabled?: boolean
           retail_delivery_enabled?: boolean
           retail_pickup_enabled?: boolean
+          review_ends_at?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          shop_kind?: string
           signup_enabled?: boolean
           signup_token?: string
           slug?: string
@@ -1465,6 +1606,111 @@ export type Database = {
           submitted_at?: string | null
           subscription_state?: Database["public"]["Enums"]["subscription_state"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      guide_faqs: {
+        Row: {
+          answer: string
+          created_at: string
+          display_order: number
+          id: string
+          published: boolean
+          question: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          published?: boolean
+          question: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          published?: boolean
+          question?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      guide_questions: {
+        Row: {
+          answer: string | null
+          answered_at: string | null
+          contact: string | null
+          created_at: string
+          id: string
+          question: string
+          status: string
+        }
+        Insert: {
+          answer?: string | null
+          answered_at?: string | null
+          contact?: string | null
+          created_at?: string
+          id?: string
+          question: string
+          status?: string
+        }
+        Update: {
+          answer?: string | null
+          answered_at?: string | null
+          contact?: string | null
+          created_at?: string
+          id?: string
+          question?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      guide_sections: {
+        Row: {
+          body: string
+          created_at: string
+          display_order: number
+          heading: string
+          id: string
+          image_url: string | null
+          published: boolean
+          section_key: string
+          subheading: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          display_order?: number
+          heading: string
+          id?: string
+          image_url?: string | null
+          published?: boolean
+          section_key: string
+          subheading?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          display_order?: number
+          heading?: string
+          id?: string
+          image_url?: string | null
+          published?: boolean
+          section_key?: string
+          subheading?: string | null
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -3017,6 +3263,60 @@ export type Database = {
           },
         ]
       }
+      shop_subscriptions: {
+        Row: {
+          allocation_total: number
+          created_at: string
+          demo_seed_credits: number
+          ecosystem_id: string
+          period_end: string | null
+          period_start: string | null
+          plan_id: string | null
+          review_ends_at: string | null
+          state: string
+          updated_at: string
+        }
+        Insert: {
+          allocation_total?: number
+          created_at?: string
+          demo_seed_credits?: number
+          ecosystem_id: string
+          period_end?: string | null
+          period_start?: string | null
+          plan_id?: string | null
+          review_ends_at?: string | null
+          state?: string
+          updated_at?: string
+        }
+        Update: {
+          allocation_total?: number
+          created_at?: string
+          demo_seed_credits?: number
+          ecosystem_id?: string
+          period_end?: string | null
+          period_start?: string | null
+          plan_id?: string | null
+          review_ends_at?: string | null
+          state?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_subscriptions_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: true
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shop_transfer_fees: {
         Row: {
           created_at: string
@@ -3874,6 +4174,157 @@ export type Database = {
           },
         ]
       }
+      subscription_events: {
+        Row: {
+          actor_id: string | null
+          actor_name: string | null
+          additional_allocation: number
+          allocation_granted: number
+          amount_php: number | null
+          created_at: string
+          ecosystem_id: string
+          event_type: string
+          id: string
+          new_plan_id: string | null
+          notes: string | null
+          payment_reference: string | null
+          period_end: string | null
+          period_start: string | null
+          previous_plan_id: string | null
+          proration_daily_value: number | null
+          proration_days_remaining: number | null
+          proration_unused_value: number | null
+          tx_id: string | null
+          verification_status: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_name?: string | null
+          additional_allocation?: number
+          allocation_granted?: number
+          amount_php?: number | null
+          created_at?: string
+          ecosystem_id: string
+          event_type: string
+          id?: string
+          new_plan_id?: string | null
+          notes?: string | null
+          payment_reference?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          previous_plan_id?: string | null
+          proration_daily_value?: number | null
+          proration_days_remaining?: number | null
+          proration_unused_value?: number | null
+          tx_id?: string | null
+          verification_status?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_name?: string | null
+          additional_allocation?: number
+          allocation_granted?: number
+          amount_php?: number | null
+          created_at?: string
+          ecosystem_id?: string
+          event_type?: string
+          id?: string
+          new_plan_id?: string | null
+          notes?: string | null
+          payment_reference?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          previous_plan_id?: string | null
+          proration_daily_value?: number | null
+          proration_days_remaining?: number | null
+          proration_unused_value?: number | null
+          tx_id?: string | null
+          verification_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_events_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_events_new_plan_id_fkey"
+            columns: ["new_plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_events_previous_plan_id_fkey"
+            columns: ["previous_plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_plans: {
+        Row: {
+          active: boolean
+          billing_period: string
+          code: string
+          coin_allocation: number
+          created_at: string
+          description: string
+          display_order: number
+          id: string
+          monthly_price: number
+          name: string
+          price_configurable: boolean
+          recommended: boolean
+          tagline: string | null
+          updated_at: string
+          upgrade_hint: string | null
+          who_for: string | null
+          wifi_use_case: string | null
+        }
+        Insert: {
+          active?: boolean
+          billing_period?: string
+          code: string
+          coin_allocation?: number
+          created_at?: string
+          description?: string
+          display_order?: number
+          id?: string
+          monthly_price?: number
+          name: string
+          price_configurable?: boolean
+          recommended?: boolean
+          tagline?: string | null
+          updated_at?: string
+          upgrade_hint?: string | null
+          who_for?: string | null
+          wifi_use_case?: string | null
+        }
+        Update: {
+          active?: boolean
+          billing_period?: string
+          code?: string
+          coin_allocation?: number
+          created_at?: string
+          description?: string
+          display_order?: number
+          id?: string
+          monthly_price?: number
+          name?: string
+          price_configurable?: boolean
+          recommended?: boolean
+          tagline?: string | null
+          updated_at?: string
+          upgrade_hint?: string | null
+          who_for?: string | null
+          wifi_use_case?: string | null
+        }
+        Relationships: []
+      }
       subscription_requests: {
         Row: {
           amount_due: number
@@ -4564,6 +5015,33 @@ export type Database = {
     }
     Functions: {
       acting_as: { Args: never; Returns: string }
+      activate_subscription: {
+        Args: {
+          _amount_php?: number
+          _ecosystem_id: string
+          _months?: number
+          _plan_id: string
+          _reference?: string
+        }
+        Returns: {
+          allocation_total: number
+          created_at: string
+          demo_seed_credits: number
+          ecosystem_id: string
+          period_end: string | null
+          period_start: string | null
+          plan_id: string | null
+          review_ends_at: string | null
+          state: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "shop_subscriptions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       active_ecosystem: { Args: { _user_id: string }; Returns: string }
       adjust_ecosystem_expiration: {
         Args: {
@@ -4658,6 +5136,10 @@ export type Database = {
         Returns: Json
       }
       admin_voucher_discount_percent: { Args: never; Returns: number }
+      answer_guide_question: {
+        Args: { _answer: string; _id: string; _publish?: boolean }
+        Returns: undefined
+      }
       apply_cash_in_receipt_ocr: {
         Args: {
           _amount?: number
@@ -4967,6 +5449,7 @@ export type Database = {
           frozen_reason: string | null
           grace_period_days: number
           id: string
+          is_review: boolean
           is_test: boolean
           last_activity_at: string | null
           name: string
@@ -4981,8 +5464,75 @@ export type Database = {
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
           retail_pickup_enabled: boolean
+          review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          shop_kind: string
+          signup_enabled: boolean
+          signup_token: string
+          slug: string
+          store_retail_enabled: boolean
+          store_voucher_enabled: boolean
+          submitted_at: string | null
+          subscription_state: Database["public"]["Enums"]["subscription_state"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ecosystems"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_review_shop: {
+        Args: { _description?: string; _name: string }
+        Returns: {
+          admin_assigned_at: string | null
+          admin_assigned_by: string | null
+          admin_sale_commission_percent: number
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          cash_in_gcash_number: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          credits_per_point: number
+          current_period_end: string | null
+          default_commission_percent: number
+          default_reseller_discount_percent: number
+          default_sale_commission_percent: number
+          default_subreseller_discount_percent: number
+          default_subreseller_sale_commission_percent: number
+          default_upline_commission_percent: number
+          description: string | null
+          facebook_page_name: string | null
+          facebook_page_url: string | null
+          frozen_at: string | null
+          frozen_by: string | null
+          frozen_reason: string | null
+          grace_period_days: number
+          id: string
+          is_review: boolean
+          is_test: boolean
+          last_activity_at: string | null
+          name: string
+          operations_frozen: boolean
+          payment_reference: string | null
+          plan_name: string
+          plan_price: number
+          points_rule_updated_at: string
+          points_rule_version: number
+          public_storefront_enabled: boolean
+          retail_cash_enabled: boolean
+          retail_credit_enabled: boolean
+          retail_delivery_enabled: boolean
+          retail_pickup_enabled: boolean
+          review_ends_at: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shop_kind: string
           signup_enabled: boolean
           signup_token: string
           slug: string
@@ -6622,6 +7172,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      run_subscription_expiry: {
+        Args: { _dry?: boolean }
+        Returns: {
+          expired: number
+          reviews_frozen: number
+          warned: number
+        }[]
+      }
       sale_commission_rate_for: {
         Args: { _recipient: string }
         Returns: number
@@ -6760,6 +7318,7 @@ export type Database = {
           frozen_reason: string | null
           grace_period_days: number
           id: string
+          is_review: boolean
           is_test: boolean
           last_activity_at: string | null
           name: string
@@ -6774,8 +7333,10 @@ export type Database = {
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
           retail_pickup_enabled: boolean
+          review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          shop_kind: string
           signup_enabled: boolean
           signup_token: string
           slug: string
@@ -6822,6 +7383,7 @@ export type Database = {
           frozen_reason: string | null
           grace_period_days: number
           id: string
+          is_review: boolean
           is_test: boolean
           last_activity_at: string | null
           name: string
@@ -6836,8 +7398,10 @@ export type Database = {
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
           retail_pickup_enabled: boolean
+          review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          shop_kind: string
           signup_enabled: boolean
           signup_token: string
           slug: string
@@ -6891,6 +7455,7 @@ export type Database = {
           frozen_reason: string | null
           grace_period_days: number
           id: string
+          is_review: boolean
           is_test: boolean
           last_activity_at: string | null
           name: string
@@ -6905,8 +7470,10 @@ export type Database = {
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
           retail_pickup_enabled: boolean
+          review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          shop_kind: string
           signup_enabled: boolean
           signup_token: string
           slug: string
@@ -7393,6 +7960,10 @@ export type Database = {
         Args: { _reason?: string; _target: string }
         Returns: string
       }
+      submit_guide_question: {
+        Args: { _contact?: string; _question: string }
+        Returns: string
+      }
       submit_subscription_request: {
         Args: {
           _amount_paid?: number
@@ -7435,6 +8006,24 @@ export type Database = {
         }
       }
       subscription_ok: { Args: { _ecosystem_id: string }; Returns: boolean }
+      subscription_quote: {
+        Args: { _ecosystem_id: string; _plan_id: string }
+        Returns: {
+          additional_allocation: number
+          amount_due: number
+          current_allocation: number
+          current_monthly_price: number
+          current_plan_id: string
+          current_plan_name: string
+          daily_value: number
+          days_remaining: number
+          is_first_activation: boolean
+          new_allocation: number
+          new_monthly_price: number
+          new_plan_name: string
+          unused_value: number
+        }[]
+      }
       super_admin_bootstrap_available: { Args: never; Returns: boolean }
       super_list_members: {
         Args: {
@@ -7691,6 +8280,7 @@ export type Database = {
           frozen_reason: string | null
           grace_period_days: number
           id: string
+          is_review: boolean
           is_test: boolean
           last_activity_at: string | null
           name: string
@@ -7705,8 +8295,10 @@ export type Database = {
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
           retail_pickup_enabled: boolean
+          review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          shop_kind: string
           signup_enabled: boolean
           signup_token: string
           slug: string
@@ -7758,6 +8350,7 @@ export type Database = {
           frozen_reason: string | null
           grace_period_days: number
           id: string
+          is_review: boolean
           is_test: boolean
           last_activity_at: string | null
           name: string
@@ -7772,8 +8365,10 @@ export type Database = {
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
           retail_pickup_enabled: boolean
+          review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          shop_kind: string
           signup_enabled: boolean
           signup_token: string
           slug: string

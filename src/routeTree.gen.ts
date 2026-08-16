@@ -12,11 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteImport } from './routes/app'
+import { Route as GuideRouteImport } from './routes/guide'
 import { Route as InviteRouteImport } from './routes/invite'
 import { Route as ResellerRouteImport } from './routes/reseller'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as StartShopRouteImport } from './routes/start-shop'
 import { Route as SuperRouteImport } from './routes/super'
 import { Route as UniverseRouteImport } from './routes/universe'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -76,11 +78,13 @@ import { Route as SuperApprovalsRouteImport } from './routes/super.approvals'
 import { Route as SuperAuditRouteImport } from './routes/super.audit'
 import { Route as SuperCreditsRouteImport } from './routes/super.credits'
 import { Route as SuperExportRouteImport } from './routes/super.export'
+import { Route as SuperGuideRouteImport } from './routes/super.guide'
 import { Route as SuperMembersRouteImport } from './routes/super.members'
 import { Route as SuperOperatorLogRouteImport } from './routes/super.operator-log'
 import { Route as SuperProfileRouteImport } from './routes/super.profile'
 import { Route as SuperReportsRouteImport } from './routes/super.reports'
 import { Route as SuperSettingsRouteImport } from './routes/super.settings'
+import { Route as SuperShopsRouteImport } from './routes/super.shops'
 import { Route as SuperSubscriptionsRouteImport } from './routes/super.subscriptions'
 import { Route as SuperUniverseRouteImport } from './routes/super.universe'
 import { Route as UniverseIndexRouteImport } from './routes/universe.index'
@@ -106,6 +110,11 @@ const AppRoute = AppRouteImport.update({
   path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GuideRoute = GuideRouteImport.update({
+  id: '/guide',
+  path: '/guide',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InviteRoute = InviteRouteImport.update({
   id: '/invite',
   path: '/invite',
@@ -129,6 +138,11 @@ const SetupRoute = SetupRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StartShopRoute = StartShopRouteImport.update({
+  id: '/start-shop',
+  path: '/start-shop',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SuperRoute = SuperRouteImport.update({
@@ -426,6 +440,11 @@ const SuperExportRoute = SuperExportRouteImport.update({
   path: '/export',
   getParentRoute: () => SuperRoute,
 } as any)
+const SuperGuideRoute = SuperGuideRouteImport.update({
+  id: '/guide',
+  path: '/guide',
+  getParentRoute: () => SuperRoute,
+} as any)
 const SuperMembersRoute = SuperMembersRouteImport.update({
   id: '/members',
   path: '/members',
@@ -449,6 +468,11 @@ const SuperReportsRoute = SuperReportsRouteImport.update({
 const SuperSettingsRoute = SuperSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => SuperRoute,
+} as any)
+const SuperShopsRoute = SuperShopsRouteImport.update({
+  id: '/shops',
+  path: '/shops',
   getParentRoute: () => SuperRoute,
 } as any)
 const SuperSubscriptionsRoute = SuperSubscriptionsRouteImport.update({
@@ -502,11 +526,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
+  '/guide': typeof GuideRoute
   '/invite': typeof InviteRoute
   '/reseller': typeof ResellerRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/start-shop': typeof StartShopRoute
   '/super': typeof SuperRouteWithChildren
   '/universe': typeof UniverseRouteWithChildren
   '/admin/applications': typeof AdminApplicationsRoute
@@ -562,11 +588,13 @@ export interface FileRoutesByFullPath {
   '/super/audit': typeof SuperAuditRoute
   '/super/credits': typeof SuperCreditsRoute
   '/super/export': typeof SuperExportRoute
+  '/super/guide': typeof SuperGuideRoute
   '/super/members': typeof SuperMembersRoute
   '/super/operator-log': typeof SuperOperatorLogRoute
   '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
+  '/super/shops': typeof SuperShopsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
   '/super/universe': typeof SuperUniverseRoute
   '/universe/messages': typeof UniverseMessagesRoute
@@ -583,10 +611,12 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/guide': typeof GuideRoute
   '/invite': typeof InviteRoute
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/start-shop': typeof StartShopRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -640,11 +670,13 @@ export interface FileRoutesByTo {
   '/super/audit': typeof SuperAuditRoute
   '/super/credits': typeof SuperCreditsRoute
   '/super/export': typeof SuperExportRoute
+  '/super/guide': typeof SuperGuideRoute
   '/super/members': typeof SuperMembersRoute
   '/super/operator-log': typeof SuperOperatorLogRoute
   '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
+  '/super/shops': typeof SuperShopsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
   '/super/universe': typeof SuperUniverseRoute
   '/universe/messages': typeof UniverseMessagesRoute
@@ -664,11 +696,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
+  '/guide': typeof GuideRoute
   '/invite': typeof InviteRoute
   '/reseller': typeof ResellerRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/start-shop': typeof StartShopRoute
   '/super': typeof SuperRouteWithChildren
   '/universe': typeof UniverseRouteWithChildren
   '/admin/applications': typeof AdminApplicationsRoute
@@ -724,11 +758,13 @@ export interface FileRoutesById {
   '/super/audit': typeof SuperAuditRoute
   '/super/credits': typeof SuperCreditsRoute
   '/super/export': typeof SuperExportRoute
+  '/super/guide': typeof SuperGuideRoute
   '/super/members': typeof SuperMembersRoute
   '/super/operator-log': typeof SuperOperatorLogRoute
   '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
+  '/super/shops': typeof SuperShopsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
   '/super/universe': typeof SuperUniverseRoute
   '/universe/messages': typeof UniverseMessagesRoute
@@ -749,11 +785,13 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/app'
+    | '/guide'
     | '/invite'
     | '/reseller'
     | '/reset-password'
     | '/setup'
     | '/sitemap.xml'
+    | '/start-shop'
     | '/super'
     | '/universe'
     | '/admin/applications'
@@ -809,11 +847,13 @@ export interface FileRouteTypes {
     | '/super/audit'
     | '/super/credits'
     | '/super/export'
+    | '/super/guide'
     | '/super/members'
     | '/super/operator-log'
     | '/super/profile'
     | '/super/reports'
     | '/super/settings'
+    | '/super/shops'
     | '/super/subscriptions'
     | '/super/universe'
     | '/universe/messages'
@@ -830,10 +870,12 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/guide'
     | '/invite'
     | '/reset-password'
     | '/setup'
     | '/sitemap.xml'
+    | '/start-shop'
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
@@ -887,11 +929,13 @@ export interface FileRouteTypes {
     | '/super/audit'
     | '/super/credits'
     | '/super/export'
+    | '/super/guide'
     | '/super/members'
     | '/super/operator-log'
     | '/super/profile'
     | '/super/reports'
     | '/super/settings'
+    | '/super/shops'
     | '/super/subscriptions'
     | '/super/universe'
     | '/universe/messages'
@@ -910,11 +954,13 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/app'
+    | '/guide'
     | '/invite'
     | '/reseller'
     | '/reset-password'
     | '/setup'
     | '/sitemap.xml'
+    | '/start-shop'
     | '/super'
     | '/universe'
     | '/admin/applications'
@@ -970,11 +1016,13 @@ export interface FileRouteTypes {
     | '/super/audit'
     | '/super/credits'
     | '/super/export'
+    | '/super/guide'
     | '/super/members'
     | '/super/operator-log'
     | '/super/profile'
     | '/super/reports'
     | '/super/settings'
+    | '/super/shops'
     | '/super/subscriptions'
     | '/super/universe'
     | '/universe/messages'
@@ -994,11 +1042,13 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   AppRoute: typeof AppRouteWithChildren
+  GuideRoute: typeof GuideRoute
   InviteRoute: typeof InviteRoute
   ResellerRoute: typeof ResellerRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   SetupRoute: typeof SetupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  StartShopRoute: typeof StartShopRoute
   SuperRoute: typeof SuperRouteWithChildren
   UniverseRoute: typeof UniverseRouteWithChildren
   JoinSlugRoute: typeof JoinSlugRoute
@@ -1027,6 +1077,13 @@ declare module '@tanstack/react-router' {
       path: '/app'
       fullPath: '/app'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guide': {
+      id: '/guide'
+      path: '/guide'
+      fullPath: '/guide'
+      preLoaderRoute: typeof GuideRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/invite': {
@@ -1062,6 +1119,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/start-shop': {
+      id: '/start-shop'
+      path: '/start-shop'
+      fullPath: '/start-shop'
+      preLoaderRoute: typeof StartShopRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/super': {
@@ -1477,6 +1541,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperExportRouteImport
       parentRoute: typeof SuperRoute
     }
+    '/super/guide': {
+      id: '/super/guide'
+      path: '/guide'
+      fullPath: '/super/guide'
+      preLoaderRoute: typeof SuperGuideRouteImport
+      parentRoute: typeof SuperRoute
+    }
     '/super/members': {
       id: '/super/members'
       path: '/members'
@@ -1510,6 +1581,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/super/settings'
       preLoaderRoute: typeof SuperSettingsRouteImport
+      parentRoute: typeof SuperRoute
+    }
+    '/super/shops': {
+      id: '/super/shops'
+      path: '/shops'
+      fullPath: '/super/shops'
+      preLoaderRoute: typeof SuperShopsRouteImport
       parentRoute: typeof SuperRoute
     }
     '/super/subscriptions': {
@@ -1707,11 +1785,13 @@ interface SuperRouteChildren {
   SuperAuditRoute: typeof SuperAuditRoute
   SuperCreditsRoute: typeof SuperCreditsRoute
   SuperExportRoute: typeof SuperExportRoute
+  SuperGuideRoute: typeof SuperGuideRoute
   SuperMembersRoute: typeof SuperMembersRoute
   SuperOperatorLogRoute: typeof SuperOperatorLogRoute
   SuperProfileRoute: typeof SuperProfileRoute
   SuperReportsRoute: typeof SuperReportsRoute
   SuperSettingsRoute: typeof SuperSettingsRoute
+  SuperShopsRoute: typeof SuperShopsRoute
   SuperSubscriptionsRoute: typeof SuperSubscriptionsRoute
   SuperUniverseRoute: typeof SuperUniverseRoute
   SuperIndexRoute: typeof SuperIndexRoute
@@ -1724,11 +1804,13 @@ const SuperRouteChildren: SuperRouteChildren = {
   SuperAuditRoute: SuperAuditRoute,
   SuperCreditsRoute: SuperCreditsRoute,
   SuperExportRoute: SuperExportRoute,
+  SuperGuideRoute: SuperGuideRoute,
   SuperMembersRoute: SuperMembersRoute,
   SuperOperatorLogRoute: SuperOperatorLogRoute,
   SuperProfileRoute: SuperProfileRoute,
   SuperReportsRoute: SuperReportsRoute,
   SuperSettingsRoute: SuperSettingsRoute,
+  SuperShopsRoute: SuperShopsRoute,
   SuperSubscriptionsRoute: SuperSubscriptionsRoute,
   SuperUniverseRoute: SuperUniverseRoute,
   SuperIndexRoute: SuperIndexRoute,
@@ -1762,11 +1844,13 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AppRoute: AppRouteWithChildren,
+  GuideRoute: GuideRoute,
   InviteRoute: InviteRoute,
   ResellerRoute: ResellerRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   SetupRoute: SetupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  StartShopRoute: StartShopRoute,
   SuperRoute: SuperRouteWithChildren,
   UniverseRoute: UniverseRouteWithChildren,
   JoinSlugRoute: JoinSlugRoute,
