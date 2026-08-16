@@ -248,6 +248,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
         notes: cashInNotes,
         proofPath: uploadedPath,
         requestKey: newKey(),
+        funding,
       });
       // Secondary check: read the reference off the uploaded receipt. Automatic
       // approval stays blocked until this agrees with what was typed, and a
