@@ -594,10 +594,10 @@ export async function cancelCashIn(id: string): Promise<void> {
  */
 export function cashInDecisionError(message: string): string {
   const m = (message || "").toLowerCase();
-  if (m.includes("recipient mismatch") || m.includes("refusing to coin")) {
+  if (m.includes("recipient mismatch") || m.includes("refusing to credit")) {
     return "Blocked: the coins would not have gone to the member who submitted this request. Nothing was issued.";
   }
-  if (m.includes("does not hold a member coin balance")) {
+  if (m.includes("does not hold a member credit balance")) {
     return "The platform owner has no member coin balance, so this request cannot be approved. Coins always go to the requesting member.";
   }
   if (m.includes("no member attached")) {
@@ -606,7 +606,7 @@ export function cashInDecisionError(message: string): string {
   if (m.includes("already approved") || m.includes("was already")) {
     return "This request was already decided — refresh the queue to see its current status.";
   }
-  if (m.includes("ecosystem_id") || m.includes("coin balance") || m.includes("coin account")) {
+  if (m.includes("ecosystem_id") || m.includes("credit balance") || m.includes("credit account")) {
     return "This member's coin balance could not be opened because their shop link is missing. Fix the member's shop, then approve again.";
   }
   if (m.includes("member") && m.includes("not")) {

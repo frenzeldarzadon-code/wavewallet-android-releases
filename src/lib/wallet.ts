@@ -638,7 +638,7 @@ export async function purchaseVoucher(productId: string, quantity = 1): Promise<
 
 export function friendlyWalletError(message: string): string {
   const m = message.toLowerCase();
-  if (m.includes("insufficient coins")) return "Not enough coins for this transaction.";
+  if (m.includes("insufficient credits")) return "Not enough coins for this transaction.";
   if (m.includes("no voucher codes are available"))
     return "This voucher is out of stock. Nothing was charged.";
   if (m.includes("row-level security") || m.includes("permission denied"))

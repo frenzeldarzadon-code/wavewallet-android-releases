@@ -66,9 +66,9 @@ export function isTransferDebitReason(reason: string): boolean {
   if (r.includes("revers")) return false;
   if (r.startsWith("voucher purchase")) return false;
   return (
-    r.startsWith("coin transfer sent") ||
-    r.startsWith("coin load to") ||
-    r.startsWith("coin released")
+    r.startsWith("credit transfer sent") ||
+    r.startsWith("credit load to") ||
+    r.startsWith("credit released")
   );
 }
 
@@ -77,9 +77,9 @@ export function isTransferCreditReason(reason: string): boolean {
   const r = (reason ?? "").trim().toLowerCase();
   if (r.includes("revers")) return false;
   return (
-    r.startsWith("coin transfer received") ||
-    r.startsWith("coin load from") ||
-    r.startsWith("coin received")
+    r.startsWith("credit transfer received") ||
+    r.startsWith("credit load from") ||
+    r.startsWith("credit received")
   );
 }
 
