@@ -83,9 +83,9 @@ export async function activateSubscription(input: {
   const { error } = await supabase.rpc("activate_subscription", {
     _ecosystem_id: input.ecosystemId,
     _plan_id: input.planId,
-    _amount_php: input.amountPhp ?? undefined,
-    _reference: input.reference ?? undefined,
     _months: input.months,
+    ...(input.amountPhp === null ? {} : { _amount_php: input.amountPhp }),
+    ...(input.reference ? { _reference: input.reference } : {}),
   });
   if (error) throw new Error(error.message);
 }
@@ -101,8 +101,9 @@ export async function runSubscriptionExpiry(dryRun: boolean) {
 export async function createReviewShop(name: string, description?: string) {
   const { data, error } = await supabase.rpc("create_review_shop", {
     _name: name,
-    _description: description ?? undefined,
+    ...(description ? { _description: description } : {}),
   });
+
   if (error) throw new Error(error.message);
   return data as unknown as Ecosystem;
 }
