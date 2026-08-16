@@ -1,102 +1,159 @@
-# Android GCash Notification Listener — Feasibility & Architecture Plan
+# Cash In / Cash Out / Listener — Implementation Review (no code changes yet)
 
-Planning only. No code, no Android project, no publish.
+Verified against the live database and current source. Findings below are confirmed by
+reads, not assumed. There are blocking questions at the end: implementation should not
+start until they are answered.
 
-## 1. Is it feasible?
+## 1. What exists today
 
-Yes, technically. Android's `NotificationListenerService` can read the text of GCash notifications once you manually grant Notification Access, and a small app can forward parsed events over HTTPS to WaveWallet. Nothing about it requires GCash cooperation, root, or accessibility abuse.
+**Cash Out (one path only).** `request_withdrawal` debits the requester's wallet with a
+`withdrawal_hold` ledger entry for the requested credits, records gross/fee/net in pesos
+using platform `withdrawal_fee_percent`, and creates a pending `withdrawal_requests` row.
+Only the platform owner can decide it (`review_withdrawal`: approve / reject / release).
+Reject writes a `withdrawal_return` credit entry. Release removes the credits permanently
+(no counter-entry). The fee is recorded on the request, never deducted from the wallet.
+There is exactly 1 withdrawal row in the database today.
 
-What it is *not*: it is not verified payment data. It is a screen-scrape of a notification string on one phone. It raises confidence a lot over screenshots, but it is spoofable by anything that can post a lookalike notification on that device, and it silently stops working when the phone is off, offline, or the OS kills the service. Treat it as a strong signal, never as settlement truth — WaveWallet stays the authority.
+This existing path already matches the approved SUPERADMIN_CASHOUT rules (deduct requested
+amount only, fee recorded separately, credits leave circulation on release). There is no
+ADMIN_CASHOUT path at all.
 
-## 2. Recommended Android technology
+**Cash In.** `request_cash_in` creates a pending request; `try_auto_approve_cash_in` gates
+approval on: rule enabled, reference present, screenshot present, reference never used
+before, amount within the automatic limit, receiving number resolved, sender number
+present, a linked accepted listener event from a non-revoked and currently-online device
+with matching sender number and amount, and `receipt_check = 'matched'`. Otherwise the
+request stays pending. `settle_cash_in_approval` books the credits once via
+`platform_credit_issuances` keyed `cash_in:<id>`.
 
-Native Kotlin, single-module Android Studio project, minSdk 26, no framework.
+**Receiving number.** `cash_in_receiving_number(ecosystem, method)` returns the shop's
+`ecosystems.cash_in_gcash_number`, falling back to `payment_methods.account_number`. There
+is no explicit "which account was this paid to" field on the request. 3 shops have a number.
 
-- `NotificationListenerService` is a platform API. Capacitor/React Native/Flutter would all need a native Kotlin plugin anyway, so a wrapper adds build weight and background-reliability risk for zero benefit.
-- The app has essentially no UI: a status screen, a permission button, a "send test event" button, a log of the last 20 events. Kotlin + one Activity + WorkManager is the whole thing.
-- Delivery uses OkHttp + WorkManager so events survive a dead network and retry with backoff.
-- Local queue in Room (or a small SQLite table) so nothing is lost between capture and acknowledged delivery.
+**Listener.** 2 devices exist, both with `ecosystem_id IS NULL` (platform / Super Admin
+scope), 0 shop-scoped devices. `register_listener_device` and `revoke_listener_device` are
+Super-Admin-only; RLS on `listener_devices` and `listener_events` is Super-Admin-only read.
+Matching (`match_listener_event`, `link_cash_in_listener_event`) accepts a device when
+`d.ecosystem_id IS NULL OR d.ecosystem_id = request.ecosystem_id`.
 
-Structure: `listener/` (the service + parser), `queue/` (Room entity + WorkManager uploader), `net/` (signed HTTP client), `ui/` (status + pairing screen).
+**Rules.** One row in `cash_in_auto_rules` (the platform row). `cash_in_auto_rule()` lets a
+shop row fully override the platform row; there is no staging/activation concept.
 
-## 3. WaveWallet backend changes
+## 2. Conflicts and risks found
 
-The verified-payment spine already exists in the database (`payment_feed_sources`, `verified_payments` with a unique `(provider, provider_txn_id)` index and a single-consumption index, plus `record_verified_payment` granted only to `service_role`). What's missing is a device layer and a live endpoint.
+1. **A Super Admin device can currently settle a shop-destined Cash In.** The
+   `ecosystem_id IS NULL` branch makes the platform listener a wildcard across all shops.
+   Once Admin listeners and two Cash In destinations exist, this becomes a real
+   mis-credit path: money paid to the Super Admin GCash could satisfy a request meant for
+   an Admin's GCash, and vice versa. Matching must become destination-aware, not
+   ecosystem-wildcard.
+2. **Requests do not record the destination account.** Nothing distinguishes "paid to the
+   Admin's GCash" from "paid to the Super Admin GCash". Both the Admin-balance cap and
+   the correct listener/rule selection depend on this. New column required.
+3. **Multi-wallet ambiguity in Cash Out.** 4 users hold more than one wallet row
+   (`credit_accounts` per membership), yet `request_withdrawal` picks the wallet with
+   `where user_id = _subject` and no ecosystem filter. Adding a second Cash Out path on
+   top of this will make the wrong-shop debit more likely and will corrupt per-shop cash
+   flow reporting. This must be scoped to the acting ecosystem first.
+4. **No Admin visibility policies.** `cash_in_requests` and `withdrawal_requests` are
+   readable only by the owner and the Super Admin. ADMIN_CASHOUT review and Admin-GCash
+   Cash In review are impossible without new shop-scoped RLS plus admin-authorised review
+   functions (separate from the Super-Admin-only ones, which must stay as they are).
+5. **Accounting definition gaps.** ADMIN_CASHOUT is an internal 1:1 transfer, so it must
+   NOT create earnings, cashback, commission or platform fee rows, and must be excluded
+   from "credits removed from circulation" reporting; SUPERADMIN_CASHOUT must be included.
+   Both need distinct `entry_kind` values so `reports.ts` / `role-earnings.ts` /
+   `platform-earnings.ts` keep classifying correctly rather than silently folding the new
+   flow into `withdrawal_hold`.
+6. **Concurrency.** The Admin-balance cap for Admin-GCash Cash In must be re-checked with
+   a row lock at settlement time, not only at request time — otherwise two concurrent
+   auto-approvals can exceed the Admin's available credits. Duplicate-reference and
+   duplicate-event protection already exist (unique event_uid, nonce table, reference
+   uniqueness check) and must be preserved as-is.
+7. **Listener parsing limits.** The Android app only sees notification text: amount,
+   sender name and sometimes a masked sender number; GCash does not expose the reference
+   number in the notification, and the receiving account is implicit (the phone that
+   received it). So the reference can only ever come from the typed value plus the
+   screenshot OCR — the listener cannot verify it. Sender-number masking means some real
+   payments will not carry a usable number and will correctly fall through to manual.
 
-New tables:
-- `listener_devices` — id, owner user, label, `device_secret_hash`, `ecosystem_id`, status (pending/active/revoked), `last_seen_at`, `last_event_at`, created/revoked audit columns. RLS: owner + Super Admin read; writes through RPCs only. Secret is stored hashed, shown once at pairing.
-- `listener_events` — raw ingest log: device, `event_uid`, raw notification text, parsed amount / sender number / sender name / posted-at, outcome (accepted / duplicate / unparsed / rejected), created_at. Unique index on `(device_id, event_uid)`. This is the audit trail and the place unparsed notifications land for inspection.
+## 3. Proposed changes (once questions are resolved)
 
-New endpoint: `POST /api/public/payments/listener` (TanStack server route, `/api/public/*` so external callers reach it, security enforced in the handler). It verifies the device signature, writes `listener_events`, and on a parsed "received money" event calls `record_verified_payment` with `provider = 'gcash_listener'` and `provider_txn_id = <device_id>:<event_uid>`, then runs the existing `try_auto_approve_cash_in` matching. Also a small `GET`/`POST` heartbeat so the app can show "connected".
+**Schema (additive only, no backfill of financial values).**
+- `cash_in_requests`: `destination` (`admin_gcash` | `superadmin_gcash`), `destination_number`,
+  `destination_ecosystem_id`, `admin_balance_cap_php` snapshot. Existing rows default to
+  the behaviour they were approved under so history is untouched.
+- `withdrawal_requests`: `cashout_path` (`admin` | `superadmin`), defaulted to `superadmin`
+  for all existing rows; `ecosystem_id` already present; `account_id` for the exact wallet
+  debited; `settlement_ledger_id` for the Admin credit leg.
+- `listener_devices`: `owner_role` / explicit `scope`, plus `receiving_number` so a device
+  is bound to the account it watches. Existing 2 platform devices are updated to
+  `scope = 'platform'` only — never unpaired, never re-keyed, secret untouched.
+- New `cash_in_verification_configs` (staged rows + one `active_at`/`activated_by` row per
+  scope) so adding options cannot change live behaviour. Defaults seeded to today's rules:
+  Layer 1 = amount + sender number, Layer 2 = submitted reference + screenshot reference.
+- New ledger `entry_kind`s: `admin_cashout_debit`, `admin_cashout_credit`,
+  `superadmin_cashout_hold` (alias of existing `withdrawal_hold` semantics, kept for
+  backward compatibility rather than renamed).
 
-New RPCs: `register_listener_device` (returns a one-time secret), `revoke_listener_device`, `listener_device_status` for the Super Admin settings card.
+**Functions.**
+- `request_cash_in` gains a destination argument; for `admin_gcash` it caps the amount at
+  the Admin's available credits at request time. Keep the current signature working.
+- `settle_cash_in_approval` re-locks the Admin wallet and re-checks the cap for
+  `admin_gcash`; on failure the request stays pending with a clear reason.
+- Matching (`match_listener_event`, `link_cash_in_listener_event`) selects candidate
+  devices by destination + receiving number instead of the ecosystem wildcard.
+- New `request_admin_cashout` / `review_admin_cashout` (shop-admin authorised, zero fee,
+  atomic debit + credit inside the same shop). Existing `request_withdrawal` /
+  `review_withdrawal` keep their exact current behaviour for the Super Admin path.
+- `register_listener_device` extended so a shop Admin may register only within their own
+  shop; Super Admin registration and the existing devices are unchanged.
 
-Matching change: today auto-approval matches on configured details. With the listener live, the rule becomes — a pending cash in may auto-approve when an *unconsumed* `verified_payments` row matches amount, sender number (normalised via the existing `normalize_ph_mobile`), and falls inside a time window. Crediting still goes through `settle_cash_in_approval`, which is already idempotent, so retries cannot double-credit.
+**UI.** Cash In destination selector with live Admin cap; Admin cash-out queue; Admin
+listener card mirroring the Super Admin card but shop-scoped; staged-vs-active verification
+configuration screen with explicit "Activate" step.
 
-## 4. Authentication
+## 4. Migration safety
 
-Pairing: Super Admin creates a device in WaveWallet, gets a one-time pairing code / secret, types or scans it into the app once. The app stores it in Android Keystore-backed EncryptedSharedPreferences.
+All migrations additive with defaults chosen so current behaviour is byte-for-byte
+preserved: no recalculation of balances, no rewrite of existing ledger rows, no touching of
+`listener_devices.secret_key_hash`, `status`, or pairing state. Rollout in this order:
+1. Wallet-scoping fix for Cash Out (multi-wallet bug) — smallest, highest risk if skipped.
+2. Additive schema + RLS + reporting classification, with no behaviour change.
+3. Verification config staging (read-only surface, defaults = current active rules).
+4. Destination-aware Cash In + Admin balance cap.
+5. Destination-aware listener matching + Admin listener registration.
+6. ADMIN_CASHOUT path.
+7. UI surfaces last, each behind the corresponding backend step.
 
-Each request carries `X-Device-Id`, `X-Timestamp`, `X-Nonce` and `X-Signature` = HMAC-SHA256 over `timestamp + nonce + raw body` using the device secret. The server looks up the device, recomputes the HMAC with a timing-safe compare, rejects timestamps older than ~5 minutes and replayed nonces, and rejects revoked devices. No Supabase user session on the phone, no service key on the phone. Revocation is instant and one-sided from the web app.
+## 5. Tests
 
-## 5. Duplicates vs. legitimate repeat payments
+SQL: Admin cash-out is 1:1 and fee-free; Super Admin cash-out deducts only the requested
+amount, records the fee separately and removes credits on release; Admin-GCash Cash In
+blocked above the Admin's balance including the concurrent-approval race; Super-Admin-GCash
+Cash In auto-approves when active rules permit and stays pending when they do not; a
+platform listener event cannot settle an Admin-destined request and vice versa; duplicate
+event and duplicate reference still blocked; tenant isolation for the new tables and
+policies; staged config does not alter active behaviour until activated.
+Vitest: destination/cap presentation helpers, fee display for the two paths, verification
+config option rendering.
 
-Two separate problems, two separate mechanisms.
+## 6. Questions that must be answered before implementation
 
-- *Same notification delivered twice* (Android re-posts, app retries, user reinstalls): the app derives `event_uid` from stable notification fields — package + posted-at millis + notification key + a hash of the text — and the server's unique `(device_id, event_uid)` index plus the existing `(provider, provider_txn_id)` index make re-ingest a no-op.
-- *Two genuine PHP 100 payments from the same sender minutes apart*: these are legitimately distinct and must both credit. They differ by posted-at timestamp, so they produce different `event_uid`s and two `verified_payments` rows. Each cash in consumes exactly one, enforced by the existing single-consumption index on `consumed_cash_in_id`. Where two pending cash ins could match one payment, match oldest-pending-first, one payment per request, never fan out.
-
-The GCash notification does not include the reference number, so the member-typed reference stays the duplicate key on the cash-in side and the listener event is the corroborating evidence.
-
-## 6. GCash changing its notification wording
-
-Never match loosely. Rules:
-- Only notifications whose source package is the GCash app are considered; everything else is discarded before parsing.
-- A small ordered set of named patterns (currently the "You have received PHP <amount> of GCash from <NAME> <number>" shape), each with a version tag recorded on the event.
-- If the package is GCash but no pattern matches, store the event as `unparsed` with the raw text and raise it in the Super Admin UI — never guess, never auto-approve. That gives you a visible signal the moment GCash changes wording, and the raw text needed to add a pattern.
-- Explicitly ignore outgoing/promo/"you sent"/"cash in successful" notifications by requiring the received-money shape, not just the word "PHP".
-- Patterns should be updatable from the server (fetched config) so a wording change doesn't require a new APK.
-
-## 7. Oppo / ColorOS background survival
-
-ColorOS is among the most aggressive at killing background services. Plan for it explicitly:
-- Foreground service with a persistent low-priority notification so the OS treats the app as user-visible.
-- Request battery-optimisation exemption; in ColorOS also set the app to "Allow background activity" / "Allow auto-launch" and lock it in Recents.
-- WorkManager periodic heartbeat that also acts as a self-heal — if the listener is disconnected it calls `requestRebind`.
-- Server-side dead-man switch: if no heartbeat for N minutes, WaveWallet marks the device offline, shows it in the Super Admin card, and auto-approval falls back to the manual queue rather than silently stalling.
-- Document the exact ColorOS settings path in an in-app checklist screen.
-
-## 8. What you install and grant
-
-Install: one APK (sideloaded), roughly 5–8 MB.
-
-Grant, all explicitly by you:
-- Notification Access (Settings → Notification & status bar → Notification access) — the core one.
-- Post-notifications permission (Android 13+) for the foreground-service notification.
-- Ignore battery optimisation + ColorOS auto-launch/background activity.
-- Internet is a normal permission, no prompt.
-
-Never requested and never stored: MPIN, GCash password, OTP, GCash login, SMS access, accessibility service, contacts.
-
-## 9. APK for the Oppo Reno 13 Pro
-
-Yes — a debug or self-signed release APK can be built and sideloaded (enable "Install unknown apps" for your browser/file manager). No Play Store listing needed; a Play listing would in fact be difficult, since notification-listener apps get heavy policy scrutiny. Building and signing the APK happens outside this web project — this environment can produce the Android source, but you (or a CI runner / Android Studio on a desktop) run the Gradle build that emits the installable file.
-
-## 10. Security and reliability limitations — read before approving
-
-- **Spoofable.** Any app on that phone that can post a notification imitating GCash can mint a payment event. Mitigation: package check, listener-only-on-your-device, per-event audit log, and an amount ceiling above which auto-approval is refused.
-- **Single point of failure.** Phone off, no data, OS killed the service, GCash notifications muted → zero events, everything falls back to the manual queue. This must be a graceful degradation, not an outage.
-- **Not reconciliation.** Notification text is not the GCash ledger. Reversals, holds and disputed transfers never appear. Periodic manual reconciliation against the real GCash statement stays necessary.
-- **No reference number** in the notification, so amount + sender + time window is the only match key; two identical amounts from the same sender in the same window are genuinely ambiguous and should go to manual review rather than guess.
-- **Privacy.** The service can technically read all notifications on the device; the app must filter to GCash at the earliest point and never transmit anything else.
-- **Terms of service.** Reading GCash notifications is not a GCash-sanctioned integration. Low practical risk on a personal device, but it is not an approved channel.
-
-## Recommended guard rails if we build it
-
-Keep configured matching and the manual queue exactly as they are. Add the listener as an additional *corroborating* signal — a cash in auto-approves only when a listener event AND the member-submitted details agree — with a per-transaction and per-day auto-approval ceiling, and every automatic approval labelled as listener-backed in the audit trail.
-
-## Suggested phasing
-
-1. Backend only: device tables, signed `/api/public/payments/listener` endpoint, Super Admin device + event card. Testable with curl, zero Android work.
-2. Android app: listener service, parser, queue, pairing, status screen, test-event button. Emitted as source in a separate project.
-3. Field hardening on the Oppo: ColorOS settings checklist, heartbeat/dead-man switch, wording-drift monitoring.
+1. **Admin cash-out reviewer.** Should ADMIN_CASHOUT be approved by the shop Admin
+   (receiving side) only, or auto-settle on request? Anyone else in the chain?
+2. **Existing wallet ambiguity.** Fixing Cash Out to be shop-scoped changes which wallet is
+   debited for the 4 multi-shop members. Confirm the requester's *acting shop* wallet is
+   the correct source.
+3. **Super Admin Cash Out fee source.** Should the configurable 1% reuse the existing
+   platform `withdrawal_fee_percent` (currently live) or a new separate setting?
+4. **Fee unit.** Fee on the peso amount (as today) or on credits?
+5. **Admin cap definition.** "Admin available credits" = the Admin's shop wallet balance
+   only, or balance minus pending holds/other pending Cash Ins?
+6. **Admin listener registration.** May an Admin self-register and pair their own device,
+   or must the Super Admin issue the pairing secret for them?
+7. **Verification config scope.** Per shop, per listener device, or per destination
+   account? And may an Admin activate their own config, or only stage it for Super Admin
+   activation?
+8. **Shop cash flow reduction.** Confirm the reduction is booked at *release* (money
+   actually paid out), consistent with the current withdrawal lifecycle, not at request.
