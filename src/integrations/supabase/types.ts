@@ -4355,6 +4355,7 @@ export type Database = {
       }
       withdrawal_requests: {
         Row: {
+          account_id: string | null
           account_name: string | null
           account_number: string | null
           created_at: string
@@ -4385,6 +4386,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_id?: string | null
           account_name?: string | null
           account_number?: string | null
           created_at?: string
@@ -4415,6 +4417,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_id?: string | null
           account_name?: string | null
           account_number?: string | null
           created_at?: string
@@ -4445,6 +4448,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "withdrawal_requests_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "withdrawal_requests_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -4669,6 +4679,7 @@ export type Database = {
       cancel_withdrawal: {
         Args: { _id: string }
         Returns: {
+          account_id: string | null
           account_name: string | null
           account_number: string | null
           created_at: string
@@ -6047,6 +6058,7 @@ export type Database = {
           _request_key?: string
         }
         Returns: {
+          account_id: string | null
           account_name: string | null
           account_number: string | null
           created_at: string
@@ -6349,6 +6361,7 @@ export type Database = {
       review_withdrawal: {
         Args: { _action: string; _id: string; _reason?: string }
         Returns: {
+          account_id: string | null
           account_name: string | null
           account_number: string | null
           created_at: string
