@@ -403,17 +403,32 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
 
               <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs">
                 <p className="font-medium">
-                  {(creditsNum || 0).toLocaleString()} credits requested
+                  {(creditsNum || 0).toLocaleString()} credits requested · {cashOutPathLabel(cashOutPath)}
                 </p>
                 <p className="text-muted-foreground">
-                  Fee {quote.feePercent}% · you receive{" "}
-                  <span className="font-semibold text-foreground">
-                    {creditsAfterFee(creditsNum || 0, quote.feePercent).toLocaleString()} credits
-                  </span>{" "}
-                  worth of payout
+                  {cashOutPath === "admin" ? (
+                    <>
+                      No fee · your shop admin hands you{" "}
+                      <span className="font-semibold text-foreground">
+                        {(creditsNum || 0).toLocaleString()} credits
+                      </span>{" "}
+                      worth of cash
+                    </>
+                  ) : (
+                    <>
+                      Fee {feePercent}% · you receive{" "}
+                      <span className="font-semibold text-foreground">
+                        {creditsAfterFee(creditsNum || 0, feePercent).toLocaleString()} credits
+                      </span>{" "}
+                      worth of payout
+                    </>
+                  )}
                 </p>
                 <p className="mt-1 flex items-start gap-1 text-muted-foreground">
-                  <Info className="mt-0.5 size-3 shrink-0" /> {WITHDRAWAL_SLA_NOTICE}
+                  <Info className="mt-0.5 size-3 shrink-0" />{" "}
+                  {cashOutPath === "admin"
+                    ? "Your shop admin reviews and settles this personally. Your credits are held until they approve it."
+                    : WITHDRAWAL_SLA_NOTICE}
                 </p>
               </div>
 
