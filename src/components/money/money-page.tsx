@@ -326,6 +326,30 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              {shopPathsAvailable ? (
+                <div className="space-y-1.5">
+                  <Label>Who settles this cash out</Label>
+                  <RadioGroup
+                    value={cashOutPath}
+                    onValueChange={(v) => setCashOutPath(v as CashOutPath)}
+                    className="gap-2"
+                  >
+                    {CASH_OUT_PATHS.map((p) => (
+                      <label
+                        key={p.value}
+                        htmlFor={`wd-path-${p.value}`}
+                        className="flex cursor-pointer items-start gap-2 rounded-lg border border-border p-3 text-xs"
+                      >
+                        <RadioGroupItem id={`wd-path-${p.value}`} value={p.value} className="mt-0.5" />
+                        <span>
+                          <span className="block text-sm font-medium">{p.label}</span>
+                          <span className="text-muted-foreground">{p.hint}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </RadioGroup>
+                </div>
+              ) : null}
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="wd-credits">Credits to cash out</Label>
