@@ -20,14 +20,20 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 
+export type VerificationMode = "staged" | "active";
+
 export interface AutoApprovalRule {
   enabled: boolean;
   amount_tolerance_php: number;
   max_auto_amount_php: number | null;
   /** Optional exact amount every automatic cash in must match. */
   expected_amount_php: number | null;
-  /** Also require a paired listener phone to have seen the payment. */
+  /** First layer: require a paired listener phone to have seen the payment. */
   require_listener_match?: boolean;
+  /** Second layer: require the reference read off the receipt to match. */
+  require_receipt_match?: boolean;
+  /** Staged evaluates every rule but never settles a request. */
+  verification_mode?: VerificationMode;
 }
 
 export interface ShopAutoRule extends AutoApprovalRule {
@@ -45,8 +51,14 @@ export interface CashInAutoStatus {
   listener_devices_active?: number;
   /** Active listener phones that have actually delivered a notification. */
   listener_devices_proven?: number;
+  /** Paired phones with no receiving GCash account set — they can never match. */
+  listener_devices_unscoped?: number;
   listener_matches_30d?: number;
   listener_last_event_at?: string | null;
+  /** Receiving numbers shared by more than one shop. */
+  shared_numbers?: { number: string; shops: number }[];
+  /** Requests that would have been approved while staged. */
+  staged_30d?: number;
 }
 
 export const DEFAULT_AUTO_RULE: AutoApprovalRule = {
@@ -54,8 +66,11 @@ export const DEFAULT_AUTO_RULE: AutoApprovalRule = {
   amount_tolerance_php: 0,
   max_auto_amount_php: null,
   expected_amount_php: null,
-  require_listener_match: false,
+  require_listener_match: true,
+  require_receipt_match: true,
+  verification_mode: "active",
 };
+
 
 /** Same normalisation as `public.normalize_payment_reference`. */
 export function normalizePaymentReference(ref?: string | null): string | null {
