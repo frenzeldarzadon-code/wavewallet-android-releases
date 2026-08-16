@@ -190,8 +190,17 @@ export function ListenerDevicesCard({
                     <div>
                       <p className="font-medium">{device.label}</p>
                       <p className="text-xs text-muted-foreground">
-                        {device.ecosystem_name ?? "All shops"} · window {device.match_window_minutes} min
+                        {device.ecosystem_name ?? "Platform-owned"} ·{" "}
+                        {device.receiving_number ? `receives on ${device.receiving_number}` : "no receiving number set"}
+                        {(device.shops_served ?? 0) > 1 ? ` · serves ${device.shops_served} shops` : ""} · window{" "}
+                        {device.match_window_minutes} min
                       </p>
+                      {!device.receiving_number ? (
+                        <p className="text-xs text-destructive">
+                          Set a receiving GCash number for this phone — until then it can never confirm a payment.
+                        </p>
+                      ) : null}
+
                     </div>
                     <StatusBadge tone={state.tone}>{state.label}</StatusBadge>
                   </div>
