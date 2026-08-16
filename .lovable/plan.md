@@ -47,11 +47,16 @@ Wallets, ledger, vouchers, cashback, points, discounts, reseller hierarchy, GCas
 
 Additive only: new tables, new columns with backfill, new RPCs. No drops, no data deletion, no rewriting of existing ledger rows. `subscription_requests` remains the Legacy path.
 
-## Remaining ambiguity (does not block, but confirm at implementation time)
+## Final decisions on the open points (no blockers remain)
 
-- **One review shop per member** is what I plan to enforce (plus Super Admin visibility of all review shops). Tell me if you want more.
-- **Review shop naming/slug**: a review shop takes a real slug. If the member never subscribes, I keep the slug reserved with the frozen shop rather than freeing it for someone else; say if you prefer it released.
-- Everything affecting real money — allocation, proration, freeze, cross-shop, cash out — is now fully specified; I see no remaining financial ambiguity.
+- **One active review shop per member**, enforced server-side; Super Admin can see every review shop.
+- **Expired review shops are kept, frozen, and their slug stays reserved** — never deleted or auto-reused; any later cleanup happens through an explicit policy.
+- `/guide` is the only anonymous area; every shop-creation path requires Universe sign-up/login first.
+- Demo ledger is fully separate, seeded at a configurable 1,000 Demo Coins, and no demo balance can ever become real Coins.
+- On subscription, the demo ledger is discarded/reset and the real shop starts with the plan allocation minted exactly once.
+- Super Admin never appears in the public guide or any role selector.
+- Everything affecting real money — allocation, proration, freeze, cross-shop, cash out — is fully specified; no remaining financial ambiguity.
+
 
 ## Tests before publish
 
