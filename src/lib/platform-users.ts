@@ -46,8 +46,19 @@ export async function assignMemberToShop(userId: string, ecosystemId: string) {
   if (error) fail(error.message);
 }
 
-export async function fetchDeletionCheck(userId: string): Promise<DeletionCheck> {
-  const { data, error } = await supabase.rpc("platform_user_deletion_check", { _user: userId });
+/**
+ * `override` is the platform-owner exemption: every non-financial rule (operator
+ * role, account age, shop membership) is waived, while zero balances and "no
+ * money in flight" stay mandatory — the database enforces both.
+ */
+export async function fetchDeletionCheck(
+  userId: string,
+  override = false,
+): Promise<DeletionCheck> {
+  const { data, error } = await supabase.rpc("platform_user_deletion_check", {
+    _user: userId,
+    _override: override,
+  });
   if (error) fail(error.message);
   const row = ((data ?? []) as DeletionCheck[])[0];
   return (
