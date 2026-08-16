@@ -18,6 +18,7 @@ import {
 import { isRealEmail, validateGlobalSignup } from "@/lib/account-identifiers";
 import { newPasswordIssue } from "@/lib/password-policy";
 import { supabase } from "@/integrations/supabase/client";
+import logo from "@/assets/wavewallet-logo.png";
 import { DEMO_ECOSYSTEM_SLUG, DEMO_ROLES, isPreviewEnvironment } from "@/lib/demo";
 import { startDemoSession } from "@/lib/demo.functions";
 import { platformSettings } from "@/lib/wavewallet";
@@ -47,6 +48,7 @@ export const Route = createFileRoute("/")({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -178,249 +180,248 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-2">
-      <div className="surface-gradient relative overflow-hidden px-6 py-10 text-primary-foreground lg:flex lg:flex-col lg:justify-between lg:px-12 lg:py-14">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-background/15 text-lg font-bold">
-              W
-            </div>
-            <div>
-              <p className="text-lg font-semibold leading-tight">{platformSettings.productName}</p>
-              <p className="text-xs opacity-80">Multi-tenant hotspot commerce</p>
+    <div className="dark auth-surface relative min-h-[100dvh] w-full overflow-x-hidden">
+      {/* Subtle wave / mountain accent — decorative only. */}
+      <svg
+        aria-hidden
+        viewBox="0 0 400 220"
+        preserveAspectRatio="none"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-40 w-full opacity-50"
+      >
+        <path d="M0 150 L110 70 L170 120 L250 45 L330 115 L400 80 L400 220 L0 220 Z" fill="oklch(0.3 0.07 250 / 0.55)" />
+        <path
+          d="M0 175 C70 145 120 195 200 170 C275 147 330 190 400 160 L400 220 L0 220 Z"
+          fill="oklch(0.55 0.12 215 / 0.35)"
+        />
+      </svg>
+
+      <div className="relative mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] sm:max-w-lg">
+        <header className="flex items-center justify-between gap-3 py-2">
+          <div className="flex items-center gap-2.5">
+            <img
+              src={logo}
+              alt="WaveWallet logo"
+              className="size-9 rounded-xl object-contain"
+              width={36}
+              height={36}
+            />
+            <div className="leading-tight">
+              <p className="text-base font-semibold tracking-tight text-auth-fg">
+                {platformSettings.productName}
+              </p>
+              <p className="text-[11px] text-auth-muted">Wallet · Vouchers · Rewards</p>
             </div>
           </div>
-          <h1 className="mt-10 max-w-md text-3xl font-semibold leading-tight tracking-tight lg:text-4xl">
-            Run your hotspot shop like a real business.
-          </h1>
-          <p className="mt-3 max-w-md text-sm opacity-90">
-            Closed-loop coin wallets, voucher inventory with duplicate-safe imports, reseller
-            networks, points and physical rewards — each operator fully isolated in their own
-            shop.
-          </p>
-          <ul className="mt-6 space-y-2 text-sm opacity-90">
-            {[
-              "Atomic voucher dispensing — a code is never sold twice",
-              "Immutable ledger for every coin and point movement",
-              "Reseller discount and earnings captured at sale time",
-              "Subscription gating with approval workflow",
-            ].map((line) => (
-              <li key={line} className="flex items-start gap-2">
-                <ArrowRight className="mt-0.5 size-4 shrink-0" />
-                {line}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <p className="mt-10 hidden text-xs opacity-70 lg:block">
-          No Omada API dependency. Voucher codes are imported manually in this version.
-        </p>
-      </div>
+          <span className="rounded-full border border-auth-border px-2.5 py-1 text-[11px] text-auth-muted">
+            EN
+          </span>
+        </header>
 
-      <div className="flex items-center justify-center px-4 py-10 lg:px-12">
-        <div className="w-full max-w-md">
-          <h2 className="text-xl font-semibold tracking-tight">Sign in</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            One sign-in for everyone — we take you to the right dashboard automatically.
-          </p>
-
-          <Card className="mt-5 shadow-[var(--shadow-card)]">
-            <CardContent className="space-y-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="email">Email or mobile number</Label>
-                <Input
-                  id="email"
-                  type="text"
-                  inputMode="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && signIn()}
-                  placeholder="you@example.com or 0917 000 0000"
-                  autoComplete="username"
-                />
-              </div>
-              <PasswordField
-                id="password"
-                label="Password"
-                value={password}
-                onChange={setPassword}
-                autoComplete="current-password"
-                onEnter={() => void signIn()}
-              />
-              <Button className="w-full" onClick={signIn} disabled={busy}>
-                <LogIn className="size-4" />
-                {busy ? "Signing in…" : "Continue"}
-              </Button>
-              <p className="text-center text-xs">
-                <Link to="/reset-password" className="text-primary hover:underline">
-                  Forgot your password?
-                </Link>
-              </p>
-              <SocialSignIn disabled={busy} />
-              <p className="text-center text-[11px] text-muted-foreground">
-                Your role and shop are resolved by the server after sign-in.
-              </p>
-            </CardContent>
-          </Card>
-
-          {setupOpen ? (
-            <Link
-              to="/setup"
-              className="mt-4 flex items-center justify-between rounded-xl border border-primary/40 bg-primary/5 px-4 py-3 transition-colors hover:bg-primary/10"
-            >
-              <span>
-                <span className="flex items-center gap-1.5 text-sm font-semibold text-primary">
-                  <ShieldCheck className="size-4" /> Initial Super Admin setup
-                </span>
-                <span className="mt-0.5 block text-xs text-muted-foreground">
-                  No platform owner exists yet — create the first one.
-                </span>
-              </span>
-              <ArrowRight className="size-4 text-primary" />
-            </Link>
-          ) : null}
-
-          {preview ? (
-            <div className="mt-6 rounded-xl border-2 border-dashed border-destructive/50 bg-destructive/5 p-4">
-              <div className="mb-1 flex items-center justify-between gap-2">
-                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-destructive">
-                  <FlaskConical className="size-3.5" /> Demo / preview access
-                </p>
-                <StatusBadge tone="danger">Not live data</StatusBadge>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                One-tap sign-in to a sandbox shop filled with clearly fake sample data. Only shown in
-                the Lovable preview — never on a published site. Real shops, codes, coins and
-                payments are untouched.
-              </p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                {DEMO_ROLES.map((d) => (
-                  <Button
-                    key={d.role}
-                    variant="outline"
-                    className="h-auto flex-col items-start gap-0.5 py-2.5 text-left"
-                    disabled={demoBusy !== null || busy}
-                    onClick={() => startDemo(d.role)}
-                  >
-                    <span className="text-sm font-semibold">
-                      {demoBusy === d.role ? "Preparing…" : `Demo ${d.label}`}
-                    </span>
-                    <span className="text-[11px] font-normal text-muted-foreground">{d.hint}</span>
-                  </Button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          <div className="mt-6 rounded-xl border border-border bg-card p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                New here?
-              </p>
-              <StatusBadge tone="success">Free account</StatusBadge>
-            </div>
-
-            {applied ? (
-              <div className="space-y-3 text-center">
+        <main className="flex flex-1 flex-col justify-center py-2">
+          {applied ? (
+            <Card className="auth-card rounded-2xl">
+              <CardContent className="space-y-3 py-5 text-center">
                 <MailCheck className="mx-auto size-8 text-success" />
-                <h3 className="text-sm font-semibold">Account created</h3>
-                <p className="text-xs text-muted-foreground">
-                  Sign in to browse shops and apply to the one you want to join. Shop access starts
-                  once an authorized member approves your application.
+                <h1 className="text-base font-semibold">Account created</h1>
+                <p className="text-xs text-auth-muted">
+                  Sign in to browse shops and apply to the one you want to join.
                   {applied.needsEmail
                     ? " We also emailed you a confirmation link — please confirm your email address."
                     : ""}
                 </p>
-                <Button variant="outline" className="w-full" onClick={() => setApplied(null)}>
+                <Button
+                  variant="outline"
+                  className="h-11 w-full"
+                  onClick={() => {
+                    setApplied(null);
+                    setMode("signin");
+                  }}
+                >
                   Back to sign in
                 </Button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div>
-                  <h3 className="text-sm font-semibold">Create your account</h3>
-                  <p className="text-xs text-muted-foreground">
-                    One account for everything. Give us an email address or a mobile number — at
-                    least one is required. You can join a shop after signing in.
+              </CardContent>
+            </Card>
+          ) : mode === "signin" ? (
+            <Card className="auth-card rounded-2xl">
+              <CardContent className="space-y-3 py-5">
+                <div className="space-y-0.5">
+                  <h1 className="text-xl font-semibold tracking-tight">Welcome back</h1>
+                  <p className="text-xs text-auth-muted">
+                    One sign-in for everyone — we take you to the right place.
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="email">Email or mobile number</Label>
+                  <Input
+                    id="email"
+                    type="text"
+                    inputMode="email"
+                    className="h-11"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && signIn()}
+                    placeholder="you@example.com or 0917 000 0000"
+                    autoComplete="username"
+                  />
+                </div>
+                <PasswordField
+                  id="password"
+                  label="Password"
+                  value={password}
+                  onChange={setPassword}
+                  autoComplete="current-password"
+                  onEnter={() => void signIn()}
+                />
+                <Button className="h-11 w-full" onClick={signIn} disabled={busy}>
+                  <LogIn className="size-4" />
+                  {busy ? "Signing in…" : "Sign In"}
+                </Button>
+                <div className="text-center text-xs">
+                  <Link to="/reset-password" className="text-auth-muted hover:underline">
+                    Forgot password?
+                  </Link>
+                </div>
+
+                <SocialSignIn disabled={busy} />
+                <Button
+                  variant="outline"
+                  className="h-11 w-full"
+                  onClick={() => setMode("signup")}
+                >
+                  <UserPlus className="size-4" />
+                  Create Free Account
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="auth-card rounded-2xl">
+              <CardContent className="space-y-3 py-5">
+                <div className="space-y-0.5">
+                  <h1 className="text-xl font-semibold tracking-tight">Create your account</h1>
+                  <p className="text-xs text-auth-muted">
+                    Give us an email address or a mobile number — at least one is required.
                   </p>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="su-name">Full name</Label>
                   <Input
                     id="su-name"
+                    className="h-11"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     placeholder="Juan Dela Cruz"
                     autoComplete="name"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="su-email">Email (optional)</Label>
-                  <Input
-                    id="su-email"
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    placeholder="you@example.com"
-                    autoComplete="email"
-                  />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="su-email">Email</Label>
+                    <Input
+                      id="su-email"
+                      type="email"
+                      className="h-11"
+                      value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      placeholder="you@example.com"
+                      autoComplete="email"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="su-phone">Mobile number</Label>
+                    <Input
+                      id="su-phone"
+                      inputMode="tel"
+                      className="h-11"
+                      value={form.phone}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                      placeholder="0917 000 0000"
+                      autoComplete="tel"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="su-phone">Mobile number (optional)</Label>
-                  <Input
-                    id="su-phone"
-                    inputMode="tel"
-                    value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    placeholder="0917 000 0000"
-                    autoComplete="tel"
-                  />
-                  <p className="text-[11px] text-muted-foreground">
-                    Enter at least one of email or mobile number — that is what you will sign in
-                    with. Only an email address can reset a forgotten password by itself.
-                  </p>
-                </div>
-                <div className="space-y-3">
-                  <PasswordField
-                    id="su-password"
-                    label="Password"
-                    value={form.password}
-                    onChange={(v) => setForm({ ...form, password: v })}
-                    autoComplete="new-password"
-                    requirements
-                  />
-                  <PasswordField
-                    id="su-confirm"
-                    label="Confirm password"
-                    value={form.confirm}
-                    onChange={(v) => setForm({ ...form, confirm: v })}
-                    placeholder="Repeat your password"
-                    autoComplete="new-password"
-                    onEnter={() => void signUp()}
-                  />
-                  {signupIssue ? (
-                    <p className="text-xs text-destructive">{signupIssue}</p>
-                  ) : null}
-                </div>
-                <Button
-                  className="w-full"
-                  variant="secondary"
-                  onClick={signUp}
-                  disabled={signupBusy}
-                >
+                <PasswordField
+                  id="su-password"
+                  label="Password"
+                  value={form.password}
+                  onChange={(v) => setForm({ ...form, password: v })}
+                  autoComplete="new-password"
+                  requirements
+                />
+                <PasswordField
+                  id="su-confirm"
+                  label="Confirm password"
+                  value={form.confirm}
+                  onChange={(v) => setForm({ ...form, confirm: v })}
+                  placeholder="Repeat your password"
+                  autoComplete="new-password"
+                  onEnter={() => void signUp()}
+                />
+                {signupIssue ? <p className="text-xs text-destructive">{signupIssue}</p> : null}
+                <Button className="h-11 w-full" onClick={signUp} disabled={signupBusy}>
                   <UserPlus className="size-4" />
-                  {signupBusy ? "Creating…" : "Create account"}
+                  {signupBusy ? "Creating…" : "Create Account"}
                 </Button>
-                <p className="text-center text-[11px] text-muted-foreground">
-                  Signing up creates a normal member account. Roles and shop access are granted by
-                  the shop, never chosen here.
+                <p className="text-center text-xs text-auth-muted">
+                  Already have an account?{" "}
+                  <button
+                    type="button"
+                    className="font-semibold text-auth-cyan hover:underline"
+                    onClick={() => setMode("signin")}
+                  >
+                    Sign In
+                  </button>
                 </p>
-              </div>
-            )}
-          </div>
+              </CardContent>
+            </Card>
+          )}
 
-        </div>
+          {setupOpen ? (
+            <Link
+              to="/setup"
+              className="mt-3 flex items-center justify-between rounded-xl border border-auth-border bg-primary/10 px-4 py-3"
+            >
+              <span>
+                <span className="flex items-center gap-1.5 text-sm font-semibold text-auth-fg">
+                  <ShieldCheck className="size-4" /> Initial Super Admin setup
+                </span>
+                <span className="mt-0.5 block text-xs text-auth-muted">
+                  No platform owner exists yet — create the first one.
+                </span>
+              </span>
+              <ArrowRight className="size-4" />
+            </Link>
+          ) : null}
+
+          {preview ? (
+            <div className="mt-3 rounded-xl border border-dashed border-destructive/50 bg-destructive/10 p-3">
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-destructive">
+                  <FlaskConical className="size-3.5" /> Demo / preview access
+                </p>
+                <StatusBadge tone="danger">Not live data</StatusBadge>
+              </div>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                {DEMO_ROLES.map((d) => (
+                  <Button
+                    key={d.role}
+                    variant="outline"
+                    size="sm"
+                    disabled={demoBusy !== null || busy}
+                    onClick={() => startDemo(d.role)}
+                  >
+                    {demoBusy === d.role ? "Preparing…" : `Demo ${d.label}`}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </main>
+
+        <footer className="py-2 text-center text-[11px] text-auth-muted">
+          Your role and shop are resolved by the server after sign-in.
+        </footer>
       </div>
     </div>
   );
 }
+
