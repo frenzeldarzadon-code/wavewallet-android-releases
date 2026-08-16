@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   adminCashbackPercent,
+  cashInFundingLabel,
+  cashOutFeePercent,
+  cashOutPathLabel,
+  EMPTY_CAPACITY,
+  maxAdminCashInPhp,
   canDecideMoney,
   canRequestMoney,
   creditsAfterFee,
@@ -199,5 +204,46 @@ describe("cash in payment screenshot", () => {
 
   it("never requires notes or a screenshot to submit", () => {
     expect(validateCashIn(500, "method-1")).toBeNull();
+  });
+});
+
+describe("cash out path fees", () => {
+  it("never charges a fee on a shop admin cash out", () => {
+    expect(cashOutFeePercent("admin", { ...MONEY_SETTINGS_FALLBACK, feePercent: 5 })).toBe(0);
+  });
+
+  it("keeps the configured fee on the platform cash out", () => {
+    expect(cashOutFeePercent("superadmin", { ...MONEY_SETTINGS_FALLBACK, feePercent: 5 })).toBe(5);
+  });
+});
+
+describe("admin cash in capacity", () => {
+  const cap = (available: number) => ({ ...EMPTY_CAPACITY, balance: available, available });
+
+  it("caps a member at the admin's spendable credits", () => {
+    expect(maxAdminCashInPhp(cap(1000), MONEY_SETTINGS_FALLBACK)).toBe(1000);
+  });
+
+  it("subtracts credits already reserved by pending requests", () => {
+    const held = { ...EMPTY_CAPACITY, balance: 1000, reserved: 300, available: 700 };
+    expect(maxAdminCashInPhp(held, MONEY_SETTINGS_FALLBACK)).toBe(700);
+  });
+
+  it("offers nothing when the admin has no spendable credits", () => {
+    expect(maxAdminCashInPhp(cap(0), MONEY_SETTINGS_FALLBACK)).toBe(0);
+    expect(maxAdminCashInPhp(EMPTY_CAPACITY, MONEY_SETTINGS_FALLBACK)).toBe(0);
+  });
+
+  it("grosses the peso ceiling up when a cash in fee is configured", () => {
+    const settings = { ...MONEY_SETTINGS_FALLBACK, cashInFeePercent: 10 };
+    // 700 credits arrive after a 10% fee, so ~777.77 pesos may be paid.
+    expect(maxAdminCashInPhp(cap(700), settings)).toBeCloseTo(777.77, 2);
+  });
+
+  it("labels the funding source and cash out path for members", () => {
+    expect(cashInFundingLabel("admin")).toBe("My shop admin's GCash");
+    expect(cashInFundingLabel(null)).toBe("Platform GCash");
+    expect(cashOutPathLabel("admin")).toBe("My shop admin");
+    expect(cashOutPathLabel(null)).toBe("Platform cash out");
   });
 });
