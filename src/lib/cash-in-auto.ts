@@ -244,12 +244,21 @@ export function matchingStatusLabel(status: CashInAutoStatus | null): {
   title: string;
   detail: string;
 } {
-  if (status?.platform_rule?.enabled) {
+  const rule = status?.platform_rule;
+  if (rule?.enabled && (rule.verification_mode ?? "active") === "staged") {
+    return {
+      tone: "warning",
+      title: "Automatic matching is staged",
+      detail:
+        "Every verification layer runs and the result is recorded, but nothing is settled automatically. Use this to prove the rules on live payments before switching to active.",
+    };
+  }
+  if (rule?.enabled) {
     return {
       tone: "success",
       title: "Automatic matching is on",
       detail:
-        "A cash in is approved automatically only when a real GCash notification from the paired phone on the shop's receiving account matches the sending number and the exact amount, and the payment reference has never been used. The customer may pay before or after submitting. GCash itself is never contacted.",
+        "A cash in is approved automatically only when a real GCash notification from a paired phone monitoring that shop's own receiving account matches the sending number and the exact amount, and the payment reference has never been used. The customer may pay before or after submitting. GCash itself is never contacted.",
     };
   }
   return {
@@ -277,6 +286,8 @@ export async function setCashInAutoApproval(input: {
   maxAmount?: number | null;
   expectedAmount?: number | null;
   requireListener?: boolean;
+  requireReceipt?: boolean;
+  verificationMode?: VerificationMode;
 }): Promise<void> {
   // The RPC treats a null shop as "platform default"; a null max/expected
   // amount means "no ceiling" / "any amount".
@@ -286,12 +297,15 @@ export async function setCashInAutoApproval(input: {
     _tolerance: input.tolerance ?? 0,
     _max_amount: input.maxAmount ?? null,
     _expected_amount: input.expectedAmount ?? null,
-    _require_listener: input.requireListener ?? false,
+    _require_listener: input.requireListener ?? true,
+    _require_receipt: input.requireReceipt ?? true,
+    _verification_mode: input.verificationMode ?? "active",
   } as unknown as Parameters<typeof supabase.rpc<"set_cash_in_auto_approval">>[1];
   const { error } = await supabase.rpc("set_cash_in_auto_approval", args);
 
   if (error) throw new Error(error.message);
 }
+
 
 /** The receiving GCash number configured for a shop (admins / platform owner). */
 export async function fetchShopCashInNumber(ecosystemId: string): Promise<string | null> {
