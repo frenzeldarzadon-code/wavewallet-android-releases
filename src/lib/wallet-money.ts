@@ -302,6 +302,27 @@ export async function deletePaymentMethod(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+/**
+ * Where the cash comes from.
+ * `admin`      — the shop admin hands over the cash; a straight 1:1 credit
+ *                transfer inside the shop with no fee.
+ * `superadmin` — the platform pays out; the configurable fee applies and the
+ *                credits leave the shop for good.
+ */
+export type CashOutPath = "admin" | "superadmin";
+
+export const CASH_OUT_PATHS: { value: CashOutPath; label: string; hint: string }[] = [
+  { value: "admin", label: "My shop admin", hint: "Settled by your shop admin. No fee." },
+  { value: "superadmin", label: "Platform cash out", hint: "Paid out by the platform. A cash out fee applies." },
+];
+
+export const cashOutPathLabel = (p?: string | null) =>
+  CASH_OUT_PATHS.find((x) => x.value === p)?.label ?? "Platform cash out";
+
+/** Fee only ever applies to the platform cash out path. */
+export const cashOutFeePercent = (path: CashOutPath, s: MoneySettings) =>
+  path === "admin" ? 0 : s.feePercent;
+
 export async function requestWithdrawal(input: {
   credits: number;
   mode: PaymentMode;
@@ -309,6 +330,7 @@ export async function requestWithdrawal(input: {
   accountNumber?: string | null;
   notes?: string | null;
   requestKey: string;
+  path?: CashOutPath;
 }): Promise<WithdrawalRequest> {
   const { data, error } = await supabase.rpc("request_withdrawal", rpcArgs({
     _credits: input.credits,
@@ -317,9 +339,24 @@ export async function requestWithdrawal(input: {
     _account_number: input.accountNumber ?? undefined,
     _notes: input.notes ?? undefined,
     _request_key: input.requestKey,
-  }));
+    _cashout_path: input.path ?? "superadmin",
+  }) as never);
   if (error) throw new Error(error.message);
   return data as unknown as WithdrawalRequest;
+}
+
+/** The shop admin settles (or denies) a cash out paid from their own pocket. */
+export async function reviewAdminCashout(
+  id: string,
+  action: "approve" | "reject",
+  reason?: string | null,
+): Promise<void> {
+  const { error } = await supabase.rpc("review_admin_cashout", rpcArgs({
+    _id: id,
+    _action: action,
+    _reason: reason ?? undefined,
+  }) as never);
+  if (error) throw new Error(error.message);
 }
 
 export async function cancelWithdrawal(id: string): Promise<void> {
@@ -387,6 +424,65 @@ export async function cashInProofUrl(path?: string | null): Promise<string | nul
   return data.signedUrl;
 }
 
+/**
+ * Who funds the credits.
+ * `platform` — paid into the platform GCash; the platform issues the credits.
+ * `admin`    — paid into the shop admin's own GCash; the admin's own credits
+ *              move to the member 1:1. Nothing is minted.
+ */
+export type CashInFunding = "platform" | "admin";
+
+export const CASH_IN_FUNDINGS: { value: CashInFunding; label: string; hint: string }[] = [
+  { value: "admin", label: "My shop admin's GCash", hint: "Limited by the credits your shop admin has available." },
+  { value: "platform", label: "Platform GCash", hint: "No shop limit." },
+];
+
+export const cashInFundingLabel = (f?: string | null) =>
+  CASH_IN_FUNDINGS.find((x) => x.value === f)?.label ?? "Platform GCash";
+
+/** Spendable funding capacity of the shop admin, in credits. */
+export interface AdminCashInCapacity {
+  adminId: string | null;
+  adminName: string | null;
+  balance: number;
+  reserved: number;
+  available: number;
+}
+
+export const EMPTY_CAPACITY: AdminCashInCapacity = {
+  adminId: null, adminName: null, balance: 0, reserved: 0, available: 0,
+};
+
+/**
+ * The most a member may cash in through the shop admin right now, in pesos.
+ * Credits arrive after the cash in fee, so the peso ceiling is grossed back up.
+ */
+export function maxAdminCashInPhp(capacity: AdminCashInCapacity, s: MoneySettings): number {
+  const available = Math.max(0, Number(capacity.available) || 0);
+  if (available <= 0) return 0;
+  const php = available * (s.phpPerUnit / s.creditsPerUnit);
+  const feePercent = Math.min(Math.max(Number(s.cashInFeePercent) || 0, 0), 99);
+  const gross = php / (1 - feePercent / 100);
+  return Math.floor(round2(gross) * 100) / 100;
+}
+
+export async function fetchAdminCashInCapacity(ecosystemId?: string | null): Promise<AdminCashInCapacity> {
+  if (!ecosystemId) return EMPTY_CAPACITY;
+  const { data, error } = await supabase.rpc("admin_cash_in_capacity", rpcArgs({ _ecosystem: ecosystemId }) as never);
+  if (error) throw new Error(error.message);
+  const row = (Array.isArray(data) ? data[0] : data) as
+    | { admin_id: string | null; admin_name: string | null; balance: number; reserved: number; available: number }
+    | undefined;
+  if (!row) return EMPTY_CAPACITY;
+  return {
+    adminId: row.admin_id ?? null,
+    adminName: row.admin_name ?? null,
+    balance: Number(row.balance) || 0,
+    reserved: Number(row.reserved) || 0,
+    available: Number(row.available) || 0,
+  };
+}
+
 export async function requestCashIn(input: {
   methodId: string;
   amountPhp: number;
@@ -399,6 +495,7 @@ export async function requestCashIn(input: {
   /** Storage path of the payment screenshot (required supporting evidence). */
   proofPath: string;
   requestKey: string;
+  funding?: CashInFunding;
 }): Promise<CashInRequest> {
   const { data, error } = await supabase.rpc("request_cash_in", rpcArgs({
     _method_id: input.methodId,
@@ -408,9 +505,24 @@ export async function requestCashIn(input: {
     _notes: input.notes ?? undefined,
     _proof_path: input.proofPath,
     _request_key: input.requestKey,
+    _funding_source: input.funding ?? "platform",
   }) as never);
   if (error) throw new Error(error.message);
   return data as unknown as CashInRequest;
+}
+
+/** The shop admin confirms (or denies) a cash in paid into their own GCash. */
+export async function reviewAdminCashIn(
+  id: string,
+  action: "approve" | "reject",
+  reason?: string | null,
+): Promise<void> {
+  const { error } = await supabase.rpc("review_admin_cash_in", rpcArgs({
+    _id: id,
+    _action: action,
+    _reason: reason ?? undefined,
+  }) as never);
+  if (error) throw new Error(cashInDecisionError(error.message));
 }
 
 /** What the member is told after submitting — never "GCash verified this". */
@@ -558,6 +670,39 @@ export async function fetchAllCashIns(): Promise<CashInRequest[]> {
   if (error) throw new Error(error.message);
   return data ?? [];
 }
+
+/* ---------------------------------------------------------------------------
+ * Shop admin queues — only the admin's own shop, and only the requests the
+ * admin is responsible for settling out of their own pocket/wallet.
+ * ------------------------------------------------------------------------- */
+
+export async function fetchShopCashouts(ecosystemId?: string | null): Promise<WithdrawalRequest[]> {
+  if (!ecosystemId) return [];
+  const { data, error } = await supabase
+    .from("withdrawal_requests")
+    .select("*")
+    .eq("ecosystem_id", ecosystemId)
+    .eq("cashout_path", "admin")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function fetchShopCashIns(ecosystemId?: string | null): Promise<CashInRequest[]> {
+  if (!ecosystemId) return [];
+  const { data, error } = await supabase
+    .from("cash_in_requests")
+    .select("*")
+    .eq("ecosystem_id", ecosystemId)
+    .eq("funding_source", "admin")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+
 
 export const pendingMoneyCount = (rows: { status: string }[]) =>
   rows.filter((r) => r.status === "pending").length;

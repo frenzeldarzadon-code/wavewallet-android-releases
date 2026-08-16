@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -56,6 +57,17 @@ import {
   validateCashInProof,
   validateWithdrawal,
   WITHDRAWAL_SLA_NOTICE,
+  CASH_IN_FUNDINGS,
+  CASH_OUT_PATHS,
+  cashInFundingLabel,
+  cashOutFeePercent,
+  cashOutPathLabel,
+  EMPTY_CAPACITY,
+  fetchAdminCashInCapacity,
+  maxAdminCashInPhp,
+  type AdminCashInCapacity,
+  type CashInFunding,
+  type CashOutPath,
   type CashInRequest,
   type MoneySettings,
   type PaymentMethod,
@@ -90,12 +102,19 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
   const [cashIns, setCashIns] = useState<CashInRequest[]>([]);
   const [busy, setBusy] = useState(false);
 
+  /**
+   * Only members below the shop admin can be settled by their admin — an admin
+   * (or the platform owner) has no upline inside the shop to hand them cash.
+   */
+  const shopPathsAvailable = account?.role !== "admin" && account?.role !== "super_admin";
+
   // cash out form
   const [credits, setCredits] = useState("");
   const [mode, setMode] = useState<PaymentMode>("ewallet");
   const [accountName, setAccountName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [notes, setNotes] = useState("");
+  const [cashOutPath, setCashOutPath] = useState<CashOutPath>("superadmin");
 
   // cash in form
   const [methodId, setMethodId] = useState<string>("");
@@ -103,18 +122,21 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
   const [payerRef, setPayerRef] = useState("");
   const [payerNumber, setPayerNumber] = useState("");
   const [cashInNotes, setCashInNotes] = useState("");
+  const [funding, setFunding] = useState<CashInFunding>("platform");
+  const [capacity, setCapacity] = useState<AdminCashInCapacity>(EMPTY_CAPACITY);
   /** Required supporting evidence — kept for audit and manual review. */
   const [proofFile, setProofFile] = useState<File | null>(null);
 
   const load = useCallback(async () => {
     if (!userId) return;
-    const [s, p, b, m, w, c] = await Promise.all([
+    const [s, p, b, m, w, c, cap] = await Promise.all([
       fetchMoneySettings(),
       fetchPlatformSettings(),
       fetchCreditBalance(userId, ecosystemDbId),
       fetchPaymentMethods(true).catch(() => []),
       fetchMyWithdrawals(userId).catch(() => []),
       fetchMyCashIns(userId).catch(() => []),
+      fetchAdminCashInCapacity(ecosystemDbId).catch(() => EMPTY_CAPACITY),
     ]);
     setSettings(s);
     setPlatform(p);
@@ -122,6 +144,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
     setMethods(m);
     setWithdrawals(w);
     setCashIns(c);
+    setCapacity(cap);
   }, [userId, ecosystemDbId]);
 
   useEffect(() => {
@@ -129,11 +152,15 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
   }, [load]);
 
   const creditsNum = Number(credits);
+  const feePercent = cashOutFeePercent(cashOutPath, settings);
   const quote = useMemo(() => quoteWithdrawal(creditsNum || 0, settings), [creditsNum, settings]);
   const cashInQuote = useMemo(
     () => quoteCashInBreakdown(Number(amount) || 0, settings),
     [amount, settings],
   );
+  /** Highest peso amount the shop admin can still fund right now. */
+  const adminMaxPhp = useMemo(() => maxAdminCashInPhp(capacity, settings), [capacity, settings]);
+  const canUseAdminFunding = shopPathsAvailable && Boolean(capacity.adminId);
   const needsAccount = PAYMENT_MODES.find((m) => m.value === mode)?.needsAccount ?? false;
 
   if (!account) return null;
@@ -147,9 +174,13 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
       toast.error(problem);
       return;
     }
+    const payoutLine =
+      cashOutPath === "admin"
+        ? `No fee · your shop admin hands you ${creditsNum.toLocaleString()} credits worth of cash.`
+        : `Cash out fee ${feePercent}% · you receive ${creditsAfterFee(creditsNum, feePercent).toLocaleString()} credits worth of payout.`;
     if (
       !window.confirm(
-        `Cash out ${creditsNum.toLocaleString()} credits?\n\nWithdrawal fee ${quote.feePercent}% · you receive ${creditsAfterFee(creditsNum, quote.feePercent).toLocaleString()} credits worth of payout.\n\n${WITHDRAWAL_SLA_NOTICE}`,
+        `Cash out ${creditsNum.toLocaleString()} credits via ${cashOutPathLabel(cashOutPath)}?\n\n${payoutLine}\n\n${WITHDRAWAL_SLA_NOTICE}`,
       )
     ) {
       return;
@@ -163,8 +194,13 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
         accountNumber: needsAccount ? accountNumber : null,
         notes,
         requestKey: newKey(),
+        path: cashOutPath,
       });
-      toast.success("Cash out request submitted for platform owner review.");
+      toast.success(
+        cashOutPath === "admin"
+          ? "Cash out request submitted for your shop admin to settle."
+          : "Cash out request submitted for platform owner review.",
+      );
       setCredits("");
       setNotes("");
       await load();
@@ -190,6 +226,11 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
       toast.error(badImage);
       return;
     }
+    // The server re-checks this under a lock; this is only a friendlier warning.
+    if (funding === "admin" && Number(amount) > adminMaxPhp) {
+      toast.error(`Your shop admin can only fund up to ${peso(adminMaxPhp)} right now.`);
+      return;
+    }
     setBusy(true);
     let uploadedPath: string | null = null;
     try {
@@ -208,6 +249,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
         notes: cashInNotes,
         proofPath: uploadedPath,
         requestKey: newKey(),
+        funding,
       });
       // Secondary check: read the reference off the uploaded receipt. Automatic
       // approval stays blocked until this agrees with what was typed, and a
@@ -285,6 +327,30 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              {shopPathsAvailable ? (
+                <div className="space-y-1.5">
+                  <Label>Who settles this cash out</Label>
+                  <RadioGroup
+                    value={cashOutPath}
+                    onValueChange={(v) => setCashOutPath(v as CashOutPath)}
+                    className="gap-2"
+                  >
+                    {CASH_OUT_PATHS.map((p) => (
+                      <label
+                        key={p.value}
+                        htmlFor={`wd-path-${p.value}`}
+                        className="flex cursor-pointer items-start gap-2 rounded-lg border border-border p-3 text-xs"
+                      >
+                        <RadioGroupItem id={`wd-path-${p.value}`} value={p.value} className="mt-0.5" />
+                        <span>
+                          <span className="block text-sm font-medium">{p.label}</span>
+                          <span className="text-muted-foreground">{p.hint}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </RadioGroup>
+                </div>
+              ) : null}
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="wd-credits">Credits to cash out</Label>
@@ -337,17 +403,32 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
 
               <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs">
                 <p className="font-medium">
-                  {(creditsNum || 0).toLocaleString()} credits requested
+                  {(creditsNum || 0).toLocaleString()} credits requested · {cashOutPathLabel(cashOutPath)}
                 </p>
                 <p className="text-muted-foreground">
-                  Fee {quote.feePercent}% · you receive{" "}
-                  <span className="font-semibold text-foreground">
-                    {creditsAfterFee(creditsNum || 0, quote.feePercent).toLocaleString()} credits
-                  </span>{" "}
-                  worth of payout
+                  {cashOutPath === "admin" ? (
+                    <>
+                      No fee · your shop admin hands you{" "}
+                      <span className="font-semibold text-foreground">
+                        {(creditsNum || 0).toLocaleString()} credits
+                      </span>{" "}
+                      worth of cash
+                    </>
+                  ) : (
+                    <>
+                      Fee {feePercent}% · you receive{" "}
+                      <span className="font-semibold text-foreground">
+                        {creditsAfterFee(creditsNum || 0, feePercent).toLocaleString()} credits
+                      </span>{" "}
+                      worth of payout
+                    </>
+                  )}
                 </p>
                 <p className="mt-1 flex items-start gap-1 text-muted-foreground">
-                  <Info className="mt-0.5 size-3 shrink-0" /> {WITHDRAWAL_SLA_NOTICE}
+                  <Info className="mt-0.5 size-3 shrink-0" />{" "}
+                  {cashOutPath === "admin"
+                    ? "Your shop admin reviews and settles this personally. Your credits are held until they approve it."
+                    : WITHDRAWAL_SLA_NOTICE}
                 </p>
               </div>
 
@@ -443,6 +524,34 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                 />
               ) : (
                 <>
+                  {canUseAdminFunding ? (
+                    <div className="space-y-1.5">
+                      <Label>Who you paid</Label>
+                      <RadioGroup
+                        value={funding}
+                        onValueChange={(v) => setFunding(v as CashInFunding)}
+                        className="gap-2"
+                      >
+                        {CASH_IN_FUNDINGS.map((f) => (
+                          <label
+                            key={f.value}
+                            htmlFor={`ci-funding-${f.value}`}
+                            className="flex cursor-pointer items-start gap-2 rounded-lg border border-border p-3 text-xs"
+                          >
+                            <RadioGroupItem id={`ci-funding-${f.value}`} value={f.value} className="mt-0.5" />
+                            <span>
+                              <span className="block text-sm font-medium">{f.label}</span>
+                              <span className="text-muted-foreground">
+                                {f.value === "admin"
+                                  ? `Up to ${peso(adminMaxPhp)} right now${capacity.adminName ? ` · ${capacity.adminName}` : ""}`
+                                  : f.hint}
+                              </span>
+                            </span>
+                          </label>
+                        ))}
+                      </RadioGroup>
+                    </div>
+                  ) : null}
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-1.5">
                       <Label htmlFor="ci-method">Payment method</Label>

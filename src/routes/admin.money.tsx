@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MoneyPage } from "@/components/money/money-page";
+import { ShopAdminQueue } from "@/components/money/shop-admin-queue";
 
 export const Route = createFileRoute("/admin/money")({
   head: () => ({
@@ -19,5 +20,10 @@ export const Route = createFileRoute("/admin/money")({
 
 function AdminMoney() {
   const { tab } = Route.useSearch();
-  return <MoneyPage initialTab={tab ?? "out"} />;
+  return (
+    <>
+      <ShopAdminQueue />
+      <MoneyPage initialTab={tab ?? "out"} />
+    </>
+  );
 }
