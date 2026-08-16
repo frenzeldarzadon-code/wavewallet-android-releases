@@ -65,7 +65,7 @@ export function WalletIntegrityCard() {
 
               {totals && !summary.ok && (
                 <p className="text-sm">
-                  Unaccounted: <span className="font-medium">{peso(totals.credits)}</span> credits,{" "}
+                  Unaccounted: <span className="font-medium">{peso(totals.credits)}</span> coins,{" "}
                   <span className="font-medium">{totals.points}</span> points.
                 </p>
               )}
