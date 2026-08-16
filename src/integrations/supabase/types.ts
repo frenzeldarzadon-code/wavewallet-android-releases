@@ -6231,6 +6231,68 @@ export type Database = {
         Args: { _reason: string; _sale_id: string }
         Returns: string
       }
+      review_admin_cash_in: {
+        Args: { _action: string; _id: string; _reason?: string }
+        Returns: {
+          amount_php: number
+          approval_method: string
+          auto_match_note: string | null
+          created_at: string
+          credits: number
+          decision_reason: string | null
+          duplicate_of: string | null
+          duplicate_reference: boolean
+          ecosystem_id: string | null
+          fee_percent: number
+          fee_php: number
+          funding_account_id: string | null
+          funding_admin_id: string | null
+          funding_ledger_id: string | null
+          funding_source: string
+          id: string
+          ledger_id: string | null
+          listener_event_id: string | null
+          method_details: Json
+          method_id: string | null
+          method_name: string
+          method_type: string
+          net_php: number | null
+          notes: string | null
+          payer_number: string | null
+          payer_number_key: string | null
+          payer_reference: string | null
+          payer_reference_key: string | null
+          proof_path: string | null
+          rate_credits: number
+          rate_php: number
+          receipt_amount_php: number | null
+          receipt_check: string
+          receipt_checked_at: string | null
+          receipt_details: Json | null
+          receipt_reference: string | null
+          receipt_reference_key: string | null
+          receipt_sender_number: string | null
+          reference: string
+          request_key: string | null
+          requester_name: string
+          requester_role: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_name: string | null
+          sender_number: string | null
+          sender_number_key: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          verified_payment_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cash_in_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       review_admin_cashout: {
         Args: { _action: string; _id: string; _reason?: string }
         Returns: {
