@@ -101,12 +101,19 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
   const [cashIns, setCashIns] = useState<CashInRequest[]>([]);
   const [busy, setBusy] = useState(false);
 
+  /**
+   * Only members below the shop admin can be settled by their admin — an admin
+   * (or the platform owner) has no upline inside the shop to hand them cash.
+   */
+  const shopPathsAvailable = account?.role !== "admin" && account?.role !== "super_admin";
+
   // cash out form
   const [credits, setCredits] = useState("");
   const [mode, setMode] = useState<PaymentMode>("ewallet");
   const [accountName, setAccountName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [notes, setNotes] = useState("");
+  const [cashOutPath, setCashOutPath] = useState<CashOutPath>("superadmin");
 
   // cash in form
   const [methodId, setMethodId] = useState<string>("");
@@ -114,18 +121,21 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
   const [payerRef, setPayerRef] = useState("");
   const [payerNumber, setPayerNumber] = useState("");
   const [cashInNotes, setCashInNotes] = useState("");
+  const [funding, setFunding] = useState<CashInFunding>("platform");
+  const [capacity, setCapacity] = useState<AdminCashInCapacity>(EMPTY_CAPACITY);
   /** Required supporting evidence — kept for audit and manual review. */
   const [proofFile, setProofFile] = useState<File | null>(null);
 
   const load = useCallback(async () => {
     if (!userId) return;
-    const [s, p, b, m, w, c] = await Promise.all([
+    const [s, p, b, m, w, c, cap] = await Promise.all([
       fetchMoneySettings(),
       fetchPlatformSettings(),
       fetchCreditBalance(userId, ecosystemDbId),
       fetchPaymentMethods(true).catch(() => []),
       fetchMyWithdrawals(userId).catch(() => []),
       fetchMyCashIns(userId).catch(() => []),
+      fetchAdminCashInCapacity(ecosystemDbId).catch(() => EMPTY_CAPACITY),
     ]);
     setSettings(s);
     setPlatform(p);
@@ -133,6 +143,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
     setMethods(m);
     setWithdrawals(w);
     setCashIns(c);
+    setCapacity(cap);
   }, [userId, ecosystemDbId]);
 
   useEffect(() => {
@@ -140,11 +151,15 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
   }, [load]);
 
   const creditsNum = Number(credits);
+  const feePercent = cashOutFeePercent(cashOutPath, settings);
   const quote = useMemo(() => quoteWithdrawal(creditsNum || 0, settings), [creditsNum, settings]);
   const cashInQuote = useMemo(
     () => quoteCashInBreakdown(Number(amount) || 0, settings),
     [amount, settings],
   );
+  /** Highest peso amount the shop admin can still fund right now. */
+  const adminMaxPhp = useMemo(() => maxAdminCashInPhp(capacity, settings), [capacity, settings]);
+  const canUseAdminFunding = shopPathsAvailable && Boolean(capacity.adminId);
   const needsAccount = PAYMENT_MODES.find((m) => m.value === mode)?.needsAccount ?? false;
 
   if (!account) return null;
