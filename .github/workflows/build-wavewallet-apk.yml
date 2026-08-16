@@ -12,6 +12,11 @@ on:
       - "android-app/**"
       - ".github/workflows/build-wavewallet-apk.yml"
   workflow_dispatch:
+    inputs:
+      environment_name:
+        description: "Leave EMPTY if the four WW_APP_* secrets are repository secrets. Set it only if they were added under Settings > Environments (type the environment name exactly)."
+        required: false
+        default: ""
 
 env:
   WORKING_DIR: android-app
@@ -68,29 +73,43 @@ jobs:
     needs: build
     if: ${{ github.event_name == 'workflow_dispatch' }}
     timeout-minutes: 45
+    # Empty string => repository secrets. A name => that environment's secrets.
+    environment: ${{ inputs.environment_name }}
+    # Job-level mapping: every step reads these env vars instead of re-evaluating
+    # the secrets context, so all four secrets are resolved once, consistently.
+    env:
+      WW_APP_KEYSTORE_BASE64: ${{ secrets.WW_APP_KEYSTORE_BASE64 }}
+      WW_APP_KEYSTORE_PASSWORD: ${{ secrets.WW_APP_KEYSTORE_PASSWORD }}
+      WW_APP_KEY_ALIAS: ${{ secrets.WW_APP_KEY_ALIAS }}
+      WW_APP_KEY_PASSWORD: ${{ secrets.WW_APP_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Check for signing credentials
         id: creds
         shell: bash
-        env:
-          KEYSTORE_B64: ${{ secrets.WW_APP_KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.WW_APP_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.WW_APP_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.WW_APP_KEY_PASSWORD }}
         run: |
+          # Presence + length only. No secret value is ever printed.
+          report() { printf '%-26s present=%s length=%s\n' "$1" "$2" "$3"; }
           missing=""
-          [ -n "$KEYSTORE_B64" ]     || missing="$missing WW_APP_KEYSTORE_BASE64"
-          [ -n "$KEYSTORE_PASSWORD" ]|| missing="$missing WW_APP_KEYSTORE_PASSWORD"
-          [ -n "$KEY_ALIAS" ]        || missing="$missing WW_APP_KEY_ALIAS"
-          [ -n "$KEY_PASSWORD" ]     || missing="$missing WW_APP_KEY_PASSWORD"
+          for name in WW_APP_KEYSTORE_BASE64 WW_APP_KEYSTORE_PASSWORD WW_APP_KEY_ALIAS WW_APP_KEY_PASSWORD; do
+            value="${!name-}"
+            if [ -n "$value" ]; then
+              report "$name" yes "${#value}"
+            else
+              report "$name" no 0
+              missing="$missing $name"
+            fi
+          done
           if [ -n "$missing" ]; then
-            echo "::error::Missing signing secret(s):$missing"
+            {
+              echo "::error::Missing signing secret(s):$missing"
+              echo "::error::The job resolved secrets from: ${GITHUB_REF_NAME} / environment='${{ inputs.environment_name }}'."
+              echo "::error::If the secrets were added under Settings > Environments, re-run this workflow and type that environment name in the 'environment_name' input. If they are repository secrets, confirm they were added to THIS repository (not the org or a fork) with these exact upper-case names."
+            }
             exit 1
           fi
           echo "available=true" >> "$GITHUB_OUTPUT"
-
 
       - name: Set up JDK 17
         if: steps.creds.outputs.available == 'true'
@@ -108,23 +127,19 @@ jobs:
       - name: Restore the keystore from the secret
         if: steps.creds.outputs.available == 'true'
         shell: bash
-        env:
-          KEYSTORE_B64: ${{ secrets.WW_APP_KEYSTORE_BASE64 }}
         run: |
           install -d -m 700 "$RUNNER_TEMP/signing"
-          printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/signing/wavewallet-release.jks"
+          # tolerate wrapped/newline-containing base64 produced by Windows tools
+          printf '%s' "$WW_APP_KEYSTORE_BASE64" | tr -d '\r\n \t' | base64 -d > "$RUNNER_TEMP/signing/wavewallet-release.jks"
           chmod 600 "$RUNNER_TEMP/signing/wavewallet-release.jks"
 
       - name: Verify the keystore contains the expected alias
         if: steps.creds.outputs.available == 'true'
         shell: bash
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.WW_APP_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.WW_APP_KEY_ALIAS }}
         run: |
           set -euo pipefail
           if ! keytool -list -keystore "$RUNNER_TEMP/signing/wavewallet-release.jks" \
-              -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" > /dev/null 2>&1; then
+              -storepass "$WW_APP_KEYSTORE_PASSWORD" -alias "$WW_APP_KEY_ALIAS" > /dev/null 2>&1; then
             echo "::error::The keystore does not contain the alias supplied in WW_APP_KEY_ALIAS."
             exit 1
           fi
@@ -137,9 +152,6 @@ jobs:
         working-directory: ${{ env.WORKING_DIR }}
         env:
           WW_APP_KEYSTORE: ${{ runner.temp }}/signing/wavewallet-release.jks
-          WW_APP_KEYSTORE_PASSWORD: ${{ secrets.WW_APP_KEYSTORE_PASSWORD }}
-          WW_APP_KEY_ALIAS: ${{ secrets.WW_APP_KEY_ALIAS }}
-          WW_APP_KEY_PASSWORD: ${{ secrets.WW_APP_KEY_PASSWORD }}
         run: |
           chmod +x ./gradlew
           ./gradlew assembleRelease --stacktrace
