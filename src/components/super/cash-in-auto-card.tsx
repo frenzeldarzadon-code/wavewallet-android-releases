@@ -67,8 +67,11 @@ export function CashInAutoCard() {
         tolerance: next.amount_tolerance_php,
         maxAmount: next.max_auto_amount_php,
         expectedAmount: next.expected_amount_php,
-        requireListener: next.require_listener_match ?? false,
+        requireListener: next.require_listener_match ?? true,
+        requireReceipt: next.require_receipt_match ?? true,
+        verificationMode: next.verification_mode ?? "staged",
       });
+
       setRule(next);
       toast.success(
         next.enabled
