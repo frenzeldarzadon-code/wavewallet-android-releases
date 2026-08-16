@@ -350,6 +350,12 @@ export function summariseCreditFlow(entries: CreditEntry[]): CreditFlowSummary {
       out.withdrawalReturned += e.amount;
       continue;
     }
+    // Shop cash out: the requester's held credits move to the shop admin 1:1.
+    // Nothing is minted and nothing leaves the shop.
+    if (kind === "admin_cashout_settlement") {
+      out.adminCashoutSettled += e.amount;
+      continue;
+    }
     if (kind === "sale_commission" || kind === "upline_commission") {
       if (e.direction === "credit") {
         if (kind === "upline_commission") out.uplinePaid += e.amount;
