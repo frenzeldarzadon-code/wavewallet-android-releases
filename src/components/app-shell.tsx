@@ -21,6 +21,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EcosystemSwitcher } from "@/components/ecosystem-switcher";
 import { SuperAdminBadge } from "@/components/role-badge";
+import { ReviewBanner } from "@/components/review-banner";
 
 
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -155,6 +156,7 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
           Demo / preview environment — sample data only, not live customer data
         </div>
       ) : null}
+      <ReviewBanner />
       {session.actingAs ? (
         <div className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-2 bg-destructive px-4 py-2 text-destructive-foreground">
           <div className="flex items-center gap-2 text-xs font-semibold sm:text-sm">
