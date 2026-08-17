@@ -147,6 +147,7 @@ describe("admin catalog filtering", () => {
     size_label: "55 g",
     unit: "piece",
     wholesale_price: 8,
+    wholesale_min_qty: 12,
     sku: null,
     barcode: null,
     published: true,
