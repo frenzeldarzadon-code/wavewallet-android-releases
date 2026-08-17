@@ -120,10 +120,6 @@ export type UnmatchedListenerEvent = {
   }[];
 };
 
-const rpc = supabase.rpc as unknown as (
-  fn: string,
-  args?: Record<string, unknown>,
-) => Promise<{ data: unknown; error: { message: string } | null }>;
 
 /** Received payments waiting for a human to attach them to a Cash In. */
 export async function fetchUnmatchedListenerEvents(): Promise<UnmatchedListenerEvent[]> {
