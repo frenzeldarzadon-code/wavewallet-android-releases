@@ -1,11 +1,17 @@
 /**
- * Pending signup applications for approvers.
+ * New members review list.
  *
- * Visible to Super Admin (all shops) and to a shop's Admin / Reseller /
- * Subreseller (their shop only). The list itself is limited by row-level
- * security, and every approve/reject is re-authorized in the database.
+ * Joining a shop is automatic: the database activates the membership and opens
+ * the wallets straight away. This screen is the AFTER-THE-FACT review — the
+ * shop admin either keeps the new member or removes them from THIS shop only.
+ *
+ * The one exception the database enforces (and this screen only reports) is a
+ * person who already holds coins in the shop: that join is held for manual
+ * review instead of being activated automatically. Removing a member never
+ * touches their coins, history, lineage or their memberships in other shops —
+ * the database refuses a removal while coins remain.
  */
-import { CheckCircle2, RefreshCw, UserPlus, XCircle } from "lucide-react";
+import { RefreshCw, UserCheck, UserMinus, UserPlus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -29,9 +35,11 @@ import {
 } from "@/components/ui/select";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import {
-  applicationTone,
+  REVIEW_LABEL,
   fetchApplications,
   reviewApplication,
+  reviewState,
+  reviewTone,
   type ApplicationStatus,
   type MembershipApplication,
 } from "@/lib/membership-applications";
@@ -40,8 +48,8 @@ import { shortDateTime } from "@/lib/wavewallet";
 export function ApplicationsPanel({
   ecosystemId,
   showEcosystem = false,
-  title = "Signup applications",
-  description = "New members who chose your shop. They cannot enter until approved.",
+  title = "New members",
+  description = "Members who joined your shop automatically. Review them here — they are already active.",
 }: {
   /** Scope to a single shop. Super Admin passes null to see every shop. */
   ecosystemId?: string | null;
@@ -53,7 +61,7 @@ export function ApplicationsPanel({
   const [status, setStatus] = useState<ApplicationStatus | "all">("pending");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
-  const [reject, setReject] = useState<MembershipApplication | null>(null);
+  const [remove, setRemove] = useState<MembershipApplication | null>(null);
   const [reason, setReason] = useState("");
 
   const load = useCallback(async () => {
@@ -61,7 +69,7 @@ export function ApplicationsPanel({
     try {
       setRows(await fetchApplications({ ecosystemId: ecosystemId ?? null, status }));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not load applications.");
+      toast.error(e instanceof Error ? e.message : "Could not load new members.");
     } finally {
       setLoading(false);
     }
@@ -71,16 +79,16 @@ export function ApplicationsPanel({
     void load();
   }, [load]);
 
-  const decide = async (row: MembershipApplication, approve: boolean, why?: string) => {
+  const decide = async (row: MembershipApplication, keep: boolean, why?: string) => {
     setBusy(row.id);
     try {
-      await reviewApplication(row.id, approve, why);
+      await reviewApplication(row.id, keep, why);
       toast.success(
-        approve
-          ? `${row.full_name || row.email} can now enter the shop.`
-          : `${row.full_name || row.email} was rejected.`,
+        keep
+          ? `${row.full_name || row.email} stays a member of this shop.`
+          : `${row.full_name || row.email} was removed from this shop only.`,
       );
-      setReject(null);
+      setRemove(null);
       setReason("");
       await load();
     } catch (e) {
@@ -90,7 +98,7 @@ export function ApplicationsPanel({
     }
   };
 
-  const pendingCount = rows.filter((r) => r.status === "pending").length;
+  const openCount = rows.filter((r) => r.status === "pending").length;
 
   return (
     <PageSection
@@ -99,13 +107,13 @@ export function ApplicationsPanel({
       action={
         <div className="flex items-center gap-2">
           <Select value={status} onValueChange={(v) => setStatus(v as ApplicationStatus | "all")}>
-            <SelectTrigger className="h-9 w-[140px]">
+            <SelectTrigger className="h-9 w-[150px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="pending">To review</SelectItem>
+              <SelectItem value="approved">Kept</SelectItem>
+              <SelectItem value="rejected">Removed</SelectItem>
               <SelectItem value="all">All</SelectItem>
             </SelectContent>
           </Select>
@@ -115,108 +123,122 @@ export function ApplicationsPanel({
         </div>
       }
     >
-      {status === "pending" && pendingCount > 0 ? (
-        <p className="mb-3 flex items-center gap-1.5 text-xs font-medium text-warning-foreground">
+      {status === "pending" && openCount > 0 ? (
+        <p className="mb-3 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
           <UserPlus className="size-3.5" />
-          {pendingCount} applicant{pendingCount === 1 ? "" : "s"} waiting for approval
+          {openCount} new member{openCount === 1 ? "" : "s"} to review — they already have access
         </p>
       ) : null}
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading applications…</p>
+        <p className="text-sm text-muted-foreground">Loading new members…</p>
       ) : rows.length === 0 ? (
         <EmptyState
-          title="Nothing here"
-          description="No signup applications match this filter."
+          title="No new members"
+          description="Members who join this shop appear here for review right after they join."
         />
       ) : (
         <div className="grid gap-3">
-          {rows.map((row) => (
-            <Card key={row.id} className="shadow-[var(--shadow-card)]">
-              <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="truncate text-sm font-semibold">
-                      {row.full_name || "Unnamed applicant"}
+          {rows.map((row) => {
+            const state = reviewState(row);
+            return (
+              <Card key={row.id} className="shadow-[var(--shadow-card)]">
+                <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="truncate text-sm font-semibold">
+                        {row.full_name || "Unnamed member"}
+                      </p>
+                      <StatusBadge tone={reviewTone(state)}>{REVIEW_LABEL[state]}</StatusBadge>
+                      {showEcosystem && row.ecosystemName ? (
+                        <StatusBadge tone="brand">{row.ecosystemName}</StatusBadge>
+                      ) : null}
+                    </div>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {row.email}
+                      {row.phone ? ` · ${row.phone}` : ""}
                     </p>
-                    <StatusBadge tone={applicationTone(row.status)}>{row.status}</StatusBadge>
-                    {showEcosystem && row.ecosystemName ? (
-                      <StatusBadge tone="brand">{row.ecosystemName}</StatusBadge>
+                    <p className="text-[11px] text-muted-foreground">
+                      Joined {shortDateTime(row.created_at)}
+                      {row.decided_at
+                        ? ` · ${state === "kept" ? "kept" : "removed"} by ${
+                            row.decider_name ?? "—"
+                          }${row.decider_role ? ` (${row.decider_role})` : ""} on ${shortDateTime(
+                            row.decided_at,
+                          )}`
+                        : ""}
+                    </p>
+                    {state === "manual_review" ? (
+                      <p className="mt-1 text-xs text-warning-foreground">
+                        Held for manual review: this person already has coins in this shop, so the
+                        automatic join does not apply.
+                      </p>
+                    ) : row.decision_reason ? (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Note: {row.decision_reason}
+                      </p>
                     ) : null}
                   </div>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {row.email}
-                    {row.phone ? ` · ${row.phone}` : ""}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Applied {shortDateTime(row.created_at)}
-                    {row.decided_at
-                      ? ` · ${row.status} by ${row.decider_name ?? "—"}${
-                          row.decider_role ? ` (${row.decider_role})` : ""
-                        } on ${shortDateTime(row.decided_at)}`
-                      : ""}
-                  </p>
-                  {row.decision_reason ? (
-                    <p className="mt-1 text-xs text-destructive">Reason: {row.decision_reason}</p>
-                  ) : null}
-                </div>
 
-                {row.status === "pending" ? (
-                  <div className="flex shrink-0 gap-2">
-                    <Button
-                      size="sm"
-                      disabled={busy === row.id}
-                      onClick={() => void decide(row, true)}
-                    >
-                      <CheckCircle2 className="size-4" /> Approve
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={busy === row.id}
-                      onClick={() => {
-                        setReason("");
-                        setReject(row);
-                      }}
-                    >
-                      <XCircle className="size-4" /> Reject
-                    </Button>
-                  </div>
-                ) : null}
-              </CardContent>
-            </Card>
-          ))}
+                  {row.status === "pending" ? (
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        disabled={busy === row.id}
+                        onClick={() => void decide(row, true)}
+                      >
+                        <UserCheck className="size-4" /> Keep member
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={busy === row.id}
+                        onClick={() => {
+                          setReason("");
+                          setRemove(row);
+                        }}
+                      >
+                        <UserMinus className="size-4" /> Remove member
+                      </Button>
+                    </div>
+                  ) : null}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
-      <Dialog open={reject !== null} onOpenChange={(o) => !o && setReject(null)}>
+      <Dialog open={remove !== null} onOpenChange={(o) => !o && setRemove(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reject application</DialogTitle>
+            <DialogTitle>Remove member from this shop?</DialogTitle>
             <DialogDescription>
-              {reject?.full_name || reject?.email} will not be able to enter the shop. The reason is
-              optional and is stored in the audit trail.
+              {remove?.full_name || remove?.email} loses access to this shop only. Their coins,
+              points, history and their memberships in other shops are never touched, and a member
+              who still holds coins here cannot be removed until those coins are used or
+              transferred. The reason is optional and is kept in the audit trail.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">
-            <Label htmlFor="reject-reason">Reason (optional)</Label>
+            <Label htmlFor="remove-reason">Reason (optional)</Label>
             <Textarea
-              id="reject-reason"
+              id="remove-reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. Could not verify the mobile number"
+              placeholder="e.g. Joined the wrong shop"
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setReject(null)}>
+            <Button variant="outline" onClick={() => setRemove(null)}>
               Cancel
             </Button>
             <Button
               variant="destructive"
               disabled={busy !== null}
-              onClick={() => reject && void decide(reject, false, reason)}
+              onClick={() => remove && void decide(remove, false, reason)}
             >
-              Reject application
+              Remove from this shop
             </Button>
           </DialogFooter>
         </DialogContent>
