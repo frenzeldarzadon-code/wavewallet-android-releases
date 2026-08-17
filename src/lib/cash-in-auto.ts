@@ -139,10 +139,16 @@ export interface MatchableListenerEvent {
   /** The paired phone is active and has checked in recently. */
   device_online?: boolean;
   /**
-   * The phone that saw this notification monitors the receiving GCash account
-   * this request pays into, and is allowed to serve this shop.
+   * The phone that saw this notification is allowed to serve this shop: it is
+   * either a platform phone or a phone bound to this very shop. This is the
+   * ONE authoritative routing rule.
    */
-  serves_destination?: boolean;
+  serves_shop?: boolean;
+  /**
+   * Informational only. GCash masks or reformats the receiving number, so a
+   * difference here is recorded for audit and never blocks approval.
+   */
+  receiving_number_matches?: boolean;
 }
 
 export interface MatchableRequest {
