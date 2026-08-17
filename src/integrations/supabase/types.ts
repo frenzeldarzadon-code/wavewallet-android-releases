@@ -5388,6 +5388,10 @@ export type Database = {
         Returns: boolean
       }
       can_see_test_shop: { Args: { _ecosystem_id: string }; Returns: boolean }
+      can_view_role: {
+        Args: { _subject: string; _viewer: string }
+        Returns: boolean
+      }
       cancel_cash_in: {
         Args: { _id: string }
         Returns: {
