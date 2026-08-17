@@ -143,7 +143,7 @@ function LoginPage() {
       }
       // Shop membership is separate from having an account. Someone who belongs
       // to no shop still gets the whole Universe — feed, profile, messages and
-      // the shop directory — while any shop application stays pending.
+      // the shop directory — joining a shop later is automatic.
       if (!ctx.ecosystem && ctx.role === "customer") {
         navigate({ to: "/universe", replace: true });
         return;
@@ -188,7 +188,7 @@ function LoginPage() {
       setForm({ name: "", email: "", phone: "", password: "", confirm: "" });
       setAddress(EMPTY_ADDRESS);
       // A new account belongs to no shop, and that is fine: the Universe is open
-      // to everyone straight away. Joining a shop stays a separate, approved step.
+      // to everyone straight away. Joining a shop later is automatic.
       if (needsEmailConfirmation && isRealEmail(form.email)) {
         await supabase.auth.signOut();
         setApplied({ needsEmail: true });
