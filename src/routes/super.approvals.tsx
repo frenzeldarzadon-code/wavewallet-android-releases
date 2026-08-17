@@ -27,7 +27,9 @@ function SuperApprovals() {
   return (
     <>
       <CreditRequestsCard />
+      <UnmatchedPaymentsCard />
       <MoneyRequestsCard />
+
       <ReferenceConflictsCard />
       <ApplicationsPanel
         ecosystemId={null}
