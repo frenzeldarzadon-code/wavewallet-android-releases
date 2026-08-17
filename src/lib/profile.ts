@@ -80,12 +80,20 @@ export interface MyProfile {
   bio: string | null;
   preferences: Json | null;
   joined_at: string;
+  /** Address to barangay level. Street and house number stay optional. */
+  province: string | null;
+  city_municipality: string | null;
+  barangay: string | null;
+  street: string | null;
+  house_number: string | null;
 }
 
 export async function fetchMyProfile(userId: string): Promise<MyProfile | null> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, full_name, handle, avatar_path, email, phone, bio, preferences, joined_at")
+    .select(
+      "id, full_name, handle, avatar_path, email, phone, bio, preferences, joined_at, province, city_municipality, barangay, street, house_number",
+    )
     .eq("id", userId)
     .maybeSingle();
   if (error) throw new Error(error.message);
