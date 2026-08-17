@@ -162,6 +162,12 @@ export interface ProfileUpdate {
   bio?: string | null;
   /** Merged into the stored preferences object by the database. */
   preferences?: Record<string, unknown>;
+  province?: string;
+  cityMunicipality?: string;
+  barangay?: string;
+  /** Optional address parts — an empty string clears them. */
+  street?: string;
+  houseNumber?: string;
 }
 
 export async function updateOwnProfile(update: ProfileUpdate): Promise<void> {
@@ -174,6 +180,13 @@ export async function updateOwnProfile(update: ProfileUpdate): Promise<void> {
     ...(update.clearAvatar ? { _clear_avatar: true } : {}),
     ...(update.bio !== undefined ? { _bio: (update.bio ?? "").trim() } : {}),
     ...(update.preferences !== undefined ? { _preferences: update.preferences as Json } : {}),
+    ...(update.province !== undefined ? { _province: update.province.trim() } : {}),
+    ...(update.cityMunicipality !== undefined
+      ? { _city_municipality: update.cityMunicipality.trim() }
+      : {}),
+    ...(update.barangay !== undefined ? { _barangay: update.barangay.trim() } : {}),
+    ...(update.street !== undefined ? { _street: update.street.trim() } : {}),
+    ...(update.houseNumber !== undefined ? { _house_number: update.houseNumber.trim() } : {}),
   });
   if (error) throw new Error(error.message);
 }
