@@ -4,6 +4,7 @@ import {
   dedupeByShop,
   inboxPendingCount,
   isAlreadyMember,
+  applicationsAwaitingMember,
   pendingApplications,
   redundantInvitations,
   sortByNewest,
@@ -102,13 +103,26 @@ describe("applications section", () => {
     const rows = [app(), app({ ecosystemId: "shop-c", status: "approved" }), app({ ecosystemId: "shop-d", status: "rejected" })];
     expect(pendingApplications(rows)).toHaveLength(1);
   });
+
+  it("separates joins held for manual review from automatic joins", () => {
+    const rows = [
+      app(),
+      app({ ecosystemId: "shop-c", decisionReason: "Manual review required — existing coins" }),
+    ];
+    expect(applicationsAwaitingMember(rows).map((r) => r.ecosystemId)).toEqual(["shop-c"]);
+  });
 });
 
 describe("badge count", () => {
-  it("adds pending applications and actionable invitations", () => {
+  it("counts manual-review joins and actionable invitations, never automatic joins", () => {
+    const held = app({ decisionReason: "Manual review required because of existing coins" });
+    expect(
+      inboxPendingCount({ applications: [held], invitations: [inv()], memberships: [] }, now),
+    ).toBe(2);
+    // An ordinary automatic join is already active — no badge.
     expect(
       inboxPendingCount({ applications: [app()], invitations: [inv()], memberships: [] }, now),
-    ).toBe(2);
+    ).toBe(1);
   });
 
   it("is zero when nothing needs attention", () => {
