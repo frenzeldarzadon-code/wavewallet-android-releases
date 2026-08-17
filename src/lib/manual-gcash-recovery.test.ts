@@ -4,7 +4,7 @@ import { validateManualRecovery, type ManualRecoveryInput } from "./manual-gcash
 const base: ManualRecoveryInput = {
   amountPhp: 1000,
   reference: "9044057598177",
-  receivedAt: "2026-08-17T12:24",
+  receivedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
   receivingNumber: "09171234567",
   senderNumber: "+639752505196",
   senderName: "DO**A RO**F B.",
