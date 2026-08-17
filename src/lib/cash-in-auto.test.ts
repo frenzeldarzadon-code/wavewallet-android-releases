@@ -11,6 +11,7 @@ import {
   type CashInAutoStatus,
   type MatchableRequest,
 } from "./cash-in-auto";
+import { eventResultLabel } from "./listener-devices";
 
 const on: AutoApprovalRule = { ...DEFAULT_AUTO_RULE, enabled: true, require_listener_match: true };
 const RECEIVING = "09541230072";
