@@ -78,7 +78,7 @@ begin
 
   -- C: unreadable notification.
   _res := public.record_listener_event(_device, 'evt-unparsed', 'com.globe.gcash.android',
-                                       'You have a new message', null, null, null, now(), 'v1');
+                                       'You have a new message', null, null, null, now(), 'v1', null);
   if _res->>'outcome' <> 'unparsed' or (_res->>'cash_in_id') is not null then
     raise exception 'C: an unreadable notification must be stored and never match';
   end if;
@@ -87,19 +87,19 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', _uid)::text, true);
   select coalesce(sum(balance), 0) into _before from public.credit_accounts where user_id = _uid;
   _row := public.request_cash_in(_method, 500, 'GC-' || gen_random_uuid()::text, null,
-                                 gen_random_uuid()::text, _uid::text || '/a.jpg', _num);
+                                 gen_random_uuid()::text, _uid::text || '/a.jpg', _sender);
   perform set_config('request.jwt.claims', null, true);
 
   if _row.status = 'approved' then
     -- configured matching already settled it; the listener must then find nothing.
     _res := public.record_listener_event(_device, 'evt-a', 'com.globe.gcash.android',
-                                         'Received PHP 500.00', 500, _sender, 'Juan D', now(), 'v1');
+                                         'Received PHP 500.00', 500, _sender, 'Juan D', now(), 'v1', null);
     if (_res->>'match') <> 'no_pending_match' then
       raise exception 'A: an already-settled cash in must not be matched again (got %)', _res->>'match';
     end if;
   else
     _res := public.record_listener_event(_device, 'evt-a', 'com.globe.gcash.android',
-                                         'Received PHP 500.00', 500, _sender, 'Juan D', now(), 'v1');
+                                         'Received PHP 500.00', 500, _sender, 'Juan D', now(), 'v1', null);
     if (_res->>'cash_in_id')::uuid is distinct from _row.id then
       raise exception 'A: the notification must corroborate the single pending cash in';
     end if;
@@ -108,7 +108,7 @@ begin
   -- B: replaying the same notification is idempotent.
   select coalesce(sum(balance), 0) into _after from public.credit_accounts where user_id = _uid;
   _res := public.record_listener_event(_device, 'evt-a', 'com.globe.gcash.android',
-                                       'Received PHP 500.00', 500, _sender, 'Juan D', now(), 'v1');
+                                       'Received PHP 500.00', 500, _sender, 'Juan D', now(), 'v1', null);
   if (_res->>'duplicate')::boolean is not true then
     raise exception 'B: a repeated event_uid must be reported as a duplicate';
   end if;
@@ -119,13 +119,16 @@ begin
     raise exception 'B: a repeated notification must never credit twice';
   end if;
 
-  -- G/H: listener-required mode.
-  update public.cash_in_auto_rules set require_listener_match = true, expected_amount_php = 700
+  -- G/H: listener-required mode. Receipt reading is off here so the listener
+  -- match is the only remaining check.
+  update public.cash_in_auto_rules
+     set require_listener_match = true, require_receipt_match = false,
+         require_reference_match = false, expected_amount_php = 700
    where ecosystem_id = _eco;
 
   perform set_config('request.jwt.claims', json_build_object('sub', _uid)::text, true);
   _row := public.request_cash_in(_method, 700, 'GC-' || gen_random_uuid()::text, null,
-                                 gen_random_uuid()::text, _uid::text || '/g.jpg', _num);
+                                 gen_random_uuid()::text, _uid::text || '/g.jpg', _sender);
   perform set_config('request.jwt.claims', null, true);
   if _row.status <> 'pending' then
     raise exception 'G: with listener verification required, a cash in must wait (got %)', _row.status;
@@ -143,7 +146,7 @@ begin
   update public.listener_devices set last_seen_at = now() where id = _device;
   _before := (select coalesce(sum(balance), 0) from public.credit_accounts where user_id = _uid);
   _res := public.record_listener_event(_device, 'evt-g', 'com.globe.gcash.android',
-                                       'Received PHP 700.00', 700, _sender, 'Juan D', now(), 'v1');
+                                       'Received PHP 700.00', 700, _sender, 'Juan D', now(), 'v1', null);
   if (_res->>'match') <> 'approved' then
     raise exception 'G: a corroborated cash in must be approved (got %)', _res->>'match';
   end if;
@@ -158,12 +161,12 @@ begin
   update public.cash_in_auto_rules set enabled = false where ecosystem_id = _eco;
   perform set_config('request.jwt.claims', json_build_object('sub', _uid)::text, true);
   _row := public.request_cash_in(_method, 850, 'GC-' || gen_random_uuid()::text, null,
-                                 gen_random_uuid()::text, _uid::text || '/d1.jpg', _num);
+                                 gen_random_uuid()::text, _uid::text || '/d1.jpg', _sender);
   _other := public.request_cash_in(_method, 850, 'GC-' || gen_random_uuid()::text, null,
-                                   gen_random_uuid()::text, _uid::text || '/d2.jpg', _num);
+                                   gen_random_uuid()::text, _uid::text || '/d2.jpg', _sender);
   perform set_config('request.jwt.claims', null, true);
   _res := public.record_listener_event(_device, 'evt-d', 'com.globe.gcash.android',
-                                       'Received PHP 850.00', 850, _sender, 'Juan D', now(), 'v1');
+                                       'Received PHP 850.00', 850, _sender, 'Juan D', now(), 'v1', null);
   if (_res->>'match') <> 'ambiguous' then
     raise exception 'D: two identical pending cash ins must stay ambiguous (got %)', _res->>'match';
   end if;
@@ -177,7 +180,7 @@ begin
          sender_number_key = public.normalize_ph_mobile('09181112222')
    where id in (_row.id, _other.id);
   _res := public.record_listener_event(_device, 'evt-e', 'com.globe.gcash.android',
-                                       'Received PHP 850.00', 850, _sender, 'Juan D', now(), 'v1');
+                                       'Received PHP 850.00', 850, _sender, 'Juan D', now(), 'v1', null);
   if (_res->>'match') <> 'no_pending_match' then
     raise exception 'E: a different sender number must not match (got %)', _res->>'match';
   end if;
@@ -188,7 +191,7 @@ begin
   perform set_config('request.jwt.claims', null, true);
   begin
     _res := public.record_listener_event(_device, 'evt-f', 'com.globe.gcash.android',
-                                         'Received PHP 500.00', 500, _sender, 'Juan D', now(), 'v1');
+                                         'Received PHP 500.00', 500, _sender, 'Juan D', now(), 'v1', null);
     raise exception 'F: a revoked device must be refused';
   exception when others then
     if sqlerrm not like '%revoked%' then raise; end if;

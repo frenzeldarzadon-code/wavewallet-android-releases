@@ -38,6 +38,8 @@ class ListenerClient(private val store: PairingStore) {
         event.amountPhp?.let { body.put("amount_php", it) }
         event.senderNumber?.let { body.put("sender_number", it) }
         event.senderName?.let { body.put("sender_name", it) }
+        event.gcashReference?.let { body.put("gcash_reference", it) }
+
         body.put("raw_text", event.rawText)
         return post(body.toString())
     }

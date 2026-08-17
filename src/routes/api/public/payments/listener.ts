@@ -20,6 +20,8 @@ import {
   timestampWithinSkew,
   timingSafeEqualHex,
 } from "@/lib/listener-signature";
+import { parseGcashNotification } from "@/lib/gcash-notification";
+
 
 const heartbeatSchema = z.object({ kind: z.literal("heartbeat") });
 
@@ -31,9 +33,12 @@ const eventSchema = z.object({
   amount_php: z.number().positive().max(1_000_000).nullable().optional(),
   sender_number: z.string().max(40).nullable().optional(),
   sender_name: z.string().max(160).nullable().optional(),
+  /** GCash reference number, when the phone could read one. */
+  gcash_reference: z.string().max(64).nullable().optional(),
   raw_text: z.string().max(2000).nullable().optional(),
   parser_version: z.string().max(40).optional(),
 });
+
 
 const payloadSchema = z.discriminatedUnion("kind", [heartbeatSchema, eventSchema]);
 
@@ -102,15 +107,26 @@ export const Route = createFileRoute("/api/public/payments/listener")({
           return json({ accepted: true, kind: "heartbeat" });
         }
 
+        // Re-read the raw text server-side: an older phone build may have sent
+        // no amount or no reference. Values the phone did send always win.
+        const reread = parsed.raw_text ? parseGcashNotification(parsed.raw_text) : null;
+
         const args: Record<string, unknown> = {
           _device: deviceId,
           _event_uid: parsed.event_uid,
           _package: parsed.package_name,
         };
+        const amount =
+          typeof parsed.amount_php === "number" ? parsed.amount_php : (reread?.amountPhp ?? null);
+        const reference = parsed.gcash_reference ?? reread?.reference ?? null;
+        const senderNumber = parsed.sender_number ?? reread?.senderNumber ?? null;
+        const senderName = parsed.sender_name ?? reread?.senderName ?? null;
+
         if (parsed.raw_text) args["_raw_text"] = parsed.raw_text;
-        if (typeof parsed.amount_php === "number") args["_amount"] = parsed.amount_php;
-        if (parsed.sender_number) args["_sender_number"] = parsed.sender_number;
-        if (parsed.sender_name) args["_sender_name"] = parsed.sender_name;
+        if (typeof amount === "number") args["_amount"] = amount;
+        if (senderNumber) args["_sender_number"] = senderNumber;
+        if (senderName) args["_sender_name"] = senderName;
+        if (reference) args["_gcash_reference"] = reference;
         if (parsed.posted_at) args["_posted_at"] = parsed.posted_at;
         if (parsed.parser_version) args["_parser_version"] = parsed.parser_version;
 
@@ -121,10 +137,12 @@ export const Route = createFileRoute("/api/public/payments/listener")({
           ) => Promise<{ data: unknown; error: { message: string } | null }>
         )("record_listener_event", args);
 
-
-        if (error) return json({ accepted: false, error: error.message }, 400);
+        // 5xx tells the phone to keep the event queued and retry; the record
+        // call is idempotent, so a retry can never duplicate a payment.
+        if (error) return json({ accepted: false, error: error.message }, 503);
         return json(data);
       },
     },
   },
 });
+

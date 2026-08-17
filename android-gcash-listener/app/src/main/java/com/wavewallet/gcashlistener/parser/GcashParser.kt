@@ -1,25 +1,31 @@
 package com.wavewallet.gcashlistener.parser
 
 /**
- * Versioned parser for GCash "money received" notifications.
+ * Versioned parser for GCash incoming-payment notifications.
  *
  * Safety rules:
- *  - Only the incoming-payment shape is parsed. Anything else is IGNORED.
+ *  - Only incoming-payment shapes are parsed. Anything else is IGNORED.
  *  - Outgoing / sent / cash-out / promo notifications are explicitly rejected.
  *  - When the text looks like an incoming payment but cannot be read
  *    confidently, the result is [Unparsed] — never a guessed amount.
+ *
+ * v2 adds the "Express Send Notification" wording and reads the GCash
+ * reference number as a first-class field so the backend can identify the
+ * exact payment even when no Cash In request exists yet.
  *
  * The parser NEVER decides anything financial; WaveWallet does the matching.
  */
 object GcashParser {
 
     /** Bump when patterns change; sent to the server as `parser_version`. */
-    const val VERSION: String = "gcash-ph-v1"
+    const val VERSION: String = "gcash-ph-v2"
 
     /** Phrases that positively identify an incoming payment. */
     private val INCOMING_MARKERS = listOf(
         Regex("""you\s+have\s+received\s+money\s+in\s+gcash""", RegexOption.IGNORE_CASE),
-        Regex("""you\s+have\s+received\s+php\s*[\d,]+\.\d{2}""", RegexOption.IGNORE_CASE),
+        Regex("""you\s+have\s+received\s+php\s*[\d,]+(?:\.\d{1,2})?""", RegexOption.IGNORE_CASE),
+        Regex("""received\s+php\s*[\d,]+(?:\.\d{1,2})?\s+from""", RegexOption.IGNORE_CASE),
+        Regex("""express\s+send""", RegexOption.IGNORE_CASE),
     )
 
     /** Phrases that mean this is NOT an incoming payment. Checked first. */
@@ -37,12 +43,21 @@ object GcashParser {
         Regex("""gcredit""", RegexOption.IGNORE_CASE),
         Regex("""ginvest""", RegexOption.IGNORE_CASE),
         Regex("""promo|voucher|discount|win\s+up\s+to|limited\s+time""", RegexOption.IGNORE_CASE),
-        Regex("""reminder|verify\s+your|log\s*in""", RegexOption.IGNORE_CASE),
+        Regex("""reminder|verify\s+your""", RegexOption.IGNORE_CASE),
     )
 
     private val AMOUNT = Regex("""received\s+PHP\s*([\d,]+(?:\.\d{1,2})?)""", RegexOption.IGNORE_CASE)
     private val PH_NUMBER = Regex("""(?<!\d)(09\d{9}|639\d{9}|\+639\d{9})(?!\d)""")
-    private val SENDER_SEGMENT = Regex("""\bfrom\s+(.+?)(?:\.\s*$|$)""", RegexOption.IGNORE_CASE)
+    private val REFERENCE = Regex(
+        """\bref(?:erence)?\.?\s*(?:no\.?|number|#)?\s*[:.\-]?\s*([A-Za-z0-9-]{6,32})""",
+        RegexOption.IGNORE_CASE,
+    )
+
+    /** Sender text between "from" and the message / balance / reference tail. */
+    private val SENDER_SEGMENT = Regex(
+        """\bfrom\s+(.+?)(?:\s*(?:w/\s*msg|with\s+msg|your\s+new\s+balance|ref\b|reference\b)|\.?\s*$)""",
+        RegexOption.IGNORE_CASE,
+    )
 
     sealed interface Result {
         /** Not a GCash incoming-payment notification at all — drop it silently. */
@@ -55,6 +70,7 @@ object GcashParser {
             val amountPhp: Double,
             val senderNumber: String?,
             val senderName: String?,
+            val reference: String?,
         ) : Result
     }
 
@@ -63,10 +79,13 @@ object GcashParser {
             .filter { it.isNotEmpty() }
             .joinToString(" ")
             .replace(Regex("""\s+"""), " ")
+            .trim()
         if (body.isEmpty()) return Result.Ignored
 
         if (REJECT_MARKERS.any { it.containsMatchIn(body) }) return Result.Ignored
         if (INCOMING_MARKERS.none { it.containsMatchIn(body) }) return Result.Ignored
+
+        val reference = REFERENCE.find(body)?.groupValues?.get(1)
 
         val amountRaw = AMOUNT.find(body)?.groupValues?.get(1)
             ?: return Result.Unparsed("no amount found in an incoming-payment notification")
@@ -78,6 +97,7 @@ object GcashParser {
         val number = segment?.let { PH_NUMBER.find(it)?.value } ?: PH_NUMBER.find(body)?.value
         val name = segment
             ?.let { if (number != null) it.replace(number, "") else it }
+            ?.replace(Regex("""\s+"""), " ")
             ?.trim()
             ?.trim(',', '.', '-', ' ')
             ?.takeIf { it.isNotEmpty() && it.length <= 160 }
@@ -86,6 +106,7 @@ object GcashParser {
             amountPhp = amount,
             senderNumber = number?.let(::normalizePhMobile),
             senderName = name,
+            reference = reference,
         )
     }
 

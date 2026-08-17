@@ -1966,13 +1966,21 @@ export type Database = {
           created_at: string
           device_id: string
           event_uid: string
+          gcash_reference: string | null
           id: string
+          last_match_attempt_at: string | null
+          match_attempts: number
           match_result: string | null
           outcome: string
           package_name: string | null
           parser_version: string | null
           posted_at: string | null
           raw_text: string | null
+          reference_key: string | null
+          review_note: string | null
+          review_state: string
+          reviewed_at: string | null
+          reviewed_by: string | null
           sender_name: string | null
           sender_number: string | null
           sender_number_key: string | null
@@ -1983,13 +1991,21 @@ export type Database = {
           created_at?: string
           device_id: string
           event_uid: string
+          gcash_reference?: string | null
           id?: string
+          last_match_attempt_at?: string | null
+          match_attempts?: number
           match_result?: string | null
           outcome?: string
           package_name?: string | null
           parser_version?: string | null
           posted_at?: string | null
           raw_text?: string | null
+          reference_key?: string | null
+          review_note?: string | null
+          review_state?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           sender_name?: string | null
           sender_number?: string | null
           sender_number_key?: string | null
@@ -2000,13 +2016,21 @@ export type Database = {
           created_at?: string
           device_id?: string
           event_uid?: string
+          gcash_reference?: string | null
           id?: string
+          last_match_attempt_at?: string | null
+          match_attempts?: number
           match_result?: string | null
           outcome?: string
           package_name?: string | null
           parser_version?: string | null
           posted_at?: string | null
           raw_text?: string | null
+          reference_key?: string | null
+          review_note?: string | null
+          review_state?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           sender_name?: string | null
           sender_number?: string | null
           sender_number_key?: string | null
@@ -5814,6 +5838,10 @@ export type Database = {
         }
         Returns: Json
       }
+      dismiss_listener_event: {
+        Args: { _event: string; _note?: string }
+        Returns: Json
+      }
       dm_messages_for: {
         Args: { _thread_id: string }
         Returns: {
@@ -6048,6 +6076,10 @@ export type Database = {
         }[]
       }
       link_cash_in_listener_event: { Args: { _id: string }; Returns: string }
+      link_listener_event: {
+        Args: { _cash_in: string; _event: string; _note?: string }
+        Returns: Json
+      }
       list_admin_invitations: {
         Args: never
         Returns: {
@@ -6253,6 +6285,7 @@ export type Database = {
         Args: { _device: string; _ecosystem: string; _method: string }
         Returns: boolean
       }
+      listener_unmatched_events: { Args: { _limit?: number }; Returns: Json }
       log_operator_action: {
         Args: {
           _action: string
@@ -6703,6 +6736,10 @@ export type Database = {
         Returns: string
       }
       real_super_admin_exists: { Args: never; Returns: boolean }
+      reconcile_listener_events: {
+        Args: { _max_age_hours?: number }
+        Returns: Json
+      }
       record_app_download: { Args: never; Returns: number }
       record_cash_in_reference_conflict: {
         Args: { _new: string }
@@ -6780,6 +6817,7 @@ export type Database = {
           _amount?: number
           _device: string
           _event_uid: string
+          _gcash_reference?: string
           _package: string
           _parser_version?: string
           _posted_at?: string

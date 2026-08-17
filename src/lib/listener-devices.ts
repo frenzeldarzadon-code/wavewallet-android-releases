@@ -95,6 +95,68 @@ export async function revokeListenerDevice(deviceId: string) {
   if (error) throw error;
 }
 
+/** One incoming GCash payment that has not been attached to a Cash In yet. */
+export type UnmatchedListenerEvent = {
+  id: string;
+  device_id: string;
+  device_label: string;
+  receiving_number: string | null;
+  ecosystem_id: string | null;
+  ecosystem_name: string | null;
+  amount_php: number | null;
+  sender_number: string | null;
+  sender_name: string | null;
+  gcash_reference: string | null;
+  posted_at: string | null;
+  created_at: string;
+  outcome: string;
+  match_result: string | null;
+  review_state: string;
+  review_note: string | null;
+  raw_text: string | null;
+  candidates: {
+    cash_in_id: string;
+    reference: string | null;
+    amount_php: number;
+    created_at: string;
+    ecosystem_name: string | null;
+    member_name: string | null;
+    member_handle: string | null;
+  }[];
+};
+
+const rpc = supabase.rpc as unknown as (
+  fn: string,
+  args?: Record<string, unknown>,
+) => Promise<{ data: unknown; error: { message: string } | null }>;
+
+/** Received payments waiting for a human to attach them to a Cash In. */
+export async function fetchUnmatchedListenerEvents(): Promise<UnmatchedListenerEvent[]> {
+  const { data, error } = await rpc("listener_unmatched_events", { _limit: 100 });
+  if (error) throw error;
+  return (data ?? []) as UnmatchedListenerEvent[];
+}
+
+/** Attaches a received payment to a pending Cash In. Approval still applies. */
+export async function linkListenerEvent(eventId: string, cashInId: string, note?: string) {
+  const { error } = await rpc("link_listener_event", {
+    _event: eventId,
+    _cash_in: cashInId,
+    ...(note ? { _note: note } : {}),
+  });
+  if (error) throw error;
+}
+
+/** Sets a received payment aside without touching any wallet. */
+export async function dismissListenerEvent(eventId: string, note?: string) {
+  const { error } = await rpc("dismiss_listener_event", {
+    _event: eventId,
+    ...(note ? { _note: note } : {}),
+  });
+  if (error) throw error;
+}
+
+
 /** Plain-language state for one device. */
 export function deviceStateLabel(device: ListenerDevice) {
   if (device.status === "revoked") return { label: "Revoked", tone: "danger" as const };
