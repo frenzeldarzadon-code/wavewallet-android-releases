@@ -1,8 +1,8 @@
 /**
- * "Applications & Invites" — the member's own inbox, for every shop role.
+ * "Shops & Invites" — the member's own inbox, for every shop role.
  *
  * Two clearly separated sections:
- *  1. Applications the member submitted (Pending / Approved / Rejected).
+ *  1. Shops the member joined (joining is automatic; admins review afterwards).
  *  2. Invitations sent to the member, with Accept and Decline.
  *
  * Accepting joins that ONE shop with the role the shop assigns; nothing moves

@@ -100,7 +100,7 @@ export function customerNav(): Nav {
       items: [
         { to: "/app/profile", label: "Profile", icon: User },
         { to: "/app", label: "Wallet Center", icon: Wallet },
-        { to: "/app/applications", label: "Applications & Invites", icon: UserPlus },
+        { to: "/app/applications", label: "Shops & Invites", icon: UserPlus },
         { to: "/help", label: "Guide & Help", icon: BookOpen },
       ],
     },
@@ -124,7 +124,7 @@ export const customerBottomNav: NavItem[] = [
   { to: "/app", label: "Wallet", icon: Wallet },
   { to: "/app/shop", label: "Shop", icon: ShoppingBag },
   { to: "/app/money", label: "Cash", icon: Banknote },
-  { to: "/app/applications", label: "Apps", icon: UserPlus },
+  { to: "/app/applications", label: "Shops", icon: UserPlus },
   { to: "/app/profile", label: "Profile", icon: User },
 ];
 
@@ -142,7 +142,7 @@ export const customerBottomNav: NavItem[] = [
 export function resellerNav(role: Role = "reseller"): Nav {
   const isReseller = role === "reseller" || role === "super_admin" || role === "admin";
   const business: NavItem[] = [
-    { to: "/reseller/applications", label: "Applications & Invites", icon: UserPlus },
+    { to: "/reseller/applications", label: "New Members", icon: UserPlus },
     ...(isReseller
       ? ([
           { to: "/reseller/customers", label: "Downlines", icon: Users },
@@ -192,7 +192,7 @@ export const resellerBottomNav: NavItem[] = [
   { to: "/reseller", label: "Home", icon: LayoutDashboard },
   { to: "/reseller/shop", label: "Shop", icon: ShoppingCart },
   { to: "/reseller/wallet", label: "Wallet", icon: Wallet },
-  { to: "/reseller/applications", label: "Apps", icon: UserPlus },
+  { to: "/reseller/applications", label: "Members", icon: UserPlus },
   { to: "/reseller/profile", label: "Profile", icon: User },
 ];
 
@@ -211,7 +211,7 @@ export function adminNav(): Nav {
       items: [
         { to: "/admin/resellers", label: "Resellers", icon: Users },
         { to: "/admin/customers", label: "Customers", icon: UserSquare2 },
-        { to: "/admin/applications", label: "Applications & Invites", icon: UserPlus },
+        { to: "/admin/applications", label: "New Members", icon: UserPlus },
         { to: "/admin/signup-link", label: "Signup link", icon: Link2 },
       ],
     },
@@ -269,7 +269,7 @@ export const adminBottomNav: NavItem[] = [
   { to: "/admin", label: "Home", icon: LayoutDashboard },
   { to: "/admin/vouchers", label: "Codes", icon: Ticket },
   { to: "/admin/wallets", label: "Wallets", icon: Wallet },
-  { to: "/admin/applications", label: "Apps", icon: UserPlus },
+  { to: "/admin/applications", label: "Members", icon: UserPlus },
   { to: "/admin/profile", label: "Profile", icon: User },
 ];
 
