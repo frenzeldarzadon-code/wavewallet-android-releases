@@ -1,6 +1,12 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { ArrowRight, MailCheck, ShieldCheck, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
+import {
+  AddressFields,
+  EMPTY_ADDRESS,
+  type AddressValue,
+} from "@/components/universe/address-fields";
+import { addressIssue } from "@/lib/ph-address";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,6 +43,7 @@ function JoinPage() {
   const [eco, setEco] = useState<SignupEcosystem | null>(null);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirm: "" });
+  const [address, setAddress] = useState<AddressValue>(EMPTY_ADDRESS);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [needsEmail, setNeedsEmail] = useState(false);
@@ -98,6 +105,17 @@ function JoinPage() {
       toast.error("Passwords do not match.");
       return;
     }
+    const addressProblem = addressIssue({
+      province: address.province,
+      cityMunicipality: address.cityMunicipality,
+      barangay: address.barangay,
+      street: address.street,
+      houseNumber: address.houseNumber,
+    });
+    if (addressProblem) {
+      toast.error(addressProblem);
+      return;
+    }
     setBusy(true);
     try {
       const { needsEmailConfirmation } = await signUpCustomerAccount({
@@ -106,6 +124,11 @@ function JoinPage() {
         email: form.email,
         phone: form.phone,
         password: form.password,
+        province: address.province,
+        cityMunicipality: address.cityMunicipality,
+        barangay: address.barangay,
+        street: address.street,
+        houseNumber: address.houseNumber,
       });
       // Membership always waits for an approver, so there is no direct entry.
       await supabase.auth.signOut();
@@ -184,6 +207,9 @@ function JoinPage() {
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   placeholder="0917 000 0000"
                 />
+              </div>
+              <div className="space-y-1.5">
+                <AddressFields value={address} onChange={setAddress} idPrefix="join" />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="password">Password</Label>

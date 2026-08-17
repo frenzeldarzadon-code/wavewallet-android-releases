@@ -80,12 +80,20 @@ export interface MyProfile {
   bio: string | null;
   preferences: Json | null;
   joined_at: string;
+  /** Address to barangay level. Street and house number stay optional. */
+  province: string | null;
+  city_municipality: string | null;
+  barangay: string | null;
+  street: string | null;
+  house_number: string | null;
 }
 
 export async function fetchMyProfile(userId: string): Promise<MyProfile | null> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, full_name, handle, avatar_path, email, phone, bio, preferences, joined_at")
+    .select(
+      "id, full_name, handle, avatar_path, email, phone, bio, preferences, joined_at, province, city_municipality, barangay, street, house_number",
+    )
     .eq("id", userId)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -154,6 +162,12 @@ export interface ProfileUpdate {
   bio?: string | null;
   /** Merged into the stored preferences object by the database. */
   preferences?: Record<string, unknown>;
+  province?: string;
+  cityMunicipality?: string;
+  barangay?: string;
+  /** Optional address parts — an empty string clears them. */
+  street?: string;
+  houseNumber?: string;
 }
 
 export async function updateOwnProfile(update: ProfileUpdate): Promise<void> {
@@ -166,6 +180,13 @@ export async function updateOwnProfile(update: ProfileUpdate): Promise<void> {
     ...(update.clearAvatar ? { _clear_avatar: true } : {}),
     ...(update.bio !== undefined ? { _bio: (update.bio ?? "").trim() } : {}),
     ...(update.preferences !== undefined ? { _preferences: update.preferences as Json } : {}),
+    ...(update.province !== undefined ? { _province: update.province.trim() } : {}),
+    ...(update.cityMunicipality !== undefined
+      ? { _city_municipality: update.cityMunicipality.trim() }
+      : {}),
+    ...(update.barangay !== undefined ? { _barangay: update.barangay.trim() } : {}),
+    ...(update.street !== undefined ? { _street: update.street.trim() } : {}),
+    ...(update.houseNumber !== undefined ? { _house_number: update.houseNumber.trim() } : {}),
   });
   if (error) throw new Error(error.message);
 }

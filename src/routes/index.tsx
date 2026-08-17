@@ -1,6 +1,12 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, FlaskConical, LogIn, MailCheck, ShieldCheck, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
+import {
+  AddressFields,
+  EMPTY_ADDRESS,
+  type AddressValue,
+} from "@/components/universe/address-fields";
+import { addressIssue } from "@/lib/ph-address";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -65,6 +71,7 @@ function LoginPage() {
     password: "",
     confirm: "",
   });
+  const [address, setAddress] = useState<AddressValue>(EMPTY_ADDRESS);
   const [signupBusy, setSignupBusy] = useState(false);
   // Live, precise feedback while typing — never a vague "incomplete password".
   const signupIssue =
@@ -152,7 +159,15 @@ function LoginPage() {
 
   const signUp = async () => {
     if (signupBusy) return;
-    const problem = validateGlobalSignup(form);
+    const problem =
+      validateGlobalSignup(form) ??
+      addressIssue({
+        province: address.province,
+        cityMunicipality: address.cityMunicipality,
+        barangay: address.barangay,
+        street: address.street,
+        houseNumber: address.houseNumber,
+      });
     if (problem) {
       toast.error(problem);
       return;
@@ -164,8 +179,14 @@ function LoginPage() {
         email: form.email,
         phone: form.phone,
         password: form.password,
+        province: address.province,
+        cityMunicipality: address.cityMunicipality,
+        barangay: address.barangay,
+        street: address.street,
+        houseNumber: address.houseNumber,
       });
       setForm({ name: "", email: "", phone: "", password: "", confirm: "" });
+      setAddress(EMPTY_ADDRESS);
       // A new account belongs to no shop, and that is fine: the Universe is open
       // to everyone straight away. Joining a shop stays a separate, approved step.
       if (needsEmailConfirmation && isRealEmail(form.email)) {
@@ -342,6 +363,7 @@ function LoginPage() {
                     />
                   </div>
                 </div>
+                <AddressFields value={address} onChange={setAddress} idPrefix="su" />
                 <PasswordField
                   id="su-password"
                   label="Password"

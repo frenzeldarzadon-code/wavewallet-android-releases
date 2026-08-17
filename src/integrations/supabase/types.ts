@@ -2743,7 +2743,9 @@ export type Database = {
         Row: {
           active_ecosystem_id: string | null
           avatar_path: string | null
+          barangay: string | null
           bio: string | null
+          city_municipality: string | null
           created_at: string
           deleted_at: string | null
           deleted_by: string | null
@@ -2752,22 +2754,27 @@ export type Database = {
           email: string
           full_name: string
           handle: string | null
+          house_number: string | null
           id: string
           is_demo: boolean
           joined_at: string
           phone: string
           preferences: Json
+          province: string | null
           reseller_commission_percent: number | null
           reseller_discount_percent: number
           reseller_id: string | null
           sale_commission_percent: number | null
           status: Database["public"]["Enums"]["account_status"]
+          street: string | null
           updated_at: string
         }
         Insert: {
           active_ecosystem_id?: string | null
           avatar_path?: string | null
+          barangay?: string | null
           bio?: string | null
+          city_municipality?: string | null
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
@@ -2776,22 +2783,27 @@ export type Database = {
           email?: string
           full_name?: string
           handle?: string | null
+          house_number?: string | null
           id: string
           is_demo?: boolean
           joined_at?: string
           phone?: string
           preferences?: Json
+          province?: string | null
           reseller_commission_percent?: number | null
           reseller_discount_percent?: number
           reseller_id?: string | null
           sale_commission_percent?: number | null
           status?: Database["public"]["Enums"]["account_status"]
+          street?: string | null
           updated_at?: string
         }
         Update: {
           active_ecosystem_id?: string | null
           avatar_path?: string | null
+          barangay?: string | null
           bio?: string | null
+          city_municipality?: string | null
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
@@ -2800,16 +2812,19 @@ export type Database = {
           email?: string
           full_name?: string
           handle?: string | null
+          house_number?: string | null
           id?: string
           is_demo?: boolean
           joined_at?: string
           phone?: string
           preferences?: Json
+          province?: string | null
           reseller_commission_percent?: number | null
           reseller_discount_percent?: number
           reseller_id?: string | null
           sale_commission_percent?: number | null
           status?: Database["public"]["Enums"]["account_status"]
+          street?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -8377,6 +8392,24 @@ export type Database = {
         Args: { _base: string; _exclude?: string }
         Returns: string
       }
+      universe_directory: {
+        Args: {
+          _barangay?: string
+          _city_municipality?: string
+          _limit?: number
+          _province?: string
+          _query?: string
+        }
+        Returns: {
+          avatar_path: string
+          barangay: string
+          city_municipality: string
+          full_name: string
+          handle: string
+          id: string
+          province: string
+        }[]
+      }
       universe_profile: {
         Args: { _handle: string }
         Returns: {
@@ -8696,11 +8729,16 @@ export type Database = {
       update_own_profile: {
         Args: {
           _avatar_path?: string
+          _barangay?: string
           _bio?: string
+          _city_municipality?: string
           _clear_avatar?: boolean
           _full_name?: string
           _handle?: string
+          _house_number?: string
           _preferences?: Json
+          _province?: string
+          _street?: string
         }
         Returns: Json
       }

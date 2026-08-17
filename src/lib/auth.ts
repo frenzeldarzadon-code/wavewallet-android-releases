@@ -219,6 +219,12 @@ export interface CustomerSignupInput {
   email: string;
   phone: string;
   password: string;
+  /** Address to barangay level. Street and house number are optional. */
+  province: string;
+  cityMunicipality: string;
+  barangay: string;
+  street?: string;
+  houseNumber?: string;
 }
 
 /**
@@ -238,6 +244,11 @@ export async function signUpCustomerAccount(input: CustomerSignupInput) {
       data: {
         full_name: input.fullName.trim(),
         phone: normalizePhone(input.phone),
+        province: input.province.trim(),
+        city_municipality: input.cityMunicipality.trim(),
+        barangay: input.barangay.trim(),
+        street: (input.street ?? "").trim(),
+        house_number: (input.houseNumber ?? "").trim(),
         ...(input.ecosystemSlug ? { ecosystem_slug: input.ecosystemSlug.toLowerCase() } : {}),
       },
     },
