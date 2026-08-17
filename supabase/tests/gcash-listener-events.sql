@@ -87,7 +87,7 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', _uid)::text, true);
   select coalesce(sum(balance), 0) into _before from public.credit_accounts where user_id = _uid;
   _row := public.request_cash_in(_method, 500, 'GC-' || gen_random_uuid()::text, null,
-                                 gen_random_uuid()::text, _uid::text || '/a.jpg', _num);
+                                 gen_random_uuid()::text, _uid::text || '/a.jpg', _sender);
   perform set_config('request.jwt.claims', null, true);
 
   if _row.status = 'approved' then
@@ -125,7 +125,7 @@ begin
 
   perform set_config('request.jwt.claims', json_build_object('sub', _uid)::text, true);
   _row := public.request_cash_in(_method, 700, 'GC-' || gen_random_uuid()::text, null,
-                                 gen_random_uuid()::text, _uid::text || '/g.jpg', _num);
+                                 gen_random_uuid()::text, _uid::text || '/g.jpg', _sender);
   perform set_config('request.jwt.claims', null, true);
   if _row.status <> 'pending' then
     raise exception 'G: with listener verification required, a cash in must wait (got %)', _row.status;
@@ -158,9 +158,9 @@ begin
   update public.cash_in_auto_rules set enabled = false where ecosystem_id = _eco;
   perform set_config('request.jwt.claims', json_build_object('sub', _uid)::text, true);
   _row := public.request_cash_in(_method, 850, 'GC-' || gen_random_uuid()::text, null,
-                                 gen_random_uuid()::text, _uid::text || '/d1.jpg', _num);
+                                 gen_random_uuid()::text, _uid::text || '/d1.jpg', _sender);
   _other := public.request_cash_in(_method, 850, 'GC-' || gen_random_uuid()::text, null,
-                                   gen_random_uuid()::text, _uid::text || '/d2.jpg', _num);
+                                   gen_random_uuid()::text, _uid::text || '/d2.jpg', _sender);
   perform set_config('request.jwt.claims', null, true);
   _res := public.record_listener_event(_device, 'evt-d', 'com.globe.gcash.android',
                                        'Received PHP 850.00', 850, _sender, 'Juan D', now(), 'v1');
