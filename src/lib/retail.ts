@@ -60,6 +60,14 @@ export interface RetailProduct {
   public_visible: boolean;
   rating_avg: number;
   rating_count: number;
+  brand?: string | null;
+  variant?: string | null;
+  size_label?: string | null;
+  unit?: string | null;
+  category?: string | null;
+  /** Bulk price, applied by the shop from `wholesale_min_qty` pieces up. */
+  wholesale_price?: number;
+  wholesale_min_qty?: number;
 }
 
 export interface OrderItem {
@@ -229,7 +237,12 @@ export async function fetchRetailProducts(ecosystemId: string): Promise<RetailPr
     _ecosystem_id: ecosystemId,
   });
   if (error) throw new Error(error.message);
-  return ((data ?? []) as RetailProduct[]).map((p) => ({ ...p, price: Number(p.price) }));
+  return ((data ?? []) as RetailProduct[]).map((p) => ({
+    ...p,
+    price: Number(p.price),
+    wholesale_price: Number(p.wholesale_price ?? 0),
+    wholesale_min_qty: Number(p.wholesale_min_qty ?? 0),
+  }));
 }
 
 /** Catalog metadata shared by starter-catalog and manually added products. */
@@ -240,6 +253,8 @@ export interface RetailProductDetails {
   size_label: string | null;
   unit: string;
   wholesale_price: number;
+  /** Smallest quantity that earns the wholesale price; 0 means retail only. */
+  wholesale_min_qty: number;
   sku: string | null;
   barcode: string | null;
   /** "Ready to go live": only published products reach customers. */
@@ -248,7 +263,9 @@ export interface RetailProductDetails {
   template_id: string | null;
 }
 
-export interface RetailProductRow extends RetailProduct, RetailProductDetails {
+export interface RetailProductRow
+  extends Omit<RetailProduct, keyof RetailProductDetails>,
+    RetailProductDetails {
   active: boolean;
   archived: boolean;
 }
@@ -267,6 +284,7 @@ export async function fetchAllRetailProducts(ecosystemId: string): Promise<Retai
     ...p,
     price: Number(p.price),
     wholesale_price: Number(p.wholesale_price ?? 0),
+    wholesale_min_qty: Number(p.wholesale_min_qty ?? 0),
     rating_avg: 0,
     rating_count: 0,
   }));
@@ -317,6 +335,7 @@ export async function saveRetailProduct(
     size_label: trimmed(input.size_label),
     unit: trimmed(input.unit) ?? "piece",
     wholesale_price: Math.max(0, input.wholesale_price ?? 0),
+    wholesale_min_qty: Math.max(0, Math.round(input.wholesale_min_qty ?? 0)),
     sku: trimmed(input.sku),
     barcode: trimmed(input.barcode),
     published: input.published ?? false,
@@ -417,6 +436,9 @@ const urlCache = new Map<string, { url: string; expires: number }>();
 
 export async function retailImageUrl(path?: string | null): Promise<string | null> {
   if (!path) return null;
+  // Shared starter-catalog photos ship with the app, so they need no signing
+  // and stay available even when a shop has never uploaded anything itself.
+  if (path.startsWith("catalog/")) return `/${path}`;
   const hit = urlCache.get(path);
   if (hit && hit.expires > Date.now()) return hit.url;
   const { data, error } = await supabase.storage

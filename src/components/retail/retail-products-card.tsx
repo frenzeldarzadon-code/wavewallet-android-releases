@@ -61,6 +61,7 @@ interface Draft {
   barcode: string;
   price: string;
   wholesale_price: string;
+  wholesale_min_qty: string;
   stock: string;
   image_path: string | null;
   public_visible: boolean;
@@ -80,6 +81,7 @@ const empty: Draft = {
   barcode: "",
   price: "",
   wholesale_price: "",
+  wholesale_min_qty: "0",
   stock: "0",
   image_path: null,
   public_visible: true,
@@ -100,6 +102,7 @@ const toDraft = (p: RetailProductRow): Draft => ({
   barcode: p.barcode ?? "",
   price: String(p.price),
   wholesale_price: String(p.wholesale_price),
+  wholesale_min_qty: String(p.wholesale_min_qty ?? 0),
   stock: String(p.stock),
   image_path: p.image_path,
   public_visible: p.public_visible,
@@ -198,6 +201,7 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
         barcode: draft.barcode,
         price,
         wholesale_price: Number(draft.wholesale_price) || 0,
+        wholesale_min_qty: Number(draft.wholesale_min_qty) || 0,
         stock,
         image_path: draft.image_path,
         public_visible: draft.public_visible,
@@ -343,7 +347,9 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
                     {p.category ?? "Uncategorised"} ·{" "}
                     {p.price > 0 ? `${p.price.toLocaleString()} retail` : "no retail price"}
                     {p.wholesale_price > 0
-                      ? ` · ${p.wholesale_price.toLocaleString()} wholesale`
+                      ? ` · ${p.wholesale_price.toLocaleString()} wholesale${
+                          (p.wholesale_min_qty ?? 0) > 0 ? ` from ${p.wholesale_min_qty}` : ""
+                        }`
                       : ""}{" "}
                     · {p.stock} {p.unit} in stock · {p.sold_count} sold
                     {p.public_visible ? " · visible to visitors" : " · members only"}
@@ -484,6 +490,17 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
                     inputMode="decimal"
                     value={draft.wholesale_price}
                     onChange={(e) => setDraft({ ...draft, wholesale_price: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="rp-wholesale-min">Wholesale minimum quantity</Label>
+                  <Input
+                    id="rp-wholesale-min"
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="e.g. 12"
+                    value={draft.wholesale_min_qty}
+                    onChange={(e) => setDraft({ ...draft, wholesale_min_qty: e.target.value })}
                   />
                 </div>
                 <div className="space-y-1.5">

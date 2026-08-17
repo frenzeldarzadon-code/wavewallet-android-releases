@@ -3010,8 +3010,11 @@ export type Database = {
           brand: string | null
           category: string
           created_at: string
+          default_price: number
+          default_wholesale_price: number
           description: string | null
           id: string
+          image_path: string | null
           name: string
           size_label: string | null
           sku: string | null
@@ -3019,14 +3022,18 @@ export type Database = {
           unit: string
           updated_at: string
           variant: string | null
+          wholesale_min_qty: number
         }
         Insert: {
           active?: boolean
           brand?: string | null
           category: string
           created_at?: string
+          default_price?: number
+          default_wholesale_price?: number
           description?: string | null
           id?: string
+          image_path?: string | null
           name: string
           size_label?: string | null
           sku?: string | null
@@ -3034,14 +3041,18 @@ export type Database = {
           unit?: string
           updated_at?: string
           variant?: string | null
+          wholesale_min_qty?: number
         }
         Update: {
           active?: boolean
           brand?: string | null
           category?: string
           created_at?: string
+          default_price?: number
+          default_wholesale_price?: number
           description?: string | null
           id?: string
+          image_path?: string | null
           name?: string
           size_label?: string | null
           sku?: string | null
@@ -3049,6 +3060,7 @@ export type Database = {
           unit?: string
           updated_at?: string
           variant?: string | null
+          wholesale_min_qty?: number
         }
         Relationships: []
       }
@@ -3253,6 +3265,7 @@ export type Database = {
           unit: string
           updated_at: string
           variant: string | null
+          wholesale_min_qty: number
           wholesale_price: number
         }
         Insert: {
@@ -3278,6 +3291,7 @@ export type Database = {
           unit?: string
           updated_at?: string
           variant?: string | null
+          wholesale_min_qty?: number
           wholesale_price?: number
         }
         Update: {
@@ -3303,6 +3317,7 @@ export type Database = {
           unit?: string
           updated_at?: string
           variant?: string | null
+          wholesale_min_qty?: number
           wholesale_price?: number
         }
         Relationships: [
@@ -6324,6 +6339,8 @@ export type Database = {
       list_retail_products: {
         Args: { _ecosystem_id: string }
         Returns: {
+          brand: string
+          category: string
           description: string
           id: string
           image_path: string
@@ -6332,8 +6349,13 @@ export type Database = {
           public_visible: boolean
           rating_avg: number
           rating_count: number
+          size_label: string
           sold_count: number
           stock: number
+          unit: string
+          variant: string
+          wholesale_min_qty: number
+          wholesale_price: number
         }[]
       }
       list_rewards: {
