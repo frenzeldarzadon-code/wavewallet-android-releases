@@ -229,3 +229,40 @@ describe("destination-aware and configurable verification layers", () => {
     ).toBe("matched");
   });
 });
+
+describe("destination is a routing safeguard, not an authentication layer", () => {
+  it("names the destination mismatch instead of pretending nothing matched", () => {
+    expect(
+      eventResultLabel({ match_result: "destination_mismatch" } as never),
+    ).toMatch(/receiving GCash number/i);
+    expect(eventResultLabel({ match_result: "no_pending_match" } as never)).toMatch(
+      /No pending Cash In matched/i,
+    );
+  });
+
+  it("still authenticates on amount and sender when the destination agrees", () => {
+    const rule = { ...on, verification_mode: "active" as const };
+    const request = {
+      amount_php: 100,
+      payer_reference: "9044061112678",
+      sender_number: "09070321959",
+      proof_path: "p.jpg",
+      receipt_check: "matched",
+      listener_event: {
+        amount_php: 100,
+        sender_number: "09070321959",
+        outcome: "accepted",
+        device_online: true,
+        serves_destination: true,
+      },
+    };
+    expect(evaluateMatch(request, rule, RECEIVING)).toBe("matched");
+    expect(
+      evaluateMatch(
+        { ...request, listener_event: { ...request.listener_event, serves_destination: false } },
+        rule,
+        RECEIVING,
+      ),
+    ).toBe("wrong_destination");
+  });
+});
