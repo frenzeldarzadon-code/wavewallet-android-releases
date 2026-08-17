@@ -24,6 +24,8 @@ data class QueuedEvent(
     val amountPhp: Double?,
     val senderNumber: String?,
     val senderName: String?,
+    /** GCash reference number when the notification carried one. */
+    @ColumnInfo(defaultValue = "NULL") val gcashReference: String? = null,
     val rawText: String,
     val parserVersion: String,
     /** queued | sent | unparsed | rejected */
@@ -34,6 +36,7 @@ data class QueuedEvent(
     val isTest: Boolean = false,
     val updatedAt: Long = System.currentTimeMillis(),
 )
+
 
 @Dao
 interface EventDao {
