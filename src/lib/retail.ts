@@ -191,24 +191,34 @@ export async function fetchStoreSettings(ecosystemId: string): Promise<StoreSett
   };
 }
 
+/**
+ * Saves which stores this shop offers.
+ *
+ * Goes through `update_store_settings`, which re-checks server-side that the
+ * caller really administers this shop (a direct table write is blocked by the
+ * tenant policies, which is why saving silently did nothing before). Turning
+ * the retail store on for the very first time also loads the shared Philippine
+ * sari-sari starter catalog into this shop as unpublished drafts.
+ */
 export async function saveStoreSettings(
   ecosystemId: string,
   s: Omit<StoreSettings, "contactEmail">,
-): Promise<void> {
-  const { error } = await supabase
-    .from("ecosystems")
-    .update({
-      store_voucher_enabled: s.voucherEnabled,
-      store_retail_enabled: s.retailEnabled,
-      retail_cash_enabled: s.cashEnabled,
-      retail_credit_enabled: s.creditEnabled,
-      retail_pickup_enabled: s.pickupEnabled,
-      retail_delivery_enabled: s.deliveryEnabled,
-      public_storefront_enabled: s.publicStorefront,
-    })
-    .eq("id", ecosystemId);
+): Promise<{ seeded: number }> {
+  const { data, error } = await supabase.rpc("update_store_settings", {
+    _ecosystem_id: ecosystemId,
+    _voucher_enabled: s.voucherEnabled,
+    _retail_enabled: s.retailEnabled,
+    _cash_enabled: s.cashEnabled,
+    _credit_enabled: s.creditEnabled,
+    _pickup_enabled: s.pickupEnabled,
+    _delivery_enabled: s.deliveryEnabled,
+    _public_storefront: s.publicStorefront,
+  });
   if (error) throw new Error(error.message);
+  const row = (data as Array<{ seeded?: number }> | null)?.[0];
+  return { seeded: Number(row?.seeded ?? 0) };
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Products                                                            */
