@@ -182,7 +182,7 @@ export type MatchOutcome =
   | "no_sender_number"
   | "awaiting_listener"
   | "listener_offline"
-  | "wrong_destination"
+  | "wrong_shop"
   | "number_mismatch"
   | "awaiting_receipt_check"
   | "receipt_reference_mismatch"

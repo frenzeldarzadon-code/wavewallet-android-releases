@@ -189,7 +189,7 @@ describe("destination-aware and configurable verification layers", () => {
       amount_php: 500,
       outcome: "accepted",
       device_online: true,
-      serves_destination: true,
+      serves_shop: true,
     },
   };
   const RECEIVING = "09541230072";
@@ -205,9 +205,9 @@ describe("destination-aware and configurable verification layers", () => {
   it("refuses a notification seen on another shop's receiving account", () => {
     const other = {
       ...request,
-      listener_event: { ...request.listener_event!, serves_destination: false },
+      listener_event: { ...request.listener_event!, serves_shop: false },
     };
-    expect(evaluateMatch(other, { ...on, verification_mode: "active" }, RECEIVING)).toBe("wrong_destination");
+    expect(evaluateMatch(other, { ...on, verification_mode: "active" }, RECEIVING)).toBe("wrong_shop");
   });
 
   it("can run without the listener layer but still blocks a wrong sender when one is linked", () => {
@@ -254,16 +254,16 @@ describe("destination is a routing safeguard, not an authentication layer", () =
         sender_number: "09070321959",
         outcome: "accepted",
         device_online: true,
-        serves_destination: true,
+        serves_shop: true,
       },
     };
     expect(evaluateMatch(request, rule, RECEIVING)).toBe("matched");
     expect(
       evaluateMatch(
-        { ...request, listener_event: { ...request.listener_event, serves_destination: false } },
+        { ...request, listener_event: { ...request.listener_event, serves_shop: false } },
         rule,
         RECEIVING,
       ),
-    ).toBe("wrong_destination");
+    ).toBe("wrong_shop");
   });
 });
