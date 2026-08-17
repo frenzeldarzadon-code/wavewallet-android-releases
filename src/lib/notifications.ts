@@ -15,15 +15,18 @@
  * deliver push when it cannot.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { FINANCIAL_CATEGORIES } from "@/lib/financial-notifications";
 
 export interface Notification {
   id: string;
   kind: string;
+  category?: string | null;
   title: string;
   body: string | null;
   link: string | null;
   read_at: string | null;
   created_at: string;
+  delivery_status?: string | null;
 }
 
 export interface NotificationPreferences {
@@ -31,7 +34,7 @@ export interface NotificationPreferences {
   pushEnabled: boolean;
 }
 
-export const NOTIFICATION_CATEGORIES = [
+export const SOCIAL_NOTIFICATION_CATEGORIES = [
   { kind: "social_like", label: "Likes on my posts" },
   { kind: "social_reply", label: "Replies to my posts and comments" },
   { kind: "social_mention", label: "Mentions of my @handle" },
@@ -40,10 +43,14 @@ export const NOTIFICATION_CATEGORIES = [
   { kind: "friend_accept", label: "Accepted friend requests" },
   { kind: "follow", label: "New followers" },
   { kind: "social_gift", label: "Social coin gifts" },
-  { kind: "cashback", label: "Cashback earned" },
   { kind: "shop_invitation", label: "Shop invitations and applications" },
   { kind: "shop_assignment", label: "Shop admin and membership assignments" },
 ] as const;
+
+export const NOTIFICATION_CATEGORIES = [
+  ...FINANCIAL_CATEGORIES,
+  ...SOCIAL_NOTIFICATION_CATEGORIES,
+] as ReadonlyArray<{ kind: string; label: string }>;
 
 /** What is still missing before real background push can be switched on. */
 export const PUSH_REQUIREMENTS = [

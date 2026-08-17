@@ -2105,8 +2105,10 @@ export type Database = {
       member_notifications: {
         Row: {
           body: string | null
+          category: string
           created_at: string
           ecosystem_id: string | null
+          event_key: string | null
           id: string
           kind: string
           link: string | null
@@ -2116,8 +2118,10 @@ export type Database = {
         }
         Insert: {
           body?: string | null
+          category?: string
           created_at?: string
           ecosystem_id?: string | null
+          event_key?: string | null
           id?: string
           kind: string
           link?: string | null
@@ -2127,8 +2131,10 @@ export type Database = {
         }
         Update: {
           body?: string | null
+          category?: string
           created_at?: string
           ecosystem_id?: string | null
+          event_key?: string | null
           id?: string
           kind?: string
           link?: string | null
@@ -2248,6 +2254,54 @@ export type Database = {
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_deliveries: {
+        Row: {
+          created_at: string
+          device_id: string | null
+          id: string
+          notification_id: string
+          reason: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          notification_id: string
+          reason?: string | null
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          notification_id?: string
+          reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_deliveries_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "push_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_deliveries_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "member_notifications"
             referencedColumns: ["id"]
           },
         ]
@@ -2898,6 +2952,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      push_devices: {
+        Row: {
+          auth_secret: string | null
+          created_at: string
+          device_label: string | null
+          endpoint: string
+          expired_at: string | null
+          failure_count: number
+          id: string
+          last_error: string | null
+          last_seen_at: string
+          p256dh: string | null
+          push_enabled: boolean
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth_secret?: string | null
+          created_at?: string
+          device_label?: string | null
+          endpoint: string
+          expired_at?: string | null
+          failure_count?: number
+          id?: string
+          last_error?: string | null
+          last_seen_at?: string
+          p256dh?: string | null
+          push_enabled?: boolean
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth_secret?: string | null
+          created_at?: string
+          device_label?: string | null
+          endpoint?: string
+          expired_at?: string | null
+          failure_count?: number
+          id?: string
+          last_error?: string | null
+          last_seen_at?: string
+          p256dh?: string | null
+          push_enabled?: boolean
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       retail_catalog_templates: {
         Row: {
@@ -5975,6 +6077,10 @@ export type Database = {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: undefined
       }
+      expire_push_device: {
+        Args: { _id: string; _reason?: string }
+        Returns: undefined
+      }
       expire_stale_invitations: { Args: never; Returns: undefined }
       expire_stale_member_invitations: { Args: never; Returns: number }
       expire_stale_subscriptions: { Args: never; Returns: number }
@@ -6437,7 +6543,9 @@ export type Database = {
         Args: { _limit?: number }
         Returns: {
           body: string
+          category: string
           created_at: string
+          delivery_status: string
           id: string
           kind: string
           link: string
@@ -6453,6 +6561,19 @@ export type Database = {
           grace_period_days: number
           operational: boolean
           subscription_state: Database["public"]["Enums"]["subscription_state"]
+        }[]
+      }
+      my_push_devices: {
+        Args: never
+        Returns: {
+          created_at: string
+          device_label: string
+          expired_at: string
+          id: string
+          last_error: string
+          last_seen_at: string
+          push_enabled: boolean
+          user_agent: string
         }[]
       }
       my_rating_eligibility: {
@@ -6539,6 +6660,30 @@ export type Database = {
       normalize_handle: { Args: { _handle: string }; Returns: string }
       normalize_payment_reference: { Args: { _ref: string }; Returns: string }
       normalize_ph_mobile: { Args: { _n: string }; Returns: string }
+      notify_financial: {
+        Args: {
+          _body?: string
+          _ecosystem: string
+          _event_key?: string
+          _kind: string
+          _link?: string
+          _title: string
+          _user: string
+        }
+        Returns: string
+      }
+      notify_financial_safe: {
+        Args: {
+          _body?: string
+          _ecosystem: string
+          _event_key?: string
+          _kind: string
+          _link?: string
+          _title: string
+          _user: string
+        }
+        Returns: undefined
+      }
       notify_handle_mentions: {
         Args: {
           _actor: string
@@ -6910,11 +7055,22 @@ export type Database = {
         }
         Returns: Json
       }
+      register_push_device: {
+        Args: {
+          _auth?: string
+          _endpoint: string
+          _label?: string
+          _p256dh?: string
+          _user_agent?: string
+        }
+        Returns: string
+      }
       release_super_admin_bootstrap: {
         Args: { _email: string }
         Returns: undefined
       }
       remove_friend: { Args: { _user: string }; Returns: undefined }
+      remove_push_device: { Args: { _id: string }; Returns: undefined }
       request_cash_in: {
         Args: {
           _amount_php: number
@@ -7968,6 +8124,10 @@ export type Database = {
       set_points_rule: {
         Args: { _credits_per_point: number; _ecosystem_id: string }
         Returns: number
+      }
+      set_push_device_enabled: {
+        Args: { _enabled: boolean; _id: string }
+        Returns: undefined
       }
       set_reseller_commission: {
         Args: { _percent: number; _user_id: string }
@@ -9124,6 +9284,7 @@ export type Database = {
           relation: string
         }[]
       }
+      ww_money: { Args: { _amount: number }; Returns: string }
     }
     Enums: {
       account_status: "active" | "suspended"
