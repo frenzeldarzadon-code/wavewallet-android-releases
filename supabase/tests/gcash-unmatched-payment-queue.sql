@@ -27,7 +27,7 @@ begin
 
   select * into _row from public.listener_events where id = (_first->>'event_id')::uuid;
   assert _row.amount_php = 1000.00, 'amount must be stored exactly';
-  assert _row.sender_number_key = '09752505196', 'sender number must be normalised';
+  assert _row.sender_number_key = public.normalize_ph_mobile('09752505196'), 'sender number must be normalised';
   assert _row.gcash_reference = '9044057598177', 'reference must be stored';
   assert _row.consumed_cash_in_id is null, 'nothing may be linked without a Cash In';
   assert _row.review_state = 'pending', 'the payment must wait in the review queue';
