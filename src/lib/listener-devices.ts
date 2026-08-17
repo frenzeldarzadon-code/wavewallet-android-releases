@@ -6,6 +6,24 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 
+/**
+ * Calls an RPC by name for functions that are not in the generated types yet.
+ * The call must stay attached to the client: a detached `supabase.rpc`
+ * reference loses `this` and throws "Cannot read properties of undefined
+ * (reading 'rest')".
+ */
+const rpc = (
+  fn: string,
+  args?: Record<string, unknown>,
+): Promise<{ data: unknown; error: { message: string } | null }> =>
+  (
+    supabase.rpc as unknown as (
+      name: string,
+      params?: Record<string, unknown>,
+    ) => Promise<{ data: unknown; error: { message: string } | null }>
+  ).call(supabase, fn, args);
+
+
 export type ListenerDevice = {
   id: string;
   label: string;
