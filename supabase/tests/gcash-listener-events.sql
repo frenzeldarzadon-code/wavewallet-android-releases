@@ -119,8 +119,10 @@ begin
     raise exception 'B: a repeated notification must never credit twice';
   end if;
 
-  -- G/H: listener-required mode.
-  update public.cash_in_auto_rules set require_listener_match = true, expected_amount_php = 700
+  -- G/H: listener-required mode. Receipt reading is off here so the listener
+  -- match is the only remaining check.
+  update public.cash_in_auto_rules
+     set require_listener_match = true, require_reference_match = false, expected_amount_php = 700
    where ecosystem_id = _eco;
 
   perform set_config('request.jwt.claims', json_build_object('sub', _uid)::text, true);
