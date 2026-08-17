@@ -31,9 +31,12 @@ const eventSchema = z.object({
   amount_php: z.number().positive().max(1_000_000).nullable().optional(),
   sender_number: z.string().max(40).nullable().optional(),
   sender_name: z.string().max(160).nullable().optional(),
+  /** GCash reference number, when the phone could read one. */
+  gcash_reference: z.string().max(64).nullable().optional(),
   raw_text: z.string().max(2000).nullable().optional(),
   parser_version: z.string().max(40).optional(),
 });
+
 
 const payloadSchema = z.discriminatedUnion("kind", [heartbeatSchema, eventSchema]);
 
