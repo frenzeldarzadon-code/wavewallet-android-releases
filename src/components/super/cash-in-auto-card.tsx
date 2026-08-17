@@ -326,11 +326,23 @@ export function CashInAutoCard() {
               onCheckedChange={(v) => void saveFields({ ...rule, layer2_require_listener_reference: v })}
             />
           </div>
+
+          <p className="rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">
+            These layers decide whether a payment is genuine. Which GCash account the money landed on is a separate
+            routing and shop-isolation rule — a “wrong receiving number” result never means the payment failed
+            authentication.
+          </p>
         </div>
 
         {(status.mismatched_devices ?? []).length > 0 ? (
           <div className="rounded-lg border border-destructive/40 p-3">
-            <p className="font-semibold text-destructive">Receiving numbers that no phone is listening on</p>
+            <p className="font-semibold text-destructive">
+              Routing problem · receiving numbers that no phone is listening on
+            </p>
+            <p className="text-xs text-muted-foreground">
+              This is not an authentication failure. Amount and sender can still match perfectly; the money simply
+              arrived on an account this shop is not configured to collect on.
+            </p>
             <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
               {(status.mismatched_devices ?? []).slice(0, 6).map((m) => (
                 <li key={`${m.device_id}-${m.shop_id}`}>
@@ -344,6 +356,7 @@ export function CashInAutoCard() {
             </p>
           </div>
         ) : null}
+
 
 
         <div className="rounded-lg border border-border p-3">
