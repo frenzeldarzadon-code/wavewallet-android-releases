@@ -263,7 +263,9 @@ export interface RetailProductDetails {
   template_id: string | null;
 }
 
-export interface RetailProductRow extends RetailProduct, RetailProductDetails {
+export interface RetailProductRow
+  extends Omit<RetailProduct, keyof RetailProductDetails>,
+    RetailProductDetails {
   active: boolean;
   archived: boolean;
 }
