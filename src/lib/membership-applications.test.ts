@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   applicationTone,
+  heldForManualReview,
+  reviewState,
+  reviewTone,
   canReviewApplication,
   validateSignupDraft,
   type SignupDraft,
@@ -66,5 +69,25 @@ describe("status tone", () => {
     expect(applicationTone("pending")).toBe("warning");
     expect(applicationTone("approved")).toBe("success");
     expect(applicationTone("rejected")).toBe("danger");
+  });
+});
+
+describe("post-join member review", () => {
+  it("treats an undecided automatic join as an active member", () => {
+    expect(reviewState({ status: "pending", decision_reason: "Auto-approved — awaiting admin member review" })).toBe("active");
+    expect(reviewTone("active")).toBe("success");
+  });
+
+  it("flags a join the database held back because of existing coins", () => {
+    const reason = "Manual review required because this member already has coins in this shop";
+    expect(heldForManualReview(reason)).toBe(true);
+    expect(reviewState({ status: "pending", decision_reason: reason })).toBe("manual_review");
+    expect(reviewTone("manual_review")).toBe("warning");
+  });
+
+  it("maps decided rows to kept and removed", () => {
+    expect(reviewState({ status: "approved", decision_reason: null })).toBe("kept");
+    expect(reviewState({ status: "rejected", decision_reason: null })).toBe("removed");
+    expect(reviewTone("removed")).toBe("danger");
   });
 });

@@ -11,9 +11,9 @@ export const Route = createFileRoute("/super/approvals")({
   head: () => ({
     meta: [
       { title: "Approvals — WaveWallet Super Admin" },
-      { name: "description", content: "Every pending platform approval in one place: shop coin payments and self-service signup applications." },
+      { name: "description", content: "Every pending platform approval in one place: shop coin payments and newly joined members." },
       { property: "og:title", content: "Approvals — WaveWallet Super Admin" },
-      { property: "og:description", content: "Every pending platform approval in one place: shop coin payments and self-service signup applications." },
+      { property: "og:description", content: "Every pending platform approval in one place: shop coin payments and newly joined members." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -34,8 +34,8 @@ function SuperApprovals() {
       <ApplicationsPanel
         ecosystemId={null}
         showEcosystem
-        title="Signup applications"
-        description="Every self-service signup across the platform, with the shop each applicant chose."
+        title="New members"
+        description="Every new member across the platform, with the shop they joined."
       />
     </>
   );

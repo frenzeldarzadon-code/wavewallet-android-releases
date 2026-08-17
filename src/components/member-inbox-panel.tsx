@@ -1,8 +1,8 @@
 /**
- * "Applications & Invites" — the member's own inbox, for every shop role.
+ * "Shops & Invites" — the member's own inbox, for every shop role.
  *
  * Two clearly separated sections:
- *  1. Applications the member submitted (Pending / Approved / Rejected).
+ *  1. Shops the member joined (joining is automatic; admins review afterwards).
  *  2. Invitations sent to the member, with Accept and Decline.
  *
  * Accepting joins that ONE shop with the role the shop assigns; nothing moves
@@ -25,7 +25,12 @@ import {
   type MemberInbox,
 } from "@/lib/member-inbox";
 import { MemberInviteCard } from "@/components/universe/member-invite-card";
-import { applicationTone } from "@/lib/membership-applications";
+import {
+  heldForManualReview,
+  memberJoinLabel,
+  reviewState,
+  reviewTone,
+} from "@/lib/membership-applications";
 import { useSession } from "@/lib/session";
 import { daysLeft, respondToInvitation, type MyInvitation } from "@/lib/shop-invitations";
 import { roleLabel, shortDateTime } from "@/lib/wavewallet";
@@ -80,13 +85,13 @@ export function MemberInboxPanel() {
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold">Applications &amp; Invites</h1>
+          <h1 className="text-lg font-semibold">Shops &amp; Invites</h1>
           <p className="text-xs text-muted-foreground">
-            Shops you applied to, and shops that invited you.
+            Shops you joined, and shops that invited you.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {pending > 0 ? <StatusBadge tone="warning">{pending} pending</StatusBadge> : null}
+          {pending > 0 ? <StatusBadge tone="warning">{pending} to answer</StatusBadge> : null}
           <Button size="sm" variant="outline" onClick={() => void reload()} disabled={loading}>
             <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
@@ -192,15 +197,15 @@ export function MemberInboxPanel() {
         </div>
       </PageSection>
 
-      {/* ---------------- Applications ---------------- */}
+      {/* ---------------- Shop memberships ---------------- */}
       <PageSection
-        title="Applications"
-        description="Shop memberships you asked for, and how they were decided."
+        title="My shops"
+        description="Shops you joined. Joining is automatic — the shop admin reviews members afterwards."
       >
         {inbox.applications.length === 0 ? (
           <EmptyState
-            title="No applications yet"
-            description="Requests to join a shop show up here with their status."
+            title="No shops joined yet"
+            description="Shops you join show up here with your membership status."
           />
         ) : (
           <div className="space-y-2">
@@ -214,18 +219,23 @@ export function MemberInboxPanel() {
                         <span className="truncate">{a.ecosystemName}</span>
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Submitted {shortDateTime(a.createdAt)}
+                        Joined {shortDateTime(a.createdAt)}
                       </p>
                     </div>
-                    <StatusBadge tone={applicationTone(a.status)}>
-                      {a.status === "pending"
-                        ? "Pending"
-                        : a.status === "approved"
-                          ? "Approved"
-                          : "Rejected"}
+                    <StatusBadge
+                      tone={reviewTone(
+                        reviewState({ status: a.status, decision_reason: a.decisionReason }),
+                      )}
+                    >
+                      {memberJoinLabel(a)}
                     </StatusBadge>
                   </div>
-                  {a.decisionReason ? (
+                  {heldForManualReview(a.decisionReason) ? (
+                    <p className="text-xs text-warning-foreground">
+                      You already have coins in this shop, so a shop admin checks this join before
+                      it becomes active.
+                    </p>
+                  ) : a.decisionReason ? (
                     <p className="text-xs text-muted-foreground">Note: {a.decisionReason}</p>
                   ) : null}
                 </CardContent>
@@ -234,6 +244,7 @@ export function MemberInboxPanel() {
           </div>
         )}
       </PageSection>
+
     </div>
   );
 }

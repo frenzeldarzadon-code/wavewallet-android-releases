@@ -5531,6 +5531,10 @@ export type Database = {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: undefined
       }
+      auto_process_membership_application: {
+        Args: { _application_id: string }
+        Returns: boolean
+      }
       can_impersonate: {
         Args: { _operator: string; _target: string }
         Returns: boolean

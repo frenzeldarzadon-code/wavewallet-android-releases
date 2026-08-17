@@ -17,6 +17,7 @@ import {
   type MyApplicationRow,
 } from "@/lib/memberships";
 import { fetchMyInvitations, type MyInvitation } from "@/lib/shop-invitations";
+import { heldForManualReview } from "@/lib/membership-applications";
 
 export interface MemberInbox {
   applications: MyApplicationRow[];
@@ -79,21 +80,35 @@ export function redundantInvitations(
   );
 }
 
-/** Applications still awaiting a decision. */
+/** Join records still open in the shop's review list. */
 export function pendingApplications(applications: MyApplicationRow[]): MyApplicationRow[] {
   return applications.filter((a) => a.status === "pending");
 }
 
 /**
- * Badge count for the "Applications & Invites" tab: pending applications plus
- * actionable invitations. Zero means no badge is shown.
+ * Joins the database held back for manual review because the person already
+ * holds coins in that shop. These are the only join records that still need
+ * the member to wait — normal joins are active immediately.
+ */
+export function applicationsAwaitingMember(
+  applications: MyApplicationRow[],
+): MyApplicationRow[] {
+  return applications.filter(
+    (a) => a.status === "pending" && heldForManualReview(a.decisionReason),
+  );
+}
+
+/**
+ * Badge count for the "Shops & Invites" tab: joins still waiting on a manual
+ * review plus actionable invitations. Automatic joins never raise a badge.
  */
 export function inboxPendingCount(inbox: MemberInbox, now = new Date()): number {
   return (
-    pendingApplications(inbox.applications).length +
+    applicationsAwaitingMember(inbox.applications).length +
     actionableInvitations(inbox.invitations, inbox.memberships, now).length
   );
 }
+
 
 /** Newest first, so the most recent invitation is answered first. */
 export function sortByNewest<T extends { created_at: string }>(rows: T[]): T[] {

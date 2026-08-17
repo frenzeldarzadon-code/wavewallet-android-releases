@@ -30,12 +30,12 @@ export const Route = createFileRoute("/universe/shops")({
       {
         name: "description",
         content:
-          "Browse WaveWallet shops, switch between the ones you belong to and request to join a new hotspot shop.",
+          "Browse WaveWallet shops, switch between the ones you belong to and join a new hotspot shop instantly.",
       },
       { property: "og:title", content: "Shop Directory — WaveWallet Universe" },
       {
         property: "og:description",
-        content: "Switch between your shops or request to join a new one.",
+        content: "Switch between your shops or join a new one instantly.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -86,7 +86,7 @@ function UniverseShops() {
           {mine.length === 0 ? (
             <EmptyState
               title="No shop memberships yet"
-              description="Request to join a shop below — an approver has to accept before you get a wallet there."
+              description="Join a shop below — your wallet in that shop opens right away."
             />
           ) : (
             <div className="space-y-2">
@@ -125,7 +125,7 @@ function UniverseShops() {
 
         <PageSection
           title="Discover shops"
-          description="Requests are reviewed by that shop's approvers — joining never grants a role by itself."
+          description="Joining is automatic — the shop admin reviews new members afterwards. Joining never grants a role by itself."
         >
           {joinable.length === 0 ? (
             <EmptyState title="No other shops are open for joining right now" />
@@ -150,7 +150,7 @@ function UniverseShops() {
                       setBusy(e.id);
                       try {
                         await requestJoinEcosystem(e.id);
-                        toast.success("Request sent — an approver will review it.");
+                        toast.success("You joined the shop — your wallet there is ready.");
                         await load();
                       } catch (err) {
                         toast.error(
@@ -161,7 +161,7 @@ function UniverseShops() {
                       }
                     }}
                   >
-                    {e.pending ? "Requested" : "Request to join"}
+                    {e.pending ? "In review" : "Join shop"}
                   </Button>
                 </div>
               ))}

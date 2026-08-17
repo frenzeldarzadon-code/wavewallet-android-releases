@@ -6,16 +6,16 @@ import { useSession } from "@/lib/session";
 export const Route = createFileRoute("/admin/applications")({
   head: () => ({
     meta: [
-      { title: "Applications & Invites — WaveWallet Admin" },
+      { title: "New Members — WaveWallet Admin" },
       {
         name: "description",
         content:
-          "Review pending signup applications for your shop and approve or reject membership requests.",
+          "Review members who just joined your shop and keep or remove them.",
       },
-      { property: "og:title", content: "Applications & Invites — WaveWallet Admin" },
+      { property: "og:title", content: "New Members — WaveWallet Admin" },
       {
         property: "og:description",
-        content: "Approve or reject pending membership applications for your shop.",
+        content: "Keep or remove members who joined your shop automatically.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -31,7 +31,7 @@ function AdminApplications() {
       <MemberInboxPanel />
       <ApplicationsPanel
         ecosystemId={ecosystemDbId}
-        description="New members who chose your shop. They cannot enter until approved."
+        description="Members who joined your shop automatically. They are already active — keep or remove them."
       />
     </>
   );

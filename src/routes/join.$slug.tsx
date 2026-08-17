@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
 import { ArrowRight, MailCheck, ShieldCheck, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -40,6 +40,7 @@ export const Route = createFileRoute("/join/$slug")({
 
 function JoinPage() {
   const { slug } = useParams({ from: "/join/$slug" });
+  const navigate = useNavigate();
   const [eco, setEco] = useState<SignupEcosystem | null>(null);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirm: "" });
@@ -130,10 +131,18 @@ function JoinPage() {
         street: address.street,
         houseNumber: address.houseNumber,
       });
-      // Membership always waits for an approver, so there is no direct entry.
-      await supabase.auth.signOut();
-      setNeedsEmail(needsEmailConfirmation);
-      setSent(true);
+      // Joining is automatic: the database activates the membership right away
+      // (unless it holds the join back because the person already has coins in
+      // this shop). Only an unconfirmed email still blocks direct entry.
+      if (needsEmailConfirmation) {
+        await supabase.auth.signOut();
+        setNeedsEmail(true);
+        setSent(true);
+      } else {
+        toast.success(`Welcome to ${eco.name}!`);
+        await navigate({ to: "/app" });
+      }
+
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not create your account.");
     } finally {
@@ -158,13 +167,11 @@ function JoinPage() {
           <Card className="shadow-[var(--shadow-card)]">
             <CardContent className="space-y-3 py-8 text-center">
               <MailCheck className="mx-auto size-8 text-success" />
-              <h2 className="text-lg font-semibold">Application received</h2>
+              <h2 className="text-lg font-semibold">Confirm your email</h2>
               <p className="text-sm text-muted-foreground">
-                Your account is pending approval. You can enter the ecosystem after an authorized
-                member of {eco.name} approves your application.
-                {needsEmail
-                  ? " We also sent a confirmation link to your email — please confirm it."
-                  : ""}
+                Your membership in {eco.name} is ready. Confirm the link we sent to your email,
+                then sign in to start using your wallet.
+                {needsEmail ? "" : ""}
               </p>
               <Button asChild variant="outline" className="w-full">
                 <Link to="/">Back to sign in</Link>

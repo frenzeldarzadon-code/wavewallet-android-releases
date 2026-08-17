@@ -82,6 +82,59 @@ export async function reviewApplication(
 export const applicationTone = (s: ApplicationStatus) =>
   s === "approved" ? "success" : s === "rejected" ? "danger" : "warning";
 
+/* ------------------------------------------------------------------ */
+/* Automatic joining — post-join member review                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Marker the database writes when the automatic join was NOT applied because
+ * the person already holds coins in that shop. That protection lives in the
+ * database; the UI only reads it so the wording stays honest.
+ */
+export const MANUAL_REVIEW_MARKER = "Manual review required";
+
+/** True when the database held this join back for manual review (existing coins). */
+export function heldForManualReview(reason: string | null | undefined): boolean {
+  return !!reason && reason.toLowerCase().includes(MANUAL_REVIEW_MARKER.toLowerCase());
+}
+
+/** Row-level state used by the "New members" review list. */
+export type ReviewState = "active" | "manual_review" | "kept" | "removed";
+
+export function reviewState(row: {
+  status: ApplicationStatus;
+  decision_reason: string | null;
+}): ReviewState {
+  if (row.status === "approved") return "kept";
+  if (row.status === "rejected") return "removed";
+  return heldForManualReview(row.decision_reason) ? "manual_review" : "active";
+}
+
+export const REVIEW_LABEL: Record<ReviewState, string> = {
+  active: "Active member",
+  manual_review: "Needs manual review",
+  kept: "Kept",
+  removed: "Removed",
+};
+
+export const reviewTone = (s: ReviewState) =>
+  s === "kept" || s === "active" ? "success" : s === "removed" ? "danger" : "warning";
+
+/** What the member themselves sees for their own join record. */
+export function memberJoinLabel(row: {
+  status: ApplicationStatus;
+  decisionReason: string | null;
+}): string {
+  return REVIEW_LABEL[reviewState({ status: row.status, decision_reason: row.decisionReason })];
+}
+
+/** Admin confirms the member stays. */
+export const keepMember = (id: string, reason?: string) => reviewApplication(id, true, reason);
+
+/** Admin removes the member from THIS shop only; other shops are untouched. */
+export const removeMember = (id: string, reason?: string) => reviewApplication(id, false, reason);
+
+
 /** Roles that may approve or reject a signup application. Mirrors the database. */
 export const APPROVER_ROLES = ["super_admin", "admin", "reseller", "subreseller"] as const;
 export type ApproverRole = (typeof APPROVER_ROLES)[number];

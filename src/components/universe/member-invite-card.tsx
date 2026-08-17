@@ -3,7 +3,7 @@
  *
  * Search the global Universe directory, pick a person, send a shop-specific
  * invitation. Sending creates no membership, role, wallet or credit movement:
- * the recipient must accept it in their own Applications & Invites inbox.
+ * the recipient must accept it in their own Shops & Invites inbox.
  * The database re-checks that the caller is an active member of the chosen
  * shop, so this card can only ever ask.
  */
