@@ -85,13 +85,13 @@ export function MemberInboxPanel() {
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold">Applications &amp; Invites</h1>
+          <h1 className="text-lg font-semibold">Shops &amp; Invites</h1>
           <p className="text-xs text-muted-foreground">
-            Shops you applied to, and shops that invited you.
+            Shops you joined, and shops that invited you.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {pending > 0 ? <StatusBadge tone="warning">{pending} pending</StatusBadge> : null}
+          {pending > 0 ? <StatusBadge tone="warning">{pending} to answer</StatusBadge> : null}
           <Button size="sm" variant="outline" onClick={() => void reload()} disabled={loading}>
             <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
