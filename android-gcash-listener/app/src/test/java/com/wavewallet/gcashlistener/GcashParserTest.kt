@@ -10,6 +10,32 @@ class GcashParserTest {
     private val observed =
         "You have received money in GCash! You have received PHP 10.00 of GCash from FR****L A. 09070321959."
 
+    /** The exact notification that was missed on the operator's phone. */
+    private val expressSend =
+        "You have received PHP 1000.00 from DO**A RO**F B. +639752505196 w/ MSG: . " +
+            "Your new balance is PHP 2102.95. Ref. No. 9044057598177."
+
+    @Test
+    fun `parses the express send notification that was missed`() {
+        val result = GcashParser.parse("Express Send Notification", expressSend)
+        assertTrue(result is GcashParser.Result.Payment)
+        result as GcashParser.Result.Payment
+        assertEquals(1000.00, result.amountPhp, 0.001)
+        assertEquals("09752505196", result.senderNumber)
+        assertEquals("9044057598177", result.reference)
+    }
+
+    @Test
+    fun `express send survives line breaks and extra whitespace`() {
+        val result = GcashParser.parse(
+            "  Express Send   Notification ",
+            "You have received PHP 1,000.00\n from DO**A RO**F B.  09752505196 w/ MSG: .\n\nRef. No.  9044057598177 .",
+        ) as GcashParser.Result.Payment
+        assertEquals(1000.00, result.amountPhp, 0.001)
+        assertEquals("09752505196", result.senderNumber)
+        assertEquals("9044057598177", result.reference)
+    }
+
     @Test
     fun `parses the notification observed on the phone`() {
         val result = GcashParser.parse("GCash", observed)
@@ -31,10 +57,10 @@ class GcashParserTest {
     }
 
     @Test
-    fun `ignores outgoing money`() {
+    fun `ignores outgoing money even with a reference`() {
         assertEquals(
             GcashParser.Result.Ignored,
-            GcashParser.parse("GCash", "You have sent PHP 500.00 to JUAN D. 09171234567."),
+            GcashParser.parse("GCash", "You have sent PHP 500.00 to JUAN D. 09171234567. Ref. No. 123456789."),
         )
     }
 
