@@ -69,11 +69,18 @@ interface EventDao {
     )
 }
 
-@Database(entities = [QueuedEvent::class], version = 1, exportSchema = false)
+@Database(entities = [QueuedEvent::class], version = 2, exportSchema = false)
 abstract class ListenerDb : RoomDatabase() {
     abstract fun events(): EventDao
 
     companion object {
+        /** Adds the GCash reference column; queued events are never dropped. */
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE queued_events ADD COLUMN gcashReference TEXT DEFAULT NULL")
+            }
+        }
+
         @Volatile private var instance: ListenerDb? = null
 
         fun get(context: Context): ListenerDb = instance ?: synchronized(this) {
@@ -81,7 +88,8 @@ abstract class ListenerDb : RoomDatabase() {
                 context.applicationContext,
                 ListenerDb::class.java,
                 "wavewallet-listener.db",
-            ).build().also { instance = it }
+            ).addMigrations(MIGRATION_1_2).build().also { instance = it }
         }
     }
 }
+
