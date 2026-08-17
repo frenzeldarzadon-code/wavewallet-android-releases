@@ -8,7 +8,7 @@
  * Navigation is presentation only — the database authorizes every read/write.
  */
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Bell, Home, LogOut, Mail, Store, User, Wallet } from "lucide-react";
+import { Bell, Home, LogOut, Mail, Store, User, Users, Wallet } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { MemberAvatar } from "@/components/member-avatar";
@@ -20,6 +20,7 @@ const items = [
   { to: "/universe", label: "Home", icon: Home },
   { to: "/universe/notifications", label: "Alerts", icon: Bell },
   { to: "/universe/messages", label: "Messages", icon: Mail },
+  { to: "/universe/members", label: "Members", icon: Users },
   { to: "/universe/shops", label: "Shops", icon: Store },
   { to: "/universe/profile", label: "Profile", icon: User },
 ] as const;
@@ -122,7 +123,7 @@ export function UniverseShell({
 
       <nav
         aria-label="Universe navigation"
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
       >
         {items.map((item) => (
           <Link
