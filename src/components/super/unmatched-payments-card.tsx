@@ -94,10 +94,14 @@ export function UnmatchedPaymentsCard() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-2">
         <CardTitle className="text-base">Incoming payments awaiting review</CardTitle>
-        <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <ManualRecoveryDialog onRecorded={() => void load()} />
+          <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
+            Refresh
+          </Button>
+        </div>
       </CardHeader>
+
       <CardContent className="space-y-3">
         <p className="text-xs text-muted-foreground">
           Money received on a paired GCash phone that no Cash In has claimed yet. Nothing here has
