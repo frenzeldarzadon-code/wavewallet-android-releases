@@ -1,0 +1,1 @@
+revoke all on function public.cash_in_auto_rule(uuid) from public, anon, authenticated;
