@@ -12,7 +12,10 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Insert
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
+
 
 /** Durable local queue. Nothing is dropped when the phone is offline. */
 @Entity(tableName = "queued_events", indices = [Index(value = ["eventUid"], unique = true)])
