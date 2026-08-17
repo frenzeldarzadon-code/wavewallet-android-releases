@@ -216,6 +216,12 @@ export type Database = {
           enabled: boolean
           expected_amount_php: number | null
           id: string
+          layer1_require_amount: boolean
+          layer1_require_sender_number: boolean
+          layer1_require_time_window: boolean
+          layer2_require_amount_match: boolean
+          layer2_require_listener_reference: boolean
+          layer2_require_sender_match: boolean
           max_auto_amount_php: number | null
           require_listener_match: boolean
           require_receipt_match: boolean
@@ -230,6 +236,12 @@ export type Database = {
           enabled?: boolean
           expected_amount_php?: number | null
           id?: string
+          layer1_require_amount?: boolean
+          layer1_require_sender_number?: boolean
+          layer1_require_time_window?: boolean
+          layer2_require_amount_match?: boolean
+          layer2_require_listener_reference?: boolean
+          layer2_require_sender_match?: boolean
           max_auto_amount_php?: number | null
           require_listener_match?: boolean
           require_receipt_match?: boolean
@@ -244,6 +256,12 @@ export type Database = {
           enabled?: boolean
           expected_amount_php?: number | null
           id?: string
+          layer1_require_amount?: boolean
+          layer1_require_sender_number?: boolean
+          layer1_require_time_window?: boolean
+          layer2_require_amount_match?: boolean
+          layer2_require_listener_reference?: boolean
+          layer2_require_sender_match?: boolean
           max_auto_amount_php?: number | null
           require_listener_match?: boolean
           require_receipt_match?: boolean
@@ -5555,6 +5573,12 @@ export type Database = {
           amount_tolerance_php: number
           enabled: boolean
           expected_amount_php: number
+          layer1_require_amount: boolean
+          layer1_require_sender_number: boolean
+          layer1_require_time_window: boolean
+          layer2_require_amount_match: boolean
+          layer2_require_listener_reference: boolean
+          layer2_require_sender_match: boolean
           max_auto_amount_php: number
           require_listener_match: boolean
           require_receipt_match: boolean
@@ -6742,6 +6766,7 @@ export type Database = {
         Returns: string
       }
       real_super_admin_exists: { Args: never; Returns: boolean }
+      recheck_pending_cash_ins: { Args: never; Returns: Json }
       reconcile_listener_events: {
         Args: { _max_age_hours?: number }
         Returns: Json
@@ -7577,6 +7602,43 @@ export type Database = {
         Args: { _ecosystem_id: string; _percent: number }
         Returns: number
       }
+      set_cash_in_auth_fields: {
+        Args: {
+          _ecosystem: string
+          _layer1_sender?: boolean
+          _layer1_time?: boolean
+          _layer2_amount?: boolean
+          _layer2_listener_reference?: boolean
+          _layer2_sender?: boolean
+          _require_receipt?: boolean
+        }
+        Returns: {
+          amount_tolerance_php: number
+          ecosystem_id: string | null
+          enabled: boolean
+          expected_amount_php: number | null
+          id: string
+          layer1_require_amount: boolean
+          layer1_require_sender_number: boolean
+          layer1_require_time_window: boolean
+          layer2_require_amount_match: boolean
+          layer2_require_listener_reference: boolean
+          layer2_require_sender_match: boolean
+          max_auto_amount_php: number | null
+          require_listener_match: boolean
+          require_receipt_match: boolean
+          require_reference_match: boolean
+          updated_at: string
+          updated_by: string | null
+          verification_mode: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cash_in_auto_rules"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       set_cash_in_auto_approval: {
         Args: {
           _ecosystem: string
@@ -7595,6 +7657,12 @@ export type Database = {
           enabled: boolean
           expected_amount_php: number | null
           id: string
+          layer1_require_amount: boolean
+          layer1_require_sender_number: boolean
+          layer1_require_time_window: boolean
+          layer2_require_amount_match: boolean
+          layer2_require_listener_reference: boolean
+          layer2_require_sender_match: boolean
           max_auto_amount_php: number | null
           require_listener_match: boolean
           require_receipt_match: boolean

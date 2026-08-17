@@ -34,11 +34,34 @@ export interface AutoApprovalRule {
   require_receipt_match?: boolean;
   /** Staged evaluates every rule but never settles a request. */
   verification_mode?: VerificationMode;
+  /* -------- Configurable authentication fields -------- */
+  /** Always true: the received amount is never optional. */
+  layer1_require_amount?: boolean;
+  /** First layer: the notification must report the sending GCash number. */
+  layer1_require_sender_number?: boolean;
+  /** First layer: only pair a notification inside the device match window. */
+  layer1_require_time_window?: boolean;
+  /** Second layer: submitted amount must equal the confirmed amount. */
+  layer2_require_amount_match?: boolean;
+  /** Second layer: submitted sender number must equal the confirmed sender. */
+  layer2_require_sender_match?: boolean;
+  /** Second layer: the notification itself must carry the same reference. */
+  layer2_require_listener_reference?: boolean;
 }
 
 export interface ShopAutoRule extends AutoApprovalRule {
   ecosystem_id: string;
   ecosystem_name: string | null;
+}
+
+/** A paired phone whose receiving number matches no shop's configured number. */
+export interface MismatchedDevice {
+  device_id: string;
+  label: string;
+  device_number: string | null;
+  shop_id: string;
+  shop_name: string | null;
+  shop_number: string | null;
 }
 
 export interface CashInAutoStatus {
@@ -59,6 +82,8 @@ export interface CashInAutoStatus {
   shared_numbers?: { number: string; shops: number }[];
   /** Requests that would have been approved while staged. */
   staged_30d?: number;
+  /** Shops whose receiving number no active phone is listening on. */
+  mismatched_devices?: MismatchedDevice[];
 }
 
 export const DEFAULT_AUTO_RULE: AutoApprovalRule = {
@@ -69,7 +94,14 @@ export const DEFAULT_AUTO_RULE: AutoApprovalRule = {
   require_listener_match: true,
   require_receipt_match: true,
   verification_mode: "active",
+  layer1_require_amount: true,
+  layer1_require_sender_number: true,
+  layer1_require_time_window: false,
+  layer2_require_amount_match: true,
+  layer2_require_sender_match: true,
+  layer2_require_listener_reference: false,
 };
+
 
 
 /** Same normalisation as `public.normalize_payment_reference`. */
@@ -207,7 +239,7 @@ export function evaluateMatch(
   }
   if (!normalizePhMobile(receivingNumber)) return "no_receiving_number";
   const sender = normalizePhMobile(request.sender_number ?? request.payer_number);
-  if (!sender) return "no_sender_number";
+  if ((rule.layer2_require_sender_match ?? true) && !sender) return "no_sender_number";
 
   // First layer — configurable, on by default.
   const requireListener = rule.require_listener_match ?? true;
@@ -215,13 +247,19 @@ export function evaluateMatch(
   if (!event || (event.outcome && event.outcome !== "accepted")) {
     if (requireListener) return "awaiting_listener";
   } else {
-    if (normalizePhMobile(event.sender_number) !== sender) return "number_mismatch";
-    if (Math.abs(Number(event.amount_php) - Number(request.amount_php)) > tolerance) {
+    if ((rule.layer2_require_sender_match ?? true) && normalizePhMobile(event.sender_number) !== sender) {
+      return "number_mismatch";
+    }
+    if (
+      (rule.layer2_require_amount_match ?? true) &&
+      Math.abs(Number(event.amount_php) - Number(request.amount_php)) > tolerance
+    ) {
       return "amount_mismatch";
     }
     if (event.serves_destination === false) return "wrong_destination";
     if (event.device_online === false) return "listener_offline";
   }
+
 
   // Second layer: the reference read off the receipt. A mismatch always blocks;
   // whether an unreadable receipt blocks is configurable.
@@ -324,4 +362,44 @@ export async function setShopCashInNumber(ecosystemId: string, number: string | 
     _number: number,
   } as never);
   if (error) throw new Error(error.message);
+}
+
+/**
+ * Platform-owner only: choose which fields each authentication layer requires.
+ * Duplicate-reference protection is never configurable and stays on.
+ */
+export async function setCashInAuthFields(input: {
+  ecosystemId: string | null;
+  layer1SenderNumber?: boolean;
+  layer1TimeWindow?: boolean;
+  layer2AmountMatch?: boolean;
+  layer2SenderMatch?: boolean;
+  layer2ListenerReference?: boolean;
+  requireReceipt?: boolean;
+}): Promise<void> {
+  const args = {
+    _ecosystem: input.ecosystemId,
+    _layer1_sender: input.layer1SenderNumber ?? null,
+    _layer1_time: input.layer1TimeWindow ?? null,
+    _layer2_amount: input.layer2AmountMatch ?? null,
+    _layer2_sender: input.layer2SenderMatch ?? null,
+    _layer2_listener_reference: input.layer2ListenerReference ?? null,
+    _require_receipt: input.requireReceipt ?? null,
+  } as never;
+  const { error } = await supabase.rpc("set_cash_in_auth_fields" as never, args);
+  if (error) throw new Error(error.message);
+}
+
+export interface RecheckResult {
+  events_checked: number;
+  linked: number;
+  approved: number;
+}
+
+/** Re-runs matching over recent pending payments under the current rules. */
+export async function recheckPendingCashIns(): Promise<RecheckResult> {
+  const { data, error } = await supabase.rpc("recheck_pending_cash_ins" as never);
+  if (error) throw new Error(error.message);
+  const v = (data ?? {}) as Partial<RecheckResult>;
+  return { events_checked: v.events_checked ?? 0, linked: v.linked ?? 0, approved: v.approved ?? 0 };
 }

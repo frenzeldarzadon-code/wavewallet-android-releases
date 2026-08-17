@@ -19,6 +19,8 @@ import {
   DEFAULT_AUTO_RULE,
   fetchCashInAutoStatus,
   matchingStatusLabel,
+  recheckPendingCashIns,
+  setCashInAuthFields,
   setCashInAutoApproval,
   type CashInAutoStatus,
 } from "@/lib/cash-in-auto";
@@ -26,6 +28,7 @@ import {
 export function CashInAutoCard() {
   const [status, setStatus] = useState<CashInAutoStatus | null>(null);
   const [saving, setSaving] = useState(false);
+  const [rechecking, setRechecking] = useState(false);
   const [rule, setRule] = useState(DEFAULT_AUTO_RULE);
 
   const load = async () => {
@@ -39,9 +42,16 @@ export function CashInAutoCard() {
       require_listener_match: next.platform_rule?.require_listener_match ?? true,
       require_receipt_match: next.platform_rule?.require_receipt_match ?? true,
       verification_mode: next.platform_rule?.verification_mode ?? "staged",
+      layer1_require_amount: true,
+      layer1_require_sender_number: next.platform_rule?.layer1_require_sender_number ?? true,
+      layer1_require_time_window: next.platform_rule?.layer1_require_time_window ?? false,
+      layer2_require_amount_match: next.platform_rule?.layer2_require_amount_match ?? true,
+      layer2_require_sender_match: next.platform_rule?.layer2_require_sender_match ?? true,
+      layer2_require_listener_reference: next.platform_rule?.layer2_require_listener_reference ?? false,
     });
 
   };
+
 
   useEffect(() => {
     void load().catch(() => {});
@@ -85,6 +95,45 @@ export function CashInAutoCard() {
       setSaving(false);
     }
   };
+
+  /** Saves one authentication-field toggle. Amount and duplicate checks stay on. */
+  const saveFields = async (next: typeof rule) => {
+    setSaving(true);
+    try {
+      await setCashInAuthFields({
+        ecosystemId: null,
+        layer1SenderNumber: next.layer1_require_sender_number ?? true,
+        layer1TimeWindow: next.layer1_require_time_window ?? false,
+        layer2AmountMatch: next.layer2_require_amount_match ?? true,
+        layer2SenderMatch: next.layer2_require_sender_match ?? true,
+        layer2ListenerReference: next.layer2_require_listener_reference ?? false,
+        requireReceipt: next.require_receipt_match ?? true,
+      });
+      setRule(next);
+      toast.success("Authentication rules saved and recorded in the audit log.");
+      await load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const recheck = async () => {
+    setRechecking(true);
+    try {
+      const r = await recheckPendingCashIns();
+      toast.success("Pending cash ins re-checked", {
+        description: `${r.events_checked} payment(s) re-examined · ${r.linked} newly linked · ${r.approved} approved by the rules.`,
+      });
+      await load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not re-check.");
+    } finally {
+      setRechecking(false);
+    }
+  };
+
 
   return (
     <Card>
@@ -183,6 +232,120 @@ export function CashInAutoCard() {
           </div>
         </div>
 
+        <div className="rounded-lg border border-border p-3 space-y-3">
+          <div>
+            <p className="font-semibold">Required authentication details</p>
+            <p className="text-xs text-muted-foreground">
+              Choose exactly which details each layer must confirm. The received amount is always required and a
+              payment reference can never be used twice — those two cannot be switched off. Change these only if
+              GCash changes what its notifications show. Every change is written to the audit log.
+            </p>
+          </div>
+
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <Label htmlFor="l1-amount">First layer · amount received</Label>
+              <p className="text-xs text-muted-foreground">Always required.</p>
+            </div>
+            <Switch id="l1-amount" checked disabled />
+          </div>
+
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <Label htmlFor="l1-sender">First layer · sending GCash number</Label>
+              <p className="text-xs text-muted-foreground">
+                The notification must show which number sent the money.
+              </p>
+            </div>
+            <Switch
+              id="l1-sender"
+              checked={rule.layer1_require_sender_number ?? true}
+              disabled={saving}
+              onCheckedChange={(v) => void saveFields({ ...rule, layer1_require_sender_number: v })}
+            />
+          </div>
+
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <Label htmlFor="l1-time">First layer · time window (off by default)</Label>
+              <p className="text-xs text-muted-foreground">
+                Off means the customer may pay long before or after submitting. Turn on only if you want the
+                payment and the request to fall inside the paired phone's matching window.
+              </p>
+            </div>
+            <Switch
+              id="l1-time"
+              checked={rule.layer1_require_time_window ?? false}
+              disabled={saving}
+              onCheckedChange={(v) => void saveFields({ ...rule, layer1_require_time_window: v })}
+            />
+          </div>
+
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <Label htmlFor="l2-amount">Second layer · submitted amount must match</Label>
+              <p className="text-xs text-muted-foreground">
+                The amount on the request must equal the amount the phone confirmed.
+              </p>
+            </div>
+            <Switch
+              id="l2-amount"
+              checked={rule.layer2_require_amount_match ?? true}
+              disabled={saving}
+              onCheckedChange={(v) => void saveFields({ ...rule, layer2_require_amount_match: v })}
+            />
+          </div>
+
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <Label htmlFor="l2-sender">Second layer · submitted sender number must match</Label>
+              <p className="text-xs text-muted-foreground">
+                The number the member says they paid from must equal the confirmed sender.
+              </p>
+            </div>
+            <Switch
+              id="l2-sender"
+              checked={rule.layer2_require_sender_match ?? true}
+              disabled={saving}
+              onCheckedChange={(v) => void saveFields({ ...rule, layer2_require_sender_match: v })}
+            />
+          </div>
+
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <Label htmlFor="l2-ref">Second layer · notification must carry the same reference</Label>
+              <p className="text-xs text-muted-foreground">
+                Off by default: most GCash notifications do not show a reference number. The reference from the
+                receipt is still checked for uniqueness in every case.
+              </p>
+            </div>
+            <Switch
+              id="l2-ref"
+              checked={rule.layer2_require_listener_reference ?? false}
+              disabled={saving}
+              onCheckedChange={(v) => void saveFields({ ...rule, layer2_require_listener_reference: v })}
+            />
+          </div>
+        </div>
+
+        {(status.mismatched_devices ?? []).length > 0 ? (
+          <div className="rounded-lg border border-destructive/40 p-3">
+            <p className="font-semibold text-destructive">Receiving numbers that no phone is listening on</p>
+            <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
+              {(status.mismatched_devices ?? []).slice(0, 6).map((m) => (
+                <li key={`${m.device_id}-${m.shop_id}`}>
+                  {m.shop_name ?? "Shop"} collects on {m.shop_number} · nearest paired phone “{m.label}” listens
+                  on {m.device_number}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Payments to that shop can never be confirmed until the two numbers are the same.
+            </p>
+          </div>
+        ) : null}
+
+
         <div className="rounded-lg border border-border p-3">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -253,6 +416,10 @@ export function CashInAutoCard() {
           <Button size="sm" disabled={saving} onClick={() => void save(rule)}>
             {saving ? "Saving…" : "Save matching rules"}
           </Button>
+          <Button size="sm" variant="outline" disabled={rechecking} onClick={() => void recheck()}>
+            {rechecking ? "Re-checking…" : "Re-check pending cash ins"}
+          </Button>
+
           <p className="text-xs text-muted-foreground">
             Auto-approved in the last 30 days: {status.auto_approved_30d} · duplicate references blocked:{" "}
             {status.duplicates_blocked_30d}
