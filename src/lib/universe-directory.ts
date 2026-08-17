@@ -55,10 +55,10 @@ export async function searchDirectory(
   limit = 30,
 ): Promise<DirectoryMember[]> {
   const { data, error } = await supabase.rpc("universe_directory", {
-    _query: f.query.trim() || undefined,
-    _province: f.province.trim() || undefined,
-    _city_municipality: f.cityMunicipality.trim() || undefined,
-    _barangay: f.barangay.trim() || undefined,
+    ...(f.query.trim() ? { _query: f.query.trim() } : {}),
+    ...(f.province.trim() ? { _province: f.province.trim() } : {}),
+    ...(f.cityMunicipality.trim() ? { _city_municipality: f.cityMunicipality.trim() } : {}),
+    ...(f.barangay.trim() ? { _barangay: f.barangay.trim() } : {}),
     _limit: limit,
   });
   if (error) throw new Error(error.message);
