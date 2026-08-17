@@ -9199,6 +9199,28 @@ export type Database = {
               isSetofReturn: false
             }
           }
+      update_store_settings: {
+        Args: {
+          _cash_enabled: boolean
+          _credit_enabled: boolean
+          _delivery_enabled: boolean
+          _ecosystem_id: string
+          _pickup_enabled: boolean
+          _public_storefront: boolean
+          _retail_enabled: boolean
+          _voucher_enabled: boolean
+        }
+        Returns: {
+          cash_enabled: boolean
+          credit_enabled: boolean
+          delivery_enabled: boolean
+          pickup_enabled: boolean
+          public_storefront: boolean
+          retail_enabled: boolean
+          seeded: number
+          voucher_enabled: boolean
+        }[]
+      }
       upline_commission_rate_for: {
         Args: { _ecosystem_id: string }
         Returns: number
