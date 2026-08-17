@@ -60,8 +60,12 @@ export function StoreSettingsCard({ ecosystemId }: { ecosystemId: string | null 
     setBusy(true);
     try {
       const { contactEmail: _ignored, ...rest } = settings;
-      await saveStoreSettings(ecosystemId, rest);
-      toast.success("Store settings saved");
+      const { seeded } = await saveStoreSettings(ecosystemId, rest);
+      toast.success("Store settings saved", {
+        description: seeded
+          ? `${seeded} starter products were added as drafts — set prices and stock, then publish.`
+          : undefined,
+      });
       // The sidebar reads these flags, so refresh the console.
       window.dispatchEvent(new Event("wavewallet:session"));
     } catch (e) {
