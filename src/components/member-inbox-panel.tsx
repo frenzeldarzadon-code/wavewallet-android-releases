@@ -25,7 +25,12 @@ import {
   type MemberInbox,
 } from "@/lib/member-inbox";
 import { MemberInviteCard } from "@/components/universe/member-invite-card";
-import { applicationTone } from "@/lib/membership-applications";
+import {
+  heldForManualReview,
+  memberJoinLabel,
+  reviewState,
+  reviewTone,
+} from "@/lib/membership-applications";
 import { useSession } from "@/lib/session";
 import { daysLeft, respondToInvitation, type MyInvitation } from "@/lib/shop-invitations";
 import { roleLabel, shortDateTime } from "@/lib/wavewallet";
