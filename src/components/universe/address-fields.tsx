@@ -45,7 +45,7 @@ export function ProvinceSelect({
   placeholder?: string;
 }) {
   return (
-    <Select value={value || undefined} onValueChange={onChange}>
+    <Select {...(value ? { value } : {})} onValueChange={onChange}>
       <SelectTrigger id={id} className="h-11">
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
