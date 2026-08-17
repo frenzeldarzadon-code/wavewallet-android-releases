@@ -287,24 +287,42 @@ export function PostComposer({
 
         {step === "write" ? (
           <div className="space-y-3">
+            {/* Familiar composer header: who is posting, and where it goes. */}
+            <div className="flex items-center gap-3">
+              <MemberAvatar name={authorName} className="size-10" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">{authorName}</p>
+                <button
+                  type="button"
+                  onClick={() => setStep("audience")}
+                  className="mt-0.5 inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/60 px-2.5 py-1 text-xs font-medium text-muted-foreground"
+                >
+                  {audience === "general" ? (
+                    <Globe2 className="size-3.5" aria-hidden />
+                  ) : audience === "shops" ? (
+                    <Store className="size-3.5" aria-hidden />
+                  ) : (
+                    <Users className="size-3.5" aria-hidden />
+                  )}
+                  <span className="max-w-40 truncate">
+                    {audienceSummary(audience, shops, shopIds, ownShopName)}
+                  </span>
+                </button>
+              </div>
+            </div>
+
             <MentionInput
               value={body}
               onChange={setBody}
               maxLength={POST_MAX_CHARS}
               rows={6}
-              placeholder="What's happening? Type @ to mention someone"
-              className="text-base"
+              placeholder="What's on your mind? Type @ to mention someone"
+              className="min-h-36 resize-none border-0 bg-transparent px-0 text-lg shadow-none focus-visible:ring-0"
             />
             <p className="text-right text-xs text-muted-foreground">
               {body.length}/{POST_MAX_CHARS}
             </p>
-            <ul className="space-y-1 rounded-2xl bg-muted/50 p-3 text-xs text-muted-foreground">
-              {freePostDisclosure(state).map((line, i) => (
-                <li key={line} className={i === 0 ? "font-medium text-foreground" : undefined}>
-                  {line}
-                </li>
-              ))}
-            </ul>
+
             {file ? (
               <div className="space-y-2">
                 <ImageCropper file={file} aspect={SOCIAL_IMAGE_ASPECT} onChange={setCrop} />
@@ -316,9 +334,9 @@ export function PostComposer({
               <>
                 <Label
                   htmlFor="composerPhoto"
-                  className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-border px-3 text-sm font-medium"
+                  className="flex h-12 cursor-pointer items-center gap-2 rounded-2xl border border-border px-3 text-sm font-medium"
                 >
-                  <ImagePlus className="size-4" /> Add photo
+                  <ImagePlus className="size-5 text-success" /> Add photo
                 </Label>
                 <Input
                   id="composerPhoto"
@@ -329,6 +347,14 @@ export function PostComposer({
                 />
               </>
             )}
+
+            <ul className="space-y-1 rounded-2xl bg-muted/50 p-3 text-xs text-muted-foreground">
+              {freePostDisclosure(state).map((line, i) => (
+                <li key={line} className={i === 0 ? "font-medium text-foreground" : undefined}>
+                  {line}
+                </li>
+              ))}
+            </ul>
           </div>
         ) : null}
 
