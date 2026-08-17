@@ -1976,6 +1976,7 @@ export type Database = {
           parser_version: string | null
           posted_at: string | null
           raw_text: string | null
+          recorded_by: string | null
           reference_key: string | null
           review_note: string | null
           review_state: string
@@ -1984,6 +1985,7 @@ export type Database = {
           sender_name: string | null
           sender_number: string | null
           sender_number_key: string | null
+          source: string
         }
         Insert: {
           amount_php?: number | null
@@ -2001,6 +2003,7 @@ export type Database = {
           parser_version?: string | null
           posted_at?: string | null
           raw_text?: string | null
+          recorded_by?: string | null
           reference_key?: string | null
           review_note?: string | null
           review_state?: string
@@ -2009,6 +2012,7 @@ export type Database = {
           sender_name?: string | null
           sender_number?: string | null
           sender_number_key?: string | null
+          source?: string
         }
         Update: {
           amount_php?: number | null
@@ -2026,6 +2030,7 @@ export type Database = {
           parser_version?: string | null
           posted_at?: string | null
           raw_text?: string | null
+          recorded_by?: string | null
           reference_key?: string | null
           review_note?: string | null
           review_state?: string
@@ -2034,6 +2039,7 @@ export type Database = {
           sender_name?: string | null
           sender_number?: string | null
           sender_number_key?: string | null
+          source?: string
         }
         Relationships: [
           {
@@ -6822,6 +6828,19 @@ export type Database = {
           _parser_version?: string
           _posted_at?: string
           _raw_text?: string
+          _sender_name?: string
+          _sender_number?: string
+        }
+        Returns: Json
+      }
+      record_manual_gcash_payment: {
+        Args: {
+          _amount: number
+          _ecosystem?: string
+          _note?: string
+          _received_at: string
+          _receiving_number: string
+          _reference: string
           _sender_name?: string
           _sender_number?: string
         }
