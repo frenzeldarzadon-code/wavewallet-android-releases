@@ -183,6 +183,12 @@ export function eventResultLabel(event: ListenerEvent) {
   if (result.startsWith("matched:")) return `Matched, not approved (${result.slice(8).replace(/_/g, " ")})`;
   if (result === "ambiguous") return "Several possible Cash Ins — left for manual review";
   if (result === "no_pending_match") return "No pending Cash In matched";
+  if (result === "destination_mismatch") {
+    return (
+      "Amount and sender number matched a pending Cash In, but that shop expects a different " +
+      "receiving GCash number than this phone monitors — check the shop's Cash In number"
+    );
+  }
   if (result === "device_without_receiving_number") {
     return "This phone has no receiving GCash account set — nothing was matched";
   }
