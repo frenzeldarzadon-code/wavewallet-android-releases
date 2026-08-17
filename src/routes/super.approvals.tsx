@@ -3,6 +3,8 @@ import { ApplicationsPanel } from "@/components/applications-panel";
 import { CreditRequestsCard } from "@/components/super/credit-requests-card";
 import { MoneyRequestsCard } from "@/components/super/money-requests-card";
 import { ReferenceConflictsCard } from "@/components/super/reference-conflicts-card";
+import { UnmatchedPaymentsCard } from "@/components/super/unmatched-payments-card";
+
 import { useSession } from "@/lib/session";
 
 export const Route = createFileRoute("/super/approvals")({
