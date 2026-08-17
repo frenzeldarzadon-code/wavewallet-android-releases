@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { EcosystemSwitcher } from "@/components/ecosystem-switcher";
 import { SuperAdminBadge } from "@/components/role-badge";
 import { ReviewBanner } from "@/components/review-banner";
+import { NotificationBell } from "@/components/notification-bell";
 
 
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -260,6 +261,7 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
               </h1>
               {subtitle ? <p className="truncate text-xs text-muted-foreground">{subtitle}</p> : null}
             </div>
+            <NotificationBell />
             <Button
               variant="ghost"
               size="icon"

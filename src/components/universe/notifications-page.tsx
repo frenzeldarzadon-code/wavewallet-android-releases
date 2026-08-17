@@ -29,6 +29,14 @@ import {
   type Notification,
   type NotificationPreferences,
 } from "@/lib/notifications";
+import {
+  deliverySummary,
+  fetchPushDevices,
+  registerThisDevice,
+  removeDevice,
+  setDeviceEnabled,
+  type PushDevice,
+} from "@/lib/financial-notifications";
 
 function when(iso: string) {
   const d = new Date(iso);
@@ -49,14 +57,22 @@ export function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [permission, setPermission] = useState(notificationPermission());
+  const [devices, setDevices] = useState<PushDevice[]>([]);
+
+  const reloadDevices = () => {
+    void fetchPushDevices()
+      .then(setDevices)
+      .catch(() => undefined);
+  };
 
   useEffect(() => {
     let active = true;
-    void Promise.all([fetchNotifications(), fetchPreferences()])
-      .then(([n, p]) => {
+    void Promise.all([fetchNotifications(), fetchPreferences(), fetchPushDevices()])
+      .then(([n, p, d]) => {
         if (!active) return;
         setRows(n);
         setPrefs(p);
+        setDevices(d);
       })
       .catch((e: Error) => toast.error("Could not load notifications", { description: e.message }))
       .finally(() => active && setLoading(false));
@@ -82,6 +98,8 @@ export function NotificationsPage() {
     setPermission(result);
     if (result === "granted") {
       await persist({ ...prefs, pushEnabled: true });
+      await registerThisDevice().catch(() => undefined);
+      reloadDevices();
       toast.success("Alerts on", {
         description: "You will see pop-up alerts while WaveWallet is open in this browser.",
       });
@@ -89,6 +107,26 @@ export function NotificationsPage() {
       toast.error("Your browser blocked alerts", {
         description: "Allow notifications for this site in your browser settings.",
       });
+    }
+  };
+
+  const toggleDevice = async (d: PushDevice, on: boolean) => {
+    setDevices((ds) => ds.map((x) => (x.id === d.id ? { ...x, push_enabled: on } : x)));
+    try {
+      await setDeviceEnabled(d.id, on);
+    } catch (e) {
+      toast.error("Could not update this device", { description: (e as Error).message });
+      reloadDevices();
+    }
+  };
+
+  const forgetDevice = async (d: PushDevice) => {
+    setDevices((ds) => ds.filter((x) => x.id !== d.id));
+    try {
+      await removeDevice(d.id);
+    } catch (e) {
+      toast.error("Could not remove this device", { description: (e as Error).message });
+      reloadDevices();
     }
   };
 
@@ -165,6 +203,9 @@ export function NotificationsPage() {
                   ) : null}
                   <span className="block text-[11px] text-muted-foreground">
                     {when(n.created_at)}
+                    {n.category === "financial"
+                      ? ` • ${deliverySummary(n.delivery_status)}`
+                      : ""}
                   </span>
                 </span>
               </button>
@@ -241,6 +282,64 @@ export function NotificationsPage() {
               waiting for you here.
             </p>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-[var(--shadow-card)]">
+        <CardHeader className="flex-row items-center justify-between gap-3 space-y-0">
+          <div>
+            <CardTitle className="text-base">Your devices</CardTitle>
+            <CardDescription>
+              Switch money alerts on or off for each phone or computer you use.
+            </CardDescription>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              void registerThisDevice()
+                .then(() => {
+                  reloadDevices();
+                  toast.success("This device is registered");
+                })
+                .catch((e: Error) =>
+                  toast.error("Could not register this device", { description: e.message }),
+                )
+            }
+          >
+            Add this device
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-3 pb-5 text-sm">
+          {devices.length === 0 ? (
+            <p className="text-muted-foreground">
+              No device registered yet. Your alerts still appear in the list above.
+            </p>
+          ) : (
+            devices.map((d) => (
+              <div key={d.id} className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{d.device_label ?? "Unnamed device"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {d.expired_at
+                      ? `Needs re-registering — ${d.last_error ?? "the browser dropped this device"}`
+                      : `Last seen ${when(d.last_seen_at)}`}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Switch
+                    checked={d.push_enabled && !d.expired_at}
+                    disabled={!!d.expired_at}
+                    onCheckedChange={(v) => void toggleDevice(d, v)}
+                    aria-label={`Alerts on ${d.device_label ?? "this device"}`}
+                  />
+                  <Button size="sm" variant="ghost" onClick={() => void forgetDevice(d)}>
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
         </CardContent>
       </Card>
     </div>
