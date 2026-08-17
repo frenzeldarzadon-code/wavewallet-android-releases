@@ -163,13 +163,26 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                   <RetailImage path={p.image_path} alt={p.name} />
                   <CardContent className="space-y-2">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-semibold">{p.name}</p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold">{p.name}</p>
+                        {[p.brand, p.variant, p.size_label].filter(Boolean).length > 0 ? (
+                          <p className="text-[11px] text-muted-foreground">
+                            {[p.brand, p.variant, p.size_label].filter(Boolean).join(" · ")}
+                          </p>
+                        ) : null}
+                      </div>
                       <StatusBadge tone={p.stock > 0 ? "success" : "danger"}>
                         {p.stock > 0 ? `${p.stock} in stock` : "Out of stock"}
                       </StatusBadge>
                     </div>
                     {p.description ? (
                       <p className="text-xs text-muted-foreground">{p.description}</p>
+                    ) : null}
+                    {(p.wholesale_price ?? 0) > 0 && (p.wholesale_min_qty ?? 0) > 0 ? (
+                      <p className="text-[11px] font-medium text-success">
+                        {credits(p.wholesale_price ?? 0)} each from {p.wholesale_min_qty}{" "}
+                        {p.unit ?? "piece"}s
+                      </p>
                     ) : null}
                     <RatingStars avg={p.rating_avg} count={p.rating_count} />
                     <div className="flex items-center justify-between gap-2 pt-1">
