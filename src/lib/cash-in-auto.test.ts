@@ -231,17 +231,18 @@ describe("destination-aware and configurable verification layers", () => {
   });
 });
 
-describe("destination is a routing safeguard, not an authentication layer", () => {
-  it("names the destination mismatch instead of pretending nothing matched", () => {
-    expect(
-      eventResultLabel({ match_result: "destination_mismatch" } as never),
-    ).toMatch(/receiving GCash number/i);
+describe("a masked receiving number never blocks a valid Cash In", () => {
+  it("reports a differing receiving number as informational, not a failure", () => {
+    expect(eventResultLabel({ match_result: "destination_mismatch" } as never)).toMatch(
+      /informational|does not block/i,
+    );
+    expect(eventResultLabel({ match_result: "wrong_shop" } as never)).toMatch(/different shop/i);
     expect(eventResultLabel({ match_result: "no_pending_match" } as never)).toMatch(
       /No pending Cash In matched/i,
     );
   });
 
-  it("still authenticates on amount and sender when the destination agrees", () => {
+  it("approves the live ₱100 case even when GCash masked the receiving number", () => {
     const rule = { ...on, verification_mode: "active" as const };
     const request = {
       amount_php: 100,
@@ -255,15 +256,41 @@ describe("destination is a routing safeguard, not an authentication layer", () =
         outcome: "accepted",
         device_online: true,
         serves_shop: true,
+        receiving_number_matches: false,
       },
     };
     expect(evaluateMatch(request, rule, RECEIVING)).toBe("matched");
+  });
+
+  it("still blocks a phone paired to another shop, a wrong amount and a wrong sender", () => {
+    const rule = { ...on, verification_mode: "active" as const };
+    const base = {
+      amount_php: 100,
+      payer_reference: "9044061112678",
+      sender_number: "09070321959",
+      proof_path: "p.jpg",
+      receipt_check: "matched",
+      listener_event: {
+        amount_php: 100,
+        sender_number: "09070321959",
+        outcome: "accepted",
+        device_online: true,
+        serves_shop: true,
+      },
+    };
+    expect(
+      evaluateMatch({ ...base, listener_event: { ...base.listener_event, serves_shop: false } }, rule, RECEIVING),
+    ).toBe("wrong_shop");
+    expect(
+      evaluateMatch({ ...base, listener_event: { ...base.listener_event, amount_php: 250 } }, rule, RECEIVING),
+    ).toBe("amount_mismatch");
     expect(
       evaluateMatch(
-        { ...request, listener_event: { ...request.listener_event, serves_shop: false } },
+        { ...base, listener_event: { ...base.listener_event, sender_number: "09990000000" } },
         rule,
         RECEIVING,
       ),
-    ).toBe("wrong_shop");
+    ).toBe("number_mismatch");
+    expect(evaluateMatch({ ...base, duplicate_reference: true }, rule, RECEIVING)).toBe("duplicate_reference");
   });
 });

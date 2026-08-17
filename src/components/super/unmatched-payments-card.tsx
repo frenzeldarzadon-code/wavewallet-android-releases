@@ -38,8 +38,10 @@ const resultLabel = (event: UnmatchedListenerEvent) => {
       return "Several possible Cash Ins";
     case "device_without_receiving_number":
       return "Phone has no receiving number set";
+    case "wrong_shop":
+      return "That phone is paired to a different shop";
     case "destination_mismatch":
-      return "Amount and sender matched, but the money landed on a different receiving GCash number";
+      return "Receiving number looked different (informational — not a failure)";
     case "no_pending_match":
       return "No matching Cash In yet";
     default:
