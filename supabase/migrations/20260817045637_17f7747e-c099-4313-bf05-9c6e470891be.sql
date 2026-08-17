@@ -1,0 +1,1 @@
+drop function if exists public.record_listener_event(uuid, text, text, text, numeric, text, text, timestamptz, text);

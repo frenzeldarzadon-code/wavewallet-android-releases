@@ -6812,36 +6812,21 @@ export type Database = {
               isSetofReturn: false
             }
           }
-      record_listener_event:
-        | {
-            Args: {
-              _amount?: number
-              _device: string
-              _event_uid: string
-              _package: string
-              _parser_version?: string
-              _posted_at?: string
-              _raw_text?: string
-              _sender_name?: string
-              _sender_number?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              _amount?: number
-              _device: string
-              _event_uid: string
-              _gcash_reference?: string
-              _package: string
-              _parser_version?: string
-              _posted_at?: string
-              _raw_text?: string
-              _sender_name?: string
-              _sender_number?: string
-            }
-            Returns: Json
-          }
+      record_listener_event: {
+        Args: {
+          _amount?: number
+          _device: string
+          _event_uid: string
+          _gcash_reference?: string
+          _package: string
+          _parser_version?: string
+          _posted_at?: string
+          _raw_text?: string
+          _sender_name?: string
+          _sender_number?: string
+        }
+        Returns: Json
+      }
       record_verified_payment: {
         Args: {
           _account_ref?: string
