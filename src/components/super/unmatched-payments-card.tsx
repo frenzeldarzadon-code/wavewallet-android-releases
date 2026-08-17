@@ -20,6 +20,8 @@ import {
   linkListenerEvent,
   type UnmatchedListenerEvent,
 } from "@/lib/listener-devices";
+import { ManualRecoveryDialog } from "./manual-recovery-dialog";
+
 
 const line = (label: string, value: string) => (
   <p key={label} className="text-muted-foreground">
