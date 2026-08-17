@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+import { eventResultLabel } from "./listener-devices";
   DEFAULT_AUTO_RULE,
   evaluateMatch,
   matchingStatusLabel,
