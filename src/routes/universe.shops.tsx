@@ -30,12 +30,12 @@ export const Route = createFileRoute("/universe/shops")({
       {
         name: "description",
         content:
-          "Browse WaveWallet shops, switch between the ones you belong to and request to join a new hotspot shop.",
+          "Browse WaveWallet shops, switch between the ones you belong to and join a new hotspot shop instantly.",
       },
       { property: "og:title", content: "Shop Directory — WaveWallet Universe" },
       {
         property: "og:description",
-        content: "Switch between your shops or request to join a new one.",
+        content: "Switch between your shops or join a new one instantly.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -161,7 +161,7 @@ function UniverseShops() {
                       }
                     }}
                   >
-                    {e.pending ? "Requested" : "Request to join"}
+                    {e.pending ? "In review" : "Join shop"}
                   </Button>
                 </div>
               ))}
