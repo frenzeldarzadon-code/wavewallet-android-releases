@@ -6,6 +6,24 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 
+/**
+ * Calls an RPC by name for functions that are not in the generated types yet.
+ * The call must stay attached to the client: a detached `supabase.rpc`
+ * reference loses `this` and throws "Cannot read properties of undefined
+ * (reading 'rest')".
+ */
+const rpc = (
+  fn: string,
+  args?: Record<string, unknown>,
+): Promise<{ data: unknown; error: { message: string } | null }> =>
+  (
+    supabase.rpc as unknown as (
+      name: string,
+      params?: Record<string, unknown>,
+    ) => Promise<{ data: unknown; error: { message: string } | null }>
+  ).call(supabase, fn, args);
+
+
 export type ListenerDevice = {
   id: string;
   label: string;
@@ -72,12 +90,7 @@ export async function registerListenerDevice(input: {
   };
   if (input.ecosystemId) args["_ecosystem"] = input.ecosystemId;
   if (input.receivingNumber) args["_receiving_number"] = input.receivingNumber;
-  const { data, error } = await (
-    supabase.rpc as unknown as (
-      fn: string,
-      args: Record<string, unknown>,
-    ) => Promise<{ data: unknown; error: { message: string } | null }>
-  )("register_listener_device", args);
+  const { data, error } = await rpc("register_listener_device", args);
   if (error) throw error;
   return data as {
     device_id: string;
@@ -125,10 +138,6 @@ export type UnmatchedListenerEvent = {
   }[];
 };
 
-const rpc = supabase.rpc as unknown as (
-  fn: string,
-  args?: Record<string, unknown>,
-) => Promise<{ data: unknown; error: { message: string } | null }>;
 
 /** Received payments waiting for a human to attach them to a Cash In. */
 export async function fetchUnmatchedListenerEvents(): Promise<UnmatchedListenerEvent[]> {
