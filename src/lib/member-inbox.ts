@@ -17,6 +17,7 @@ import {
   type MyApplicationRow,
 } from "@/lib/memberships";
 import { fetchMyInvitations, type MyInvitation } from "@/lib/shop-invitations";
+import { heldForManualReview } from "@/lib/membership-applications";
 
 export interface MemberInbox {
   applications: MyApplicationRow[];
