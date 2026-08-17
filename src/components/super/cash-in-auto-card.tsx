@@ -175,9 +175,9 @@ export function CashInAutoCard() {
             <div>
               <Label htmlFor="auto-listener">First layer — a listener phone must confirm the payment</Label>
               <p className="text-xs text-muted-foreground">
-                A cash in is only settled automatically if a paired phone that monitors that shop's own receiving
-                GCash account saw a matching notification. A notification seen on a different receiving account
-                can never settle this shop's request, even when two shops share the same number.
+                A cash in is only settled automatically if a paired phone saw a matching notification. A phone
+                paired to one shop can only settle that shop's requests; the receiving number shown by GCash is
+                informational and never blocks approval.
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Paired phones ready: {listenerProven} of {listenerActive} active ·{" "}
@@ -328,34 +328,39 @@ export function CashInAutoCard() {
           </div>
 
           <p className="rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">
-            These layers decide whether a payment is genuine. Which GCash account the money landed on is a separate
-            routing and shop-isolation rule — a “wrong receiving number” result never means the payment failed
-            authentication.
+            These layers decide whether a payment is genuine. Which GCash account the money appears to have landed
+            on is no longer part of that decision: GCash masks and reformats the receiving number, so a difference
+            is recorded for audit only and never blocks approval.
           </p>
         </div>
 
-        {(status.mismatched_devices ?? []).length > 0 ? (
-          <div className="rounded-lg border border-destructive/40 p-3">
-            <p className="font-semibold text-destructive">
-              Routing problem · receiving numbers that no phone is listening on
-            </p>
-            <p className="text-xs text-muted-foreground">
-              This is not an authentication failure. Amount and sender can still match perfectly; the money simply
-              arrived on an account this shop is not configured to collect on.
-            </p>
-            <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
-              {(status.mismatched_devices ?? []).slice(0, 6).map((m) => (
-                <li key={`${m.device_id}-${m.shop_id}`}>
-                  {m.shop_name ?? "Shop"} collects on {m.shop_number} · nearest paired phone “{m.label}” listens
-                  on {m.device_number}
-                </li>
-              ))}
-            </ul>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Payments to that shop can never be confirmed until the two numbers are the same.
-            </p>
+        <div className="rounded-lg border border-dashed border-border p-3 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="font-semibold">Legacy · deprecated rules (read-only)</p>
+            <StatusBadge tone="muted">Not active</StatusBadge>
           </div>
-        ) : null}
+          <p className="text-xs text-muted-foreground">
+            These rules are retired. They cannot be switched on and the backend ignores any old stored value.
+          </p>
+          <ul className="space-y-1 text-xs text-muted-foreground">
+            <li>
+              <span className="font-medium text-foreground">Receiving-number (destination) match</span> — retired.
+              A masked or differently formatted receiving number is informational only. Shop isolation still
+              applies: a phone paired to one shop can only settle that shop's Cash In.
+            </li>
+            <li>
+              <span className="font-medium text-foreground">Require reference match flag</span> — retired.
+              Reference uniqueness and duplicate/replay protection are always enforced and cannot be switched off.
+            </li>
+          </ul>
+          {(status.mismatched_devices ?? []).length > 0 ? (
+            <p className="text-xs text-muted-foreground">
+              For information only, {(status.mismatched_devices ?? []).length} shop receiving number(s) differ from
+              the nearest paired phone. This no longer prevents automatic approval.
+            </p>
+          ) : null}
+        </div>
+
 
 
 

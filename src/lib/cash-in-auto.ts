@@ -139,10 +139,16 @@ export interface MatchableListenerEvent {
   /** The paired phone is active and has checked in recently. */
   device_online?: boolean;
   /**
-   * The phone that saw this notification monitors the receiving GCash account
-   * this request pays into, and is allowed to serve this shop.
+   * The phone that saw this notification is allowed to serve this shop: it is
+   * either a platform phone or a phone bound to this very shop. This is the
+   * ONE authoritative routing rule.
    */
-  serves_destination?: boolean;
+  serves_shop?: boolean;
+  /**
+   * Informational only. GCash masks or reformats the receiving number, so a
+   * difference here is recorded for audit and never blocks approval.
+   */
+  receiving_number_matches?: boolean;
 }
 
 export interface MatchableRequest {
@@ -176,7 +182,7 @@ export type MatchOutcome =
   | "no_sender_number"
   | "awaiting_listener"
   | "listener_offline"
-  | "wrong_destination"
+  | "wrong_shop"
   | "number_mismatch"
   | "awaiting_receipt_check"
   | "receipt_reference_mismatch"
@@ -199,8 +205,8 @@ export const MATCH_REASON: Record<MatchOutcome, string> = {
   no_sender_number: "No sending GCash number was submitted, so the payment cannot be traced.",
   awaiting_listener: "No matching GCash payment has been seen yet — waiting for the notification.",
   listener_offline: "The paired listener phone is offline, so the payment cannot be confirmed.",
-  wrong_destination:
-    "That notification was seen on a different receiving GCash account, so it cannot settle this request.",
+  wrong_shop:
+    "That notification came from a phone paired to a different shop, so it cannot settle this request.",
   number_mismatch: "The GCash number that sent the money does not match this request.",
   awaiting_receipt_check: "The uploaded receipt has not been read yet.",
   receipt_reference_mismatch: "Reference does not match receipt — held for manual review.",
@@ -256,7 +262,9 @@ export function evaluateMatch(
     ) {
       return "amount_mismatch";
     }
-    if (event.serves_destination === false) return "wrong_destination";
+    // Shop isolation is the only routing rule. A differing / masked receiving
+    // number is informational and must never block a valid approval.
+    if (event.serves_shop === false) return "wrong_shop";
     if (event.device_online === false) return "listener_offline";
   }
 

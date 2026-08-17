@@ -1982,6 +1982,7 @@ export type Database = {
           amount_php: number | null
           consumed_cash_in_id: string | null
           created_at: string
+          destination_note: string | null
           device_id: string
           event_uid: string
           gcash_reference: string | null
@@ -2009,6 +2010,7 @@ export type Database = {
           amount_php?: number | null
           consumed_cash_in_id?: string | null
           created_at?: string
+          destination_note?: string | null
           device_id: string
           event_uid: string
           gcash_reference?: string | null
@@ -2036,6 +2038,7 @@ export type Database = {
           amount_php?: number | null
           consumed_cash_in_id?: string | null
           created_at?: string
+          destination_note?: string | null
           device_id?: string
           event_uid?: string
           gcash_reference?: string | null
@@ -6416,6 +6419,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      listener_receiving_number_matches: {
+        Args: { _device: string; _ecosystem: string; _method: string }
+        Returns: boolean
       }
       listener_serves_destination: {
         Args: { _device: string; _ecosystem: string; _method: string }
