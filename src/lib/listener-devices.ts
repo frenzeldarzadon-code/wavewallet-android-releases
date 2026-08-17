@@ -72,12 +72,7 @@ export async function registerListenerDevice(input: {
   };
   if (input.ecosystemId) args["_ecosystem"] = input.ecosystemId;
   if (input.receivingNumber) args["_receiving_number"] = input.receivingNumber;
-  const { data, error } = await (
-    supabase.rpc as unknown as (
-      fn: string,
-      args: Record<string, unknown>,
-    ) => Promise<{ data: unknown; error: { message: string } | null }>
-  )("register_listener_device", args);
+  const { data, error } = await rpc("register_listener_device", args);
   if (error) throw error;
   return data as {
     device_id: string;
