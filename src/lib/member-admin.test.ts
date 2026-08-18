@@ -5,6 +5,7 @@ import {
   isValidEmail,
   memberIdentityLine,
   memberMatches,
+  sortMembersForList,
   normalizeEmail,
   validateProfileEdit,
   type MemberSearchResult,
@@ -141,5 +142,33 @@ describe("change detection for audit logging", () => {
 
   it("ignores surrounding whitespace", () => {
     expect(diffProfile(before, { ...before, fullName: "  Maria  " })).toEqual({});
+  });
+});
+
+describe("member list ordering", () => {
+  const rows = [
+    { full_name: "Zoe Cruz", handle: "zoe" },
+    { full_name: "Ana Reyes", handle: "ana" },
+    { full_name: "Mariano Cruz", handle: "mars" },
+    { full_name: "Maria Dela Cruz", handle: "maria" },
+  ];
+
+  it("is A–Z when nobody is searching", () => {
+    expect(sortMembersForList(rows, "").map((r) => r.full_name)).toEqual([
+      "Ana Reyes",
+      "Maria Dela Cruz",
+      "Mariano Cruz",
+      "Zoe Cruz",
+    ]);
+  });
+
+  it("puts the nearest match first while searching", () => {
+    expect(sortMembersForList(rows, "maria dela cruz")[0]?.full_name).toBe("Maria Dela Cruz");
+    expect(sortMembersForList(rows, "mari")[0]?.full_name).toBe("Maria Dela Cruz");
+    expect(sortMembersForList(rows, "cruz").map((r) => r.full_name)).toEqual([
+      "Maria Dela Cruz",
+      "Mariano Cruz",
+      "Zoe Cruz",
+    ]);
   });
 });
