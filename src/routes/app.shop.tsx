@@ -1,9 +1,11 @@
 import { useOnline } from "@/lib/pwa";
 import { createFileRoute } from "@tanstack/react-router";
-import { Sparkles, Ticket } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { Coins, Search, Sparkles, Ticket, Wallet } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -14,8 +16,11 @@ import {
 } from "@/components/ui/dialog";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { RatingStars } from "@/components/rating-stars";
+import { IssuedVouchersDialog } from "@/components/voucher/issued-vouchers-dialog";
+import type { PaymentStatus, VoucherImageData } from "@/lib/voucher-image";
 import { soldLabel } from "@/lib/ratings";
 import { useSession } from "@/lib/session";
+import { cn } from "@/lib/utils";
 import { peso } from "@/lib/wavewallet";
 import {
   fetchCreditBalance,
@@ -64,21 +69,24 @@ export function VoucherShopView({
   discountPercent?: number;
 }) {
   // Subresellers share the reseller workspace; the database still authorizes each purchase.
-  const { account, ecosystemDbId } = useSession(role === "subreseller" ? "reseller" : role);
+  const { account, ecosystem, ecosystemDbId } = useSession(
+    role === "subreseller" ? "reseller" : role,
+  );
   const [products, setProducts] = useState<ShopProduct[]>([]);
   const [balance, setBalance] = useState(0);
   const [points, setPoints] = useState<PointsAccount>({ balance: 0, held: 0, available: 0 });
   const [ratio, setRatio] = useState(10);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
   const [buying, setBuying] = useState<{ product: ShopProduct; method: Method } | null>(null);
   const [qty, setQty] = useState(1);
+  const [customerName, setCustomerName] = useState("");
+  const [payment, setPayment] = useState<PaymentStatus>(null);
   const [busy, setBusy] = useState(false);
   const online = useOnline();
   const [issued, setIssued] = useState<{
-    codes: string[];
-    tx: string;
-    name: string;
-    price: string;
+    vouchers: VoucherImageData[];
+    summary: string;
     earned: number;
   } | null>(null);
   const userId = account?.id ?? null;
@@ -108,18 +116,57 @@ export function VoucherShopView({
     void load();
   }, [load]);
 
+  const term = query.trim().toLowerCase();
+  const visible = useMemo(
+    () =>
+      term
+        ? products.filter(
+            (p) =>
+              p.name.toLowerCase().includes(term) ||
+              (p.description ?? "").toLowerCase().includes(term),
+          )
+        : products,
+    [products, term],
+  );
+
   if (!account) return null;
 
   const priceFor = (p: ShopProduct) => voucherCost(listPrice(p), discountPercent);
 
   const openBuy = (product: ShopProduct, method: Method) => {
     setQty(1);
+    setCustomerName("");
+    setPayment(null);
     setBuying({ product, method });
   };
 
   const maxQty = buying ? Math.min(50, Math.max(1, buying.product.available)) : 1;
   const unit = buying ? priceFor(buying.product) : 0;
   const total = Math.round(unit * qty * 100) / 100;
+
+  const buildVouchers = (
+    codes: string[],
+    productName: string,
+    description: string | null,
+    priceLabel: string,
+    txId: string,
+  ): VoucherImageData[] => {
+    const issuedAt = new Date();
+    const name = customerName.trim();
+    return codes.map((code, i) => ({
+      code,
+      productName,
+      description,
+      priceLabel,
+      shopName: ecosystem?.name ?? "WaveWallet",
+      customerName: name || null,
+      paymentStatus: payment,
+      index: i + 1,
+      total: codes.length,
+      txId,
+      issuedAt,
+    }));
+  };
 
   const confirm = async () => {
     if (!buying) return;
@@ -128,19 +175,30 @@ export function VoucherShopView({
       if (buying.method === "points") {
         const res = await purchaseVoucherWithPoints(buying.product.id);
         setIssued({
-          codes: [res.code],
-          tx: res.tx_id,
-          name: res.product_name,
-          price: `${res.points_spent} pts`,
+          vouchers: buildVouchers(
+            [res.code],
+            res.product_name,
+            buying.product.description ?? null,
+            `${res.points_spent} pts`,
+            res.tx_id,
+          ),
+          summary: `${res.product_name} · ${res.points_spent} pts · ${res.tx_id}`,
           earned: 0,
         });
       } else {
         const res = await purchaseVoucher(buying.product.id, qty);
+        const unitLabel = peso(Number(res.unit_price));
         setIssued({
-          codes: res.codes,
-          tx: res.tx_id,
-          name: `${res.product_name}${res.quantity > 1 ? ` ×${res.quantity}` : ""}`,
-          price: peso(res.sale_price),
+          vouchers: buildVouchers(
+            res.codes,
+            res.product_name,
+            buying.product.description ?? null,
+            unitLabel,
+            res.tx_id,
+          ),
+          summary: `${res.product_name}${res.quantity > 1 ? ` ×${res.quantity}` : ""} · ${peso(
+            res.sale_price,
+          )} · ${res.tx_id}`,
           earned: Number(res.points_earned ?? 0),
         });
       }
@@ -152,6 +210,8 @@ export function VoucherShopView({
       setBusy(false);
     }
   };
+
+
 
 
   return (
