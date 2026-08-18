@@ -137,3 +137,64 @@ export function roleInEcosystem(list: Membership[], ecosystemId: string): Role |
 export function activeMembership(list: Membership[]): Membership | null {
   return list.find((m) => m.isActive) ?? null;
 }
+
+/* ------------------------------------------------------------------ */
+/* Leaving a shop                                                      */
+/* ------------------------------------------------------------------ */
+
+export interface LeavePreview {
+  ecosystemId: string;
+  ecosystemName: string;
+  role: Role;
+  needsStepDown: boolean;
+  dependentSubresellers: number;
+  otherShops: number;
+  blockedReason: string | null;
+}
+
+/** What leaving this shop would mean — position, dependants, where you land next. */
+export async function fetchLeavePreview(ecosystemId: string): Promise<LeavePreview> {
+  const { data, error } = await supabase.rpc("leave_shop_preview", {
+    _ecosystem_id: ecosystemId,
+  });
+  if (error) throw new Error(error.message);
+  const r = data as {
+    ecosystem_id: string;
+    ecosystem_name: string;
+    role: Role;
+    needs_step_down: boolean;
+    dependent_subresellers: number;
+    other_shops: number;
+    blocked_reason: string | null;
+  };
+  return {
+    ecosystemId: r.ecosystem_id,
+    ecosystemName: r.ecosystem_name,
+    role: r.role,
+    needsStepDown: !!r.needs_step_down,
+    dependentSubresellers: Number(r.dependent_subresellers ?? 0),
+    otherShops: Number(r.other_shops ?? 0),
+    blockedReason: r.blocked_reason,
+  };
+}
+
+/**
+ * Leaves a shop. Sellers must step down first; the database resets any
+ * dependent subresellers to ordinary customers and never deletes accounts,
+ * wallets or history.
+ */
+export async function leaveShop(
+  ecosystemId: string,
+  stepDown = false,
+): Promise<{ nextEcosystemId: string | null; subresellersReset: number }> {
+  const { data, error } = await supabase.rpc("leave_shop", {
+    _ecosystem_id: ecosystemId,
+    _step_down: stepDown,
+  });
+  if (error) throw new Error(error.message);
+  const r = (data ?? {}) as { next_ecosystem_id: string | null; subresellers_reset: number };
+  return {
+    nextEcosystemId: r.next_ecosystem_id ?? null,
+    subresellersReset: Number(r.subresellers_reset ?? 0),
+  };
+}
