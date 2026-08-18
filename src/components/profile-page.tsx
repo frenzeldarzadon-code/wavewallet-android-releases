@@ -11,6 +11,7 @@ import { ImageCropper } from "@/components/image-cropper";
 import { MemberAvatar } from "@/components/member-avatar";
 import { SocialLinksCard } from "@/components/social-links-card";
 import { AccountSecurityCard } from "@/components/account-security-card";
+import { UpdateCenterCard } from "@/components/update-center-card";
 import type { CropRect } from "@/lib/image-optimize";
 import {
   deleteAvatar,
@@ -371,6 +372,8 @@ export function ProfilePage() {
       </PageSection>
 
       <AccountSecurityCard username={profile?.handle ?? null} />
+
+      <UpdateCenterCard />
 
       {ecosystemDbId && userId ? (
         <SocialLinksCard ecosystemId={ecosystemDbId} userId={userId} />

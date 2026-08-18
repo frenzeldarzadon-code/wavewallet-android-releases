@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { OfflineBanner } from "@/components/offline-banner";
+import { UpdateBanner } from "@/components/update-banner";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { registerAppServiceWorker } from "@/lib/sw-register";
 
@@ -156,6 +157,7 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <OfflineBanner />
+      <UpdateBanner />
       <Toaster position="top-center" richColors />
     </QueryClientProvider>
   );

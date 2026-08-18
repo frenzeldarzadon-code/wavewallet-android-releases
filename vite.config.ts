@@ -22,6 +22,13 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    // Unique per deploy: the update check compares this against the build id
+    // reported by /api/public/app-version. No secrets, just an identifier.
+    define: {
+      __WW_BUILD__: JSON.stringify(
+        process.env["WW_BUILD_ID"] ?? new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14),
+      ),
+    },
     plugins: [
       VitePWA({
         registerType: "autoUpdate",
