@@ -11,13 +11,18 @@ android {
         applicationId = "com.wavewallet.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        // Native release containing the voucher ImageSaver bridge and the
+        // update centre. Must match ANDROID_VERSION_* in src/lib/update-manifest.ts.
+        versionCode = 2
+        versionName = "1.1.0"
 
         // The one and only backend: the published WaveWallet web app.
         buildConfigField("String", "APP_URL", "\"https://wallet.sagadawave.com\"")
         buildConfigField("String", "APP_HOST", "\"wallet.sagadawave.com\"")
         buildConfigField("String", "ALT_HOST", "\"sagada-wave-wallet.lovable.app\"")
+        // The single, compiled-in update destination. The web page can never
+        // supply a different URL to the installer.
+        buildConfigField("String", "UPDATE_URL", "\"https://wallet.sagadawave.com/download\"")
     }
 
     // Signing material never lives in this repository. The release signing

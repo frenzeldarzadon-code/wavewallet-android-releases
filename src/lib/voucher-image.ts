@@ -283,7 +283,12 @@ export async function downloadBlob(blob: Blob, fileName: string): Promise<"saved
   if (bridge) {
     // Native shell: hand the bytes over directly — blob: URLs never reach the
     // Android download manager.
-    bridge.saveImage(await blobToBase64(blob), fileName);
+    const ok = bridge.saveImage(await blobToBase64(blob), fileName);
+    // The bridge returns a real result: only a confirmed MediaStore write is
+    // reported as saved, so the page never claims success after a failure.
+    if (ok === false) {
+      throw new Error("Android could not write the voucher image to Downloads. Check storage space and try again.");
+    }
     return "saved";
   }
 
