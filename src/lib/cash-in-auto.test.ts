@@ -81,8 +81,41 @@ describe("automatic approval matching", () => {
     expect(evaluateMatch({ ...req, duplicate_reference: true }, on, RECEIVING)).toBe("duplicate_reference");
   });
 
-  it("requires a payment reference", () => {
-    expect(evaluateMatch({ ...req, payer_reference: "" }, on, RECEIVING)).toBe("no_reference");
+  it("uses the receipt reference when the member typed none", () => {
+    // Screenshot-first submissions carry no typed reference at all.
+    expect(
+      evaluateMatch({ ...req, payer_reference: "", receipt_reference: "9044011942642" }, on, RECEIVING),
+    ).toBe("approve");
+  });
+
+  it("waits for the receipt reading when there is no reference anywhere", () => {
+    expect(evaluateMatch({ ...req, payer_reference: "", receipt_reference: null }, on, RECEIVING)).toBe(
+      "awaiting_receipt_check",
+    );
+  });
+
+  it("holds an unreadable screenshot that produced no reference", () => {
+    expect(
+      evaluateMatch(
+        { ...req, payer_reference: "", receipt_reference: null, receipt_check: "unreadable" },
+        on,
+        RECEIVING,
+      ),
+    ).toBe("receipt_unreadable");
+  });
+
+  it("passes the first layer without a listener reference", () => {
+    const event = { ...(req.listener_event as Record<string, unknown>), reference: null };
+    expect(evaluateMatch({ ...req, listener_event: event as never }, on, RECEIVING)).toBe("approve");
+  });
+
+  it("holds when the notification reference contradicts the receipt", () => {
+    const event = { ...(req.listener_event as Record<string, unknown>), reference: "1111111111111" };
+    expect(evaluateMatch({ ...req, listener_event: event as never }, on, RECEIVING)).toBe("reference_mismatch");
+  });
+
+  it("holds when the receipt amount contradicts the request", () => {
+    expect(evaluateMatch({ ...req, receipt_amount_php: 999 }, on, RECEIVING)).toBe("amount_mismatch");
   });
 
   it("requires the payment screenshot as supporting evidence", () => {
