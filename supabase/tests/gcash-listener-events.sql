@@ -11,6 +11,8 @@
 --   G. require_listener_match keeps a Cash In pending until an event arrives.
 --   H. an offline device blocks listener-required approval.
 --   I. only the platform owner can register, revoke or read listener devices.
+--   J. a reference-less event can associate by exact amount + verified profile
+--      phone + destination, but association alone never bypasses Layer 2.
 begin;
 
 -- I. Authorisation -----------------------------------------------------------
@@ -26,22 +28,24 @@ begin
     perform public.register_listener_device('hack', null, 60, 15, 'com.globe.gcash.android');
     raise exception 'I: a non-owner must not register a listener device';
   exception when others then
-    if sqlerrm not like '%platform owner%' then raise; end if;
+    if sqlerrm not like '%platform owner%' and sqlerrm not like '%cannot pair a listener device%' then
+      raise;
+    end if;
   end;
   begin
     perform public.listener_device_status();
     raise exception 'I: a non-owner must not read listener device status';
   exception when others then
-    if sqlerrm not like '%platform owner%' then raise; end if;
+    if sqlerrm not like '%platform owner%' and sqlerrm not like '%permission denied%' then raise; end if;
   end;
   perform set_config('request.jwt.claims', null, true);
 end $$;
 
 -- A–H. Behaviour -------------------------------------------------------------
 do $$
-declare _owner uuid; _uid uuid; _eco uuid; _method uuid; _device uuid; _secret jsonb;
+declare _owner uuid; _uid uuid; _eco uuid; _method uuid; _device uuid; _event uuid; _secret jsonb;
         _row public.cash_in_requests; _other public.cash_in_requests;
-        _before numeric; _after numeric; _res jsonb; _match text;
+        _before numeric; _after numeric; _res jsonb; _match text; _profile_phone text;
         _num constant text := '09171234567'; _sender constant text := '09991234567';
 begin
   select ur.user_id into _owner from public.user_roles ur where ur.role = 'super_admin' limit 1;
@@ -75,6 +79,44 @@ begin
   end if;
   update public.listener_devices set status = 'active', last_seen_at = now() where id = _device;
   perform set_config('request.jwt.claims', null, true);
+
+  -- J: Screenshot-first receipts may not expose the sender and GCash may omit
+  -- its reference. The member's verified profile phone is the exact sender
+  -- fallback for Layer 1; receipt review remains a separate approval gate.
+  _profile_phone := '09992223333';
+  update public.profiles set phone = _profile_phone where id = _uid;
+  update public.cash_in_auto_rules
+     set enabled = true, require_listener_match = true, require_receipt_match = true,
+         layer1_require_sender_number = true, layer1_require_time_window = true,
+         expected_amount_php = null
+   where ecosystem_id = _eco;
+  perform set_config('request.jwt.claims', json_build_object('sub', _uid)::text, true);
+  _row := public.request_cash_in(_method, 230, 'TEST-J-' || gen_random_uuid()::text, null,
+                                 gen_random_uuid()::text, _uid::text || '/j.jpg', null);
+  perform set_config('request.jwt.claims', null, true);
+  update public.cash_in_requests
+     set sender_number = null, sender_number_key = null,
+         payer_number = null, payer_number_key = null,
+         ocr_sender_number = null, ocr_sender_number_key = null,
+         receipt_check = 'pending'
+   where id = _row.id;
+  insert into public.listener_events
+    (device_id, event_uid, package_name, outcome, amount_php, sender_number,
+     sender_number_key, gcash_reference, reference_key, posted_at, raw_text)
+  values
+    (_device, 'evt-j', 'com.globe.gcash.android', 'accepted', 230, _profile_phone,
+     public.normalize_ph_mobile(_profile_phone), null, null, now(), 'Received PHP 230.00')
+  returning id into _event;
+  _match := public.match_listener_event(_event);
+  if (select listener_event_id from public.cash_in_requests where id = _row.id) is distinct from _event then
+    raise exception 'J: missing listener reference must not reject a unique exact Layer-1 match (got %)', _match;
+  end if;
+  if (select status from public.cash_in_requests where id = _row.id) <> 'pending' then
+    raise exception 'J: Layer-1 association must not credit before Layer 2 passes';
+  end if;
+  if public.match_listener_event(_event) <> 'already_consumed' then
+    raise exception 'J: replaying an associated listener event must remain idempotent';
+  end if;
 
   -- C: unreadable notification.
   _res := public.record_listener_event(_device, 'evt-unparsed', 'com.globe.gcash.android',
