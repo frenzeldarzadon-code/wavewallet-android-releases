@@ -169,6 +169,7 @@ describe("member list ordering", () => {
       "Maria Dela Cruz",
       "Mariano Cruz",
       "Zoe Cruz",
+      "Ana Reyes",
     ]);
   });
 });
