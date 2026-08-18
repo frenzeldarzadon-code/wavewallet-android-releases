@@ -6286,6 +6286,11 @@ export type Database = {
           slug: string
         }[]
       }
+      leave_shop: {
+        Args: { _ecosystem_id: string; _step_down?: boolean }
+        Returns: Json
+      }
+      leave_shop_preview: { Args: { _ecosystem_id: string }; Returns: Json }
       link_cash_in_listener_event: { Args: { _id: string }; Returns: string }
       link_listener_event: {
         Args: { _cash_in: string; _event: string; _note?: string }
