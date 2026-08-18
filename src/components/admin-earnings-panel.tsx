@@ -157,7 +157,7 @@ export function AdminEarningsPanel({
             <dd className="tabular-nums">{loading ? "—" : peso(breakdown.gross)}</dd>
           </div>
           <div className="flex justify-between gap-3">
-            <dt className="text-muted-foreground">Reseller &amp; subreseller cashback</dt>
+            <dt className="text-muted-foreground">Non-admin allocations</dt>
             <dd className="tabular-nums text-destructive">
               {loading ? "—" : `− ${peso(breakdown.downline)}`}
             </dd>
