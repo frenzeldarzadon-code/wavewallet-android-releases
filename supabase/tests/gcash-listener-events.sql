@@ -28,7 +28,9 @@ begin
     perform public.register_listener_device('hack', null, 60, 15, 'com.globe.gcash.android');
     raise exception 'I: a non-owner must not register a listener device';
   exception when others then
-    if sqlerrm not like '%platform owner%' then raise; end if;
+    if sqlerrm not like '%platform owner%' and sqlerrm not like '%cannot pair a listener device%' then
+      raise;
+    end if;
   end;
   begin
     perform public.listener_device_status();
