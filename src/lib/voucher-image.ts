@@ -72,6 +72,45 @@ function fitText(ctx: CanvasRenderingContext2D, text: string, max: number, start
   return size;
 }
 
+/**
+ * The static part of the voucher (background, glow, grid) never changes, so it
+ * is painted ONCE into a reusable canvas and blitted for every voucher. This
+ * keeps per-voucher rendering to a single drawImage plus text.
+ */
+let template: HTMLCanvasElement | null = null;
+
+function backdrop(): HTMLCanvasElement {
+  if (template) return template;
+  const c = document.createElement("canvas");
+  c.width = W;
+  c.height = H;
+  const g = c.getContext("2d")!;
+  const bg = g.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, "#0b1b34");
+  bg.addColorStop(0.55, "#0e2c56");
+  bg.addColorStop(1, "#071324");
+  g.fillStyle = bg;
+  g.fillRect(0, 0, W, H);
+
+  const glow = g.createRadialGradient(W * 0.85, H * 0.1, 20, W * 0.85, H * 0.1, W * 0.8);
+  glow.addColorStop(0, "rgba(56,189,248,0.35)");
+  glow.addColorStop(1, "rgba(56,189,248,0)");
+  g.fillStyle = glow;
+  g.fillRect(0, 0, W, H);
+
+  // Lightweight geometric pattern for the premium/futuristic direction.
+  g.strokeStyle = "rgba(148,197,255,0.07)";
+  g.lineWidth = 2;
+  for (let x = 0; x <= W; x += 60) {
+    g.beginPath();
+    g.moveTo(x, 0);
+    g.lineTo(x + 240, H);
+    g.stroke();
+  }
+  template = c;
+  return c;
+}
+
 /** Draws one premium voucher and returns it as a PNG blob. */
 export async function renderVoucherImage(data: VoucherImageData): Promise<Blob> {
   const canvas = document.createElement("canvas");
@@ -80,19 +119,8 @@ export async function renderVoucherImage(data: VoucherImageData): Promise<Blob> 
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("This device cannot generate the voucher image.");
 
-  // Background: deep navy with a blue glow, matching the app's premium surface.
-  const bg = ctx.createLinearGradient(0, 0, W, H);
-  bg.addColorStop(0, "#0b1b34");
-  bg.addColorStop(0.55, "#0e2c56");
-  bg.addColorStop(1, "#071324");
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, W, H);
+  ctx.drawImage(backdrop(), 0, 0);
 
-  const glow = ctx.createRadialGradient(W * 0.85, H * 0.1, 20, W * 0.85, H * 0.1, W * 0.8);
-  glow.addColorStop(0, "rgba(56,189,248,0.35)");
-  glow.addColorStop(1, "rgba(56,189,248,0)");
-  ctx.fillStyle = glow;
-  ctx.fillRect(0, 0, W, H);
 
   // Header
   ctx.fillStyle = "#7dd3fc";
