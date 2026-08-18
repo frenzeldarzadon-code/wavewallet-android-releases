@@ -18,6 +18,54 @@ export interface ReceiptCheckResult {
   approvalMethod: string | null;
 }
 
+/** What the screenshot reader extracted, offered to the member for review. */
+export interface ReceiptExtraction {
+  reference: string | null;
+  amountPhp: number | null;
+  senderNumber: string | null;
+  paidAt: string | null;
+  confidence: number;
+  readable: boolean;
+}
+
+/**
+ * Read an already-uploaded Cash In screenshot BEFORE the request exists, so
+ * the form can be filled from the receipt instead of typed from memory.
+ *
+ * The reading is evidence only: the authoritative copy is read again on the
+ * server after the request is created, so nothing the browser sends back can
+ * change what the receipt actually says.
+ */
+export const extractCashInReceipt = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { proofPath: string }) => {
+    const proofPath = (input?.proofPath ?? "").trim();
+    if (!proofPath) throw new Error("Upload your payment screenshot first.");
+    return { proofPath };
+  })
+  .handler(async ({ data, context }): Promise<ReceiptExtraction> => {
+    // A member may only read a screenshot inside their own storage folder.
+    const folder = data.proofPath.split("/")[0] ?? "";
+    if (folder !== context.userId) {
+      throw new Error("That payment screenshot does not belong to you.");
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { readReceipt } = await import("./cash-in-receipt.server");
+    const signed = await supabaseAdmin.storage
+      .from("cash-in-proofs")
+      .createSignedUrl(data.proofPath, 300);
+    if (!signed.data?.signedUrl) throw new Error("The payment screenshot could not be opened.");
+    const reading = await readReceipt(signed.data.signedUrl);
+    return {
+      reference: reading.reference,
+      amountPhp: reading.amountPhp,
+      senderNumber: reading.senderNumber,
+      paidAt: reading.paidAt ?? null,
+      confidence: reading.confidence,
+      readable: reading.readable,
+    };
+  });
+
 export const verifyCashInReceipt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { cashInId: string }) => {
@@ -59,7 +107,7 @@ export const verifyCashInReceipt = createServerFn({ method: "POST" })
       reading = await readReceipt(signed.data.signedUrl);
       check = decideReceiptCheck(row.payer_reference as string | null, reading);
     } catch {
-      reading = { reference: null, amountPhp: null, senderNumber: null, confidence: 0, readable: false };
+      reading = { reference: null, amountPhp: null, senderNumber: null, paidAt: null, confidence: 0, readable: false };
       check = "error";
     }
 
@@ -69,7 +117,13 @@ export const verifyCashInReceipt = createServerFn({ method: "POST" })
       _amount: reading.amountPhp,
       _sender: reading.senderNumber,
       _readable: check !== "error" && reading.readable,
-      _details: { confidence: reading.confidence, check, read_at: new Date().toISOString() },
+      _paid_at: reading.paidAt ?? null,
+      _details: {
+        confidence: reading.confidence,
+        check,
+        read_at: new Date().toISOString(),
+        paid_at: reading.paidAt ?? null,
+      },
     } as never);
 
     const { data: after } = await supabaseAdmin

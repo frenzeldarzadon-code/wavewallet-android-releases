@@ -28,7 +28,11 @@ import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-
 import { FacebookSupportCard } from "@/components/facebook-support-card";
 import { PaymentMethodCards } from "@/components/money/payment-method-cards";
 import { CashInProofPicker, CashInProofViewer } from "@/components/money/cash-in-proof";
-import { verifyCashInReceipt } from "@/lib/cash-in-receipt.functions";
+import {
+  extractCashInReceipt,
+  verifyCashInReceipt,
+  type ReceiptExtraction,
+} from "@/lib/cash-in-receipt.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
@@ -88,6 +92,22 @@ const newKey = () =>
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random()}`;
 
+/** ISO instant -> value a <input type="datetime-local"> understands (local time). */
+const toLocalInput = (iso: string | null): string => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+/** datetime-local value -> ISO instant, or null when it is empty or invalid. */
+const fromLocalInput = (value: string): string | null => {
+  if (!value) return null;
+  const t = Date.parse(value);
+  return Number.isFinite(t) ? new Date(t).toISOString() : null;
+};
+
 /**
  * `initialTab` only picks which tab opens first — the request flows,
  * accounting and approval rules are unchanged and shared by every role.
@@ -128,6 +148,13 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
   const [capacity, setCapacity] = useState<AdminCashInCapacity>(EMPTY_CAPACITY);
   /** Required supporting evidence — kept for audit and manual review. */
   const [proofFile, setProofFile] = useState<File | null>(null);
+  /** Uploaded straight away so the receipt can be read before submitting. */
+  const [proofPath, setProofPath] = useState<string | null>(null);
+  const [extracting, setExtracting] = useState(false);
+  /** What the receipt reader saw — evidence, never a verification from GCash. */
+  const [extract, setExtract] = useState<ReceiptExtraction | null>(null);
+  /** Payment date/time the member confirms, as a datetime-local value. */
+  const [paidAt, setPaidAt] = useState("");
 
   const load = useCallback(async () => {
     if (!userId) return;
@@ -213,19 +240,47 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
     }
   };
 
+  /** Upload the screenshot immediately, then read it so the form can be filled. */
+  const handlePickProof = async (file: File | null) => {
+    if (proofPath) void removeCashInProof(proofPath).catch(() => {});
+    setProofPath(null);
+    setExtract(null);
+    setPayerRef("");
+    setPayerNumber("");
+    setPaidAt("");
+    setAmount("");
+    setProofFile(file);
+    if (!file) return;
+    setExtracting(true);
+    try {
+      // Storage RLS scopes the folder to the SIGNED IN user, which can differ
+      // from the acted-on member, so the real auth id owns the object.
+      const { data: authUser } = await supabase.auth.getUser();
+      const ownerId = authUser?.user?.id;
+      if (!ownerId) throw new Error("Your session expired. Sign in again to attach a screenshot.");
+      const path = await uploadCashInProof(ownerId, file);
+      setProofPath(path);
+      const read = await extractCashInReceipt({ data: { proofPath: path } });
+      setExtract(read);
+      if (read.reference) setPayerRef(read.reference);
+      if (read.amountPhp) setAmount(String(read.amountPhp));
+      if (read.senderNumber) setPayerNumber(read.senderNumber);
+      if (read.paidAt) setPaidAt(toLocalInput(read.paidAt));
+      if (read.readable) toast.success("Screenshot read — check the details before you submit.");
+      else toast.info("We could not read this screenshot clearly. You can still submit it for manual review.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not read that screenshot.");
+    } finally {
+      setExtracting(false);
+    }
+  };
+
   const submitCashIn = async () => {
     const problem = validateCashIn(Number(amount), methodId || null, {
-      payerNumber,
-      payerReference: payerRef,
-      hasProof: Boolean(proofFile),
+      hasProof: Boolean(proofPath),
     });
     if (problem) {
       toast.error(problem);
-      return;
-    }
-    const badImage = proofFile ? validateCashInProof(proofFile) : "Attach your payment screenshot.";
-    if (badImage) {
-      toast.error(badImage);
       return;
     }
     // The server re-checks this under a lock; this is only a friendlier warning.
@@ -234,28 +289,31 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
       return;
     }
     setBusy(true);
-    let uploadedPath: string | null = null;
     try {
-      // Storage RLS scopes the folder to the SIGNED IN user, which can differ
-      // from the acted-on member, so the real auth id owns the object.
-      const { data: authUser } = await supabase.auth.getUser();
-      const ownerId = authUser?.user?.id;
-      if (!ownerId) throw new Error("Your session expired. Sign in again to attach a screenshot.");
-      uploadedPath = await uploadCashInProof(ownerId, proofFile as File);
-
       const submitted = await requestCashIn({
         methodId,
         amountPhp: Number(amount),
-        payerNumber,
+        // Evidence, not a typed claim: the sending number comes off the receipt.
+        payerNumber: extract?.senderNumber ?? null,
         payerReference: payerRef,
+        paidAt: fromLocalInput(paidAt),
+        ocr: extract
+          ? {
+              reference: extract.reference,
+              amountPhp: extract.amountPhp,
+              senderNumber: extract.senderNumber,
+              paidAt: extract.paidAt,
+              confidence: extract.confidence,
+              readable: extract.readable,
+            }
+          : null,
         notes: cashInNotes,
-        proofPath: uploadedPath,
+        proofPath: proofPath as string,
         requestKey: newKey(),
         funding,
       });
-      // Secondary check: read the reference off the uploaded receipt. Automatic
-      // approval stays blocked until this agrees with what was typed, and a
-      // reused reference is held for manual investigation instead of credited.
+      // Second layer: the server reads the very same screenshot again and that
+      // reading — not anything the browser sent — decides the receipt check.
       let decided = submitted;
       if (submitted.status === "pending" && !submitted.duplicate_reference) {
         try {
@@ -275,19 +333,20 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
         setAmount("");
         setPayerRef("");
         setPayerNumber("");
+        setPaidAt("");
         setCashInNotes("");
         setProofFile(null);
+        setProofPath(null);
+        setExtract(null);
       }
       await load();
     } catch (e) {
-      // Never leave an orphan screenshot behind when the request itself failed.
-      if (uploadedPath) await removeCashInProof(uploadedPath).catch(() => {});
+      // The screenshot stays uploaded so the member can correct and resubmit.
       toast.error(e instanceof Error ? e.message : "Could not submit that request.");
     } finally {
       setBusy(false);
     }
   };
-
 
   const selectedMethod = methods.find((m) => m.id === methodId) ?? null;
 
@@ -515,9 +574,10 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-                Enter the amount you sent, the GCash number you paid from, your GCash payment reference number, and upload
-                your payment screenshot. You may pay first and submit this afterwards — matching Cash In requests may be approved automatically. Your screenshot is
-                kept as supporting evidence for review — it is not a verification from GCash.
+                Start with your GCash payment screenshot — we read the amount, the sending number, the reference and the
+                payment date and time from it. Check the details, correct the reference or the date and time if needed,
+                then submit. The screenshot is supporting evidence, not a verification from GCash: coins are added only
+                once a real GCash notification confirms the payment.
               </p>
               {methods.length === 0 ? (
                 <EmptyState
@@ -554,47 +614,97 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                       </RadioGroup>
                     </div>
                   ) : null}
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="ci-method">Payment method</Label>
-                      <Select value={methodId} onValueChange={setMethodId}>
-                        <SelectTrigger id="ci-method">
-                          <SelectValue placeholder="Choose a method" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {methods.map((m) => (
-                            <SelectItem key={m.id} value={m.id}>
-                              {m.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="ci-amount">Amount you are paying (₱)</Label>
-                      <Input id="ci-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="ci-number">GCash number you paid from</Label>
-                      <Input
-                        id="ci-number"
-                        inputMode="tel"
-                        value={payerNumber}
-                        onChange={(e) => setPayerNumber(e.target.value)}
-                        placeholder="09171234567"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="ci-ref">GCash payment reference number</Label>
-                      <Input id="ci-ref" value={payerRef} onChange={(e) => setPayerRef(e.target.value)} placeholder="Reference / transaction number" />
-                    </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ci-method">Payment method</Label>
+                    <Select value={methodId} onValueChange={setMethodId}>
+                      <SelectTrigger id="ci-method">
+                        <SelectValue placeholder="Choose a method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {methods.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+
                   <CashInProofPicker
                     file={proofFile}
-                    onPick={setProofFile}
-                    disabled={busy}
+                    onPick={(f) => void handlePickProof(f)}
+                    disabled={busy || extracting}
                     onError={(m) => toast.error(m)}
                   />
+
+                  {extracting ? (
+                    <p className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                      Reading your screenshot…
+                    </p>
+                  ) : null}
+
+                  {proofPath && !extracting ? (
+                    <div className="space-y-3 rounded-lg border border-border p-3">
+                      <p className="text-xs font-medium">Details read from your screenshot</p>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="ci-amount">Amount paid (₱)</Label>
+                          <Input
+                            id="ci-amount"
+                            inputMode="decimal"
+                            value={amount}
+                            readOnly={Boolean(extract?.amountPhp)}
+                            disabled={Boolean(extract?.amountPhp)}
+                            onChange={(e) => setAmount(e.target.value)}
+                          />
+                          <p className="text-[11px] text-muted-foreground">
+                            {extract?.amountPhp
+                              ? "Extracted evidence — not editable."
+                              : "Not readable on the screenshot. Anything you enter is unverified and this request stays in manual review."}
+                          </p>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="ci-number">GCash number you paid from</Label>
+                          <Input id="ci-number" value={payerNumber || "Not readable"} readOnly disabled />
+                          <p className="text-[11px] text-muted-foreground">
+                            {extract?.senderNumber
+                              ? "Extracted evidence — matched against the real GCash notification."
+                              : "Not readable on the screenshot, so this request goes to manual review."}
+                          </p>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="ci-ref">GCash reference number</Label>
+                          <Input
+                            id="ci-ref"
+                            value={payerRef}
+                            onChange={(e) => setPayerRef(e.target.value)}
+                            placeholder="Reference / transaction number"
+                          />
+                          <p className="text-[11px] text-muted-foreground">
+                            Verify / correct if needed. The original reading is kept as evidence.
+                          </p>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="ci-paid-at">Payment date and time</Label>
+                          <Input
+                            id="ci-paid-at"
+                            type="datetime-local"
+                            value={paidAt}
+                            onChange={(e) => setPaidAt(e.target.value)}
+                          />
+                          <p className="text-[11px] text-muted-foreground">
+                            Verify / correct if needed. The original reading is kept as evidence.
+                          </p>
+                        </div>
+                      </div>
+                      {extract && !extract.readable ? (
+                        <p className="text-[11px] text-muted-foreground">
+                          We could not read this screenshot reliably, so nothing was guessed. You may still submit it — a
+                          person will review it.
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
                   {selectedMethod ? (
                     <PaymentMethodCards methods={[selectedMethod]} selectedId={selectedMethod.id} />
                   ) : null}

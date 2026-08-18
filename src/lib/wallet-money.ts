@@ -19,7 +19,7 @@
  */
 import { requireOnline } from "@/lib/offline-guard";
 import { supabase } from "@/integrations/supabase/client";
-import { normalizePaymentReference, normalizePhMobile } from "@/lib/cash-in-auto";
+
 import type { Database } from "@/integrations/supabase/types";
 
 export type WithdrawalRequest = Database["public"]["Tables"]["withdrawal_requests"]["Row"];
@@ -203,10 +203,9 @@ export function validateCashIn(
   if (!Number.isFinite(php) || php <= 0) return "Enter how much you are paying.";
   if (php > 10_000_000) return "A single cash in is limited to ₱10,000,000.";
   if (input) {
-    if (!normalizePhMobile(input.payerNumber ?? "")) return "Enter the GCash number you paid from.";
-    if (!normalizePaymentReference(input.payerReference ?? "")) {
-      return "Enter your GCash payment reference number.";
-    }
+    // The screenshot is the only thing the member must supply: the amount, the
+    // sending number, the reference and the payment time are read off it. A
+    // missing reference or sender simply keeps the request in manual review.
     if (!input.hasProof) return "Attach your payment screenshot.";
   }
   return null;
@@ -491,10 +490,21 @@ export async function fetchAdminCashInCapacity(ecosystemId?: string | null): Pro
 export async function requestCashIn(input: {
   methodId: string;
   amountPhp: number;
-  /** GCash number the member paid FROM — matched against the real GCash notification. */
-  payerNumber: string;
-  /** GCash payment reference number — required and unique across all cash ins. */
-  payerReference: string;
+  /** GCash number the member paid FROM — read off the receipt, matched against the real notification. */
+  payerNumber?: string | null;
+  /** GCash payment reference — the member may correct what the receipt reader read. */
+  payerReference?: string | null;
+  /** Payment date/time the member confirmed, ISO 8601. */
+  paidAt?: string | null;
+  /** The ORIGINAL screenshot reading, kept as evidence and never overwritten. */
+  ocr?: {
+    reference?: string | null;
+    amountPhp?: number | null;
+    senderNumber?: string | null;
+    paidAt?: string | null;
+    confidence?: number | null;
+    readable?: boolean | null;
+  } | null;
   /** Optional — cash in never requires notes. */
   notes?: string | null;
   /** Storage path of the payment screenshot (required supporting evidence). */
@@ -506,8 +516,19 @@ export async function requestCashIn(input: {
   const { data, error } = await supabase.rpc("request_cash_in", rpcArgs({
     _method_id: input.methodId,
     _amount_php: input.amountPhp,
-    _payer_reference: input.payerReference,
-    _payer_number: input.payerNumber,
+    _payer_reference: input.payerReference ?? undefined,
+    _payer_number: input.payerNumber ?? undefined,
+    _paid_at: input.paidAt ?? undefined,
+    _ocr: input.ocr
+      ? {
+          reference: input.ocr.reference ?? null,
+          amount_php: input.ocr.amountPhp ?? null,
+          sender_number: input.ocr.senderNumber ?? null,
+          paid_at: input.ocr.paidAt ?? null,
+          confidence: input.ocr.confidence ?? null,
+          readable: input.ocr.readable ?? null,
+        }
+      : undefined,
     _notes: input.notes ?? undefined,
     _proof_path: input.proofPath,
     _request_key: input.requestKey,

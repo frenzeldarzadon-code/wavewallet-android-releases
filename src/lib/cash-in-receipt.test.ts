@@ -34,8 +34,10 @@ describe("receipt reference check", () => {
     expect(decideReceiptCheck("9044011942642", reading({ confidence: 0.2 }))).toBe("unreadable");
   });
 
-  it("treats a missing typed reference as a mismatch, not a pass", () => {
-    expect(decideReceiptCheck("", reading())).toBe("mismatch");
+  it("accepts the receipt reference when the member typed nothing", () => {
+    // Screenshot-first: the reference READ OFF the receipt is authoritative,
+    // so a member who never typed one is not punished for it.
+    expect(decideReceiptCheck("", reading())).toBe("matched");
   });
 
   it("compares the sender number on the receipt with the submitted one", () => {
@@ -196,9 +198,14 @@ describe("reference normalization boundaries", () => {
     expect(decideReceiptCheck("19044011942642", reading)).toBe("mismatch");
   });
 
-  it("holds the request when the member typed nothing", () => {
+  it("uses the receipt reference when the member typed nothing", () => {
     const reading = { reference: "9044011942642", amountPhp: 200, senderNumber: null, confidence: 0.95, readable: true };
-    expect(decideReceiptCheck("", reading)).toBe("mismatch");
+    expect(decideReceiptCheck("", reading)).toBe("matched");
+  });
+
+  it("still holds a reference the member changed to something else", () => {
+    const reading = { reference: "9044011942642", amountPhp: 200, senderNumber: null, confidence: 0.95, readable: true };
+    expect(decideReceiptCheck("9044011942643", reading)).toBe("mismatch");
   });
 
   it("never guesses from a low-confidence read", () => {

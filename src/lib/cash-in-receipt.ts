@@ -22,6 +22,8 @@ export interface ReceiptReading {
   reference: string | null;
   amountPhp: number | null;
   senderNumber: string | null;
+  /** Payment date/time printed on the receipt, ISO 8601, when it was legible. */
+  paidAt?: string | null;
   /** The reader's own confidence that it read the reference correctly, 0..1. */
   confidence: number;
   readable: boolean;
@@ -47,7 +49,10 @@ export function decideReceiptCheck(typedReference: string | null | undefined, re
   const typed = normalizePaymentReference(typedReference);
   const read = normalizePaymentReference(reading.reference);
   if (!reading.readable || !read || reading.confidence < RECEIPT_MIN_CONFIDENCE) return "unreadable";
-  if (!typed) return "mismatch";
+  // Screenshot-first submission: when the member typed nothing, the reference
+  // READ OFF the receipt is the authoritative one. Nothing is invented — the
+  // request still needs a real listener notification to be approved.
+  if (!typed) return "matched";
   return read === typed ? "matched" : "mismatch";
 }
 
@@ -75,6 +80,14 @@ const text = (value: unknown): string | null => {
   return v === "" || /^(null|none|n\/a|unknown)$/i.test(v) ? null : v;
 };
 
+/** A date/time only counts when it parses to a real instant; never guessed. */
+const isoDateTime = (value: unknown): string | null => {
+  const v = text(value);
+  if (!v) return null;
+  const t = Date.parse(v);
+  return Number.isFinite(t) ? new Date(t).toISOString() : null;
+};
+
 /**
  * Parse the reader's JSON answer defensively — a model may wrap it in prose or
  * a code fence. Anything we cannot parse is an unreadable receipt, never a
@@ -85,6 +98,7 @@ export function parseReceiptReading(raw: string): ReceiptReading {
     reference: null,
     amountPhp: null,
     senderNumber: null,
+    paidAt: null,
     confidence: 0,
     readable: false,
   };
@@ -105,6 +119,7 @@ export function parseReceiptReading(raw: string): ReceiptReading {
     reference,
     amountPhp: numeric(parsed["amount_php"] ?? parsed["amount"]),
     senderNumber: text(parsed["sender_number"] ?? parsed["sender"]),
+    paidAt: isoDateTime(parsed["paid_at"] ?? parsed["datetime"] ?? parsed["date_time"]),
     confidence,
     readable: parsed["readable"] === false ? false : Boolean(reference),
   };
