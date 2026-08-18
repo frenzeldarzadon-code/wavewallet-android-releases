@@ -59,6 +59,20 @@ export interface NavGroup {
 
 export type Nav = NavGroup[];
 
+/**
+ * Wallet Center and the Voucher Shop are permanent core destinations of the
+ * mobile bottom bar. Any future edit to a bottom-nav list is filtered through
+ * this helper, so neither can be dropped or pushed out of the visible five.
+ */
+export function withCoreDestinations(items: NavItem[], core: NavItem[]): NavItem[] {
+  const missing = core.filter((c) => !items.some((i) => i.to === c.to));
+  const kept = [...core.filter((c) => items.some((i) => i.to === c.to)), ...missing];
+  const rest = items.filter((i) => !kept.some((c) => c.to === i.to));
+  // Core first (stable thumb positions), then role-specific slots, max five.
+  return [...kept, ...rest].slice(0, 5);
+}
+
+
 /** Every item in a grouped nav, in visual order. */
 export const flattenNav = (nav: Nav): NavItem[] => nav.flatMap((g) => g.items);
 
@@ -120,13 +134,20 @@ export function customerNav(): Nav {
   ];
 }
 
-export const customerBottomNav: NavItem[] = [
+/** Permanent core destinations for a customer. */
+export const customerCoreBottomNav: NavItem[] = [
   { to: "/app", label: "Wallet", icon: Wallet },
   { to: "/app/shop", label: "Shop", icon: ShoppingBag },
-  { to: "/app/money", label: "Cash", icon: Banknote },
-  { to: "/app/applications", label: "Shops", icon: UserPlus },
-  { to: "/app/profile", label: "Profile", icon: User },
 ];
+
+export const customerBottomNav: NavItem[] = withCoreDestinations(
+  [
+    { to: "/app/money", label: "Cash", icon: Banknote },
+    { to: "/app/applications", label: "Shops", icon: UserPlus },
+    { to: "/app/profile", label: "Profile", icon: User },
+  ],
+  customerCoreBottomNav,
+);
 
 
 /* ------------------------------------------------------------------ */
@@ -188,13 +209,20 @@ export function resellerNav(role: Role = "reseller"): Nav {
   ];
 }
 
-export const resellerBottomNav: NavItem[] = [
-  { to: "/reseller", label: "Home", icon: LayoutDashboard },
-  { to: "/reseller/shop", label: "Shop", icon: ShoppingCart },
+/** Permanent core destinations for a reseller / subreseller. */
+export const resellerCoreBottomNav: NavItem[] = [
   { to: "/reseller/wallet", label: "Wallet", icon: Wallet },
-  { to: "/reseller/applications", label: "Members", icon: UserPlus },
-  { to: "/reseller/profile", label: "Profile", icon: User },
+  { to: "/reseller/shop", label: "Shop", icon: ShoppingCart },
 ];
+
+export const resellerBottomNav: NavItem[] = withCoreDestinations(
+  [
+    { to: "/reseller", label: "Home", icon: LayoutDashboard },
+    { to: "/reseller/applications", label: "Members", icon: UserPlus },
+    { to: "/reseller/profile", label: "Profile", icon: User },
+  ],
+  resellerCoreBottomNav,
+);
 
 /* ------------------------------------------------------------------ */
 /* Admin                                                               */

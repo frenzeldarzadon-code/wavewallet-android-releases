@@ -92,14 +92,14 @@ export function RecipientSearch({
                 type="button"
                 onClick={() => onSelect(m)}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
+                  "flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
                   selected?.id === m.id ? "bg-brand-soft" : "hover:bg-muted",
                 )}
               >
                 <MemberAvatar path={m.avatar_path ?? null} name={m.full_name} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium">{m.full_name}</span>
-                  <span className="block truncate text-xs text-muted-foreground">
+                  <span className="block break-words text-sm font-medium leading-snug">{m.full_name}</span>
+                  <span className="block break-words text-xs leading-snug text-muted-foreground">
                     {recipientIdentityLine(m)}
                   </span>
                 </span>

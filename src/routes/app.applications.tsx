@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MemberInboxPanel } from "@/components/member-inbox-panel";
+import { LeaveShopCard } from "@/components/leave-shop-card";
+import { useSession } from "@/lib/session";
 
 export const Route = createFileRoute("/app/applications")({
   head: () => ({
@@ -23,5 +25,11 @@ export const Route = createFileRoute("/app/applications")({
 });
 
 function CustomerInbox() {
-  return <MemberInboxPanel />;
+  const { ecosystem, ecosystemDbId } = useSession("customer");
+  return (
+    <div className="space-y-4">
+      <MemberInboxPanel />
+      <LeaveShopCard ecosystemId={ecosystemDbId} ecosystemName={ecosystem?.name ?? "this shop"} />
+    </div>
+  );
 }

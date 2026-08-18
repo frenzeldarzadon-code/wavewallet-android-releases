@@ -66,6 +66,40 @@ export function memberMatches(
 }
 
 /**
+ * Ordering for member/customer lists.
+ *
+ * With no search term the list is plain A–Z. While searching, the nearest
+ * authorized match comes first — exact name or @handle, then prefix matches,
+ * then broader matches — with alphabetical tie-breaking. Visibility itself is
+ * decided by the database; this only orders rows already returned.
+ */
+export function memberSortScore(
+  member: Pick<MemberSearchResult, "full_name"> & { handle?: string | null },
+  query: string,
+): number {
+  const q = query.trim().toLowerCase();
+  if (!q) return 0;
+  const name = member.full_name.toLowerCase();
+  const handle = (member.handle ?? "").toLowerCase();
+  const h = q.replace(/^@+/, "");
+  if (handle && handle === h) return 0;
+  if (name === q) return 1;
+  if (name.startsWith(q)) return 2;
+  if (handle && handle.startsWith(h)) return 3;
+  if (name.includes(q)) return 4;
+  return 5;
+}
+
+export function sortMembersForList<
+  T extends Pick<MemberSearchResult, "full_name"> & { handle?: string | null },
+>(members: T[], query: string): T[] {
+  return [...members].sort((a, b) => {
+    const diff = memberSortScore(a, query) - memberSortScore(b, query);
+    return diff !== 0 ? diff : a.full_name.localeCompare(b.full_name);
+  });
+}
+
+/**
  * A one-line, unambiguous description of a member so nobody credits the wrong
  * person: @handle, email and phone (plus the shop when searching across
  * ecosystems). Resellers only ever receive masked contact details.

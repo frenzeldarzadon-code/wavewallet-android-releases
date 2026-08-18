@@ -38,7 +38,7 @@ import { CashbackRateDialog, type CashbackTarget } from "@/components/cashback-r
 import { supabase } from "@/integrations/supabase/client";
 import { peso, roleLabel, shortDate, shortDateTime, type Role } from "@/lib/wavewallet";
 import { EditMemberDialog, type EditableMember } from "@/components/edit-member-dialog";
-import { memberMatches } from "@/lib/member-admin";
+import { memberMatches, sortMembersForList } from "@/lib/member-admin";
 import { InviteMemberCard } from "@/components/invite-member-card";
 import { AccessAccountDialog, type AccessTarget } from "@/components/access-account-dialog";
 import { isImpersonatable } from "@/lib/impersonation";
@@ -242,11 +242,13 @@ function AdminCustomers() {
   );
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return customers.filter((c) => {
+    const rows = customers.filter((c) => {
       if (roleFilter !== "all" && c.role !== roleFilter) return false;
       if (statusFilter !== "all" && c.status !== statusFilter) return false;
       return memberMatches(c, needle);
     });
+    // A–Z when browsing; nearest match first while searching.
+    return sortMembersForList(rows, needle);
   }, [customers, q, roleFilter, statusFilter]);
   const resellers = customers.filter((c) => c.role === "reseller");
   const subresellers = customers.filter((c) => c.role === "subreseller");

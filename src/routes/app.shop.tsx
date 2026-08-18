@@ -1,9 +1,11 @@
 import { useOnline } from "@/lib/pwa";
 import { createFileRoute } from "@tanstack/react-router";
-import { Sparkles, Ticket } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { Coins, Search, Sparkles, Ticket, Wallet } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -14,8 +16,11 @@ import {
 } from "@/components/ui/dialog";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { RatingStars } from "@/components/rating-stars";
+import { IssuedVouchersDialog } from "@/components/voucher/issued-vouchers-dialog";
+import type { PaymentStatus, VoucherImageData } from "@/lib/voucher-image";
 import { soldLabel } from "@/lib/ratings";
 import { useSession } from "@/lib/session";
+import { cn } from "@/lib/utils";
 import { peso } from "@/lib/wavewallet";
 import {
   fetchCreditBalance,
@@ -64,21 +69,24 @@ export function VoucherShopView({
   discountPercent?: number;
 }) {
   // Subresellers share the reseller workspace; the database still authorizes each purchase.
-  const { account, ecosystemDbId } = useSession(role === "subreseller" ? "reseller" : role);
+  const { account, ecosystem, ecosystemDbId } = useSession(
+    role === "subreseller" ? "reseller" : role,
+  );
   const [products, setProducts] = useState<ShopProduct[]>([]);
   const [balance, setBalance] = useState(0);
   const [points, setPoints] = useState<PointsAccount>({ balance: 0, held: 0, available: 0 });
   const [ratio, setRatio] = useState(10);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
   const [buying, setBuying] = useState<{ product: ShopProduct; method: Method } | null>(null);
   const [qty, setQty] = useState(1);
+  const [customerName, setCustomerName] = useState("");
+  const [payment, setPayment] = useState<PaymentStatus>(null);
   const [busy, setBusy] = useState(false);
   const online = useOnline();
   const [issued, setIssued] = useState<{
-    codes: string[];
-    tx: string;
-    name: string;
-    price: string;
+    vouchers: VoucherImageData[];
+    summary: string;
     earned: number;
   } | null>(null);
   const userId = account?.id ?? null;
@@ -108,18 +116,57 @@ export function VoucherShopView({
     void load();
   }, [load]);
 
+  const term = query.trim().toLowerCase();
+  const visible = useMemo(
+    () =>
+      term
+        ? products.filter(
+            (p) =>
+              p.name.toLowerCase().includes(term) ||
+              (p.description ?? "").toLowerCase().includes(term),
+          )
+        : products,
+    [products, term],
+  );
+
   if (!account) return null;
 
   const priceFor = (p: ShopProduct) => voucherCost(listPrice(p), discountPercent);
 
   const openBuy = (product: ShopProduct, method: Method) => {
     setQty(1);
+    setCustomerName("");
+    setPayment(null);
     setBuying({ product, method });
   };
 
   const maxQty = buying ? Math.min(50, Math.max(1, buying.product.available)) : 1;
   const unit = buying ? priceFor(buying.product) : 0;
   const total = Math.round(unit * qty * 100) / 100;
+
+  const buildVouchers = (
+    codes: string[],
+    productName: string,
+    description: string | null,
+    priceLabel: string,
+    txId: string,
+  ): VoucherImageData[] => {
+    const issuedAt = new Date();
+    const name = customerName.trim();
+    return codes.map((code, i) => ({
+      code,
+      productName,
+      description,
+      priceLabel,
+      shopName: ecosystem?.name ?? "WaveWallet",
+      customerName: name || null,
+      paymentStatus: payment,
+      index: i + 1,
+      total: codes.length,
+      txId,
+      issuedAt,
+    }));
+  };
 
   const confirm = async () => {
     if (!buying) return;
@@ -128,19 +175,30 @@ export function VoucherShopView({
       if (buying.method === "points") {
         const res = await purchaseVoucherWithPoints(buying.product.id);
         setIssued({
-          codes: [res.code],
-          tx: res.tx_id,
-          name: res.product_name,
-          price: `${res.points_spent} pts`,
+          vouchers: buildVouchers(
+            [res.code],
+            res.product_name,
+            buying.product.description ?? null,
+            `${res.points_spent} pts`,
+            res.tx_id,
+          ),
+          summary: `${res.product_name} · ${res.points_spent} pts · ${res.tx_id}`,
           earned: 0,
         });
       } else {
         const res = await purchaseVoucher(buying.product.id, qty);
+        const unitLabel = peso(Number(res.unit_price));
         setIssued({
-          codes: res.codes,
-          tx: res.tx_id,
-          name: `${res.product_name}${res.quantity > 1 ? ` ×${res.quantity}` : ""}`,
-          price: peso(res.sale_price),
+          vouchers: buildVouchers(
+            res.codes,
+            res.product_name,
+            buying.product.description ?? null,
+            unitLabel,
+            res.tx_id,
+          ),
+          summary: `${res.product_name}${res.quantity > 1 ? ` ×${res.quantity}` : ""} · ${peso(
+            res.sale_price,
+          )} · ${res.tx_id}`,
           earned: Number(res.points_earned ?? 0),
         });
       }
@@ -153,23 +211,63 @@ export function VoucherShopView({
     }
   };
 
+  const discountLabel =
+    role === "admin" ? "admin voucher" : role === "subreseller" ? "subreseller" : "reseller";
 
   return (
     <>
-      <PageSection
-        title="Voucher shop"
-        description={`Balance: ${peso(balance)} · ${points.available} pts available${
-          discountPercent > 0
-            ? ` · ${discountPercent}% ${
-                role === "admin"
-                  ? "admin voucher"
-                  : role === "subreseller"
-                    ? "subreseller"
-                    : "reseller"
-              } discount applied`
-            : ""
-        }`}
-      >
+      {/* Premium shop header: identity, balances and one clear search control. */}
+      <section className="surface-gradient relative overflow-hidden rounded-2xl px-4 py-5 text-primary-foreground shadow-[var(--shadow-card)] sm:px-6">
+        <div className="relative space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] opacity-80">
+                Voucher shop
+              </p>
+              <h1 className="truncate text-xl font-semibold leading-tight sm:text-2xl">
+                {ecosystem?.name ?? "WaveWallet"}
+              </h1>
+            </div>
+            <Ticket className="size-7 shrink-0 opacity-80" aria-hidden />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-xl bg-background/15 px-3 py-2">
+              <p className="flex items-center gap-1.5 text-[11px] opacity-85">
+                <Wallet className="size-3.5" /> Coins
+              </p>
+              <p className="truncate text-lg font-semibold tabular-nums">{peso(balance)}</p>
+            </div>
+            <div className="rounded-xl bg-background/15 px-3 py-2">
+              <p className="flex items-center gap-1.5 text-[11px] opacity-85">
+                <Coins className="size-3.5" /> Points
+              </p>
+              <p className="truncate text-lg font-semibold tabular-nums">
+                {points.available} pts
+              </p>
+            </div>
+          </div>
+
+          {discountPercent > 0 ? (
+            <p className="rounded-lg bg-background/15 px-3 py-1.5 text-[11px] font-medium">
+              {discountPercent}% {discountLabel} discount applied to every price below.
+            </p>
+          ) : null}
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 opacity-70" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search vouchers"
+              aria-label="Search vouchers"
+              className="h-11 border-background/25 bg-background/15 pl-9 text-primary-foreground placeholder:text-primary-foreground/60"
+            />
+          </div>
+        </div>
+      </section>
+
+      <PageSection title="Available vouchers" description="Codes come from your shop's uploaded inventory and are issued instantly.">
         {loading ? (
           <EmptyState title="Loading products…" />
         ) : products.length === 0 ? (
@@ -177,22 +275,37 @@ export function VoucherShopView({
             title="No vouchers on sale"
             description="Your shop admin has not published any active voucher products yet."
           />
+        ) : visible.length === 0 ? (
+          <EmptyState
+            title="No match"
+            description="No voucher in this shop matches your search."
+          />
         ) : (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {products.map((p) => {
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {visible.map((p) => {
               const price = priceFor(p);
               const soldOut = p.available === 0;
               const affordable = balance >= price;
               const pointsPrice = p.points_price ?? 0;
               const pointsOk = pointsPrice > 0 && points.available >= pointsPrice;
               return (
-                <Card key={p.id} className="shadow-[var(--shadow-card)]">
-                  <CardContent className="space-y-3">
+                <Card
+                  key={p.id}
+                  className={cn(
+                    "overflow-hidden border-border/70 shadow-[var(--shadow-card)] transition-shadow hover:shadow-lg",
+                    soldOut && "opacity-70",
+                  )}
+                >
+                  <CardContent className="space-y-3 p-4">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="font-medium">{p.name}</p>
-                        <p className="text-xs text-muted-foreground">{p.description}</p>
-                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <div className="min-w-0 flex-1">
+                        <p className="break-words text-base font-semibold leading-snug">{p.name}</p>
+                        {p.description ? (
+                          <p className="mt-0.5 break-words text-xs text-muted-foreground">
+                            {p.description}
+                          </p>
+                        ) : null}
+                        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
                           <RatingStars avg={p.rating_avg} count={p.rating_count} />
                           {soldLabel(p.sold_count) ? (
                             <span className="text-xs text-muted-foreground">
@@ -201,12 +314,15 @@ export function VoucherShopView({
                           ) : null}
                         </div>
                       </div>
-                      <StatusBadge tone={soldOut ? "danger" : p.available <= 10 ? "warning" : "success"}>
+                      <StatusBadge
+                        tone={soldOut ? "danger" : p.available <= 10 ? "warning" : "success"}
+                      >
                         {soldOut ? "Sold out" : `${p.available} left`}
                       </StatusBadge>
                     </div>
-                    <div className="flex items-end gap-2">
-                      <p className="text-xl font-semibold tracking-tight">{peso(price)}</p>
+
+                    <div className="flex flex-wrap items-end gap-x-2 gap-y-1 rounded-xl bg-muted/60 px-3 py-2">
+                      <p className="text-2xl font-bold tracking-tight">{peso(price)}</p>
                       {p.promo_price !== null || discountPercent > 0 ? (
                         <p className="pb-1 text-xs text-muted-foreground line-through">
                           {peso(Number(p.credit_price))}
@@ -218,6 +334,7 @@ export function VoucherShopView({
                         </StatusBadge>
                       ) : null}
                     </div>
+
                     {discountPercent > 0 ? (
                       <p className="rounded-lg bg-success/10 px-2.5 py-1.5 text-[11px] font-medium text-success">
                         {role === "admin"
@@ -225,14 +342,22 @@ export function VoucherShopView({
                           : `Your cost ${peso(price)} · sell at ${peso(listPrice(p))} · margin ${peso(listPrice(p) - price)} (${discountPercent}%)`}
                       </p>
                     ) : null}
+
                     <div className="grid gap-2">
                       <Button
+                        size="lg"
                         className="w-full"
                         disabled={soldOut || !affordable}
                         onClick={() => openBuy(p, "credits")}
                       >
                         <Ticket className="size-4" />
-                        {soldOut ? "Out of stock" : affordable ? "Buy with coins" : "Not enough coins"}
+                        <span className="truncate">
+                          {soldOut
+                            ? "Out of stock"
+                            : affordable
+                              ? "Buy with coins"
+                              : "Not enough coins"}
+                        </span>
                       </Button>
                       {pointsPrice > 0 ? (
                         <Button
@@ -242,11 +367,13 @@ export function VoucherShopView({
                           onClick={() => openBuy(p, "points")}
                         >
                           <Sparkles className="size-4" />
-                          {soldOut
-                            ? "Out of stock"
-                            : pointsOk
-                              ? `Buy with ${pointsPrice} points`
-                              : "Not enough points"}
+                          <span className="truncate">
+                            {soldOut
+                              ? "Out of stock"
+                              : pointsOk
+                                ? `Buy with ${pointsPrice} points`
+                                : "Not enough points"}
+                          </span>
                         </Button>
                       ) : null}
                     </div>
@@ -257,6 +384,8 @@ export function VoucherShopView({
           </div>
         )}
       </PageSection>
+
+
 
       <Dialog open={!!buying} onOpenChange={(o) => !o && setBuying(null)}>
         <DialogContent className="sm:max-w-sm">
@@ -350,6 +479,45 @@ export function VoucherShopView({
               )}
             </div>
           ) : null}
+
+          {/* Optional details printed on the voucher image only. They never
+              change price, wallets, points, commissions or accounting. */}
+          <div className="space-y-2 rounded-xl border border-dashed border-border px-3 py-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="voucher-customer">Customer name (optional)</Label>
+              <Input
+                id="voucher-customer"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Printed on the voucher image"
+                maxLength={60}
+                autoComplete="off"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Payment status (optional)</Label>
+              <div className="grid grid-cols-3 gap-1.5">
+                {([null, "paid", "credited"] as PaymentStatus[]).map((s) => (
+                  <Button
+                    key={s ?? "none"}
+                    type="button"
+                    size="sm"
+                    variant={payment === s ? "default" : "outline"}
+                    onClick={() => setPayment(s)}
+                  >
+                    <span className="truncate">
+                      {s === null ? "None" : s === "paid" ? "Paid" : "Credited"}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                A note for your own record keeping only — it does not affect funding, price,
+                coins, points or commissions.
+              </p>
+            </div>
+          </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setBuying(null)}>
               Cancel
@@ -358,47 +526,19 @@ export function VoucherShopView({
               onClick={() => void confirm()}
               disabled={busy || !online || (buying?.method === "credits" && (total > balance || qty > maxQty))}
             >
-              {busy ? "Issuing…" : "Confirm purchase"}
+              {busy ? "Issuing…" : "Confirm & Generate Vouchers"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!issued} onOpenChange={(o) => !o && setIssued(null)}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{(issued?.codes.length ?? 0) > 1 ? "Vouchers issued" : "Voucher issued"}</DialogTitle>
-            <DialogDescription>
-              {issued?.name} · {issued?.price} · {issued?.tx}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="max-h-64 space-y-2 overflow-y-auto rounded-xl border border-success/40 bg-success-soft px-4 py-4 text-center">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-success">
-              {(issued?.codes.length ?? 0) > 1 ? "Your codes" : "Your code"}
-            </p>
-            {issued?.codes.map((c) => (
-              <p key={c} className="font-mono text-lg font-semibold tracking-widest text-success">
-                {c}
-              </p>
-            ))}
-          </div>
-          {issued && issued.earned > 0 ? (
-            <p className="text-center text-xs text-points">+{issued.earned} points earned</p>
-          ) : null}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (issued) void navigator.clipboard?.writeText(issued.codes.join("\n"));
-                toast.success(issued && issued.codes.length > 1 ? "Codes copied" : "Code copied");
-              }}
-            >
-              {issued && issued.codes.length > 1 ? "Copy codes" : "Copy code"}
-            </Button>
-            <Button onClick={() => setIssued(null)}>Done</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <IssuedVouchersDialog
+        vouchers={issued?.vouchers ?? []}
+        summary={issued?.summary ?? ""}
+        pointsEarned={issued?.earned ?? 0}
+        onClose={() => setIssued(null)}
+      />
+
 
     </>
   );
