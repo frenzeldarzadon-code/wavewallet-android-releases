@@ -78,6 +78,9 @@ export function VoucherShopView({
   const [ratio, setRatio] = useState(10);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  // Compact dropdown filters — no long vertical filter panel on mobile.
+  const [sort, setSort] = useState<"name" | "price-asc" | "price-desc" | "popular">("name");
+  const [avail, setAvail] = useState<"all" | "in" | "points">("all");
   const [buying, setBuying] = useState<{ product: ShopProduct; method: Method } | null>(null);
   const [qty, setQty] = useState(1);
   const [customerName, setCustomerName] = useState("");
