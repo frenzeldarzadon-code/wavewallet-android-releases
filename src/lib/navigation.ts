@@ -134,13 +134,20 @@ export function customerNav(): Nav {
   ];
 }
 
-export const customerBottomNav: NavItem[] = [
+/** Permanent core destinations for a customer. */
+export const customerCoreBottomNav: NavItem[] = [
   { to: "/app", label: "Wallet", icon: Wallet },
   { to: "/app/shop", label: "Shop", icon: ShoppingBag },
-  { to: "/app/money", label: "Cash", icon: Banknote },
-  { to: "/app/applications", label: "Shops", icon: UserPlus },
-  { to: "/app/profile", label: "Profile", icon: User },
 ];
+
+export const customerBottomNav: NavItem[] = withCoreDestinations(
+  [
+    { to: "/app/money", label: "Cash", icon: Banknote },
+    { to: "/app/applications", label: "Shops", icon: UserPlus },
+    { to: "/app/profile", label: "Profile", icon: User },
+  ],
+  customerCoreBottomNav,
+);
 
 
 /* ------------------------------------------------------------------ */
@@ -202,13 +209,20 @@ export function resellerNav(role: Role = "reseller"): Nav {
   ];
 }
 
-export const resellerBottomNav: NavItem[] = [
-  { to: "/reseller", label: "Home", icon: LayoutDashboard },
-  { to: "/reseller/shop", label: "Shop", icon: ShoppingCart },
+/** Permanent core destinations for a reseller / subreseller. */
+export const resellerCoreBottomNav: NavItem[] = [
   { to: "/reseller/wallet", label: "Wallet", icon: Wallet },
-  { to: "/reseller/applications", label: "Members", icon: UserPlus },
-  { to: "/reseller/profile", label: "Profile", icon: User },
+  { to: "/reseller/shop", label: "Shop", icon: ShoppingCart },
 ];
+
+export const resellerBottomNav: NavItem[] = withCoreDestinations(
+  [
+    { to: "/reseller", label: "Home", icon: LayoutDashboard },
+    { to: "/reseller/applications", label: "Members", icon: UserPlus },
+    { to: "/reseller/profile", label: "Profile", icon: User },
+  ],
+  resellerCoreBottomNav,
+);
 
 /* ------------------------------------------------------------------ */
 /* Admin                                                               */
