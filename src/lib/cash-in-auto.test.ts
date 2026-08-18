@@ -85,7 +85,7 @@ describe("automatic approval matching", () => {
     // Screenshot-first submissions carry no typed reference at all.
     expect(
       evaluateMatch({ ...req, payer_reference: "", receipt_reference: "9044011942642" }, on, RECEIVING),
-    ).toBe("approve");
+    ).toBe("matched");
   });
 
   it("waits for the receipt reading when there is no reference anywhere", () => {
@@ -106,7 +106,7 @@ describe("automatic approval matching", () => {
 
   it("passes the first layer without a listener reference", () => {
     const event = { ...(req.listener_event as Record<string, unknown>), reference: null };
-    expect(evaluateMatch({ ...req, listener_event: event as never }, on, RECEIVING)).toBe("approve");
+    expect(evaluateMatch({ ...req, listener_event: event as never }, on, RECEIVING)).toBe("matched");
   });
 
   it("holds when the notification reference contradicts the receipt", () => {
