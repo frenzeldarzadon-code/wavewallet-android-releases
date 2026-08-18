@@ -14,6 +14,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { EcosystemSwitcher } from "@/components/ecosystem-switcher";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { RatingStars } from "@/components/rating-stars";
 import { IssuedVouchersDialog } from "@/components/voucher/issued-vouchers-dialog";
@@ -78,6 +86,9 @@ export function VoucherShopView({
   const [ratio, setRatio] = useState(10);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  // Compact dropdown filters — no long vertical filter panel on mobile.
+  const [sort, setSort] = useState<"name" | "price-asc" | "price-desc" | "popular">("name");
+  const [avail, setAvail] = useState<"all" | "in" | "points">("all");
   const [buying, setBuying] = useState<{ product: ShopProduct; method: Method } | null>(null);
   const [qty, setQty] = useState(1);
   const [customerName, setCustomerName] = useState("");
@@ -117,21 +128,32 @@ export function VoucherShopView({
   }, [load]);
 
   const term = query.trim().toLowerCase();
-  const visible = useMemo(
-    () =>
-      term
-        ? products.filter(
-            (p) =>
-              p.name.toLowerCase().includes(term) ||
-              (p.description ?? "").toLowerCase().includes(term),
-          )
-        : products,
-    [products, term],
-  );
+  const visible = useMemo(() => {
+    let list = term
+      ? products.filter(
+          (p) =>
+            p.name.toLowerCase().includes(term) ||
+            (p.description ?? "").toLowerCase().includes(term),
+        )
+      : products.slice();
+    if (avail === "in") list = list.filter((p) => p.available > 0);
+    if (avail === "points") list = list.filter((p) => (p.points_price ?? 0) > 0);
+    const retail = (p: ShopProduct) => listPrice(p);
+    list.sort((a, b) => {
+      if (sort === "price-asc") return retail(a) - retail(b);
+      if (sort === "price-desc") return retail(b) - retail(a);
+      if (sort === "popular") return (b.sold_count ?? 0) - (a.sold_count ?? 0);
+      return a.name.localeCompare(b.name);
+    });
+    return list;
+  }, [products, term, avail, sort]);
 
   if (!account) return null;
 
-  const priceFor = (p: ShopProduct) => voucherCost(listPrice(p), discountPercent);
+  /** Customer-facing retail price — the product's source of truth. */
+  const retailFor = (p: ShopProduct) => listPrice(p);
+  /** What THIS buyer is charged after their own discount (never the retail price). */
+  const priceFor = (p: ShopProduct) => voucherCost(retailFor(p), discountPercent);
 
   const openBuy = (product: ShopProduct, method: Method) => {
     setQty(1);
@@ -172,6 +194,9 @@ export function VoucherShopView({
     if (!buying) return;
     setBusy(true);
     try {
+      // The voucher image always prints the shop's RETAIL price, never the
+      // buyer's discounted acquisition cost. Charging is untouched.
+      const retailLabel = peso(retailFor(buying.product));
       if (buying.method === "points") {
         const res = await purchaseVoucherWithPoints(buying.product.id);
         setIssued({
@@ -179,7 +204,7 @@ export function VoucherShopView({
             [res.code],
             res.product_name,
             buying.product.description ?? null,
-            `${res.points_spent} pts`,
+            retailLabel,
             res.tx_id,
           ),
           summary: `${res.product_name} · ${res.points_spent} pts · ${res.tx_id}`,
@@ -187,13 +212,12 @@ export function VoucherShopView({
         });
       } else {
         const res = await purchaseVoucher(buying.product.id, qty);
-        const unitLabel = peso(Number(res.unit_price));
         setIssued({
           vouchers: buildVouchers(
             res.codes,
             res.product_name,
             buying.product.description ?? null,
-            unitLabel,
+            retailLabel,
             res.tx_id,
           ),
           summary: `${res.product_name}${res.quantity > 1 ? ` ×${res.quantity}` : ""} · ${peso(
@@ -214,58 +238,103 @@ export function VoucherShopView({
   const discountLabel =
     role === "admin" ? "admin voucher" : role === "subreseller" ? "subreseller" : "reseller";
 
+
   return (
     <>
-      {/* Premium shop header: identity, balances and one clear search control. */}
-      <section className="surface-gradient relative overflow-hidden rounded-2xl px-4 py-5 text-primary-foreground shadow-[var(--shadow-card)] sm:px-6">
+      {/* Premium futuristic hero — pure CSS gradients + a tiny CSS grid pattern,
+          no raster art, so first paint stays fast on low-end phones. */}
+      <section className="shop-hero relative overflow-hidden rounded-3xl px-4 py-5 text-primary-foreground shadow-[var(--shadow-float)] sm:px-6">
+        <div className="shop-grid pointer-events-none absolute inset-0 opacity-60" aria-hidden />
+        <div
+          className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-[oklch(0.72_0.14_205_/_0.28)] blur-2xl"
+          aria-hidden
+        />
         <div className="relative space-y-4">
-          <div className="flex items-start justify-between gap-3">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] opacity-80">
-                Voucher shop
+              <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] opacity-80">
+                <Ticket className="size-3.5 shrink-0" aria-hidden /> Voucher shop
               </p>
-              <h1 className="truncate text-xl font-semibold leading-tight sm:text-2xl">
+              <h1 className="truncate text-2xl font-bold leading-tight sm:text-3xl">
                 {ecosystem?.name ?? "WaveWallet"}
               </h1>
             </div>
-            <Ticket className="size-7 shrink-0 opacity-80" aria-hidden />
+            {/* Switch shop stays one tap away from the shop itself. */}
+            <div className="shrink-0">
+              <EcosystemSwitcher mini />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <div className="rounded-xl bg-background/15 px-3 py-2">
+            <div className="rounded-2xl border border-background/15 bg-background/10 px-3 py-2 backdrop-blur-sm">
               <p className="flex items-center gap-1.5 text-[11px] opacity-85">
                 <Wallet className="size-3.5" /> Coins
               </p>
-              <p className="truncate text-lg font-semibold tabular-nums">{peso(balance)}</p>
+              <p className="truncate text-lg font-bold tabular-nums text-[oklch(0.9_0.13_160)]">
+                {peso(balance)}
+              </p>
             </div>
-            <div className="rounded-xl bg-background/15 px-3 py-2">
+            <div className="rounded-2xl border border-background/15 bg-background/10 px-3 py-2 backdrop-blur-sm">
               <p className="flex items-center gap-1.5 text-[11px] opacity-85">
                 <Coins className="size-3.5" /> Points
               </p>
-              <p className="truncate text-lg font-semibold tabular-nums">
+              <p className="truncate text-lg font-bold tabular-nums text-[oklch(0.88_0.14_85)]">
                 {points.available} pts
               </p>
             </div>
           </div>
 
           {discountPercent > 0 ? (
-            <p className="rounded-lg bg-background/15 px-3 py-1.5 text-[11px] font-medium">
-              {discountPercent}% {discountLabel} discount applied to every price below.
+            <p className="rounded-xl border border-background/15 bg-background/10 px-3 py-1.5 text-[11px] font-medium">
+              {discountPercent}% {discountLabel} discount applies to what you pay — customers still
+              pay the retail price shown on each card.
             </p>
           ) : null}
 
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 opacity-70" />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search vouchers"
-              aria-label="Search vouchers"
-              className="h-11 border-background/25 bg-background/15 pl-9 text-primary-foreground placeholder:text-primary-foreground/60"
-            />
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
+            <div className="relative min-w-0">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 opacity-70" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search vouchers"
+                aria-label="Search vouchers"
+                className="h-11 border-background/25 bg-background/15 pl-9 text-primary-foreground placeholder:text-primary-foreground/60"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:contents">
+              <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
+                <SelectTrigger
+                  aria-label="Sort vouchers"
+                  className="h-11 min-w-0 border-background/25 bg-background/15 text-primary-foreground"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Name A–Z</SelectItem>
+                  <SelectItem value="price-asc">Price: low to high</SelectItem>
+                  <SelectItem value="price-desc">Price: high to low</SelectItem>
+                  <SelectItem value="popular">Best selling</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={avail} onValueChange={(v) => setAvail(v as typeof avail)}>
+                <SelectTrigger
+                  aria-label="Filter vouchers"
+                  className="h-11 min-w-0 border-background/25 bg-background/15 text-primary-foreground"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All vouchers</SelectItem>
+                  <SelectItem value="in">In stock</SelectItem>
+                  <SelectItem value="points">Points redeemable</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </section>
+
 
       <PageSection title="Available vouchers" description="Codes come from your shop's uploaded inventory and are issued instantly.">
         {loading ? (
@@ -283,7 +352,9 @@ export function VoucherShopView({
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {visible.map((p) => {
+              const retail = retailFor(p);
               const price = priceFor(p);
+              const discounted = price < retail;
               const soldOut = p.available === 0;
               const affordable = balance >= price;
               const pointsPrice = p.points_price ?? 0;
@@ -292,11 +363,22 @@ export function VoucherShopView({
                 <Card
                   key={p.id}
                   className={cn(
-                    "overflow-hidden border-border/70 shadow-[var(--shadow-card)] transition-shadow hover:shadow-lg",
+                    "card-sheen relative overflow-hidden rounded-2xl border-border/70 shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-float)]",
                     soldOut && "opacity-70",
                   )}
                 >
-                  <CardContent className="space-y-3 p-4">
+                  <span
+                    className={cn(
+                      "absolute inset-y-0 left-0 w-1.5",
+                      soldOut
+                        ? "bg-destructive/70"
+                        : pointsPrice > 0
+                          ? "bg-points"
+                          : "bg-primary",
+                    )}
+                    aria-hidden
+                  />
+                  <CardContent className="space-y-3 p-4 pl-5">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <p className="break-words text-base font-semibold leading-snug">{p.name}</p>
@@ -321,9 +403,16 @@ export function VoucherShopView({
                       </StatusBadge>
                     </div>
 
-                    <div className="flex flex-wrap items-end gap-x-2 gap-y-1 rounded-xl bg-muted/60 px-3 py-2">
-                      <p className="text-2xl font-bold tracking-tight">{peso(price)}</p>
-                      {p.promo_price !== null || discountPercent > 0 ? (
+                    {/* RETAIL price is the headline everywhere. A buyer's own
+                        discounted acquisition cost never replaces it. */}
+                    <div className="flex flex-wrap items-end gap-x-2 gap-y-1 rounded-xl bg-gradient-to-r from-brand-soft to-transparent px-3 py-2">
+                      <p className="price-glow text-2xl font-bold tracking-tight text-primary">
+                        {peso(retail)}
+                      </p>
+                      <p className="pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                        retail
+                      </p>
+                      {p.promo_price !== null ? (
                         <p className="pb-1 text-xs text-muted-foreground line-through">
                           {peso(Number(p.credit_price))}
                         </p>
@@ -335,13 +424,14 @@ export function VoucherShopView({
                       ) : null}
                     </div>
 
-                    {discountPercent > 0 ? (
+                    {discounted ? (
                       <p className="rounded-lg bg-success/10 px-2.5 py-1.5 text-[11px] font-medium text-success">
                         {role === "admin"
-                          ? `Normal price ${peso(listPrice(p))} · admin discount ${discountPercent}% · your cost ${peso(price)}`
-                          : `Your cost ${peso(price)} · sell at ${peso(listPrice(p))} · margin ${peso(listPrice(p) - price)} (${discountPercent}%)`}
+                          ? `Your admin cost ${peso(price)} (${discountPercent}% off) · customers pay ${peso(retail)}`
+                          : `Your cost ${peso(price)} · sell at ${peso(retail)} · margin ${peso(retail - price)} (${discountPercent}%)`}
                       </p>
                     ) : null}
+
 
                     <div className="grid gap-2">
                       <Button
@@ -402,6 +492,12 @@ export function VoucherShopView({
               <p className="flex justify-between">
                 <span className="text-muted-foreground">Voucher</span>
                 <span className="font-medium">{buying.product.name}</span>
+              </p>
+              <p className="flex justify-between">
+                <span className="text-muted-foreground">Retail price (printed on voucher)</span>
+                <span className="font-medium text-primary">
+                  {peso(retailFor(buying.product))}
+                </span>
               </p>
               {buying.method === "credits" ? (
                 <>
