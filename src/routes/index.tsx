@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/ui-kit";
 import { SocialSignIn } from "@/components/auth/social-sign-in";
 import { PasswordField } from "@/components/password-field";
-import { homeFor } from "@/lib/session";
+import { homeFor, shopHomeFor } from "@/lib/session";
 import { useOnline } from "@/lib/pwa";
 import {
   loadAuthContext,
@@ -149,7 +149,8 @@ function LoginPage() {
         return;
       }
       // Role is resolved after authentication — never chosen by the visitor.
-      navigate({ to: homeFor(ctx.role) });
+      // With a valid remembered shop we open its Voucher Shop directly.
+      navigate({ to: shopHomeFor(ctx.role) });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not sign you in.");
     } finally {

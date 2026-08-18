@@ -40,6 +40,18 @@ export const homeFor = (role: Role) =>
         ? "/reseller"
         : "/app";
 
+/**
+ * Where a member lands right after signing in. Their last valid active shop is
+ * remembered by the database (`profiles.active_ecosystem_id`, re-authorized on
+ * every load), and selling members open straight in that shop's Voucher Shop.
+ */
+export const shopHomeFor = (role: Role) =>
+  role === "customer"
+    ? "/app/shop"
+    : role === "reseller" || role === "subreseller"
+      ? "/reseller/shop"
+      : homeFor(role);
+
 /** Subresellers share the reseller workspace — the database still authorizes every action. */
 const roleSatisfies = (role: Role, required: Role) =>
   role === required ||
