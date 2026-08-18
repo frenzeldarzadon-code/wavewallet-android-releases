@@ -105,13 +105,13 @@ describe("automatic approval matching", () => {
   });
 
   it("passes the first layer without a listener reference", () => {
-    const event = { ...(req.listener_event as Record<string, unknown>), reference: null };
-    expect(evaluateMatch({ ...req, listener_event: event as never }, on, RECEIVING)).toBe("matched");
+    const event = { ...seen, reference: null };
+    expect(evaluateMatch({ ...req, listener_event: event }, on, RECEIVING)).toBe("matched");
   });
 
   it("holds when the notification reference contradicts the receipt", () => {
-    const event = { ...(req.listener_event as Record<string, unknown>), reference: "1111111111111" };
-    expect(evaluateMatch({ ...req, listener_event: event as never }, on, RECEIVING)).toBe("reference_mismatch");
+    const event = { ...seen, reference: "1111111111111" };
+    expect(evaluateMatch({ ...req, listener_event: event }, on, RECEIVING)).toBe("reference_mismatch");
   });
 
   it("holds when the receipt amount contradicts the request", () => {
