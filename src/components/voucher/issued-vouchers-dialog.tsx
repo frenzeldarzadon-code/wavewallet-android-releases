@@ -57,18 +57,21 @@ export function IssuedVouchersDialog({
     if (vouchers.length === 0) return;
     void (async () => {
       try {
-        const out: Rendered[] = [];
         for (const data of vouchers) {
           const blob = await renderVoucherImage(data);
+          if (cancelled) return;
           const url = URL.createObjectURL(blob);
           urls.push(url);
-          out.push({ data, blob, url, fileName: voucherFileName(data) });
+          // Reveal each voucher as soon as it is ready — never block on the batch.
+          setImages((prev) => [...prev, { data, blob, url, fileName: voucherFileName(data) }]);
+          // Yield to the browser so the dialog stays responsive on low-end phones.
+          await new Promise((r) => setTimeout(r, 0));
         }
-        if (!cancelled) setImages(out);
       } catch {
         if (!cancelled) setFailed(true);
       }
     })();
+
     return () => {
       cancelled = true;
       urls.forEach((u) => URL.revokeObjectURL(u));
