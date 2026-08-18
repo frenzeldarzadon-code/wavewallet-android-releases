@@ -93,7 +93,7 @@ export function IssuedVouchersDialog({
         </DialogHeader>
 
         {pointsEarned > 0 ? (
-          <p className="rounded-lg bg-points-soft px-3 py-2 text-center text-xs font-medium text-points">
+          <p className="rounded-lg bg-success-soft px-3 py-2 text-center text-xs font-medium text-points">
             +{pointsEarned} points earned
           </p>
         ) : null}
