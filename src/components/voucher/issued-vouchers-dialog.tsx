@@ -193,21 +193,26 @@ export function IssuedVouchersDialog({
 
                 <div className="grid grid-cols-2 gap-2">
                   <Button
+                    type="button"
                     variant="outline"
                     size="sm"
-                    disabled={!img}
-                    onClick={() => img && downloadBlob(img.blob, img.fileName)}
+                    disabled={!img || busy !== null}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (img) void saveOne(img);
+                    }}
                   >
                     <Download className="size-4" /> Download
                   </Button>
                   <Button
+                    type="button"
                     size="sm"
-                    disabled={!img}
-                    onClick={() => {
-                      if (!img) return;
-                      void shareVoucherImage(img.blob, img.fileName, v.productName).catch(
-                        () => undefined,
-                      );
+                    disabled={!img || busy !== null}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (img) void shareOne(img, v.productName);
                     }}
                   >
                     <Share2 className="size-4" /> Share
@@ -220,10 +225,20 @@ export function IssuedVouchersDialog({
 
         <DialogFooter className="gap-2 sm:justify-between">
           {many ? (
-            <Button variant="outline" disabled={images.length === 0} onClick={downloadAll}>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={images.length === 0 || busy !== null}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                void downloadAll();
+              }}
+            >
               <Download className="size-4" /> Download all ({vouchers.length} files)
             </Button>
           ) : (
+
             <span />
           )}
           <Button onClick={onClose}>Done</Button>
