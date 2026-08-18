@@ -479,6 +479,45 @@ export function VoucherShopView({
               )}
             </div>
           ) : null}
+
+          {/* Optional details printed on the voucher image only. They never
+              change price, wallets, points, commissions or accounting. */}
+          <div className="space-y-2 rounded-xl border border-dashed border-border px-3 py-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="voucher-customer">Customer name (optional)</Label>
+              <Input
+                id="voucher-customer"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Printed on the voucher image"
+                maxLength={60}
+                autoComplete="off"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Payment status (optional)</Label>
+              <div className="grid grid-cols-3 gap-1.5">
+                {([null, "paid", "credited"] as PaymentStatus[]).map((s) => (
+                  <Button
+                    key={s ?? "none"}
+                    type="button"
+                    size="sm"
+                    variant={payment === s ? "default" : "outline"}
+                    onClick={() => setPayment(s)}
+                  >
+                    <span className="truncate">
+                      {s === null ? "None" : s === "paid" ? "Paid" : "Credited"}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                A note for your own record keeping only — it does not affect funding, price,
+                coins, points or commissions.
+              </p>
+            </div>
+          </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setBuying(null)}>
               Cancel
@@ -487,47 +526,19 @@ export function VoucherShopView({
               onClick={() => void confirm()}
               disabled={busy || !online || (buying?.method === "credits" && (total > balance || qty > maxQty))}
             >
-              {busy ? "Issuing…" : "Confirm purchase"}
+              {busy ? "Issuing…" : "Confirm & Generate Vouchers"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!issued} onOpenChange={(o) => !o && setIssued(null)}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{(issued?.codes.length ?? 0) > 1 ? "Vouchers issued" : "Voucher issued"}</DialogTitle>
-            <DialogDescription>
-              {issued?.name} · {issued?.price} · {issued?.tx}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="max-h-64 space-y-2 overflow-y-auto rounded-xl border border-success/40 bg-success-soft px-4 py-4 text-center">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-success">
-              {(issued?.codes.length ?? 0) > 1 ? "Your codes" : "Your code"}
-            </p>
-            {issued?.codes.map((c) => (
-              <p key={c} className="font-mono text-lg font-semibold tracking-widest text-success">
-                {c}
-              </p>
-            ))}
-          </div>
-          {issued && issued.earned > 0 ? (
-            <p className="text-center text-xs text-points">+{issued.earned} points earned</p>
-          ) : null}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (issued) void navigator.clipboard?.writeText(issued.codes.join("\n"));
-                toast.success(issued && issued.codes.length > 1 ? "Codes copied" : "Code copied");
-              }}
-            >
-              {issued && issued.codes.length > 1 ? "Copy codes" : "Copy code"}
-            </Button>
-            <Button onClick={() => setIssued(null)}>Done</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <IssuedVouchersDialog
+        vouchers={issued?.vouchers ?? []}
+        summary={issued?.summary ?? ""}
+        pointsEarned={issued?.earned ?? 0}
+        onClose={() => setIssued(null)}
+      />
+
 
     </>
   );
