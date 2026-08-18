@@ -134,6 +134,8 @@ export function samePhMobile(a?: string | null, b?: string | null): boolean {
 export interface MatchableListenerEvent {
   /** Number the money was sent FROM, as GCash reported it. */
   sender_number?: string | null;
+  /** Reference the notification carried, when GCash included one. Optional. */
+  reference?: string | null;
   amount_php: number;
   outcome?: string;
   /** The paired phone is active and has checked in recently. */
@@ -164,6 +166,12 @@ export interface MatchableRequest {
   duplicate_reference?: boolean;
   /** Result of reading the reference off the uploaded receipt. */
   receipt_check?: string | null;
+  /** The reference READ OFF the receipt — authoritative for this layer. */
+  receipt_reference?: string | null;
+  /** Amount read off the receipt, compared against the submitted amount. */
+  receipt_amount_php?: number | null;
+  /** Sending number read off the receipt. */
+  receipt_sender_number?: string | null;
   /** Linked notification, in either order: pay-then-submit or submit-then-pay. */
   listener_event?: MatchableListenerEvent | null;
 }
@@ -186,6 +194,7 @@ export type MatchOutcome =
   | "number_mismatch"
   | "awaiting_receipt_check"
   | "receipt_reference_mismatch"
+  | "reference_mismatch"
   | "receipt_unreadable";
 
 /** Human wording for a matching result, used in the UI and the audit trail. */
@@ -210,6 +219,8 @@ export const MATCH_REASON: Record<MatchOutcome, string> = {
   number_mismatch: "The GCash number that sent the money does not match this request.",
   awaiting_receipt_check: "The uploaded receipt has not been read yet.",
   receipt_reference_mismatch: "Reference does not match receipt — held for manual review.",
+  reference_mismatch:
+    "The reference on the GCash notification does not match the reference on the receipt — held for manual review.",
   receipt_unreadable: "The reference could not be read from the receipt, so nothing is assumed.",
 };
 
@@ -230,9 +241,20 @@ export function evaluateMatch(
 ): MatchOutcome {
   if (request.status && request.status !== "pending") return "not_pending";
   if (!rule.enabled) return "disabled";
-  if (request.duplicate_reference) return "duplicate_reference";
-  if (!normalizePaymentReference(request.payer_reference)) return "no_reference";
   if (!request.proof_path) return "no_proof";
+
+  // The established reference: what the member confirmed, else what the
+  // receipt reader read. A missing typed reference is no longer a failure.
+  const receipt = request.receipt_check ?? "pending";
+  const established =
+    normalizePaymentReference(request.payer_reference) ??
+    normalizePaymentReference(request.receipt_reference);
+  if (!established) {
+    if (receipt === "unreadable" || receipt === "error") return "receipt_unreadable";
+    return "awaiting_receipt_check";
+  }
+  if (request.duplicate_reference) return "duplicate_reference";
+
   if (rule.max_auto_amount_php != null && Number(request.amount_php) > Number(rule.max_auto_amount_php)) {
     return "above_auto_limit";
   }
@@ -247,7 +269,9 @@ export function evaluateMatch(
   const sender = normalizePhMobile(request.sender_number ?? request.payer_number);
   if ((rule.layer2_require_sender_match ?? true) && !sender) return "no_sender_number";
 
-  // First layer — configurable, on by default.
+  // First layer — a real GCash notification. A listener reference is optional;
+  // when the notification does carry one it must agree with the established
+  // reference.
   const requireListener = rule.require_listener_match ?? true;
   const event = request.listener_event;
   if (!event || (event.outcome && event.outcome !== "accepted")) {
@@ -262,21 +286,30 @@ export function evaluateMatch(
     ) {
       return "amount_mismatch";
     }
+    const eventRef = normalizePaymentReference(event.reference);
+    if (eventRef && eventRef !== established) return "reference_mismatch";
+    if ((rule.layer2_require_listener_reference ?? false) && !eventRef) return "reference_mismatch";
     // Shop isolation is the only routing rule. A differing / masked receiving
     // number is informational and must never block a valid approval.
     if (event.serves_shop === false) return "wrong_shop";
     if (event.device_online === false) return "listener_offline";
   }
 
-
-  // Second layer: the reference read off the receipt. A mismatch always blocks;
+  // Second layer: the receipt evidence. A conflicting reference always blocks;
   // whether an unreadable receipt blocks is configurable.
-  const receipt = request.receipt_check ?? "pending";
   if (receipt === "mismatch") return "receipt_reference_mismatch";
   if (rule.require_receipt_match ?? true) {
     if (receipt === "unreadable" || receipt === "error") return "receipt_unreadable";
     if (receipt !== "matched") return "awaiting_receipt_check";
   }
+  if (
+    request.receipt_amount_php != null &&
+    Math.abs(Number(request.receipt_amount_php) - Number(request.amount_php)) > tolerance
+  ) {
+    return "amount_mismatch";
+  }
+  const receiptSender = normalizePhMobile(request.receipt_sender_number);
+  if (receiptSender && sender && receiptSender !== sender) return "number_mismatch";
 
   if ((rule.verification_mode ?? "active") === "staged") return "staged";
   return "matched";

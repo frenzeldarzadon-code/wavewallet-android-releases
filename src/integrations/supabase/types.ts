@@ -396,6 +396,15 @@ export type Database = {
           method_type: string
           net_php: number | null
           notes: string | null
+          ocr_amount_php: number | null
+          ocr_details: Json | null
+          ocr_paid_at: string | null
+          ocr_reference: string | null
+          ocr_reference_key: string | null
+          ocr_sender_number: string | null
+          ocr_sender_number_key: string | null
+          paid_at: string | null
+          paid_at_edited: boolean
           payer_number: string | null
           payer_number_key: string | null
           payer_reference: string | null
@@ -407,10 +416,13 @@ export type Database = {
           receipt_check: string
           receipt_checked_at: string | null
           receipt_details: Json | null
+          receipt_paid_at: string | null
           receipt_reference: string | null
           receipt_reference_key: string | null
           receipt_sender_number: string | null
           reference: string
+          reference_edited: boolean
+          reference_source: string | null
           request_key: string | null
           requester_name: string
           requester_role: string
@@ -451,6 +463,15 @@ export type Database = {
           method_type: string
           net_php?: number | null
           notes?: string | null
+          ocr_amount_php?: number | null
+          ocr_details?: Json | null
+          ocr_paid_at?: string | null
+          ocr_reference?: string | null
+          ocr_reference_key?: string | null
+          ocr_sender_number?: string | null
+          ocr_sender_number_key?: string | null
+          paid_at?: string | null
+          paid_at_edited?: boolean
           payer_number?: string | null
           payer_number_key?: string | null
           payer_reference?: string | null
@@ -462,10 +483,13 @@ export type Database = {
           receipt_check?: string
           receipt_checked_at?: string | null
           receipt_details?: Json | null
+          receipt_paid_at?: string | null
           receipt_reference?: string | null
           receipt_reference_key?: string | null
           receipt_sender_number?: string | null
           reference: string
+          reference_edited?: boolean
+          reference_source?: string | null
           request_key?: string | null
           requester_name: string
           requester_role: string
@@ -506,6 +530,15 @@ export type Database = {
           method_type?: string
           net_php?: number | null
           notes?: string | null
+          ocr_amount_php?: number | null
+          ocr_details?: Json | null
+          ocr_paid_at?: string | null
+          ocr_reference?: string | null
+          ocr_reference_key?: string | null
+          ocr_sender_number?: string | null
+          ocr_sender_number_key?: string | null
+          paid_at?: string | null
+          paid_at_edited?: boolean
           payer_number?: string | null
           payer_number_key?: string | null
           payer_reference?: string | null
@@ -517,10 +550,13 @@ export type Database = {
           receipt_check?: string
           receipt_checked_at?: string | null
           receipt_details?: Json | null
+          receipt_paid_at?: string | null
           receipt_reference?: string | null
           receipt_reference_key?: string | null
           receipt_sender_number?: string | null
           reference?: string
+          reference_edited?: boolean
+          reference_source?: string | null
           request_key?: string | null
           requester_name?: string
           requester_role?: string
@@ -5531,6 +5567,7 @@ export type Database = {
           _amount?: number
           _details?: Json
           _id: string
+          _paid_at?: string
           _readable?: boolean
           _reference?: string
           _sender?: string
@@ -5606,6 +5643,15 @@ export type Database = {
           method_type: string
           net_php: number | null
           notes: string | null
+          ocr_amount_php: number | null
+          ocr_details: Json | null
+          ocr_paid_at: string | null
+          ocr_reference: string | null
+          ocr_reference_key: string | null
+          ocr_sender_number: string | null
+          ocr_sender_number_key: string | null
+          paid_at: string | null
+          paid_at_edited: boolean
           payer_number: string | null
           payer_number_key: string | null
           payer_reference: string | null
@@ -5617,10 +5663,13 @@ export type Database = {
           receipt_check: string
           receipt_checked_at: string | null
           receipt_details: Json | null
+          receipt_paid_at: string | null
           receipt_reference: string | null
           receipt_reference_key: string | null
           receipt_sender_number: string | null
           reference: string
+          reference_edited: boolean
+          reference_source: string | null
           request_key: string | null
           requester_name: string
           requester_role: string
@@ -5713,6 +5762,10 @@ export type Database = {
       }
       cash_in_auto_status: { Args: never; Returns: Json }
       cash_in_conflict_snapshot: { Args: { _id: string }; Returns: Json }
+      cash_in_established_reference_key: {
+        Args: { _row: Database["public"]["Tables"]["cash_in_requests"]["Row"] }
+        Returns: string
+      }
       cash_in_receiving_number: {
         Args: { _ecosystem: string; _method: string }
         Returns: string
@@ -7110,6 +7163,8 @@ export type Database = {
           _funding_source?: string
           _method_id: string
           _notes?: string
+          _ocr?: Json
+          _paid_at?: string
           _payer_number?: string
           _payer_reference?: string
           _proof_path?: string
@@ -7140,6 +7195,15 @@ export type Database = {
           method_type: string
           net_php: number | null
           notes: string | null
+          ocr_amount_php: number | null
+          ocr_details: Json | null
+          ocr_paid_at: string | null
+          ocr_reference: string | null
+          ocr_reference_key: string | null
+          ocr_sender_number: string | null
+          ocr_sender_number_key: string | null
+          paid_at: string | null
+          paid_at_edited: boolean
           payer_number: string | null
           payer_number_key: string | null
           payer_reference: string | null
@@ -7151,10 +7215,13 @@ export type Database = {
           receipt_check: string
           receipt_checked_at: string | null
           receipt_details: Json | null
+          receipt_paid_at: string | null
           receipt_reference: string | null
           receipt_reference_key: string | null
           receipt_sender_number: string | null
           reference: string
+          reference_edited: boolean
+          reference_source: string | null
           request_key: string | null
           requester_name: string
           requester_role: string
@@ -7390,6 +7457,15 @@ export type Database = {
           method_type: string
           net_php: number | null
           notes: string | null
+          ocr_amount_php: number | null
+          ocr_details: Json | null
+          ocr_paid_at: string | null
+          ocr_reference: string | null
+          ocr_reference_key: string | null
+          ocr_sender_number: string | null
+          ocr_sender_number_key: string | null
+          paid_at: string | null
+          paid_at_edited: boolean
           payer_number: string | null
           payer_number_key: string | null
           payer_reference: string | null
@@ -7401,10 +7477,13 @@ export type Database = {
           receipt_check: string
           receipt_checked_at: string | null
           receipt_details: Json | null
+          receipt_paid_at: string | null
           receipt_reference: string | null
           receipt_reference_key: string | null
           receipt_sender_number: string | null
           reference: string
+          reference_edited: boolean
+          reference_source: string | null
           request_key: string | null
           requester_name: string
           requester_role: string
@@ -7497,6 +7576,15 @@ export type Database = {
           method_type: string
           net_php: number | null
           notes: string | null
+          ocr_amount_php: number | null
+          ocr_details: Json | null
+          ocr_paid_at: string | null
+          ocr_reference: string | null
+          ocr_reference_key: string | null
+          ocr_sender_number: string | null
+          ocr_sender_number_key: string | null
+          paid_at: string | null
+          paid_at_edited: boolean
           payer_number: string | null
           payer_number_key: string | null
           payer_reference: string | null
@@ -7508,10 +7596,13 @@ export type Database = {
           receipt_check: string
           receipt_checked_at: string | null
           receipt_details: Json | null
+          receipt_paid_at: string | null
           receipt_reference: string | null
           receipt_reference_key: string | null
           receipt_sender_number: string | null
           reference: string
+          reference_edited: boolean
+          reference_source: string | null
           request_key: string | null
           requester_name: string
           requester_role: string
@@ -8213,6 +8304,15 @@ export type Database = {
           method_type: string
           net_php: number | null
           notes: string | null
+          ocr_amount_php: number | null
+          ocr_details: Json | null
+          ocr_paid_at: string | null
+          ocr_reference: string | null
+          ocr_reference_key: string | null
+          ocr_sender_number: string | null
+          ocr_sender_number_key: string | null
+          paid_at: string | null
+          paid_at_edited: boolean
           payer_number: string | null
           payer_number_key: string | null
           payer_reference: string | null
@@ -8224,10 +8324,13 @@ export type Database = {
           receipt_check: string
           receipt_checked_at: string | null
           receipt_details: Json | null
+          receipt_paid_at: string | null
           receipt_reference: string | null
           receipt_reference_key: string | null
           receipt_sender_number: string | null
           reference: string
+          reference_edited: boolean
+          reference_source: string | null
           request_key: string | null
           requester_name: string
           requester_role: string
