@@ -352,7 +352,9 @@ export function VoucherShopView({
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {visible.map((p) => {
+              const retail = retailFor(p);
               const price = priceFor(p);
+              const discounted = price < retail;
               const soldOut = p.available === 0;
               const affordable = balance >= price;
               const pointsPrice = p.points_price ?? 0;
@@ -361,11 +363,22 @@ export function VoucherShopView({
                 <Card
                   key={p.id}
                   className={cn(
-                    "overflow-hidden border-border/70 shadow-[var(--shadow-card)] transition-shadow hover:shadow-lg",
+                    "card-sheen relative overflow-hidden rounded-2xl border-border/70 shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-float)]",
                     soldOut && "opacity-70",
                   )}
                 >
-                  <CardContent className="space-y-3 p-4">
+                  <span
+                    className={cn(
+                      "absolute inset-y-0 left-0 w-1.5",
+                      soldOut
+                        ? "bg-destructive/70"
+                        : pointsPrice > 0
+                          ? "bg-points"
+                          : "bg-primary",
+                    )}
+                    aria-hidden
+                  />
+                  <CardContent className="space-y-3 p-4 pl-5">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <p className="break-words text-base font-semibold leading-snug">{p.name}</p>
@@ -390,9 +403,16 @@ export function VoucherShopView({
                       </StatusBadge>
                     </div>
 
-                    <div className="flex flex-wrap items-end gap-x-2 gap-y-1 rounded-xl bg-muted/60 px-3 py-2">
-                      <p className="text-2xl font-bold tracking-tight">{peso(price)}</p>
-                      {p.promo_price !== null || discountPercent > 0 ? (
+                    {/* RETAIL price is the headline everywhere. A buyer's own
+                        discounted acquisition cost never replaces it. */}
+                    <div className="flex flex-wrap items-end gap-x-2 gap-y-1 rounded-xl bg-gradient-to-r from-brand-soft to-transparent px-3 py-2">
+                      <p className="price-glow text-2xl font-bold tracking-tight text-primary">
+                        {peso(retail)}
+                      </p>
+                      <p className="pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                        retail
+                      </p>
+                      {p.promo_price !== null ? (
                         <p className="pb-1 text-xs text-muted-foreground line-through">
                           {peso(Number(p.credit_price))}
                         </p>
@@ -404,13 +424,14 @@ export function VoucherShopView({
                       ) : null}
                     </div>
 
-                    {discountPercent > 0 ? (
+                    {discounted ? (
                       <p className="rounded-lg bg-success/10 px-2.5 py-1.5 text-[11px] font-medium text-success">
                         {role === "admin"
-                          ? `Normal price ${peso(listPrice(p))} · admin discount ${discountPercent}% · your cost ${peso(price)}`
-                          : `Your cost ${peso(price)} · sell at ${peso(listPrice(p))} · margin ${peso(listPrice(p) - price)} (${discountPercent}%)`}
+                          ? `Your admin cost ${peso(price)} (${discountPercent}% off) · customers pay ${peso(retail)}`
+                          : `Your cost ${peso(price)} · sell at ${peso(retail)} · margin ${peso(retail - price)} (${discountPercent}%)`}
                       </p>
                     ) : null}
+
 
                     <div className="grid gap-2">
                       <Button
