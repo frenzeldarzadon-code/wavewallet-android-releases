@@ -493,6 +493,12 @@ export function VoucherShopView({
                 <span className="text-muted-foreground">Voucher</span>
                 <span className="font-medium">{buying.product.name}</span>
               </p>
+              <p className="flex justify-between">
+                <span className="text-muted-foreground">Retail price (printed on voucher)</span>
+                <span className="font-medium text-primary">
+                  {peso(retailFor(buying.product))}
+                </span>
+              </p>
               {buying.method === "credits" ? (
                 <>
                   <div className="flex items-center justify-between gap-2 py-1">
