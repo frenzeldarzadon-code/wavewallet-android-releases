@@ -233,56 +233,100 @@ export function VoucherShopView({
 
   return (
     <>
-      {/* Premium shop header: identity, balances and one clear search control. */}
-      <section className="surface-gradient relative overflow-hidden rounded-2xl px-4 py-5 text-primary-foreground shadow-[var(--shadow-card)] sm:px-6">
+      {/* Premium futuristic hero — pure CSS gradients + a tiny CSS grid pattern,
+          no raster art, so first paint stays fast on low-end phones. */}
+      <section className="shop-hero relative overflow-hidden rounded-3xl px-4 py-5 text-primary-foreground shadow-[var(--shadow-float)] sm:px-6">
+        <div className="shop-grid pointer-events-none absolute inset-0 opacity-60" aria-hidden />
+        <div
+          className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-[oklch(0.72_0.14_205_/_0.28)] blur-2xl"
+          aria-hidden
+        />
         <div className="relative space-y-4">
-          <div className="flex items-start justify-between gap-3">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] opacity-80">
-                Voucher shop
+              <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] opacity-80">
+                <Ticket className="size-3.5 shrink-0" aria-hidden /> Voucher shop
               </p>
-              <h1 className="truncate text-xl font-semibold leading-tight sm:text-2xl">
+              <h1 className="truncate text-2xl font-bold leading-tight sm:text-3xl">
                 {ecosystem?.name ?? "WaveWallet"}
               </h1>
             </div>
-            <Ticket className="size-7 shrink-0 opacity-80" aria-hidden />
+            {/* Switch shop stays one tap away from the shop itself. */}
+            <div className="shrink-0">
+              <EcosystemSwitcher mini />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <div className="rounded-xl bg-background/15 px-3 py-2">
+            <div className="rounded-2xl border border-background/15 bg-background/10 px-3 py-2 backdrop-blur-sm">
               <p className="flex items-center gap-1.5 text-[11px] opacity-85">
                 <Wallet className="size-3.5" /> Coins
               </p>
-              <p className="truncate text-lg font-semibold tabular-nums">{peso(balance)}</p>
+              <p className="truncate text-lg font-bold tabular-nums text-[oklch(0.9_0.13_160)]">
+                {peso(balance)}
+              </p>
             </div>
-            <div className="rounded-xl bg-background/15 px-3 py-2">
+            <div className="rounded-2xl border border-background/15 bg-background/10 px-3 py-2 backdrop-blur-sm">
               <p className="flex items-center gap-1.5 text-[11px] opacity-85">
                 <Coins className="size-3.5" /> Points
               </p>
-              <p className="truncate text-lg font-semibold tabular-nums">
+              <p className="truncate text-lg font-bold tabular-nums text-[oklch(0.88_0.14_85)]">
                 {points.available} pts
               </p>
             </div>
           </div>
 
           {discountPercent > 0 ? (
-            <p className="rounded-lg bg-background/15 px-3 py-1.5 text-[11px] font-medium">
-              {discountPercent}% {discountLabel} discount applied to every price below.
+            <p className="rounded-xl border border-background/15 bg-background/10 px-3 py-1.5 text-[11px] font-medium">
+              {discountPercent}% {discountLabel} discount applies to what you pay — customers still
+              pay the retail price shown on each card.
             </p>
           ) : null}
 
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 opacity-70" />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search vouchers"
-              aria-label="Search vouchers"
-              className="h-11 border-background/25 bg-background/15 pl-9 text-primary-foreground placeholder:text-primary-foreground/60"
-            />
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
+            <div className="relative min-w-0">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 opacity-70" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search vouchers"
+                aria-label="Search vouchers"
+                className="h-11 border-background/25 bg-background/15 pl-9 text-primary-foreground placeholder:text-primary-foreground/60"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:contents">
+              <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
+                <SelectTrigger
+                  aria-label="Sort vouchers"
+                  className="h-11 min-w-0 border-background/25 bg-background/15 text-primary-foreground"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Name A–Z</SelectItem>
+                  <SelectItem value="price-asc">Price: low to high</SelectItem>
+                  <SelectItem value="price-desc">Price: high to low</SelectItem>
+                  <SelectItem value="popular">Best selling</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={avail} onValueChange={(v) => setAvail(v as typeof avail)}>
+                <SelectTrigger
+                  aria-label="Filter vouchers"
+                  className="h-11 min-w-0 border-background/25 bg-background/15 text-primary-foreground"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All vouchers</SelectItem>
+                  <SelectItem value="in">In stock</SelectItem>
+                  <SelectItem value="points">Points redeemable</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </section>
+
 
       <PageSection title="Available vouchers" description="Codes come from your shop's uploaded inventory and are issued instantly.">
         {loading ? (
