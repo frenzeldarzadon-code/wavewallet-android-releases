@@ -574,9 +574,10 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-                Enter the amount you sent, the GCash number you paid from, your GCash payment reference number, and upload
-                your payment screenshot. You may pay first and submit this afterwards — matching Cash In requests may be approved automatically. Your screenshot is
-                kept as supporting evidence for review — it is not a verification from GCash.
+                Start with your GCash payment screenshot — we read the amount, the sending number, the reference and the
+                payment date and time from it. Check the details, correct the reference or the date and time if needed,
+                then submit. The screenshot is supporting evidence, not a verification from GCash: coins are added only
+                once a real GCash notification confirms the payment.
               </p>
               {methods.length === 0 ? (
                 <EmptyState
@@ -613,47 +614,97 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                       </RadioGroup>
                     </div>
                   ) : null}
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="ci-method">Payment method</Label>
-                      <Select value={methodId} onValueChange={setMethodId}>
-                        <SelectTrigger id="ci-method">
-                          <SelectValue placeholder="Choose a method" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {methods.map((m) => (
-                            <SelectItem key={m.id} value={m.id}>
-                              {m.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="ci-amount">Amount you are paying (₱)</Label>
-                      <Input id="ci-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="ci-number">GCash number you paid from</Label>
-                      <Input
-                        id="ci-number"
-                        inputMode="tel"
-                        value={payerNumber}
-                        onChange={(e) => setPayerNumber(e.target.value)}
-                        placeholder="09171234567"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="ci-ref">GCash payment reference number</Label>
-                      <Input id="ci-ref" value={payerRef} onChange={(e) => setPayerRef(e.target.value)} placeholder="Reference / transaction number" />
-                    </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ci-method">Payment method</Label>
+                    <Select value={methodId} onValueChange={setMethodId}>
+                      <SelectTrigger id="ci-method">
+                        <SelectValue placeholder="Choose a method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {methods.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+
                   <CashInProofPicker
                     file={proofFile}
-                    onPick={setProofFile}
-                    disabled={busy}
+                    onPick={(f) => void handlePickProof(f)}
+                    disabled={busy || extracting}
                     onError={(m) => toast.error(m)}
                   />
+
+                  {extracting ? (
+                    <p className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                      Reading your screenshot…
+                    </p>
+                  ) : null}
+
+                  {proofPath && !extracting ? (
+                    <div className="space-y-3 rounded-lg border border-border p-3">
+                      <p className="text-xs font-medium">Details read from your screenshot</p>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="ci-amount">Amount paid (₱)</Label>
+                          <Input
+                            id="ci-amount"
+                            inputMode="decimal"
+                            value={amount}
+                            readOnly={Boolean(extract?.amountPhp)}
+                            disabled={Boolean(extract?.amountPhp)}
+                            onChange={(e) => setAmount(e.target.value)}
+                          />
+                          <p className="text-[11px] text-muted-foreground">
+                            {extract?.amountPhp
+                              ? "Extracted evidence — not editable."
+                              : "Not readable on the screenshot. Anything you enter is unverified and this request stays in manual review."}
+                          </p>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="ci-number">GCash number you paid from</Label>
+                          <Input id="ci-number" value={payerNumber || "Not readable"} readOnly disabled />
+                          <p className="text-[11px] text-muted-foreground">
+                            {extract?.senderNumber
+                              ? "Extracted evidence — matched against the real GCash notification."
+                              : "Not readable on the screenshot, so this request goes to manual review."}
+                          </p>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="ci-ref">GCash reference number</Label>
+                          <Input
+                            id="ci-ref"
+                            value={payerRef}
+                            onChange={(e) => setPayerRef(e.target.value)}
+                            placeholder="Reference / transaction number"
+                          />
+                          <p className="text-[11px] text-muted-foreground">
+                            Verify / correct if needed. The original reading is kept as evidence.
+                          </p>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="ci-paid-at">Payment date and time</Label>
+                          <Input
+                            id="ci-paid-at"
+                            type="datetime-local"
+                            value={paidAt}
+                            onChange={(e) => setPaidAt(e.target.value)}
+                          />
+                          <p className="text-[11px] text-muted-foreground">
+                            Verify / correct if needed. The original reading is kept as evidence.
+                          </p>
+                        </div>
+                      </div>
+                      {extract && !extract.readable ? (
+                        <p className="text-[11px] text-muted-foreground">
+                          We could not read this screenshot reliably, so nothing was guessed. You may still submit it — a
+                          person will review it.
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
                   {selectedMethod ? (
                     <PaymentMethodCards methods={[selectedMethod]} selectedId={selectedMethod.id} />
                   ) : null}
