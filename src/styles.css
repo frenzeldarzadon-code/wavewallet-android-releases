@@ -183,6 +183,39 @@
 }
 
 /*
+ * Voucher Shop premium surfaces.
+ * Pure CSS gradients + tiny repeating patterns — no raster assets, so the
+ * shop stays instant on low-end Android devices.
+ */
+@utility shop-hero {
+  background-image:
+    radial-gradient(120% 90% at 100% 0%, oklch(0.62 0.16 205 / 0.55) 0%, transparent 60%),
+    radial-gradient(90% 80% at 0% 100%, oklch(0.5 0.19 285 / 0.45) 0%, transparent 62%),
+    linear-gradient(150deg, oklch(0.32 0.11 262) 0%, oklch(0.24 0.08 258) 60%, oklch(0.18 0.06 256) 100%);
+}
+
+@utility shop-grid {
+  background-image:
+    linear-gradient(oklch(1 0 0 / 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(1 0 0 / 0.06) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+
+@utility card-sheen {
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--color-primary) 8%, transparent) 0%,
+    transparent 45%
+  );
+}
+
+@utility price-glow {
+  text-shadow: 0 0 22px color-mix(in oklab, var(--color-primary) 35%, transparent);
+}
+
+
+
+/*
  * Authentication screen surface.
  * Always the premium navy identity, independent of light/dark app theme,
  * so the first screen is consistent on every device.
