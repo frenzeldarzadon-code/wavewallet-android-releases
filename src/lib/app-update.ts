@@ -23,7 +23,7 @@ export const MIN_CHECK_INTERVAL_MS = 30 * 60 * 1000;
 export interface NativeVersion {
   versionCode: number;
   versionName: string;
-  packageName?: string;
+  packageName?: string | undefined;
 }
 
 export interface UpdateState {
@@ -125,7 +125,7 @@ export function evaluateUpdate(
 
 async function fetchManifest(signal?: AbortSignal): Promise<UpdateManifest | null> {
   try {
-    const res = await fetch(VERSION_ENDPOINT, { cache: "no-store", signal });
+    const res = await fetch(VERSION_ENDPOINT, { cache: "no-store", signal: signal ?? null });
     if (!res.ok) return null;
     return (await res.json()) as UpdateManifest;
   } catch {
