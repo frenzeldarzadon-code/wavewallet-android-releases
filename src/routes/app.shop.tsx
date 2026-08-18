@@ -117,21 +117,32 @@ export function VoucherShopView({
   }, [load]);
 
   const term = query.trim().toLowerCase();
-  const visible = useMemo(
-    () =>
-      term
-        ? products.filter(
-            (p) =>
-              p.name.toLowerCase().includes(term) ||
-              (p.description ?? "").toLowerCase().includes(term),
-          )
-        : products,
-    [products, term],
-  );
+  const visible = useMemo(() => {
+    let list = term
+      ? products.filter(
+          (p) =>
+            p.name.toLowerCase().includes(term) ||
+            (p.description ?? "").toLowerCase().includes(term),
+        )
+      : products.slice();
+    if (avail === "in") list = list.filter((p) => p.available > 0);
+    if (avail === "points") list = list.filter((p) => (p.points_price ?? 0) > 0);
+    const retail = (p: ShopProduct) => listPrice(p);
+    list.sort((a, b) => {
+      if (sort === "price-asc") return retail(a) - retail(b);
+      if (sort === "price-desc") return retail(b) - retail(a);
+      if (sort === "popular") return (b.sold_count ?? 0) - (a.sold_count ?? 0);
+      return a.name.localeCompare(b.name);
+    });
+    return list;
+  }, [products, term, avail, sort]);
 
   if (!account) return null;
 
-  const priceFor = (p: ShopProduct) => voucherCost(listPrice(p), discountPercent);
+  /** Customer-facing retail price — the product's source of truth. */
+  const retailFor = (p: ShopProduct) => listPrice(p);
+  /** What THIS buyer is charged after their own discount (never the retail price). */
+  const priceFor = (p: ShopProduct) => voucherCost(retailFor(p), discountPercent);
 
   const openBuy = (product: ShopProduct, method: Method) => {
     setQty(1);
@@ -172,6 +183,9 @@ export function VoucherShopView({
     if (!buying) return;
     setBusy(true);
     try {
+      // The voucher image always prints the shop's RETAIL price, never the
+      // buyer's discounted acquisition cost. Charging is untouched.
+      const retailLabel = peso(retailFor(buying.product));
       if (buying.method === "points") {
         const res = await purchaseVoucherWithPoints(buying.product.id);
         setIssued({
@@ -179,7 +193,7 @@ export function VoucherShopView({
             [res.code],
             res.product_name,
             buying.product.description ?? null,
-            `${res.points_spent} pts`,
+            retailLabel,
             res.tx_id,
           ),
           summary: `${res.product_name} · ${res.points_spent} pts · ${res.tx_id}`,
@@ -187,13 +201,12 @@ export function VoucherShopView({
         });
       } else {
         const res = await purchaseVoucher(buying.product.id, qty);
-        const unitLabel = peso(Number(res.unit_price));
         setIssued({
           vouchers: buildVouchers(
             res.codes,
             res.product_name,
             buying.product.description ?? null,
-            unitLabel,
+            retailLabel,
             res.tx_id,
           ),
           summary: `${res.product_name}${res.quantity > 1 ? ` ×${res.quantity}` : ""} · ${peso(
@@ -213,6 +226,7 @@ export function VoucherShopView({
 
   const discountLabel =
     role === "admin" ? "admin voucher" : role === "subreseller" ? "subreseller" : "reseller";
+
 
   return (
     <>
