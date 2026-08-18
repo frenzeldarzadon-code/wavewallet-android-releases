@@ -36,7 +36,7 @@ begin
     perform public.listener_device_status();
     raise exception 'I: a non-owner must not read listener device status';
   exception when others then
-    if sqlerrm not like '%platform owner%' then raise; end if;
+    if sqlerrm not like '%platform owner%' and sqlerrm not like '%permission denied%' then raise; end if;
   end;
   perform set_config('request.jwt.claims', null, true);
 end $$;
