@@ -245,31 +245,103 @@ export async function renderVoucherImage(data: VoucherImageData): Promise<Blob> 
   );
 }
 
-/** Saves one blob to the device as its own file. */
-export function downloadBlob(blob: Blob, fileName: string) {
+/**
+ * True inside the WaveWallet Android WebView shell, where `a[download]` on a
+ * blob: URL is handed to the native DownloadListener instead of being saved.
+ */
+function androidBridge():
+  | { saveImage: (base64: string, fileName: string) => void | boolean }
+  | null {
+  const w = window as unknown as {
+    WaveWalletNative?: { saveImage?: (b: string, f: string) => void | boolean };
+  };
+  return typeof w.WaveWalletNative?.saveImage === "function"
+    ? (w.WaveWalletNative as { saveImage: (b: string, f: string) => void | boolean })
+    : null;
+}
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => {
+      const s = String(r.result);
+      resolve(s.slice(s.indexOf(",") + 1));
+    };
+    r.onerror = () => reject(new Error("Could not read the voucher image."));
+    r.readAsDataURL(blob);
+  });
+}
+
+/**
+ * Saves one blob to the device as its own file.
+ *
+ * Throws when the save could not be started, so the caller can surface a real
+ * message instead of a silent no-op.
+ */
+export async function downloadBlob(blob: Blob, fileName: string): Promise<"saved"> {
+  const bridge = androidBridge();
+  if (bridge) {
+    // Native shell: hand the bytes over directly — blob: URLs never reach the
+    // Android download manager.
+    bridge.saveImage(await blobToBase64(blob), fileName);
+    return "saved";
+  }
+
+  const legacy = navigator as Navigator & { msSaveOrOpenBlob?: (b: Blob, n: string) => boolean };
+  if (typeof legacy.msSaveOrOpenBlob === "function") {
+    legacy.msSaveOrOpenBlob(blob, fileName);
+    return "saved";
+  }
+
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  try {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.rel = "noopener";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } catch (e) {
+    URL.revokeObjectURL(url);
+    throw e instanceof Error ? e : new Error("The browser blocked this download.");
+  }
+  // Keep the object URL alive well past the click so the save can complete.
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  return "saved";
 }
 
 /** True when the device can share image files natively. */
 export function canShareFiles(files: File[]): boolean {
   const nav = navigator as Navigator & { canShare?: (data: { files: File[] }) => boolean };
-  return typeof nav.share === "function" && !!nav.canShare?.({ files });
+  if (typeof nav.share !== "function") return false;
+  try {
+    return !!nav.canShare?.({ files });
+  } catch {
+    return false;
+  }
 }
 
+export type ShareOutcome = "shared" | "cancelled" | "downloaded";
+
 /** Shares a single voucher image; falls back to a download when sharing is unavailable. */
-export async function shareVoucherImage(blob: Blob, fileName: string, title: string) {
+export async function shareVoucherImage(
+  blob: Blob,
+  fileName: string,
+  title: string,
+): Promise<ShareOutcome> {
   const file = new File([blob], fileName, { type: "image/png" });
   if (canShareFiles([file])) {
-    await navigator.share({ files: [file], title });
-    return "shared" as const;
+    try {
+      await navigator.share({ files: [file], title, text: title });
+      return "shared";
+    } catch (e) {
+      // User dismissed the sheet — not an error, and never a silent download.
+      if ((e as DOMException)?.name === "AbortError") return "cancelled";
+    }
   }
-  downloadBlob(blob, fileName);
-  return "downloaded" as const;
+  await downloadBlob(blob, fileName);
+  return "downloaded";
 }
+

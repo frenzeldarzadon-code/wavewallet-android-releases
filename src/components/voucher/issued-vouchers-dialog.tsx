@@ -80,12 +80,62 @@ export function IssuedVouchersDialog({
 
   const open = vouchers.length > 0;
   const many = vouchers.length > 1;
+  const [busy, setBusy] = useState<string | null>(null);
 
-  const downloadAll = () => {
-    // Separate files, saved one after another — never merged.
-    images.forEach((img, i) => setTimeout(() => downloadBlob(img.blob, img.fileName), i * 350));
-    toast.success(`Saving ${images.length} voucher image${many ? "s" : ""}`);
+  const saveOne = async (img: Rendered) => {
+    setBusy(img.data.code);
+    try {
+      await downloadBlob(img.blob, img.fileName);
+      toast.success("Voucher image saved", { description: img.fileName });
+    } catch (e) {
+      toast.error("Could not save the image", {
+        description: (e as Error).message || "Your browser blocked the download.",
+      });
+    } finally {
+      setBusy(null);
+    }
   };
+
+  const shareOne = async (img: Rendered, productName: string) => {
+    setBusy(img.data.code);
+    try {
+      const outcome = await shareVoucherImage(img.blob, img.fileName, productName);
+      if (outcome === "shared") toast.success("Shared");
+      else if (outcome === "downloaded")
+        toast.success("Sharing isn't available here — image saved instead", {
+          description: img.fileName,
+        });
+    } catch (e) {
+      toast.error("Could not share the image", {
+        description: (e as Error).message || "Try Download instead.",
+      });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const downloadAll = async () => {
+    setBusy("all");
+    let saved = 0;
+    let blocked = 0;
+    for (const img of images) {
+      try {
+        await downloadBlob(img.blob, img.fileName);
+        saved += 1;
+      } catch {
+        blocked += 1;
+      }
+      // Space the saves out; browsers throttle rapid multi-file downloads.
+      await new Promise((r) => setTimeout(r, 400));
+    }
+    setBusy(null);
+    if (blocked === 0) toast.success(`Saved ${saved} separate voucher image${saved > 1 ? "s" : ""}`);
+    else
+      toast.error(`${blocked} of ${images.length} downloads were blocked`, {
+        description: "Save the remaining vouchers one by one using their Download buttons.",
+      });
+  };
+
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -143,21 +193,26 @@ export function IssuedVouchersDialog({
 
                 <div className="grid grid-cols-2 gap-2">
                   <Button
+                    type="button"
                     variant="outline"
                     size="sm"
-                    disabled={!img}
-                    onClick={() => img && downloadBlob(img.blob, img.fileName)}
+                    disabled={!img || busy !== null}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (img) void saveOne(img);
+                    }}
                   >
                     <Download className="size-4" /> Download
                   </Button>
                   <Button
+                    type="button"
                     size="sm"
-                    disabled={!img}
-                    onClick={() => {
-                      if (!img) return;
-                      void shareVoucherImage(img.blob, img.fileName, v.productName).catch(
-                        () => undefined,
-                      );
+                    disabled={!img || busy !== null}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (img) void shareOne(img, v.productName);
                     }}
                   >
                     <Share2 className="size-4" /> Share
@@ -170,10 +225,20 @@ export function IssuedVouchersDialog({
 
         <DialogFooter className="gap-2 sm:justify-between">
           {many ? (
-            <Button variant="outline" disabled={images.length === 0} onClick={downloadAll}>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={images.length === 0 || busy !== null}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                void downloadAll();
+              }}
+            >
               <Download className="size-4" /> Download all ({vouchers.length} files)
             </Button>
           ) : (
+
             <span />
           )}
           <Button onClick={onClose}>Done</Button>

@@ -190,9 +190,15 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // Voucher images are generated in-page and saved through the bridge;
+        // only real remote URLs reach the system download handler.
+        webView.addJavascriptInterface(ImageSaver(this), "WaveWalletNative")
+
         webView.setDownloadListener(DownloadListener { url, _, _, _, _ ->
+            if (url.startsWith("blob:") || url.startsWith("data:")) return@DownloadListener
             runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
         })
+
     }
 
     private fun isAppUrl(url: Uri): Boolean {
