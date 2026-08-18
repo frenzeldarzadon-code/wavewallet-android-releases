@@ -45,6 +45,7 @@ import {
   type PointsAccount,
 } from "@/lib/rewards";
 import { toast } from "sonner";
+import { beginCriticalOperation } from "@/lib/app-update";
 
 export const Route = createFileRoute("/app/shop")({
   head: () => ({
@@ -193,6 +194,8 @@ export function VoucherShopView({
   const confirm = async () => {
     if (!buying) return;
     setBusy(true);
+    // Suppresses background update checks/prompts while money is moving.
+    const endCritical = beginCriticalOperation();
     try {
       // The voucher image always prints the shop's RETAIL price, never the
       // buyer's discounted acquisition cost. Charging is untouched.
@@ -231,6 +234,7 @@ export function VoucherShopView({
     } catch (e) {
       toast.error("Purchase failed", { description: (e as Error).message });
     } finally {
+      endCritical();
       setBusy(false);
     }
   };
