@@ -96,6 +96,7 @@ import { Route as UniverseMessagesRouteImport } from './routes/universe.messages
 import { Route as UniverseNotificationsRouteImport } from './routes/universe.notifications'
 import { Route as UniverseProfileRouteImport } from './routes/universe.profile'
 import { Route as UniverseShopsRouteImport } from './routes/universe.shops'
+import { Route as ApiPublicAppVersionRouteImport } from './routes/api/public/app-version'
 import { Route as UniverseUHandleRouteImport } from './routes/universe.u.$handle'
 import { Route as ApiPublicPaymentsListenerRouteImport } from './routes/api/public/payments/listener'
 
@@ -534,6 +535,11 @@ const UniverseShopsRoute = UniverseShopsRouteImport.update({
   path: '/shops',
   getParentRoute: () => UniverseRoute,
 } as any)
+const ApiPublicAppVersionRoute = ApiPublicAppVersionRouteImport.update({
+  id: '/api/public/app-version',
+  path: '/api/public/app-version',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UniverseUHandleRoute = UniverseUHandleRouteImport.update({
   id: '/u/$handle',
   path: '/u/$handle',
@@ -634,6 +640,7 @@ export interface FileRoutesByFullPath {
   '/reseller/': typeof ResellerIndexRoute
   '/super/': typeof SuperIndexRoute
   '/universe/': typeof UniverseIndexRoute
+  '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
   '/api/public/payments/listener': typeof ApiPublicPaymentsListenerRoute
 }
@@ -720,6 +727,7 @@ export interface FileRoutesByTo {
   '/reseller': typeof ResellerIndexRoute
   '/super': typeof SuperIndexRoute
   '/universe': typeof UniverseIndexRoute
+  '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
   '/api/public/payments/listener': typeof ApiPublicPaymentsListenerRoute
 }
@@ -812,6 +820,7 @@ export interface FileRoutesById {
   '/reseller/': typeof ResellerIndexRoute
   '/super/': typeof SuperIndexRoute
   '/universe/': typeof UniverseIndexRoute
+  '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
   '/api/public/payments/listener': typeof ApiPublicPaymentsListenerRoute
 }
@@ -905,6 +914,7 @@ export interface FileRouteTypes {
     | '/reseller/'
     | '/super/'
     | '/universe/'
+    | '/api/public/app-version'
     | '/universe/u/$handle'
     | '/api/public/payments/listener'
   fileRoutesByTo: FileRoutesByTo
@@ -991,6 +1001,7 @@ export interface FileRouteTypes {
     | '/reseller'
     | '/super'
     | '/universe'
+    | '/api/public/app-version'
     | '/universe/u/$handle'
     | '/api/public/payments/listener'
   id:
@@ -1082,6 +1093,7 @@ export interface FileRouteTypes {
     | '/reseller/'
     | '/super/'
     | '/universe/'
+    | '/api/public/app-version'
     | '/universe/u/$handle'
     | '/api/public/payments/listener'
   fileRoutesById: FileRoutesById
@@ -1104,6 +1116,7 @@ export interface RootRouteChildren {
   UniverseRoute: typeof UniverseRouteWithChildren
   JoinSlugRoute: typeof JoinSlugRoute
   ShopSlugRoute: typeof ShopSlugRoute
+  ApiPublicAppVersionRoute: typeof ApiPublicAppVersionRoute
   ApiPublicPaymentsListenerRoute: typeof ApiPublicPaymentsListenerRoute
 }
 
@@ -1718,6 +1731,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UniverseShopsRouteImport
       parentRoute: typeof UniverseRoute
     }
+    '/api/public/app-version': {
+      id: '/api/public/app-version'
+      path: '/api/public/app-version'
+      fullPath: '/api/public/app-version'
+      preLoaderRoute: typeof ApiPublicAppVersionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/universe/u/$handle': {
       id: '/universe/u/$handle'
       path: '/u/$handle'
@@ -1939,6 +1959,7 @@ const rootRouteChildren: RootRouteChildren = {
   UniverseRoute: UniverseRouteWithChildren,
   JoinSlugRoute: JoinSlugRoute,
   ShopSlugRoute: ShopSlugRoute,
+  ApiPublicAppVersionRoute: ApiPublicAppVersionRoute,
   ApiPublicPaymentsListenerRoute: ApiPublicPaymentsListenerRoute,
 }
 export const routeTree = rootRouteImport
