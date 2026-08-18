@@ -59,6 +59,20 @@ export interface NavGroup {
 
 export type Nav = NavGroup[];
 
+/**
+ * Wallet Center and the Voucher Shop are permanent core destinations of the
+ * mobile bottom bar. Any future edit to a bottom-nav list is filtered through
+ * this helper, so neither can be dropped or pushed out of the visible five.
+ */
+export function withCoreDestinations(items: NavItem[], core: NavItem[]): NavItem[] {
+  const missing = core.filter((c) => !items.some((i) => i.to === c.to));
+  const kept = [...core.filter((c) => items.some((i) => i.to === c.to)), ...missing];
+  const rest = items.filter((i) => !kept.some((c) => c.to === i.to));
+  // Core first (stable thumb positions), then role-specific slots, max five.
+  return [...kept, ...rest].slice(0, 5);
+}
+
+
 /** Every item in a grouped nav, in visual order. */
 export const flattenNav = (nav: Nav): NavItem[] => nav.flatMap((g) => g.items);
 
