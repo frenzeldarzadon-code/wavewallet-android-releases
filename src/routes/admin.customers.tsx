@@ -242,11 +242,13 @@ function AdminCustomers() {
   );
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return customers.filter((c) => {
+    const rows = customers.filter((c) => {
       if (roleFilter !== "all" && c.role !== roleFilter) return false;
       if (statusFilter !== "all" && c.status !== statusFilter) return false;
       return memberMatches(c, needle);
     });
+    // A–Z when browsing; nearest match first while searching.
+    return sortMembersForList(rows, needle);
   }, [customers, q, roleFilter, statusFilter]);
   const resellers = customers.filter((c) => c.role === "reseller");
   const subresellers = customers.filter((c) => c.role === "subreseller");
