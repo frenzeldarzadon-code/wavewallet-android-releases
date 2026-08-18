@@ -13,6 +13,11 @@ export interface VoucherImageData {
   code: string;
   productName: string;
   description?: string | null;
+  /**
+   * The customer-facing RETAIL price of the product. Never the buyer's
+   * discounted acquisition cost (an admin's 100% discount must still print the
+   * shop's retail price on the voucher).
+   */
   priceLabel: string;
   shopName: string;
   customerName?: string | null;
