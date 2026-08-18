@@ -41,7 +41,7 @@ end $$;
 
 -- A–H. Behaviour -------------------------------------------------------------
 do $$
-declare _owner uuid; _uid uuid; _eco uuid; _method uuid; _device uuid; _secret jsonb;
+declare _owner uuid; _uid uuid; _eco uuid; _method uuid; _device uuid; _event uuid; _secret jsonb;
         _row public.cash_in_requests; _other public.cash_in_requests;
         _before numeric; _after numeric; _res jsonb; _match text; _profile_phone text;
         _num constant text := '09171234567'; _sender constant text := '09991234567';
@@ -104,21 +104,17 @@ begin
   values
     (_device, 'evt-j', 'com.globe.gcash.android', 'accepted', 230, _profile_phone,
      public.normalize_ph_mobile(_profile_phone), null, null, now(), 'Received PHP 230.00')
-  returning id into _device;
-  _match := public.match_listener_event(_device);
-  if (select listener_event_id from public.cash_in_requests where id = _row.id) is distinct from _device then
+  returning id into _event;
+  _match := public.match_listener_event(_event);
+  if (select listener_event_id from public.cash_in_requests where id = _row.id) is distinct from _event then
     raise exception 'J: missing listener reference must not reject a unique exact Layer-1 match (got %)', _match;
   end if;
   if (select status from public.cash_in_requests where id = _row.id) <> 'pending' then
     raise exception 'J: Layer-1 association must not credit before Layer 2 passes';
   end if;
-  if public.match_listener_event(_device) <> 'already_consumed' then
+  if public.match_listener_event(_event) <> 'already_consumed' then
     raise exception 'J: replaying an associated listener event must remain idempotent';
   end if;
-
-  -- Restore the listener-device id after using the event id above.
-  select device_id into _device from public.listener_events where id =
-    (select listener_event_id from public.cash_in_requests where id = _row.id);
 
   -- C: unreadable notification.
   _res := public.record_listener_event(_device, 'evt-unparsed', 'com.globe.gcash.android',
