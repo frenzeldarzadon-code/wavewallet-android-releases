@@ -246,19 +246,25 @@ export async function renderVoucherImage(data: VoucherImageData): Promise<Blob> 
 }
 
 /**
- * True inside the WaveWallet Android WebView shell, where `a[download]` on a
- * blob: URL is handed to the native DownloadListener instead of being saved.
+ * The WaveWallet Android WebView shell bridge.
+ *
+ * The shell is needed for BOTH actions: `a[download]` on a blob: URL is handed
+ * to the native DownloadListener instead of being saved, and Android WebView
+ * does not implement the Web Share API at all (`navigator.share` is undefined),
+ * so sharing must go through the native share sheet.
  */
-function androidBridge():
-  | { saveImage: (base64: string, fileName: string) => void | boolean }
-  | null {
-  const w = window as unknown as {
-    WaveWalletNative?: { saveImage?: (b: string, f: string) => void | boolean };
-  };
+interface NativeImageBridge {
+  saveImage: (base64: string, fileName: string) => void | boolean;
+  shareImage?: (base64: string, fileName: string, title: string) => boolean;
+}
+
+function androidBridge(): NativeImageBridge | null {
+  const w = window as unknown as { WaveWalletNative?: NativeImageBridge };
   return typeof w.WaveWalletNative?.saveImage === "function"
-    ? (w.WaveWalletNative as { saveImage: (b: string, f: string) => void | boolean })
+    ? (w.WaveWalletNative as NativeImageBridge)
     : null;
 }
+
 
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
