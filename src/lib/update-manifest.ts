@@ -32,8 +32,17 @@ export const ANDROID_VERSION_NAME = "1.1.1";
  */
 export const ANDROID_MIN_VERSION_CODE = 2;
 
-/** The one allowed destination for a native update. Never an arbitrary URL. */
-export const ANDROID_UPDATE_URL = "https://wallet.sagadawave.com/download";
+/**
+ * The one allowed destination for a native update. Never an arbitrary URL:
+ * this is the permanent signed APK asset published on the official public
+ * release repository.
+ */
+export const ANDROID_UPDATE_URL =
+  "https://github.com/frenzeldarzadon-code/wavewallet-android-releases/releases/download/v1.1.1/WaveWallet-1.1.1.apk";
+
+/** SHA-256 of the published 1.1.1 APK, for verification on the download page. */
+export const ANDROID_SHA256 =
+  "4af79779ce316190b3afd4c796d87bd542c358d8d8b6966c5a4853c75f7f284d";
 
 export const RELEASE_NOTES =
   "Voucher images now save reliably to Downloads inside the Android app, and WaveWallet can check for web and app updates from Profile.";
