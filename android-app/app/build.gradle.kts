@@ -13,8 +13,8 @@ android {
         targetSdk = 34
         // Native release containing the voucher ImageSaver bridge and the
         // update centre. Must match ANDROID_VERSION_* in src/lib/update-manifest.ts.
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.1.1"
 
         // The one and only backend: the published WaveWallet web app.
         buildConfigField("String", "APP_URL", "\"https://wallet.sagadawave.com\"")

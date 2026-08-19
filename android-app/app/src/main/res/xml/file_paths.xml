@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The ONLY directory the app ever exposes through FileProvider: a private cache
+  folder holding voucher PNGs the user explicitly chose to share. No downloads,
+  no wallet data, no app storage beyond this folder.
+-->
+<paths>
+    <cache-path name="shared_vouchers" path="shared/" />
+</paths>
