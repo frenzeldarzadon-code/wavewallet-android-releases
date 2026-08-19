@@ -2141,6 +2141,69 @@ export type Database = {
           },
         ]
       }
+      login_attempts: {
+        Row: {
+          attempted_at: string
+          id: number
+          succeeded: boolean
+          username: string
+        }
+        Insert: {
+          attempted_at?: string
+          id?: number
+          succeeded?: boolean
+          username: string
+        }
+        Update: {
+          attempted_at?: string
+          id?: number
+          succeeded?: boolean
+          username?: string
+        }
+        Relationships: []
+      }
+      login_usernames: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ecosystem_id: string | null
+          updated_at: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ecosystem_id?: string | null
+          updated_at?: string
+          user_id: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ecosystem_id?: string | null
+          updated_at?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "login_usernames_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "login_usernames_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_notifications: {
         Row: {
           body: string | null
@@ -5599,6 +5662,10 @@ export type Database = {
         Args: { _actor: string; _target: string }
         Returns: boolean
       }
+      can_manage_login_credential: {
+        Args: { _actor: string; _target: string }
+        Returns: boolean
+      }
       can_manage_member_profile: {
         Args: { _actor: string; _target: string }
         Returns: boolean
@@ -5812,6 +5879,7 @@ export type Database = {
         Args: { _email: string; _source: string }
         Returns: string
       }
+      clear_login_username: { Args: { _target: string }; Returns: boolean }
       commission_rate_for: {
         Args: { _recipient: string; _sender: string }
         Returns: number
@@ -8180,6 +8248,10 @@ export type Database = {
           _subreseller_percent: number
         }
         Returns: undefined
+      }
+      set_login_username: {
+        Args: { _target: string; _username: string }
+        Returns: string
       }
       set_member_cashback_rate: {
         Args: {
