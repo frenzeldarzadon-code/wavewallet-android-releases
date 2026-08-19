@@ -342,6 +342,17 @@ export async function shareVoucherImage(
   fileName: string,
   title: string,
 ): Promise<ShareOutcome> {
+  // Native shell first: Android WebView has no Web Share API, so without this
+  // the share button silently degraded into a second download.
+  const bridge = androidBridge();
+  if (bridge && typeof bridge.shareImage === "function") {
+    const ok = bridge.shareImage(await blobToBase64(blob), fileName, title);
+    if (ok !== false) return "shared";
+    // Older shells or a failed share sheet: keep the voucher reachable.
+    await downloadBlob(blob, fileName);
+    return "downloaded";
+  }
+
   const file = new File([blob], fileName, { type: "image/png" });
   if (canShareFiles([file])) {
     try {
@@ -355,4 +366,5 @@ export async function shareVoucherImage(
   await downloadBlob(blob, fileName);
   return "downloaded";
 }
+
 
