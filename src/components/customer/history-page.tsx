@@ -70,10 +70,13 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
     void load();
   }, [load]);
 
+  // Presentation-only grouping: one voucher purchase renders as one row, with
+  // the viewer's own cashback summarised inside it. No amounts are recomputed.
+  const rows = useMemo(() => buildCoinHistory(entries), [entries]);
+  const visibleRows = useMemo(() => filterCoinHistory(rows, direction), [rows, direction]);
+
   if (!account) return null;
 
-  const visibleEntries =
-    direction === "all" ? entries : entries.filter((e) => e.direction === direction);
 
   return (
     <PageSection
