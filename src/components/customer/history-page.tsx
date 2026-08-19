@@ -3,7 +3,8 @@
  * shared by the member and reseller consoles. Read-only: no historical record
  * is modified here.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { buildCoinHistory, cashbackSummary, filterCoinHistory } from "@/lib/coin-history";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
