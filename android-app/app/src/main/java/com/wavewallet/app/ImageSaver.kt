@@ -9,6 +9,7 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.util.Base64
 import android.webkit.JavascriptInterface
+import androidx.core.content.FileProvider
 import android.widget.Toast
 import org.json.JSONObject
 import java.io.File
@@ -77,6 +78,46 @@ class ImageSaver(private val activity: Activity) {
         }
         return ok
     }
+
+    /**
+     * Shares one voucher PNG through the Android share sheet.
+     *
+     * Android WebView does not implement the Web Share API, so the page routes
+     * sharing here. The bytes are the same locally generated voucher image the
+     * page already holds; they are written to a private cache folder and handed
+     * out as a single read-only FileProvider URI.
+     */
+    @JavascriptInterface
+    fun shareImage(base64: String, fileName: String, title: String): Boolean =
+        runCatching {
+            val bytes = Base64.decode(base64, Base64.DEFAULT)
+            if (bytes.isEmpty()) return@runCatching false
+            val safeName = fileName.replace(Regex("[^A-Za-z0-9._-]"), "-").ifBlank { "voucher.png" }
+
+            val dir = File(activity.cacheDir, "shared").apply { mkdirs() }
+            // Keep the cache small: this folder only ever holds share hand-offs.
+            dir.listFiles()?.forEach { runCatching { it.delete() } }
+            val out = File(dir, safeName)
+            FileOutputStream(out).use { it.write(bytes) }
+
+            val uri = FileProvider.getUriForFile(
+                activity,
+                "${'$'}{activity.packageName}.fileprovider",
+                out,
+            )
+            val send = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                putExtra(Intent.EXTRA_SUBJECT, title)
+                putExtra(Intent.EXTRA_TEXT, title)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            val chooser = Intent.createChooser(send, title).apply {
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            activity.startActivity(chooser)
+            true
+        }.getOrDefault(false)
 
     /** Read-only installed app version, as JSON, for the web update centre. */
     @JavascriptInterface
