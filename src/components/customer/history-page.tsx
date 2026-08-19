@@ -49,6 +49,7 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [lots, setLots] = useState<CreditLot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<string | null>(null);
   const userId = account?.id ?? null;
   const scopeId = ecosystemId === undefined ? ecosystemDbId : ecosystemId;
 
