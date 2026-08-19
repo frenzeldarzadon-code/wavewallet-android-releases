@@ -102,7 +102,7 @@ class ImageSaver(private val activity: Activity) {
 
             val uri = FileProvider.getUriForFile(
                 activity,
-                "${'$'}{activity.packageName}.fileprovider",
+                "${activity.packageName}.fileprovider",
                 out,
             )
             val send = Intent(Intent.ACTION_SEND).apply {
