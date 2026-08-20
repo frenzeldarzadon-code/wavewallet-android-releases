@@ -5,7 +5,15 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Printer } from "lucide-react";
+import { Download, Printer, Share2 } from "lucide-react";
+import { toast } from "sonner";
+import {
+  downloadBlob,
+  renderVoucherImage,
+  shareVoucherImage,
+  voucherFileName,
+  type VoucherImageData,
+} from "@/lib/voucher-image";
 import { Button } from "@/components/ui/button";
 import { buildCoinHistory, cashbackSummary, filterCoinHistory } from "@/lib/coin-history";
 import { Card, CardContent } from "@/components/ui/card";
@@ -53,6 +61,7 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
   const [lots, setLots] = useState<CreditLot[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const userId = account?.id ?? null;
   const scopeId = ecosystemId === undefined ? ecosystemDbId : ecosystemId;
 
@@ -78,6 +87,52 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
   // the viewer's own cashback summarised inside it. No amounts are recomputed.
   const rows = useMemo(() => buildCoinHistory(entries), [entries]);
   const visibleRows = useMemo(() => filterCoinHistory(rows, direction), [rows, direction]);
+
+  // Presentation only: re-renders the image for a voucher already issued.
+  const voucherImageData = (p: Purchase): VoucherImageData => ({
+    code: p.code ?? "",
+    productName: p.product_name,
+    description: null,
+    priceLabel: peso(Number(p.list_price ?? p.sale_price)),
+    shopName: shopName ?? "WaveWallet",
+    customerName: null,
+    paymentStatus: null,
+    index: 1,
+    total: 1,
+    txId: p.tx_id,
+    issuedAt: new Date(p.created_at),
+  });
+
+  const saveVoucher = async (p: Purchase) => {
+    if (!p.code) return;
+    setBusyId(p.id);
+    try {
+      const data = voucherImageData(p);
+      const blob = await renderVoucherImage(data);
+      await downloadBlob(blob, voucherFileName(data));
+      toast.success("Voucher image saved");
+    } catch (e) {
+      toast.error("Could not save the image", { description: (e as Error).message });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const shareVoucher = async (p: Purchase) => {
+    if (!p.code) return;
+    setBusyId(p.id);
+    try {
+      const data = voucherImageData(p);
+      const blob = await renderVoucherImage(data);
+      const outcome = await shareVoucherImage(blob, voucherFileName(data), p.product_name);
+      if (outcome === "shared") toast.success("Shared");
+      else if (outcome === "downloaded") toast.success("Sharing isn't available here — image saved");
+    } catch (e) {
+      toast.error("Could not share the image", { description: (e as Error).message });
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   if (!account) return null;
 
@@ -189,13 +244,33 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
                   ) : (
                     <StatusBadge tone="muted">Code unavailable</StatusBadge>
                   )}
-                  {/* Presentation only: opens the print page for the exact
-                      vouchers already issued by this transaction. */}
-                  <Button asChild variant="outline" size="sm" className="mt-1">
-                    <Link to="/print/vouchers/$saleId" params={{ saleId: p.id }}>
-                      <Printer className="size-4" /> Print
-                    </Link>
-                  </Button>
+                  {/* Presentation only: Download | Share | Print act on the
+                      exact voucher already issued by this transaction. */}
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={!p.code || busyId === p.id}
+                      onClick={() => void saveVoucher(p)}
+                    >
+                      <Download className="size-4" /> Download
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={!p.code || busyId === p.id}
+                      onClick={() => void shareVoucher(p)}
+                    >
+                      <Share2 className="size-4" /> Share
+                    </Button>
+                    <Button asChild variant="outline" size="sm">
+                      <Link to="/print/vouchers/$saleId" params={{ saleId: p.id }}>
+                        <Printer className="size-4" /> Print
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               ))}
             </CardContent>
