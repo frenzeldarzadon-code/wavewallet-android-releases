@@ -28,4 +28,12 @@ describe("validateGoLive", () => {
     expect(validateGoLive({ payerNumber: "09171234567", reference: "12" })).toMatch(/reference/);
     expect(validateGoLive({ payerNumber: "09171234567", reference: "9044057598177" })).toBeNull();
   });
+  it("requires a payment screenshot when one is expected", () => {
+    expect(
+      validateGoLive({ payerNumber: "09171234567", reference: "9044057598177", proofPath: "" }),
+    ).toMatch(/screenshot/);
+    expect(
+      validateGoLive({ payerNumber: "09171234567", reference: "9044057598177", proofPath: "u/1.jpg" }),
+    ).toBeNull();
+  });
 });
