@@ -88,6 +88,17 @@ export async function fetchSubscriptionShops(): Promise<SubscriptionShop[]> {
   return (shops ?? []).map((s) => ({ ...s, subscription: byShop.get(s.id) ?? null }));
 }
 
+/** Legacy shops — listed read-only; their rules are never touched from here. */
+export async function fetchLegacyShops(): Promise<Ecosystem[]> {
+  const { data, error } = await supabase
+    .from("ecosystems")
+    .select("*")
+    .neq("shop_kind", "subscription")
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
 export async function fetchSubscriptionEvents(ecosystemId: string): Promise<SubscriptionEvent[]> {
   const { data, error } = await supabase
     .from("subscription_events")

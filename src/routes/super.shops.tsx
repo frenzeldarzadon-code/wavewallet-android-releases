@@ -21,7 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
+import { superadminSetShopPlan } from "@/lib/go-live";
 import { SubscriptionPlansCard } from "@/components/super/subscription-plans-card";
 import { peso, shortDate } from "@/lib/wavewallet";
 import {
@@ -29,6 +32,7 @@ import {
   daysUntil,
   fetchPlans,
   fetchQuote,
+  fetchLegacyShops,
   fetchSubscriptionShops,
   runSubscriptionExpiry,
   subscriptionStateLabel,
@@ -36,6 +40,7 @@ import {
   type SubscriptionPlan,
   type SubscriptionQuote,
   type SubscriptionShop,
+  type Ecosystem,
 } from "@/lib/subscription-shops";
 
 const TITLE = "Subscription Shops — WaveWallet Super Admin";
@@ -61,13 +66,20 @@ function SuperShops() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [target, setTarget] = useState<SubscriptionShop | null>(null);
+  const [override, setOverride] = useState<SubscriptionShop | null>(null);
+  const [legacy, setLegacy] = useState<Ecosystem[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [s, p] = await Promise.all([fetchSubscriptionShops(), fetchPlans()]);
+      const [s, p, l] = await Promise.all([
+        fetchSubscriptionShops(),
+        fetchPlans(),
+        fetchLegacyShops(),
+      ]);
       setShops(s);
       setPlans(p);
+      setLegacy(l);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not load Subscription Shops");
     } finally {
@@ -131,6 +143,45 @@ function SuperShops() {
         </div>
       </PageSection>
 
+      <Tabs defaultValue="new" className="mt-2">
+        <TabsList>
+          <TabsTrigger value="new">New Generation Shops</TabsTrigger>
+          <TabsTrigger value="legacy">Legacy Shops</TabsTrigger>
+        </TabsList>
+        <TabsContent value="legacy">
+          <PageSection
+            title="Legacy Shops"
+            description="Existing shops on the original WaveWallet architecture. They keep their own rules — no new Legacy Shop can be created."
+          >
+            {legacy.length === 0 ? (
+              <Card className="shadow-[var(--shadow-card)]">
+                <CardContent className="px-4 text-sm text-muted-foreground">
+                  No Legacy Shops.
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {legacy.map((s) => (
+                  <Card key={s.id} className="shadow-[var(--shadow-card)]">
+                    <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
+                      <div>
+                        <p className="text-sm font-semibold tracking-tight">{s.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {s.plan_name ?? "Legacy plan"} ·{" "}
+                          {s.current_period_end
+                            ? `Valid until ${shortDate(s.current_period_end)}`
+                            : "No expiry recorded"}
+                        </p>
+                      </div>
+                      <StatusBadge tone="muted">Legacy</StatusBadge>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </PageSection>
+        </TabsContent>
+        <TabsContent value="new">
       <PageSection title="Shops">
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
@@ -170,9 +221,14 @@ function SuperShops() {
                           {left !== null ? ` · ${left} day${left === 1 ? "" : "s"} left` : ""}
                         </p>
                       </div>
-                      <Button size="sm" onClick={() => setTarget(s)}>
-                        Activate / change plan
-                      </Button>
+                      <div className="flex flex-wrap gap-2">
+                        <Button size="sm" onClick={() => setTarget(s)}>
+                          Activate / change plan
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setOverride(s)}>
+                          Override / discount
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -182,7 +238,20 @@ function SuperShops() {
         )}
       </PageSection>
 
+        </TabsContent>
+      </Tabs>
+
       <SubscriptionPlansCard onSaved={() => void load()} />
+
+      <OverrideDialog
+        shop={override}
+        plans={plans}
+        onClose={() => setOverride(null)}
+        onDone={() => {
+          setOverride(null);
+          void load();
+        }}
+      />
 
       <ActivateDialog
         shop={target}
@@ -338,6 +407,138 @@ function ActivateDialog({
           </Button>
           <Button onClick={confirm} disabled={busy || !quote}>
             Confirm payment &amp; activate
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function OverrideDialog({
+  shop,
+  plans,
+  onClose,
+  onDone,
+}: {
+  shop: SubscriptionShop | null;
+  plans: SubscriptionPlan[];
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [planId, setPlanId] = useState("");
+  const [months, setMonths] = useState("1");
+  const [discount, setDiscount] = useState("0");
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setPlanId("");
+    setMonths("1");
+    setDiscount("0");
+    setReason("");
+  }, [shop?.id]);
+
+  const plan = plans.find((p) => p.id === planId) ?? null;
+  const pct = Math.max(0, Math.min(100, Number(discount) || 0));
+  const monthCount = Math.max(1, Math.min(24, Number(months) || 1));
+  const charged = plan
+    ? Math.round(Number(plan.monthly_price) * monthCount * (100 - pct)) / 100
+    : 0;
+
+  const confirm = async () => {
+    if (!shop || !plan) return;
+    setBusy(true);
+    try {
+      await superadminSetShopPlan({
+        ecosystemId: shop.id,
+        planId: plan.id,
+        months: monthCount,
+        discountPercent: pct,
+        reason,
+      });
+      toast.success("Plan applied and recorded in the audit trail.");
+      onDone();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not apply that plan");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open={Boolean(shop)} onOpenChange={(o) => (!o ? onClose() : undefined)}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Platform override — {shop?.name}</DialogTitle>
+          <DialogDescription>
+            Put this New Generation Shop on any plan, with a discount or completely free. The plan
+            still controls the period, features and Coin allocation. Every override is audited.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>Plan</Label>
+            <Select value={planId} onValueChange={setPlanId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose a plan" />
+              </SelectTrigger>
+              <SelectContent>
+                {plans.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name} — {peso(Number(p.monthly_price))}/mo ·{" "}
+                    {Number(p.coin_allocation).toLocaleString()} Coins
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="ov-months">Months</Label>
+              <Input
+                id="ov-months"
+                type="number"
+                min={1}
+                max={24}
+                value={months}
+                onChange={(e) => setMonths(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ov-discount">Discount %</Label>
+              <Input
+                id="ov-discount"
+                type="number"
+                min={0}
+                max={100}
+                value={discount}
+                onChange={(e) => setDiscount(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="ov-reason">Reason (audited)</Label>
+            <Textarea
+              id="ov-reason"
+              rows={2}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Partner shop — first 3 months free"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Charged: <strong>{peso(charged)}</strong>
+            {pct === 100 ? " — free subscription on a full plan" : ""}
+          </p>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={confirm} disabled={busy || !plan}>
+            Apply plan
           </Button>
         </DialogFooter>
       </DialogContent>
