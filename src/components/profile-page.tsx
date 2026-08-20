@@ -12,6 +12,7 @@ import { MemberAvatar } from "@/components/member-avatar";
 import { SocialLinksCard } from "@/components/social-links-card";
 import { AccountSecurityCard } from "@/components/account-security-card";
 import { LoginCredentialCard } from "@/components/login-credential-card";
+import { supabase } from "@/integrations/supabase/client";
 import { PageSection as CredentialSection } from "@/components/ui-kit";
 import { UpdateCenterCard } from "@/components/update-center-card";
 import type { CropRect } from "@/lib/image-optimize";
