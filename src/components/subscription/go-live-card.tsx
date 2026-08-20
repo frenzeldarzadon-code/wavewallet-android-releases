@@ -8,7 +8,8 @@
  * payment with the pending request. Demo Coins are never converted.
  */
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, Loader2, Rocket, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, Rocket, ShieldCheck } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -285,7 +286,7 @@ export function GoLiveCard({
                   <Input
                     id="gl-ref"
                     inputMode="numeric"
-                    placeholder="9044057598177"
+                    placeholder="Reference number on your receipt"
                     value={reference}
                     onChange={(e) => setReference(e.target.value)}
                   />
@@ -340,7 +341,7 @@ export function GoLiveCard({
                           </button>
                         ) : item.to ? (
                           <Link
-                            to={item.to}
+                            to={item.to as never}
                             className="font-semibold underline underline-offset-2"
                           >
                             {item.label}
