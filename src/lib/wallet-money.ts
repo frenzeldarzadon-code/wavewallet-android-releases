@@ -203,11 +203,16 @@ export function validateCashIn(
   if (!Number.isFinite(php) || php <= 0) return "Enter how much you are paying.";
   if (php > 10_000_000) return "A single cash in is limited to ₱10,000,000.";
   if (input) {
-    // The screenshot is the only thing the member must supply: the amount, the
-    // sending number, the reference and the payment time are read off it. A
-    // missing reference or sender simply keeps the request in manual review.
+    // The screenshot supplies the amount, reference and payment time. A GCash
+    // "money sent" receipt never prints the payer's OWN number, so the sending
+    // number is stated here — it is the identity matched against the real
+    // GCash notification.
     if (!input.hasProof) return "Attach your payment screenshot.";
+    if (!normalizePhMobile(input.payerNumber ?? null)) {
+      return "Enter the GCash number you paid from (09XXXXXXXXX).";
+    }
   }
+
   return null;
 }
 
