@@ -665,13 +665,22 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                         </div>
                         <div className="space-y-1.5">
                           <Label htmlFor="ci-number">GCash number you paid from</Label>
-                          <Input id="ci-number" value={payerNumber || "Not readable"} readOnly disabled />
+                          <Input
+                            id="ci-number"
+                            inputMode="tel"
+                            value={payerNumber}
+                            readOnly={Boolean(extract?.senderNumber)}
+                            disabled={Boolean(extract?.senderNumber)}
+                            onChange={(e) => setPayerNumber(e.target.value)}
+                            placeholder="09XXXXXXXXX"
+                          />
                           <p className="text-[11px] text-muted-foreground">
                             {extract?.senderNumber
                               ? "Extracted evidence — matched against the real GCash notification."
-                              : "Not readable on the screenshot, so this request goes to manual review."}
+                              : "GCash receipts do not print your own number, so type the number you paid from. It is matched against the real GCash notification."}
                           </p>
                         </div>
+
                         <div className="space-y-1.5">
                           <Label htmlFor="ci-ref">GCash reference number</Label>
                           <Input
