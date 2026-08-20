@@ -32,18 +32,25 @@ import {
   fetchPlatformGcash,
   goLiveStatusLine,
   submitGoLivePayment,
-  validateGoLive,
   type SubscriptionRequest,
 } from "@/lib/go-live";
+import {
+  goLiveChecklist,
+  goLiveFieldErrors,
+  mapGoLiveError,
+  type GoLiveField,
+} from "@/lib/go-live-readiness";
 
 
 type Gcash = Awaited<ReturnType<typeof fetchPlatformGcash>>;
 
 export function GoLiveCard({
   ecosystemId,
+  shopName,
   onLive,
 }: {
   ecosystemId: string;
+  shopName?: string | null;
   onLive?: () => void;
 }) {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
@@ -57,6 +64,9 @@ export function GoLiveCard({
   const [loading, setLoading] = useState(true);
   const [quote, setQuote] = useState<SubscriptionQuote | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [attempted, setAttempted] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [serverField, setServerField] = useState<GoLiveField | null>(null);
 
 
   const load = useCallback(async () => {
