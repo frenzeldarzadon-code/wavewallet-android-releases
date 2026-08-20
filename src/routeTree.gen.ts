@@ -97,6 +97,7 @@ import { Route as UniverseNotificationsRouteImport } from './routes/universe.not
 import { Route as UniverseProfileRouteImport } from './routes/universe.profile'
 import { Route as UniverseShopsRouteImport } from './routes/universe.shops'
 import { Route as ApiPublicAppVersionRouteImport } from './routes/api/public/app-version'
+import { Route as PrintVouchersSaleIdRouteImport } from './routes/print.vouchers.$saleId'
 import { Route as UniverseUHandleRouteImport } from './routes/universe.u.$handle'
 import { Route as ApiPublicPaymentsListenerRouteImport } from './routes/api/public/payments/listener'
 
@@ -540,6 +541,11 @@ const ApiPublicAppVersionRoute = ApiPublicAppVersionRouteImport.update({
   path: '/api/public/app-version',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrintVouchersSaleIdRoute = PrintVouchersSaleIdRouteImport.update({
+  id: '/print/vouchers/$saleId',
+  path: '/print/vouchers/$saleId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UniverseUHandleRoute = UniverseUHandleRouteImport.update({
   id: '/u/$handle',
   path: '/u/$handle',
@@ -641,6 +647,7 @@ export interface FileRoutesByFullPath {
   '/super/': typeof SuperIndexRoute
   '/universe/': typeof UniverseIndexRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
+  '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
   '/api/public/payments/listener': typeof ApiPublicPaymentsListenerRoute
 }
@@ -728,6 +735,7 @@ export interface FileRoutesByTo {
   '/super': typeof SuperIndexRoute
   '/universe': typeof UniverseIndexRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
+  '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
   '/api/public/payments/listener': typeof ApiPublicPaymentsListenerRoute
 }
@@ -821,6 +829,7 @@ export interface FileRoutesById {
   '/super/': typeof SuperIndexRoute
   '/universe/': typeof UniverseIndexRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
+  '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
   '/api/public/payments/listener': typeof ApiPublicPaymentsListenerRoute
 }
@@ -915,6 +924,7 @@ export interface FileRouteTypes {
     | '/super/'
     | '/universe/'
     | '/api/public/app-version'
+    | '/print/vouchers/$saleId'
     | '/universe/u/$handle'
     | '/api/public/payments/listener'
   fileRoutesByTo: FileRoutesByTo
@@ -1002,6 +1012,7 @@ export interface FileRouteTypes {
     | '/super'
     | '/universe'
     | '/api/public/app-version'
+    | '/print/vouchers/$saleId'
     | '/universe/u/$handle'
     | '/api/public/payments/listener'
   id:
@@ -1094,6 +1105,7 @@ export interface FileRouteTypes {
     | '/super/'
     | '/universe/'
     | '/api/public/app-version'
+    | '/print/vouchers/$saleId'
     | '/universe/u/$handle'
     | '/api/public/payments/listener'
   fileRoutesById: FileRoutesById
@@ -1117,6 +1129,7 @@ export interface RootRouteChildren {
   JoinSlugRoute: typeof JoinSlugRoute
   ShopSlugRoute: typeof ShopSlugRoute
   ApiPublicAppVersionRoute: typeof ApiPublicAppVersionRoute
+  PrintVouchersSaleIdRoute: typeof PrintVouchersSaleIdRoute
   ApiPublicPaymentsListenerRoute: typeof ApiPublicPaymentsListenerRoute
 }
 
@@ -1738,6 +1751,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAppVersionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/print/vouchers/$saleId': {
+      id: '/print/vouchers/$saleId'
+      path: '/print/vouchers/$saleId'
+      fullPath: '/print/vouchers/$saleId'
+      preLoaderRoute: typeof PrintVouchersSaleIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/universe/u/$handle': {
       id: '/universe/u/$handle'
       path: '/u/$handle'
@@ -1960,6 +1980,7 @@ const rootRouteChildren: RootRouteChildren = {
   JoinSlugRoute: JoinSlugRoute,
   ShopSlugRoute: ShopSlugRoute,
   ApiPublicAppVersionRoute: ApiPublicAppVersionRoute,
+  PrintVouchersSaleIdRoute: PrintVouchersSaleIdRoute,
   ApiPublicPaymentsListenerRoute: ApiPublicPaymentsListenerRoute,
 }
 export const routeTree = rootRouteImport
