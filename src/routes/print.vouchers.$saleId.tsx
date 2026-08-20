@@ -72,9 +72,34 @@ function PrintVouchersPage() {
     else void router.navigate({ to: "/app/history" });
   };
 
+  const card = (code: string, i: number, count: number) => (
+    <div key={`${code}-${i}`} className={`vp-voucher vp-t-${template}`}>
+      <span className="vp-art" aria-hidden />
+      <div className="vp-head">
+        <p className="vp-brand">WaveWallet</p>
+        <p className="vp-shop">{sale?.shopName ?? "WaveWallet"}</p>
+        <p className="vp-product">{sale?.productName}</p>
+        {sale?.description ? <p className="vp-desc">{sale.description}</p> : null}
+      </div>
+      <div className="vp-body">
+        <p className="vp-code-label">WiFi voucher code</p>
+        <p className={code.length > 12 ? "vp-code vp-code-long" : "vp-code"}>{code}</p>
+      </div>
+      <div className="vp-meta">
+        <span className="vp-price">{peso(sale?.listPrice ?? 0)}</span>
+        <span>
+          {i + 1}/{count} · {(sale?.txId ?? "").slice(0, 10)}
+        </span>
+      </div>
+    </div>
+  );
+
+  const sampleCode = sale?.codes[0] ?? "WAVE-2026";
+
   return (
     <div className="min-h-screen bg-background">
       <style dangerouslySetInnerHTML={{ __html: voucherPrintCss }} />
+      <style dangerouslySetInnerHTML={{ __html: voucherSelectorCss }} />
 
       <div className="vp-no-print mx-auto max-w-3xl space-y-4 px-4 py-5">
         <div className="flex items-center justify-between gap-2">
@@ -99,30 +124,58 @@ function PrintVouchersPage() {
 
         <Card>
           <CardContent className="space-y-3 p-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="vp-template">Template</Label>
-              <Select
-                value={template}
-                onValueChange={(v) => setTemplate(v as VoucherTemplateId)}
-              >
-                <SelectTrigger id="vp-template" className="h-11">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {voucherTemplates.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name} — {t.description}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-2">
+              <Label>Template</Label>
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {voucherTemplates.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    aria-pressed={template === t.id}
+                    aria-label={`${t.name} template`}
+                    onClick={() => setTemplate(t.id)}
+                    className={`group rounded-xl border p-2 text-left transition-colors ${
+                      template === t.id
+                        ? "border-primary bg-primary/5 ring-2 ring-primary/40"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    <div className="vp-thumb-frame mx-auto">
+                      <div className={`vp-voucher vp-t-${t.id}`} aria-hidden>
+                        <span className="vp-art" />
+                        <div className="vp-head">
+                          <p className="vp-brand">WaveWallet</p>
+                          <p className="vp-shop">{sale?.shopName ?? "WaveWallet"}</p>
+                          <p className="vp-product">{sale?.productName ?? "WiFi Voucher"}</p>
+                          {sale?.description ? <p className="vp-desc">{sale.description}</p> : null}
+                        </div>
+                        <div className="vp-body">
+                          <p className="vp-code-label">WiFi voucher code</p>
+                          <p className={sampleCode.length > 12 ? "vp-code vp-code-long" : "vp-code"}>
+                            {sampleCode}
+                          </p>
+                        </div>
+                        <div className="vp-meta">
+                          <span className="vp-price">{peso(sale?.listPrice ?? 0)}</span>
+                          <span>1/1</span>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="mt-1.5 truncate text-[11px] font-semibold">{t.name}</p>
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                {voucherTemplates.find((t) => t.id === template)?.description}
+              </p>
             </div>
             <p className="rounded-lg bg-warning/15 px-3 py-2 text-xs font-medium text-warning-foreground">
               For accurate voucher size, print at 100% / Actual Size. Do not use Fit to Page.
             </p>
             <p className="text-[11px] text-muted-foreground">
               Each card prints at exactly 2in × 2in. Vouchers are arranged several per sheet and
-              continue onto more pages automatically. Printing never changes a voucher.
+              continue onto more pages automatically. Template choice changes the design only —
+              never the voucher data.
             </p>
           </CardContent>
         </Card>
@@ -142,26 +195,7 @@ function PrintVouchersPage() {
       ) : (
         <div className="mx-auto max-w-3xl px-4 pb-10">
           <div className="vp-sheet">
-            {sale.codes.map((code, i) => (
-              <div key={code} className={`vp-voucher vp-t-${template}`}>
-                <div className="vp-head">
-                  <p className="vp-brand">WaveWallet</p>
-                  <p className="vp-shop">{sale.shopName}</p>
-                  <p className="vp-product">{sale.productName}</p>
-                  {sale.description ? <p className="vp-desc">{sale.description}</p> : null}
-                </div>
-                <div className="vp-body">
-                  <p className="vp-code-label">WiFi voucher code</p>
-                  <p className={code.length > 12 ? "vp-code vp-code-long" : "vp-code"}>{code}</p>
-                </div>
-                <div className="vp-meta">
-                  <span className="vp-price">{peso(sale.listPrice)}</span>
-                  <span>
-                    {i + 1}/{sale.codes.length} · {sale.txId.slice(0, 10)}
-                  </span>
-                </div>
-              </div>
-            ))}
+            {sale.codes.map((code, i) => card(code, i, sale.codes.length))}
           </div>
         </div>
       )}
