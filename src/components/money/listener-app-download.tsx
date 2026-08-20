@@ -15,10 +15,10 @@ import apkAsset from "@/assets/wavewallet-gcash-listener.apk.asset.json";
  * values in step with the uploaded binary — the page must never advertise a
  * version that is not the file being served.
  */
-const APK_SHA256 = "e58f845cb3ec550a91d7e68bf71eddf76f7f3405a92f7d6d2c0e91126441c9ee";
+const APK_SHA256 = "ea91f2be5a55a1bd4be88448941bba40fc12e61bb8673e89c3d79c36dabf6470";
 const APK_PACKAGE = "com.wavewallet.gcashlistener";
-const APK_VERSION_NAME = "1.0.0";
-const APK_VERSION_CODE = 1;
+const APK_VERSION_NAME = "1.2.0";
+const APK_VERSION_CODE = 3;
 
 const sizeMb = (apkAsset.size / (1024 * 1024)).toFixed(2);
 
