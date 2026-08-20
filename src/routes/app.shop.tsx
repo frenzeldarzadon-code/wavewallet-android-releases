@@ -100,6 +100,7 @@ export function VoucherShopView({
     vouchers: VoucherImageData[];
     summary: string;
     earned: number;
+    saleId: string | null;
   } | null>(null);
   const userId = account?.id ?? null;
 
@@ -212,6 +213,7 @@ export function VoucherShopView({
           ),
           summary: `${res.product_name} · ${res.points_spent} pts · ${res.tx_id}`,
           earned: 0,
+          saleId: res.sale_id ?? null,
         });
       } else {
         const res = await purchaseVoucher(buying.product.id, qty);
@@ -227,6 +229,7 @@ export function VoucherShopView({
             res.sale_price,
           )} · ${res.tx_id}`,
           earned: Number(res.points_earned ?? 0),
+          saleId: res.sale_id ?? null,
         });
       }
       setBuying(null);
@@ -636,6 +639,7 @@ export function VoucherShopView({
         vouchers={issued?.vouchers ?? []}
         summary={issued?.summary ?? ""}
         pointsEarned={issued?.earned ?? 0}
+        saleId={issued?.saleId ?? null}
         onClose={() => setIssued(null)}
       />
 

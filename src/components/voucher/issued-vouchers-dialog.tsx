@@ -1,15 +1,17 @@
 /**
  * Post-purchase voucher delivery.
  *
- * Each issued code is rendered as its OWN premium image, with its own download
- * and share action. "Download all" saves separate files — never one combined
- * sheet. Copy code stays available as a plain-text fallback.
+ * The success screen shows the issued CODES only — no voucher pictures are
+ * rendered until the buyer picks an action. Download Picture and Share render
+ * images on demand (one file per code, never a combined sheet); Print opens the
+ * existing 2in x 2in voucher template flow for this exact transaction.
  *
  * Presentation only: the codes shown here are exactly what the purchase RPC
  * returned; nothing in this component can issue, price or reprice a voucher.
  */
-import { useEffect, useState } from "react";
-import { Copy, Download, Share2 } from "lucide-react";
+import { useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { Copy, Download, Printer, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,114 +30,78 @@ import {
   type VoucherImageData,
 } from "@/lib/voucher-image";
 
-interface Rendered {
-  data: VoucherImageData;
-  blob: Blob;
-  url: string;
-  fileName: string;
-}
-
 export function IssuedVouchersDialog({
   vouchers,
   summary,
   pointsEarned,
+  saleId,
   onClose,
 }: {
   vouchers: VoucherImageData[];
   summary: string;
   pointsEarned: number;
+  /** Voucher sale this purchase created — used only to open the print flow. */
+  saleId?: string | null;
   onClose: () => void;
 }) {
-  const [images, setImages] = useState<Rendered[]>([]);
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    const urls: string[] = [];
-    setImages([]);
-    setFailed(false);
-    if (vouchers.length === 0) return;
-    void (async () => {
-      try {
-        for (const data of vouchers) {
-          const blob = await renderVoucherImage(data);
-          if (cancelled) return;
-          const url = URL.createObjectURL(blob);
-          urls.push(url);
-          // Reveal each voucher as soon as it is ready — never block on the batch.
-          setImages((prev) => [...prev, { data, blob, url, fileName: voucherFileName(data) }]);
-          // Yield to the browser so the dialog stays responsive on low-end phones.
-          await new Promise((r) => setTimeout(r, 0));
-        }
-      } catch {
-        if (!cancelled) setFailed(true);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      urls.forEach((u) => URL.revokeObjectURL(u));
-    };
-  }, [vouchers]);
-
+  const [busy, setBusy] = useState<null | "download" | "share">(null);
   const open = vouchers.length > 0;
   const many = vouchers.length > 1;
-  const [busy, setBusy] = useState<string | null>(null);
-
-  const saveOne = async (img: Rendered) => {
-    setBusy(img.data.code);
-    try {
-      await downloadBlob(img.blob, img.fileName);
-      toast.success("Voucher image saved", { description: img.fileName });
-    } catch (e) {
-      toast.error("Could not save the image", {
-        description: (e as Error).message || "Your browser blocked the download.",
-      });
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const shareOne = async (img: Rendered, productName: string) => {
-    setBusy(img.data.code);
-    try {
-      const outcome = await shareVoucherImage(img.blob, img.fileName, productName);
-      if (outcome === "shared") toast.success("Shared");
-      else if (outcome === "downloaded")
-        toast.success("Sharing isn't available here — image saved instead", {
-          description: img.fileName,
-        });
-    } catch (e) {
-      toast.error("Could not share the image", {
-        description: (e as Error).message || "Try Download instead.",
-      });
-    } finally {
-      setBusy(null);
-    }
-  };
 
   const downloadAll = async () => {
-    setBusy("all");
+    setBusy("download");
     let saved = 0;
     let blocked = 0;
-    for (const img of images) {
-      try {
-        await downloadBlob(img.blob, img.fileName);
-        saved += 1;
-      } catch {
-        blocked += 1;
+    try {
+      for (const data of vouchers) {
+        try {
+          const blob = await renderVoucherImage(data);
+          await downloadBlob(blob, voucherFileName(data));
+          saved += 1;
+        } catch {
+          blocked += 1;
+        }
+        // Space the saves out; browsers throttle rapid multi-file downloads.
+        if (vouchers.length > 1) await new Promise((r) => setTimeout(r, 400));
       }
-      // Space the saves out; browsers throttle rapid multi-file downloads.
-      await new Promise((r) => setTimeout(r, 400));
+    } finally {
+      setBusy(null);
     }
-    setBusy(null);
-    if (blocked === 0) toast.success(`Saved ${saved} separate voucher image${saved > 1 ? "s" : ""}`);
+    if (blocked === 0)
+      toast.success(`Saved ${saved} voucher image${saved > 1 ? "s" : ""}`);
     else
-      toast.error(`${blocked} of ${images.length} downloads were blocked`, {
-        description: "Save the remaining vouchers one by one using their Download buttons.",
+      toast.error(`${blocked} of ${vouchers.length} downloads were blocked`, {
+        description: "Try again, or use Share to send the remaining vouchers.",
       });
   };
 
+  const shareAll = async () => {
+    setBusy("share");
+    let shared = 0;
+    let downloaded = 0;
+    try {
+      for (const data of vouchers) {
+        const blob = await renderVoucherImage(data);
+        const outcome = await shareVoucherImage(
+          blob,
+          voucherFileName(data),
+          data.productName,
+        );
+        if (outcome === "shared") shared += 1;
+        else if (outcome === "downloaded") downloaded += 1;
+        else break; // User dismissed the share sheet.
+      }
+      if (shared > 0) toast.success(`Shared ${shared} voucher${shared > 1 ? "s" : ""}`);
+      else if (downloaded > 0)
+        toast.success("Sharing isn't available here — image saved instead");
+    } catch (e) {
+      toast.error("Could not share the image", {
+        description: (e as Error).message || "Try Download Picture instead.",
+      });
+    } finally {
+      setBusy(null);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -151,96 +117,79 @@ export function IssuedVouchersDialog({
           </p>
         ) : null}
 
-        <div className="space-y-4">
-          {vouchers.map((v, i) => {
-            const img = images[i];
-            return (
-              <div key={v.code} className="space-y-2 rounded-2xl border border-border p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      Voucher {v.index} of {v.total}
-                    </p>
-                    <p className="break-all font-mono text-lg font-semibold tracking-widest text-success">
-                      {v.code}
-                    </p>
-                  </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    aria-label={`Copy code ${v.code}`}
-                    onClick={() => {
-                      void navigator.clipboard?.writeText(v.code);
-                      toast.success("Code copied");
-                    }}
-                  >
-                    <Copy className="size-4" />
-                  </Button>
-                </div>
-
-                {img ? (
-                  <img
-                    src={img.url}
-                    alt={`${v.productName} voucher ${v.index} of ${v.total}`}
-                    className="w-full rounded-xl border border-border"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="flex h-40 items-center justify-center rounded-xl border border-dashed border-border text-xs text-muted-foreground">
-                    {failed ? "Image preview unavailable" : "Preparing voucher image…"}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={!img || busy !== null}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      if (img) void saveOne(img);
-                    }}
-                  >
-                    <Download className="size-4" /> Download
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={!img || busy !== null}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      if (img) void shareOne(img, v.productName);
-                    }}
-                  >
-                    <Share2 className="size-4" /> Share
-                  </Button>
-                </div>
+        <div className="space-y-2">
+          {vouchers.map((v) => (
+            <div
+              key={v.code}
+              className="flex items-start justify-between gap-2 rounded-2xl border border-border p-3"
+            >
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Voucher {v.index} of {v.total}
+                </p>
+                <p className="break-all font-mono text-lg font-semibold tracking-widest text-success">
+                  {v.code}
+                </p>
               </div>
-            );
-          })}
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label={`Copy code ${v.code}`}
+                onClick={() => {
+                  void navigator.clipboard?.writeText(v.code);
+                  toast.success("Code copied");
+                }}
+              >
+                <Copy className="size-4" />
+              </Button>
+            </div>
+          ))}
         </div>
 
-        <DialogFooter className="gap-2 sm:justify-between">
-          {many ? (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={images.length === 0 || busy !== null}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                void downloadAll();
-              }}
-            >
-              <Download className="size-4" /> Download all ({vouchers.length} files)
-            </Button>
-          ) : (
+        {/* On-demand actions: nothing is rendered until one is chosen. */}
+        <div className="grid gap-2 sm:grid-cols-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={busy !== null}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              void downloadAll();
+            }}
+          >
+            <Download className="size-4" />
+            {busy === "download" ? "Preparing…" : "Download Picture"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={busy !== null}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              void shareAll();
+            }}
+          >
+            <Share2 className="size-4" />
+            {busy === "share" ? "Preparing…" : "Share"}
+          </Button>
+          <Button asChild variant="outline" size="sm" disabled={!saleId}>
+            {saleId ? (
+              <Link to="/print/vouchers/$saleId" params={{ saleId }} onClick={onClose}>
+                <Printer className="size-4" /> Print
+              </Link>
+            ) : (
+              <span>
+                <Printer className="size-4" /> Print
+              </span>
+            )}
+          </Button>
+        </div>
 
-            <span />
-          )}
+        <DialogFooter>
           <Button onClick={onClose}>Done</Button>
         </DialogFooter>
       </DialogContent>
