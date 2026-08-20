@@ -51,6 +51,23 @@ export function ProfilePage() {
   const [removePhoto, setRemovePhoto] = useState(false);
 
   const userId = account?.id ?? null;
+  // Existing username sign-in, if the member set one. Passwords are never read back.
+  const [loginUsername, setLoginUsername] = useState<string | null>(null);
+  useEffect(() => {
+    if (!userId) return;
+    let active = true;
+    void supabase
+      .from("login_usernames")
+      .select("username")
+      .eq("user_id", userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (active) setLoginUsername((data as { username: string } | null)?.username ?? null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [userId]);
   const saveContact = useServerFn(updateOwnContact);
 
   const load = useCallback(async () => {
