@@ -377,6 +377,20 @@ function PendingCard({
             <dt className="text-muted-foreground">Submitted</dt>
             <dd className="font-medium">{shortDate(request.created_at)}</dd>
           </div>
+          <div>
+            <dt className="text-muted-foreground">Receipt check</dt>
+            <dd
+              className={
+                receiptCheck(request) === "matched"
+                  ? "font-medium text-success"
+                  : receiptCheck(request) === "mismatch"
+                    ? "font-medium text-destructive"
+                    : "font-medium"
+              }
+            >
+              {RECEIPT_CHECK_LABEL[receiptCheck(request)] ?? "—"}
+            </dd>
+          </div>
         </dl>
         {url ? (
           <a href={url} target="_blank" rel="noreferrer" className="block">

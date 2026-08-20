@@ -60,7 +60,12 @@ export async function proofUrl(path?: string | null): Promise<string | null> {
   if (!path) return null;
   const hit = urlCache.get(path);
   if (hit && hit.expires > Date.now()) return hit.url;
-  const { data, error } = await supabase.storage.from(PROOF_BUCKET).createSignedUrl(path, 3600);
+  let { data, error } = await supabase.storage.from(PROOF_BUCKET).createSignedUrl(path, 3600);
+  if (error || !data?.signedUrl) {
+    // New Generation Go Live payments reuse the shared private Cash In receipt
+    // bucket, so fall back to it before giving up.
+    ({ data, error } = await supabase.storage.from("cash-in-proofs").createSignedUrl(path, 3600));
+  }
   if (error || !data?.signedUrl) return null;
   urlCache.set(path, { url: data.signedUrl, expires: Date.now() + 55 * 60 * 1000 });
   return data.signedUrl;
