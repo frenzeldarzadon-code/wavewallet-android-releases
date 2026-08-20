@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { RatingStars } from "@/components/rating-stars";
 import { RetailImage } from "@/components/retail/retail-image";
+import { RETAIL_VISIBLE } from "@/lib/features";
 import { shortDateTime } from "@/lib/wavewallet";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -136,7 +137,7 @@ function PublicStorefront() {
               <Ticket className="size-3" /> Voucher store
             </StatusBadge>
           ) : null}
-          {shop.retail_enabled ? (
+          {RETAIL_VISIBLE && shop.retail_enabled ? (
             <StatusBadge tone="success">
               <Store className="size-3" /> Retail store
             </StatusBadge>
@@ -160,11 +161,13 @@ function PublicStorefront() {
         ) : null}
       </header>
 
-      <Tabs defaultValue={retail.length || !vouchers.length ? "retail" : "voucher"}>
+      <Tabs defaultValue={RETAIL_VISIBLE && (retail.length || !vouchers.length) ? "retail" : "voucher"}>
         <TabsList className="w-full">
-          <TabsTrigger value="retail" className="flex-1">
-            Retail ({retail.length})
-          </TabsTrigger>
+          {RETAIL_VISIBLE ? (
+            <TabsTrigger value="retail" className="flex-1">
+              Retail ({retail.length})
+            </TabsTrigger>
+          ) : null}
           <TabsTrigger value="voucher" className="flex-1">
             Vouchers ({vouchers.length})
           </TabsTrigger>
@@ -173,7 +176,7 @@ function PublicStorefront() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="retail">
+        <TabsContent value="retail" hidden={!RETAIL_VISIBLE}>
           {retail.length === 0 ? (
             <EmptyState title="No public retail products" />
           ) : (

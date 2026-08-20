@@ -26,6 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { RatingPicker, RatingStars } from "@/components/rating-stars";
 import { RetailImage } from "@/components/retail/retail-image";
+import { RETAIL_VISIBLE } from "@/lib/features";
 import { useSession } from "@/lib/session";
 import { fetchCreditBalance } from "@/lib/wallet";
 import { shortDateTime } from "@/lib/wavewallet";
@@ -126,11 +127,11 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
     }
   };
 
-  if (!settings.retailEnabled) {
+  if (!RETAIL_VISIBLE || !settings.retailEnabled) {
     return (
       <PageSection title="Retail store">
         <EmptyState
-          title="This shop has no retail store"
+          title="The retail store is not available"
           description="The shop admin has not enabled a retail store yet."
         />
       </PageSection>

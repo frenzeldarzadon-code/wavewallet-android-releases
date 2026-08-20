@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/ui-kit";
 import { SocialSignIn } from "@/components/auth/social-sign-in";
 import { PasswordField } from "@/components/password-field";
-import { homeFor, shopHomeFor } from "@/lib/session";
+import { homeFor } from "@/lib/session";
 import { useOnline } from "@/lib/pwa";
 import {
   loadAuthContext,
@@ -23,6 +23,12 @@ import {
   signUpCustomerAccount,
 } from "@/lib/auth";
 import { isRealEmail, validateGlobalSignup } from "@/lib/account-identifiers";
+import { ShopFinder } from "@/components/shop/shop-finder";
+import type { ShopSummary } from "@/lib/shop-directory";
+import { joinShopByCode, normalizeShopCode } from "@/lib/shop-directory";
+import { destinationAfterAuth, rememberPendingShopCode } from "@/lib/shop-routing";
+import { signInWithUsername } from "@/lib/username-login.functions";
+import { LOGIN_PASSWORD_HINT, LOGIN_USERNAME_HINT } from "@/lib/username-login";
 import { newPasswordIssue } from "@/lib/password-policy";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/wavewallet-logo.webp";
@@ -32,6 +38,13 @@ import { platformSettings } from "@/lib/wavewallet";
 import { superAdminSetupAvailable } from "@/lib/bootstrap.functions";
 
 export const Route = createFileRoute("/")({
+  // A direct shop link carries only the public 7-digit Shop ID.
+  validateSearch: (search: Record<string, unknown>): { shop?: string } => {
+    const raw = search["shop"];
+    const code =
+      typeof raw === "string" || typeof raw === "number" ? normalizeShopCode(String(raw)) : "";
+    return code ? { shop: code } : {};
+  },
   head: () => ({
     meta: [
       { title: "WaveWallet — Voucher & Wallet Platform for Hotspot Operators" },
@@ -55,7 +68,15 @@ export const Route = createFileRoute("/")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const shopParam = Route.useSearch().shop ?? "";
+  const [mode, setMode] = useState<"signin" | "signup">(shopParam ? "signup" : "signin");
+  // Two ways in: join an existing WiFi voucher operation, or become an operator.
+  const [signupPath, setSignupPath] = useState<"choose" | "join" | "operator">(
+    shopParam ? "join" : "choose",
+  );
+  const [shop, setShop] = useState<ShopSummary | null>(null);
+  const [method, setMethod] = useState<"email" | "username">("email");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -108,14 +129,10 @@ function LoginPage() {
   // Already signed in? Send straight to the right dashboard.
   useEffect(() => {
     let active = true;
-    loadAuthContext().then((ctx) => {
+    loadAuthContext().then(async (ctx) => {
       if (!active || !ctx) return;
-      // No shop membership yet — the Universe is still fully theirs.
-      if (!ctx.ecosystem && ctx.role === "customer") {
-        navigate({ to: "/universe", replace: true });
-        return;
-      }
-      navigate({ to: homeFor(ctx.role), replace: true });
+      const to = await destinationAfterAuth(ctx.role);
+      if (active) navigate({ to, replace: true });
     });
     superAdminSetupAvailable()
       .then((r) => active && setSetupOpen(r.available))
@@ -129,28 +146,41 @@ function LoginPage() {
 
   const signIn = async () => {
     if (busy) return;
-    if (!email.trim() || !password) {
-      toast.error("Enter your email or mobile number, and your password.");
+    if (method === "username" ? !username.trim() : !email.trim()) {
+      toast.error(
+        method === "username"
+          ? "Enter your username and password."
+          : "Enter your email or mobile number, and your password.",
+      );
+      return;
+    }
+    if (!password) {
+      toast.error("Enter your password.");
       return;
     }
     setBusy(true);
     try {
-      const ctx = await signInWithPassword(email, password);
+      let ctx = null;
+      if (method === "username") {
+        // The username maps to the same single account — no duplicate identity.
+        const tokens = await signInWithUsername({ data: { username, password } });
+        const { error } = await supabase.auth.setSession({
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+        });
+        if (error) throw new Error(error.message);
+        ctx = await loadAuthContext();
+      } else {
+        ctx = await signInWithPassword(email, password);
+      }
       if (!ctx) throw new Error("We could not load your account profile.");
       if (ctx.profile.status !== "active") {
         await supabase.auth.signOut();
         throw new Error("This account is suspended. Contact your operator.");
       }
-      // Shop membership is separate from having an account. Someone who belongs
-      // to no shop still gets the whole Universe — feed, profile, messages and
-      // the shop directory — joining a shop later is automatic.
-      if (!ctx.ecosystem && ctx.role === "customer") {
-        navigate({ to: "/universe", replace: true });
-        return;
-      }
-      // Role is resolved after authentication — never chosen by the visitor.
-      // With a valid remembered shop we open its Voucher Shop directly.
-      navigate({ to: shopHomeFor(ctx.role) });
+      // Members who belong to a shop open that shop; the Universe stays in
+      // navigation. Role is resolved after authentication, never chosen here.
+      navigate({ to: await destinationAfterAuth(ctx.role), replace: true });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not sign you in.");
     } finally {
@@ -160,6 +190,10 @@ function LoginPage() {
 
   const signUp = async () => {
     if (signupBusy) return;
+    if (signupPath === "join" && !shop) {
+      toast.error("Enter the 7-digit Shop ID of the operator you want to join.");
+      return;
+    }
     const problem =
       validateGlobalSignup(form) ??
       addressIssue({
@@ -174,6 +208,7 @@ function LoginPage() {
       return;
     }
     setSignupBusy(true);
+    const joinCode = signupPath === "join" ? (shop?.shopCode ?? "") : "";
     try {
       const { needsEmailConfirmation } = await signUpCustomerAccount({
         fullName: form.name,
@@ -188,14 +223,25 @@ function LoginPage() {
       });
       setForm({ name: "", email: "", phone: "", password: "", confirm: "" });
       setAddress(EMPTY_ADDRESS);
-      // A new account belongs to no shop, and that is fine: the Universe is open
-      // to everyone straight away. Joining a shop later is automatic.
       if (needsEmailConfirmation && isRealEmail(form.email)) {
+        // The shop can only be joined by a confirmed, signed-in account.
+        if (joinCode) rememberPendingShopCode(joinCode);
         await supabase.auth.signOut();
         setApplied({ needsEmail: true });
         return;
       }
-      toast.success("Welcome to WaveWallet. You are in the Universe — join a shop any time.");
+      if (joinCode) {
+        await joinShopByCode(joinCode);
+        toast.success("You joined the shop — your wallet there is ready.");
+        navigate({ to: "/app/shop", replace: true });
+        return;
+      }
+      if (signupPath === "operator") {
+        toast.success("Account created — now create your shop.");
+        navigate({ to: "/start-shop", replace: true });
+        return;
+      }
+      toast.success("Welcome to WaveWallet.");
       navigate({ to: "/universe", replace: true });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not create your account.");
@@ -203,6 +249,7 @@ function LoginPage() {
       setSignupBusy(false);
     }
   };
+
 
   return (
     <div className="dark auth-surface relative min-h-[100dvh] w-full overflow-x-hidden">
@@ -275,20 +322,54 @@ function LoginPage() {
                     One sign-in for everyone — we take you to the right place.
                   </p>
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="email">Email or mobile number</Label>
-                  <Input
-                    id="email"
-                    type="text"
-                    inputMode="email"
-                    className="h-11"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && signIn()}
-                    placeholder="you@example.com or 0917 000 0000"
-                    autoComplete="username"
-                  />
+                <div className="grid grid-cols-2 gap-1 rounded-xl border border-auth-border p-1">
+                  {(["email", "username"] as const).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setMethod(m)}
+                      className={
+                        "rounded-lg px-2 py-1.5 text-xs font-medium " +
+                        (method === m
+                          ? "bg-primary text-primary-foreground"
+                          : "text-auth-muted hover:text-auth-fg")
+                      }
+                    >
+                      {m === "email" ? "Email / mobile" : "Username"}
+                    </button>
+                  ))}
                 </div>
+                {method === "username" ? (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="login-username">Username</Label>
+                    <Input
+                      id="login-username"
+                      type="text"
+                      className="h-11"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && signIn()}
+                      placeholder="Enter username"
+                      autoComplete="username"
+                    />
+                    <p className="text-[11px] text-auth-muted">{LOGIN_USERNAME_HINT}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email">Email or mobile number</Label>
+                    <Input
+                      id="email"
+                      type="text"
+                      inputMode="email"
+                      className="h-11"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && signIn()}
+                      placeholder="Enter your email or mobile number"
+                      autoComplete="username"
+                    />
+                  </div>
+                )}
                 <PasswordField
                   id="password"
                   label="Password"
@@ -297,6 +378,10 @@ function LoginPage() {
                   autoComplete="current-password"
                   onEnter={() => void signIn()}
                 />
+                {method === "username" ? (
+                  <p className="-mt-1 text-[11px] text-auth-muted">{LOGIN_PASSWORD_HINT}</p>
+                ) : null}
+
                 <Button className="h-11 w-full" onClick={signIn} disabled={busy || !online}>
                   <LogIn className="size-4" />
                   {busy ? "Signing in…" : "Sign In"}
@@ -318,15 +403,69 @@ function LoginPage() {
                 </Button>
               </CardContent>
             </Card>
-          ) : (
+          ) : signupPath === "choose" ? (
             <Card className="auth-card rounded-2xl">
               <CardContent className="space-y-3 py-5">
                 <div className="space-y-0.5">
                   <h1 className="text-xl font-semibold tracking-tight">Create your account</h1>
+                  <p className="text-xs text-auth-muted">How will you use WaveWallet?</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSignupPath("join")}
+                  className="flex w-full items-start gap-3 rounded-xl border border-auth-border px-4 py-3 text-left hover:bg-primary/10"
+                >
+                  <UserPlus className="mt-0.5 size-4 text-auth-cyan" />
+                  <span>
+                    <span className="block text-sm font-semibold text-auth-fg">
+                      Sign up to an existing WiFi voucher operation
+                    </span>
+                    <span className="mt-0.5 block text-xs text-auth-muted">
+                      Enter the operator&apos;s 7-digit Shop ID, or find them by municipality.
+                    </span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSignupPath("operator")}
+                  className="flex w-full items-start gap-3 rounded-xl border border-auth-border px-4 py-3 text-left hover:bg-primary/10"
+                >
+                  <ShieldCheck className="mt-0.5 size-4 text-auth-cyan" />
+                  <span>
+                    <span className="block text-sm font-semibold text-auth-fg">
+                      Sign up as an operator of WiFi voucher
+                    </span>
+                    <span className="mt-0.5 block text-xs text-auth-muted">
+                      Create your own shop — free Demo mode first, Go Live when you are ready.
+                    </span>
+                  </span>
+                </button>
+                <p className="text-center text-xs text-auth-muted">
+                  Already have an account?{" "}
+                  <button
+                    type="button"
+                    className="font-semibold text-auth-cyan hover:underline"
+                    onClick={() => setMode("signin")}
+                  >
+                    Sign In
+                  </button>
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="auth-card rounded-2xl">
+              <CardContent className="space-y-3 py-5">
+                <div className="space-y-0.5">
+                  <h1 className="text-xl font-semibold tracking-tight">
+                    {signupPath === "join" ? "Join a WiFi voucher shop" : "Become an operator"}
+                  </h1>
                   <p className="text-xs text-auth-muted">
                     Give us an email address or a mobile number — at least one is required.
                   </p>
                 </div>
+                {signupPath === "join" ? (
+                  <ShopFinder value={shop} onChange={setShop} initialCode={shopParam} idPrefix="su" />
+                ) : null}
                 <div className="space-y-1.5">
                   <Label htmlFor="su-name">Full name</Label>
                   <Input
@@ -334,7 +473,7 @@ function LoginPage() {
                     className="h-11"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    placeholder="Juan Dela Cruz"
+                    placeholder="Enter your full name"
                     autoComplete="name"
                   />
                 </div>
@@ -347,7 +486,7 @@ function LoginPage() {
                       className="h-11"
                       value={form.email}
                       onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      placeholder="you@example.com"
+                      placeholder="Enter your email"
                       autoComplete="email"
                     />
                   </div>
@@ -359,7 +498,7 @@ function LoginPage() {
                       className="h-11"
                       value={form.phone}
                       onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                      placeholder="0917 000 0000"
+                      placeholder="Enter your mobile number"
                       autoComplete="tel"
                     />
                   </div>
@@ -387,8 +526,17 @@ function LoginPage() {
                   <UserPlus className="size-4" />
                   {signupBusy ? "Creating…" : "Create Account"}
                 </Button>
-                <p className="text-center text-xs text-auth-muted">
-                  Already have an account?{" "}
+                <div className="flex items-center justify-between text-xs text-auth-muted">
+                  <button
+                    type="button"
+                    className="hover:underline"
+                    onClick={() => {
+                      setSignupPath("choose");
+                      setShop(null);
+                    }}
+                  >
+                    ← Back
+                  </button>
                   <button
                     type="button"
                     className="font-semibold text-auth-cyan hover:underline"
@@ -396,9 +544,10 @@ function LoginPage() {
                   >
                     Sign In
                   </button>
-                </p>
+                </div>
               </CardContent>
             </Card>
+
           )}
 
           {setupOpen ? (

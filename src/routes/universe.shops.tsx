@@ -4,7 +4,7 @@
  * they belong inside the shop console, isolated per ecosystem.
  */
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Check, Loader2, Store } from "lucide-react";
+import { Check, Loader2, Plus, Store } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -13,14 +13,13 @@ import { ShopInvitationsCard } from "@/components/universe/shop-invitations-card
 import { UniverseShell } from "@/components/universe/universe-shell";
 import { homeFor, useSession } from "@/lib/session";
 import {
-  fetchJoinableEcosystems,
   fetchMyMemberships,
-  requestJoinEcosystem,
   switchEcosystem,
   switchableMemberships,
-  type JoinableEcosystem,
   type Membership,
 } from "@/lib/memberships";
+import { ShopFinder } from "@/components/shop/shop-finder";
+import { joinShopByCode, type ShopSummary } from "@/lib/shop-directory";
 import { roleLabels } from "@/lib/wavewallet";
 
 export const Route = createFileRoute("/universe/shops")({
@@ -47,12 +46,11 @@ export const Route = createFileRoute("/universe/shops")({
 function UniverseShops() {
   const session = useSession();
   const [memberships, setMemberships] = useState<Membership[]>([]);
-  const [joinable, setJoinable] = useState<JoinableEcosystem[]>([]);
+  const [found, setFound] = useState<ShopSummary | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setMemberships(await fetchMyMemberships());
-    setJoinable(await fetchJoinableEcosystems());
   }, []);
 
   useEffect(() => {
@@ -75,7 +73,7 @@ function UniverseShops() {
   };
 
   return (
-    <UniverseShell title="Shops" subtitle="Your memberships and the directory">
+    <UniverseShell title="Shops" subtitle="Your shops, and joining another one">
       <div className="space-y-6 px-4 sm:px-0">
         <ShopInvitationsCard onChanged={() => void load()} />
 
@@ -86,7 +84,7 @@ function UniverseShops() {
           {mine.length === 0 ? (
             <EmptyState
               title="No shop memberships yet"
-              description="Join a shop below — your wallet in that shop opens right away."
+              description="Join a shop with its 7-digit Shop ID below, or create your own."
             />
           ) : (
             <div className="space-y-2">
@@ -124,50 +122,47 @@ function UniverseShops() {
         </PageSection>
 
         <PageSection
-          title="Discover shops"
-          description="Joining is automatic — the shop admin reviews new members afterwards. Joining never grants a role by itself."
+          title="Search & join an existing shop"
+          description="Enter the operator's 7-digit Shop ID, or find them by city / municipality. Shops you do not belong to stay private."
         >
-          {joinable.length === 0 ? (
-            <EmptyState title="No other shops are open for joining right now" />
-          ) : (
-            <div className="space-y-2">
-              {joinable.map((e) => (
-                <div
-                  key={e.id}
-                  className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">{e.name}</p>
-                    <p className="line-clamp-2 text-xs text-muted-foreground">
-                      {e.description ?? "Hotspot shop"}
-                    </p>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={e.pending || busy === e.id}
-                    onClick={async () => {
-                      setBusy(e.id);
-                      try {
-                        await requestJoinEcosystem(e.id);
-                        toast.success("You joined the shop — your wallet there is ready.");
-                        await load();
-                      } catch (err) {
-                        toast.error(
-                          err instanceof Error ? err.message : "Could not send the request",
-                        );
-                      } finally {
-                        setBusy(null);
-                      }
-                    }}
-                  >
-                    {e.pending ? "In review" : "Join shop"}
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+            <ShopFinder value={found} onChange={setFound} />
+            <Button
+              className="w-full"
+              disabled={!found || busy === "join"}
+              onClick={async () => {
+                if (!found) return;
+                setBusy("join");
+                try {
+                  await joinShopByCode(found.shopCode);
+                  toast.success("You joined the shop — your wallet there is ready.");
+                  setFound(null);
+                  await load();
+                } catch (err) {
+                  toast.error(err instanceof Error ? err.message : "Could not join that shop");
+                } finally {
+                  setBusy(null);
+                }
+              }}
+            >
+              {busy === "join" ? <Loader2 className="size-4 animate-spin" /> : null}
+              Join shop
+            </Button>
+          </div>
         </PageSection>
+
+        <PageSection
+          title="Create a new shop"
+          description="Run your own WiFi voucher operation. Shops start free in Demo mode; you Go Live when you are ready."
+        >
+          <Button asChild variant="outline" className="w-full">
+            <Link to="/start-shop">
+              <Plus className="size-4" />
+              Create New Shop
+            </Link>
+          </Button>
+        </PageSection>
+
 
         <p className="text-xs text-muted-foreground">
           Looking for balances, vouchers or reports?{" "}

@@ -11,6 +11,9 @@ import { ImageCropper } from "@/components/image-cropper";
 import { MemberAvatar } from "@/components/member-avatar";
 import { SocialLinksCard } from "@/components/social-links-card";
 import { AccountSecurityCard } from "@/components/account-security-card";
+import { LoginCredentialCard } from "@/components/login-credential-card";
+import { supabase } from "@/integrations/supabase/client";
+import { PageSection as CredentialSection } from "@/components/ui-kit";
 import { UpdateCenterCard } from "@/components/update-center-card";
 import type { CropRect } from "@/lib/image-optimize";
 import {
@@ -49,6 +52,23 @@ export function ProfilePage() {
   const [removePhoto, setRemovePhoto] = useState(false);
 
   const userId = account?.id ?? null;
+  // Existing username sign-in, if the member set one. Passwords are never read back.
+  const [loginUsername, setLoginUsername] = useState<string | null>(null);
+  useEffect(() => {
+    if (!userId) return;
+    let active = true;
+    void supabase
+      .from("login_usernames")
+      .select("username")
+      .eq("user_id", userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (active) setLoginUsername((data as { username: string } | null)?.username ?? null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [userId]);
   const saveContact = useServerFn(updateOwnContact);
 
   const load = useCallback(async () => {
@@ -372,6 +392,15 @@ export function ProfilePage() {
       </PageSection>
 
       <AccountSecurityCard username={profile?.handle ?? null} />
+
+      {userId ? (
+        <CredentialSection
+          title="Username sign-in"
+          description="Optional: sign in with a username and password instead of your email or mobile number."
+        >
+          <LoginCredentialCard userId={userId} current={loginUsername} self onSaved={(u) => setLoginUsername(u || null)} />
+        </CredentialSection>
+      ) : null}
 
       <UpdateCenterCard />
 

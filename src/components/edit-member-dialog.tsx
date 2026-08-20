@@ -17,6 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { diffProfile, validateProfileEdit, type ProfileEdit } from "@/lib/member-admin";
 import { updateMemberProfile } from "@/lib/member-admin.functions";
+import { LoginCredentialCard } from "@/components/login-credential-card";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface EditableMember {
   id: string;
@@ -34,11 +36,30 @@ interface Props {
 export function EditMemberDialog({ member, onClose, onSaved }: Props) {
   const [form, setForm] = useState<ProfileEdit>({ fullName: "", phone: "", email: "" });
   const [busy, setBusy] = useState(false);
+  // The username already on file, if any. A password is never read back.
+  const [loginUsername, setLoginUsername] = useState<string | null>(null);
 
   useEffect(() => {
     if (member) {
       setForm({ fullName: member.full_name, phone: member.phone, email: member.email });
     }
+  }, [member]);
+
+  useEffect(() => {
+    if (!member) return;
+    let active = true;
+    setLoginUsername(null);
+    void supabase
+      .from("login_usernames")
+      .select("username")
+      .eq("user_id", member.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (active) setLoginUsername((data as { username: string } | null)?.username ?? null);
+      });
+    return () => {
+      active = false;
+    };
   }, [member]);
 
   const submit = async () => {
@@ -84,7 +105,7 @@ export function EditMemberDialog({ member, onClose, onSaved }: Props) {
 
   return (
     <Dialog open={Boolean(member)} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit member details</DialogTitle>
           <DialogDescription>
@@ -118,6 +139,13 @@ export function EditMemberDialog({ member, onClose, onSaved }: Props) {
               onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
             />
           </div>
+          {member ? (
+            <LoginCredentialCard
+              userId={member.id}
+              current={loginUsername}
+              onSaved={(u) => setLoginUsername(u || null)}
+            />
+          ) : null}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={busy}>

@@ -27,3 +27,11 @@ export const SOCIAL_PATHS = [
 export function isSocialPath(path: string): boolean {
   return (SOCIAL_PATHS as readonly string[]).includes(path);
 }
+
+/**
+ * Retail Shop is hidden from the normal user-facing product for now: no
+ * navigation entries, no storefront entry points, no promotional UI. The
+ * backend, data and routes are deliberately left intact so it can be switched
+ * back on without a migration. The Voucher Shop is unaffected.
+ */
+export const RETAIL_VISIBLE = false;
