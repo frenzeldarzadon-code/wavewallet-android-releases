@@ -74,10 +74,11 @@ export async function submitGoLivePayment(input: {
   reference: string;
   months?: number;
   amountPaid?: number | null;
-  proofPath?: string | null;
+  /** Required: object path in the shared private cash-in-proofs bucket. */
+  proofPath: string;
 }): Promise<SubscriptionRequest> {
   requireOnline();
-  const problem = validateGoLive(input);
+  const problem = validateGoLive({ ...input, proofPath: input.proofPath });
   if (problem) throw new Error(problem);
   const { data, error } = await supabase.rpc("submit_go_live_payment", {
     _ecosystem_id: input.ecosystemId,
