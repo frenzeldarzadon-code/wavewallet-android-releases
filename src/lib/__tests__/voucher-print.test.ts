@@ -31,22 +31,25 @@ describe("voucher print templates", () => {
 });
 
 describe("physical print size", () => {
-  it("locks every voucher card to exactly 2in x 1.5in", () => {
+  it("locks every voucher card to exactly 2in x 2in", () => {
     expect(VOUCHER_PRINT_WIDTH_IN).toBe(2);
-    expect(VOUCHER_PRINT_HEIGHT_IN).toBe(1.5);
+    expect(VOUCHER_PRINT_HEIGHT_IN).toBe(2);
     const card = voucherPrintCss.slice(
       voucherPrintCss.indexOf(".vp-voucher {"),
       voucherPrintCss.indexOf("}", voucherPrintCss.indexOf(".vp-voucher {")),
     );
     expect(card).toContain("width: 2in;");
-    expect(card).toContain("height: 1.5in;");
+    expect(card).toContain("height: 2in;");
     expect(card).toContain("min-width: 2in;");
     expect(card).toContain("max-width: 2in;");
-    expect(card).toContain("min-height: 1.5in;");
-    expect(card).toContain("max-height: 1.5in;");
+    expect(card).toContain("min-height: 2in;");
+    expect(card).toContain("max-height: 2in;");
     // Never allowed to stretch or be scaled by the sheet.
     expect(card).toContain("flex: 0 0 auto;");
     expect(voucherPrintCss).not.toMatch(/transform:\s*scale/);
+    // Product name and the shop's stored description must wrap, never overflow.
+    expect(voucherPrintCss).toContain(".vp-desc");
+    expect(voucherPrintCss).toContain(".vp-product");
   });
 
   it("keeps cards whole across pages and hides the controls when printing", () => {
