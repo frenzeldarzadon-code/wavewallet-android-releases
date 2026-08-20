@@ -235,8 +235,8 @@ export const voucherPrintCss = `
  */
 export const voucherSelectorCss = `
 .vp-thumb-frame {
-  width: 100%;
-  aspect-ratio: 1 / 1;
+  width: 96px;
+  height: 96px;
   overflow: hidden;
   border-radius: 0.5rem;
   position: relative;
@@ -245,7 +245,7 @@ export const voucherSelectorCss = `
   position: absolute;
   top: 0;
   left: 0;
-  transform: scale(var(--vp-thumb-scale, 0.46));
+  transform: scale(var(--vp-thumb-scale, 0.5));
   transform-origin: top left;
 }
 `;
