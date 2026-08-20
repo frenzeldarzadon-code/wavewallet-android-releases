@@ -41,7 +41,8 @@ export const Route = createFileRoute("/")({
   // A direct shop link carries only the public 7-digit Shop ID.
   validateSearch: (search: Record<string, unknown>): { shop?: string } => {
     const raw = search["shop"];
-    const code = typeof raw === "string" ? normalizeShopCode(raw) : "";
+    const code =
+      typeof raw === "string" || typeof raw === "number" ? normalizeShopCode(String(raw)) : "";
     return code ? { shop: code } : {};
   },
   head: () => ({

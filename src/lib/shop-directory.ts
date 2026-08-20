@@ -36,7 +36,7 @@ export const SHOP_CODE_LENGTH = 7;
 
 /** Keeps digits only, so "123-4567" and "123 4567" both work. */
 export function normalizeShopCode(value: string): string {
-  return (value ?? "").replace(/\D+/g, "").slice(0, SHOP_CODE_LENGTH);
+  return String(value ?? "").replace(/\D+/g, "").slice(0, SHOP_CODE_LENGTH);
 }
 
 /** Guidance shown BEFORE submitting — never only as an error afterwards. */
