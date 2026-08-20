@@ -402,15 +402,69 @@ function LoginPage() {
                 </Button>
               </CardContent>
             </Card>
-          ) : (
+          ) : signupPath === "choose" ? (
             <Card className="auth-card rounded-2xl">
               <CardContent className="space-y-3 py-5">
                 <div className="space-y-0.5">
                   <h1 className="text-xl font-semibold tracking-tight">Create your account</h1>
+                  <p className="text-xs text-auth-muted">How will you use WaveWallet?</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSignupPath("join")}
+                  className="flex w-full items-start gap-3 rounded-xl border border-auth-border px-4 py-3 text-left hover:bg-primary/10"
+                >
+                  <UserPlus className="mt-0.5 size-4 text-auth-cyan" />
+                  <span>
+                    <span className="block text-sm font-semibold text-auth-fg">
+                      Sign up to an existing WiFi voucher operation
+                    </span>
+                    <span className="mt-0.5 block text-xs text-auth-muted">
+                      Enter the operator&apos;s 7-digit Shop ID, or find them by municipality.
+                    </span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSignupPath("operator")}
+                  className="flex w-full items-start gap-3 rounded-xl border border-auth-border px-4 py-3 text-left hover:bg-primary/10"
+                >
+                  <ShieldCheck className="mt-0.5 size-4 text-auth-cyan" />
+                  <span>
+                    <span className="block text-sm font-semibold text-auth-fg">
+                      Sign up as an operator of WiFi voucher
+                    </span>
+                    <span className="mt-0.5 block text-xs text-auth-muted">
+                      Create your own shop — free Demo mode first, Go Live when you are ready.
+                    </span>
+                  </span>
+                </button>
+                <p className="text-center text-xs text-auth-muted">
+                  Already have an account?{" "}
+                  <button
+                    type="button"
+                    className="font-semibold text-auth-cyan hover:underline"
+                    onClick={() => setMode("signin")}
+                  >
+                    Sign In
+                  </button>
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="auth-card rounded-2xl">
+              <CardContent className="space-y-3 py-5">
+                <div className="space-y-0.5">
+                  <h1 className="text-xl font-semibold tracking-tight">
+                    {signupPath === "join" ? "Join a WiFi voucher shop" : "Become an operator"}
+                  </h1>
                   <p className="text-xs text-auth-muted">
                     Give us an email address or a mobile number — at least one is required.
                   </p>
                 </div>
+                {signupPath === "join" ? (
+                  <ShopFinder value={shop} onChange={setShop} initialCode={shopParam} idPrefix="su" />
+                ) : null}
                 <div className="space-y-1.5">
                   <Label htmlFor="su-name">Full name</Label>
                   <Input
@@ -418,7 +472,7 @@ function LoginPage() {
                     className="h-11"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    placeholder="Juan Dela Cruz"
+                    placeholder="Enter your full name"
                     autoComplete="name"
                   />
                 </div>
@@ -431,7 +485,7 @@ function LoginPage() {
                       className="h-11"
                       value={form.email}
                       onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      placeholder="you@example.com"
+                      placeholder="Enter your email"
                       autoComplete="email"
                     />
                   </div>
@@ -443,7 +497,7 @@ function LoginPage() {
                       className="h-11"
                       value={form.phone}
                       onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                      placeholder="0917 000 0000"
+                      placeholder="Enter your mobile number"
                       autoComplete="tel"
                     />
                   </div>
@@ -471,8 +525,17 @@ function LoginPage() {
                   <UserPlus className="size-4" />
                   {signupBusy ? "Creating…" : "Create Account"}
                 </Button>
-                <p className="text-center text-xs text-auth-muted">
-                  Already have an account?{" "}
+                <div className="flex items-center justify-between text-xs text-auth-muted">
+                  <button
+                    type="button"
+                    className="hover:underline"
+                    onClick={() => {
+                      setSignupPath("choose");
+                      setShop(null);
+                    }}
+                  >
+                    ← Back
+                  </button>
                   <button
                     type="button"
                     className="font-semibold text-auth-cyan hover:underline"
@@ -480,9 +543,10 @@ function LoginPage() {
                   >
                     Sign In
                   </button>
-                </p>
+                </div>
               </CardContent>
             </Card>
+
           )}
 
           {setupOpen ? (
