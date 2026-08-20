@@ -186,9 +186,20 @@ export function ShopAdminQueue() {
                         Ref {c.payer_reference ?? "—"} · paid from {c.payer_number ?? "—"}
                       </p>
                       <p className="text-muted-foreground">{shortDateTime(c.created_at)}</p>
+                      {c.status === "pending" && c.authentication_reason ? (
+                        <p
+                          className={
+                            c.payment_authenticated ? "text-muted-foreground" : "font-medium text-destructive"
+                          }
+                        >
+                          {c.payment_authenticated ? "Payment authenticated" : "Not authenticated"} ·{" "}
+                          {c.authentication_reason}
+                        </p>
+                      ) : null}
                       {c.decision_reason ? (
                         <p className="text-muted-foreground">Note: {c.decision_reason}</p>
                       ) : null}
+
                     </div>
                     <div className="flex items-center gap-2">
                       <StatusBadge tone={tone(c.status)}>{statusLabel(c.status)}</StatusBadge>
