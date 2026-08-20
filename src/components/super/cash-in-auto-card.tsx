@@ -44,10 +44,10 @@ export function CashInAutoCard() {
       verification_mode: next.platform_rule?.verification_mode ?? "staged",
       layer1_require_amount: true,
       layer1_require_sender_number: next.platform_rule?.layer1_require_sender_number ?? true,
-      layer1_require_time_window: next.platform_rule?.layer1_require_time_window ?? false,
+      layer1_require_time_window: false,
       layer2_require_amount_match: next.platform_rule?.layer2_require_amount_match ?? true,
       layer2_require_sender_match: next.platform_rule?.layer2_require_sender_match ?? true,
-      layer2_require_listener_reference: next.platform_rule?.layer2_require_listener_reference ?? false,
+      layer2_require_listener_reference: false,
     });
 
   };
@@ -103,10 +103,8 @@ export function CashInAutoCard() {
       await setCashInAuthFields({
         ecosystemId: null,
         layer1SenderNumber: next.layer1_require_sender_number ?? true,
-        layer1TimeWindow: next.layer1_require_time_window ?? false,
         layer2AmountMatch: next.layer2_require_amount_match ?? true,
         layer2SenderMatch: next.layer2_require_sender_match ?? true,
-        layer2ListenerReference: next.layer2_require_listener_reference ?? false,
         requireReceipt: next.require_receipt_match ?? true,
       });
       setRule(next);

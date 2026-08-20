@@ -22,6 +22,8 @@ export interface ReceiptReading {
   reference: string | null;
   amountPhp: number | null;
   senderNumber: string | null;
+  /** The GCash account the money was sent TO, when the receipt shows it. */
+  receivingNumber?: string | null;
   /** Payment date/time printed on the receipt, ISO 8601, when it was legible. */
   paidAt?: string | null;
   /** The reader's own confidence that it read the reference correctly, 0..1. */
@@ -98,6 +100,7 @@ export function parseReceiptReading(raw: string): ReceiptReading {
     reference: null,
     amountPhp: null,
     senderNumber: null,
+    receivingNumber: null,
     paidAt: null,
     confidence: 0,
     readable: false,
@@ -119,6 +122,7 @@ export function parseReceiptReading(raw: string): ReceiptReading {
     reference,
     amountPhp: numeric(parsed["amount_php"] ?? parsed["amount"]),
     senderNumber: text(parsed["sender_number"] ?? parsed["sender"]),
+    receivingNumber: text(parsed["receiving_number"] ?? parsed["receiver_number"] ?? parsed["recipient_number"]),
     paidAt: isoDateTime(parsed["paid_at"] ?? parsed["datetime"] ?? parsed["date_time"]),
     confidence,
     readable: parsed["readable"] === false ? false : Boolean(reference),
