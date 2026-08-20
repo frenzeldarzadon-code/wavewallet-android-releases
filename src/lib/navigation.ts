@@ -40,7 +40,7 @@ import {
   UserSquare2,
   Wallet,
 } from "lucide-react";
-import { SOCIAL_ENABLED } from "@/lib/features";
+import { RETAIL_VISIBLE, SOCIAL_ENABLED } from "@/lib/features";
 import type { Role } from "@/lib/wavewallet";
 
 export interface NavItem {
@@ -122,7 +122,9 @@ export function customerNav(): Nav {
       label: "Shop",
       items: [
         { to: "/app/shop", label: "Voucher shop", icon: ShoppingBag },
-        { to: "/app/store", label: "Retail store", icon: Store },
+        ...(RETAIL_VISIBLE
+          ? ([{ to: "/app/store", label: "Retail store", icon: Store }] as NavItem[])
+          : []),
         { to: "/app/rewards", label: "Rewards", icon: Gift },
       ],
     },
@@ -188,7 +190,9 @@ export function resellerNav(role: Role = "reseller"): Nav {
       label: "Shop",
       items: [
         { to: "/reseller/shop", label: "Voucher shop", icon: ShoppingCart },
-        { to: "/reseller/store", label: "Retail store", icon: Store },
+        ...(RETAIL_VISIBLE
+          ? ([{ to: "/reseller/store", label: "Retail store", icon: Store }] as NavItem[])
+          : []),
         { to: "/reseller/rewards", label: "Rewards", icon: Gift },
       ],
     },
@@ -249,8 +253,12 @@ export function adminNav(): Nav {
         { to: "/admin/products", label: "Voucher products", icon: Package },
         { to: "/admin/vouchers", label: "Code inventory", icon: Ticket },
         { to: "/admin/shop", label: "Voucher shop", icon: ShoppingBag },
-        { to: "/admin/retail", label: "Retail products", icon: Store },
-        { to: "/admin/orders", label: "Retail orders", icon: ClipboardList },
+        ...(RETAIL_VISIBLE
+          ? ([
+              { to: "/admin/retail", label: "Retail products", icon: Store },
+              { to: "/admin/orders", label: "Retail orders", icon: ClipboardList },
+            ] as NavItem[])
+          : []),
         { to: "/admin/rewards", label: "Rewards", icon: Gift },
       ],
     },
