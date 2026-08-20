@@ -26,6 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { superadminSetShopPlan } from "@/lib/go-live";
 import { SubscriptionPlansCard } from "@/components/super/subscription-plans-card";
+import { GoLiveRequestsCard } from "@/components/super/go-live-requests-card";
 import { peso, shortDate } from "@/lib/wavewallet";
 import {
   activateSubscription,
@@ -90,6 +91,11 @@ function SuperShops() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const shopNames = useMemo(
+    () => Object.fromEntries(shops.map((s) => [s.id, s.name] as const)),
+    [shops],
+  );
 
   const stats = useMemo(() => {
     const active = shops.filter((s) => s.subscription?.state === "active").length;
