@@ -5,7 +5,15 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Printer } from "lucide-react";
+import { Download, Printer, Share2 } from "lucide-react";
+import { toast } from "sonner";
+import {
+  downloadBlob,
+  renderVoucherImage,
+  shareVoucherImage,
+  voucherFileName,
+  type VoucherImageData,
+} from "@/lib/voucher-image";
 import { Button } from "@/components/ui/button";
 import { buildCoinHistory, cashbackSummary, filterCoinHistory } from "@/lib/coin-history";
 import { Card, CardContent } from "@/components/ui/card";
