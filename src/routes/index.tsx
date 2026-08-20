@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/ui-kit";
 import { SocialSignIn } from "@/components/auth/social-sign-in";
 import { PasswordField } from "@/components/password-field";
-import { homeFor, shopHomeFor } from "@/lib/session";
+import { homeFor } from "@/lib/session";
 import { useOnline } from "@/lib/pwa";
 import {
   loadAuthContext,
@@ -39,9 +39,11 @@ import { superAdminSetupAvailable } from "@/lib/bootstrap.functions";
 
 export const Route = createFileRoute("/")({
   // A direct shop link carries only the public 7-digit Shop ID.
-  validateSearch: (search: Record<string, unknown>) => ({
-    shop: typeof search.shop === "string" ? normalizeShopCode(search.shop) : "",
-  }),
+  validateSearch: (search: Record<string, unknown>): { shop?: string } => {
+    const raw = search["shop"];
+    const code = typeof raw === "string" ? normalizeShopCode(raw) : "";
+    return code ? { shop: code } : {};
+  },
   head: () => ({
     meta: [
       { title: "WaveWallet — Voucher & Wallet Platform for Hotspot Operators" },
@@ -65,7 +67,7 @@ export const Route = createFileRoute("/")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { shop: shopParam } = Route.useSearch();
+  const shopParam = Route.useSearch().shop ?? "";
   const [mode, setMode] = useState<"signin" | "signup">(shopParam ? "signup" : "signin");
   // Two ways in: join an existing WiFi voucher operation, or become an operator.
   const [signupPath, setSignupPath] = useState<"choose" | "join" | "operator">(
