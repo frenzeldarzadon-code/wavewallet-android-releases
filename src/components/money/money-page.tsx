@@ -295,8 +295,10 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
       const submitted = await requestCashIn({
         methodId,
         amountPhp: Number(amount),
-        // Evidence, not a typed claim: the sending number comes off the receipt.
-        payerNumber: extract?.senderNumber ?? null,
+        // A GCash send receipt never prints the payer's own number, so this is
+        // the number stated by the member — never their saved profile phone.
+        payerNumber: extract?.senderNumber ?? payerNumber,
+
         payerReference: payerRef,
         paidAt: fromLocalInput(paidAt),
         ocr: extract
