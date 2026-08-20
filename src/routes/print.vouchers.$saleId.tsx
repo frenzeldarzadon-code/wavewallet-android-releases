@@ -144,14 +144,15 @@ function PrintVouchersPage() {
           <div className="vp-sheet">
             {sale.codes.map((code, i) => (
               <div key={code} className={`vp-voucher vp-t-${template}`}>
-                <div>
+                <div className="vp-head">
                   <p className="vp-brand">WaveWallet</p>
                   <p className="vp-shop">{sale.shopName}</p>
                   <p className="vp-product">{sale.productName}</p>
+                  {sale.description ? <p className="vp-desc">{sale.description}</p> : null}
                 </div>
-                <div>
+                <div className="vp-body">
                   <p className="vp-code-label">WiFi voucher code</p>
-                  <p className="vp-code">{code}</p>
+                  <p className={code.length > 12 ? "vp-code vp-code-long" : "vp-code"}>{code}</p>
                 </div>
                 <div className="vp-meta">
                   <span className="vp-price">{peso(sale.listPrice)}</span>
