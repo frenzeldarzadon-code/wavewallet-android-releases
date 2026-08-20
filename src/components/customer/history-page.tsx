@@ -189,13 +189,33 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
                   ) : (
                     <StatusBadge tone="muted">Code unavailable</StatusBadge>
                   )}
-                  {/* Presentation only: opens the print page for the exact
-                      vouchers already issued by this transaction. */}
-                  <Button asChild variant="outline" size="sm" className="mt-1">
-                    <Link to="/print/vouchers/$saleId" params={{ saleId: p.id }}>
-                      <Printer className="size-4" /> Print
-                    </Link>
-                  </Button>
+                  {/* Presentation only: Download | Share | Print act on the
+                      exact voucher already issued by this transaction. */}
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={!p.code || busyId === p.id}
+                      onClick={() => void saveVoucher(p)}
+                    >
+                      <Download className="size-4" /> Download
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={!p.code || busyId === p.id}
+                      onClick={() => void shareVoucher(p)}
+                    >
+                      <Share2 className="size-4" /> Share
+                    </Button>
+                    <Button asChild variant="outline" size="sm">
+                      <Link to="/print/vouchers/$saleId" params={{ saleId: p.id }}>
+                        <Printer className="size-4" /> Print
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               ))}
             </CardContent>
