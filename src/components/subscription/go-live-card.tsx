@@ -55,6 +55,9 @@ export function GoLiveCard({
   const [reference, setReference] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [quote, setQuote] = useState<SubscriptionQuote | null>(null);
+  const [confirming, setConfirming] = useState(false);
+
 
   const load = useCallback(async () => {
     try {
