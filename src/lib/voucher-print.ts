@@ -11,7 +11,19 @@ import { supabase } from "@/integrations/supabase/client";
 export const VOUCHER_PRINT_WIDTH_IN = 2;
 export const VOUCHER_PRINT_HEIGHT_IN = 2;
 
-export type VoucherTemplateId = "classic" | "minimal" | "modern" | "dark" | "colorful";
+export type VoucherTemplateId =
+  | "classic"
+  | "minimal"
+  | "modern"
+  | "geometric"
+  | "futuristic"
+  | "pastel"
+  | "luxury"
+  | "aurora"
+  | "pop"
+  | "organic"
+  | "neon"
+  | "mono";
 
 export interface VoucherTemplate {
   id: VoucherTemplateId;
@@ -21,11 +33,18 @@ export interface VoucherTemplate {
 
 /** Visual styling only — all templates render identical voucher data. */
 export const voucherTemplates: VoucherTemplate[] = [
-  { id: "classic", name: "Classic", description: "Bordered ticket with a dashed cut line." },
-  { id: "minimal", name: "Minimal", description: "Plain white, maximum code legibility." },
-  { id: "modern", name: "Modern", description: "Accent bar with clean type." },
-  { id: "dark", name: "Dark", description: "Dark panel with a bright code." },
-  { id: "colorful", name: "Colorful", description: "Blue/green gradient header." },
+  { id: "classic", name: "Classic Premium", description: "Timeless framed ticket with a refined cut line." },
+  { id: "minimal", name: "Minimal", description: "Quiet Swiss card, maximum code legibility." },
+  { id: "modern", name: "Very Modern", description: "Editorial product card with a bold accent edge." },
+  { id: "geometric", name: "Geometric", description: "Precise shapes and a premium retail composition." },
+  { id: "futuristic", name: "Futuristic", description: "Sleek dark tech surface with a fine grid." },
+  { id: "pastel", name: "Pastel", description: "Soft refined pastels, elegant and youthful." },
+  { id: "luxury", name: "Luxury", description: "Black-tie card with restrained gold accents." },
+  { id: "aurora", name: "Aurora Glass", description: "Translucent gradient panel with a clear code plate." },
+  { id: "pop", name: "Bold Pop", description: "Confident shapes and heavyweight typography." },
+  { id: "organic", name: "Organic", description: "Earthy palette with soft natural curves." },
+  { id: "neon", name: "Neon Night", description: "Dark nightlife card with controlled neon accents." },
+  { id: "mono", name: "Mono Press", description: "Inked editorial press stub in monospace." },
 ];
 
 export function isVoucherTemplate(v: string): v is VoucherTemplateId {
