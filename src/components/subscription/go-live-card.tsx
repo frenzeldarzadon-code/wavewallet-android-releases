@@ -319,19 +319,56 @@ export function GoLiveCard({
                   : ` for ${monthCount} month${monthCount === 1 ? "" : "s"} of ${plan?.name ?? "the selected plan"}.`}
               </p>
 
-              <Button
-                className="w-full"
-                disabled={busy || !plan || Boolean(problem)}
-                onClick={() => setConfirming(true)}
-              >
+              {showErrors && checklist.length > 0 ? (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-destructive bg-destructive/10 px-3 py-2.5"
+                >
+                  <p className="flex items-center gap-1.5 text-sm font-semibold text-destructive">
+                    <AlertTriangle className="size-4" /> Complete these items before going Live
+                  </p>
+                  <ul className="mt-2 space-y-1.5">
+                    {checklist.map((item) => (
+                      <li key={item.id} className="text-xs leading-relaxed text-destructive">
+                        {item.fieldId ? (
+                          <button
+                            type="button"
+                            className="text-left font-semibold underline underline-offset-2"
+                            onClick={() => focusItem(item)}
+                          >
+                            {item.label}
+                          </button>
+                        ) : item.to ? (
+                          <Link
+                            to={item.to}
+                            className="font-semibold underline underline-offset-2"
+                          >
+                            {item.label}
+                          </Link>
+                        ) : (
+                          <span className="font-semibold">{item.label}</span>
+                        )}
+                        <span className="block text-destructive/90">{item.how}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+              {serverError && !serverField ? (
+                <p role="alert" className="text-xs font-medium text-destructive">
+                  {serverError}
+                </p>
+              ) : null}
+
+              <Button className="w-full" disabled={busy} onClick={tryConfirm}>
                 {busy ? (
                   <Loader2 className="mr-1 size-4 animate-spin" />
                 ) : (
                   <Rocket className="mr-1 size-4" />
                 )}
-                {isPlanChange ? "Review and confirm plan change" : "Submit payment and go live"}
+                {isPlanChange ? "Review and confirm plan change" : "Subscribe & Go Live"}
               </Button>
-              {problem ? <p className="text-xs text-destructive">{problem}</p> : null}
 
               <AlertDialog open={confirming} onOpenChange={setConfirming}>
                 <AlertDialogContent>
