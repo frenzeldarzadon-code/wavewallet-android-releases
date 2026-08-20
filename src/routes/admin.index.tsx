@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Coins, Link2, Ticket, Users } from "lucide-react";
+import { ArrowRight, Coins, FlaskConical, Link2, Rocket, Ticket, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,9 @@ import { useSession } from "@/lib/session";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminEarningsPanel } from "@/components/admin-earnings-panel";
 import { peso, shortDateTime } from "@/lib/wavewallet";
+import { useShopStatus } from "@/lib/shop-status";
+import { reviewCountdown } from "@/lib/review-demo";
+import { StatusBadge } from "@/components/ui-kit";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
@@ -53,6 +56,7 @@ function AdminDashboard() {
   const [dash, setDash] = useState<Dash | null>(null);
   const [audit, setAudit] = useState<AuditRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const shop = useShopStatus(ecosystemDbId);
 
   useEffect(() => {
     if (!ecosystemDbId) return;
@@ -82,6 +86,28 @@ function AdminDashboard() {
 
   return (
     <>
+      {shop.isDemo ? (
+        <Card className="mb-4 border-warning/60 bg-warning/10 shadow-[var(--shadow-card)]">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 px-4">
+            <div className="min-w-0">
+              <StatusBadge tone="warning">
+                <FlaskConical className="mr-1 inline size-3.5" /> Demo shop ·{" "}
+                {reviewCountdown(shop.reviewEndsAt)}
+              </StatusBadge>
+              <p className="mt-1.5 text-sm font-semibold">This shop is not live yet</p>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Everything here runs on simulated Demo Coins. Pick a plan and pay it with GCash to
+                turn this same shop into a live one — same login, name and settings.
+              </p>
+            </div>
+            <Button asChild>
+              <Link to="/admin/go-live">
+                <Rocket className="mr-1 size-4" /> Subscribe &amp; Go Live
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
 
 
       <PageSection
