@@ -3,7 +3,7 @@ name: Build listener APK
 # Builds the WaveWallet GCash listener companion app and publishes the
 # installable debug APK as a downloadable workflow artifact.
 #
-# Note: this workflow file must sit at .github/workflows/build-apk.yml in the
+# Note: this workflow file must sit at .github/workflows/build-gcash-listener-apk.yml in the
 # repository ROOT to run. If the Android project lives in a subfolder of a
 # larger repo, copy this file to the repo root and keep `working-directory`
 # pointing at the Android project (see WORKING_DIR below).
@@ -13,7 +13,7 @@ on:
     branches: ["**"]
     paths:
       - "android-gcash-listener/**"
-      - ".github/workflows/build-apk.yml"
+      - ".github/workflows/build-gcash-listener-apk.yml"
   workflow_dispatch:
 
 env:
