@@ -24,6 +24,7 @@ import {
   MessagesSquare,
   Package,
   ReceiptText,
+  Rocket,
   ScrollText,
   Send,
   Settings,
@@ -232,11 +233,18 @@ export const resellerBottomNav: NavItem[] = withCoreDestinations(
 /* Admin                                                               */
 /* ------------------------------------------------------------------ */
 
-export function adminNav(): Nav {
+export function adminNav(options?: { goLive?: boolean }): Nav {
   return [
     {
       label: "Overview",
-      items: [{ to: "/admin", label: "Dashboard", icon: LayoutDashboard }],
+      items: [
+        { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
+        // Only a New Generation shop still in Demo mode sees this entry;
+        // Legacy shops never get it.
+        ...(options?.goLive
+          ? ([{ to: "/admin/go-live", label: "Go Live", icon: Rocket }] as NavItem[])
+          : []),
+      ],
     },
     {
       label: "Members",

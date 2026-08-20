@@ -3,6 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { useSession } from "@/lib/session";
 import { adminBottomNav, adminNav, withBadges } from "@/lib/navigation";
 import { useMemberInbox } from "@/components/member-inbox-panel";
+import { useShopStatus } from "@/lib/shop-status";
 
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
@@ -11,6 +12,7 @@ export const Route = createFileRoute("/admin")({
 function AdminLayout() {
   const session = useSession("admin");
   const { pending } = useMemberInbox();
+  const shopStatus = useShopStatus(session.ecosystemDbId);
 
   // Never render a blank screen: the session resolves asynchronously, and an
   // admin whose active shop is not resolved yet gets a readable state instead.
@@ -26,7 +28,9 @@ function AdminLayout() {
   }
 
 
-  const nav = withBadges(adminNav(), { "/admin/applications": pending });
+  const nav = withBadges(adminNav({ goLive: shopStatus.isDemo }), {
+    "/admin/applications": pending,
+  });
   return (
     <AppShell
       session={session}

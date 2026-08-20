@@ -8,7 +8,8 @@
  * payment with the pending request. Demo Coins are never converted.
  */
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, Loader2, Rocket, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, Rocket, ShieldCheck } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,18 +33,25 @@ import {
   fetchPlatformGcash,
   goLiveStatusLine,
   submitGoLivePayment,
-  validateGoLive,
   type SubscriptionRequest,
 } from "@/lib/go-live";
+import {
+  goLiveChecklist,
+  goLiveFieldErrors,
+  mapGoLiveError,
+  type GoLiveField,
+} from "@/lib/go-live-readiness";
 
 
 type Gcash = Awaited<ReturnType<typeof fetchPlatformGcash>>;
 
 export function GoLiveCard({
   ecosystemId,
+  shopName,
   onLive,
 }: {
   ecosystemId: string;
+  shopName?: string | null;
   onLive?: () => void;
 }) {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
@@ -57,6 +65,9 @@ export function GoLiveCard({
   const [loading, setLoading] = useState(true);
   const [quote, setQuote] = useState<SubscriptionQuote | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [attempted, setAttempted] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [serverField, setServerField] = useState<GoLiveField | null>(null);
 
 
   const load = useCallback(async () => {
@@ -106,13 +117,46 @@ export function GoLiveCard({
     : plan
       ? Number(plan.monthly_price) * monthCount
       : 0;
-  const problem = validateGoLive({ payerNumber, reference });
   const pending = request?.status === "pending";
+
+  // Everything the existing payment RPC already requires, told up-front.
+  const checklist = goLiveChecklist({
+    shopName: shopName ?? "shop",
+    shopKind: "subscription",
+    planId,
+    months: Number(months),
+    payerNumber,
+    reference,
+    platformGcashNumber: gcash?.gcash_number ?? null,
+    hasPendingRequest: pending,
+  });
+  const fieldErrors = goLiveFieldErrors({ planId, months: Number(months), payerNumber, reference });
+  const showErrors = attempted;
+
+  const focusItem = (item: { fieldId?: string }) => {
+    if (!item.fieldId) return;
+    const el = document.getElementById(item.fieldId);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    (el as HTMLInputElement | null)?.focus?.();
+  };
+
+  const tryConfirm = () => {
+    setServerError(null);
+    setServerField(null);
+    setAttempted(true);
+    if (checklist.length > 0) {
+      focusItem(checklist.find((i) => i.fieldId) ?? {});
+      return;
+    }
+    setConfirming(true);
+  };
 
   const submit = async () => {
     if (!plan) return;
     setConfirming(false);
     setBusy(true);
+    setServerError(null);
+    setServerField(null);
 
     try {
       const r = await submitGoLivePayment({
@@ -131,10 +175,18 @@ export function GoLiveCard({
         toast.success("Payment submitted. It goes live the moment the GCash payment is recognised.");
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not submit that payment");
+      const mapped = mapGoLiveError(e instanceof Error ? e.message : "");
+      setServerError(mapped.message);
+      setServerField(mapped.field ?? null);
+      toast.error(mapped.message);
     } finally {
       setBusy(false);
     }
+  };
+
+  const errorFor = (field: GoLiveField): string | null => {
+    if (serverField === field && serverError) return serverError;
+    return showErrors ? (fieldErrors[field] ?? null) : null;
   };
 
   if (loading) {
@@ -169,7 +221,7 @@ export function GoLiveCard({
             </div>
           ) : (
             <>
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div id="gl-plans" className="grid gap-2 sm:grid-cols-2">
                 {plans.map((p) => (
                   <button
                     key={p.id}
@@ -192,6 +244,11 @@ export function GoLiveCard({
                   </button>
                 ))}
               </div>
+              {errorFor("plan") ? (
+                <p role="alert" className="text-xs font-medium text-destructive">
+                  {errorFor("plan")}
+                </p>
+              ) : null}
 
               <div className="rounded-xl border bg-muted/40 px-3 py-2.5 text-xs leading-relaxed">
                 <p className="flex items-center gap-1.5 font-medium">
@@ -203,21 +260,30 @@ export function GoLiveCard({
                   {gcash?.gcash_account_name ? ` · ${gcash.gcash_account_name}` : ""}
                 </p>
                 <p className="mt-1 text-muted-foreground">
-                  Pay first, then enter the sending number and reference below exactly as they
-                  appear on your GCash receipt. Each reference can only ever be used once, in any
-                  shop.
+                  Before you submit, three things are unavoidable: pay from your own GCash number
+                  first, enter that exact sending number, and copy the reference number from the
+                  receipt. Payment is recognised automatically only when the sending number,
+                  amount and reference all match, and each reference can only ever be used once in
+                  any shop.
                 </p>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="gl-months">Months</Label>
+                  <Label htmlFor="gl-months">Months (1–24)</Label>
                   <Input
                     id="gl-months"
                     inputMode="numeric"
+                    aria-invalid={Boolean(errorFor("months"))}
+                    className={errorFor("months") ? "border-destructive" : undefined}
                     value={months}
                     onChange={(e) => setMonths(e.target.value)}
                   />
+                  {errorFor("months") ? (
+                    <p role="alert" className="text-xs font-medium text-destructive">
+                      {errorFor("months")}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="gl-number">GCash number you paid from</Label>
@@ -225,21 +291,36 @@ export function GoLiveCard({
                     id="gl-number"
                     inputMode="numeric"
                     placeholder="09XXXXXXXXX"
+                    aria-invalid={Boolean(errorFor("payerNumber"))}
+                    className={errorFor("payerNumber") ? "border-destructive" : undefined}
                     value={payerNumber}
                     onChange={(e) => setPayerNumber(e.target.value)}
                   />
+                  {errorFor("payerNumber") ? (
+                    <p role="alert" className="text-xs font-medium text-destructive">
+                      {errorFor("payerNumber")}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="gl-ref">GCash reference number</Label>
                   <Input
                     id="gl-ref"
                     inputMode="numeric"
-                    placeholder="9044057598177"
+                    placeholder="Reference number on your receipt"
+                    aria-invalid={Boolean(errorFor("reference"))}
+                    className={errorFor("reference") ? "border-destructive" : undefined}
                     value={reference}
                     onChange={(e) => setReference(e.target.value)}
                   />
+                  {errorFor("reference") ? (
+                    <p role="alert" className="text-xs font-medium text-destructive">
+                      {errorFor("reference")}
+                    </p>
+                  ) : null}
                 </div>
               </div>
+
 
               {isPlanChange && quote ? (
                 <div className="rounded-xl border bg-muted/40 px-3 py-2.5 text-xs leading-relaxed">
@@ -268,19 +349,56 @@ export function GoLiveCard({
                   : ` for ${monthCount} month${monthCount === 1 ? "" : "s"} of ${plan?.name ?? "the selected plan"}.`}
               </p>
 
-              <Button
-                className="w-full"
-                disabled={busy || !plan || Boolean(problem)}
-                onClick={() => setConfirming(true)}
-              >
+              {showErrors && checklist.length > 0 ? (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-destructive bg-destructive/10 px-3 py-2.5"
+                >
+                  <p className="flex items-center gap-1.5 text-sm font-semibold text-destructive">
+                    <AlertTriangle className="size-4" /> Complete these items before going Live
+                  </p>
+                  <ul className="mt-2 space-y-1.5">
+                    {checklist.map((item) => (
+                      <li key={item.id} className="text-xs leading-relaxed text-destructive">
+                        {item.fieldId ? (
+                          <button
+                            type="button"
+                            className="text-left font-semibold underline underline-offset-2"
+                            onClick={() => focusItem(item)}
+                          >
+                            {item.label}
+                          </button>
+                        ) : item.to ? (
+                          <Link
+                            to={item.to as never}
+                            className="font-semibold underline underline-offset-2"
+                          >
+                            {item.label}
+                          </Link>
+                        ) : (
+                          <span className="font-semibold">{item.label}</span>
+                        )}
+                        <span className="block text-destructive/90">{item.how}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+              {serverError && !serverField ? (
+                <p role="alert" className="text-xs font-medium text-destructive">
+                  {serverError}
+                </p>
+              ) : null}
+
+              <Button className="w-full" disabled={busy} onClick={tryConfirm}>
                 {busy ? (
                   <Loader2 className="mr-1 size-4 animate-spin" />
                 ) : (
                   <Rocket className="mr-1 size-4" />
                 )}
-                {isPlanChange ? "Review and confirm plan change" : "Submit payment and go live"}
+                {isPlanChange ? "Review and confirm plan change" : "Subscribe & Go Live"}
               </Button>
-              {problem ? <p className="text-xs text-destructive">{problem}</p> : null}
 
               <AlertDialog open={confirming} onOpenChange={setConfirming}>
                 <AlertDialogContent>
