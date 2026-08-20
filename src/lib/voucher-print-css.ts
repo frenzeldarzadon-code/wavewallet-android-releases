@@ -52,8 +52,8 @@ export const voucherPrintCss = `
   z-index: 0;
 }
 .vp-head, .vp-body, .vp-meta { position: relative; z-index: 1; min-width: 0; }
-.vp-head { min-height: 0; }
-.vp-body { min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; gap: 0.015in; }
+.vp-head { min-height: 0; flex: 0 1 auto; overflow: hidden; }
+.vp-body { min-height: 0; flex: 1 0 auto; display: flex; flex-direction: column; justify-content: center; gap: 0.015in; }
 .vp-shop { font-size: 7pt; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vp-brand { font-size: 4.5pt; letter-spacing: .16em; text-transform: uppercase; opacity: .6; line-height: 1.1; }
 .vp-product {
@@ -73,9 +73,10 @@ export const voucherPrintCss = `
   opacity: .8;
   overflow-wrap: anywhere;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  margin-top: .015in;
 }
 .vp-code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
