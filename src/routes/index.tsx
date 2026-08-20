@@ -187,6 +187,10 @@ function LoginPage() {
 
   const signUp = async () => {
     if (signupBusy) return;
+    if (signupPath === "join" && !shop) {
+      toast.error("Enter the 7-digit Shop ID of the operator you want to join.");
+      return;
+    }
     const problem =
       validateGlobalSignup(form) ??
       addressIssue({
@@ -201,6 +205,7 @@ function LoginPage() {
       return;
     }
     setSignupBusy(true);
+    const joinCode = signupPath === "join" ? (shop?.shopCode ?? "") : "";
     try {
       const { needsEmailConfirmation } = await signUpCustomerAccount({
         fullName: form.name,
@@ -215,14 +220,25 @@ function LoginPage() {
       });
       setForm({ name: "", email: "", phone: "", password: "", confirm: "" });
       setAddress(EMPTY_ADDRESS);
-      // A new account belongs to no shop, and that is fine: the Universe is open
-      // to everyone straight away. Joining a shop later is automatic.
       if (needsEmailConfirmation && isRealEmail(form.email)) {
+        // The shop can only be joined by a confirmed, signed-in account.
+        if (joinCode) rememberPendingShopCode(joinCode);
         await supabase.auth.signOut();
         setApplied({ needsEmail: true });
         return;
       }
-      toast.success("Welcome to WaveWallet. You are in the Universe — join a shop any time.");
+      if (joinCode) {
+        await joinShopByCode(joinCode);
+        toast.success("You joined the shop — your wallet there is ready.");
+        navigate({ to: "/app/shop", replace: true });
+        return;
+      }
+      if (signupPath === "operator") {
+        toast.success("Account created — now create your shop.");
+        navigate({ to: "/start-shop", replace: true });
+        return;
+      }
+      toast.success("Welcome to WaveWallet.");
       navigate({ to: "/universe", replace: true });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not create your account.");
@@ -230,6 +246,7 @@ function LoginPage() {
       setSignupBusy(false);
     }
   };
+
 
   return (
     <div className="dark auth-surface relative min-h-[100dvh] w-full overflow-x-hidden">
