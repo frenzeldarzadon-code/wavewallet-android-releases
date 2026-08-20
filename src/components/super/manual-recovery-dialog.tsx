@@ -156,7 +156,7 @@ export function ManualRecoveryDialog({ onRecorded }: { onRecorded: () => void })
               id="mr-receiving"
               inputMode="tel"
               value={receivingNumber}
-              placeholder="09171234567"
+              placeholder="GCash number the payment was sent from"
               onChange={(e) => setReceivingNumber(e.target.value)}
             />
           </div>
@@ -177,7 +177,7 @@ export function ManualRecoveryDialog({ onRecorded }: { onRecorded: () => void })
               <Input
                 id="mr-ref"
                 value={reference}
-                placeholder="9044057598177"
+                placeholder="Reference number from the GCash notification"
                 onChange={(e) => setReference(e.target.value)}
               />
             </div>
@@ -200,7 +200,7 @@ export function ManualRecoveryDialog({ onRecorded }: { onRecorded: () => void })
                 id="mr-sender"
                 inputMode="tel"
                 value={senderNumber}
-                placeholder="+639752505196"
+                placeholder="Receiving GCash number"
                 onChange={(e) => setSenderNumber(e.target.value)}
               />
             </div>

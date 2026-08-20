@@ -59,7 +59,7 @@ export function CashInNumberCard({ ecosystemId }: { ecosystemId: string | null }
           <Input
             id="shop-gcash"
             inputMode="tel"
-            placeholder="09171234567"
+            placeholder="Your GCash mobile number"
             value={value}
             onChange={(e) => setValue(e.target.value)}
           />

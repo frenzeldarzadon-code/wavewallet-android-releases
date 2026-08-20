@@ -163,7 +163,7 @@ function ResetPasswordPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && sendLink()}
-                    placeholder="you@example.com"
+                    placeholder="Your email address"
                   />
                 </div>
                 <Button className="w-full" onClick={sendLink} disabled={busy || sent}>

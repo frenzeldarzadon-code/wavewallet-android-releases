@@ -244,7 +244,7 @@ function AdminSettings() {
               <Input
                 id="fbName"
                 value={fb.name}
-                placeholder="Sagada Wave Support"
+                placeholder="Name customers should contact"
                 onChange={(e) => setFb({ ...fb, name: e.target.value })}
               />
             </div>

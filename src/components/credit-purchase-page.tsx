@@ -294,7 +294,7 @@ export function CreditPurchasePage() {
                       id="ref"
                       value={reference}
                       onChange={(e) => setReference(e.target.value)}
-                      placeholder="e.g. 1234567890123"
+                      placeholder="Reference number from your GCash receipt"
                     />
                   </div>
                   <div className="space-y-1.5 sm:col-span-2">
