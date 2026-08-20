@@ -2038,6 +2038,7 @@ export type Database = {
         Row: {
           amount_php: number | null
           consumed_cash_in_id: string | null
+          consumed_subscription_request_id: string | null
           created_at: string
           destination_note: string | null
           device_id: string
@@ -2066,6 +2067,7 @@ export type Database = {
         Insert: {
           amount_php?: number | null
           consumed_cash_in_id?: string | null
+          consumed_subscription_request_id?: string | null
           created_at?: string
           destination_note?: string | null
           device_id: string
@@ -2094,6 +2096,7 @@ export type Database = {
         Update: {
           amount_php?: number | null
           consumed_cash_in_id?: string | null
+          consumed_subscription_request_id?: string | null
           created_at?: string
           destination_note?: string | null
           device_id?: string
@@ -2125,6 +2128,13 @@ export type Database = {
             columns: ["consumed_cash_in_id"]
             isOneToOne: false
             referencedRelation: "cash_in_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listener_events_consumed_subscription_request_id_fkey"
+            columns: ["consumed_subscription_request_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_requests"
             referencedColumns: ["id"]
           },
           {
@@ -4835,21 +4845,29 @@ export type Database = {
         Row: {
           amount_due: number
           amount_paid: number | null
+          auto_reason: string | null
+          auto_state: string
           billing_period: string
           created_at: string
           currency: string
           decision_reason: string | null
           ecosystem_id: string
           id: string
+          listener_event_id: string | null
           monthly_rate: number | null
           months_purchased: number | null
+          payer_number: string | null
+          payer_number_key: string | null
+          payer_reference_key: string | null
           payment_reference: string
           period_end: string | null
           period_start: string | null
+          plan_id: string | null
           plan_name: string
           plan_price: number
           previous_period_end: string | null
           proof_path: string | null
+          purpose: string
           remainder_amount: number
           requested_by: string | null
           requested_by_name: string
@@ -4862,21 +4880,29 @@ export type Database = {
         Insert: {
           amount_due: number
           amount_paid?: number | null
+          auto_reason?: string | null
+          auto_state?: string
           billing_period: string
           created_at?: string
           currency?: string
           decision_reason?: string | null
           ecosystem_id: string
           id?: string
+          listener_event_id?: string | null
           monthly_rate?: number | null
           months_purchased?: number | null
+          payer_number?: string | null
+          payer_number_key?: string | null
+          payer_reference_key?: string | null
           payment_reference: string
           period_end?: string | null
           period_start?: string | null
+          plan_id?: string | null
           plan_name: string
           plan_price: number
           previous_period_end?: string | null
           proof_path?: string | null
+          purpose?: string
           remainder_amount?: number
           requested_by?: string | null
           requested_by_name?: string
@@ -4889,21 +4915,29 @@ export type Database = {
         Update: {
           amount_due?: number
           amount_paid?: number | null
+          auto_reason?: string | null
+          auto_state?: string
           billing_period?: string
           created_at?: string
           currency?: string
           decision_reason?: string | null
           ecosystem_id?: string
           id?: string
+          listener_event_id?: string | null
           monthly_rate?: number | null
           months_purchased?: number | null
+          payer_number?: string | null
+          payer_number_key?: string | null
+          payer_reference_key?: string | null
           payment_reference?: string
           period_end?: string | null
           period_start?: string | null
+          plan_id?: string | null
           plan_name?: string
           plan_price?: number
           previous_period_end?: string | null
           proof_path?: string | null
+          purpose?: string
           remainder_amount?: number
           requested_by?: string | null
           requested_by_name?: string
@@ -4919,6 +4953,13 @@ export type Database = {
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_requests_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
             referencedColumns: ["id"]
           },
         ]
@@ -5521,6 +5562,10 @@ export type Database = {
     }
     Functions: {
       acting_as: { Args: never; Returns: string }
+      activate_go_live_request: {
+        Args: { _request_id: string }
+        Returns: string
+      }
       activate_subscription: {
         Args: {
           _amount_php?: number
@@ -5658,6 +5703,34 @@ export type Database = {
           _sender?: string
         }
         Returns: string
+      }
+      apply_subscription_plan: {
+        Args: {
+          _amount_php?: number
+          _ecosystem_id: string
+          _months?: number
+          _notes?: string
+          _plan_id: string
+          _reference?: string
+        }
+        Returns: {
+          allocation_total: number
+          created_at: string
+          demo_seed_credits: number
+          ecosystem_id: string
+          period_end: string | null
+          period_start: string | null
+          plan_id: string | null
+          review_ends_at: string | null
+          state: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "shop_subscriptions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       archive_ecosystem: {
         Args: { _ecosystem_id: string; _reason?: string }
@@ -6313,6 +6386,10 @@ export type Database = {
           slug: string
         }[]
       }
+      go_live_reference_duplicate: {
+        Args: { _id?: string; _key: string }
+        Returns: string
+      }
       guide_questions_admin: {
         Args: never
         Returns: {
@@ -6381,6 +6458,11 @@ export type Database = {
       }
       is_ecosystem_admin: {
         Args: { _ecosystem_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_legacy_shop: { Args: { _ecosystem_id: string }; Returns: boolean }
+      is_new_generation_shop: {
+        Args: { _ecosystem_id: string }
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
@@ -7119,6 +7201,11 @@ export type Database = {
       real_super_admin_exists: { Args: never; Returns: boolean }
       recheck_pending_cash_ins: { Args: never; Returns: Json }
       reconcile_cash_in: { Args: { _id: string }; Returns: string }
+      reconcile_go_live_payments: { Args: { _days?: number }; Returns: Json }
+      reconcile_go_live_request: {
+        Args: { _request_id: string }
+        Returns: string
+      }
       reconcile_listener_events: {
         Args: { _max_age_hours?: number }
         Returns: Json
@@ -7822,21 +7909,29 @@ export type Database = {
         Returns: {
           amount_due: number
           amount_paid: number | null
+          auto_reason: string | null
+          auto_state: string
           billing_period: string
           created_at: string
           currency: string
           decision_reason: string | null
           ecosystem_id: string
           id: string
+          listener_event_id: string | null
           monthly_rate: number | null
           months_purchased: number | null
+          payer_number: string | null
+          payer_number_key: string | null
+          payer_reference_key: string | null
           payment_reference: string
           period_end: string | null
           period_start: string | null
+          plan_id: string | null
           plan_name: string
           plan_price: number
           previous_period_end: string | null
           proof_path: string | null
+          purpose: string
           remainder_amount: number
           requested_by: string | null
           requested_by_name: string
@@ -8808,6 +8903,58 @@ export type Database = {
         Args: { _reason?: string; _target: string }
         Returns: string
       }
+      submit_go_live_payment: {
+        Args: {
+          _amount_paid?: number
+          _ecosystem_id: string
+          _months?: number
+          _payer_number: string
+          _plan_id: string
+          _proof_path?: string
+          _reference: string
+        }
+        Returns: {
+          amount_due: number
+          amount_paid: number | null
+          auto_reason: string | null
+          auto_state: string
+          billing_period: string
+          created_at: string
+          currency: string
+          decision_reason: string | null
+          ecosystem_id: string
+          id: string
+          listener_event_id: string | null
+          monthly_rate: number | null
+          months_purchased: number | null
+          payer_number: string | null
+          payer_number_key: string | null
+          payer_reference_key: string | null
+          payment_reference: string
+          period_end: string | null
+          period_start: string | null
+          plan_id: string | null
+          plan_name: string
+          plan_price: number
+          previous_period_end: string | null
+          proof_path: string | null
+          purpose: string
+          remainder_amount: number
+          requested_by: string | null
+          requested_by_name: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewed_by_name: string | null
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "subscription_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       submit_guide_question: {
         Args: { _contact?: string; _question: string }
         Returns: string
@@ -8822,21 +8969,29 @@ export type Database = {
         Returns: {
           amount_due: number
           amount_paid: number | null
+          auto_reason: string | null
+          auto_state: string
           billing_period: string
           created_at: string
           currency: string
           decision_reason: string | null
           ecosystem_id: string
           id: string
+          listener_event_id: string | null
           monthly_rate: number | null
           months_purchased: number | null
+          payer_number: string | null
+          payer_number_key: string | null
+          payer_reference_key: string | null
           payment_reference: string
           period_end: string | null
           period_start: string | null
+          plan_id: string | null
           plan_name: string
           plan_price: number
           previous_period_end: string | null
           proof_path: string | null
+          purpose: string
           remainder_amount: number
           requested_by: string | null
           requested_by_name: string
@@ -8929,6 +9084,33 @@ export type Database = {
           _user_id: string
         }
         Returns: string
+      }
+      superadmin_set_shop_plan: {
+        Args: {
+          _discount_percent?: number
+          _ecosystem_id: string
+          _months?: number
+          _plan_id: string
+          _reason?: string
+        }
+        Returns: {
+          allocation_total: number
+          created_at: string
+          demo_seed_credits: number
+          ecosystem_id: string
+          period_end: string | null
+          period_start: string | null
+          plan_id: string | null
+          review_ends_at: string | null
+          state: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "shop_subscriptions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       switch_ecosystem: { Args: { _ecosystem_id: string }; Returns: string }
       top_role: {
