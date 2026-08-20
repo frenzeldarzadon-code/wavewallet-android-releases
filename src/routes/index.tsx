@@ -23,6 +23,12 @@ import {
   signUpCustomerAccount,
 } from "@/lib/auth";
 import { isRealEmail, validateGlobalSignup } from "@/lib/account-identifiers";
+import { ShopFinder } from "@/components/shop/shop-finder";
+import type { ShopSummary } from "@/lib/shop-directory";
+import { joinShopByCode, normalizeShopCode } from "@/lib/shop-directory";
+import { destinationAfterAuth, rememberPendingShopCode } from "@/lib/shop-routing";
+import { signInWithUsername } from "@/lib/username-login.functions";
+import { LOGIN_PASSWORD_HINT, LOGIN_USERNAME_HINT } from "@/lib/username-login";
 import { newPasswordIssue } from "@/lib/password-policy";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/wavewallet-logo.webp";
@@ -32,6 +38,10 @@ import { platformSettings } from "@/lib/wavewallet";
 import { superAdminSetupAvailable } from "@/lib/bootstrap.functions";
 
 export const Route = createFileRoute("/")({
+  // A direct shop link carries only the public 7-digit Shop ID.
+  validateSearch: (search: Record<string, unknown>) => ({
+    shop: typeof search.shop === "string" ? normalizeShopCode(search.shop) : "",
+  }),
   head: () => ({
     meta: [
       { title: "WaveWallet — Voucher & Wallet Platform for Hotspot Operators" },
@@ -55,7 +65,15 @@ export const Route = createFileRoute("/")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const { shop: shopParam } = Route.useSearch();
+  const [mode, setMode] = useState<"signin" | "signup">(shopParam ? "signup" : "signin");
+  // Two ways in: join an existing WiFi voucher operation, or become an operator.
+  const [signupPath, setSignupPath] = useState<"choose" | "join" | "operator">(
+    shopParam ? "join" : "choose",
+  );
+  const [shop, setShop] = useState<ShopSummary | null>(null);
+  const [method, setMethod] = useState<"email" | "username">("email");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -108,14 +126,10 @@ function LoginPage() {
   // Already signed in? Send straight to the right dashboard.
   useEffect(() => {
     let active = true;
-    loadAuthContext().then((ctx) => {
+    loadAuthContext().then(async (ctx) => {
       if (!active || !ctx) return;
-      // No shop membership yet — the Universe is still fully theirs.
-      if (!ctx.ecosystem && ctx.role === "customer") {
-        navigate({ to: "/universe", replace: true });
-        return;
-      }
-      navigate({ to: homeFor(ctx.role), replace: true });
+      const to = await destinationAfterAuth(ctx.role);
+      if (active) navigate({ to, replace: true });
     });
     superAdminSetupAvailable()
       .then((r) => active && setSetupOpen(r.available))
@@ -129,28 +143,41 @@ function LoginPage() {
 
   const signIn = async () => {
     if (busy) return;
-    if (!email.trim() || !password) {
-      toast.error("Enter your email or mobile number, and your password.");
+    if (method === "username" ? !username.trim() : !email.trim()) {
+      toast.error(
+        method === "username"
+          ? "Enter your username and password."
+          : "Enter your email or mobile number, and your password.",
+      );
+      return;
+    }
+    if (!password) {
+      toast.error("Enter your password.");
       return;
     }
     setBusy(true);
     try {
-      const ctx = await signInWithPassword(email, password);
+      let ctx = null;
+      if (method === "username") {
+        // The username maps to the same single account — no duplicate identity.
+        const tokens = await signInWithUsername({ data: { username, password } });
+        const { error } = await supabase.auth.setSession({
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+        });
+        if (error) throw new Error(error.message);
+        ctx = await loadAuthContext();
+      } else {
+        ctx = await signInWithPassword(email, password);
+      }
       if (!ctx) throw new Error("We could not load your account profile.");
       if (ctx.profile.status !== "active") {
         await supabase.auth.signOut();
         throw new Error("This account is suspended. Contact your operator.");
       }
-      // Shop membership is separate from having an account. Someone who belongs
-      // to no shop still gets the whole Universe — feed, profile, messages and
-      // the shop directory — joining a shop later is automatic.
-      if (!ctx.ecosystem && ctx.role === "customer") {
-        navigate({ to: "/universe", replace: true });
-        return;
-      }
-      // Role is resolved after authentication — never chosen by the visitor.
-      // With a valid remembered shop we open its Voucher Shop directly.
-      navigate({ to: shopHomeFor(ctx.role) });
+      // Members who belong to a shop open that shop; the Universe stays in
+      // navigation. Role is resolved after authentication, never chosen here.
+      navigate({ to: await destinationAfterAuth(ctx.role), replace: true });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not sign you in.");
     } finally {
