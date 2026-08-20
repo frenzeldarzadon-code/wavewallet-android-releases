@@ -39,13 +39,13 @@ export interface AutoApprovalRule {
   layer1_require_amount?: boolean;
   /** First layer: the notification must report the sending GCash number. */
   layer1_require_sender_number?: boolean;
-  /** First layer: only pair a notification inside the device match window. */
+  /** Retired: the notification carries no transaction time. Always false. */
   layer1_require_time_window?: boolean;
   /** Second layer: submitted amount must equal the confirmed amount. */
   layer2_require_amount_match?: boolean;
   /** Second layer: submitted sender number must equal the confirmed sender. */
   layer2_require_sender_match?: boolean;
-  /** Second layer: the notification itself must carry the same reference. */
+  /** Retired: the notification never reports a reference. Always false. */
   layer2_require_listener_reference?: boolean;
 }
 
@@ -172,6 +172,9 @@ export interface MatchableRequest {
   receipt_amount_php?: number | null;
   /** Sending number read off the receipt. */
   receipt_sender_number?: string | null;
+  /** Receiving GCash account read off the receipt, when it was legible. */
+  receipt_receiving_number?: string | null;
+
   /** Linked notification, in either order: pay-then-submit or submit-then-pay. */
   listener_event?: MatchableListenerEvent | null;
 }
@@ -192,6 +195,7 @@ export type MatchOutcome =
   | "listener_offline"
   | "wrong_shop"
   | "number_mismatch"
+  | "receiving_mismatch"
   | "awaiting_receipt_check"
   | "receipt_reference_mismatch"
   | "reference_mismatch"
@@ -217,6 +221,8 @@ export const MATCH_REASON: Record<MatchOutcome, string> = {
   wrong_shop:
     "That notification came from a phone paired to a different shop, so it cannot settle this request.",
   number_mismatch: "The GCash number that sent the money does not match this request.",
+  receiving_mismatch:
+    "The receiving GCash account on the receipt is not this shop's account — held for manual review.",
   awaiting_receipt_check: "The uploaded receipt has not been read yet.",
   receipt_reference_mismatch: "Reference does not match receipt — held for manual review.",
   reference_mismatch:
@@ -269,9 +275,9 @@ export function evaluateMatch(
   const sender = normalizePhMobile(request.sender_number ?? request.payer_number);
   if ((rule.layer2_require_sender_match ?? true) && !sender) return "no_sender_number";
 
-  // First layer — a real GCash notification. A listener reference is optional;
-  // when the notification does carry one it must agree with the established
-  // reference.
+  // First layer — the real GCash notification. It reports only the sending
+  // number and the amount: transaction time is not a factor and no reference
+  // is expected from it.
   const requireListener = rule.require_listener_match ?? true;
   const event = request.listener_event;
   if (!event || (event.outcome && event.outcome !== "accepted")) {
@@ -286,9 +292,6 @@ export function evaluateMatch(
     ) {
       return "amount_mismatch";
     }
-    const eventRef = normalizePaymentReference(event.reference);
-    if (eventRef && eventRef !== established) return "reference_mismatch";
-    if ((rule.layer2_require_listener_reference ?? false) && !eventRef) return "reference_mismatch";
     // Shop isolation is the only routing rule. A differing / masked receiving
     // number is informational and must never block a valid approval.
     if (event.serves_shop === false) return "wrong_shop";
@@ -310,6 +313,11 @@ export function evaluateMatch(
   }
   const receiptSender = normalizePhMobile(request.receipt_sender_number);
   if (receiptSender && sender && receiptSender !== sender) return "number_mismatch";
+  const receiptReceiving = normalizePhMobile(request.receipt_receiving_number);
+  if (receiptReceiving && receiptReceiving !== normalizePhMobile(receivingNumber)) {
+    return "receiving_mismatch";
+  }
+
 
   if ((rule.verification_mode ?? "active") === "staged") return "staged";
   return "matched";
@@ -421,10 +429,12 @@ export async function setCashInAuthFields(input: {
   const args = {
     _ecosystem: input.ecosystemId,
     _layer1_sender: input.layer1SenderNumber ?? null,
-    _layer1_time: input.layer1TimeWindow ?? null,
+    // Retired rules: time is never an authentication factor and the
+    // notification is never expected to carry a reference.
+    _layer1_time: false,
     _layer2_amount: input.layer2AmountMatch ?? null,
     _layer2_sender: input.layer2SenderMatch ?? null,
-    _layer2_listener_reference: input.layer2ListenerReference ?? null,
+    _layer2_listener_reference: false,
     _require_receipt: input.requireReceipt ?? null,
   } as never;
   const { error } = await supabase.rpc("set_cash_in_auth_fields" as never, args);

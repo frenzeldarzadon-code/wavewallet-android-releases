@@ -23,6 +23,8 @@ export interface ReceiptExtraction {
   reference: string | null;
   amountPhp: number | null;
   senderNumber: string | null;
+  /** Receiving GCash account read off the receipt, when it was printed. */
+  receivingNumber: string | null;
   paidAt: string | null;
   confidence: number;
   readable: boolean;
@@ -60,6 +62,7 @@ export const extractCashInReceipt = createServerFn({ method: "POST" })
       reference: reading.reference,
       amountPhp: reading.amountPhp,
       senderNumber: reading.senderNumber,
+      receivingNumber: reading.receivingNumber ?? null,
       paidAt: reading.paidAt ?? null,
       confidence: reading.confidence,
       readable: reading.readable,
@@ -107,7 +110,15 @@ export const verifyCashInReceipt = createServerFn({ method: "POST" })
       reading = await readReceipt(signed.data.signedUrl);
       check = decideReceiptCheck(row.payer_reference as string | null, reading);
     } catch {
-      reading = { reference: null, amountPhp: null, senderNumber: null, paidAt: null, confidence: 0, readable: false };
+      reading = {
+        reference: null,
+        amountPhp: null,
+        senderNumber: null,
+        receivingNumber: null,
+        paidAt: null,
+        confidence: 0,
+        readable: false,
+      };
       check = "error";
     }
 
@@ -118,11 +129,13 @@ export const verifyCashInReceipt = createServerFn({ method: "POST" })
       _sender: reading.senderNumber,
       _readable: check !== "error" && reading.readable,
       _paid_at: reading.paidAt ?? null,
+      _receiving: reading.receivingNumber ?? null,
       _details: {
         confidence: reading.confidence,
         check,
         read_at: new Date().toISOString(),
         paid_at: reading.paidAt ?? null,
+        receiving_number: reading.receivingNumber ?? null,
       },
     } as never);
 

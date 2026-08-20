@@ -14,8 +14,9 @@ const MODEL = "google/gemini-3.6-flash";
 
 const PROMPT = `You are reading a GCash payment receipt screenshot.
 Return ONLY JSON with these keys and nothing else:
-{"reference": string|null, "amount_php": number|null, "sender_number": string|null, "paid_at": string|null, "readable": boolean, "confidence": number}
+{"reference": string|null, "amount_php": number|null, "sender_number": string|null, "receiving_number": string|null, "paid_at": string|null, "readable": boolean, "confidence": number}
 - "reference" is the GCash reference number printed on the receipt (often labelled "Ref No." or "Reference No."). Copy the digits exactly as printed.
+- "sender_number" is the mobile number the money was sent FROM; "receiving_number" is the GCash account/number the money was sent TO. Copy digits exactly, including masked characters as printed; use null when a field is not shown.
 - "paid_at" is the payment date AND time printed on the receipt, as an ISO 8601 string (assume Asia/Manila when no zone is shown). Use null when it is not legible.
 - "confidence" is 0..1: how certain you are that you read the reference correctly.
 - If the image is not a payment receipt, is cropped, blurred or the reference is not fully legible, set "readable": false and "reference": null. Never guess or reconstruct a reference.`;

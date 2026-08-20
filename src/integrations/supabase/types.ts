@@ -417,6 +417,8 @@ export type Database = {
           receipt_checked_at: string | null
           receipt_details: Json | null
           receipt_paid_at: string | null
+          receipt_receiving_number: string | null
+          receipt_receiving_number_key: string | null
           receipt_reference: string | null
           receipt_reference_key: string | null
           receipt_sender_number: string | null
@@ -484,6 +486,8 @@ export type Database = {
           receipt_checked_at?: string | null
           receipt_details?: Json | null
           receipt_paid_at?: string | null
+          receipt_receiving_number?: string | null
+          receipt_receiving_number_key?: string | null
           receipt_reference?: string | null
           receipt_reference_key?: string | null
           receipt_sender_number?: string | null
@@ -551,6 +555,8 @@ export type Database = {
           receipt_checked_at?: string | null
           receipt_details?: Json | null
           receipt_paid_at?: string | null
+          receipt_receiving_number?: string | null
+          receipt_receiving_number_key?: string | null
           receipt_reference?: string | null
           receipt_reference_key?: string | null
           receipt_sender_number?: string | null
@@ -5632,6 +5638,7 @@ export type Database = {
           _id: string
           _paid_at?: string
           _readable?: boolean
+          _receiving?: string
           _reference?: string
           _sender?: string
         }
@@ -5731,6 +5738,8 @@ export type Database = {
           receipt_checked_at: string | null
           receipt_details: Json | null
           receipt_paid_at: string | null
+          receipt_receiving_number: string | null
+          receipt_receiving_number_key: string | null
           receipt_reference: string | null
           receipt_reference_key: string | null
           receipt_sender_number: string | null
@@ -5862,6 +5871,10 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      cash_in_reference_duplicate: {
+        Args: { _id: string; _key: string; _paid_at?: string }
+        Returns: string
       }
       cashback_chain: {
         Args: { _ecosystem_id: string; _source: string }
@@ -7289,6 +7302,8 @@ export type Database = {
           receipt_checked_at: string | null
           receipt_details: Json | null
           receipt_paid_at: string | null
+          receipt_receiving_number: string | null
+          receipt_receiving_number_key: string | null
           receipt_reference: string | null
           receipt_reference_key: string | null
           receipt_sender_number: string | null
@@ -7551,6 +7566,8 @@ export type Database = {
           receipt_checked_at: string | null
           receipt_details: Json | null
           receipt_paid_at: string | null
+          receipt_receiving_number: string | null
+          receipt_receiving_number_key: string | null
           receipt_reference: string | null
           receipt_reference_key: string | null
           receipt_sender_number: string | null
@@ -7670,6 +7687,8 @@ export type Database = {
           receipt_checked_at: string | null
           receipt_details: Json | null
           receipt_paid_at: string | null
+          receipt_receiving_number: string | null
+          receipt_receiving_number_key: string | null
           receipt_reference: string | null
           receipt_reference_key: string | null
           receipt_sender_number: string | null
@@ -8402,6 +8421,8 @@ export type Database = {
           receipt_checked_at: string | null
           receipt_details: Json | null
           receipt_paid_at: string | null
+          receipt_receiving_number: string | null
+          receipt_receiving_number_key: string | null
           receipt_reference: string | null
           receipt_reference_key: string | null
           receipt_sender_number: string | null

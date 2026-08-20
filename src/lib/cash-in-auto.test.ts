@@ -109,10 +109,21 @@ describe("automatic approval matching", () => {
     expect(evaluateMatch({ ...req, listener_event: event }, on, RECEIVING)).toBe("matched");
   });
 
-  it("holds when the notification reference contradicts the receipt", () => {
+  it("ignores a reference on the notification: the receipt owns the reference", () => {
     const event = { ...seen, reference: "1111111111111" };
-    expect(evaluateMatch({ ...req, listener_event: event }, on, RECEIVING)).toBe("reference_mismatch");
+    expect(evaluateMatch({ ...req, listener_event: event }, on, RECEIVING)).toBe("matched");
   });
+
+  it("holds when the receipt was paid into a different GCash account", () => {
+    expect(evaluateMatch({ ...req, receipt_receiving_number: "09990001111" }, on, RECEIVING)).toBe(
+      "receiving_mismatch",
+    );
+  });
+
+  it("accepts a receipt whose receiving account is this shop's account", () => {
+    expect(evaluateMatch({ ...req, receipt_receiving_number: RECEIVING }, on, RECEIVING)).toBe("matched");
+  });
+
 
   it("holds when the receipt amount contradicts the request", () => {
     expect(evaluateMatch({ ...req, receipt_amount_php: 999 }, on, RECEIVING)).toBe("amount_mismatch");
