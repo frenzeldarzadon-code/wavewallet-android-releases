@@ -8,21 +8,21 @@ import {
 import { voucherPrintCss } from "@/lib/voucher-print-css";
 
 describe("voucher print templates", () => {
-  it("ships exactly five distinct templates", () => {
-    expect(voucherTemplates).toHaveLength(5);
-    expect(new Set(voucherTemplates.map((t) => t.id)).size).toBe(5);
-    expect(voucherTemplates.map((t) => t.id)).toEqual([
-      "classic",
-      "minimal",
-      "modern",
-      "dark",
-      "colorful",
-    ]);
+  it("ships at least ten distinct templates", () => {
+    expect(voucherTemplates.length).toBeGreaterThanOrEqual(10);
+    expect(new Set(voucherTemplates.map((t) => t.id)).size).toBe(voucherTemplates.length);
+    for (const id of ["geometric", "futuristic", "modern", "pastel", "luxury", "aurora", "pop", "organic", "neon", "classic"]) {
+      expect(voucherTemplates.map((t) => t.id)).toContain(id);
+      expect(isVoucherTemplate(id)).toBe(true);
+    }
+    for (const t of voucherTemplates) {
+      expect(t.name.length).toBeGreaterThan(2);
+      expect(t.description.length).toBeGreaterThan(10);
+    }
   });
 
   it("has a style rule for every template and rejects unknown ones", () => {
     for (const t of voucherTemplates) {
-      if (t.id === "classic") continue; // classic is the base card style
       expect(voucherPrintCss).toContain(`.vp-t-${t.id}`);
     }
     expect(isVoucherTemplate("modern")).toBe(true);

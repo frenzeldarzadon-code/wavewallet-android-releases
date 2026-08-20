@@ -12,15 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/ui-kit";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { peso, shortDateTime } from "@/lib/wavewallet";
-import { voucherPrintCss } from "@/lib/voucher-print-css";
+import { voucherPrintCss, voucherSelectorCss } from "@/lib/voucher-print-css";
 import {
   fetchPrintableSale,
   voucherTemplates,
