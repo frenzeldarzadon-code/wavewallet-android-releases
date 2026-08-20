@@ -359,7 +359,14 @@ function ReviewPage() {
         </Card>
       </PageSection>
 
-      <GoLiveCard ecosystemId={state.ecosystem_id} onLive={() => void load()} />
+      <GoLiveCard
+        ecosystemId={state.ecosystem_id}
+        shopName={state.name}
+        onLive={() => {
+          // Verified payment — continue in the live Admin console, not the demo.
+          if (typeof window !== "undefined") window.location.assign("/admin");
+        }}
+      />
 
       <PageSection title="Demo ledger" description="Every simulated movement, newest first.">
         <Card className="shadow-[var(--shadow-card)]">

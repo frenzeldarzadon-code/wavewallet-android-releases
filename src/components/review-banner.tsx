@@ -51,6 +51,9 @@ export function ReviewBanner() {
       <Link to="/review" className="underline underline-offset-2">
         Open simulation
       </Link>
+      <Link to="/admin/go-live" className="underline underline-offset-2">
+        Subscribe &amp; Go Live
+      </Link>
     </div>
   );
 }
