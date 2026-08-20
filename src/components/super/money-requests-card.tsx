@@ -249,10 +249,22 @@ export function MoneyRequestsCard() {
                       <p className="text-muted-foreground">Why pending: {verificationReason(c)}</p>
                     ) : null}
                     <p className="text-muted-foreground">
+                      D. Payment authentication:{" "}
+                      {c.payment_authenticated
+                        ? "authenticated"
+                        : "not authenticated — a matching receipt alone is not proof of payment"}
+                    </p>
+                    {c.authentication_reason ? (
+                      <p className={c.payment_authenticated ? "text-muted-foreground" : "font-medium text-destructive"}>
+                        {c.authentication_reason}
+                      </p>
+                    ) : null}
+                    <p className="text-muted-foreground">
                       {c.listener_event_id
                         ? "Listener phone confirmed a matching GCash notification"
                         : "No listener confirmation for this payment"}
                     </p>
+
 
                     {c.status === "approved" ? (
                       <p className="mt-1 text-muted-foreground">

@@ -374,6 +374,8 @@ export type Database = {
         Row: {
           amount_php: number
           approval_method: string
+          authentication_checked_at: string | null
+          authentication_reason: string | null
           auto_match_note: string | null
           created_at: string
           credits: number
@@ -409,6 +411,7 @@ export type Database = {
           payer_number_key: string | null
           payer_reference: string | null
           payer_reference_key: string | null
+          payment_authenticated: boolean
           proof_path: string | null
           rate_credits: number
           rate_php: number
@@ -422,6 +425,8 @@ export type Database = {
           receipt_reference: string | null
           receipt_reference_key: string | null
           receipt_sender_number: string | null
+          receipt_sender_number_key: string | null
+          receipt_verified: boolean
           reference: string
           reference_edited: boolean
           reference_source: string | null
@@ -443,6 +448,8 @@ export type Database = {
         Insert: {
           amount_php: number
           approval_method?: string
+          authentication_checked_at?: string | null
+          authentication_reason?: string | null
           auto_match_note?: string | null
           created_at?: string
           credits: number
@@ -478,6 +485,7 @@ export type Database = {
           payer_number_key?: string | null
           payer_reference?: string | null
           payer_reference_key?: string | null
+          payment_authenticated?: boolean
           proof_path?: string | null
           rate_credits: number
           rate_php: number
@@ -491,6 +499,8 @@ export type Database = {
           receipt_reference?: string | null
           receipt_reference_key?: string | null
           receipt_sender_number?: string | null
+          receipt_sender_number_key?: string | null
+          receipt_verified?: boolean
           reference: string
           reference_edited?: boolean
           reference_source?: string | null
@@ -512,6 +522,8 @@ export type Database = {
         Update: {
           amount_php?: number
           approval_method?: string
+          authentication_checked_at?: string | null
+          authentication_reason?: string | null
           auto_match_note?: string | null
           created_at?: string
           credits?: number
@@ -547,6 +559,7 @@ export type Database = {
           payer_number_key?: string | null
           payer_reference?: string | null
           payer_reference_key?: string | null
+          payment_authenticated?: boolean
           proof_path?: string | null
           rate_credits?: number
           rate_php?: number
@@ -560,6 +573,8 @@ export type Database = {
           receipt_reference?: string | null
           receipt_reference_key?: string | null
           receipt_sender_number?: string | null
+          receipt_sender_number_key?: string | null
+          receipt_verified?: boolean
           reference?: string
           reference_edited?: boolean
           reference_source?: string | null
@@ -5695,6 +5710,8 @@ export type Database = {
         Returns: {
           amount_php: number
           approval_method: string
+          authentication_checked_at: string | null
+          authentication_reason: string | null
           auto_match_note: string | null
           created_at: string
           credits: number
@@ -5730,6 +5747,7 @@ export type Database = {
           payer_number_key: string | null
           payer_reference: string | null
           payer_reference_key: string | null
+          payment_authenticated: boolean
           proof_path: string | null
           rate_credits: number
           rate_php: number
@@ -5743,6 +5761,8 @@ export type Database = {
           receipt_reference: string | null
           receipt_reference_key: string | null
           receipt_sender_number: string | null
+          receipt_sender_number_key: string | null
+          receipt_verified: boolean
           reference: string
           reference_edited: boolean
           reference_source: string | null
@@ -5816,6 +5836,8 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      cash_in_auth_blockers: { Args: { _id: string }; Returns: string[] }
+      cash_in_auth_explain: { Args: { _codes: string[] }; Returns: string }
       cash_in_auto_rule: {
         Args: { _ecosystem: string }
         Returns: {
@@ -5842,6 +5864,7 @@ export type Database = {
         Args: { _row: Database["public"]["Tables"]["cash_in_requests"]["Row"] }
         Returns: string
       }
+      cash_in_pending_diagnostics: { Args: { _limit?: number }; Returns: Json }
       cash_in_receiving_number: {
         Args: { _ecosystem: string; _method: string }
         Returns: string
@@ -5874,6 +5897,10 @@ export type Database = {
       }
       cash_in_reference_duplicate: {
         Args: { _id: string; _key: string; _paid_at?: string }
+        Returns: string
+      }
+      cash_in_sender_key: {
+        Args: { _row: Database["public"]["Tables"]["cash_in_requests"]["Row"] }
         Returns: string
       }
       cashback_chain: {
@@ -6557,6 +6584,13 @@ export type Database = {
         Returns: boolean
       }
       listener_device_status: { Args: never; Returns: Json }
+      listener_event_fits_cash_in: {
+        Args: {
+          _ev: Database["public"]["Tables"]["listener_events"]["Row"]
+          _row: Database["public"]["Tables"]["cash_in_requests"]["Row"]
+        }
+        Returns: boolean
+      }
       listener_heartbeat: {
         Args: { _device: string }
         Returns: {
@@ -7084,10 +7118,12 @@ export type Database = {
       }
       real_super_admin_exists: { Args: never; Returns: boolean }
       recheck_pending_cash_ins: { Args: never; Returns: Json }
+      reconcile_cash_in: { Args: { _id: string }; Returns: string }
       reconcile_listener_events: {
         Args: { _max_age_hours?: number }
         Returns: Json
       }
+      reconcile_payments: { Args: { _days?: number }; Returns: Json }
       record_app_download: { Args: never; Returns: number }
       record_cash_in_reference_conflict: {
         Args: { _new: string }
@@ -7259,6 +7295,8 @@ export type Database = {
         Returns: {
           amount_php: number
           approval_method: string
+          authentication_checked_at: string | null
+          authentication_reason: string | null
           auto_match_note: string | null
           created_at: string
           credits: number
@@ -7294,6 +7332,7 @@ export type Database = {
           payer_number_key: string | null
           payer_reference: string | null
           payer_reference_key: string | null
+          payment_authenticated: boolean
           proof_path: string | null
           rate_credits: number
           rate_php: number
@@ -7307,6 +7346,8 @@ export type Database = {
           receipt_reference: string | null
           receipt_reference_key: string | null
           receipt_sender_number: string | null
+          receipt_sender_number_key: string | null
+          receipt_verified: boolean
           reference: string
           reference_edited: boolean
           reference_source: string | null
@@ -7523,6 +7564,8 @@ export type Database = {
         Returns: {
           amount_php: number
           approval_method: string
+          authentication_checked_at: string | null
+          authentication_reason: string | null
           auto_match_note: string | null
           created_at: string
           credits: number
@@ -7558,6 +7601,7 @@ export type Database = {
           payer_number_key: string | null
           payer_reference: string | null
           payer_reference_key: string | null
+          payment_authenticated: boolean
           proof_path: string | null
           rate_credits: number
           rate_php: number
@@ -7571,6 +7615,8 @@ export type Database = {
           receipt_reference: string | null
           receipt_reference_key: string | null
           receipt_sender_number: string | null
+          receipt_sender_number_key: string | null
+          receipt_verified: boolean
           reference: string
           reference_edited: boolean
           reference_source: string | null
@@ -7644,6 +7690,8 @@ export type Database = {
         Returns: {
           amount_php: number
           approval_method: string
+          authentication_checked_at: string | null
+          authentication_reason: string | null
           auto_match_note: string | null
           created_at: string
           credits: number
@@ -7679,6 +7727,7 @@ export type Database = {
           payer_number_key: string | null
           payer_reference: string | null
           payer_reference_key: string | null
+          payment_authenticated: boolean
           proof_path: string | null
           rate_credits: number
           rate_php: number
@@ -7692,6 +7741,8 @@ export type Database = {
           receipt_reference: string | null
           receipt_reference_key: string | null
           receipt_sender_number: string | null
+          receipt_sender_number_key: string | null
+          receipt_verified: boolean
           reference: string
           reference_edited: boolean
           reference_source: string | null
@@ -8378,6 +8429,8 @@ export type Database = {
         Returns: {
           amount_php: number
           approval_method: string
+          authentication_checked_at: string | null
+          authentication_reason: string | null
           auto_match_note: string | null
           created_at: string
           credits: number
@@ -8413,6 +8466,7 @@ export type Database = {
           payer_number_key: string | null
           payer_reference: string | null
           payer_reference_key: string | null
+          payment_authenticated: boolean
           proof_path: string | null
           rate_credits: number
           rate_php: number
@@ -8426,6 +8480,8 @@ export type Database = {
           receipt_reference: string | null
           receipt_reference_key: string | null
           receipt_sender_number: string | null
+          receipt_sender_number_key: string | null
+          receipt_verified: boolean
           reference: string
           reference_edited: boolean
           reference_source: string | null
