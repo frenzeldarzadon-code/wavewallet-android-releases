@@ -186,6 +186,13 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
                   ) : (
                     <StatusBadge tone="muted">Code unavailable</StatusBadge>
                   )}
+                  {/* Presentation only: opens the print page for the exact
+                      vouchers already issued by this transaction. */}
+                  <Button asChild variant="outline" size="sm" className="mt-1">
+                    <Link to="/print/vouchers/$saleId" params={{ saleId: p.id }}>
+                      <Printer className="size-4" /> Print
+                    </Link>
+                  </Button>
                 </div>
               ))}
             </CardContent>
