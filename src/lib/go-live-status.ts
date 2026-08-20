@@ -27,9 +27,9 @@ export interface GoLiveStatus {
   /** True when the platform owner must actually do something. */
   actionRequired: boolean;
   /** Where the problem gets corrected, when a person can correct it. */
-  fix?: string;
+  fix?: string | undefined;
   /** Extra evidence note (receipt reading), never an approval authority. */
-  note?: string;
+  note?: string | undefined;
 }
 
 export interface GoLiveRequestLike {
