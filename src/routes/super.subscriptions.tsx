@@ -47,6 +47,7 @@ import {
 } from "@/lib/subscription";
 import { toast } from "sonner";
 import { RECEIPT_CHECK_LABEL, type ReceiptCheck } from "@/lib/cash-in-receipt";
+import { describeGoLiveRequest } from "@/lib/go-live-status";
 
 /** Receipt evidence stored on the request; never an approval authority. */
 const receiptCheck = (r: { receipt_check?: string | null }): ReceiptCheck =>
@@ -136,7 +137,8 @@ function SuperSubscriptions() {
     }
   };
 
-  const pending = requests.filter((r) => r.status === "pending");
+  // Legacy shops only — New Generation Go Live payments live in Subscription Shops.
+  const pending = requests.filter((r) => r.status === "pending" && Boolean(ecoName[r.ecosystem_id]));
   const active = rows.filter((e) => e.subscription_state === "active");
   const mrr = active.reduce((s, e) => s + Number(e.plan_price), 0);
   const visible =
@@ -161,7 +163,7 @@ function SuperSubscriptions() {
 
       <PageSection
         title="Approval queue"
-        description="Manual review only — GCash payments are never verified automatically."
+        description="Legacy shop payments. Each card explains exactly why it is still open."
       >
         <div className="grid gap-3 md:grid-cols-2">
           {pending.length === 0 ? (
@@ -341,6 +343,7 @@ function PendingCard({
   onReason: (v: string) => void;
   onReview: (decision: "approved" | "rejected") => void;
 }) {
+  const status = describeGoLiveRequest(request);
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     void proofUrl(request.proof_path).then(setUrl);
@@ -354,7 +357,18 @@ function PendingCard({
             <p className="font-medium">{ecosystemName}</p>
             <p className="text-xs text-muted-foreground">{request.requested_by_name}</p>
           </div>
-          <StatusBadge tone="warning">Pending</StatusBadge>
+          <StatusBadge tone={status.tone}>{status.badge}</StatusBadge>
+        </div>
+        <div
+          className={
+            status.kind === "invalid" || status.kind === "review"
+              ? "rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs leading-relaxed text-destructive"
+              : "rounded-lg border border-border bg-muted/50 px-3 py-2 text-xs leading-relaxed text-muted-foreground"
+          }
+        >
+          <p className="font-medium">{status.detail}</p>
+          {status.fix ? <p className="mt-1">What to do: {status.fix}</p> : null}
+          {!status.actionRequired ? <p className="mt-1 font-medium">No action required.</p> : null}
         </div>
         <dl className="grid grid-cols-2 gap-y-2 text-xs">
           <div>
@@ -412,7 +426,7 @@ function PendingCard({
           </p>
         )}
         <Input
-          placeholder="Reason (required when rejecting)"
+          placeholder="Reason for deciding this by hand (required when rejecting)"
           value={reason}
           onChange={(e) => onReason(e.target.value)}
         />
