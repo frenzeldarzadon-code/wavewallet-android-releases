@@ -15,8 +15,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageSection, StatusBadge } from "@/components/ui-kit";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { peso } from "@/lib/wavewallet";
-import { fetchPlans, type SubscriptionPlan } from "@/lib/subscription-shops";
+import { fetchPlans, fetchQuote, type SubscriptionPlan, type SubscriptionQuote } from "@/lib/subscription-shops";
 import {
   fetchGoLiveRequest,
   fetchPlatformGcash,
@@ -25,6 +35,7 @@ import {
   validateGoLive,
   type SubscriptionRequest,
 } from "@/lib/go-live";
+
 
 type Gcash = Awaited<ReturnType<typeof fetchPlatformGcash>>;
 
@@ -44,6 +55,9 @@ export function GoLiveCard({
   const [reference, setReference] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [quote, setQuote] = useState<SubscriptionQuote | null>(null);
+  const [confirming, setConfirming] = useState(false);
+
 
   const load = useCallback(async () => {
     try {
@@ -67,15 +81,39 @@ export function GoLiveCard({
     void load();
   }, [load]);
 
+  // Existing server-side calculation engine (subscription_quote) — the single
+  // source of truth for plan changes, prorated value and credit adjustment.
+  useEffect(() => {
+    let cancelled = false;
+    if (!planId) return;
+    fetchQuote(ecosystemId, planId)
+      .then((q) => {
+        if (!cancelled) setQuote(q);
+      })
+      .catch(() => {
+        if (!cancelled) setQuote(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ecosystemId, planId]);
+
   const plan = plans.find((p) => p.id === planId) ?? null;
   const monthCount = Math.max(1, Math.min(24, Number(months) || 1));
-  const due = plan ? Number(plan.monthly_price) * monthCount : 0;
+  const isPlanChange = Boolean(quote && !quote.is_first_activation);
+  const due = isPlanChange
+    ? Number(quote?.amount_due ?? 0)
+    : plan
+      ? Number(plan.monthly_price) * monthCount
+      : 0;
   const problem = validateGoLive({ payerNumber, reference });
   const pending = request?.status === "pending";
 
   const submit = async () => {
     if (!plan) return;
+    setConfirming(false);
     setBusy(true);
+
     try {
       const r = await submitGoLivePayment({
         ecosystemId,
@@ -203,20 +241,85 @@ export function GoLiveCard({
                 </div>
               </div>
 
+              {isPlanChange && quote ? (
+                <div className="rounded-xl border bg-muted/40 px-3 py-2.5 text-xs leading-relaxed">
+                  <p className="font-medium">Plan change summary</p>
+                  <p className="mt-1">
+                    Current plan: {quote.current_plan_name ?? "—"} ·{" "}
+                    {peso(Number(quote.current_monthly_price))}/mo
+                  </p>
+                  <p>
+                    New plan: {quote.new_plan_name} · {peso(Number(quote.new_monthly_price))}/mo
+                  </p>
+                  <p>
+                    Unused value credited: {peso(Number(quote.unused_value))} ·{" "}
+                    {quote.days_remaining} day{quote.days_remaining === 1 ? "" : "s"} remaining
+                  </p>
+                  <p>
+                    Coin adjustment: {Number(quote.additional_allocation).toLocaleString()} Coins
+                  </p>
+                </div>
+              ) : null}
+
               <p className="text-xs text-muted-foreground">
-                Total to pay: <strong>{peso(due)}</strong> for {monthCount} month
-                {monthCount === 1 ? "" : "s"} of {plan?.name ?? "the selected plan"}.
+                Total to pay: <strong>{peso(due)}</strong>
+                {isPlanChange
+                  ? ` after the existing adjustment rules for ${quote?.new_plan_name ?? "the selected plan"}.`
+                  : ` for ${monthCount} month${monthCount === 1 ? "" : "s"} of ${plan?.name ?? "the selected plan"}.`}
               </p>
 
-              <Button className="w-full" disabled={busy || !plan || Boolean(problem)} onClick={submit}>
+              <Button
+                className="w-full"
+                disabled={busy || !plan || Boolean(problem)}
+                onClick={() => setConfirming(true)}
+              >
                 {busy ? (
                   <Loader2 className="mr-1 size-4 animate-spin" />
                 ) : (
                   <Rocket className="mr-1 size-4" />
                 )}
-                Submit payment and go live
+                {isPlanChange ? "Review and confirm plan change" : "Submit payment and go live"}
               </Button>
               {problem ? <p className="text-xs text-destructive">{problem}</p> : null}
+
+              <AlertDialog open={confirming} onOpenChange={setConfirming}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {isPlanChange ? "Confirm this plan change" : "Confirm this payment"}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription asChild>
+                      <div className="space-y-1 text-left text-sm">
+                        {isPlanChange && quote ? (
+                          <>
+                            <p>
+                              From <strong>{quote.current_plan_name ?? "—"}</strong> to{" "}
+                              <strong>{quote.new_plan_name}</strong>.
+                            </p>
+                            <p>Unused value credited: {peso(Number(quote.unused_value))}</p>
+                            <p>
+                              Coin adjustment:{" "}
+                              {Number(quote.additional_allocation).toLocaleString()} Coins
+                            </p>
+                          </>
+                        ) : (
+                          <p>
+                            {plan?.name} · {monthCount} month{monthCount === 1 ? "" : "s"}
+                          </p>
+                        )}
+                        <p>
+                          Amount due: <strong>{peso(due)}</strong> · reference {reference || "—"}
+                        </p>
+                      </div>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={submit}>Confirm</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
             </>
           )}
         </CardContent>
