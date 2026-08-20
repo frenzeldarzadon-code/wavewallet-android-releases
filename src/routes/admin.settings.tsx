@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PageSection } from "@/components/ui-kit";
 import { RetentionPolicyCard } from "@/components/retention-policy-card";
 import { CashInNumberCard } from "@/components/money/cash-in-number-card";
+import { ShopIdentityCard } from "@/components/shop/shop-identity-card";
 import { ListenerDevicesCard } from "@/components/super/listener-devices-card";
 import { useSession } from "@/lib/session";
 import {
@@ -187,6 +188,13 @@ function AdminSettings() {
             </div>
           </CardContent>
         </Card>
+      </PageSection>
+
+      <PageSection
+        title="Shop ID, sign-up link & address"
+        description="New members join with your 7-digit Shop ID. The optional shop address decides where your shop appears in municipality discovery."
+      >
+        <ShopIdentityCard ecosystemId={ecosystemDbId} />
       </PageSection>
 
       <PageSection title="Contact information">
