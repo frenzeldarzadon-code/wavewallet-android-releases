@@ -10,8 +10,15 @@ import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import apkAsset from "@/assets/wavewallet-gcash-listener.apk.asset.json";
 
+/**
+ * Metadata of the APK actually hosted at the asset URL below. Keep these three
+ * values in step with the uploaded binary — the page must never advertise a
+ * version that is not the file being served.
+ */
 const APK_SHA256 = "e58f845cb3ec550a91d7e68bf71eddf76f7f3405a92f7d6d2c0e91126441c9ee";
 const APK_PACKAGE = "com.wavewallet.gcashlistener";
+const APK_VERSION_NAME = "1.0.0";
+const APK_VERSION_CODE = 1;
 
 const sizeMb = (apkAsset.size / (1024 * 1024)).toFixed(2);
 
@@ -20,17 +27,20 @@ export function ListenerAppDownload() {
     <section className="rounded-lg border bg-muted/30 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold">GCash Listener App for Admins</h3>
+          <h3 className="text-sm font-semibold">
+            GCash Listener App for Admins · v{APK_VERSION_NAME}
+          </h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            The official WaveWallet GCash Listener for Android. Install it on the phone that receives
-            the GCash notifications for your shop. One physical GCash account uses one listener
-            device.
+            The official WaveWallet GCash Listener for Android, downloaded straight from WaveWallet
+            (this is the permanent download link — never a GitHub Actions build artifact). Install it
+            on the phone that receives the GCash notifications for your shop. One physical GCash
+            account uses one listener device.
           </p>
         </div>
         <Button asChild>
           <a href={apkAsset.url} download="wavewallet-gcash-listener.apk">
             <Download className="mr-2 h-4 w-4" />
-            Download GCash Listener APK
+            Download v{APK_VERSION_NAME}
           </a>
         </Button>
       </div>
@@ -41,6 +51,12 @@ export function ListenerAppDownload() {
           <dd className="break-all font-mono text-foreground">{APK_PACKAGE}</dd>
         </div>
         <div>
+          <dt>Version</dt>
+          <dd className="text-foreground">
+            {APK_VERSION_NAME} (build {APK_VERSION_CODE})
+          </dd>
+        </div>
+        <div>
           <dt>Build</dt>
           <dd className="text-foreground">Signed release · {sizeMb} MB</dd>
         </div>
@@ -49,6 +65,18 @@ export function ListenerAppDownload() {
           <dd className="break-all font-mono text-foreground">{APK_SHA256}</dd>
         </div>
       </dl>
+
+      <div className="mt-4 rounded-md border border-primary/40 bg-primary/5 p-3 text-sm">
+        <p className="font-medium">Already have the listener installed? Update it — don’t uninstall.</p>
+        <p className="mt-1 text-muted-foreground">
+          Download this APK on the same phone and install it over the existing app. Installing over
+          the top keeps your pairing, your Notification access grant and your queued events. If you
+          uninstall first you lose the pairing and must register the device again here and re-enable
+          Notification access. After updating, open the app once and confirm it still shows as online
+          below.
+        </p>
+      </div>
+
 
       <div className="mt-4 space-y-3 text-sm">
         <div>
