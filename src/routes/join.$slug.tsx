@@ -191,7 +191,7 @@ function JoinPage() {
                   id="name"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Juan Dela Cruz"
+                  placeholder="Your full name"
                 />
               </div>
               <div className="space-y-1.5">
@@ -202,7 +202,7 @@ function JoinPage() {
                   autoComplete="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="you@example.com"
+                  placeholder="Your email address"
                 />
               </div>
               <div className="space-y-1.5">
@@ -212,7 +212,7 @@ function JoinPage() {
                   inputMode="tel"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="0917 000 0000"
+                  placeholder="Your mobile number"
                 />
               </div>
               <div className="space-y-1.5">

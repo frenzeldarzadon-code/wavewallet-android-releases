@@ -145,7 +145,7 @@ function InvitePage() {
                   autoComplete="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="operator@example.com"
+                  placeholder="Email address"
                 />
               </div>
               <div className="space-y-1.5">
@@ -155,7 +155,7 @@ function InvitePage() {
                   inputMode="tel"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="0917 000 0000"
+                  placeholder="Mobile number"
                 />
               </div>
               <div className="space-y-1.5">

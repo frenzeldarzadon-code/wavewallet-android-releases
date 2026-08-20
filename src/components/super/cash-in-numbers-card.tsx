@@ -97,7 +97,7 @@ export function CashInNumbersCard() {
                 <Input
                   id={`gcash-${row.id}`}
                   inputMode="tel"
-                  placeholder="09171234567"
+                  placeholder="GCash mobile number for this shop"
                   value={row.number}
                   onChange={(e) =>
                     setRows((prev) =>

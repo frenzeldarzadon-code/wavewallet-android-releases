@@ -60,7 +60,7 @@ export function MemberDirectory() {
                 value={filters.query}
                 onChange={(e) => set({ query: e.target.value })}
                 onKeyDown={(e) => e.key === "Enter" && void proceed()}
-                placeholder="Juan, or @juandc"
+                placeholder="Search by name or @handle"
                 autoCapitalize="none"
                 autoCorrect="off"
               />

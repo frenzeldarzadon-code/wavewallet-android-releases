@@ -595,7 +595,7 @@ function SuperAdmins() {
               type="email"
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
-              placeholder="operator@example.com"
+              placeholder="Email address"
             />
           </div>
           <DialogFooter>
@@ -861,7 +861,7 @@ function CreateDialog({
               type="email"
               value={form.adminEmail}
               onChange={(e) => setForm({ ...form, adminEmail: e.target.value })}
-              placeholder="operator@example.com"
+              placeholder="Email address"
             />
           </div>
           <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2 sm:col-span-2">

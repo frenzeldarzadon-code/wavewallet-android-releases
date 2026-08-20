@@ -368,7 +368,7 @@ export function ProfilePage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="h-11"
-                placeholder="you@example.com"
+                placeholder="Your email address"
                 inputMode="email"
                 autoCapitalize="none"
                 autoCorrect="off"

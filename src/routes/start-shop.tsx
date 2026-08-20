@@ -89,7 +89,7 @@ Free to create · Demo mode
                   id="shop-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Sagada Wave WiFi"
+                  placeholder="Your shop name"
                   maxLength={60}
                 />
               </div>

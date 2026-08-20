@@ -88,7 +88,7 @@ export function AddressFields({
             className="h-11"
             value={value.cityMunicipality}
             onChange={(e) => set({ cityMunicipality: e.target.value })}
-            placeholder="Sagada"
+            placeholder="Search municipality"
             autoComplete="address-level2"
           />
         </div>
