@@ -238,7 +238,10 @@ function SuperShops() {
         )}
       </PageSection>
 
+      <GoLiveRequestsCard shopNames={shopNames} onChanged={() => void load()} />
+
         </TabsContent>
+
       </Tabs>
 
       <SubscriptionPlansCard onSaved={() => void load()} />
