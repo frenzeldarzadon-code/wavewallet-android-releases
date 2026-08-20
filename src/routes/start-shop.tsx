@@ -11,9 +11,9 @@ import { StatusBadge } from "@/components/ui-kit";
 import { supabase } from "@/integrations/supabase/client";
 import { createReviewShop } from "@/lib/subscription-shops";
 
-const TITLE = "Start a 5-day review shop — WaveWallet";
+const TITLE = "Create your free WaveWallet shop";
 const DESCRIPTION =
-  "Create one WaveWallet review shop and explore Coins, resellers, WiFi vouchers and rewards for 5 days with 1,000 simulated Demo Coins.";
+  "Create a WaveWallet shop for free — no payment and no plan needed. Explore Coins, resellers, WiFi vouchers and rewards in Demo mode, then Go Live whenever you are ready.";
 
 export const Route = createFileRoute("/start-shop")({
   ssr: false,
@@ -49,7 +49,7 @@ function StartShopPage() {
     setBusy(true);
     try {
       await createReviewShop(name.trim(), description.trim() || undefined);
-      toast.success("Your review shop is ready — 1,000 Demo Coins are waiting.");
+      toast.success("Your shop is ready — 1,000 Demo Coins are waiting.");
       void navigate({ to: "/admin" });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not create the review shop");
@@ -64,14 +64,15 @@ function StartShopPage() {
         ← Back to the guide
       </Link>
       <StatusBadge tone="brand" className="mt-4">
-        5 days · simulated Demo Coins
+Free to create · Demo mode
       </StatusBadge>
-      <h1 className="mt-3 text-2xl font-semibold tracking-tight">Start your review shop</h1>
+      <h1 className="mt-3 text-2xl font-semibold tracking-tight">Create your shop</h1>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-        You get one review shop with 1,000 Demo Coins so you can try the full WaveWallet flow:
-        loading Coins to resellers, selling WiFi vouchers, points and rewards. Demo Coins are
-        simulated and never touch real balances. After 5 days the review shop freezes until you
-        subscribe — your WaveWallet account stays yours.
+        Creating a shop is free — no payment and no plan to choose yet. You become the Shop Admin
+        straight away and your shop starts in Demo mode with 1,000 Demo Coins so you can try the
+        full WaveWallet flow: loading Coins to resellers, selling WiFi vouchers, points and rewards.
+        Demo Coins are simulated and never become real value. When you are ready, hit Go Live in
+        your shop, pick a plan and pay it with GCash — the same shop becomes live.
       </p>
 
       <Card className="mt-6 shadow-[var(--shadow-card)]">
@@ -113,7 +114,7 @@ function StartShopPage() {
                 ) : (
                   <Sparkles className="mr-1 size-4" />
                 )}
-                Create review shop
+                Create my shop
               </Button>
             </>
           ) : (
