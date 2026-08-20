@@ -4,6 +4,9 @@
  * is modified here.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { Printer } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { buildCoinHistory, cashbackSummary, filterCoinHistory } from "@/lib/coin-history";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
