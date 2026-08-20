@@ -278,7 +278,9 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
   const submitCashIn = async () => {
     const problem = validateCashIn(Number(amount), methodId || null, {
       hasProof: Boolean(proofPath),
+      payerNumber,
     });
+
     if (problem) {
       toast.error(problem);
       return;
