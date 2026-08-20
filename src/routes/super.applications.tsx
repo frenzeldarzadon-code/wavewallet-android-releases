@@ -1,37 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ApplicationsPanel } from "@/components/applications-panel";
-import { useSession } from "@/lib/session";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
+/**
+ * Superseded by the single Approvals page, which already shows the same
+ * platform-wide new-member queue. Kept as a redirect so old links and
+ * bookmarks keep working — no functionality is removed.
+ */
 export const Route = createFileRoute("/super/applications")({
-  head: () => ({
-    meta: [
-      { title: "New Members — WaveWallet Platform" },
-      {
-        name: "description",
-        content:
-          "Review members who joined any WaveWallet shop and keep or remove them per shop.",
-      },
-      { property: "og:title", content: "New Members — WaveWallet Platform" },
-      {
-        property: "og:description",
-        content: "Keep or remove newly joined members across all shops.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
-  component: SuperApplications,
+  beforeLoad: () => {
+    throw redirect({ to: "/super/approvals" });
+  },
 });
-
-function SuperApplications() {
-  const session = useSession("super_admin");
-  if (!session.account) return null;
-  return (
-    <ApplicationsPanel
-      ecosystemId={null}
-      showEcosystem
-      title="New members"
-      description="Every new member across the platform, with the shop they joined."
-    />
-  );
-}
