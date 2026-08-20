@@ -221,7 +221,7 @@ export function GoLiveCard({
             </div>
           ) : (
             <>
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div id="gl-plans" className="grid gap-2 sm:grid-cols-2">
                 {plans.map((p) => (
                   <button
                     key={p.id}
@@ -244,6 +244,11 @@ export function GoLiveCard({
                   </button>
                 ))}
               </div>
+              {errorFor("plan") ? (
+                <p role="alert" className="text-xs font-medium text-destructive">
+                  {errorFor("plan")}
+                </p>
+              ) : null}
 
               <div className="rounded-xl border bg-muted/40 px-3 py-2.5 text-xs leading-relaxed">
                 <p className="flex items-center gap-1.5 font-medium">
@@ -255,21 +260,30 @@ export function GoLiveCard({
                   {gcash?.gcash_account_name ? ` · ${gcash.gcash_account_name}` : ""}
                 </p>
                 <p className="mt-1 text-muted-foreground">
-                  Pay first, then enter the sending number and reference below exactly as they
-                  appear on your GCash receipt. Each reference can only ever be used once, in any
-                  shop.
+                  Before you submit, three things are unavoidable: pay from your own GCash number
+                  first, enter that exact sending number, and copy the reference number from the
+                  receipt. Payment is recognised automatically only when the sending number,
+                  amount and reference all match, and each reference can only ever be used once in
+                  any shop.
                 </p>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="gl-months">Months</Label>
+                  <Label htmlFor="gl-months">Months (1–24)</Label>
                   <Input
                     id="gl-months"
                     inputMode="numeric"
+                    aria-invalid={Boolean(errorFor("months"))}
+                    className={errorFor("months") ? "border-destructive" : undefined}
                     value={months}
                     onChange={(e) => setMonths(e.target.value)}
                   />
+                  {errorFor("months") ? (
+                    <p role="alert" className="text-xs font-medium text-destructive">
+                      {errorFor("months")}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="gl-number">GCash number you paid from</Label>
@@ -277,9 +291,16 @@ export function GoLiveCard({
                     id="gl-number"
                     inputMode="numeric"
                     placeholder="09XXXXXXXXX"
+                    aria-invalid={Boolean(errorFor("payerNumber"))}
+                    className={errorFor("payerNumber") ? "border-destructive" : undefined}
                     value={payerNumber}
                     onChange={(e) => setPayerNumber(e.target.value)}
                   />
+                  {errorFor("payerNumber") ? (
+                    <p role="alert" className="text-xs font-medium text-destructive">
+                      {errorFor("payerNumber")}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="gl-ref">GCash reference number</Label>
@@ -287,11 +308,19 @@ export function GoLiveCard({
                     id="gl-ref"
                     inputMode="numeric"
                     placeholder="Reference number on your receipt"
+                    aria-invalid={Boolean(errorFor("reference"))}
+                    className={errorFor("reference") ? "border-destructive" : undefined}
                     value={reference}
                     onChange={(e) => setReference(e.target.value)}
                   />
+                  {errorFor("reference") ? (
+                    <p role="alert" className="text-xs font-medium text-destructive">
+                      {errorFor("reference")}
+                    </p>
+                  ) : null}
                 </div>
               </div>
+
 
               {isPlanChange && quote ? (
                 <div className="rounded-xl border bg-muted/40 px-3 py-2.5 text-xs leading-relaxed">
