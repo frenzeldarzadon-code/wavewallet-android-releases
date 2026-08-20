@@ -56,6 +56,13 @@ export type Database = {
             foreignKeyName: "admin_invitations_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_invitations_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -145,6 +152,13 @@ export type Database = {
             foreignKeyName: "audit_logs_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_logs_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -200,6 +214,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "business_expenses_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "business_expenses_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -275,6 +296,13 @@ export type Database = {
             foreignKeyName: "cash_in_auto_rules_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_in_auto_rules_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -340,6 +368,13 @@ export type Database = {
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "cash_in_reference_conflicts_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "cash_in_reference_conflicts_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -605,6 +640,13 @@ export type Database = {
             foreignKeyName: "cash_in_requests_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_in_requests_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -689,6 +731,13 @@ export type Database = {
             foreignKeyName: "credit_accounts_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_accounts_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -767,6 +816,13 @@ export type Database = {
             foreignKeyName: "credit_ledger_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_ledger_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -815,6 +871,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "credit_lot_consumptions_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "credit_lot_consumptions_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -876,6 +939,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "credit_lots_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "credit_lots_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -1010,6 +1080,13 @@ export type Database = {
             foreignKeyName: "credit_purchase_orders_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_purchase_orders_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -1095,6 +1172,13 @@ export type Database = {
             foreignKeyName: "credit_transfer_reversals_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_transfer_reversals_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -1170,6 +1254,13 @@ export type Database = {
             foreignKeyName: "demo_ledger_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demo_ledger_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -1207,6 +1298,13 @@ export type Database = {
           stock?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "demo_vouchers_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "demo_vouchers_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -1255,6 +1353,13 @@ export type Database = {
             foreignKeyName: "demo_wallets_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demo_wallets_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -1295,6 +1400,13 @@ export type Database = {
           thread_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "dm_messages_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "dm_messages_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -1340,6 +1452,13 @@ export type Database = {
           user_b?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "dm_threads_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "dm_threads_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -1473,6 +1592,13 @@ export type Database = {
             foreignKeyName: "ecosystem_invitations_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ecosystem_invitations_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -1532,6 +1658,13 @@ export type Database = {
             foreignKeyName: "ecosystem_memberships_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ecosystem_memberships_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -1569,6 +1702,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ecosystem_reviews_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ecosystem_reviews_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -1626,6 +1766,13 @@ export type Database = {
             foreignKeyName: "ecosystem_social_settings_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: true
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ecosystem_social_settings_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: true
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -1678,7 +1825,12 @@ export type Database = {
           review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          shop_barangay: string | null
+          shop_city_municipality: string | null
+          shop_code: string | null
           shop_kind: string
+          shop_province: string | null
+          shop_street: string | null
           signup_enabled: boolean
           signup_token: string
           slug: string
@@ -1734,7 +1886,12 @@ export type Database = {
           review_ends_at?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          shop_barangay?: string | null
+          shop_city_municipality?: string | null
+          shop_code?: string | null
           shop_kind?: string
+          shop_province?: string | null
+          shop_street?: string | null
           signup_enabled?: boolean
           signup_token?: string
           slug: string
@@ -1790,7 +1947,12 @@ export type Database = {
           review_ends_at?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          shop_barangay?: string | null
+          shop_city_municipality?: string | null
+          shop_code?: string | null
           shop_kind?: string
+          shop_province?: string | null
+          shop_street?: string | null
           signup_enabled?: boolean
           signup_token?: string
           slug?: string
@@ -1961,6 +2123,13 @@ export type Database = {
             foreignKeyName: "impersonation_sessions_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "impersonation_sessions_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -2025,6 +2194,13 @@ export type Database = {
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "listener_devices_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "listener_devices_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -2223,6 +2399,13 @@ export type Database = {
             foreignKeyName: "login_usernames_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "login_usernames_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -2280,6 +2463,13 @@ export type Database = {
             foreignKeyName: "member_notifications_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_notifications_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -2323,6 +2513,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "member_social_links_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "member_social_links_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -2382,6 +2579,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "membership_applications_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "membership_applications_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -2653,6 +2857,13 @@ export type Database = {
             foreignKeyName: "platform_credit_issuances_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_credit_issuances_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -2833,6 +3044,13 @@ export type Database = {
             foreignKeyName: "points_accounts_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "points_accounts_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -2911,6 +3129,13 @@ export type Database = {
             foreignKeyName: "points_ledger_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "points_ledger_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -2951,6 +3176,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "product_ratings_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "product_ratings_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -3067,7 +3299,21 @@ export type Database = {
             foreignKeyName: "profiles_active_ecosystem_id_fkey"
             columns: ["active_ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_active_ecosystem_id_fkey"
+            columns: ["active_ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
             referencedColumns: ["id"]
           },
           {
@@ -3311,6 +3557,13 @@ export type Database = {
             foreignKeyName: "retail_orders_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "retail_orders_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -3348,6 +3601,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "retail_product_ratings_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "retail_product_ratings_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -3455,6 +3715,13 @@ export type Database = {
             foreignKeyName: "retail_products_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "retail_products_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -3557,6 +3824,13 @@ export type Database = {
             foreignKeyName: "reward_products_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reward_products_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -3597,6 +3871,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "reward_ratings_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reward_ratings_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -3683,6 +3964,13 @@ export type Database = {
             foreignKeyName: "reward_redemptions_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reward_redemptions_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -3742,6 +4030,13 @@ export type Database = {
           source_lot_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "sale_commissions_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sale_commissions_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -3821,6 +4116,13 @@ export type Database = {
             foreignKeyName: "shop_subscriptions_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: true
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_subscriptions_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: true
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -3872,7 +4174,21 @@ export type Database = {
             foreignKeyName: "shop_transfer_fees_from_ecosystem_id_fkey"
             columns: ["from_ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_transfer_fees_from_ecosystem_id_fkey"
+            columns: ["from_ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_transfer_fees_to_ecosystem_id_fkey"
+            columns: ["to_ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
             referencedColumns: ["id"]
           },
           {
@@ -3923,6 +4239,13 @@ export type Database = {
             foreignKeyName: "social_ad_events_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_ad_events_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -3951,6 +4274,13 @@ export type Database = {
           id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "social_blocks_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "social_blocks_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -4011,6 +4341,13 @@ export type Database = {
             foreignKeyName: "social_comments_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_comments_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -4066,6 +4403,13 @@ export type Database = {
             foreignKeyName: "social_credit_accounts_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_credit_accounts_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -4117,6 +4461,13 @@ export type Database = {
             columns: ["account_id"]
             isOneToOne: false
             referencedRelation: "social_credit_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_credit_ledger_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
             referencedColumns: ["id"]
           },
           {
@@ -4233,6 +4584,13 @@ export type Database = {
             foreignKeyName: "social_likes_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_likes_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -4293,7 +4651,21 @@ export type Database = {
             foreignKeyName: "social_post_distributions_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_post_distributions_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_post_distributions_origin_ecosystem_id_fkey"
+            columns: ["origin_ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
             referencedColumns: ["id"]
           },
           {
@@ -4341,6 +4713,13 @@ export type Database = {
           reason?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "social_post_shop_hides_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "social_post_shop_hides_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -4444,6 +4823,13 @@ export type Database = {
             foreignKeyName: "social_posts_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_posts_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -4510,6 +4896,13 @@ export type Database = {
             foreignKeyName: "social_promotion_tiers_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_promotion_tiers_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -4556,6 +4949,13 @@ export type Database = {
           target_user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "social_reports_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "social_reports_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -4685,6 +5085,13 @@ export type Database = {
             foreignKeyName: "subscription_adjustments_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_adjustments_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -4758,6 +5165,13 @@ export type Database = {
           verification_status?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "subscription_events_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "subscription_events_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -4952,6 +5366,13 @@ export type Database = {
             foreignKeyName: "subscription_requests_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_requests_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -4997,6 +5418,13 @@ export type Database = {
             foreignKeyName: "test_data_resets_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_data_resets_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -5025,6 +5453,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_roles_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_roles_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -5155,6 +5590,13 @@ export type Database = {
             foreignKeyName: "voucher_codes_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_codes_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -5226,6 +5668,13 @@ export type Database = {
             foreignKeyName: "voucher_imports_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_imports_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -5282,6 +5731,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "voucher_products_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "voucher_products_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -5392,6 +5848,13 @@ export type Database = {
           upline_recipient_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "voucher_sales_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "voucher_sales_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -5530,6 +5993,13 @@ export type Database = {
             foreignKeyName: "withdrawal_requests_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "withdrawal_requests_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
             referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
@@ -5558,7 +6028,16 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      discoverable_shops: {
+        Row: {
+          city_municipality: string | null
+          id: string | null
+          name: string | null
+          province: string | null
+          shop_code: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       acting_as: { Args: never; Returns: string }
@@ -6101,7 +6580,12 @@ export type Database = {
           review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          shop_barangay: string | null
+          shop_city_municipality: string | null
+          shop_code: string | null
           shop_kind: string
+          shop_province: string | null
+          shop_street: string | null
           signup_enabled: boolean
           signup_token: string
           slug: string
@@ -6166,7 +6650,12 @@ export type Database = {
           review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          shop_barangay: string | null
+          shop_city_municipality: string | null
+          shop_code: string | null
           shop_kind: string
+          shop_province: string | null
+          shop_street: string | null
           signup_enabled: boolean
           signup_token: string
           slug: string
@@ -6340,6 +6829,16 @@ export type Database = {
       expire_stale_invitations: { Args: never; Returns: undefined }
       expire_stale_member_invitations: { Args: never; Returns: number }
       expire_stale_subscriptions: { Args: never; Returns: number }
+      find_shop_by_code: {
+        Args: { _code: string }
+        Returns: {
+          city_municipality: string
+          id: string
+          name: string
+          province: string
+          shop_code: string
+        }[]
+      }
       follow_member: {
         Args: { _follow?: boolean; _user: string }
         Returns: undefined
@@ -6377,6 +6876,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      generate_shop_code: { Args: never; Returns: string }
       get_signup_ecosystem: {
         Args: { _slug: string }
         Returns: {
@@ -6466,6 +6966,7 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      join_shop_by_code: { Args: { _code: string }; Returns: string }
       joinable_ecosystems: {
         Args: never
         Returns: {
@@ -8252,7 +8753,12 @@ export type Database = {
           review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          shop_barangay: string | null
+          shop_city_municipality: string | null
+          shop_code: string | null
           shop_kind: string
+          shop_province: string | null
+          shop_street: string | null
           signup_enabled: boolean
           signup_token: string
           slug: string
@@ -8317,7 +8823,12 @@ export type Database = {
           review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          shop_barangay: string | null
+          shop_city_municipality: string | null
+          shop_code: string | null
           shop_kind: string
+          shop_province: string | null
+          shop_street: string | null
           signup_enabled: boolean
           signup_token: string
           slug: string
@@ -8389,7 +8900,12 @@ export type Database = {
           review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          shop_barangay: string | null
+          shop_city_municipality: string | null
+          shop_code: string | null
           shop_kind: string
+          shop_province: string | null
+          shop_street: string | null
           signup_enabled: boolean
           signup_token: string
           slug: string
@@ -8507,6 +9023,16 @@ export type Database = {
         Args: { _percent: number; _user_id: string }
         Returns: undefined
       }
+      set_shop_address: {
+        Args: {
+          _barangay?: string
+          _city_municipality?: string
+          _ecosystem_id: string
+          _province?: string
+          _street?: string
+        }
+        Returns: undefined
+      }
       set_subreseller_parent: {
         Args: { _reseller_id: string; _user_id: string }
         Returns: undefined
@@ -8602,6 +9128,21 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      shop_discovery_municipalities: {
+        Args: never
+        Returns: {
+          city_municipality: string
+          province: string
+          shop_count: number
+        }[]
+      }
+      shop_effective_location: {
+        Args: { _ecosystem_id: string }
+        Returns: {
+          city_municipality: string
+          province: string
+        }[]
+      }
       shop_funding_admin: { Args: { _ecosystem: string }; Returns: string }
       shop_store_settings: {
         Args: { _ecosystem_id: string }
@@ -8614,6 +9155,16 @@ export type Database = {
           public_storefront: boolean
           retail_enabled: boolean
           voucher_enabled: boolean
+        }[]
+      }
+      shops_in_municipality: {
+        Args: { _city: string; _province: string }
+        Returns: {
+          city_municipality: string
+          id: string
+          name: string
+          province: string
+          shop_code: string
         }[]
       }
       slugify: { Args: { _value: string }; Returns: string }
@@ -9379,7 +9930,12 @@ export type Database = {
           review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          shop_barangay: string | null
+          shop_city_municipality: string | null
+          shop_code: string | null
           shop_kind: string
+          shop_province: string | null
+          shop_street: string | null
           signup_enabled: boolean
           signup_token: string
           slug: string
@@ -9449,7 +10005,12 @@ export type Database = {
           review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          shop_barangay: string | null
+          shop_city_municipality: string | null
+          shop_code: string | null
           shop_kind: string
+          shop_province: string | null
+          shop_street: string | null
           signup_enabled: boolean
           signup_token: string
           slug: string
