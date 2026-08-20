@@ -121,7 +121,7 @@ function PrintVouchersPage() {
               For accurate voucher size, print at 100% / Actual Size. Do not use Fit to Page.
             </p>
             <p className="text-[11px] text-muted-foreground">
-              Each card prints at exactly 2in × 1.5in. Vouchers are arranged several per sheet and
+              Each card prints at exactly 2in × 2in. Vouchers are arranged several per sheet and
               continue onto more pages automatically. Printing never changes a voucher.
             </p>
           </CardContent>
