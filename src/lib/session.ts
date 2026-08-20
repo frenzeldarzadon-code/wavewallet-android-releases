@@ -52,6 +52,41 @@ export const shopHomeFor = (role: Role) =>
       ? "/reseller/shop"
       : homeFor(role);
 
+/** The My Shops screen — the only shop list an ordinary member ever sees. */
+export const MY_SHOPS_PATH = "/universe/shops";
+
+export interface LandingMembership {
+  ecosystemId: string;
+  role: Role;
+  isActive: boolean;
+}
+
+/**
+ * Landing decision for a member who belongs to shops.
+ *
+ * - no shop at all → the Universe, which is open to everyone
+ * - exactly one shop → open it (switching first when it is not the active one)
+ * - several shops with a last-used one → open that one
+ * - several shops and no last-used one → My Shops, so nothing is guessed
+ *
+ * Universe stays reachable from navigation; it is simply not the default for
+ * members who belong to a shop.
+ */
+export function landingForMemberships(list: LandingMembership[]): {
+  to: string;
+  switchTo: string | null;
+} {
+  if (list.length === 0) return { to: "/universe", switchTo: null };
+  const active = list.find((m) => m.isActive);
+  if (list.length === 1) {
+    const only = list[0]!;
+    return { to: shopHomeFor(only.role), switchTo: only.isActive ? null : only.ecosystemId };
+  }
+  if (active) return { to: shopHomeFor(active.role), switchTo: null };
+  return { to: MY_SHOPS_PATH, switchTo: null };
+}
+
+
 /** Subresellers share the reseller workspace — the database still authorizes every action. */
 const roleSatisfies = (role: Role, required: Role) =>
   role === required ||
