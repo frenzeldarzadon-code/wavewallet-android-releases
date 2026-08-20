@@ -11,14 +11,23 @@ import android.os.Build
 import android.os.IBinder
 import com.wavewallet.gcashlistener.R
 import com.wavewallet.gcashlistener.ui.MainActivity
+import com.wavewallet.gcashlistener.util.LastStatus
 
 /** Low-priority persistent notification keeps ColorOS from freezing the app. */
 class ListenerForegroundService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    override fun onDestroy() {
+        LastStatus.recordForeground(this, false)
+        super.onDestroy()
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startForeground(NOTIFICATION_ID, buildNotification())
+        // This notification only proves the process is alive. It is NOT proof
+        // that the NotificationListenerService is connected.
+        LastStatus.recordForeground(this, true)
         return START_STICKY
     }
 

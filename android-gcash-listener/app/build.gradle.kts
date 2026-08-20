@@ -12,10 +12,11 @@ android {
         applicationId = "com.wavewallet.gcashlistener"
         minSdk = 26
         targetSdk = 34
-        // 2 / 1.1.0 — adds reconnect recovery (onListenerConnected reads
-        // activeNotifications) and GCash parser v2 reference handling.
-        versionCode = 2
-        versionName = "1.1.0"
+        // 3 / 1.2.0 — layered listener diagnostics (connection vs reception vs
+        // parsing), all notification text surfaces read (bigText, textLines,
+        // messaging style), automatic rebind + re-scan of active notifications.
+        versionCode = 3
+        versionName = "1.2.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Default WaveWallet base URL. Override at pairing time in the app.

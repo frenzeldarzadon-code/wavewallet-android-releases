@@ -1,6 +1,8 @@
 package com.wavewallet.gcashlistener.ui
 
+import android.content.ComponentName
 import android.content.Intent
+import android.service.notification.NotificationListenerService
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
@@ -39,6 +41,7 @@ import com.wavewallet.gcashlistener.data.ListenerDb
 import com.wavewallet.gcashlistener.data.QueuedEvent
 import com.wavewallet.gcashlistener.net.ListenerClient
 import com.wavewallet.gcashlistener.parser.GcashParser
+import com.wavewallet.gcashlistener.service.GcashNotificationListener
 import com.wavewallet.gcashlistener.service.ListenerForegroundService
 import com.wavewallet.gcashlistener.store.PairingStore
 import com.wavewallet.gcashlistener.util.LastStatus
@@ -72,13 +75,26 @@ private fun HomeScreen() {
     val queued by dao.pendingCount().collectAsState(initial = 0)
     val recent by dao.recent().collectAsState(initial = emptyList())
 
+    var connected by remember { mutableStateOf(LastStatus.isListenerConnected(context)) }
+
     LaunchedEffect(Unit) {
         access = LastStatus.hasNotificationAccess(context)
         status = LastStatus.snapshot(context)
-        if (paired && access) ListenerForegroundService.start(context)
+        connected = LastStatus.isListenerConnected(context)
+        if (paired && access) {
+            ListenerForegroundService.start(context)
+            // Android can leave the listener unbound while the foreground
+            // service runs. Asking for a rebind reconnects it and triggers a
+            // fresh sweep of the notifications still on the status bar.
+            runCatching {
+                NotificationListenerService.requestRebind(
+                    ComponentName(context, GcashNotificationListener::class.java),
+                )
+            }
+        }
     }
 
-    val ready = paired && access
+    val ready = paired && access && connected
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -86,10 +102,11 @@ private fun HomeScreen() {
     ) {
         Text("WaveWallet GCash Listener", style = MaterialTheme.typography.headlineSmall)
         Text(
-            if (ready) "Status: LISTENING (online when heartbeats succeed)"
+            if (ready) "Status: LISTENING — listener CONNECTED"
             else "Status: NOT READY — " + listOfNotNull(
                 if (!paired) "device not paired" else null,
                 if (!access) "Notification Access not granted" else null,
+                if (access && !connected) "Notification Access granted but the listener is NOT connected" else null,
             ).joinToString(" and "),
             fontWeight = FontWeight.SemiBold,
         )
@@ -161,6 +178,31 @@ private fun HomeScreen() {
 
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Diagnostics", fontWeight = FontWeight.SemiBold)
+                Text("Notification Access: " + if (access) "granted" else "NOT granted")
+                Text("Listener service: ${status["listener"]}")
+                Text("Foreground service: ${status["foreground"]} (not proof of connection)")
+                Text("Last GCash notification received: ${status["lastReceived"]} (${status["lastReceivedAt"]})")
+                Text("GCash notifications received in total: ${status["receivedCount"]}")
+                Text("Last parser result: ${status["lastParse"]} (${status["lastParseAt"]})")
+                Text("Last recovery sweep: ${status["lastSweep"]} (${status["lastSweepAt"]})")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = {
+                        runCatching {
+                            NotificationListenerService.requestRebind(
+                                ComponentName(context, GcashNotificationListener::class.java),
+                            )
+                        }
+                        message = "Reconnect requested. The listener re-scans active notifications on connect."
+                        status = LastStatus.snapshot(context)
+                        connected = LastStatus.isListenerConnected(context)
+                    }, enabled = access) { Text("Reconnect & re-scan") }
+                    OutlinedButton(onClick = {
+                        access = LastStatus.hasNotificationAccess(context)
+                        status = LastStatus.snapshot(context)
+                        connected = LastStatus.isListenerConnected(context)
+                    }) { Text("Refresh status") }
+                }
                 Text("Activity", fontWeight = FontWeight.SemiBold)
                 Text("Last notification read: ${status["lastNotification"]} (${status["lastNotificationAt"]})")
                 Text("Last event sent: ${status["lastSent"]} (${status["lastSentAt"]})")
