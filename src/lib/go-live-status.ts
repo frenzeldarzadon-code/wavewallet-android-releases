@@ -21,7 +21,7 @@ export interface GoLiveStatus {
   kind: GoLiveStatusKind;
   /** Short badge text. */
   badge: string;
-  tone: "positive" | "warning" | "negative" | "muted" | "brand";
+  tone: "brand" | "success" | "danger" | "warning" | "muted";
   /** One sentence explaining WHY it is in this state. */
   detail: string;
   /** True when the platform owner must actually do something. */
@@ -65,7 +65,7 @@ export function describeGoLiveRequest(r: GoLiveRequestLike): GoLiveStatus {
       ? {
           kind: "activated",
           badge: "Activated automatically",
-          tone: "positive",
+          tone: "success",
           detail:
             "The platform GCash listener verified this payment and the shop was switched to live. No Super Admin action is required.",
           actionRequired: false,
@@ -74,7 +74,7 @@ export function describeGoLiveRequest(r: GoLiveRequestLike): GoLiveStatus {
       : {
           kind: "approved_manually",
           badge: "Approved manually",
-          tone: "positive",
+          tone: "success",
           detail:
             "This payment was approved by the platform owner as an exception, not by the GCash listener.",
           actionRequired: false,
@@ -86,7 +86,7 @@ export function describeGoLiveRequest(r: GoLiveRequestLike): GoLiveStatus {
     return {
       kind: "rejected",
       badge: "Rejected",
-      tone: "negative",
+      tone: "danger",
       detail: r.decision_reason?.trim() || "This payment was rejected by the platform owner.",
       actionRequired: false,
       note,
@@ -98,7 +98,7 @@ export function describeGoLiveRequest(r: GoLiveRequestLike): GoLiveStatus {
     return {
       kind: "invalid",
       badge: "Missing proof of payment",
-      tone: "negative",
+      tone: "danger",
       detail:
         "No GCash payment screenshot is attached to this request, so there is no evidence to check it against.",
       actionRequired: true,
@@ -111,7 +111,7 @@ export function describeGoLiveRequest(r: GoLiveRequestLike): GoLiveStatus {
     return {
       kind: "invalid",
       badge: "Incomplete request",
-      tone: "negative",
+      tone: "danger",
       detail:
         "No sending GCash number was recorded, so this payment can never be matched to a GCash notification.",
       actionRequired: true,
