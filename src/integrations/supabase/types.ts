@@ -5282,6 +5282,12 @@ export type Database = {
           previous_period_end: string | null
           proof_path: string | null
           purpose: string
+          receipt_amount_php: number | null
+          receipt_check: string
+          receipt_details: Json | null
+          receipt_paid_at: string | null
+          receipt_reference_key: string | null
+          receipt_sender_key: string | null
           remainder_amount: number
           requested_by: string | null
           requested_by_name: string
@@ -5317,6 +5323,12 @@ export type Database = {
           previous_period_end?: string | null
           proof_path?: string | null
           purpose?: string
+          receipt_amount_php?: number | null
+          receipt_check?: string
+          receipt_details?: Json | null
+          receipt_paid_at?: string | null
+          receipt_reference_key?: string | null
+          receipt_sender_key?: string | null
           remainder_amount?: number
           requested_by?: string | null
           requested_by_name?: string
@@ -5352,6 +5364,12 @@ export type Database = {
           previous_period_end?: string | null
           proof_path?: string | null
           purpose?: string
+          receipt_amount_php?: number | null
+          receipt_check?: string
+          receipt_details?: Json | null
+          receipt_paid_at?: string | null
+          receipt_reference_key?: string | null
+          receipt_sender_key?: string | null
           remainder_amount?: number
           requested_by?: string | null
           requested_by_name?: string
@@ -6180,6 +6198,18 @@ export type Database = {
           _receiving?: string
           _reference?: string
           _sender?: string
+        }
+        Returns: string
+      }
+      apply_go_live_receipt_ocr: {
+        Args: {
+          _amount: number
+          _details?: Json
+          _id: string
+          _paid_at?: string
+          _readable: boolean
+          _reference: string
+          _sender: string
         }
         Returns: string
       }
@@ -8433,6 +8463,12 @@ export type Database = {
           previous_period_end: string | null
           proof_path: string | null
           purpose: string
+          receipt_amount_php: number | null
+          receipt_check: string
+          receipt_details: Json | null
+          receipt_paid_at: string | null
+          receipt_reference_key: string | null
+          receipt_sender_key: string | null
           remainder_amount: number
           requested_by: string | null
           requested_by_name: string
@@ -9490,6 +9526,12 @@ export type Database = {
           previous_period_end: string | null
           proof_path: string | null
           purpose: string
+          receipt_amount_php: number | null
+          receipt_check: string
+          receipt_details: Json | null
+          receipt_paid_at: string | null
+          receipt_reference_key: string | null
+          receipt_sender_key: string | null
           remainder_amount: number
           requested_by: string | null
           requested_by_name: string
@@ -9543,6 +9585,12 @@ export type Database = {
           previous_period_end: string | null
           proof_path: string | null
           purpose: string
+          receipt_amount_php: number | null
+          receipt_check: string
+          receipt_details: Json | null
+          receipt_paid_at: string | null
+          receipt_reference_key: string | null
+          receipt_sender_key: string | null
           remainder_amount: number
           requested_by: string | null
           requested_by_name: string
