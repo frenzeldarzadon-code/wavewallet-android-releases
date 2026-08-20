@@ -4,7 +4,7 @@
  * they belong inside the shop console, isolated per ecosystem.
  */
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Check, Loader2, Store } from "lucide-react";
+import { Check, Loader2, Plus, Store } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -13,14 +13,13 @@ import { ShopInvitationsCard } from "@/components/universe/shop-invitations-card
 import { UniverseShell } from "@/components/universe/universe-shell";
 import { homeFor, useSession } from "@/lib/session";
 import {
-  fetchJoinableEcosystems,
   fetchMyMemberships,
-  requestJoinEcosystem,
   switchEcosystem,
   switchableMemberships,
-  type JoinableEcosystem,
   type Membership,
 } from "@/lib/memberships";
+import { ShopFinder } from "@/components/shop/shop-finder";
+import { joinShopByCode, type ShopSummary } from "@/lib/shop-directory";
 import { roleLabels } from "@/lib/wavewallet";
 
 export const Route = createFileRoute("/universe/shops")({
@@ -47,12 +46,11 @@ export const Route = createFileRoute("/universe/shops")({
 function UniverseShops() {
   const session = useSession();
   const [memberships, setMemberships] = useState<Membership[]>([]);
-  const [joinable, setJoinable] = useState<JoinableEcosystem[]>([]);
+  const [found, setFound] = useState<ShopSummary | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setMemberships(await fetchMyMemberships());
-    setJoinable(await fetchJoinableEcosystems());
   }, []);
 
   useEffect(() => {
@@ -75,7 +73,7 @@ function UniverseShops() {
   };
 
   return (
-    <UniverseShell title="Shops" subtitle="Your memberships and the directory">
+    <UniverseShell title="Shops" subtitle="Your shops, and joining another one">
       <div className="space-y-6 px-4 sm:px-0">
         <ShopInvitationsCard onChanged={() => void load()} />
 
@@ -86,7 +84,7 @@ function UniverseShops() {
           {mine.length === 0 ? (
             <EmptyState
               title="No shop memberships yet"
-              description="Join a shop below — your wallet in that shop opens right away."
+              description="Join a shop with its 7-digit Shop ID below, or create your own."
             />
           ) : (
             <div className="space-y-2">
@@ -99,6 +97,73 @@ function UniverseShops() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{m.ecosystemName}</p>
                     <p className="text-xs text-muted-foreground">
+                      {roleLabels[m.role]}
+                      {m.isActive ? " · active" : ""}
+                    </p>
+                  </div>
+                  {m.isActive ? (
+                    <Check className="size-4 text-success" aria-label="Active shop" />
+                  ) : null}
+                  <Button
+                    size="sm"
+                    variant={m.isActive ? "default" : "outline"}
+                    disabled={busy === m.ecosystemId}
+                    onClick={() => void enter(m.ecosystemId, m.isActive)}
+                  >
+                    {busy === m.ecosystemId ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : null}
+                    {m.isActive ? "Open" : "Switch & open"}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </PageSection>
+
+        <PageSection
+          title="Search & join an existing shop"
+          description="Enter the operator's 7-digit Shop ID, or find them by city / municipality. Shops you do not belong to stay private."
+        >
+          <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+            <ShopFinder value={found} onChange={setFound} />
+            <Button
+              className="w-full"
+              disabled={!found || busy === "join"}
+              onClick={async () => {
+                if (!found) return;
+                setBusy("join");
+                try {
+                  await joinShopByCode(found.shopCode);
+                  toast.success("You joined the shop — your wallet there is ready.");
+                  setFound(null);
+                  await load();
+                } catch (err) {
+                  toast.error(err instanceof Error ? err.message : "Could not join that shop");
+                } finally {
+                  setBusy(null);
+                }
+              }}
+            >
+              {busy === "join" ? <Loader2 className="size-4 animate-spin" /> : null}
+              Join shop
+            </Button>
+          </div>
+        </PageSection>
+
+        <PageSection
+          title="Create a new shop"
+          description="Run your own WiFi voucher operation. Shops start free in Demo mode; you Go Live when you are ready."
+        >
+          <Button asChild variant="outline" className="w-full">
+            <Link to="/start-shop">
+              <Plus className="size-4" />
+              Create New Shop
+            </Link>
+          </Button>
+        </PageSection>
+
+        <p className="text-xs text-muted-foreground">
                       {roleLabels[m.role]}
                       {m.isActive ? " · active" : ""}
                     </p>
