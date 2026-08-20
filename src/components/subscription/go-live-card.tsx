@@ -241,20 +241,85 @@ export function GoLiveCard({
                 </div>
               </div>
 
+              {isPlanChange && quote ? (
+                <div className="rounded-xl border bg-muted/40 px-3 py-2.5 text-xs leading-relaxed">
+                  <p className="font-medium">Plan change summary</p>
+                  <p className="mt-1">
+                    Current plan: {quote.current_plan_name ?? "—"} ·{" "}
+                    {peso(Number(quote.current_monthly_price))}/mo
+                  </p>
+                  <p>
+                    New plan: {quote.new_plan_name} · {peso(Number(quote.new_monthly_price))}/mo
+                  </p>
+                  <p>
+                    Unused value credited: {peso(Number(quote.unused_value))} ·{" "}
+                    {quote.days_remaining} day{quote.days_remaining === 1 ? "" : "s"} remaining
+                  </p>
+                  <p>
+                    Coin adjustment: {Number(quote.additional_allocation).toLocaleString()} Coins
+                  </p>
+                </div>
+              ) : null}
+
               <p className="text-xs text-muted-foreground">
-                Total to pay: <strong>{peso(due)}</strong> for {monthCount} month
-                {monthCount === 1 ? "" : "s"} of {plan?.name ?? "the selected plan"}.
+                Total to pay: <strong>{peso(due)}</strong>
+                {isPlanChange
+                  ? ` after the existing adjustment rules for ${quote?.new_plan_name ?? "the selected plan"}.`
+                  : ` for ${monthCount} month${monthCount === 1 ? "" : "s"} of ${plan?.name ?? "the selected plan"}.`}
               </p>
 
-              <Button className="w-full" disabled={busy || !plan || Boolean(problem)} onClick={submit}>
+              <Button
+                className="w-full"
+                disabled={busy || !plan || Boolean(problem)}
+                onClick={() => setConfirming(true)}
+              >
                 {busy ? (
                   <Loader2 className="mr-1 size-4 animate-spin" />
                 ) : (
                   <Rocket className="mr-1 size-4" />
                 )}
-                Submit payment and go live
+                {isPlanChange ? "Review and confirm plan change" : "Submit payment and go live"}
               </Button>
               {problem ? <p className="text-xs text-destructive">{problem}</p> : null}
+
+              <AlertDialog open={confirming} onOpenChange={setConfirming}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {isPlanChange ? "Confirm this plan change" : "Confirm this payment"}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription asChild>
+                      <div className="space-y-1 text-left text-sm">
+                        {isPlanChange && quote ? (
+                          <>
+                            <p>
+                              From <strong>{quote.current_plan_name ?? "—"}</strong> to{" "}
+                              <strong>{quote.new_plan_name}</strong>.
+                            </p>
+                            <p>Unused value credited: {peso(Number(quote.unused_value))}</p>
+                            <p>
+                              Coin adjustment:{" "}
+                              {Number(quote.additional_allocation).toLocaleString()} Coins
+                            </p>
+                          </>
+                        ) : (
+                          <p>
+                            {plan?.name} · {monthCount} month{monthCount === 1 ? "" : "s"}
+                          </p>
+                        )}
+                        <p>
+                          Amount due: <strong>{peso(due)}</strong> · reference {reference || "—"}
+                        </p>
+                      </div>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={submit}>Confirm</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
             </>
           )}
         </CardContent>
