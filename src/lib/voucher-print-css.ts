@@ -90,6 +90,7 @@ export const voucherPrintCss = `
   text-align: center;
 }
 .vp-code-long { font-size: 12.5pt; letter-spacing: .01em; }
+.vp-code-xs { font-size: 9.5pt; letter-spacing: 0; }
 .vp-code-label { font-size: 4.5pt; letter-spacing: .16em; text-transform: uppercase; text-align: center; opacity: .6; line-height: 1.1; }
 .vp-meta { display: flex; justify-content: space-between; align-items: flex-end; gap: .05in; font-size: 4.8pt; opacity: .75; line-height: 1.1; }
 .vp-meta span:last-child { text-align: right; white-space: nowrap; }

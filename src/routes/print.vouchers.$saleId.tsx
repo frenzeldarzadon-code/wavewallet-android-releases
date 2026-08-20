@@ -42,6 +42,13 @@ export const Route = createFileRoute("/print/vouchers/$saleId")({
   component: PrintVouchersPage,
 });
 
+/** Keeps even very long codes on one or two readable lines inside 2in x 2in. */
+function codeClass(code: string) {
+  if (code.length > 18) return "vp-code vp-code-xs";
+  if (code.length > 12) return "vp-code vp-code-long";
+  return "vp-code";
+}
+
 function PrintVouchersPage() {
   const { saleId } = Route.useParams();
   const router = useRouter();
@@ -76,7 +83,7 @@ function PrintVouchersPage() {
       </div>
       <div className="vp-body">
         <p className="vp-code-label">WiFi voucher code</p>
-        <p className={code.length > 12 ? "vp-code vp-code-long" : "vp-code"}>{code}</p>
+        <p className={codeClass(code)}>{code}</p>
       </div>
       <div className="vp-meta">
         <span className="vp-price">{peso(sale?.listPrice ?? 0)}</span>
@@ -144,9 +151,7 @@ function PrintVouchersPage() {
                         </div>
                         <div className="vp-body">
                           <p className="vp-code-label">WiFi voucher code</p>
-                          <p className={sampleCode.length > 12 ? "vp-code vp-code-long" : "vp-code"}>
-                            {sampleCode}
-                          </p>
+                          <p className={codeClass(sampleCode)}>{sampleCode}</p>
                         </div>
                         <div className="vp-meta">
                           <span className="vp-price">{peso(sale?.listPrice ?? 0)}</span>
