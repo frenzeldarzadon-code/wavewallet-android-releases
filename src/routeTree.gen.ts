@@ -28,6 +28,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
 import { Route as AdminCreditsRouteImport } from './routes/admin.credits'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
+import { Route as AdminGoLiveRouteImport } from './routes/admin.go-live'
 import { Route as AdminMoneyRouteImport } from './routes/admin.money'
 import { Route as AdminOperatorLogRouteImport } from './routes/admin.operator-log'
 import { Route as AdminOrdersRouteImport } from './routes/admin.orders'
@@ -194,6 +195,11 @@ const AdminCreditsRoute = AdminCreditsRouteImport.update({
 const AdminCustomersRoute = AdminCustomersRouteImport.update({
   id: '/customers',
   path: '/customers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminGoLiveRoute = AdminGoLiveRouteImport.update({
+  id: '/go-live',
+  path: '/go-live',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminMoneyRoute = AdminMoneyRouteImport.update({
@@ -577,6 +583,7 @@ export interface FileRoutesByFullPath {
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/go-live': typeof AdminGoLiveRoute
   '/admin/money': typeof AdminMoneyRoute
   '/admin/operator-log': typeof AdminOperatorLogRoute
   '/admin/orders': typeof AdminOrdersRoute
@@ -665,6 +672,7 @@ export interface FileRoutesByTo {
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/go-live': typeof AdminGoLiveRoute
   '/admin/money': typeof AdminMoneyRoute
   '/admin/operator-log': typeof AdminOperatorLogRoute
   '/admin/orders': typeof AdminOrdersRoute
@@ -759,6 +767,7 @@ export interface FileRoutesById {
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/go-live': typeof AdminGoLiveRoute
   '/admin/money': typeof AdminMoneyRoute
   '/admin/operator-log': typeof AdminOperatorLogRoute
   '/admin/orders': typeof AdminOrdersRoute
@@ -854,6 +863,7 @@ export interface FileRouteTypes {
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
+    | '/admin/go-live'
     | '/admin/money'
     | '/admin/operator-log'
     | '/admin/orders'
@@ -942,6 +952,7 @@ export interface FileRouteTypes {
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
+    | '/admin/go-live'
     | '/admin/money'
     | '/admin/operator-log'
     | '/admin/orders'
@@ -1035,6 +1046,7 @@ export interface FileRouteTypes {
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
+    | '/admin/go-live'
     | '/admin/money'
     | '/admin/operator-log'
     | '/admin/orders'
@@ -1266,6 +1278,13 @@ declare module '@tanstack/react-router' {
       path: '/customers'
       fullPath: '/admin/customers'
       preLoaderRoute: typeof AdminCustomersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/go-live': {
+      id: '/admin/go-live'
+      path: '/go-live'
+      fullPath: '/admin/go-live'
+      preLoaderRoute: typeof AdminGoLiveRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/money': {
@@ -1779,6 +1798,7 @@ interface AdminRouteChildren {
   AdminApplicationsRoute: typeof AdminApplicationsRoute
   AdminCreditsRoute: typeof AdminCreditsRoute
   AdminCustomersRoute: typeof AdminCustomersRoute
+  AdminGoLiveRoute: typeof AdminGoLiveRoute
   AdminMoneyRoute: typeof AdminMoneyRoute
   AdminOperatorLogRoute: typeof AdminOperatorLogRoute
   AdminOrdersRoute: typeof AdminOrdersRoute
@@ -1803,6 +1823,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminApplicationsRoute: AdminApplicationsRoute,
   AdminCreditsRoute: AdminCreditsRoute,
   AdminCustomersRoute: AdminCustomersRoute,
+  AdminGoLiveRoute: AdminGoLiveRoute,
   AdminMoneyRoute: AdminMoneyRoute,
   AdminOperatorLogRoute: AdminOperatorLogRoute,
   AdminOrdersRoute: AdminOrdersRoute,
