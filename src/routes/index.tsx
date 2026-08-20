@@ -321,20 +321,54 @@ function LoginPage() {
                     One sign-in for everyone — we take you to the right place.
                   </p>
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="email">Email or mobile number</Label>
-                  <Input
-                    id="email"
-                    type="text"
-                    inputMode="email"
-                    className="h-11"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && signIn()}
-                    placeholder="you@example.com or 0917 000 0000"
-                    autoComplete="username"
-                  />
+                <div className="grid grid-cols-2 gap-1 rounded-xl border border-auth-border p-1">
+                  {(["email", "username"] as const).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setMethod(m)}
+                      className={
+                        "rounded-lg px-2 py-1.5 text-xs font-medium " +
+                        (method === m
+                          ? "bg-primary text-primary-foreground"
+                          : "text-auth-muted hover:text-auth-fg")
+                      }
+                    >
+                      {m === "email" ? "Email / mobile" : "Username"}
+                    </button>
+                  ))}
                 </div>
+                {method === "username" ? (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="login-username">Username</Label>
+                    <Input
+                      id="login-username"
+                      type="text"
+                      className="h-11"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && signIn()}
+                      placeholder="Enter username"
+                      autoComplete="username"
+                    />
+                    <p className="text-[11px] text-auth-muted">{LOGIN_USERNAME_HINT}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email">Email or mobile number</Label>
+                    <Input
+                      id="email"
+                      type="text"
+                      inputMode="email"
+                      className="h-11"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && signIn()}
+                      placeholder="Enter your email or mobile number"
+                      autoComplete="username"
+                    />
+                  </div>
+                )}
                 <PasswordField
                   id="password"
                   label="Password"
@@ -343,6 +377,10 @@ function LoginPage() {
                   autoComplete="current-password"
                   onEnter={() => void signIn()}
                 />
+                {method === "username" ? (
+                  <p className="-mt-1 text-[11px] text-auth-muted">{LOGIN_PASSWORD_HINT}</p>
+                ) : null}
+
                 <Button className="h-11 w-full" onClick={signIn} disabled={busy || !online}>
                   <LogIn className="size-4" />
                   {busy ? "Signing in…" : "Sign In"}
