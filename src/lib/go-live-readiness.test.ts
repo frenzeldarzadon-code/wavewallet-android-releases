@@ -15,6 +15,7 @@ const ready = {
   reference: "1234567890123",
   platformGcashNumber: "09170000000",
   hasPendingRequest: false,
+  proofPath: "user-id/receipt.jpg",
 };
 
 describe("go live readiness", () => {
@@ -37,6 +38,13 @@ describe("go live readiness", () => {
       reference: "",
     });
     expect(items.map((i) => i.id)).toEqual(["plan", "payerNumber", "reference"]);
+  });
+
+  it("requires the payment screenshot, like Cash In", () => {
+    const items = goLiveChecklist({ ...ready, proofPath: null });
+    expect(items.map((i) => i.id)).toEqual(["proof"]);
+    expect(goLiveFieldErrors({ ...ready, proofPath: null }).proof).toMatch(/screenshot/);
+    expect(mapGoLiveError("A payment screenshot is required").field).toBe("proof");
     expect(items.every((i) => i.fieldId && i.how.length > 10)).toBe(true);
   });
 

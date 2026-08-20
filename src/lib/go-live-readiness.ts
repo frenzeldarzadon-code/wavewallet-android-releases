@@ -10,7 +10,7 @@
  * exactly as they are; this only explains them earlier.
  */
 
-export type GoLiveField = "plan" | "months" | "payerNumber" | "reference";
+export type GoLiveField = "plan" | "months" | "payerNumber" | "reference" | "proof";
 
 export interface GoLiveItem {
   id: string;
@@ -38,6 +38,8 @@ export interface GoLiveReadinessInput {
   platformGcashNumber: string | null | undefined;
   /** A payment for this shop is already awaiting verification. */
   hasPendingRequest: boolean;
+  /** Uploaded payment screenshot path — required, exactly like Cash In. */
+  proofPath?: string | null;
 }
 
 /** 09XXXXXXXXX / +639XXXXXXXXX / 639XXXXXXXXX → 639XXXXXXXXX. */
@@ -51,7 +53,7 @@ export function normalizeSenderNumber(input: string): string | null {
 
 /** Per-field messages, shown in red under the field itself. */
 export function goLiveFieldErrors(
-  input: Pick<GoLiveReadinessInput, "planId" | "months" | "payerNumber" | "reference">,
+  input: Pick<GoLiveReadinessInput, "planId" | "months" | "payerNumber" | "reference" | "proofPath">,
 ): Partial<Record<GoLiveField, string>> {
   const errors: Partial<Record<GoLiveField, string>> = {};
   if (!input.planId) errors.plan = "Choose the plan you are paying for.";
@@ -65,6 +67,9 @@ export function goLiveFieldErrors(
   if (!ref) errors.reference = "Enter the reference number printed on your GCash receipt.";
   else if (ref.length < 6)
     errors.reference = "A GCash reference number is longer than that — copy it exactly from the receipt.";
+  if (!input.proofPath?.trim())
+    errors.proof =
+      "Attach the GCash payment screenshot. It is the same proof of payment the Cash In process requires.";
   return errors;
 }
 
@@ -127,6 +132,13 @@ export function goLiveChecklist(input: GoLiveReadinessInput): GoLiveItem[] {
       how: fields.reference,
       fieldId: "gl-ref",
     });
+  if (fields.proof)
+    items.push({
+      id: "proof",
+      label: "Payment screenshot",
+      how: fields.proof,
+      fieldId: "gl-proof",
+    });
 
   return items;
 }
@@ -142,6 +154,17 @@ export function mapGoLiveError(message: string): { field?: GoLiveField; message:
       field: "reference",
       message:
         "That GCash reference has already been used for another payment. Check your receipt and enter the reference of the payment you just made — each reference can only ever be used once.",
+    };
+  if (m.includes("payment screenshot is required"))
+    return {
+      field: "proof",
+      message:
+        "Attach the GCash payment screenshot before submitting — the payment cannot be reviewed without it.",
+    };
+  if (m.includes("proof of payment must belong to you"))
+    return {
+      field: "proof",
+      message: "That screenshot could not be attached to your account. Upload it again from this device.",
     };
   if (m.includes("reference number is required"))
     return { field: "reference", message: "Enter the reference number printed on your GCash receipt." };
