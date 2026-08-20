@@ -35,6 +35,12 @@ import {
   submitGoLivePayment,
   type SubscriptionRequest,
 } from "@/lib/go-live";
+import { CashInProofPicker } from "@/components/money/cash-in-proof";
+import { uploadCashInProof, removeCashInProof } from "@/lib/wallet-money";
+import { extractCashInReceipt } from "@/lib/cash-in-receipt.functions";
+import { verifyGoLiveReceipt } from "@/lib/go-live-receipt.functions";
+import { RECEIPT_CHECK_LABEL } from "@/lib/cash-in-receipt";
+import { supabase } from "@/integrations/supabase/client";
 import {
   goLiveChecklist,
   goLiveFieldErrors,
@@ -68,7 +74,44 @@ export function GoLiveCard({
   const [attempted, setAttempted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [serverField, setServerField] = useState<GoLiveField | null>(null);
+  // Proof of payment — same bucket, same folder convention and same reader as
+  // the established Cash In flow. Evidence only; the listener still decides.
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [proofPath, setProofPath] = useState<string | null>(null);
+  const [reading, setReading] = useState(false);
+  const [receiptNote, setReceiptNote] = useState<string | null>(null);
 
+
+  /** Upload immediately, then read it with the existing Cash In receipt reader. */
+  const handlePickProof = async (file: File | null) => {
+    if (proofPath) void removeCashInProof(proofPath).catch(() => {});
+    setProofPath(null);
+    setReceiptNote(null);
+    setProofFile(file);
+    if (!file) return;
+    setReading(true);
+    try {
+      const { data: authUser } = await supabase.auth.getUser();
+      const ownerId = authUser?.user?.id;
+      if (!ownerId) throw new Error("Your session expired. Sign in again to attach a screenshot.");
+      const path = await uploadCashInProof(ownerId, file);
+      setProofPath(path);
+      const read = await extractCashInReceipt({ data: { proofPath: path } });
+      if (read.reference) setReference(read.reference);
+      if (read.senderNumber) setPayerNumber(read.senderNumber);
+      setReceiptNote(
+        read.readable
+          ? "Screenshot read — check the reference and sending number below before you submit."
+          : "We could not read this screenshot clearly. Type the reference and sending number yourself; the payment still goes for review.",
+      );
+    } catch (e) {
+      setProofFile(null);
+      setServerField("proof");
+      setServerError(e instanceof Error ? e.message : "Could not read that screenshot.");
+    } finally {
+      setReading(false);
+    }
+  };
 
   const load = useCallback(async () => {
     try {
@@ -129,8 +172,15 @@ export function GoLiveCard({
     reference,
     platformGcashNumber: gcash?.gcash_number ?? null,
     hasPendingRequest: pending,
+    proofPath,
   });
-  const fieldErrors = goLiveFieldErrors({ planId, months: Number(months), payerNumber, reference });
+  const fieldErrors = goLiveFieldErrors({
+    planId,
+    months: Number(months),
+    payerNumber,
+    reference,
+    proofPath,
+  });
   const showErrors = attempted;
 
   const focusItem = (item: { fieldId?: string }) => {
@@ -166,8 +216,17 @@ export function GoLiveCard({
         reference,
         months: monthCount,
         amountPaid: due,
+        proofPath: proofPath as string,
       });
       setRequest(r);
+      // Second layer: the server reads the same screenshot again and that
+      // reading — not anything sent by this browser — is what gets stored.
+      try {
+        const checked = await verifyGoLiveReceipt({ data: { requestId: r.id } });
+        setReceiptNote(RECEIPT_CHECK_LABEL[checked.check] ?? null);
+      } catch {
+        setReceiptNote("The receipt could not be checked automatically — it goes to manual review.");
+      }
       if (r.status === "approved") {
         toast.success("Payment verified — your shop is now live.");
         onLive?.();
@@ -321,6 +380,31 @@ export function GoLiveCard({
                 </div>
               </div>
 
+
+              <div id="gl-proof" className="space-y-1.5">
+                <CashInProofPicker
+                  file={proofFile}
+                  disabled={busy || reading}
+                  onPick={(f) => void handlePickProof(f)}
+                  onError={(m) => {
+                    setServerField("proof");
+                    setServerError(m);
+                  }}
+                />
+                {reading ? (
+                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Loader2 className="size-3.5 animate-spin" /> Reading your receipt…
+                  </p>
+                ) : null}
+                {receiptNote ? (
+                  <p className="text-xs text-muted-foreground">{receiptNote}</p>
+                ) : null}
+                {errorFor("proof") ? (
+                  <p role="alert" className="text-xs font-medium text-destructive">
+                    {errorFor("proof")}
+                  </p>
+                ) : null}
+              </div>
 
               {isPlanChange && quote ? (
                 <div className="rounded-xl border bg-muted/40 px-3 py-2.5 text-xs leading-relaxed">
