@@ -42,11 +42,17 @@ export function normalizePhMobile(input: string): string | null {
   return null;
 }
 
-export function validateGoLive(input: { payerNumber: string; reference: string }): string | null {
+export function validateGoLive(input: {
+  payerNumber: string;
+  reference: string;
+  proofPath?: string | null;
+}): string | null {
   if (!normalizePhMobile(input.payerNumber))
     return "Enter the GCash number you paid from (09XXXXXXXXX).";
   const ref = (input.reference || "").replace(/\s/g, "");
   if (ref.length < 6) return "Enter the GCash reference number from your receipt.";
+  if (input.proofPath !== undefined && !input.proofPath?.trim())
+    return "Upload the GCash payment screenshot for this payment.";
   return null;
 }
 
