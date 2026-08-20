@@ -1,20 +1,8 @@
 -- Cash In authentication, rebuilt as the two agreed layers.
---
--- LAYER 1 (listener): the GCash notification reports only the sending number
---   and the amount. Time is NOT an authentication factor, and the notification
---   is never expected to carry a reference.
--- LAYER 2 (receipt): the guest's screenshot supplies sender number, receiving
---   account, amount, reference and transaction date/time. Those are verified
---   against the listener sighting and the shop's receiving account.
--- DUPLICATE CHECK: the receipt reference + transaction date/time are searched
---   GLOBALLY across every shop. A hit holds the request for manual review.
-
--- 1. Receipt receiving account -------------------------------------------------
 alter table public.cash_in_requests
   add column if not exists receipt_receiving_number text,
   add column if not exists receipt_receiving_number_key text;
 
--- 2. Retire the two conflicting rules -----------------------------------------
 update public.cash_in_auto_rules
    set layer1_require_time_window = false,
        layer2_require_listener_reference = false
@@ -33,7 +21,6 @@ alter table public.cash_in_auto_rules
   alter column layer1_require_time_window set default false,
   alter column layer2_require_listener_reference set default false;
 
--- 3. Defaults returned when no rule row exists --------------------------------
 create or replace function public.cash_in_auto_rule(_ecosystem uuid)
 returns table(enabled boolean, require_reference_match boolean, amount_tolerance_php numeric,
               max_auto_amount_php numeric, expected_amount_php numeric, require_listener_match boolean,
@@ -67,7 +54,6 @@ as $function$
    limit 1
 $function$;
 
--- 4. Configuration entry point: the retired switches can no longer be turned on
 create or replace function public.set_cash_in_auth_fields(_ecosystem uuid,
   _layer1_sender boolean default null, _layer1_time boolean default null,
   _layer2_amount boolean default null, _layer2_sender boolean default null,
@@ -126,16 +112,11 @@ begin
   return _row;
 end $function$;
 
--- 5. Global duplicate search: reference + transaction date/time ---------------
 create or replace function public.cash_in_reference_duplicate(_id uuid, _key text,
                                                               _paid_at timestamptz default null)
 returns uuid
 language sql stable security definer set search_path to 'public'
 as $function$
-  -- Deliberately NOT scoped to a shop: a GCash reference must never be
-  -- reusable anywhere on the platform. The recorded transaction date/time is
-  -- carried alongside so a reviewer sees both, and an exact date/time match
-  -- ranks first.
   select c.id
     from public.cash_in_requests c
    where c.id is distinct from _id
@@ -152,7 +133,6 @@ $function$;
 
 revoke all on function public.cash_in_reference_duplicate(uuid, text, timestamptz) from public, anon, authenticated;
 
--- 6. Receipt reading: also records the receiving account -----------------------
 create or replace function public.apply_cash_in_receipt_ocr(_id uuid, _reference text default null,
   _amount numeric default null, _sender text default null, _readable boolean default true,
   _details jsonb default null, _paid_at timestamptz default null, _receiving text default null)
@@ -219,7 +199,6 @@ begin
   return _state;
 end $function$;
 
--- 7. Layer 1 matching: amount + sender number only ----------------------------
 create or replace function public.link_cash_in_listener_event(_id uuid)
 returns text
 language plpgsql security definer set search_path to 'public'
@@ -247,8 +226,6 @@ begin
     return 'no_sender_number';
   end if;
 
-  -- Time is deliberately not a factor: the notification carries no
-  -- transaction time, so a payment made before or long after still matches.
   select array_agg(e.id) into _cands
     from public.listener_events e
     join public.listener_devices d on d.id = e.device_id
@@ -300,8 +277,6 @@ begin
      set match_attempts = match_attempts + 1, last_match_attempt_at = now()
    where id = _ev.id;
 
-  -- Layer 1 is amount + sending number. The notification is not expected to
-  -- carry a reference, and its arrival time is not an authentication factor.
   select array_agg(c.id) into _auth_candidates
     from public.cash_in_requests c
     join public.profiles p on p.id = c.user_id
@@ -370,7 +345,6 @@ begin
   return _result;
 end $function$;
 
--- 8. Approval decision ---------------------------------------------------------
 create or replace function public.try_auto_approve_cash_in(_id uuid)
 returns text
 language plpgsql security definer set search_path to 'public'
@@ -388,7 +362,6 @@ begin
   if _row.proof_path is null then return 'no_proof'; end if;
 
   _receipt := coalesce(_row.receipt_check, 'pending');
-  -- The receipt is the source of the reference; a typed one only corroborates.
   _refkey := coalesce(_row.receipt_reference_key, _row.payer_reference_key);
   _paid := coalesce(_row.receipt_paid_at, _row.paid_at);
 
@@ -397,8 +370,6 @@ begin
     return 'awaiting_receipt_check';
   end if;
 
-  -- Global duplicate/reuse check across every shop, on the receipt reference
-  -- together with the recorded transaction date/time.
   if _row.duplicate_reference
      or public.cash_in_reference_duplicate(_row.id, _refkey, _paid) is not null then
     return 'duplicate_reference';
@@ -425,7 +396,6 @@ begin
     return 'no_sender_number';
   end if;
 
-  -- Layer 1: the real GCash notification — sending number and amount only.
   if _row.listener_event_id is null then
     if coalesce(_rule.require_listener_match, true) then return 'awaiting_listener'; end if;
   else
@@ -451,7 +421,6 @@ begin
     end if;
   end if;
 
-  -- Layer 2: the receipt evidence itself.
   if _receipt = 'mismatch' then return 'receipt_reference_mismatch'; end if;
   if coalesce(_rule.require_receipt_match, true) then
     if _receipt in ('unreadable', 'error') then return 'receipt_unreadable'; end if;
@@ -461,13 +430,11 @@ begin
      and abs(_row.receipt_amount_php - _row.amount_php) > coalesce(_rule.amount_tolerance_php, 0) then
     return 'amount_mismatch';
   end if;
-  -- The sender on the receipt must be the sender the listener saw.
   if _row.receipt_sender_number is not null and _row.sender_number_key is not null
      and public.normalize_ph_mobile(_row.receipt_sender_number) is not null
      and public.normalize_ph_mobile(_row.receipt_sender_number) <> _row.sender_number_key then
     return 'number_mismatch';
   end if;
-  -- The receiving account on the receipt, when legible, must be this shop's.
   if _row.receipt_receiving_number_key is not null
      and _row.receipt_receiving_number_key <> _recv then
     return 'receiving_mismatch';
@@ -493,7 +460,6 @@ begin
   return 'approved';
 end $function$;
 
--- 9. Retire the old receipt entry point (also removes its anon EXECUTE grant).
 drop function if exists public.apply_cash_in_receipt_ocr(uuid, text, numeric, text, boolean, jsonb, timestamptz);
 revoke all on function public.apply_cash_in_receipt_ocr(uuid, text, numeric, text, boolean, jsonb, timestamptz, text)
   from public, anon, authenticated;

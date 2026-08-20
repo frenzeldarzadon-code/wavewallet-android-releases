@@ -172,6 +172,9 @@ export interface MatchableRequest {
   receipt_amount_php?: number | null;
   /** Sending number read off the receipt. */
   receipt_sender_number?: string | null;
+  /** Receiving GCash account read off the receipt, when it was legible. */
+  receipt_receiving_number?: string | null;
+
   /** Linked notification, in either order: pay-then-submit or submit-then-pay. */
   listener_event?: MatchableListenerEvent | null;
 }
@@ -269,9 +272,9 @@ export function evaluateMatch(
   const sender = normalizePhMobile(request.sender_number ?? request.payer_number);
   if ((rule.layer2_require_sender_match ?? true) && !sender) return "no_sender_number";
 
-  // First layer — a real GCash notification. A listener reference is optional;
-  // when the notification does carry one it must agree with the established
-  // reference.
+  // First layer — the real GCash notification. It reports only the sending
+  // number and the amount: transaction time is not a factor and no reference
+  // is expected from it.
   const requireListener = rule.require_listener_match ?? true;
   const event = request.listener_event;
   if (!event || (event.outcome && event.outcome !== "accepted")) {
@@ -286,9 +289,6 @@ export function evaluateMatch(
     ) {
       return "amount_mismatch";
     }
-    const eventRef = normalizePaymentReference(event.reference);
-    if (eventRef && eventRef !== established) return "reference_mismatch";
-    if ((rule.layer2_require_listener_reference ?? false) && !eventRef) return "reference_mismatch";
     // Shop isolation is the only routing rule. A differing / masked receiving
     // number is informational and must never block a valid approval.
     if (event.serves_shop === false) return "wrong_shop";
@@ -310,6 +310,11 @@ export function evaluateMatch(
   }
   const receiptSender = normalizePhMobile(request.receipt_sender_number);
   if (receiptSender && sender && receiptSender !== sender) return "number_mismatch";
+  const receiptReceiving = normalizePhMobile(request.receipt_receiving_number);
+  if (receiptReceiving && receiptReceiving !== normalizePhMobile(receivingNumber)) {
+    return "receiving_mismatch";
+  }
+
 
   if ((rule.verification_mode ?? "active") === "staged") return "staged";
   return "matched";

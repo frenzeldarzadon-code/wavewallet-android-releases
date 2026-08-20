@@ -267,22 +267,6 @@ export function CashInAutoCard() {
 
           <div className="flex items-start justify-between gap-3">
             <div>
-              <Label htmlFor="l1-time">First layer · time window (off by default)</Label>
-              <p className="text-xs text-muted-foreground">
-                Off means the customer may pay long before or after submitting. Turn on only if you want the
-                payment and the request to fall inside the paired phone's matching window.
-              </p>
-            </div>
-            <Switch
-              id="l1-time"
-              checked={rule.layer1_require_time_window ?? false}
-              disabled={saving}
-              onCheckedChange={(v) => void saveFields({ ...rule, layer1_require_time_window: v })}
-            />
-          </div>
-
-          <div className="flex items-start justify-between gap-3">
-            <div>
               <Label htmlFor="l2-amount">Second layer · submitted amount must match</Label>
               <p className="text-xs text-muted-foreground">
                 The amount on the request must equal the amount the phone confirmed.
@@ -298,9 +282,9 @@ export function CashInAutoCard() {
 
           <div className="flex items-start justify-between gap-3">
             <div>
-              <Label htmlFor="l2-sender">Second layer · submitted sender number must match</Label>
+              <Label htmlFor="l2-sender">Second layer · receipt sender must match the notification</Label>
               <p className="text-xs text-muted-foreground">
-                The number the member says they paid from must equal the confirmed sender.
+                The sending number on the payment screenshot must equal the number the phone reported.
               </p>
             </div>
             <Switch
@@ -311,28 +295,15 @@ export function CashInAutoCard() {
             />
           </div>
 
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <Label htmlFor="l2-ref">Second layer · notification must carry the same reference</Label>
-              <p className="text-xs text-muted-foreground">
-                Off by default: most GCash notifications do not show a reference number. The reference from the
-                receipt is still checked for uniqueness in every case.
-              </p>
-            </div>
-            <Switch
-              id="l2-ref"
-              checked={rule.layer2_require_listener_reference ?? false}
-              disabled={saving}
-              onCheckedChange={(v) => void saveFields({ ...rule, layer2_require_listener_reference: v })}
-            />
-          </div>
-
           <p className="rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">
-            These layers decide whether a payment is genuine. Which GCash account the money appears to have landed
-            on is no longer part of that decision: GCash masks and reformats the receiving number, so a difference
-            is recorded for audit only and never blocks approval.
+            First layer reads only what the GCash notification actually reports: the sending number and the amount.
+            Transaction time is not used, and no reference number is expected from the notification. Second layer
+            reads the payment screenshot for the sender, the receiving account, the amount, the reference and the
+            transaction date and time. The reference and date/time are then checked against every shop on the
+            platform — any earlier use holds the cash in for manual review.
           </p>
         </div>
+
 
         <div className="rounded-lg border border-dashed border-border p-3 space-y-2">
           <div className="flex items-center justify-between gap-2">
