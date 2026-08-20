@@ -31,6 +31,7 @@ import {
 import { PageSection, StatusBadge } from "@/components/ui-kit";
 import { HelpTip } from "@/components/help-tip";
 import { supabase } from "@/integrations/supabase/client";
+import { GoLiveCard } from "@/components/subscription/go-live-card";
 import {
   demoReset,
   demoSellVoucher,
@@ -358,6 +359,8 @@ function ReviewPage() {
         </Card>
       </PageSection>
 
+      <GoLiveCard ecosystemId={state.ecosystem_id} onLive={() => void load()} />
+
       <PageSection title="Demo ledger" description="Every simulated movement, newest first.">
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="divide-y px-4">
@@ -407,8 +410,8 @@ function ReviewPage() {
       </div>
 
       <p className="mt-6 text-xs leading-relaxed text-muted-foreground">
-        Ready to go live? Ask WaveWallet Support to activate your plan. Your login stays the same,
-        this shop becomes your live account, Demo Coins are removed, and the plan&apos;s real Coin
+        Ready to go live? Choose a plan above and pay it with GCash. Your login stays the same, this
+        shop becomes your live account, Demo Coins are removed, and the plan&apos;s real Coin
         allocation is issued once.
       </p>
     </main>
