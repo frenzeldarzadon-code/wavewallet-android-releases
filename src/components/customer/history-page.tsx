@@ -87,6 +87,52 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
   const rows = useMemo(() => buildCoinHistory(entries), [entries]);
   const visibleRows = useMemo(() => filterCoinHistory(rows, direction), [rows, direction]);
 
+  // Presentation only: re-renders the image for a voucher already issued.
+  const voucherImageData = (p: Purchase): VoucherImageData => ({
+    code: p.code ?? "",
+    productName: p.product_name,
+    description: null,
+    priceLabel: peso(Number(p.list_price ?? p.sale_price)),
+    shopName: shopName ?? "WaveWallet",
+    customerName: null,
+    paymentStatus: null,
+    index: 1,
+    total: 1,
+    txId: p.tx_id,
+    issuedAt: new Date(p.created_at),
+  });
+
+  const saveVoucher = async (p: Purchase) => {
+    if (!p.code) return;
+    setBusyId(p.id);
+    try {
+      const data = voucherImageData(p);
+      const blob = await renderVoucherImage(data);
+      await downloadBlob(blob, voucherFileName(data));
+      toast.success("Voucher image saved");
+    } catch (e) {
+      toast.error("Could not save the image", { description: (e as Error).message });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const shareVoucher = async (p: Purchase) => {
+    if (!p.code) return;
+    setBusyId(p.id);
+    try {
+      const data = voucherImageData(p);
+      const blob = await renderVoucherImage(data);
+      const outcome = await shareVoucherImage(blob, voucherFileName(data), p.product_name);
+      if (outcome === "shared") toast.success("Shared");
+      else if (outcome === "downloaded") toast.success("Sharing isn't available here — image saved");
+    } catch (e) {
+      toast.error("Could not share the image", { description: (e as Error).message });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   if (!account) return null;
 
 
