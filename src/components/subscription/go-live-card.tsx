@@ -81,15 +81,39 @@ export function GoLiveCard({
     void load();
   }, [load]);
 
+  // Existing server-side calculation engine (subscription_quote) — the single
+  // source of truth for plan changes, prorated value and credit adjustment.
+  useEffect(() => {
+    let cancelled = false;
+    if (!planId) return;
+    fetchQuote(ecosystemId, planId)
+      .then((q) => {
+        if (!cancelled) setQuote(q);
+      })
+      .catch(() => {
+        if (!cancelled) setQuote(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ecosystemId, planId]);
+
   const plan = plans.find((p) => p.id === planId) ?? null;
   const monthCount = Math.max(1, Math.min(24, Number(months) || 1));
-  const due = plan ? Number(plan.monthly_price) * monthCount : 0;
+  const isPlanChange = Boolean(quote && !quote.is_first_activation);
+  const due = isPlanChange
+    ? Number(quote?.amount_due ?? 0)
+    : plan
+      ? Number(plan.monthly_price) * monthCount
+      : 0;
   const problem = validateGoLive({ payerNumber, reference });
   const pending = request?.status === "pending";
 
   const submit = async () => {
     if (!plan) return;
+    setConfirming(false);
     setBusy(true);
+
     try {
       const r = await submitGoLivePayment({
         ecosystemId,
