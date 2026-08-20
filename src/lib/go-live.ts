@@ -115,7 +115,7 @@ export async function reconcileGoLivePayments(days = 30) {
 export function goLiveStatusLine(r: SubscriptionRequest | null): string {
   if (!r) return "No payment submitted yet.";
   if (r.status === "approved") return "Payment verified — your shop is live.";
-  if (r.status === "rejected") return r.review_reason || "That payment was rejected.";
+  if (r.status === "rejected") return r.decision_reason || "That payment was rejected.";
   const auto = (r as { auto_reason?: string | null }).auto_reason;
   return auto || "Waiting for the GCash payment to be recognised.";
 }
