@@ -106,13 +106,46 @@ export function GoLiveCard({
     : plan
       ? Number(plan.monthly_price) * monthCount
       : 0;
-  const problem = validateGoLive({ payerNumber, reference });
   const pending = request?.status === "pending";
+
+  // Everything the existing payment RPC already requires, told up-front.
+  const checklist = goLiveChecklist({
+    shopName: shopName ?? "shop",
+    shopKind: "subscription",
+    planId,
+    months: Number(months),
+    payerNumber,
+    reference,
+    platformGcashNumber: gcash?.gcash_number ?? null,
+    hasPendingRequest: pending,
+  });
+  const fieldErrors = goLiveFieldErrors({ planId, months: Number(months), payerNumber, reference });
+  const showErrors = attempted;
+
+  const focusItem = (item: { fieldId?: string }) => {
+    if (!item.fieldId) return;
+    const el = document.getElementById(item.fieldId);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    (el as HTMLInputElement | null)?.focus?.();
+  };
+
+  const tryConfirm = () => {
+    setServerError(null);
+    setServerField(null);
+    setAttempted(true);
+    if (checklist.length > 0) {
+      focusItem(checklist.find((i) => i.fieldId) ?? {});
+      return;
+    }
+    setConfirming(true);
+  };
 
   const submit = async () => {
     if (!plan) return;
     setConfirming(false);
     setBusy(true);
+    setServerError(null);
+    setServerField(null);
 
     try {
       const r = await submitGoLivePayment({
@@ -131,10 +164,18 @@ export function GoLiveCard({
         toast.success("Payment submitted. It goes live the moment the GCash payment is recognised.");
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not submit that payment");
+      const mapped = mapGoLiveError(e instanceof Error ? e.message : "");
+      setServerError(mapped.message);
+      setServerField(mapped.field ?? null);
+      toast.error(mapped.message);
     } finally {
       setBusy(false);
     }
+  };
+
+  const errorFor = (field: GoLiveField): string | null => {
+    if (serverField === field && serverError) return serverError;
+    return showErrors ? (fieldErrors[field] ?? null) : null;
   };
 
   if (loading) {
