@@ -46,6 +46,11 @@ import {
   type SubscriptionRequest,
 } from "@/lib/subscription";
 import { toast } from "sonner";
+import { RECEIPT_CHECK_LABEL, type ReceiptCheck } from "@/lib/cash-in-receipt";
+
+/** Receipt evidence stored on the request; never an approval authority. */
+const receiptCheck = (r: { receipt_check?: string | null }): ReceiptCheck =>
+  ((r.receipt_check as ReceiptCheck | null) ?? "skipped");
 
 type EcoRow = Database["public"]["Tables"]["ecosystems"]["Row"];
 type Filter = "all" | "active" | "awaiting_approval" | "pending" | "expired" | "rejected";
