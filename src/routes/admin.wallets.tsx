@@ -114,19 +114,11 @@ function AdminWallets() {
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
     setLoading(true);
-    const [
-      { data: profiles },
-      { data: roles },
-      { data: accounts },
-      { data: pointAccounts },
-      { data: entries },
-      { data: memberships },
-    ] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("id, full_name, email, phone, status")
-          .eq("ecosystem_id", ecosystemDbId),
-        supabase.from("user_roles").select("user_id, role").eq("ecosystem_id", ecosystemDbId),
+    // Shop membership is authoritative: multi-shop members must be loadable
+    // from every shop they actually belong to.
+    const [roster, { data: accounts }, { data: pointAccounts }, { data: entries }] =
+      await Promise.all([
+        fetchShopMembers(ecosystemDbId),
         supabase.from("credit_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
         supabase.from("points_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
         supabase
@@ -135,32 +127,29 @@ function AdminWallets() {
           .eq("ecosystem_id", ecosystemDbId)
           .order("created_at", { ascending: false })
           .limit(60),
-        supabase
-          .from("ecosystem_memberships")
-          .select("user_id, sale_commission_percent")
-          .eq("ecosystem_id", ecosystemDbId),
       ]);
-    const roleBy = new Map((roles ?? []).map((r) => [r.user_id, r.role as string]));
     const balBy = new Map((accounts ?? []).map((a) => [a.user_id, Number(a.balance)]));
     const ptsBy = new Map((pointAccounts ?? []).map((a) => [a.user_id, Number(a.balance)]));
-    // One Discount per member, per shop — also their voucher shop discount.
-    const rateBy = new Map(
-      (memberships ?? []).map((m) => [m.user_id, Number(m.sale_commission_percent ?? 0)]),
-    );
     setShopBalance(account?.id ? (balBy.get(account.id) ?? 0) : 0);
     setMembers(
-      (profiles ?? [])
-        .map((p) => ({
-          ...p,
-          role: roleBy.get(p.id) ?? "customer",
-          balance: balBy.get(p.id) ?? 0,
-          points: ptsBy.get(p.id) ?? 0,
-          commission: rateBy.get(p.id) ?? 0,
-          discount: rateBy.get(p.id) ?? 0,
+      activeMembers(roster)
+        .map((m) => ({
+          id: m.id,
+          full_name: m.full_name,
+          email: m.email,
+          phone: m.phone,
+          status: m.status,
+          role: m.role as string,
+          balance: balBy.get(m.id) ?? 0,
+          points: ptsBy.get(m.id) ?? 0,
+          // One Discount per member, per shop — also their voucher shop discount.
+          commission: m.sale_commission_percent ?? 0,
+          discount: m.sale_commission_percent ?? 0,
         }))
         .filter((m) => m.role !== "admin" && m.role !== "super_admin")
         .sort((a, b) => a.full_name.localeCompare(b.full_name)),
     );
+
     setLedger(
       ((entries ?? []) as unknown as CreditEntry[]).map(normalizeEntry),
     );
