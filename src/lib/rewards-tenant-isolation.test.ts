@@ -41,7 +41,7 @@ function builder(table: string) {
   const filters: { column: string; value: unknown }[] = [];
   const nullFilters: string[] = [];
   const rows = () =>
-    tables[table].filter(
+    (tables[table] ?? []).filter(
       (r) =>
         filters.every((f) => r[f.column] === f.value) &&
         nullFilters.every((c) => r[c] === null || r[c] === undefined),
