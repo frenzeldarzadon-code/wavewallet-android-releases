@@ -119,10 +119,19 @@ export async function reconcileGoLivePayments(days = 30) {
   return (data ?? {}) as { checked?: number; activated?: number };
 }
 
-export function goLiveStatusLine(r: SubscriptionRequest | null): string {
+/**
+ * `isLive` is the shop's own persisted state (ecosystems.is_review === false).
+ * A verified payment is only reported as "live" when the shop record agrees —
+ * otherwise we state the real, still-pending situation.
+ */
+export function goLiveStatusLine(r: SubscriptionRequest | null, isLive?: boolean): string {
   if (!r) return "No payment submitted yet.";
-  if (r.status === "approved") return "Payment verified — your shop is live.";
+  if (r.status === "approved")
+    return isLive === false
+      ? "Payment verified — finishing activation. Refresh in a moment; if this stays, the platform owner needs to complete the activation."
+      : "Payment verified — your shop is live.";
   if (r.status === "rejected") return r.decision_reason || "That payment was rejected.";
   const auto = (r as { auto_reason?: string | null }).auto_reason;
   return auto || "Waiting for the GCash payment to be recognised.";
 }
+
