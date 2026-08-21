@@ -7241,6 +7241,7 @@ export type Database = {
         Returns: boolean
       }
       listener_unmatched_events: { Args: { _limit?: number }; Returns: Json }
+      live_shop_name: { Args: { _name: string }; Returns: string }
       log_operator_action: {
         Args: {
           _action: string
