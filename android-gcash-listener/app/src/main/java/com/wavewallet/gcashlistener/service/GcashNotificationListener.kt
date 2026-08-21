@@ -37,12 +37,16 @@ class GcashNotificationListener : NotificationListenerService() {
         LastStatus.recordListenerConnected(this, true)
         ListenerForegroundService.start(this)
         ListenerScheduler.scheduleHeartbeat(this)
+        ListenerScheduler.heartbeatNow(this)
         recoverActiveNotifications()
     }
 
     override fun onListenerDisconnected() {
         super.onListenerDisconnected()
         LastStatus.recordListenerConnected(this, false)
+        // Report the outage immediately: the foreground service and its
+        // heartbeat can stay alive while Android is no longer delivering.
+        ListenerScheduler.heartbeatNow(this)
         // Android can unbind the listener while the foreground service keeps
         // running. Ask the system to bind us again; recovery then re-runs.
         runCatching { requestRebind(ComponentName(this, GcashNotificationListener::class.java)) }

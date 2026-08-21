@@ -23,7 +23,21 @@ import {
 import { parseGcashNotification } from "@/lib/gcash-notification";
 
 
-const heartbeatSchema = z.object({ kind: z.literal("heartbeat") });
+/**
+ * A heartbeat now carries the phone's own listener health. These are operational
+ * facts only — never notification contents of any app.
+ */
+const heartbeatSchema = z.object({
+  kind: z.literal("heartbeat"),
+  /** Android has the NotificationListenerService bound right now. */
+  listener_connected: z.boolean().optional(),
+  /** Notification Access is still granted in system settings. */
+  notification_access: z.boolean().optional(),
+  /** How many GCash notifications the phone has seen since install. */
+  received_count: z.number().int().min(0).max(10_000_000).optional(),
+  last_received_at: z.string().datetime().optional(),
+  app_version: z.string().max(40).optional(),
+});
 
 const eventSchema = z.object({
   kind: z.literal("event"),
@@ -102,7 +116,22 @@ export const Route = createFileRoute("/api/public/payments/listener")({
         }
 
         if (parsed.kind === "heartbeat") {
-          const { error } = await supabaseAdmin.rpc("listener_heartbeat", { _device: deviceId });
+          const health: Record<string, unknown> = { _device: deviceId };
+          if (typeof parsed.listener_connected === "boolean")
+            health["_listener_connected"] = parsed.listener_connected;
+          if (typeof parsed.notification_access === "boolean")
+            health["_notification_access"] = parsed.notification_access;
+          if (typeof parsed.received_count === "number")
+            health["_received_count"] = parsed.received_count;
+          if (parsed.last_received_at) health["_last_received_at"] = parsed.last_received_at;
+          if (parsed.app_version) health["_app_version"] = parsed.app_version;
+
+          const { error } = await (
+            supabaseAdmin.rpc as unknown as (
+              fn: string,
+              args: Record<string, unknown>,
+            ) => Promise<{ error: { message: string } | null }>
+          )("listener_heartbeat", health);
           if (error) return json({ accepted: false, error: "Device not accepted" }, 403);
           return json({ accepted: true, kind: "heartbeat" });
         }

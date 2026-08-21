@@ -43,6 +43,15 @@ export type ListenerDevice = {
   last_seen_at: string | null;
   last_event_at: string | null;
   revoked_at: string | null;
+  /** Android reported the notification listener bound at the last heartbeat. */
+  listener_connected?: boolean | null;
+  /** Notification Access still granted in the phone's system settings. */
+  notification_access?: boolean | null;
+  listener_state_at?: string | null;
+  /** GCash notifications the phone has seen, and when the last one arrived. */
+  received_count?: number | null;
+  last_received_at?: string | null;
+  app_version?: string | null;
   online: boolean;
   accepted_events: number;
   unparsed_events: number;
@@ -170,8 +179,38 @@ export async function dismissListenerEvent(eventId: string, note?: string) {
 export function deviceStateLabel(device: ListenerDevice) {
   if (device.status === "revoked") return { label: "Revoked", tone: "danger" as const };
   if (device.status === "pending") return { label: "Waiting to pair", tone: "warning" as const };
+  // The app process staying alive proves nothing: Android can drop the
+  // notification listener while heartbeats keep arriving. Those two failures
+  // are named separately so the operator knows what to fix on the phone.
+  if (device.notification_access === false)
+    return { label: "Notification access lost", tone: "danger" as const };
+  if (device.listener_connected === false)
+    return { label: "Listener disconnected", tone: "danger" as const };
   if (!device.online) return { label: "Offline", tone: "danger" as const };
   return { label: "Online", tone: "success" as const };
+}
+
+/** One-line plain-language health summary for a paired phone. */
+export function deviceHealthLine(device: ListenerDevice) {
+  const parts: string[] = [];
+  parts.push(
+    device.notification_access === false
+      ? "Notification access OFF"
+      : device.notification_access === true
+        ? "Notification access ON"
+        : "Notification access unknown",
+  );
+  parts.push(
+    device.listener_connected === false
+      ? "Android listener DISCONNECTED"
+      : device.listener_connected === true
+        ? "Android listener connected"
+        : "Listener state unknown",
+  );
+  if (typeof device.received_count === "number")
+    parts.push(`${device.received_count} GCash notification(s) seen`);
+  if (device.app_version) parts.push(`app ${device.app_version}`);
+  return parts.join(" · ");
 }
 
 /** Plain-language outcome of one forwarded notification. */
