@@ -72,6 +72,10 @@ class PairingStore(context: Context) {
     /** Drops the credential. The device id is retained for easy re-pairing. */
     fun unpair() = prefs.edit().remove(KEY_DEVICE).remove(KEY_HMAC).apply()
 
+    /** Forgets the retained device id too, so a different device can be paired. */
+    fun forgetDevice() = prefs.edit()
+        .remove(KEY_DEVICE).remove(KEY_HMAC).remove(KEY_LAST_DEVICE).remove(KEY_REVOKED).apply()
+
     private companion object {
         const val KEY_DEVICE = "device_id"
         const val KEY_LAST_DEVICE = "last_device_id"

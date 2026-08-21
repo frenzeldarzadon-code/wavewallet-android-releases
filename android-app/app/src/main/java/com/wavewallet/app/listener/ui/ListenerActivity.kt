@@ -176,7 +176,7 @@ private fun HomeScreen() {
                         },
                     ) { Text("Re-pair this device") }
                     OutlinedButton(onClick = {
-                        store.unpair(); store.revokedByServer = false
+                        store.forgetDevice()
                         paired = false; revoked = false; knownDeviceId = null
                     }) { Text("Pair a different device instead") }
                 } else {
