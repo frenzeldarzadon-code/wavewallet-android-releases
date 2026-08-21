@@ -2137,17 +2137,23 @@ export type Database = {
       }
       listener_devices: {
         Row: {
+          app_version: string | null
           created_at: string
           created_by: string | null
           ecosystem_id: string | null
           id: string
           label: string
           last_event_at: string | null
+          last_received_at: string | null
           last_seen_at: string | null
+          listener_connected: boolean | null
+          listener_state_at: string | null
           match_window_minutes: number
+          notification_access: boolean | null
           offline_after_minutes: number
           owner_role: string
           package_name: string
+          received_count: number
           receiving_number: string | null
           receiving_number_key: string | null
           revoked_at: string | null
@@ -2156,17 +2162,23 @@ export type Database = {
           status: string
         }
         Insert: {
+          app_version?: string | null
           created_at?: string
           created_by?: string | null
           ecosystem_id?: string | null
           id?: string
           label: string
           last_event_at?: string | null
+          last_received_at?: string | null
           last_seen_at?: string | null
+          listener_connected?: boolean | null
+          listener_state_at?: string | null
           match_window_minutes?: number
+          notification_access?: boolean | null
           offline_after_minutes?: number
           owner_role?: string
           package_name?: string
+          received_count?: number
           receiving_number?: string | null
           receiving_number_key?: string | null
           revoked_at?: string | null
@@ -2175,17 +2187,23 @@ export type Database = {
           status?: string
         }
         Update: {
+          app_version?: string | null
           created_at?: string
           created_by?: string | null
           ecosystem_id?: string | null
           id?: string
           label?: string
           last_event_at?: string | null
+          last_received_at?: string | null
           last_seen_at?: string | null
+          listener_connected?: boolean | null
+          listener_state_at?: string | null
           match_window_minutes?: number
+          notification_access?: boolean | null
           offline_after_minutes?: number
           owner_role?: string
           package_name?: string
+          received_count?: number
           receiving_number?: string | null
           receiving_number_key?: string | null
           revoked_at?: string | null
@@ -7205,19 +7223,32 @@ export type Database = {
         Returns: boolean
       }
       listener_heartbeat: {
-        Args: { _device: string }
+        Args: {
+          _app_version?: string
+          _device: string
+          _last_received_at?: string
+          _listener_connected?: boolean
+          _notification_access?: boolean
+          _received_count?: number
+        }
         Returns: {
+          app_version: string | null
           created_at: string
           created_by: string | null
           ecosystem_id: string | null
           id: string
           label: string
           last_event_at: string | null
+          last_received_at: string | null
           last_seen_at: string | null
+          listener_connected: boolean | null
+          listener_state_at: string | null
           match_window_minutes: number
+          notification_access: boolean | null
           offline_after_minutes: number
           owner_role: string
           package_name: string
+          received_count: number
           receiving_number: string | null
           receiving_number_key: string | null
           revoked_at: string | null
@@ -8539,17 +8570,23 @@ export type Database = {
       revoke_listener_device: {
         Args: { _device: string }
         Returns: {
+          app_version: string | null
           created_at: string
           created_by: string | null
           ecosystem_id: string | null
           id: string
           label: string
           last_event_at: string | null
+          last_received_at: string | null
           last_seen_at: string | null
+          listener_connected: boolean | null
+          listener_state_at: string | null
           match_window_minutes: number
+          notification_access: boolean | null
           offline_after_minutes: number
           owner_role: string
           package_name: string
+          received_count: number
           receiving_number: string | null
           receiving_number_key: string | null
           revoked_at: string | null
