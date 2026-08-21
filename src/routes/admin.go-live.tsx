@@ -89,6 +89,7 @@ function AdminGoLivePage() {
           <GoLiveCard
             ecosystemId={ecosystemDbId}
             shopName={status.name}
+            isLive
             onLive={() => setRefresh((n) => n + 1)}
           />
         ) : null}
@@ -125,6 +126,7 @@ function AdminGoLivePage() {
         <GoLiveCard
           ecosystemId={ecosystemDbId}
           shopName={status.name}
+          isLive={false}
           onLive={() => {
             // A verified payment changes role, plan and wallet context — reload
             // straight into the live Admin console so no Demo state lingers.

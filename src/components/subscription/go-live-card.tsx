@@ -54,10 +54,13 @@ type Gcash = Awaited<ReturnType<typeof fetchPlatformGcash>>;
 export function GoLiveCard({
   ecosystemId,
   shopName,
+  isLive,
   onLive,
 }: {
   ecosystemId: string;
   shopName?: string | null;
+  /** The shop's own persisted Demo/Live state — the single source of truth. */
+  isLive?: boolean;
   onLive?: () => void;
 }) {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
@@ -228,7 +231,7 @@ export function GoLiveCard({
         setReceiptNote("The receipt could not be checked automatically — it goes to manual review.");
       }
       if (r.status === "approved") {
-        toast.success("Payment verified — your shop is now live.");
+        toast.success("Payment verified — activating your shop now.");
         onLive?.();
       } else {
         toast.success("Payment submitted. It goes live the moment the GCash payment is recognised.");
@@ -264,8 +267,12 @@ export function GoLiveCard({
       <Card className="shadow-[var(--shadow-card)]">
         <CardContent className="space-y-4 px-4">
           {request?.status === "approved" ? (
-            <p className="flex items-center gap-2 text-sm font-medium text-success">
-              <CheckCircle2 className="size-4" /> {goLiveStatusLine(request)}
+            <p
+              className={`flex items-center gap-2 text-sm font-medium ${
+                isLive === false ? "text-warning" : "text-success"
+              }`}
+            >
+              <CheckCircle2 className="size-4" /> {goLiveStatusLine(request, isLive)}
             </p>
           ) : null}
 
@@ -273,7 +280,7 @@ export function GoLiveCard({
             <div className="rounded-xl border border-warning/40 bg-warning/10 px-3 py-2.5 text-xs leading-relaxed">
               <StatusBadge tone="warning">Awaiting payment verification</StatusBadge>
               <p className="mt-1.5">
-                {goLiveStatusLine(request)} Reference {request?.payment_reference} ·{" "}
+                {goLiveStatusLine(request, isLive)} Reference {request?.payment_reference} ·{" "}
                 {peso(Number(request?.amount_due ?? 0))}. Your shop activates automatically once the
                 platform GCash notification for this exact amount and sending number arrives.
               </p>
