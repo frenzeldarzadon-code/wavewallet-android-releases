@@ -3,8 +3,16 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- GCash listener: keeps the notification listener alive in the background. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- Deliberately NOT requested: SMS, contacts, accessibility, storage. -->
 
     <application
+        android:name=".WaveWalletApp"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
@@ -33,6 +41,42 @@
             android:name=".AboutActivity"
             android:exported="false"
             android:label="@string/about_title" />
+
+        <!-- Integrated GCash listener setup, pairing and diagnostics screen. -->
+        <activity
+            android:name="com.wavewallet.app.listener.ui.ListenerActivity"
+            android:exported="false"
+            android:label="@string/listener_title"
+            android:theme="@style/Theme.WaveWallet.Listener" />
+
+        <!--
+          Reads notifications only after the user grants Notification Access, and
+          only from the GCash package. Everything else is discarded in memory.
+        -->
+        <service
+            android:name="com.wavewallet.app.listener.service.GcashNotificationListener"
+            android:exported="true"
+            android:label="@string/listener_service_label"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name="com.wavewallet.app.listener.service.ListenerForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <receiver
+            android:name="com.wavewallet.app.listener.service.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
         <!--
           Grants a one-shot, read-only URI for a single voucher PNG the user
           chose to share. Scoped to the shared_vouchers cache folder only.

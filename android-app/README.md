@@ -67,3 +67,21 @@ Bump `versionCode` (and `versionName`) in `app/build.gradle.kts`, rebuild with
 the **same** keystore, and install the new APK over the old one. The
 application ID and signing identity stay identical, so accounts, sessions and
 data are untouched.
+
+
+## Integrated GCash listener (v1.2.0, versionCode 4)
+
+The GCash notification listener now ships inside this app — operators no longer
+need the separate `com.wavewallet.gcashlistener` install. The code lives under
+`app/src/main/java/com/wavewallet/app/listener/` (parser, event queue, pairing
+store, signer, workers, services) and is a direct move of the standalone
+project, which is kept intact for rollback and testing.
+
+- Screen: About WaveWallet > "GCash Listener" (also a launcher shortcut).
+- Same server pairing protocol and the same `/api/public/payments/listener`
+  endpoint. Nothing changed server-side.
+- Pairing cannot be copied between Android apps: operators moving from the
+  standalone listener must request a new device pairing code, pair inside
+  WaveWallet, then uninstall the old listener app.
+- Only `com.globe.gcash.android` notifications are read; everything else is
+  discarded in memory.

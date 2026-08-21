@@ -1,8 +1,10 @@
 package com.wavewallet.app
 
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -33,6 +35,19 @@ class AboutActivity : AppCompatActivity() {
             "This app is the official WaveWallet client. It uses the same accounts, " +
                 "the same wallets and the same backend as the website. No Coin, voucher, " +
                 "cash in, cash out or subscription action is stored on this device.",
+            13f,
+            "#64748B",
+        )
+        // Entry point to the integrated GCash listener (shop operators only).
+        column.addView(Button(this).apply {
+            text = getString(R.string.listener_title)
+            setOnClickListener {
+                startActivity(Intent(this@AboutActivity, com.wavewallet.app.listener.ui.ListenerActivity::class.java))
+            }
+        })
+        line(
+            "Only shop operators paired by WaveWallet need the GCash listener. " +
+                "Everyone else can ignore it.",
             13f,
             "#64748B",
         )

@@ -6,6 +6,9 @@
         <item name="android:colorPrimary" tools:ignore="NewApi">@color/ww_blue</item>
     </style>
 
+    <!-- Compose-hosted listener screen; AppCompat parent keeps one theme family. -->
+    <style name="Theme.WaveWallet.Listener" parent="Theme.AppCompat.DayNight.NoActionBar" />
+
     <style name="Theme.WaveWallet.Splash" parent="Theme.WaveWallet">
         <item name="android:windowBackground">@drawable/splash_background</item>
     </style>

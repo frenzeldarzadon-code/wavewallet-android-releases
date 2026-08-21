@@ -9,4 +9,13 @@
             android:targetPackage="com.wavewallet.app"
             android:targetClass="com.wavewallet.app.AboutActivity" />
     </shortcut>
+    <shortcut
+        android:shortcutId="gcash-listener"
+        android:enabled="true"
+        android:shortcutShortLabel="@string/listener_title">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.wavewallet.app"
+            android:targetClass="com.wavewallet.app.listener.ui.ListenerActivity" />
+    </shortcut>
 </shortcuts>

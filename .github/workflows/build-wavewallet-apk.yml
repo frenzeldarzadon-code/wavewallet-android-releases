@@ -63,7 +63,7 @@ jobs:
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: wavewallet-debug-apk
+          name: DEV-ONLY-wavewallet-debug-apk-do-not-distribute
           path: ${{ env.WORKING_DIR }}/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
@@ -161,28 +161,87 @@ jobs:
         shell: bash
         run: rm -rf "$RUNNER_TEMP/signing"
 
-      - name: Verify the signature and report the fingerprint
+      - name: Verify package identity, version, signature and update compatibility
         if: steps.creds.outputs.available == 'true'
         shell: bash
+        env:
+          # Optional pin. Set repository variable WW_APP_EXPECTED_SIGNER_SHA256
+          # to the fingerprint of the APK operators already have installed; the
+          # job then fails on any signer that could not update it.
+          EXPECTED_SIGNER_SHA256: ${{ vars.WW_APP_EXPECTED_SIGNER_SHA256 }}
+          # versionCode of the current production release. A build must be higher.
+          PRODUCTION_VERSION_CODE: "3"
         run: |
           set -euo pipefail
           APK=$(ls "$WORKING_DIR"/app/build/outputs/apk/release/*.apk | head -n1)
-          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort | tail -n1)
-          "$APKSIGNER" verify --verbose --print-certs "$APK" | tee /tmp/apksigner.txt
-          grep -q "Verified using v2 scheme (APK Signature Scheme v2): true" /tmp/apksigner.txt
-          if grep -qi "CN=Android Debug" /tmp/apksigner.txt; then
-            echo "::error::APK is signed with the Android debug key, not the release keystore."
-            exit 1
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort | tail -n1)
+          AAPT2="$BT/aapt2"; APKSIGNER="$BT/apksigner"
+
+          BADGING=$("$AAPT2" dump badging "$APK")
+          PKG=$(sed -n "s/^package: name='\([^']*\)'.*/\1/p" <<<"$BADGING")
+          VCODE=$(sed -n "s/.*versionCode='\([^']*\)'.*/\1/p" <<<"$BADGING" | head -n1)
+          VNAME=$(sed -n "s/.*versionName='\([^']*\)'.*/\1/p" <<<"$BADGING" | head -n1)
+
+          fail=0
+          if [ "$PKG" != "com.wavewallet.app" ]; then
+            echo "::error::applicationId is '$PKG', expected exactly com.wavewallet.app"; fail=1
           fi
+          case "$PKG" in *.debug) echo "::error::Debug-suffixed package must never be released."; fail=1;; esac
+          if [ "$VCODE" -le "$PRODUCTION_VERSION_CODE" ]; then
+            echo "::error::versionCode $VCODE is not greater than production $PRODUCTION_VERSION_CODE — installs would be rejected as a downgrade."; fail=1
+          fi
+
+          # Capture stdout AND stderr: a pipe here silently loses the digest.
+          set +e
+          "$APKSIGNER" verify --verbose --print-certs "$APK" > /tmp/apksigner.txt 2>&1
+          SIGNER_RC=$?
+          set -e
+          cat /tmp/apksigner.txt
+          if [ "$SIGNER_RC" -ne 0 ]; then
+            echo "::error::apksigner could not verify the APK (exit $SIGNER_RC)."; fail=1
+          fi
+          grep -q "Verified using v2 scheme (APK Signature Scheme v2): true" /tmp/apksigner.txt || {
+            echo "::error::APK is missing a v2 signature."; fail=1; }
+          if grep -qi "CN=Android Debug" /tmp/apksigner.txt; then
+            echo "::error::APK is signed with the Android debug key, not the release keystore."; fail=1
+          fi
+
+          SIGNER=$(grep -iEo 'certificate SHA-?256 digest:[[:space:]]*[0-9a-fA-F:]+' /tmp/apksigner.txt \
+            | head -n1 | grep -oiE '[0-9a-fA-F:]{32,}' | tr -d ':' | tr 'A-F' 'a-f')
+          if [ -z "$SIGNER" ]; then
+            SIGNER=$(keytool -printcert -jarfile "$APK" 2>/dev/null \
+              | grep -iEo 'SHA-?256:[[:space:]]*[0-9a-fA-F:]+' | head -n1 \
+              | grep -oiE '[0-9a-fA-F:]{32,}' | tr -d ':' | tr 'A-F' 'a-f')
+          fi
+          if [ -z "$SIGNER" ]; then
+            echo "::error::Could not extract the signer SHA-256 fingerprint."; fail=1; SIGNER="NOT DETECTED"
+          fi
+
+          if [ -n "${EXPECTED_SIGNER_SHA256:-}" ]; then
+            EXPECT=$(tr -d ': ' <<<"$EXPECTED_SIGNER_SHA256" | tr 'A-F' 'a-f')
+            if [ "$SIGNER" != "$EXPECT" ]; then
+              echo "::error::Signer fingerprint does not match the pinned production certificate — this APK could NOT update the installed WaveWallet app."; fail=1
+            else
+              echo "Signer matches the pinned production certificate."
+            fi
+          else
+            echo "::warning::WW_APP_EXPECTED_SIGNER_SHA256 is not set, so update compatibility with the installed WaveWallet app is UNVERIFIED. Set it to the fingerprint below once confirmed."
+          fi
+
           {
-            echo "### Signed WaveWallet release APK"
+            echo "### WaveWallet release APK verification"
             echo ""
             echo "- File: \`$(basename "$APK")\`"
+            echo "- Package: \`$PKG\`"
+            echo "- Version: \`$VNAME\` (versionCode \`$VCODE\`, production \`$PRODUCTION_VERSION_CODE\`)"
             echo "- Size: $(stat -c%s "$APK") bytes"
-            echo "- SHA-256: \`$(sha256sum "$APK" | cut -d' ' -f1)\`"
-            echo ""
-            grep -E "Signer #1 certificate (SHA-256|SHA-1) digest" /tmp/apksigner.txt || true
+            echo "- APK SHA-256: \`$(sha256sum "$APK" | cut -d' ' -f1)\`"
+            echo "- Signer SHA-256: \`$SIGNER\`"
+            echo "- Update compatibility: ${EXPECTED_SIGNER_SHA256:+pinned check applied}${EXPECTED_SIGNER_SHA256:-UNVERIFIED (no pin configured)}"
           } >> "$GITHUB_STEP_SUMMARY"
+
+          [ "$fail" -eq 0 ] || exit 1
+
 
       - name: Upload release APK
         if: steps.creds.outputs.available == 'true'
