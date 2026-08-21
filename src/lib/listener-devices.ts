@@ -117,6 +117,24 @@ export async function revokeListenerDevice(deviceId: string) {
   if (error) throw error;
 }
 
+/**
+ * Issues a fresh one-time pairing secret for a phone that is already known.
+ * The device keeps its id, the old credential stops working immediately, and
+ * only the platform owner or that shop's admin may do this.
+ */
+export async function repairListenerDevice(deviceId: string) {
+  const { data, error } = await rpc("repair_listener_device", { _device: deviceId });
+  if (error) throw error;
+  return data as {
+    device_id: string;
+    label: string;
+    pairing_secret: string;
+    package_name: string;
+    receiving_number: string | null;
+  };
+}
+
+
 /** One incoming GCash payment that has not been attached to a Cash In yet. */
 export type UnmatchedListenerEvent = {
   id: string;

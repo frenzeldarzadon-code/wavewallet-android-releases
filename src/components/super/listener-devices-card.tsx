@@ -21,9 +21,11 @@ import {
   fetchListenerStatus,
   LISTENER_ENDPOINT_PATH,
   registerListenerDevice,
+  repairListenerDevice,
   revokeListenerDevice,
   type ListenerStatus,
 } from "@/lib/listener-devices";
+
 
 const when = (value: string | null) =>
   value ? new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "—";
@@ -102,6 +104,24 @@ export function ListenerDevicesCard({
     }
   };
 
+  /** Same phone, brand-new one-time secret. The old credential dies with it. */
+  const repair = async (id: string, name: string) => {
+    setBusy(true);
+    try {
+      const issued = await repairListenerDevice(id);
+      setSecret({ deviceId: issued.device_id, secret: issued.pairing_secret });
+      await load();
+      toast.success(`${name} can be paired again`, {
+        description: "Enter the new one-time code in the app — it is shown only once.",
+      });
+    } catch (error) {
+      toast.error("Could not re-pair the device", { description: (error as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+
   return (
     <Card id="gcash-listener" className="shadow-[var(--shadow-card)] scroll-mt-24">
       <CardHeader>
@@ -171,9 +191,11 @@ export function ListenerDevicesCard({
               Endpoint: <span className="font-mono">{LISTENER_ENDPOINT_PATH}</span>
             </p>
             <p className="mt-1 text-muted-foreground">
-              Enter these in the companion app under “Pair device”, together with this site’s
-              address. The secret cannot be shown again — revoke and re-register if it is lost.
+              Enter these in the WaveWallet app under “Pair device”. A phone that was paired before
+              already knows its Device ID and only asks for this one-time code. The code cannot be
+              shown again — use “Re-pair this device” to issue a new one.
             </p>
+
             <Button variant="outline" size="sm" className="mt-2" onClick={() => setSecret(null)}>
               I saved it
             </Button>
@@ -241,17 +263,27 @@ export function ListenerDevicesCard({
                       <dd className="text-foreground">{device.matched_cash_ins}</dd>
                     </div>
                   </dl>
-                  {device.status !== "revoked" ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {device.status !== "revoked" ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={busy}
+                        onClick={() => revoke(device.id, device.label)}
+                      >
+                        Revoke device
+                      </Button>
+                    ) : null}
                     <Button
                       variant="outline"
                       size="sm"
-                      className="mt-3"
                       disabled={busy}
-                      onClick={() => revoke(device.id, device.label)}
+                      onClick={() => repair(device.id, device.label)}
                     >
-                      Revoke device
+                      Re-pair this device
                     </Button>
-                  ) : null}
+                  </div>
+
                 </div>
               );
             })}
