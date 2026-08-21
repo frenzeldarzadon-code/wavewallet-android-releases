@@ -73,6 +73,29 @@ object LastStatus {
     fun isListenerConnected(context: Context): Boolean =
         prefs(context).getBoolean("listener_connected", false)
 
+    /**
+     * Operational health reported to WaveWallet with every heartbeat. It holds
+     * no notification content — only whether Android is delivering at all.
+     */
+    data class Health(
+        val listenerConnected: Boolean,
+        val notificationAccess: Boolean,
+        val receivedCount: Int,
+        val lastReceivedAt: Long,
+    )
+
+    fun health(context: Context): Health {
+        val p = prefs(context)
+        val access = hasNotificationAccess(context)
+        return Health(
+            // Access revoked means Android unbinds us; never report connected then.
+            listenerConnected = access && p.getBoolean("listener_connected", false),
+            notificationAccess = access,
+            receivedCount = p.getInt("received_count", 0),
+            lastReceivedAt = p.getLong("last_received_at", 0),
+        )
+    }
+
     fun snapshot(context: Context): Map<String, String> {
         val p = prefs(context)
         val connected = p.getBoolean("listener_connected", false)
