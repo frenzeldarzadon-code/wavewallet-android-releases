@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import androidx.core.app.NotificationCompat
 import com.wavewallet.app.R
 import com.wavewallet.app.listener.ui.ListenerActivity
 import com.wavewallet.app.listener.util.LastStatus
@@ -43,10 +44,13 @@ class ListenerForegroundService : Service() {
             this, 0, Intent(this, ListenerActivity::class.java),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        return Notification.Builder(this, CHANNEL)
+        // NotificationCompat keeps this valid on API 24/25 devices, where
+        // Notification.Builder(context, channelId) does not exist.
+        return NotificationCompat.Builder(this, CHANNEL)
             .setContentTitle(getString(R.string.fg_notification_title))
             .setContentText(getString(R.string.fg_notification_text))
             .setSmallIcon(android.R.drawable.stat_notify_sync_noanim)
+            .setPriority(NotificationCompat.PRIORITY_MIN)
             .setOngoing(true)
             .setContentIntent(open)
             .build()
