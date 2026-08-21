@@ -1,8 +1,29 @@
 # How to get the WaveWallet listener APK
 
-No APK has been produced yet. This environment has no Java JDK and no Android
-SDK, so it cannot compile Android code. What follows are the two routes that
-actually produce an installable `app-debug.apk`.
+## Which APK may be distributed
+
+| Build | applicationId | Distributable? |
+| --- | --- | --- |
+| **release** (`assembleRelease`, signed with the WaveWallet keystore) | `com.wavewallet.gcashlistener` | **Yes — this is the only one.** Updates the installed listener in place, keeps pairing/settings. |
+| debug (`assembleDebug`) | `com.wavewallet.gcashlistener.debug` | **No.** It is a *different* Android app: it installs side by side and can never update the production listener. |
+
+The listener currently in the field is **v1.2.0 (versionCode 3)**, package
+`com.wavewallet.gcashlistener`, signed with the WaveWallet release certificate
+`8C:9A:D2:E7:C9:2B:F5:71:9D:03:E7:B6:0D:AC:60:45:2D:0C:AA:AB:58:83:A3:3C:D9:56:1E:A9:8B:23:E1:90`.
+Any replacement APK must use that exact package **and** that exact signing key,
+with a higher versionCode, or Android rejects the update
+(`INSTALL_FAILED_UPDATE_INCOMPATIBLE`) or installs a second app.
+
+Guardrails now enforce this:
+
+- `app/build.gradle.kts` fails `assembleRelease`/`bundleRelease` outright when
+  the `WW_KEYSTORE*` environment variables are absent, so an unsigned or
+  debug-keyed "release" can never be produced by accident.
+- `.github/workflows/build-gcash-listener-apk.yml` fails (rather than skips) the
+  `release` job when the signing secrets are missing, and verifies package name,
+  versionCode > 3, v2 signature, no debug key, and that the signer SHA-256
+  matches the fingerprint above before uploading the artifact. The debug
+  artifact is uploaded as `DEV-ONLY-gcash-listener-debug-apk-do-not-distribute`.
 
 ---
 
@@ -26,7 +47,7 @@ with the rest of the project and GitHub picks it up automatically.
 4. Click the **Run workflow** button on the right → **Run workflow** (green).
 5. Wait roughly 5–10 minutes for the run to turn green.
 6. Click the finished run, scroll to the bottom **Artifacts** box.
-7. Download **`wavewallet-gcash-listener-debug-apk`** — it downloads as a `.zip`.
+7. Download **`wavewallet-gcash-listener-release-apk`** (the debug artifact is development-only) — it downloads as a `.zip`.
 8. Unzip it. Inside is **`app-debug.apk`**. That is the file you install.
 
 ### Install it on the Oppo Reno 13 Pro
