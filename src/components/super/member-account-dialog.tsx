@@ -35,6 +35,7 @@ import {
 import { newPasswordIssue } from "@/lib/password-policy";
 import { resetBlockedReason, sendAccountRecovery } from "@/lib/account-assistance";
 import type { PlatformMember } from "@/lib/platform-members";
+import { pts } from "@/lib/points";
 
 interface Props {
   member: PlatformMember | null;
@@ -180,7 +181,7 @@ export function MemberAccountDialog({ member, onClose, onSaved }: Props) {
                         </span>
                         <span className="text-muted-foreground">
                           {" "}
-                          · {a.points_balance.toLocaleString()} pts
+                          · {pts(a.points_balance)}
                         </span>
                       </span>
                     </li>

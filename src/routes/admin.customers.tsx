@@ -62,6 +62,7 @@ import {
   type RestructureCheck,
   type RestructureTargetRole,
 } from "@/lib/role-restructure";
+import { pts } from "@/lib/points";
 
 export const Route = createFileRoute("/admin/customers")({
   head: () => ({
@@ -555,7 +556,7 @@ function AdminCustomers() {
                         </TableCell>
                         <TableCell className="text-sm">
                           <p className="text-success">{peso(c.credits)}</p>
-                          <p className="text-xs text-muted-foreground">{c.points} pts</p>
+                          <p className="text-xs text-muted-foreground">{pts(c.points)}</p>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {shortDate(c.joined_at)}
@@ -824,7 +825,7 @@ function AdminCustomers() {
                     {restructureTarget ? roleLabel(restructureTarget) : "—"}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Wallet: {peso(restructureCheck.credits)} · {restructureCheck.points} pts
+                    Wallet: {peso(restructureCheck.credits)} · {pts(restructureCheck.points)}
                     (unchanged)
                   </p>
                 </div>
@@ -1000,7 +1001,7 @@ function AdminCustomers() {
             <>
               <div className="grid grid-cols-2 gap-3">
                 <StatCard label="Coin balance" value={peso(detail.credits)} tone="positive" />
-                <StatCard label="Points balance" value={`${detail.points} pts`} tone="brand" />
+                <StatCard label="Points balance" value={pts(detail.points)} tone="brand" />
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge

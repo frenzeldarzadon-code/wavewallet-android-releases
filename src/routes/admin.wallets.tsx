@@ -48,6 +48,7 @@ import {
   type ReversalRecord,
 } from "@/lib/transfer-reversal";
 import { toast } from "sonner";
+import { pts } from "@/lib/points";
 
 export const Route = createFileRoute("/admin/wallets")({
   head: () => ({
@@ -221,7 +222,7 @@ function AdminWallets() {
               });
       toast.success(mode === "points" ? "Points updated" : "Wallet updated", {
         description: `${value > 0 ? "+" : "−"}${
-          mode === "points" ? `${Math.abs(Math.trunc(value))} pts` : peso(Math.abs(value))
+          mode === "points" ? pts(Math.abs(value)) : peso(Math.abs(value))
         } · ${target.full_name} · ${tx}`,
       });
       setTarget(null);
@@ -366,7 +367,7 @@ function AdminWallets() {
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="text-lg font-semibold text-success">{peso(m.balance)}</p>
-                    <p className="text-[11px] text-points">{m.points} pts</p>
+                    <p className="text-[11px] text-points">{pts(m.points)}</p>
                     <div className="mt-1 flex flex-wrap gap-1.5">
                       <Button
                         size="sm"
@@ -654,7 +655,7 @@ function AdminWallets() {
             <DialogDescription>
               {target?.full_name} ·{" "}
               {mode === "points"
-                ? `${target?.points ?? 0} pts`
+                ? pts(target?.points ?? 0)
                 : `current balance ${peso(target?.balance ?? 0)}`}
             </DialogDescription>
           </DialogHeader>

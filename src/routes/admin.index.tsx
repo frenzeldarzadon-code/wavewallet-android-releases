@@ -11,6 +11,7 @@ import { peso, shortDateTime } from "@/lib/wavewallet";
 import { useShopStatus } from "@/lib/shop-status";
 import { reviewCountdown } from "@/lib/review-demo";
 import { StatusBadge } from "@/components/ui-kit";
+import { pts } from "@/lib/points";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
@@ -144,7 +145,7 @@ function AdminDashboard() {
           />
           <StatCard
             label="Points outstanding"
-            value={loading ? "—" : `${Number(dash?.points_outstanding ?? 0)} pts`}
+            value={loading ? "—" : pts(dash?.points_outstanding ?? 0)}
             icon={Coins}
             hint="Redeemable balance"
           />

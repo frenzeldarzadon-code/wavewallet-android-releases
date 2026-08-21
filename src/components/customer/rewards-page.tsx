@@ -35,6 +35,7 @@ import {
   type RewardListing,
 } from "@/lib/rewards";
 import { toast } from "sonner";
+import { formatPoints } from "@/lib/points";
 
 export function RewardsPage() {
   const { account, ecosystem, ecosystemDbId } = useSession();
@@ -112,9 +113,9 @@ export function RewardsPage() {
     <>
       <PageSection title="My points" description={`Earned from voucher purchases inside ${ecosystem.name}.`}>
         <div className="grid gap-3 sm:grid-cols-3">
-          <StatCard label="Points available" value={String(points.available)} icon={Sparkles} tone="brand" />
-          <StatCard label="On hold" value={String(points.held)} hint="Reserved by pending redemptions" />
-          <StatCard label="Total balance" value={String(points.balance)} tone="positive" />
+          <StatCard label="Points available" value={formatPoints(points.available)} icon={Sparkles} tone="brand" />
+          <StatCard label="On hold" value={formatPoints(points.held)} hint="Reserved by pending redemptions" />
+          <StatCard label="Total balance" value={formatPoints(points.balance)} tone="positive" />
         </div>
       </PageSection>
 
