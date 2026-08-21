@@ -165,12 +165,18 @@ jobs:
         if: steps.creds.outputs.available == 'true'
         shell: bash
         env:
-          # Optional pin. Set repository variable WW_APP_EXPECTED_SIGNER_SHA256
-          # to the fingerprint of the APK operators already have installed; the
-          # job then fails on any signer that could not update it.
-          EXPECTED_SIGNER_SHA256: ${{ vars.WW_APP_EXPECTED_SIGNER_SHA256 }}
+          # Public signing certificate of the WaveWallet app operators already
+          # have installed. Established from the distributed production build
+          # WaveWallet-1.1.1.apk (file SHA-256
+          # 4af79779ce316190b3afd4c796d87bd542c358d8d8b6966c5a4853c75f7f284d),
+          # whose v1 (META-INF/CERT.RSA) and v2 signing-block certificate are the
+          # same cert: CN=WaveWallet, O=WaveWallet, L=Sagada, PH, valid
+          # 2026-08-16 .. 2054-01-01. This is a public fingerprint, not a secret.
+          # The repository variable WW_APP_EXPECTED_SIGNER_SHA256 can override it.
+          EXPECTED_SIGNER_SHA256: ${{ vars.WW_APP_EXPECTED_SIGNER_SHA256 || '1EBA9274703D33AF72591EE18F583BD332A1C0F4D24E31B8EB1B02D4D0E6CCF2' }}
           # versionCode of the current production release. A build must be higher.
           PRODUCTION_VERSION_CODE: "3"
+
         run: |
           set -euo pipefail
           APK=$(ls "$WORKING_DIR"/app/build/outputs/apk/release/*.apk | head -n1)
