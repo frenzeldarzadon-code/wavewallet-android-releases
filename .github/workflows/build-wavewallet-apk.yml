@@ -63,7 +63,7 @@ jobs:
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: wavewallet-debug-apk
+          name: DEV-ONLY-wavewallet-debug-apk-do-not-distribute
           path: ${{ env.WORKING_DIR }}/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
