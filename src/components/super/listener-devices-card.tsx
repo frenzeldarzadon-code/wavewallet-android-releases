@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge, EmptyState } from "@/components/ui-kit";
 import { ListenerAppDownload } from "@/components/money/listener-app-download";
+import { formatPairingCode } from "@/lib/listener-pairing-code";
 
 import {
   deviceHealthLine,
