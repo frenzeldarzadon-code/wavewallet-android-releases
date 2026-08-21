@@ -201,7 +201,9 @@ export function ListenerDevicesCard({
               Endpoint: <span className="font-mono">{LISTENER_ENDPOINT_PATH}</span>
             </p>
             <p className="mt-1 text-muted-foreground">
-              Enter these in the WaveWallet app under “Pair device”. A phone that was paired before
+              Tap “Copy both (one paste)” and paste the single value into the WaveWallet app under
+              “Pair device” — it fills in the Device ID and the code for you. Enter these in the
+              WaveWallet app under “Pair device”. A phone that was paired before
               already knows its Device ID and only asks for this one-time code. The code cannot be
               shown again — use “Re-pair this device” to issue a new one.
             </p>
@@ -216,10 +218,13 @@ export function ListenerDevicesCard({
                 size="sm"
                 variant="secondary"
                 onClick={() =>
-                  copy(`${secret.deviceId}:${secret.secret}`, "Device ID and code copied together")
+                  copy(
+                    formatPairingCode(secret.deviceId, secret.secret),
+                    "Device ID and code copied together",
+                  )
                 }
               >
-                Copy both
+                Copy both (one paste)
               </Button>
               <Button variant="outline" size="sm" onClick={() => setSecret(null)}>
                 I saved it
