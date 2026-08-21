@@ -43,6 +43,15 @@ export type ListenerDevice = {
   last_seen_at: string | null;
   last_event_at: string | null;
   revoked_at: string | null;
+  /** Android reported the notification listener bound at the last heartbeat. */
+  listener_connected?: boolean | null;
+  /** Notification Access still granted in the phone's system settings. */
+  notification_access?: boolean | null;
+  listener_state_at?: string | null;
+  /** GCash notifications the phone has seen, and when the last one arrived. */
+  received_count?: number | null;
+  last_received_at?: string | null;
+  app_version?: string | null;
   online: boolean;
   accepted_events: number;
   unparsed_events: number;
