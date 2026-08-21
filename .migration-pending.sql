@@ -122,6 +122,11 @@ set search_path to 'public'
 as $$
 begin
   if new.reseller_id is null then return new; end if;
+  -- Only validate when the parent link is actually being set or changed, so
+  -- unrelated updates to legacy rows are never blocked.
+  if tg_op = 'UPDATE' and new.reseller_id is not distinct from old.reseller_id then
+    return new;
+  end if;
   if new.reseller_id = new.user_id then
     raise exception 'A member cannot be their own parent reseller';
   end if;
