@@ -1,95 +1,115 @@
-# Cross-shop parent reseller error — inspection result
+# Push Notification Audit — WaveWallet (inspection only, no changes made)
 
-No code was changed. This is what I found.
+**Verdict: there are NO true OS-level push notifications today.** The app has a complete
+in-app notification centre plus an honest "device registry" scaffold, but no push provider,
+no FCM, no VAPID keys, and no server-side sender. Nothing can reach a phone whose app is
+closed.
 
-## 1. Exact source of the error
+## 1. Android APK / native wrapper — no push provider
 
-The message "The parent reseller must be a member of this shop" exists in exactly one place: the
-database function `public.validate_member_parent()`, run by the trigger
+`android-app/` is a plain WebView shell (`MainActivity.kt`, `AboutActivity.kt`,
+`ImageSaver.kt`, `NetworkStatus.kt`).
 
-```text
-validate_member_parent
-BEFORE INSERT OR UPDATE OF reseller_id, ecosystem_id ON public.profiles
-```
+- `android-app/app/build.gradle.kts` dependencies: `core-ktx`, `appcompat`, `activity-ktx`,
+  `webkit`, `swiperefreshlayout`, `junit`. **No `firebase-bom`, no `firebase-messaging`,
+  no `com.google.gms.google-services` plugin** (root `build.gradle.kts` has only AGP +
+  Kotlin). No `google-services.json` anywhere in the repo.
+- No OneSignal / Airship / Pusher / any alternative provider.
+- The only push-adjacent Android code in the repo belongs to a different app,
+  `android-gcash-listener/`, which *reads* GCash notifications (`NotificationListenerService`)
+  and posts them to the backend. It does not deliver notifications to customers.
 
-It raises when the row's `reseller_id` is not an active member of the row's `ecosystem_id`.
+## 2. Android 13+ permission and channels — missing in the customer app
 
-Important: this trigger is on the **profiles** table — the legacy single-shop mirror — not on
-`ecosystem_memberships`. The per-shop trigger (`ecosystem_memberships_validate_parent` ->
-`validate_membership_parent()`) is correct and uses a different wording:
-"The parent must be a reseller in this shop".
+`android-app/app/src/main/AndroidManifest.xml` declares only `INTERNET` and
+`ACCESS_NETWORK_STATE`. **No `POST_NOTIFICATIONS`**, no runtime permission request, no
+`NotificationChannel` creation, no notification-posting code in `MainActivity.kt`.
 
-## 2. Why it fires even when the membership looks fine
+(The listener app does declare `POST_NOTIFICATIONS` and creates a channel in
+`service/ListenerForegroundService.kt` — that is the operator's own tool, not the customer APK.)
 
-`profiles` still carries one global `ecosystem_id` plus one global `reseller_id`. Several flows
-rewrite `profiles.ecosystem_id` without clearing the stale parent copied from the previous shop:
+## 3. Token collection — no FCM tokens; browser-subscription scaffold only
 
-- `respond_to_shop_invitation` (accepting an invite when no active shop is set)
-- `auto_process_membership_application` and `review_membership_application`
-- `switch_ecosystem`, `superadmin_assign_member_to_shop`
+- No `FirebaseMessaging.getInstance().token`, no `onNewToken` anywhere.
+- The web app has `public.push_devices` (migration `20260817065540…`) with
+  `endpoint`, `p256dh`, `auth`, `push_enabled`, `expired_at`, RLS scoped to `auth.uid()`,
+  written through `public.register_push_device(...)` (EXECUTE revoked from `anon`).
+  So there *is* a secure, user-associated device registry — it is just fed by the Web Push
+  API, not FCM.
+- `src/lib/financial-notifications.ts` → `browserSubscription()` returns `null` unless
+  `VITE_VAPID_PUBLIC_KEY` is set. **It is not set in `.env`**, so every registration stores a
+  local device id with no real push endpoint.
 
-If the person is a subreseller in Shop A (so `profiles.reseller_id` = Reseller A) and the profile
-pointer moves to Shop B, the trigger sees `reseller_id = Reseller A` against `ecosystem_id = Shop B`
-and blocks the write — even though the Shop B membership row itself is perfectly valid.
+## 4. Background/closed-app receiver — none
 
-A second, related hazard: the trigger `profiles_sync_membership` ->
-`sync_membership_from_profile()` copies the profile-level `reseller_id`, discount and commission
-into `ecosystem_memberships` for whichever shop the profile currently points at. So a profile-level
-value from Shop A can be pushed onto the Shop B membership row (or be rejected by the membership
-trigger with the other wording).
+- No `FirebaseMessagingService` subclass in the APK.
+- The service worker (`vite-plugin-pwa` in `vite.config.ts`, emitted as `/sw.js`) is
+  Workbox caching only: `globPatterns`, `runtimeCaching`. **No `push` event listener and no
+  `notificationclick` handler.** A WebView also does not run a site service worker for push.
+- Consequence: nothing can display a notification while WaveWallet is backgrounded or closed.
 
-## 3. Is the behaviour correct?
+## 5. Server-side sender — does not exist
 
-The *rule* is correct — a parent reseller must belong to the shop where the subreseller lives.
-The *implementation* is wrong at the profiles layer: it evaluates a per-shop rule against a global
-mirror row that can legitimately hold values belonging to a different shop. So this specific error
-is an overly restrictive, stale-mirror false positive, not a genuine hierarchy violation.
+- `public.notify_financial` / `notify_financial_safe` (migration `20260817070138…`) insert a
+  row into `member_notifications` (idempotent on `event_key`), then insert
+  `notification_deliveries` rows with status `pending` per active device — or `skipped` with
+  reason `category_muted` / `account_push_disabled` / `no_active_device`.
+- **Nothing ever moves a row from `pending` to `sent`.** There is no web-push library, no FCM
+  HTTP v1 call, no Admin SDK, no Edge Function or server route that sends. `src/routes/api/public/`
+  contains only `app-version.ts` and `payments/listener.ts`.
 
-Current live data check: 0 profiles currently hold a `reseller_id` that is not an active member of
-their `profiles.ecosystem_id`, so nothing is broken right now — the error appears at the moment of
-a transition, and the transaction is rolled back.
+## 6. Financial events → push? No; in-app rows only
 
-## 4. The intended multi-shop process, in plain language
+The financial wiring itself is correct and post-commit: money RPCs call `notify_financial_safe`
+after the ledger write, with categories in `src/lib/financial-notifications.ts`
+(`cash_in`, `purchase`, `cashback`, `transfer`, `points`, `reward_redemption`, `refund`,
+`withdrawal`, `wallet_adjustment`). A raw GCash listener detection does **not** notify — only a
+confirmed transaction does, which already matches your desired rule. But the outcome is an
+in-app row plus, at best, `showBrowserNotification()` in `src/lib/notifications.ts`, which
+only fires while a tab is open and focused.
 
-1. One login, many memberships. A person can belong to Shop A and Shop B at the same time.
-2. Each membership carries its own role, parent reseller, wallet coins, points, vouchers, rewards,
-   transactions and history. Nothing crosses the shop boundary.
-3. A parent reseller is validated only inside the shop where the subreseller is being created or
-   managed — never against any other shop, and never against a global profile field.
-4. Being a reseller in Shop A grants no standing in Shop B. Shop B must have its own active
-   reseller membership for that person before they can be anyone's parent there.
-5. For an admin creating or managing a subreseller: make sure the shop you are working in is the
-   active shop (or is explicitly chosen in the dialog), then pick the parent from the list the shop
-   itself offers. The parent dropdown must only ever list members with an active `reseller`
-   membership in that same shop, so a parent from another shop cannot be selected by accident.
+## 7. Deep links — half present
 
-## 5. Does the current implementation satisfy true shop isolation?
+`member_notifications.link` is stored and `notificationLink()` (`src/lib/notifications.ts`)
+routes in-app taps via `NotificationBell` / `universe/notifications-page.tsx`. There is no
+`notificationclick` handler and no Android intent/deep-link path, so a *system* notification
+tap has no route today.
 
-Mostly yes at the RPC layer, no at the mirror layer.
+## 8. In-app centre vs real push
 
-Correct today: `promote_to_reseller`, `promote_to_subreseller`, `set_subreseller_parent` and
-`restructure_member_role` all resolve the shop via `member_ecosystem_scope(...)` and validate the
-parent against `ecosystem_memberships` in that shop only. `validate_membership_parent()` is the
-authoritative per-shop guard.
+| Layer | Status |
+| --- | --- |
+| In-app notification centre (bell, `/universe/notifications`, prefs, delivery log) | Implemented |
+| Foreground browser alert while a tab is open | Implemented (`showBrowserNotification`) |
+| Device registry + per-category preferences + delivery audit | Implemented, unused for sending |
+| OS push with app closed | **Not implemented** |
 
-## 6. Remaining risks
+`src/lib/notifications.ts` already documents this honestly in `PUSH_REQUIREMENTS`.
 
-- R1 (cause of the reported error): `validate_member_parent()` on `profiles` applies a per-shop rule
-  to a global row and blocks legitimate shop transitions for anyone who is a subreseller somewhere.
-- R2: `sync_membership_from_profile()` pushes profile-level `reseller_id`, discount and commission
-  onto the membership of the current shop — a real cross-shop contamination path for rates and
-  parentage.
-- R3: `promote_to_subreseller` and `set_subreseller_parent` update `profiles ... where id = _user_id
-  and ecosystem_id = _eco`. When the operator manages a shop that is not the member's current profile
-  pointer, that update silently matches zero rows, leaving the mirror stale.
-- R4: `member_ecosystem_scope()` falls back to `profiles.ecosystem_id` when no explicit shop is
-  passed, so any UI that omits the shop id can resolve the wrong shop.
-- R5: two different error wordings for the same conceptual rule make support diagnosis harder.
+## 9. Minimum work to get GCash-style push on the current APK
 
-## 7. Suggested fix direction (not applied)
+Recommended path: **FCM in the native APK** (a WebView cannot receive Web Push reliably on Android).
 
-Make `ecosystem_memberships` the only authority for parentage: relax `validate_member_parent()` so
-it only rejects a genuinely invalid parent for the shop, or drop the parent check from the profiles
-trigger entirely; make the profile mirror derive from the active membership instead of the reverse;
-and have the shop-transition flows clear or re-derive `profiles.reseller_id` from the target shop's
-membership. Say the word and I will write that as a migration plan with tests.
+1. Add Firebase to `android-app`: `google-services` plugin, `firebase-messaging`,
+   `google-services.json`.
+2. Add `POST_NOTIFICATIONS` to the manifest, request it at runtime on Android 13+, and create
+   a high-importance "Money alerts" channel.
+3. Add a `FirebaseMessagingService` (`onNewToken`, `onMessageReceived`) that posts a
+   notification with a `PendingIntent` carrying the `link`, and have `MainActivity` load that
+   path in the WebView.
+4. Bridge the signed-in user to the token: a JS interface exposing the FCM token to the web
+   layer so it can call `register_push_device` with a new `provider='fcm'` / `token` column —
+   the existing table, RLS and preferences then apply unchanged.
+5. Backend sender: a TanStack server route/cron that reads `notification_deliveries` rows with
+   status `pending`, calls FCM HTTP v1 with a service-account secret, and marks
+   `sent`/`failed` + `expired_at` on `UNREGISTERED`. Keep it triggered only by committed
+   financial events (already the case).
+6. Optional web parity: generate VAPID keys, set `VITE_VAPID_PUBLIC_KEY`, add `push` +
+   `notificationclick` handlers to the service worker, and send via `web-push` for desktop
+   browsers.
+
+iOS: nothing in the current architecture supports it — there is no iOS app and no APNs
+configuration. It would require a separate wrapper plus APNs (reachable through the same FCM
+sender once built).
+
+No files were changed, no commit made, nothing published.
