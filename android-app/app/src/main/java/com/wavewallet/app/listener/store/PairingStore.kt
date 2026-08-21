@@ -30,6 +30,18 @@ class PairingStore(context: Context) {
         get() = prefs.getString(KEY_DEVICE, null)
         private set(value) = prefs.edit().putString(KEY_DEVICE, value).apply()
 
+    /**
+     * The device id of the last pairing on this phone, kept after an unpair or a
+     * revoke so the operator never has to retype it. It is an identifier only —
+     * on its own it grants nothing, because the credential is gone.
+     */
+    val lastKnownDeviceId: String? get() = deviceId ?: prefs.getString(KEY_LAST_DEVICE, null)
+
+    /** WaveWallet answered that this device was revoked. Needs a fresh code. */
+    var revokedByServer: Boolean
+        get() = prefs.getBoolean(KEY_REVOKED, false)
+        set(value) = prefs.edit().putBoolean(KEY_REVOKED, value).apply()
+
     var baseUrl: String
         get() = prefs.getString(KEY_BASE_URL, BuildConfig.DEFAULT_BASE_URL) ?: BuildConfig.DEFAULT_BASE_URL
         set(value) = prefs.edit().putString(KEY_BASE_URL, value.trimEnd('/')).apply()
@@ -40,16 +52,32 @@ class PairingStore(context: Context) {
     fun pair(deviceId: String, pairingSecret: String, baseUrl: String) {
         prefs.edit()
             .putString(KEY_DEVICE, deviceId.trim())
+            .putString(KEY_LAST_DEVICE, deviceId.trim())
             .putString(KEY_HMAC, ListenerSigner.deriveHmacKey(pairingSecret.trim()))
             .putString(KEY_BASE_URL, baseUrl.trim().trimEnd('/'))
+            .putBoolean(KEY_REVOKED, false)
             .apply()
     }
 
+    /**
+     * Re-pairs the device this phone already knows with a freshly issued one-time
+     * secret. Fails when no previous device id is retained.
+     */
+    fun repair(pairingSecret: String, baseUrl: String = this.baseUrl): Boolean {
+        val known = lastKnownDeviceId ?: return false
+        pair(known, pairingSecret, baseUrl)
+        return true
+    }
+
+    /** Drops the credential. The device id is retained for easy re-pairing. */
     fun unpair() = prefs.edit().remove(KEY_DEVICE).remove(KEY_HMAC).apply()
 
     private companion object {
         const val KEY_DEVICE = "device_id"
+        const val KEY_LAST_DEVICE = "last_device_id"
         const val KEY_HMAC = "hmac_key"
         const val KEY_BASE_URL = "base_url"
+        const val KEY_REVOKED = "revoked_by_server"
     }
 }
+
