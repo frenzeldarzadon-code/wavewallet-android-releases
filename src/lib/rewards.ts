@@ -133,11 +133,20 @@ export async function fetchRewardProducts(ecosystemId: string): Promise<RewardPr
   return (data ?? []) as unknown as RewardProductRow[];
 }
 
-export async function fetchMyRedemptions(userId: string): Promise<RedemptionRow[]> {
+/**
+ * Redemption history is shop-scoped: a member who belongs to several shops only
+ * ever sees the redemptions made in the shop they are currently in.
+ */
+export async function fetchMyRedemptions(
+  userId: string,
+  ecosystemId: string | null,
+): Promise<RedemptionRow[]> {
+  if (!ecosystemId) return [];
   const { data } = await supabase
     .from("reward_redemptions")
     .select("*")
     .eq("user_id", userId)
+    .eq("ecosystem_id", ecosystemId)
     .order("created_at", { ascending: false })
     .limit(50);
   return (data ?? []) as unknown as RedemptionRow[];
