@@ -38,19 +38,10 @@ class AboutActivity : AppCompatActivity() {
             13f,
             "#64748B",
         )
-        // Entry point to the integrated GCash listener (shop operators only).
-        column.addView(Button(this).apply {
-            text = getString(R.string.listener_title)
-            setOnClickListener {
-                startActivity(Intent(this@AboutActivity, com.wavewallet.app.listener.ui.ListenerActivity::class.java))
-            }
-        })
-        line(
-            "Only shop operators paired by WaveWallet need the GCash listener. " +
-                "Everyone else can ignore it.",
-            13f,
-            "#64748B",
-        )
+        // The GCash listener screen is deliberately NOT reachable from here.
+        // It is opened only from the Super Admin platform settings page in the
+        // web app, which is where the role check lives.
+
         val scroll = ScrollView(this)
         scroll.addView(column, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         setContentView(scroll)
