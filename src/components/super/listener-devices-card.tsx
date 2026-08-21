@@ -191,9 +191,11 @@ export function ListenerDevicesCard({
               Endpoint: <span className="font-mono">{LISTENER_ENDPOINT_PATH}</span>
             </p>
             <p className="mt-1 text-muted-foreground">
-              Enter these in the companion app under “Pair device”, together with this site’s
-              address. The secret cannot be shown again — revoke and re-register if it is lost.
+              Enter these in the WaveWallet app under “Pair device”. A phone that was paired before
+              already knows its Device ID and only asks for this one-time code. The code cannot be
+              shown again — use “Re-pair this device” to issue a new one.
             </p>
+
             <Button variant="outline" size="sm" className="mt-2" onClick={() => setSecret(null)}>
               I saved it
             </Button>
