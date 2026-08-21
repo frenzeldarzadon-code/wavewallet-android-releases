@@ -121,6 +121,16 @@ export function ListenerDevicesCard({
     }
   };
 
+  /** Clipboard helper so credentials never have to be transcribed by hand. */
+  const copy = async (value: string, done: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(done);
+    } catch {
+      toast.error("Could not copy — select the text and copy it manually.");
+    }
+  };
+
 
   return (
     <Card id="gcash-listener" className="shadow-[var(--shadow-card)] scroll-mt-24">
