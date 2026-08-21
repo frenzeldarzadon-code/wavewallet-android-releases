@@ -355,11 +355,21 @@ export async function setSaleCommission(userId: string, percent: number | null):
   if (error) throw new Error(friendlyWalletError(error.message));
 }
 
-/** Moves a subreseller under a different parent reseller in the same shop. */
-export async function setSubresellerParent(userId: string, resellerId: string): Promise<void> {
+/**
+ * Moves a subreseller under a different parent reseller in the same shop.
+ *
+ * The shop is passed explicitly so the change applies to that membership only —
+ * the member's role or parent in any other shop is never consulted or touched.
+ */
+export async function setSubresellerParent(
+  userId: string,
+  resellerId: string,
+  ecosystemId?: string | null,
+): Promise<void> {
   const { error } = await supabase.rpc("set_subreseller_parent", {
     _user_id: userId,
     _reseller_id: resellerId,
+    ...(ecosystemId ? { _ecosystem_id: ecosystemId } : {}),
   });
   if (error) throw new Error(friendlyWalletError(error.message));
 }
