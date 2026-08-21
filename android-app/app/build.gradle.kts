@@ -46,6 +46,20 @@ android {
             !keyPasswordEnv.isNullOrBlank() &&
             file(keystorePath).exists()
 
+    // A partially supplied release keystore is always a configuration mistake.
+    // Failing loudly is the only way to guarantee a release build can never be
+    // silently produced unsigned (or with anything other than the production
+    // key) on CI. A completely empty environment stays valid for local debug.
+    val anySigningMaterial = listOf(keystorePath, keystorePassword, keyAliasEnv, keyPasswordEnv)
+        .any { !it.isNullOrBlank() }
+    if (anySigningMaterial && !hasSigningMaterial) {
+        throw GradleException(
+            "Incomplete WaveWallet release signing configuration: all of WW_APP_KEYSTORE, " +
+                "WW_APP_KEYSTORE_PASSWORD, WW_APP_KEY_ALIAS and WW_APP_KEY_PASSWORD must be set " +
+                "and the keystore file must exist. Refusing to build without the production key.",
+        )
+    }
+
     if (hasSigningMaterial) {
         signingConfigs {
             create("release") {
