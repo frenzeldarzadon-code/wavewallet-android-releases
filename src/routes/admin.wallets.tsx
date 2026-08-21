@@ -49,6 +49,7 @@ import {
 } from "@/lib/transfer-reversal";
 import { toast } from "sonner";
 import { pts } from "@/lib/points";
+import { activeMembers, fetchShopMembers } from "@/lib/shop-members";
 
 export const Route = createFileRoute("/admin/wallets")({
   head: () => ({
