@@ -12,11 +12,14 @@ android {
         applicationId = "com.wavewallet.gcashlistener"
         minSdk = 26
         targetSdk = 34
-        // 3 / 1.2.0 — layered listener diagnostics (connection vs reception vs
+        // 4 / 1.3.0 — listener health reported to the server with every heartbeat
+    // (connected / notification access / received count / app version), instant
+    // heartbeat on connect and disconnect. Plus 3 / 1.2.0: layered diagnostics
+    // (connection vs reception vs
         // parsing), all notification text surfaces read (bigText, textLines,
         // messaging style), automatic rebind + re-scan of active notifications.
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 4
+        versionName = "1.3.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Default WaveWallet base URL. Override at pairing time in the app.
