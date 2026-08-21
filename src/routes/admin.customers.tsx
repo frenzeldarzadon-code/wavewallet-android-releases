@@ -363,12 +363,16 @@ function AdminCustomers() {
     if (!restructuring || !restructureTarget || !restructureVerdict?.ok) return;
     setBusy(true);
     try {
-      await restructureMemberRole(restructuring.id, {
-        newRole: restructureTarget,
-        parentResellerId: restructureParent,
-        childReassignments: childParents,
-        reason: restructureReason,
-      });
+      await restructureMemberRole(
+        restructuring.id,
+        {
+          newRole: restructureTarget,
+          parentResellerId: restructureParent,
+          childReassignments: childParents,
+          reason: restructureReason,
+        },
+        ecosystemDbId,
+      );
       toast.success(
         `${restructuring.full_name || restructuring.email} is now a ${roleLabel(restructureTarget).toLowerCase()} — wallet, history and earnings untouched.`,
       );
