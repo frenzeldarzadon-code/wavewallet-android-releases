@@ -8,6 +8,7 @@ import { CashbackRateDialog, type CashbackTarget } from "@/components/cashback-r
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { fetchMyVoucherDiscount } from "@/lib/wallet";
+import { fetchShopMembers, resellersOf } from "@/lib/shop-members";
 import { peso, roleLabel, shortDate, type Role } from "@/lib/wavewallet";
 
 export const Route = createFileRoute("/admin/resellers")({
@@ -53,45 +54,17 @@ function AdminResellers() {
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
     setLoading(true);
-    const [
-      { data: roles },
-      { data: profiles },
-      { data: credits },
-      { data: sales },
-      { data: memberships },
-    ] = await Promise.all([
-        supabase
-          .from("user_roles")
-          .select("user_id, role")
-          .eq("ecosystem_id", ecosystemDbId)
-          .in("role", ["reseller", "subreseller"]),
-        supabase
-          .from("profiles")
-          .select("id, full_name, email, joined_at, status")
-          .eq("ecosystem_id", ecosystemDbId),
-        supabase.from("credit_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
-        supabase
-          .from("voucher_sales")
-          .select("reseller_id, sale_price")
-          .eq("ecosystem_id", ecosystemDbId),
-        // The single Discount lives on the shop membership: it is both the
-        // member's share and their voucher shop discount in THIS shop.
-        supabase
-          .from("ecosystem_memberships")
-          .select("user_id, sale_commission_percent")
-          .eq("ecosystem_id", ecosystemDbId),
-      ]);
+    // Membership — not the single profiles.ecosystem_id mirror — decides who
+    // belongs to this shop, so a reseller of two shops appears in both.
+    const [members, { data: credits }, { data: sales }] = await Promise.all([
+      fetchShopMembers(ecosystemDbId),
+      supabase.from("credit_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
+      supabase
+        .from("voucher_sales")
+        .select("reseller_id, sale_price")
+        .eq("ecosystem_id", ecosystemDbId),
+    ]);
 
-    const rateOf = new Map(
-      (memberships ?? []).map((m) => [m.user_id, Number(m.sale_commission_percent ?? 0)]),
-    );
-
-    const roleOf = new Map<string, ResellerRow["role"]>();
-    for (const r of roles ?? []) {
-      const rank = (x: string) => (x === "reseller" ? 0 : 1);
-      const cur = roleOf.get(r.user_id);
-      if (!cur || rank(r.role) < rank(cur)) roleOf.set(r.user_id, r.role as ResellerRow["role"]);
-    }
     const creditOf = new Map((credits ?? []).map((c) => [c.user_id, Number(c.balance)]));
     const saleCount = new Map<string, number>();
     const saleValue = new Map<string, number>();
@@ -101,21 +74,22 @@ function AdminResellers() {
       saleValue.set(s.reseller_id, (saleValue.get(s.reseller_id) ?? 0) + Number(s.sale_price));
     }
 
-    const base = (profiles ?? [])
-      .filter((p) => roleOf.has(p.id))
-      .map((p) => ({
-        id: p.id,
-        full_name: p.full_name,
-        email: p.email,
-        joined_at: p.joined_at,
-        status: p.status as ResellerRow["status"],
-        discount: rateOf.get(p.id) ?? 0,
-        cashback: rateOf.get(p.id) ?? 0,
-        role: roleOf.get(p.id)!,
-        credits: creditOf.get(p.id) ?? 0,
-        sales: saleCount.get(p.id) ?? 0,
-        revenue: saleValue.get(p.id) ?? 0,
-      }));
+    // The single Discount lives on the shop membership: it is both the
+    // member's share and their voucher shop discount in THIS shop.
+    const base = resellersOf(members).map((m) => ({
+      id: m.id,
+      full_name: m.full_name,
+      email: m.email,
+      joined_at: m.joined_at,
+      status: m.status,
+      discount: m.sale_commission_percent ?? 0,
+      cashback: m.sale_commission_percent ?? 0,
+      role: m.role as ResellerRow["role"],
+      credits: creditOf.get(m.id) ?? 0,
+      sales: saleCount.get(m.id) ?? 0,
+      revenue: saleValue.get(m.id) ?? 0,
+    }));
+
 
     // The displayed percentage must be the one the purchase engine would use,
     // including the shop-default fallback — never a locally computed value.

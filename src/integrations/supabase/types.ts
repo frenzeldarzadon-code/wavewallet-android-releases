@@ -9187,6 +9187,26 @@ export type Database = {
         }[]
       }
       shop_funding_admin: { Args: { _ecosystem: string }; Returns: string }
+      shop_members: {
+        Args: { _ecosystem_id: string }
+        Returns: {
+          avatar_path: string
+          deleted_at: string
+          email: string
+          full_name: string
+          handle: string
+          id: string
+          joined_at: string
+          membership_state: string
+          phone: string
+          reseller_commission_percent: number
+          reseller_discount_percent: number
+          reseller_id: string
+          role: string
+          sale_commission_percent: number
+          status: string
+        }[]
+      }
       shop_store_settings: {
         Args: { _ecosystem_id: string }
         Returns: {

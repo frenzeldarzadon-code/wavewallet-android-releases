@@ -24,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
+import { fetchShopMembers } from "@/lib/shop-members";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
   canReverse,
@@ -88,14 +89,17 @@ function AdminTransactions() {
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
     setLoading(true);
-    const [{ data: profiles }, feed] = await Promise.all([
-      supabase.from("profiles").select("id, full_name").eq("ecosystem_id", ecosystemDbId),
+    // Names come from shop membership so transactions of multi-shop members
+    // are not shown as bare ids.
+    const [roster, feed] = await Promise.all([
+      fetchShopMembers(ecosystemDbId),
       fetchTransactionFeed(ecosystemDbId),
     ]);
-    setNames(new Map((profiles ?? []).map((p) => [p.id, p.full_name])));
+    setNames(new Map(roster.map((m) => [m.id, m.full_name])));
     setRows(feed.rows);
     setLoading(false);
   }, [ecosystemDbId]);
+
 
   useEffect(() => {
     void load();
