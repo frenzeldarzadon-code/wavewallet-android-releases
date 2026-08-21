@@ -52,7 +52,6 @@ import { peso, roleLabel } from "@/lib/wavewallet";
 import { fetchPointsAccount, type PointsAccount } from "@/lib/rewards";
 import { fetchEarnings, summariseEarnings } from "@/lib/earnings";
 import {
-import { pts } from "@/lib/points";
   fetchShopRecipients,
   filterRecipientsByTab,
   lineageResetNotice,
@@ -70,6 +69,7 @@ import { pts } from "@/lib/points";
   type ShopRecipient,
   type WalletShop,
 } from "@/lib/wallet-center";
+import { pts } from "@/lib/points";
 
 export interface WalletCenterProps {
   /** Route prefix for the quick links. */

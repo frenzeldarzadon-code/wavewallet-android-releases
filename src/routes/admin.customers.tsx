@@ -54,7 +54,6 @@ import {
 } from "@/lib/wallet";
 import { Textarea } from "@/components/ui/textarea";
 import {
-import { pts } from "@/lib/points";
   evaluateRestructure,
   fetchRestructureCheck,
   isRestructurable,
@@ -63,6 +62,7 @@ import { pts } from "@/lib/points";
   type RestructureCheck,
   type RestructureTargetRole,
 } from "@/lib/role-restructure";
+import { pts } from "@/lib/points";
 
 export const Route = createFileRoute("/admin/customers")({
   head: () => ({
