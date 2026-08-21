@@ -12,6 +12,7 @@ import { MoneySettingsCard } from "@/components/super/money-settings-card";
 import { CashInAutoCard } from "@/components/super/cash-in-auto-card";
 import { CashInNumbersCard } from "@/components/super/cash-in-numbers-card";
 import { ListenerDevicesCard } from "@/components/super/listener-devices-card";
+import { ListenerDeviceScreenButton } from "@/components/super/listener-device-screen-button";
 
 import { PaymentMethodsCard } from "@/components/super/payment-methods-card";
 import { AppReleaseCard } from "@/components/super/app-release-card";
