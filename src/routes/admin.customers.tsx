@@ -274,8 +274,17 @@ function AdminCustomers() {
     const { error } = await supabase.rpc(
       promoteTo === "subreseller" ? "promote_to_subreseller" : "promote_to_reseller",
       promoteTo === "subreseller"
-        ? { _user_id: promoting.id, _discount: value, _parent_reseller_id: parentId }
-        : { _user_id: promoting.id, _discount: value },
+        ? {
+            _user_id: promoting.id,
+            _discount: value,
+            _parent_reseller_id: parentId,
+            ...(ecosystemDbId ? { _ecosystem_id: ecosystemDbId } : {}),
+          }
+        : {
+            _user_id: promoting.id,
+            _discount: value,
+            ...(ecosystemDbId ? { _ecosystem_id: ecosystemDbId } : {}),
+          },
     );
     setBusy(false);
     if (error) {
