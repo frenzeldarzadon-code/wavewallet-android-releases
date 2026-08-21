@@ -243,7 +243,9 @@ jobs:
             echo "- Size: $(stat -c%s "$APK") bytes"
             echo "- APK SHA-256: \`$(sha256sum "$APK" | cut -d' ' -f1)\`"
             echo "- Signer SHA-256: \`$SIGNER\`"
+            echo "- Signer SHA-256 (expected): \`${EXPECTED_SIGNER_SHA256:-none}\`"
             echo "- Update compatibility: ${EXPECTED_SIGNER_SHA256:+pinned check applied}${EXPECTED_SIGNER_SHA256:-UNVERIFIED (no pin configured)}"
+
           } >> "$GITHUB_STEP_SUMMARY"
 
           [ "$fail" -eq 0 ] || exit 1
