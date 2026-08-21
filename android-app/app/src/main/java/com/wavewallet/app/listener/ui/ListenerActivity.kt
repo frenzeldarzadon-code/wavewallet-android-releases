@@ -77,6 +77,10 @@ private fun HomeScreen() {
     val dao = remember { ListenerDb.get(context).events() }
 
     var paired by remember { mutableStateOf(store.isPaired) }
+    // A phone that was paired before keeps its device id, so re-pairing only
+    // needs the fresh one-time code an admin issues in WaveWallet.
+    var knownDeviceId by remember { mutableStateOf(store.lastKnownDeviceId) }
+    var revoked by remember { mutableStateOf(store.revokedByServer) }
     var deviceId by remember { mutableStateOf("") }
     var secret by remember { mutableStateOf("") }
     var baseUrl by remember { mutableStateOf(store.baseUrl) }
@@ -93,7 +97,9 @@ private fun HomeScreen() {
         access = LastStatus.hasNotificationAccess(context)
         status = LastStatus.snapshot(context)
         connected = LastStatus.isListenerConnected(context)
-        if (paired && access) {
+        revoked = store.revokedByServer
+        knownDeviceId = store.lastKnownDeviceId
+        if (paired && !store.revokedByServer && access) {
             ListenerForegroundService.start(context)
             // Android can leave the listener unbound while the foreground
             // service runs. Asking for a rebind reconnects it and triggers a
@@ -106,7 +112,7 @@ private fun HomeScreen() {
         }
     }
 
-    val ready = paired && access && connected
+    val ready = paired && !revoked && access && connected
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -116,7 +122,7 @@ private fun HomeScreen() {
         Text(
             if (ready) "Status: LISTENING — listener CONNECTED"
             else "Status: NOT READY — " + listOfNotNull(
-                if (!paired) "device not paired" else null,
+                if (revoked) "device revoked — re-pair it below" else if (!paired) "device not paired" else null,
                 if (!access) "Notification Access not granted" else null,
                 if (access && !connected) "Notification Access granted but the listener is NOT connected" else null,
             ).joinToString(" and "),
@@ -126,11 +132,53 @@ private fun HomeScreen() {
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("1. Pair device", fontWeight = FontWeight.SemiBold)
-                if (paired) {
+                if (paired && !revoked) {
                     Text("Paired as device ${store.deviceId}")
                     Text("Server: ${store.baseUrl}")
                     Text("The pairing secret is stored encrypted and is never shown again.")
-                    OutlinedButton(onClick = { store.unpair(); paired = false }) { Text("Unpair") }
+                    OutlinedButton(onClick = {
+                        store.unpair(); paired = false; knownDeviceId = store.lastKnownDeviceId
+                    }) { Text("Unpair") }
+                } else if (knownDeviceId != null) {
+                    Text(
+                        if (revoked) "This device was revoked in WaveWallet."
+                        else "This device is not paired right now.",
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text("Device: $knownDeviceId")
+                    Text("Server: ${store.baseUrl}")
+                    Text(
+                        "Ask a WaveWallet Super Admin — or your shop's admin — to open Settings > " +
+                            "GCash notification listener and tap \"Re-pair this device\". They will " +
+                            "read you a new one-time code. The old code no longer works.",
+                    )
+                    OutlinedTextField(
+                        secret, { secret = it },
+                        label = { Text("New one-time pairing code") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Button(
+                        enabled = secret.isNotBlank(),
+                        onClick = {
+                            if (store.repair(secret.trim())) {
+                                secret = ""
+                                paired = true
+                                revoked = false
+                                store.revokedByServer = false
+                                knownDeviceId = store.lastKnownDeviceId
+                                ListenerScheduler.scheduleHeartbeat(context)
+                                message = "Re-paired. Code discarded from memory."
+                            } else {
+                                message = "No device is known on this phone yet — pair it first."
+                            }
+                        },
+                    ) { Text("Re-pair this device") }
+                    OutlinedButton(onClick = {
+                        store.unpair(); store.revokedByServer = false
+                        paired = false; revoked = false; knownDeviceId = null
+                    }) { Text("Pair a different device instead") }
                 } else {
                     Text(
                         "Moving from the separate \"WaveWallet Listener\" app? Pairing cannot be " +
@@ -152,6 +200,7 @@ private fun HomeScreen() {
                             store.pair(deviceId, secret, baseUrl)
                             secret = ""; deviceId = ""
                             paired = true
+                            knownDeviceId = store.lastKnownDeviceId
                             ListenerScheduler.scheduleHeartbeat(context)
                             message = "Paired. Secret discarded from memory."
                         },
