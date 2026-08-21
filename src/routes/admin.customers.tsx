@@ -149,39 +149,22 @@ function AdminCustomers() {
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
     setLoading(true);
-    const [
-      { data: profiles },
-      { data: roles },
-      { data: credits },
-      { data: points },
-      { data: pending },
-    ] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select(
-            "id, full_name, email, phone, joined_at, status, reseller_discount_percent, reseller_commission_percent, sale_commission_percent, reseller_id, deleted_at",
-          )
-          .eq("ecosystem_id", ecosystemDbId)
-          .order("joined_at", { ascending: false }),
-        supabase.from("user_roles").select("user_id, role").eq("ecosystem_id", ecosystemDbId),
-        supabase.from("credit_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
-        supabase
-          .from("points_accounts")
-          .select("user_id, balance, held")
-          .eq("ecosystem_id", ecosystemDbId),
-        supabase
-          .from("reward_redemptions")
-          .select("user_id, status")
-          .eq("ecosystem_id", ecosystemDbId)
-          .in("status", ["pending", "approved"]),
-      ]);
+    // Membership decides who belongs to this shop; profiles.ecosystem_id only
+    // remembers one shop and would hide every multi-shop member.
+    const [roster, { data: credits }, { data: points }, { data: pending }] = await Promise.all([
+      fetchShopMembers(ecosystemDbId),
+      supabase.from("credit_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
+      supabase
+        .from("points_accounts")
+        .select("user_id, balance, held")
+        .eq("ecosystem_id", ecosystemDbId),
+      supabase
+        .from("reward_redemptions")
+        .select("user_id, status")
+        .eq("ecosystem_id", ecosystemDbId)
+        .in("status", ["pending", "approved"]),
+    ]);
 
-    const roleOf = new Map<string, Member["role"]>();
-    for (const r of roles ?? []) {
-      const current = roleOf.get(r.user_id);
-      const rank = (x: string) => (x === "reseller" ? 0 : x === "subreseller" ? 1 : 2);
-      if (!current || rank(r.role) < rank(current)) roleOf.set(r.user_id, r.role as Member["role"]);
-    }
     const creditOf = new Map((credits ?? []).map((c) => [c.user_id, Number(c.balance)]));
     const pointOf = new Map((points ?? []).map((p) => [p.user_id, Number(p.balance)]));
     const heldOf = new Map((points ?? []).map((p) => [p.user_id, Number(p.held)]));
@@ -189,19 +172,30 @@ function AdminCustomers() {
     for (const r of pending ?? []) pendingOf.set(r.user_id, (pendingOf.get(r.user_id) ?? 0) + 1);
 
     setMembers(
-      (profiles ?? [])
-        .filter((p) => !p.deleted_at)
-        .map((p) => ({
-          ...p,
-          role: roleOf.get(p.id) ?? "customer",
-          credits: creditOf.get(p.id) ?? 0,
-          points: pointOf.get(p.id) ?? 0,
-          pointsHeld: heldOf.get(p.id) ?? 0,
-          pendingRedemptions: pendingOf.get(p.id) ?? 0,
+      activeMembers(roster)
+        .sort((a, b) => (a.joined_at < b.joined_at ? 1 : -1))
+        .map((m) => ({
+          id: m.id,
+          full_name: m.full_name,
+          email: m.email,
+          phone: m.phone,
+          joined_at: m.joined_at,
+          status: m.status,
+          reseller_discount_percent: m.reseller_discount_percent,
+          reseller_commission_percent: m.reseller_commission_percent,
+          sale_commission_percent: m.sale_commission_percent,
+          reseller_id: m.reseller_id,
+          deleted_at: m.deleted_at,
+          role: m.role,
+          credits: creditOf.get(m.id) ?? 0,
+          points: pointOf.get(m.id) ?? 0,
+          pointsHeld: heldOf.get(m.id) ?? 0,
+          pendingRedemptions: pendingOf.get(m.id) ?? 0,
         }) as Member),
     );
     setLoading(false);
   }, [ecosystemDbId]);
+
 
   useEffect(() => {
     void load();
