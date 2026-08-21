@@ -204,6 +204,18 @@ export function ListenerDevicesCard({
                           Set a receiving GCash number for this phone — until then it can never confirm a payment.
                         </p>
                       ) : null}
+                      <p className="mt-1 text-xs text-muted-foreground">{deviceHealthLine(device)}</p>
+                      {device.notification_access === false ? (
+                        <p className="text-xs text-destructive">
+                          This phone lost Notification Access — re-grant it in Android settings.
+                        </p>
+                      ) : device.listener_connected === false ? (
+                        <p className="text-xs text-destructive">
+                          Android disconnected the listener on this phone. Open the app and tap
+                          “Reconnect listener”.
+                        </p>
+                      ) : null}
+
 
                     </div>
                     <StatusBadge tone={state.tone}>{state.label}</StatusBadge>
