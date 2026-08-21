@@ -195,12 +195,29 @@ export function ListenerDevicesCard({
               already knows its Device ID and only asks for this one-time code. The code cannot be
               shown again — use “Re-pair this device” to issue a new one.
             </p>
-
-            <Button variant="outline" size="sm" className="mt-2" onClick={() => setSecret(null)}>
-              I saved it
-            </Button>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Button size="sm" onClick={() => copy(secret.deviceId, "Device ID copied")}>
+                Copy Device ID
+              </Button>
+              <Button size="sm" onClick={() => copy(secret.secret, "Pairing code copied")}>
+                Copy pairing code
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() =>
+                  copy(`${secret.deviceId}:${secret.secret}`, "Device ID and code copied together")
+                }
+              >
+                Copy both
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setSecret(null)}>
+                I saved it
+              </Button>
+            </div>
           </div>
         ) : null}
+
 
         {view.devices.length === 0 ? (
           <EmptyState
