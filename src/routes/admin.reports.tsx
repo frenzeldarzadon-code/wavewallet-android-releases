@@ -44,6 +44,7 @@ import {
 } from "@/lib/reports";
 import type { CreditEntry } from "@/lib/wallet";
 import { toast } from "sonner";
+import { formatPoints } from "@/lib/points";
 
 
 export const Route = createFileRoute("/admin/reports")({
@@ -448,7 +449,7 @@ function AdminReports() {
                           )}
                         </TableCell>
                         <TableCell className="hidden lg:table-cell text-sm text-success">
-                          {s.points_earned > 0 ? `+${s.points_earned}` : "—"}
+                          {s.points_earned > 0 ? `+${formatPoints(s.points_earned)}` : "—"}
                           {s.credits_per_point_used ? (
                             <span className="ml-1 text-[11px] text-muted-foreground">
                               @{s.credits_per_point_used}:1

@@ -52,6 +52,7 @@ import { peso, roleLabel } from "@/lib/wavewallet";
 import { fetchPointsAccount, type PointsAccount } from "@/lib/rewards";
 import { fetchEarnings, summariseEarnings } from "@/lib/earnings";
 import {
+import { pts } from "@/lib/points";
   fetchShopRecipients,
   filterRecipientsByTab,
   lineageResetNotice,
@@ -274,11 +275,11 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
             />
             <StatCard
               label="Points balance"
-              value={`${points.available} pts`}
+              value={pts(points.available)}
               hint={
                 isActiveShop
                   ? points.held > 0
-                    ? `${points.held} pts held for redemptions`
+                    ? `${pts(points.held)} held for redemptions`
                     : "Earned from voucher purchases"
                   : "Points shown for your current shop"
               }

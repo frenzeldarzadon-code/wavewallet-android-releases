@@ -11,6 +11,7 @@ import { PeriodEarningsTable } from "@/components/period-earnings-table";
 import { supabase } from "@/integrations/supabase/client";
 import { EMPTY_PERIOD_TOTALS, type PeriodTotals } from "@/lib/earnings";
 import { pointsEarnings, type PointsEarningRow } from "@/lib/role-earnings";
+import { pts } from "@/lib/points";
 
 export function PointsEarningsPanel({
   userId,
@@ -60,7 +61,7 @@ export function PointsEarningsPanel({
     >
       <PeriodEarningsTable
         loading={loading}
-        format={(v) => `${Math.round(v)} pts`}
+        format={(v) => pts(v)}
         metrics={[
           {
             label: "Points earned",

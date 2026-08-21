@@ -17,6 +17,7 @@ import {
   type MemberSearchResult,
 } from "@/lib/member-admin";
 import { peso, roleLabel, type Role } from "@/lib/wavewallet";
+import { pts } from "@/lib/points";
 
 interface Props {
   /** Pin the search to one shop (admins are pinned server-side regardless). */
@@ -118,7 +119,7 @@ export function MemberPicker({
                   </span>
                   {m.credit_balance || m.points_balance ? (
                     <span className="block text-xs text-muted-foreground">
-                      Balance {peso(m.credit_balance)} · {m.points_balance} pts
+                      Balance {peso(m.credit_balance)} · {pts(m.points_balance)}
                     </span>
                   ) : null}
                 </span>

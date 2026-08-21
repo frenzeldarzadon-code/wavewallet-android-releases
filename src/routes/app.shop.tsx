@@ -46,6 +46,7 @@ import {
 } from "@/lib/rewards";
 import { toast } from "sonner";
 import { beginCriticalOperation } from "@/lib/app-update";
+import { pts } from "@/lib/points";
 
 export const Route = createFileRoute("/app/shop")({
   head: () => ({
@@ -286,7 +287,7 @@ export function VoucherShopView({
                 <Coins className="size-3.5" /> Points
               </p>
               <p className="truncate text-lg font-bold tabular-nums text-[oklch(0.88_0.14_85)]">
-                {points.available} pts
+                {pts(points.available)}
               </p>
             </div>
           </div>
@@ -572,7 +573,7 @@ export function VoucherShopView({
                   <p className="flex justify-between">
                     <span className="text-muted-foreground">Points after</span>
                     <span className="font-medium">
-                      {points.available - (buying.product.points_price ?? 0)} pts
+                      {pts(points.available - (buying.product.points_price ?? 0))}
                     </span>
                   </p>
                   <p className="text-[11px] text-muted-foreground">
