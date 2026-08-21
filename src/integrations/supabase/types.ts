@@ -7283,6 +7283,10 @@ export type Database = {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: number
       }
+      member_ecosystem_scope: {
+        Args: { _ecosystem_id?: string; _user_id: string }
+        Returns: string
+      }
       member_email_taken: {
         Args: { _email: string; _exclude?: string }
         Returns: boolean
@@ -7603,12 +7607,13 @@ export type Database = {
         }[]
       }
       promote_to_reseller: {
-        Args: { _discount: number; _user_id: string }
+        Args: { _discount: number; _ecosystem_id?: string; _user_id: string }
         Returns: undefined
       }
       promote_to_subreseller: {
         Args: {
           _discount: number
+          _ecosystem_id?: string
           _parent_reseller_id?: string
           _user_id: string
         }
@@ -8135,6 +8140,7 @@ export type Database = {
       restructure_member_role: {
         Args: {
           _child_reassignments?: Json
+          _ecosystem_id?: string
           _new_role: Database["public"]["Enums"]["app_role"]
           _parent_reseller_id?: string
           _reason: string
@@ -9071,7 +9077,7 @@ export type Database = {
         Returns: undefined
       }
       set_subreseller_parent: {
-        Args: { _reseller_id: string; _user_id: string }
+        Args: { _ecosystem_id?: string; _reseller_id: string; _user_id: string }
         Returns: undefined
       }
       settle_cash_in_approval: {
