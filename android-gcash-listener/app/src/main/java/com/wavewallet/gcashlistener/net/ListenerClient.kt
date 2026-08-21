@@ -3,6 +3,7 @@ package com.wavewallet.gcashlistener.net
 import com.wavewallet.gcashlistener.crypto.ListenerSigner
 import com.wavewallet.gcashlistener.data.QueuedEvent
 import com.wavewallet.gcashlistener.store.PairingStore
+import com.wavewallet.gcashlistener.util.LastStatus
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -26,7 +27,22 @@ class ListenerClient(private val store: PairingStore) {
         .retryOnConnectionFailure(true)
         .build()
 
-    suspend fun heartbeat(): Outcome = post(JSONObject().put("kind", "heartbeat").toString())
+    /**
+     * A heartbeat carries the phone's own listener health so the server can
+     * tell "process alive" apart from "Android is actually delivering
+     * notifications". No notification content is ever sent here.
+     */
+    suspend fun heartbeat(health: LastStatus.Health? = null, appVersion: String? = null): Outcome {
+        val body = JSONObject().put("kind", "heartbeat")
+        health?.let {
+            body.put("listener_connected", it.listenerConnected)
+            body.put("notification_access", it.notificationAccess)
+            body.put("received_count", it.receivedCount)
+            if (it.lastReceivedAt > 0) body.put("last_received_at", isoUtc(it.lastReceivedAt))
+        }
+        appVersion?.let { body.put("app_version", it) }
+        return post(body.toString())
+    }
 
     suspend fun sendEvent(event: QueuedEvent): Outcome {
         val body = JSONObject()

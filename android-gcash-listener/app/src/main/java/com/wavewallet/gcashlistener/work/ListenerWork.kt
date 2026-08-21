@@ -11,6 +11,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.wavewallet.gcashlistener.BuildConfig
 import com.wavewallet.gcashlistener.data.ListenerDb
 import com.wavewallet.gcashlistener.net.ListenerClient
 import com.wavewallet.gcashlistener.store.PairingStore
@@ -52,7 +53,10 @@ class HeartbeatWorker(context: Context, params: WorkerParameters) : CoroutineWor
     override suspend fun doWork(): Result {
         val store = PairingStore(applicationContext)
         if (!store.isPaired) return Result.success()
-        val outcome = ListenerClient(store).heartbeat()
+        val outcome = ListenerClient(store).heartbeat(
+            health = LastStatus.health(applicationContext),
+            appVersion = BuildConfig.VERSION_NAME,
+        )
         LastStatus.recordHeartbeat(applicationContext, outcome.ok, "${outcome.code} ${outcome.body}")
         ListenerScheduler.syncNow(applicationContext)
         return if (outcome.ok) Result.success() else Result.retry()
@@ -67,6 +71,22 @@ object ListenerScheduler {
             "listener-sync",
             ExistingWorkPolicy.KEEP,
             OneTimeWorkRequestBuilder<SyncWorker>()
+                .setConstraints(NETWORK)
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
+                .build(),
+        )
+    }
+
+    /**
+     * Push the health snapshot right now. Used when Android connects or drops
+     * the listener, so a disconnect is visible on the server within seconds
+     * instead of at the next 15-minute heartbeat.
+     */
+    fun heartbeatNow(context: Context) {
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            "listener-heartbeat-now",
+            ExistingWorkPolicy.REPLACE,
+            OneTimeWorkRequestBuilder<HeartbeatWorker>()
                 .setConstraints(NETWORK)
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
                 .build(),
