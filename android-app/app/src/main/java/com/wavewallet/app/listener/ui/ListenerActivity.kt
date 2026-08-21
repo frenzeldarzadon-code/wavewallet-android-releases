@@ -53,6 +53,18 @@ import kotlinx.coroutines.withContext
 class ListenerActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Android 13+ hides the persistent "listener active" notification until
+        // POST_NOTIFICATIONS is granted, which makes ColorOS far more likely to
+        // freeze the process. Ask once; denial never blocks the listener.
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            runCatching {
+                if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) !=
+                    android.content.pm.PackageManager.PERMISSION_GRANTED
+                ) {
+                    requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1001)
+                }
+            }
+        }
         setContent { MaterialTheme { Surface { HomeScreen() } } }
     }
 }
