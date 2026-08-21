@@ -1,19 +1,4 @@
 -- Per-shop reseller hierarchy.
---
--- A member's role, parent reseller, discount and commission belong to ONE
--- (member, shop) membership. Being a subreseller in Shop A must place no
--- requirement whatsoever on Shop B: the parent check applies only inside the
--- shop the change is being made in.
---
--- The bug: every role RPC derived the shop from `profiles.ecosystem_id` (a
--- mirror of the member's CURRENTLY ACTIVE shop) and `validate_member_parent`
--- compared the parent's `profiles.ecosystem_id`. Assigning a parent in Shop B
--- for someone whose active shop is Shop A therefore raised
--- "The parent reseller must belong to the same shop".
-
--- ---------------------------------------------------------------------------
--- Which shop is a role change being made in?
--- ---------------------------------------------------------------------------
 create or replace function public.member_ecosystem_scope(
   _user_id uuid, _ecosystem_id uuid default null)
 returns uuid
@@ -31,8 +16,6 @@ begin
   select coalesce(p.active_ecosystem_id, p.ecosystem_id) into _actor_eco
     from public.profiles p where p.id = auth.uid();
 
-  -- The shop the operator is currently working in, when the target is a
-  -- member of it. This is what makes Shop B changes independent of Shop A.
   if _actor_eco is not null then
     select m.ecosystem_id into _eco
       from public.ecosystem_memberships m
@@ -49,11 +32,8 @@ begin
 end $$;
 
 comment on function public.member_ecosystem_scope(uuid, uuid) is
-  'Resolves which shop a member-management action applies to: the explicit shop, else the operator''s current shop when the member belongs to it, else the member''s active shop.';
+  'Resolves which shop a member-management action applies to: the explicit shop, else the operators current shop when the member belongs to it, else the members active shop.';
 
--- ---------------------------------------------------------------------------
--- Parent validation: membership-scoped, never cross-shop
--- ---------------------------------------------------------------------------
 create or replace function public.validate_member_parent()
 returns trigger
 language plpgsql
@@ -62,7 +42,6 @@ set search_path to 'public'
 as $$
 declare _is_sub boolean;
 begin
-  -- Role is per shop: only consider the role held in THIS profile's shop.
   select exists (
     select 1 from public.user_roles ur
     where ur.user_id = new.id and ur.role = 'subreseller'
@@ -80,8 +59,6 @@ begin
     raise exception 'A member cannot be their own parent reseller';
   end if;
 
-  -- The parent only has to be a member of THIS shop. Their standing in any
-  -- other shop is irrelevant.
   if new.ecosystem_id is not null and not exists (
     select 1 from public.ecosystem_memberships m
      where m.user_id = new.reseller_id
@@ -113,7 +90,6 @@ begin
   return new;
 end $$;
 
--- Authoritative check on the membership row itself.
 create or replace function public.validate_membership_parent()
 returns trigger
 language plpgsql
@@ -122,8 +98,6 @@ set search_path to 'public'
 as $$
 begin
   if new.reseller_id is null then return new; end if;
-  -- Only validate when the parent link is actually being set or changed, so
-  -- unrelated updates to legacy rows are never blocked.
   if tg_op = 'UPDATE' and new.reseller_id is not distinct from old.reseller_id then
     return new;
   end if;
@@ -155,9 +129,6 @@ create trigger ecosystem_memberships_validate_parent
 before insert or update of reseller_id, role on public.ecosystem_memberships
 for each row execute function public.validate_membership_parent();
 
--- ---------------------------------------------------------------------------
--- Shop-scoped role management
--- ---------------------------------------------------------------------------
 drop function if exists public.promote_to_reseller(uuid, integer);
 create or replace function public.promote_to_reseller(
   _user_id uuid, _discount integer, _ecosystem_id uuid default null)
@@ -196,7 +167,6 @@ begin
          sale_commission_percent = _discount, updated_at = now()
    where user_id = _user_id and ecosystem_id = _eco;
 
-  -- The profile is only a mirror of the member's CURRENT shop.
   update public.profiles
      set reseller_discount_percent = _discount,
          sale_commission_percent = _discount,
@@ -243,7 +213,6 @@ begin
   if _parent_reseller_id is null then
     raise exception 'Choose the parent reseller who will own this subreseller';
   end if;
-  -- The parent only needs to be a reseller in THIS shop.
   if not exists (
     select 1 from public.ecosystem_memberships m
      where m.user_id = _parent_reseller_id and m.ecosystem_id = _eco
@@ -341,9 +310,6 @@ begin
                              'new_parent_name',(select full_name from public.profiles where id = _reseller_id)));
 end $$;
 
--- ---------------------------------------------------------------------------
--- Restructuring: same shop scoping
--- ---------------------------------------------------------------------------
 drop function if exists public.restructure_member_role(uuid, public.app_role, text, uuid, jsonb);
 create or replace function public.restructure_member_role(
   _user_id uuid, _new_role public.app_role, _reason text,
@@ -397,7 +363,6 @@ begin
   end if;
   if _new_role = _role then raise exception 'That member already has this role'; end if;
 
-  -- Children are counted inside THIS shop only.
   if _new_role in ('subreseller','customer') then
     for _child in
       select m.user_id as id, p.full_name

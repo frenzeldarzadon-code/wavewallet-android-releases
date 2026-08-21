@@ -177,10 +177,16 @@ export interface RestructureResult {
   reassigned_children: Array<{ child_id: string; child_name: string; new_parent_id: string }>;
 }
 
-/** Performs the role change atomically in the database. */
+/**
+ * Performs the role change atomically in the database.
+ *
+ * `ecosystemId` names the shop the change applies to. Roles are per shop, so a
+ * member's position in any other shop is left exactly as it is.
+ */
 export async function restructureMemberRole(
   userId: string,
   plan: RestructurePlan,
+  ecosystemId?: string | null,
 ): Promise<RestructureResult> {
   const reassignments = Object.entries(plan.childReassignments ?? {})
     .filter(([, parent]) => !!parent)
@@ -193,6 +199,7 @@ export async function restructureMemberRole(
     _reason: plan.reason.trim(),
     _child_reassignments: reassignments as unknown as never,
     ...(parent ? { _parent_reseller_id: parent } : {}),
+    ...(ecosystemId ? { _ecosystem_id: ecosystemId } : {}),
   });
   if (error) throw new Error(error.message);
   return data as unknown as RestructureResult;

@@ -274,8 +274,17 @@ function AdminCustomers() {
     const { error } = await supabase.rpc(
       promoteTo === "subreseller" ? "promote_to_subreseller" : "promote_to_reseller",
       promoteTo === "subreseller"
-        ? { _user_id: promoting.id, _discount: value, _parent_reseller_id: parentId }
-        : { _user_id: promoting.id, _discount: value },
+        ? {
+            _user_id: promoting.id,
+            _discount: value,
+            _parent_reseller_id: parentId,
+            ...(ecosystemDbId ? { _ecosystem_id: ecosystemDbId } : {}),
+          }
+        : {
+            _user_id: promoting.id,
+            _discount: value,
+            ...(ecosystemDbId ? { _ecosystem_id: ecosystemDbId } : {}),
+          },
     );
     setBusy(false);
     if (error) {
@@ -298,7 +307,7 @@ function AdminCustomers() {
     if (!editingOwner || !parentId) return;
     setBusy(true);
     try {
-      await setSubresellerParent(editingOwner.id, parentId);
+      await setSubresellerParent(editingOwner.id, parentId, ecosystemDbId);
       toast.success("Parent reseller updated.");
       setEditingOwner(null);
       setParentId("");
@@ -354,12 +363,16 @@ function AdminCustomers() {
     if (!restructuring || !restructureTarget || !restructureVerdict?.ok) return;
     setBusy(true);
     try {
-      await restructureMemberRole(restructuring.id, {
-        newRole: restructureTarget,
-        parentResellerId: restructureParent,
-        childReassignments: childParents,
-        reason: restructureReason,
-      });
+      await restructureMemberRole(
+        restructuring.id,
+        {
+          newRole: restructureTarget,
+          parentResellerId: restructureParent,
+          childReassignments: childParents,
+          reason: restructureReason,
+        },
+        ecosystemDbId,
+      );
       toast.success(
         `${restructuring.full_name || restructuring.email} is now a ${roleLabel(restructureTarget).toLowerCase()} — wallet, history and earnings untouched.`,
       );
