@@ -63,6 +63,7 @@ import {
   type RestructureTargetRole,
 } from "@/lib/role-restructure";
 import { pts } from "@/lib/points";
+import { activeMembers, fetchShopMembers } from "@/lib/shop-members";
 
 export const Route = createFileRoute("/admin/customers")({
   head: () => ({
