@@ -261,17 +261,27 @@ export function ListenerDevicesCard({
                       <dd className="text-foreground">{device.matched_cash_ins}</dd>
                     </div>
                   </dl>
-                  {device.status !== "revoked" ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {device.status !== "revoked" ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={busy}
+                        onClick={() => revoke(device.id, device.label)}
+                      >
+                        Revoke device
+                      </Button>
+                    ) : null}
                     <Button
                       variant="outline"
                       size="sm"
-                      className="mt-3"
                       disabled={busy}
-                      onClick={() => revoke(device.id, device.label)}
+                      onClick={() => repair(device.id, device.label)}
                     >
-                      Revoke device
+                      Re-pair this device
                     </Button>
-                  ) : null}
+                  </div>
+
                 </div>
               );
             })}
