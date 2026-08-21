@@ -59,7 +59,7 @@ export function RewardsPage() {
       const [p, r, m] = await Promise.all([
         fetchPointsAccount(userId, ecosystemDbId),
         fetchRewards(),
-        fetchMyRedemptions(userId),
+        fetchMyRedemptions(userId, ecosystemDbId),
       ]);
       setPoints(p);
       setRewards(r);
@@ -69,7 +69,7 @@ export function RewardsPage() {
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, ecosystemDbId]);
 
   useEffect(() => {
     void load();
