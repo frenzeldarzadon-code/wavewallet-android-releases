@@ -307,7 +307,7 @@ function AdminCustomers() {
     if (!editingOwner || !parentId) return;
     setBusy(true);
     try {
-      await setSubresellerParent(editingOwner.id, parentId);
+      await setSubresellerParent(editingOwner.id, parentId, ecosystemDbId);
       toast.success("Parent reseller updated.");
       setEditingOwner(null);
       setParentId("");
