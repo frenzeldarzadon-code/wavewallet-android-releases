@@ -24,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
+import { fetchShopMembers } from "@/lib/shop-members";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
   canReverse,
