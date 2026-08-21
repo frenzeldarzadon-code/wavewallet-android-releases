@@ -8,6 +8,7 @@ import { CashbackRateDialog, type CashbackTarget } from "@/components/cashback-r
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { fetchMyVoucherDiscount } from "@/lib/wallet";
+import { fetchShopMembers, resellersOf } from "@/lib/shop-members";
 import { peso, roleLabel, shortDate, type Role } from "@/lib/wavewallet";
 
 export const Route = createFileRoute("/admin/resellers")({
