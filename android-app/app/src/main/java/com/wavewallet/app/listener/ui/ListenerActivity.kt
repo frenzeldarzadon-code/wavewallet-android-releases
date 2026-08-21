@@ -120,6 +120,11 @@ private fun HomeScreen() {
                     Text("The pairing secret is stored encrypted and is never shown again.")
                     OutlinedButton(onClick = { store.unpair(); paired = false }) { Text("Unpair") }
                 } else {
+                    Text(
+                        "Moving from the separate \"WaveWallet Listener\" app? Pairing cannot be " +
+                            "copied between apps. Ask WaveWallet for a new device pairing code, pair " +
+                            "here, then uninstall the old listener app.",
+                    )
                     OutlinedTextField(baseUrl, { baseUrl = it }, label = { Text("WaveWallet URL") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(deviceId, { deviceId = it }, label = { Text("Device ID") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(
