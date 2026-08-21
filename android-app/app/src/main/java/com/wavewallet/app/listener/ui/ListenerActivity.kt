@@ -37,6 +37,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.wavewallet.app.BuildConfig
 import com.wavewallet.app.listener.crypto.EventUid
+import com.wavewallet.app.listener.crypto.PairingCode
 import com.wavewallet.app.listener.data.ListenerDb
 import com.wavewallet.app.listener.data.QueuedEvent
 import com.wavewallet.app.listener.net.ListenerClient
@@ -154,7 +155,7 @@ private fun HomeScreen() {
                     )
                     OutlinedTextField(
                         secret, { secret = it },
-                        label = { Text("New one-time pairing code") },
+                        label = { Text("New one-time pairing code (or paste \"Copy both\")") },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
@@ -162,7 +163,7 @@ private fun HomeScreen() {
                     Button(
                         enabled = secret.isNotBlank(),
                         onClick = {
-                            if (store.repair(secret.trim())) {
+                            if (store.repair(PairingCode.secretOf(secret))) {
                                 secret = ""
                                 paired = true
                                 revoked = false
@@ -186,9 +187,35 @@ private fun HomeScreen() {
                             "here, then uninstall the old listener app.",
                     )
                     OutlinedTextField(baseUrl, { baseUrl = it }, label = { Text("WaveWallet URL") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(deviceId, { deviceId = it }, label = { Text("Device ID") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    Text(
+                        "Tip: in WaveWallet tap \"Copy both (one paste)\" and paste that single " +
+                            "value into either field below — the Device ID and the code are filled in " +
+                            "automatically.",
+                    )
                     OutlinedTextField(
-                        secret, { secret = it },
+                        deviceId,
+                        { input ->
+                            val combined = PairingCode.parse(input)
+                            if (combined != null) {
+                                deviceId = combined.deviceId; secret = combined.secret
+                            } else {
+                                deviceId = input
+                            }
+                        },
+                        label = { Text("Device ID (or paste \"Copy both\" value)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        secret,
+                        { input ->
+                            val combined = PairingCode.parse(input)
+                            if (combined != null) {
+                                deviceId = combined.deviceId; secret = combined.secret
+                            } else {
+                                secret = input
+                            }
+                        },
                         label = { Text("Pairing secret (one time)") },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
