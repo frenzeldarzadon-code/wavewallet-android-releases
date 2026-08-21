@@ -12,6 +12,7 @@ import { MoneySettingsCard } from "@/components/super/money-settings-card";
 import { CashInAutoCard } from "@/components/super/cash-in-auto-card";
 import { CashInNumbersCard } from "@/components/super/cash-in-numbers-card";
 import { ListenerDevicesCard } from "@/components/super/listener-devices-card";
+import { ListenerDeviceScreenButton } from "@/components/super/listener-device-screen-button";
 
 import { PaymentMethodsCard } from "@/components/super/payment-methods-card";
 import { AppReleaseCard } from "@/components/super/app-release-card";
@@ -93,8 +94,10 @@ function SuperSettings() {
         title="GCash notification listener"
         description="Register the paired Android phone and copy its one-time Device ID and pairing secret."
       >
+        <ListenerDeviceScreenButton />
         <ListenerDevicesCard />
       </PageSection>
+
 
       <PageSection title="Collection details" description="The platform GCash account shop admins pay when buying a coin allocation.">
 

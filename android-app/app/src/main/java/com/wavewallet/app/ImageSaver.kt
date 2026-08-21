@@ -142,4 +142,22 @@ class ImageSaver(private val activity: Activity) {
             )
             true
         }.getOrDefault(false)
+
+    /**
+     * Opens the integrated GCash notification listener screen.
+     *
+     * The only caller is the Super Admin platform settings page: the web layer
+     * decides, server-side role in hand, whether the button is rendered at all.
+     * The activity itself stays `exported=false`, so nothing outside this app
+     * can start it, and this method takes no arguments — it cannot be pointed
+     * at any other screen.
+     */
+    @JavascriptInterface
+    fun openGcashListener(): Boolean =
+        runCatching {
+            activity.startActivity(
+                Intent(activity, com.wavewallet.app.listener.ui.ListenerActivity::class.java),
+            )
+            true
+        }.getOrDefault(false)
 }

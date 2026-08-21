@@ -11,7 +11,6 @@ import { PageSection } from "@/components/ui-kit";
 import { RetentionPolicyCard } from "@/components/retention-policy-card";
 import { CashInNumberCard } from "@/components/money/cash-in-number-card";
 import { ShopIdentityCard } from "@/components/shop/shop-identity-card";
-import { ListenerDevicesCard } from "@/components/super/listener-devices-card";
 import { useSession } from "@/lib/session";
 import {
   facebookLabel,
@@ -377,9 +376,6 @@ function AdminSettings() {
       </div>
 
       <CashInNumberCard ecosystemId={ecosystemDbId ?? null} />
-      {ecosystemDbId ? (
-        <ListenerDevicesCard ecosystemId={ecosystemDbId} ecosystemName={ecosystem.name} />
-      ) : null}
       <RetentionPolicyCard />
     </>
   );
