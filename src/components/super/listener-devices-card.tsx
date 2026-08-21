@@ -15,6 +15,7 @@ import { StatusBadge, EmptyState } from "@/components/ui-kit";
 import { ListenerAppDownload } from "@/components/money/listener-app-download";
 
 import {
+  deviceHealthLine,
   deviceStateLabel,
   eventResultLabel,
   fetchListenerStatus,
