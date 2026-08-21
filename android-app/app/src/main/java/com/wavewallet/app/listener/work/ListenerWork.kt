@@ -30,6 +30,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         for (event in dao.pending()) {
             val outcome = client.sendEvent(event)
             LastStatus.recordServerResponse(applicationContext, "${outcome.code} ${outcome.body}")
+            if (isRevoked(outcome)) { store.revokedByServer = true; return Result.success() }
             when {
                 outcome.ok -> {
                     dao.mark(event.id, "sent", null, outcome.body)
@@ -58,10 +59,18 @@ class HeartbeatWorker(context: Context, params: WorkerParameters) : CoroutineWor
             appVersion = BuildConfig.VERSION_NAME,
         )
         LastStatus.recordHeartbeat(applicationContext, outcome.ok, "${outcome.code} ${outcome.body}")
+        // A revoked device can only come back through a fresh one-time code
+        // issued by an authorised admin. Remember it so the UI offers re-pairing.
+        if (isRevoked(outcome)) { store.revokedByServer = true; return Result.success() }
+        if (outcome.ok) store.revokedByServer = false
         ListenerScheduler.syncNow(applicationContext)
         return if (outcome.ok) Result.success() else Result.retry()
     }
 }
+
+/** WaveWallet refused this device because it was revoked. */
+private fun isRevoked(outcome: ListenerClient.Outcome) =
+    outcome.code == 403 && outcome.body.contains("revoked", ignoreCase = true)
 
 object ListenerScheduler {
     private val NETWORK = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
