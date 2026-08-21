@@ -93,8 +93,10 @@ function SuperSettings() {
         title="GCash notification listener"
         description="Register the paired Android phone and copy its one-time Device ID and pairing secret."
       >
+        <ListenerDeviceScreenButton />
         <ListenerDevicesCard />
       </PageSection>
+
 
       <PageSection title="Collection details" description="The platform GCash account shop admins pay when buying a coin allocation.">
 
