@@ -17,8 +17,10 @@ export function formatPairingCode(deviceId: string, secret: string) {
 export function parsePairingCode(value: string): { deviceId: string; secret: string } | null {
   const parts = value.trim().split(":");
   if (parts.length !== 3) return null;
-  const [prefix, deviceId, secret] = parts;
+  const prefix = (parts[0] ?? "").trim();
+  const deviceId = (parts[1] ?? "").trim();
+  const secret = (parts[2] ?? "").trim();
   if (prefix.toUpperCase() !== PAIRING_CODE_PREFIX) return null;
-  if (!deviceId.trim() || !secret.trim()) return null;
-  return { deviceId: deviceId.trim(), secret: secret.trim() };
+  if (!deviceId || !secret) return null;
+  return { deviceId, secret };
 }
