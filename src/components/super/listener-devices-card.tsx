@@ -21,9 +21,11 @@ import {
   fetchListenerStatus,
   LISTENER_ENDPOINT_PATH,
   registerListenerDevice,
+  repairListenerDevice,
   revokeListenerDevice,
   type ListenerStatus,
 } from "@/lib/listener-devices";
+
 
 const when = (value: string | null) =>
   value ? new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "—";
