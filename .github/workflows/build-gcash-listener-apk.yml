@@ -234,7 +234,8 @@ jobs:
             echo "- Version: \`$VNAME\` (versionCode \`$VCODE\`)"
             echo "- Size: $(stat -c%s "$APK") bytes"
             echo "- SHA-256 (file): \`$(sha256sum "$APK" | cut -d' ' -f1)\`"
-            echo "- Signer SHA-256: \`$NORM_SIGNER\`"
+            echo "- Signer SHA-256 (built APK): \`${NORM_SIGNER:-NOT DETECTED}\`"
+            echo "- Signer SHA-256 (expected): \`$NORM_EXPECTED\`"
             if [ "$OK" = true ]; then
               echo "- Update compatibility: **OK — upgrades the installed listener in place, pairing and settings preserved.**"
             else
