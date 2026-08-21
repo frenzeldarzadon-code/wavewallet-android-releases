@@ -1,11 +1,14 @@
 /**
- * Super Admin-only launcher for the integrated native GCash listener screen.
+ * Launcher for the integrated native GCash listener screen.
  *
- * This button is rendered exclusively on `/super/settings`, which is behind the
- * `super_admin` session guard, so shop admins, resellers and customers never
- * see it. On the web it explains where the screen lives; inside the WaveWallet
- * Android app it calls the argument-less `WaveWalletNative.openGcashListener()`
- * bridge, which starts the `exported=false` ListenerActivity.
+ * Operating the listener is a payment-operations task: it is rendered on
+ * `/super/settings` (platform owner) and on `/admin/settings`, which is behind
+ * the shop-admin guard, so the phone paired for that shop can be set up by its
+ * own admin. Global listener configuration stays on the Super Admin pages.
+ * Inside the WaveWallet Android app the button calls the argument-less
+ * `WaveWalletNative.openGcashListener()` bridge, which starts the
+ * `exported=false` ListenerActivity; the screen itself only reports the state
+ * of the phone it runs on and the device it is paired to.
  */
 import { useEffect, useState } from "react";
 import { Smartphone } from "lucide-react";
@@ -30,7 +33,7 @@ export function ListenerDeviceScreenButton() {
   const open = () => {
     if (bridge()?.openGcashListener?.() !== true) {
       toast.error("Could not open the listener screen", {
-        description: "Open it from the WaveWallet Android app, signed in as Super Admin.",
+        description: "Open it from the WaveWallet Android app, signed in as the admin of this shop.",
       });
     }
   };
@@ -38,11 +41,11 @@ export function ListenerDeviceScreenButton() {
   return (
     <Card className="shadow-[var(--shadow-card)]">
       <CardHeader>
-        <CardTitle className="text-sm">Listener device screen (Super Admin only)</CardTitle>
+        <CardTitle className="text-sm">Listener device screen</CardTitle>
         <p className="text-sm text-muted-foreground">
           The GCash notification listener now ships inside the WaveWallet Android app. This screen
           shows Notification Access, connection and pairing status, the last notification read, the
-          parser result, the recovery sweep and the heartbeat — and it is only reachable from here.
+          parser result, the recovery sweep and the heartbeat for this phone only.
         </p>
       </CardHeader>
       <CardContent className="space-y-2">
@@ -53,7 +56,7 @@ export function ListenerDeviceScreenButton() {
         {inApp ? null : (
           <p className="text-xs text-muted-foreground">
             Available inside the WaveWallet Android app. Open this page in the app on the paired
-            phone, signed in as Super Admin, then tap the button.
+            phone, then tap the button.
           </p>
         )}
       </CardContent>
