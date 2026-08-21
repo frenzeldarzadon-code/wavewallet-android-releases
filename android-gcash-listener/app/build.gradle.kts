@@ -4,6 +4,9 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
+// Set from inside android {} below; read by the release guard at the bottom.
+var hasSigningMaterialForRelease = false
+
 android {
     namespace = "com.wavewallet.gcashlistener"
     compileSdk = 34
@@ -42,6 +45,8 @@ android {
             !keyPasswordEnv.isNullOrBlank() &&
             file(keystorePath).exists()
 
+    hasSigningMaterialForRelease = hasSigningMaterial
+
     if (hasSigningMaterial) {
         signingConfigs {
             create("release") {
@@ -65,8 +70,12 @@ android {
                 signingConfig = signingConfigs.getByName("release")
             }
         }
+        // Development only. The ".debug" suffix makes this a SEPARATE Android
+        // app (com.wavewallet.gcashlistener.debug) that installs alongside the
+        // production listener and can never update it. Never distribute it.
         debug {
             applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
         }
     }
 
@@ -127,4 +136,19 @@ dependencies {
     testImplementation("androidx.test:core:1.6.1")
     testImplementation("androidx.test:core-ktx:1.6.1")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
+}
+
+// A release APK without the WaveWallet keystore is unsigned (or debug-keyed) and
+// could never update the installed listener, so fail loudly instead of
+// producing something that looks distributable.
+if (!hasSigningMaterialForRelease) {
+    tasks.matching { it.name == "assembleRelease" || it.name == "bundleRelease" }.configureEach {
+        doFirst {
+            throw GradleException(
+                "Release signing material missing. Set WW_KEYSTORE, WW_KEYSTORE_PASSWORD, " +
+                    "WW_KEY_ALIAS and WW_KEY_PASSWORD to the WaveWallet release keystore; " +
+                    "any other key cannot update the installed com.wavewallet.gcashlistener."
+            )
+        }
+    }
 }
