@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PageSection } from "@/components/ui-kit";
 import { RetentionPolicyCard } from "@/components/retention-policy-card";
+import { ListenerDevicesCard } from "@/components/super/listener-devices-card";
+import { ListenerDeviceScreenButton } from "@/components/money/listener-device-screen-button";
 import { CashInNumberCard } from "@/components/money/cash-in-number-card";
 import { ShopIdentityCard } from "@/components/shop/shop-identity-card";
 import { useSession } from "@/lib/session";
@@ -376,6 +378,12 @@ function AdminSettings() {
       </div>
 
       <CashInNumberCard ecosystemId={ecosystemDbId ?? null} />
+      {ecosystemDbId ? (
+        <>
+          <ListenerDeviceScreenButton />
+          <ListenerDevicesCard ecosystemId={ecosystemDbId} ecosystemName={ecosystem.name} />
+        </>
+      ) : null}
       <RetentionPolicyCard />
     </>
   );
