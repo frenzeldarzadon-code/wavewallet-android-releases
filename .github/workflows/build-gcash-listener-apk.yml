@@ -183,20 +183,42 @@ jobs:
           VCODE=$(sed -n "s/.*versionCode='\([^']*\)'.*/\1/p" <<<"$BADGING" | head -n1)
           VNAME=$(sed -n "s/.*versionName='\([^']*\)'.*/\1/p" <<<"$BADGING" | head -n1)
 
-          "$APKSIGNER" verify --verbose --print-certs "$APK" | tee /tmp/apksigner.txt
-          SIGNER=$(sed -n 's/.*Signer #1 certificate SHA-256 digest: *//p' /tmp/apksigner.txt | head -n1)
-          # apksigner prints lowercase hex without separators; normalise both.
-          NORM_SIGNER=$(tr 'a-f' 'A-F' <<<"$SIGNER")
-          NORM_EXPECTED=$(tr -d ':' <<<"$EXPECTED_SIGNER_SHA256")
+          # apksigner can write parts of its report to stderr, and different
+          # build-tools revisions label the line slightly differently, so capture
+          # both streams and match case-insensitively. `set -o pipefail` would
+          # abort on a non-zero apksigner exit before we can report, so run it
+          # without failing the step here.
+          set +e
+          "$APKSIGNER" verify --verbose --print-certs "$APK" > /tmp/apksigner.txt 2>&1
+          APKSIGNER_RC=$?
+          set -e
+          cat /tmp/apksigner.txt
+
+          SIGNER=$(grep -aiEo 'certificate SHA-?256 digest:[[:space:]]*[0-9a-fA-F: ]+' /tmp/apksigner.txt | head -n1 | sed 's/.*digest:[[:space:]]*//')
+
+          # Fallback: read the certificate straight out of the APK with keytool.
+          if [ -z "${SIGNER//[[:space:]]/}" ]; then
+            echo "notice: apksigner did not print a SHA-256 digest (exit $APKSIGNER_RC); falling back to keytool."
+            SIGNER=$(keytool -printcert -jarfile "$APK" 2>/dev/null \
+              | grep -aiE 'SHA-?256:' | head -n1 | sed 's/.*: *//')
+          fi
+
+          # Normalise: strip separators/whitespace/CR and upper-case both sides.
+          NORM_SIGNER=$(printf '%s' "$SIGNER" | tr -d ': \t\r\n' | tr 'a-f' 'A-F')
+          NORM_EXPECTED=$(printf '%s' "$EXPECTED_SIGNER_SHA256" | tr -d ': \t\r\n' | tr 'a-f' 'A-F')
 
           OK=true
+          [ "$APKSIGNER_RC" -eq 0 ] || { echo "::error::apksigner verify failed (exit $APKSIGNER_RC) — see the log above."; OK=false; }
           [ "$PKG" = "$EXPECTED_PACKAGE" ] || { echo "::error::Package is '$PKG', expected '$EXPECTED_PACKAGE' — this would install as a separate app."; OK=false; }
           case "$PKG" in *.debug) echo "::error::Debug-suffixed package must never be released."; OK=false;; esac
           grep -q "Verified using v2 scheme (APK Signature Scheme v2): true" /tmp/apksigner.txt || { echo "::error::APK is not v2-signed."; OK=false; }
           if grep -qi "CN=Android Debug" /tmp/apksigner.txt; then
             echo "::error::APK is signed with the Android debug key, not the release keystore."; OK=false
           fi
-          if [ "$NORM_SIGNER" != "$NORM_EXPECTED" ]; then
+          if [ -z "$NORM_SIGNER" ]; then
+            echo "::error::Could not extract the signing certificate SHA-256 from the built APK — cannot confirm update compatibility."
+            OK=false
+          elif [ "$NORM_SIGNER" != "$NORM_EXPECTED" ]; then
             echo "::error::Signing certificate $NORM_SIGNER does not match the installed listener's certificate $NORM_EXPECTED — Android would refuse this update (INSTALL_FAILED_UPDATE_INCOMPATIBLE)."
             OK=false
           fi
