@@ -23,7 +23,21 @@ import {
 import { parseGcashNotification } from "@/lib/gcash-notification";
 
 
-const heartbeatSchema = z.object({ kind: z.literal("heartbeat") });
+/**
+ * A heartbeat now carries the phone's own listener health. These are operational
+ * facts only — never notification contents of any app.
+ */
+const heartbeatSchema = z.object({
+  kind: z.literal("heartbeat"),
+  /** Android has the NotificationListenerService bound right now. */
+  listener_connected: z.boolean().optional(),
+  /** Notification Access is still granted in system settings. */
+  notification_access: z.boolean().optional(),
+  /** How many GCash notifications the phone has seen since install. */
+  received_count: z.number().int().min(0).max(10_000_000).optional(),
+  last_received_at: z.string().datetime().optional(),
+  app_version: z.string().max(40).optional(),
+});
 
 const eventSchema = z.object({
   kind: z.literal("event"),
