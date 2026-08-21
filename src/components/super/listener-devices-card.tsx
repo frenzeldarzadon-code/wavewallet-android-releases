@@ -104,6 +104,24 @@ export function ListenerDevicesCard({
     }
   };
 
+  /** Same phone, brand-new one-time secret. The old credential dies with it. */
+  const repair = async (id: string, name: string) => {
+    setBusy(true);
+    try {
+      const issued = await repairListenerDevice(id);
+      setSecret({ deviceId: issued.device_id, secret: issued.pairing_secret });
+      await load();
+      toast.success(`${name} can be paired again`, {
+        description: "Enter the new one-time code in the app — it is shown only once.",
+      });
+    } catch (error) {
+      toast.error("Could not re-pair the device", { description: (error as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+
   return (
     <Card id="gcash-listener" className="shadow-[var(--shadow-card)] scroll-mt-24">
       <CardHeader>
