@@ -33,7 +33,12 @@ export interface ShopMember {
 
 type ShopMemberRow = Omit<
   ShopMember,
-  "role" | "status" | "membership_state" | "reseller_discount_percent"
+  | "role"
+  | "status"
+  | "membership_state"
+  | "reseller_discount_percent"
+  | "reseller_commission_percent"
+  | "sale_commission_percent"
 > & {
   role: string;
   status: string;
