@@ -116,7 +116,22 @@ export const Route = createFileRoute("/api/public/payments/listener")({
         }
 
         if (parsed.kind === "heartbeat") {
-          const { error } = await supabaseAdmin.rpc("listener_heartbeat", { _device: deviceId });
+          const health: Record<string, unknown> = { _device: deviceId };
+          if (typeof parsed.listener_connected === "boolean")
+            health["_listener_connected"] = parsed.listener_connected;
+          if (typeof parsed.notification_access === "boolean")
+            health["_notification_access"] = parsed.notification_access;
+          if (typeof parsed.received_count === "number")
+            health["_received_count"] = parsed.received_count;
+          if (parsed.last_received_at) health["_last_received_at"] = parsed.last_received_at;
+          if (parsed.app_version) health["_app_version"] = parsed.app_version;
+
+          const { error } = await (
+            supabaseAdmin.rpc as unknown as (
+              fn: string,
+              args: Record<string, unknown>,
+            ) => Promise<{ error: { message: string } | null }>
+          )("listener_heartbeat", health);
           if (error) return json({ accepted: false, error: "Device not accepted" }, 403);
           return json({ accepted: true, kind: "heartbeat" });
         }
