@@ -7934,6 +7934,7 @@ export type Database = {
       }
       remove_friend: { Args: { _user: string }; Returns: undefined }
       remove_push_device: { Args: { _id: string }; Returns: undefined }
+      repair_listener_device: { Args: { _device: string }; Returns: Json }
       request_cash_in: {
         Args: {
           _amount_php: number
