@@ -10,7 +10,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import com.wavewallet.app.R
-import com.wavewallet.app.listener.ui.MainActivity
+import com.wavewallet.app.listener.ui.ListenerActivity
 import com.wavewallet.app.listener.util.LastStatus
 
 /** Low-priority persistent notification keeps ColorOS from freezing the app. */
@@ -40,7 +40,7 @@ class ListenerForegroundService : Service() {
             )
         }
         val open = PendingIntent.getActivity(
-            this, 0, Intent(this, MainActivity::class.java),
+            this, 0, Intent(this, ListenerActivity::class.java),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         return Notification.Builder(this, CHANNEL)
