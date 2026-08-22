@@ -27,7 +27,7 @@ So GCash flow, the 1,500 payment path, pairing/revocation and the ≥2-signal ru
 
 1. **Receipt reading is GCash-only.** The vision prompt in `src/lib/cash-in-receipt.server.ts` says "You are reading a GCash payment receipt" and only names GCash fields. A Maya or bank receipt is read badly or marked unreadable.
 2. **No provider on the receipt/request side.** `cash_in_requests` has no provider column, so `try_auto_approve_cash_in` falls back to `coalesce(_provider, 'gcash')` when there is no listener event — the wrong namespace for a non-GCash reference hash.
-3. **No durable match record.** Which signals matched and why approval happened lives only in an `audit_logs` JSON blob and in mutable joins; nothing snapshots the receipt values and the notification values at approval time. Point 5 (history must not depend on current parser/config) is not satisfied.
+3. ~~**No durable match record.**~~ **Done** — `payment_match_records` now snapshots the receipt values, the notification values, the agreeing signals and the timing metadata at decision time, so history no longer depends on the current parser or provider configuration.
 4. **No learned provider patterns.** Nothing records observed notification shapes per provider, so extraction never improves (point 6).
 5. **Signals are number-shaped only.** `sender_number_key` uses `normalize_ph_mobile`; bank receipts often expose a masked account or a payer name instead, so a valid bank payment can reach only 1 signal and stall in review (safe, but never auto-approves).
 
