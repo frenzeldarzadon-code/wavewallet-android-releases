@@ -39,7 +39,7 @@ export function PaymentMethodCards({
     return (
       <EmptyState
         title="No payment methods available"
-        description="The platform owner has not published any cash in payment methods yet. Please check back later."
+        description="This shop has not published any receiving accounts yet. Please check back later."
       />
     );
   }

@@ -10,7 +10,6 @@ import { RetentionPolicyCard } from "@/components/retention-policy-card";
 import { CreditSupplyCard } from "@/components/super/credit-supply-card";
 import { MoneySettingsCard } from "@/components/super/money-settings-card";
 import { CashInAutoCard } from "@/components/super/cash-in-auto-card";
-import { CashInNumbersCard } from "@/components/super/cash-in-numbers-card";
 import { ListenerDevicesCard } from "@/components/super/listener-devices-card";
 import { ListenerDeviceScreenButton } from "@/components/money/listener-device-screen-button";
 import { ListenerSourceRulesCard } from "@/components/money/listener-source-rules-card";
@@ -103,7 +102,10 @@ function SuperSettings() {
 
 
 
-      <PageSection title="Collection details" description="The platform GCash account shop admins pay when buying a coin allocation.">
+      <PageSection
+        title="Platform subscription collection"
+        description="WaveWallet's own account, used only when shop admins pay for their subscription or coin allocation. Members never see this — their cash in options come from their shop's listener payment methods."
+      >
 
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">
@@ -176,12 +178,11 @@ function SuperSettings() {
       </Button>
 
       <MoneySettingsCard />
-      <CashInNumbersCard />
       <CashInAutoCard />
       <ReceivingAccountsCard
         ecosystemId={null}
-        title="Platform receiving accounts"
-        description="Accounts every shop may be paid through. Upload a QR code so payers can scan or download it instead of typing details."
+        title="Platform collection accounts (subscriptions)"
+        description="Platform-level accounts for WaveWallet's own collections. These are not offered to members — each shop configures its own receiving accounts in its listener payment settings."
       />
       <CreditSupplyCard />
       <AppReleaseCard />
