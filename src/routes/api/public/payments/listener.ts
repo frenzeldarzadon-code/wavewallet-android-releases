@@ -39,6 +39,12 @@ const heartbeatSchema = z.object({
   app_version: z.string().max(40).optional(),
 });
 
+/**
+ * The phone asking for the notification-source allow/deny rules that apply to
+ * it. Carries no content; the answer is scoped to this device's own shop.
+ */
+const sourceRulesSchema = z.object({ kind: z.literal("source_rules") });
+
 const eventSchema = z.object({
   kind: z.literal("event"),
   event_uid: z.string().min(6).max(200),
