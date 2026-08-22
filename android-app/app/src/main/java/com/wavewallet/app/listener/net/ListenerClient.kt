@@ -55,10 +55,21 @@ class ListenerClient(private val store: PairingStore) {
         event.senderNumber?.let { body.put("sender_number", it) }
         event.senderName?.let { body.put("sender_name", it) }
         event.gcashReference?.let { body.put("gcash_reference", it) }
+        event.title?.let { body.put("title", it) }
+        event.text?.let { body.put("text", it) }
+        event.appLabel?.let { body.put("app_label", it) }
+        event.providerId?.let { body.put("provider_id", it) }
 
         body.put("raw_text", event.rawText)
         return post(body.toString())
     }
+
+    /**
+     * Downloads the notification-source allow/deny rules that apply to this
+     * device. Carries no notification content in either direction.
+     */
+    suspend fun fetchSourceRules(): Outcome =
+        post(JSONObject().put("kind", "source_rules").toString())
 
     private fun post(raw: String): Outcome {
         val deviceId = store.deviceId ?: return Outcome(false, 0, "Device is not paired")

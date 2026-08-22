@@ -47,7 +47,45 @@ object LastStatus {
         prefs(context).edit().putBoolean("fg_running", running)
             .putLong("fg_at", System.currentTimeMillis()).apply()
 
-    /** A GCash-package notification arrived — recorded BEFORE any parsing. */
+    private fun bump(context: Context, key: String) =
+        prefs(context).edit().putInt(key, prefs(context).getInt(key, 0) + 1).apply()
+
+    /**
+     * Every notification Android delivered to us, before any filtering. This is
+     * the only counter that proves Android is delivering at all.
+     */
+    fun recordSeen(context: Context) = bump(context, "seen_count")
+
+    /** The source is disabled for this shop/device — nothing was uploaded. */
+    fun recordSourceDisabled(context: Context, packageName: String) {
+        bump(context, "disabled_count")
+        prefs(context).edit()
+            .putString("last_disabled", packageName)
+            .putLong("last_disabled_at", System.currentTimeMillis()).apply()
+    }
+
+    /** An allowed source whose text carried no money shape — dropped locally. */
+    fun recordNonPayment(context: Context, packageName: String) {
+        bump(context, "nonpayment_count")
+        prefs(context).edit()
+            .putString("last_nonpayment", packageName)
+            .putLong("last_nonpayment_at", System.currentTimeMillis()).apply()
+    }
+
+    /** A payment candidate queued for the server to classify. */
+    fun recordCandidate(context: Context, packageName: String, provider: String?) {
+        bump(context, "candidate_count")
+        prefs(context).edit()
+            .putString("last_candidate", packageName + (provider?.let { " · $it" } ?: " · unknown provider"))
+            .putLong("last_candidate_at", System.currentTimeMillis()).apply()
+    }
+
+    fun recordSourceRules(context: Context, ok: Boolean, summary: String) =
+        prefs(context).edit().putBoolean("rules_ok", ok)
+            .putString("rules_summary", summary.take(200))
+            .putLong("rules_at", System.currentTimeMillis()).apply()
+
+    /** A candidate notification arrived — recorded BEFORE any parsing. */
     fun recordReceived(context: Context, source: String, chars: Int) =
         prefs(context).edit()
             .putString("last_received", "$source · ${chars} chars of text")
@@ -61,11 +99,11 @@ object LastStatus {
             .putLong("last_parse_at", System.currentTimeMillis()).apply()
 
     /** Result of an activeNotifications sweep (connect time or manual re-scan). */
-    fun recordSweep(context: Context, total: Int, gcash: Int, candidates: Int, note: String? = null) =
+    fun recordSweep(context: Context, total: Int, considered: Int, candidates: Int, note: String? = null) =
         prefs(context).edit()
             .putString(
                 "last_sweep",
-                "$total active · $gcash from GCash · $candidates payment candidate(s)" +
+                "$total active · $considered allowed source(s) · $candidates payment candidate(s)" +
                     (note?.let { " · $it" } ?: ""),
             )
             .putLong("last_sweep_at", System.currentTimeMillis()).apply()
@@ -107,6 +145,17 @@ object LastStatus {
             "lastReceived" to (p.getString("last_received", null) ?: "—"),
             "lastReceivedAt" to timeOf(p.getLong("last_received_at", 0)),
             "receivedCount" to p.getInt("received_count", 0).toString(),
+            "seenCount" to p.getInt("seen_count", 0).toString(),
+            "disabledCount" to p.getInt("disabled_count", 0).toString(),
+            "candidateCount" to p.getInt("candidate_count", 0).toString(),
+            "nonPaymentCount" to p.getInt("nonpayment_count", 0).toString(),
+            "lastDisabled" to (p.getString("last_disabled", null) ?: "—"),
+            "lastDisabledAt" to timeOf(p.getLong("last_disabled_at", 0)),
+            "lastCandidate" to (p.getString("last_candidate", null) ?: "—"),
+            "lastCandidateAt" to timeOf(p.getLong("last_candidate_at", 0)),
+            "lastNonPayment" to (p.getString("last_nonpayment", null) ?: "—"),
+            "sourceRules" to (p.getString("rules_summary", null) ?: "not synced yet"),
+            "sourceRulesAt" to timeOf(p.getLong("rules_at", 0)),
             "lastParse" to (p.getString("last_parse", null) ?: "—"),
             "lastParseAt" to timeOf(p.getLong("last_parse_at", 0)),
             "lastSweep" to (p.getString("last_sweep", null) ?: "—"),

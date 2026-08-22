@@ -14,6 +14,7 @@ import androidx.work.WorkerParameters
 import com.wavewallet.app.BuildConfig
 import com.wavewallet.app.listener.data.ListenerDb
 import com.wavewallet.app.listener.net.ListenerClient
+import com.wavewallet.app.listener.source.SourceRules
 import com.wavewallet.app.listener.store.PairingStore
 import com.wavewallet.app.listener.util.LastStatus
 import java.util.concurrent.TimeUnit
@@ -64,7 +65,35 @@ class HeartbeatWorker(context: Context, params: WorkerParameters) : CoroutineWor
         if (isRevoked(outcome)) { store.revokedByServer = true; return Result.success() }
         if (outcome.ok) store.revokedByServer = false
         ListenerScheduler.syncNow(applicationContext)
+        ListenerScheduler.syncSourceRules(applicationContext)
         return if (outcome.ok) Result.success() else Result.retry()
+    }
+}
+
+/**
+ * Refreshes the notification-source allow/deny rules for this device.
+ *
+ * The cache is only ever replaced by a successful answer, so a failed fetch
+ * leaves the previous decision in place and an installation that never had any
+ * rules keeps allowing every source (GCash included).
+ */
+class SourceRulesWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result {
+        val store = PairingStore(applicationContext)
+        if (!store.isPaired) return Result.success()
+        val outcome = ListenerClient(store).fetchSourceRules()
+        if (!outcome.ok) {
+            LastStatus.recordSourceRules(
+                applicationContext,
+                false,
+                "sync failed (HTTP ${outcome.code}) - using " + SourceRules.summary(applicationContext),
+            )
+            return Result.retry()
+        }
+        val rules = SourceRules.rulesArrayOf(outcome.body)
+        if (rules != null) SourceRules.store(applicationContext, rules)
+        LastStatus.recordSourceRules(applicationContext, true, SourceRules.summary(applicationContext))
+        return Result.success()
     }
 }
 
@@ -82,6 +111,18 @@ object ListenerScheduler {
             OneTimeWorkRequestBuilder<SyncWorker>()
                 .setConstraints(NETWORK)
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
+                .build(),
+        )
+    }
+
+    /** Pull the notification-source rules that apply to this device. */
+    fun syncSourceRules(context: Context) {
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            "listener-source-rules",
+            ExistingWorkPolicy.REPLACE,
+            OneTimeWorkRequestBuilder<SourceRulesWorker>()
+                .setConstraints(NETWORK)
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 60, TimeUnit.SECONDS)
                 .build(),
         )
     }

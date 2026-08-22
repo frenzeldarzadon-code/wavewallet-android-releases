@@ -39,6 +39,12 @@ const heartbeatSchema = z.object({
   app_version: z.string().max(40).optional(),
 });
 
+/**
+ * The phone asking for the notification-source allow/deny rules that apply to
+ * it. Carries no content; the answer is scoped to this device's own shop.
+ */
+const sourceRulesSchema = z.object({ kind: z.literal("source_rules") });
+
 const eventSchema = z.object({
   kind: z.literal("event"),
   event_uid: z.string().min(6).max(200),
@@ -63,7 +69,11 @@ const eventSchema = z.object({
 
 
 
-const payloadSchema = z.discriminatedUnion("kind", [heartbeatSchema, eventSchema]);
+const payloadSchema = z.discriminatedUnion("kind", [
+  heartbeatSchema,
+  eventSchema,
+  sourceRulesSchema,
+]);
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -143,6 +153,19 @@ export const Route = createFileRoute("/api/public/payments/listener")({
           )("listener_heartbeat", health);
           if (error) return json({ accepted: false, error: "Device not accepted" }, 403);
           return json({ accepted: true, kind: "heartbeat" });
+        }
+
+        if (parsed.kind === "source_rules") {
+          // Scoped to this device's own shop by the database function; a phone
+          // can never see another tenant's configuration.
+          const { data, error } = await (
+            supabaseAdmin.rpc as unknown as (
+              fn: string,
+              args: Record<string, unknown>,
+            ) => Promise<{ data: unknown; error: { message: string } | null }>
+          )("listener_device_source_rules", { _device: deviceId });
+          if (error) return json({ accepted: false, error: "Could not read rules" }, 503);
+          return json({ accepted: true, kind: "source_rules", rules: data ?? [] });
         }
 
         // Newer phone builds forward every notification with title/text; older
