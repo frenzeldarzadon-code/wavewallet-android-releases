@@ -270,9 +270,27 @@ export async function saveMoneySettings(s: MoneySettings): Promise<void> {
 }
 
 
-export async function fetchPaymentMethods(activeOnly = true): Promise<PaymentMethod[]> {
+/**
+ * Receiving accounts a payer may use.
+ *
+ * `scope` narrows the list to one shop's own accounts plus the platform-wide
+ * ones; row level security still decides what is actually readable, so a shop
+ * can never see another shop's accounts.
+ */
+export async function fetchPaymentMethods(
+  activeOnly = true,
+  scope?: { ecosystemId?: string | null; includeGlobal?: boolean },
+): Promise<PaymentMethod[]> {
   let q = supabase.from("payment_methods").select("*").order("sort_order").order("name");
   if (activeOnly) q = q.eq("active", true);
+  if (scope?.ecosystemId) {
+    q =
+      scope.includeGlobal === false
+        ? q.eq("ecosystem_id", scope.ecosystemId)
+        : q.or(`ecosystem_id.is.null,ecosystem_id.eq.${scope.ecosystemId}`);
+  } else if (scope && scope.ecosystemId === null && scope.includeGlobal !== false) {
+    q = q.is("ecosystem_id", null);
+  }
   const { data, error } = await q;
   if (error) throw new Error(error.message);
   return data ?? [];
@@ -288,6 +306,14 @@ export async function savePaymentMethod(input: {
   notes?: string | null;
   active: boolean;
   sort_order?: number;
+  /** Provider / bank this account belongs to (`payment_provider_registry`). */
+  provider_id?: string | null;
+  /** Owning shop. Null = platform-wide account (platform owner only). */
+  ecosystem_id?: string | null;
+  label?: string | null;
+  qr_path?: string | null;
+  qr_content?: string | null;
+  metadata?: Record<string, unknown> | null;
 }): Promise<PaymentMethod> {
   const { data, error } = await supabase.rpc("upsert_payment_method", rpcArgs({
     _id: input.id ?? undefined,
@@ -299,6 +325,12 @@ export async function savePaymentMethod(input: {
     _notes: input.notes ?? undefined,
     _active: input.active,
     _sort_order: input.sort_order ?? 0,
+    _provider_id: input.provider_id ?? undefined,
+    _ecosystem_id: input.ecosystem_id ?? undefined,
+    _label: input.label ?? undefined,
+    _qr_path: input.qr_path ?? undefined,
+    _qr_content: input.qr_content ?? undefined,
+    _metadata: input.metadata ?? undefined,
   }));
   if (error) throw new Error(error.message);
   return data as unknown as PaymentMethod;
