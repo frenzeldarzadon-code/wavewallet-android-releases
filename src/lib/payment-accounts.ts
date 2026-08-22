@@ -26,7 +26,7 @@ const QR_MAX_SIDE = 1000;
 export interface PaymentProviderRow {
   id: string;
   name: string;
-  active: boolean | null;
+  enabled: boolean | null;
 }
 
 export function validateQrImage(file: { type: string; size: number }): string | null {
@@ -137,8 +137,8 @@ export async function downloadPaymentQr(path: string, fileName: string): Promise
 export async function fetchPaymentProviders(): Promise<PaymentProviderRow[]> {
   const { data, error } = await supabase
     .from("payment_provider_registry")
-    .select("id, name, active")
+    .select("id, name, enabled")
     .order("name");
   if (error) return [];
-  return (data ?? []).filter((p) => p.active !== false) as PaymentProviderRow[];
+  return (data ?? []).filter((p) => p.enabled !== false) as PaymentProviderRow[];
 }
