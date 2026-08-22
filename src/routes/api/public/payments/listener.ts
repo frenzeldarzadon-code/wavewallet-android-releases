@@ -155,6 +155,19 @@ export const Route = createFileRoute("/api/public/payments/listener")({
           return json({ accepted: true, kind: "heartbeat" });
         }
 
+        if (parsed.kind === "source_rules") {
+          // Scoped to this device's own shop by the database function; a phone
+          // can never see another tenant's configuration.
+          const { data, error } = await (
+            supabaseAdmin.rpc as unknown as (
+              fn: string,
+              args: Record<string, unknown>,
+            ) => Promise<{ data: unknown; error: { message: string } | null }>
+          )("listener_device_source_rules", { _device: deviceId });
+          if (error) return json({ accepted: false, error: "Could not read rules" }, 503);
+          return json({ accepted: true, kind: "source_rules", rules: data ?? [] });
+        }
+
         // Newer phone builds forward every notification with title/text; older
         // builds send a merged raw_text for GCash only. Both shapes work.
         const bodyText =
