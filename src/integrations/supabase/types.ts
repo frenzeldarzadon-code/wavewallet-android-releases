@@ -7427,6 +7427,7 @@ export type Database = {
         Args: { _device: string; _nonce: string }
         Returns: boolean
       }
+      listener_device_source_rules: { Args: { _device: string }; Returns: Json }
       listener_device_status: { Args: never; Returns: Json }
       listener_event_fits_cash_in: {
         Args: {
