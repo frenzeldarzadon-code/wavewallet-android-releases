@@ -24,14 +24,17 @@ if (!("navigator" in globalThis)) {
 import {
   enqueueEntry,
   flushQueue,
+  isTransportFailure,
   newClientRef,
   queueFor,
   queuedAsEntries,
   queuedInPeriod,
   readQueue,
   removeQueuedEntry,
+  submitNewEntry,
   updateQueuedEntry,
   type QueuedEntry,
+  type SubmitInput,
 } from "@/lib/offline-spending";
 
 const base = (over: Partial<QueuedEntry> = {}) => ({
