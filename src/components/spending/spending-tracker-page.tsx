@@ -45,15 +45,33 @@ import {
   fetchSpendingCategories,
   fetchSpendingEntries,
   monthKey,
+  quarterKey,
   resolvePeriod,
   summarize,
   syncSpendingCategories,
   timeBuckets,
+  yearKey,
   type EntryKind,
   type PeriodMode,
   type SpendingCategory,
   type SpendingEntry,
 } from "@/lib/spending-tracker";
+import {
+  QUEUE_EVENT,
+  flushQueue,
+  queueFor,
+  queuedAsEntries,
+  queuedInPeriod,
+  removeQueuedEntry,
+} from "@/lib/offline-spending";
+import { yearChoices } from "@/lib/reports";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const SLICE_COLORS = [
   "var(--chart-1)",
@@ -66,20 +84,23 @@ const SLICE_COLORS = [
 export function SpendingTrackerPage({ ecosystemId }: { ecosystemId: string | null }) {
   const [mode, setMode] = useState<PeriodMode>("month");
   const [month, setMonth] = useState(monthKey(new Date()));
+  const [quarter, setQuarter] = useState(quarterKey(new Date()));
+  const [year, setYear] = useState(yearKey(new Date()));
   const [day, setDay] = useState(dayKey(new Date()));
   const [from, setFrom] = useState(dayKey(new Date()));
   const [to, setTo] = useState(dayKey(new Date()));
 
   const [categories, setCategories] = useState<SpendingCategory[]>([]);
-  const [entries, setEntries] = useState<SpendingEntry[]>([]);
+  const [serverEntries, setServerEntries] = useState<SpendingEntry[]>([]);
+  const [queueVersion, setQueueVersion] = useState(0);
   const [loading, setLoading] = useState(true);
   const [dialog, setDialog] = useState<{ kind: EntryKind; editing?: SpendingEntry } | null>(null);
   const [manageOpen, setManageOpen] = useState(false);
   const [side, setSide] = useState<EntryKind>("income");
 
   const period = useMemo(
-    () => resolvePeriod({ mode, month, day, from, to }),
-    [mode, month, day, from, to],
+    () => resolvePeriod({ mode, month, quarter, year, day, from, to }),
+    [mode, month, quarter, year, day, from, to],
   );
 
   const load = useCallback(async () => {
@@ -89,7 +110,7 @@ export function SpendingTrackerPage({ ecosystemId }: { ecosystemId: string | nul
       await syncSpendingCategories(ecosystemId);
       const cats = await fetchSpendingCategories(ecosystemId);
       setCategories(cats);
-      setEntries(await fetchSpendingEntries(ecosystemId, period, cats));
+      setServerEntries(await fetchSpendingEntries(ecosystemId, period, cats));
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -101,6 +122,45 @@ export function SpendingTrackerPage({ ecosystemId }: { ecosystemId: string | nul
     void load();
   }, [load]);
 
+  // Re-render whenever the offline queue changes in this tab.
+  useEffect(() => {
+    const bump = () => setQueueVersion((v) => v + 1);
+    window.addEventListener(QUEUE_EVENT, bump);
+    return () => window.removeEventListener(QUEUE_EVENT, bump);
+  }, []);
+
+  // Try to drain the queue on mount and whenever connectivity returns.
+  useEffect(() => {
+    if (!ecosystemId) return;
+    let cancelled = false;
+    const run = async () => {
+      const before = queueFor(ecosystemId).length;
+      if (before === 0) return;
+      const result = await flushQueue(ecosystemId);
+      if (cancelled || result.skipped || result.synced === 0) return;
+      toast.success(`${result.synced} offline ${result.synced === 1 ? "entry" : "entries"} synced.`);
+      void load();
+    };
+    void run();
+    window.addEventListener("online", run);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("online", run);
+    };
+  }, [ecosystemId, load]);
+
+  const pending = useMemo(
+    () => (queueVersion >= 0 ? queueFor(ecosystemId) : []),
+    [ecosystemId, queueVersion],
+  );
+
+  const entries = useMemo(() => {
+    const local = queuedAsEntries(queuedInPeriod(pending, period.from, period.to));
+    return [...local, ...serverEntries].sort((a, b) =>
+      a.occurredAt < b.occurredAt ? 1 : a.occurredAt > b.occurredAt ? -1 : 0,
+    );
+  }, [pending, period, serverEntries]);
+
   const totals = useMemo(() => summarize(entries), [entries]);
   const highlights = useMemo(() => categoryHighlights(entries), [entries]);
   const buckets = useMemo(() => timeBuckets(entries, period), [entries, period]);
@@ -109,6 +169,12 @@ export function SpendingTrackerPage({ ecosystemId }: { ecosystemId: string | nul
   if (!ecosystemId) return null;
 
   async function remove(entry: SpendingEntry) {
+    // Not sent yet: dropping the queued copy is the whole deletion.
+    if (entry.sync) {
+      removeQueuedEntry(entry.id);
+      toast.success("Entry removed before it was synced.");
+      return;
+    }
     try {
       await deleteManualEntry(entry.kind, entry.id);
       toast.success("Entry deleted.");
@@ -142,6 +208,8 @@ export function SpendingTrackerPage({ ecosystemId }: { ecosystemId: string | nul
             <Tabs value={mode} onValueChange={(v) => setMode(v as PeriodMode)}>
               <TabsList className="flex w-full flex-wrap justify-start">
                 <TabsTrigger value="month">Month</TabsTrigger>
+                <TabsTrigger value="quarter">Quarter</TabsTrigger>
+                <TabsTrigger value="year">Year</TabsTrigger>
                 <TabsTrigger value="day">Single date</TabsTrigger>
                 <TabsTrigger value="range">Date range</TabsTrigger>
               </TabsList>
@@ -156,6 +224,62 @@ export function SpendingTrackerPage({ ecosystemId }: { ecosystemId: string | nul
                     value={month}
                     onChange={(e) => setMonth(e.target.value)}
                   />
+                </div>
+              ) : null}
+              {mode === "quarter" ? (
+                <>
+                  <div className="space-y-1.5">
+                    <Label>Quarter</Label>
+                    <Select
+                      value={quarter.slice(5)}
+                      onValueChange={(q) => setQuarter(`${quarter.slice(0, 4)}-${q}`)}
+                    >
+                      <SelectTrigger aria-label="Quarter">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="pointer-events-auto">
+                        <SelectItem value="Q1">Q1 (Jan–Mar)</SelectItem>
+                        <SelectItem value="Q2">Q2 (Apr–Jun)</SelectItem>
+                        <SelectItem value="Q3">Q3 (Jul–Sep)</SelectItem>
+                        <SelectItem value="Q4">Q4 (Oct–Dec)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Year</Label>
+                    <Select
+                      value={quarter.slice(0, 4)}
+                      onValueChange={(y) => setQuarter(`${y}-${quarter.slice(5)}`)}
+                    >
+                      <SelectTrigger aria-label="Quarter year">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="pointer-events-auto">
+                        {yearChoices().map((y) => (
+                          <SelectItem key={y} value={String(y)}>
+                            {y}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              ) : null}
+              {mode === "year" ? (
+                <div className="space-y-1.5">
+                  <Label>Year</Label>
+                  <Select value={year} onValueChange={setYear}>
+                    <SelectTrigger aria-label="Year">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="pointer-events-auto">
+                      {yearChoices().map((y) => (
+                        <SelectItem key={y} value={String(y)}>
+                          {y}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               ) : null}
               {mode === "day" ? (
@@ -195,6 +319,29 @@ export function SpendingTrackerPage({ ecosystemId }: { ecosystemId: string | nul
               ) : null}
             </div>
             <p className="text-xs text-muted-foreground">Showing {period.label}.</p>
+            {pending.length > 0 ? (
+              <div className="flex flex-wrap items-center gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs">
+                <span className="flex-1">
+                  {pending.length} manual {pending.length === 1 ? "entry is" : "entries are"} saved on
+                  this device only and not synced yet.
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={async () => {
+                    const r = await flushQueue(ecosystemId);
+                    if (r.skipped) {
+                      toast.error("Still offline — they will sync automatically when you reconnect.");
+                      return;
+                    }
+                    if (r.synced > 0) void load();
+                    if (r.failed > 0) toast.error(`${r.failed} could not sync yet. Will retry.`);
+                  }}
+                >
+                  Sync now
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -335,6 +482,11 @@ export function SpendingTrackerPage({ ecosystemId }: { ecosystemId: string | nul
                       {e.categoryName} · {shortDate(e.occurredAt)}
                       {e.source === "automatic" ? " · automatic" : ""}
                     </p>
+                    {e.sync ? (
+                      <StatusBadge tone={e.sync === "failed" ? "danger" : "warning"}>
+                        {e.sync === "failed" ? "Sync failed — will retry" : "Saved on this device · not synced"}
+                      </StatusBadge>
+                    ) : null}
                   </div>
                   <p
                     className={`shrink-0 text-sm font-semibold ${

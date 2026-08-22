@@ -169,6 +169,7 @@ export type Database = {
           amount: number
           category: string | null
           category_id: string | null
+          client_ref: string | null
           created_at: string
           created_by: string
           created_by_name: string | null
@@ -187,6 +188,7 @@ export type Database = {
           amount: number
           category?: string | null
           category_id?: string | null
+          client_ref?: string | null
           created_at?: string
           created_by: string
           created_by_name?: string | null
@@ -205,6 +207,7 @@ export type Database = {
           amount?: number
           category?: string | null
           category_id?: string | null
+          client_ref?: string | null
           created_at?: string
           created_by?: string
           created_by_name?: string | null
@@ -5435,6 +5438,7 @@ export type Database = {
         Row: {
           amount: number
           category_id: string | null
+          client_ref: string | null
           created_at: string
           created_by: string
           created_by_name: string | null
@@ -5448,6 +5452,7 @@ export type Database = {
         Insert: {
           amount: number
           category_id?: string | null
+          client_ref?: string | null
           created_at?: string
           created_by: string
           created_by_name?: string | null
@@ -5461,6 +5466,7 @@ export type Database = {
         Update: {
           amount?: number
           category_id?: string | null
+          client_ref?: string | null
           created_at?: string
           created_by?: string
           created_by_name?: string | null
@@ -8307,6 +8313,7 @@ export type Database = {
               amount: number
               category: string | null
               category_id: string | null
+              client_ref: string | null
               created_at: string
               created_by: string
               created_by_name: string | null
@@ -8343,6 +8350,7 @@ export type Database = {
               amount: number
               category: string | null
               category_id: string | null
+              client_ref: string | null
               created_at: string
               created_by: string
               created_by_name: string | null
@@ -10151,6 +10159,7 @@ export type Database = {
         Args: {
           _amount: number
           _category_id?: string
+          _client_ref?: string
           _description: string
           _ecosystem: string
           _notes?: string
@@ -10160,6 +10169,7 @@ export type Database = {
           amount: number
           category: string | null
           category_id: string | null
+          client_ref: string | null
           created_at: string
           created_by: string
           created_by_name: string | null
@@ -10185,6 +10195,7 @@ export type Database = {
         Args: {
           _amount: number
           _category_id?: string
+          _client_ref?: string
           _description: string
           _ecosystem: string
           _notes?: string
@@ -10193,6 +10204,7 @@ export type Database = {
         Returns: {
           amount: number
           category_id: string | null
+          client_ref: string | null
           created_at: string
           created_by: string
           created_by_name: string | null
@@ -10227,6 +10239,7 @@ export type Database = {
           amount: number
           category: string | null
           category_id: string | null
+          client_ref: string | null
           created_at: string
           created_by: string
           created_by_name: string | null
@@ -10260,6 +10273,7 @@ export type Database = {
         Returns: {
           amount: number
           category_id: string | null
+          client_ref: string | null
           created_at: string
           created_by: string
           created_by_name: string | null

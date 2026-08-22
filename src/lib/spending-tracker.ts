@@ -19,6 +19,13 @@
  * a single expense source of truth); only manual income has its own table.
  */
 import { supabase } from "@/integrations/supabase/client";
+import {
+  monthBounds,
+  quarterBounds,
+  quarterValue,
+  yearBounds,
+  yearValue,
+} from "@/lib/reports";
 
 export type EntryKind = "income" | "expense";
 
@@ -48,18 +55,27 @@ export interface SpendingEntry {
   notes: string | null;
   /** Manual entries only: automatic ones are derived and can never be edited. */
   editable: boolean;
+  /**
+   * Set only for entries saved on this device that the server has not
+   * confirmed yet. Absent means the row came back from the server.
+   */
+  sync?: "pending" | "failed";
 }
 
 /* ------------------------------------------------------------------ */
 /* Period filter                                                       */
 /* ------------------------------------------------------------------ */
 
-export type PeriodMode = "month" | "day" | "range";
+export type PeriodMode = "month" | "quarter" | "year" | "day" | "range";
 
 export interface PeriodFilter {
   mode: PeriodMode;
   /** `YYYY-MM` for month mode. */
   month?: string;
+  /** `YYYY-Qn` for quarter mode. */
+  quarter?: string;
+  /** `YYYY` for year mode. */
+  year?: string;
   /** `YYYY-MM-DD` for day mode. */
   day?: string;
   /** `YYYY-MM-DD` bounds for range mode. */
@@ -73,11 +89,6 @@ export interface ResolvedPeriod {
   label: string;
 }
 
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-
 const startOfDay = (iso: string) => new Date(`${iso}T00:00:00.000`);
 const endOfDay = (iso: string) => new Date(`${iso}T23:59:59.999`);
 
@@ -87,8 +98,21 @@ export const monthKey = (d: Date) =>
 export const dayKey = (d: Date) =>
   `${monthKey(d)}-${String(d.getDate()).padStart(2, "0")}`;
 
-/** Turns the UI filter into concrete bounds. Invalid input falls back to today's month. */
+export const quarterKey = quarterValue;
+export const yearKey = yearValue;
+
+/**
+ * Turns the UI filter into concrete bounds. Calendar periods share the report
+ * range helpers, so a month, quarter or year here covers exactly the same
+ * inclusive local-time window the Reports page uses. Invalid input falls back
+ * to the current month.
+ */
 export function resolvePeriod(filter: PeriodFilter, now = new Date()): ResolvedPeriod {
+  const wrap = (r: { start: Date; end: Date; label: string }): ResolvedPeriod => ({
+    from: r.start,
+    to: r.end,
+    label: r.label,
+  });
   if (filter.mode === "day" && filter.day) {
     return {
       from: startOfDay(filter.day),
@@ -105,13 +129,9 @@ export function resolvePeriod(filter: PeriodFilter, now = new Date()): ResolvedP
     const b = filter.from <= filter.to ? filter.to : filter.from;
     return { from: startOfDay(a), to: endOfDay(b), label: `${a} → ${b}` };
   }
-  const key = filter.month ?? monthKey(now);
-  const [y, m] = key.split("-").map(Number);
-  const year = Number.isFinite(y) ? (y as number) : now.getFullYear();
-  const monthIndex = Number.isFinite(m) ? (m as number) - 1 : now.getMonth();
-  const from = new Date(year, monthIndex, 1, 0, 0, 0, 0);
-  const to = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
-  return { from, to, label: `${MONTHS[monthIndex]} ${year}` };
+  if (filter.mode === "quarter") return wrap(quarterBounds(filter.quarter ?? quarterValue(now), now));
+  if (filter.mode === "year") return wrap(yearBounds(filter.year ?? yearValue(now), now));
+  return wrap(monthBounds(filter.month ?? monthKey(now), now));
 }
 
 /* ------------------------------------------------------------------ */
@@ -290,6 +310,12 @@ export interface ManualEntryInput {
   categoryId: string | null;
   occurredAt: Date;
   notes?: string | null;
+  /**
+   * Client-generated idempotency key. Sending the same key twice returns the
+   * entry that already exists instead of creating a duplicate, which is what
+   * makes replaying the offline queue safe.
+   */
+  clientRef?: string | null;
 }
 
 export function validateManualEntry(input: {
@@ -313,14 +339,15 @@ export async function saveManualEntry(input: ManualEntryInput, id?: string): Pro
     _category_id: input.categoryId,
     _notes: input.notes?.trim() || null,
   };
+  const ref = input.clientRef ?? null;
   const rpc =
     input.kind === "income"
       ? id
         ? { fn: "spending_update_income", args: { _id: id, ...shared, _occurred_at: input.occurredAt.toISOString() } }
-        : { fn: "spending_record_income", args: { _ecosystem: input.ecosystemId, ...shared, _occurred_at: input.occurredAt.toISOString() } }
+        : { fn: "spending_record_income", args: { _ecosystem: input.ecosystemId, ...shared, _occurred_at: input.occurredAt.toISOString(), _client_ref: ref } }
       : id
         ? { fn: "spending_update_expense", args: { _id: id, ...shared, _spent_at: input.occurredAt.toISOString() } }
-        : { fn: "spending_record_expense", args: { _ecosystem: input.ecosystemId, ...shared, _spent_at: input.occurredAt.toISOString() } };
+        : { fn: "spending_record_expense", args: { _ecosystem: input.ecosystemId, ...shared, _spent_at: input.occurredAt.toISOString(), _client_ref: ref } };
   const { error } = await supabase.rpc(
     rpc.fn as "spending_record_income",
     rpc.args as never,
