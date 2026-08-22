@@ -30,6 +30,13 @@ data class QueuedEvent(
     /** GCash reference number when the notification carried one. */
     @ColumnInfo(defaultValue = "NULL") val gcashReference: String? = null,
     val rawText: String,
+    /** Notification title/text kept apart so the server can re-classify. */
+    @ColumnInfo(defaultValue = "NULL") val title: String? = null,
+    @ColumnInfo(defaultValue = "NULL") val text: String? = null,
+    /** Human-readable app name of the source, when Android exposed one. */
+    @ColumnInfo(defaultValue = "NULL") val appLabel: String? = null,
+    /** Provider the phone believes this is; the server re-resolves it anyway. */
+    @ColumnInfo(defaultValue = "NULL") val providerId: String? = null,
     val parserVersion: String,
     /** queued | sent | unparsed | rejected */
     @ColumnInfo(defaultValue = "queued") val status: String = "queued",
@@ -72,7 +79,7 @@ interface EventDao {
     )
 }
 
-@Database(entities = [QueuedEvent::class], version = 2, exportSchema = false)
+@Database(entities = [QueuedEvent::class], version = 3, exportSchema = false)
 abstract class ListenerDb : RoomDatabase() {
     abstract fun events(): EventDao
 
@@ -84,6 +91,16 @@ abstract class ListenerDb : RoomDatabase() {
             }
         }
 
+        /** Provider-agnostic columns. Existing queued events are preserved. */
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE queued_events ADD COLUMN title TEXT DEFAULT NULL")
+                db.execSQL("ALTER TABLE queued_events ADD COLUMN text TEXT DEFAULT NULL")
+                db.execSQL("ALTER TABLE queued_events ADD COLUMN appLabel TEXT DEFAULT NULL")
+                db.execSQL("ALTER TABLE queued_events ADD COLUMN providerId TEXT DEFAULT NULL")
+            }
+        }
+
         @Volatile private var instance: ListenerDb? = null
 
         fun get(context: Context): ListenerDb = instance ?: synchronized(this) {
@@ -91,7 +108,7 @@ abstract class ListenerDb : RoomDatabase() {
                 context.applicationContext,
                 ListenerDb::class.java,
                 "wavewallet-listener.db",
-            ).addMigrations(MIGRATION_1_2).build().also { instance = it }
+            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { instance = it }
         }
     }
 }
