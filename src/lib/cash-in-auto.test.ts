@@ -338,3 +338,83 @@ describe("a masked receiving number never blocks a valid Cash In", () => {
     expect(evaluateMatch({ ...base, duplicate_reference: true }, rule, RECEIVING)).toBe("duplicate_reference");
   });
 });
+
+describe("two agreeing details are enough (corrected rule)", () => {
+  const rule = { ...DEFAULT_AUTO_RULE, enabled: true, require_listener_match: true };
+
+  it("A: amount + sending number approve even when the notification has no reference", () => {
+    const request: MatchableRequest = {
+      amount_php: 1500,
+      payer_reference: "ABC123",
+      sender_number: "09171234567",
+      proof_path: "user/a.jpg",
+      receipt_check: "matched",
+      status: "pending",
+      listener_event: {
+        amount_php: 1500,
+        sender_number: "09171234567",
+        reference: null,
+        outcome: "accepted",
+        device_online: true,
+      },
+    };
+    expect(evaluateMatch(request, rule, RECEIVING)).toBe("matched");
+  });
+
+  it("B: a different or missing reference on the notification never blocks approval", () => {
+    const request: MatchableRequest = {
+      amount_php: 1500,
+      payer_reference: "ABC123",
+      sender_number: "09171234567",
+      proof_path: "user/b.jpg",
+      receipt_check: "matched",
+      status: "pending",
+      listener_event: {
+        amount_php: 1500,
+        sender_number: "09171234567",
+        reference: "9999999999",
+        outcome: "accepted",
+        device_online: true,
+        receiving_number_matches: false,
+      },
+    };
+    expect(evaluateMatch(request, rule, RECEIVING)).toBe("matched");
+  });
+
+  it("C: the amount alone is never enough", () => {
+    const request: MatchableRequest = {
+      amount_php: 1500,
+      payer_reference: "ABC123",
+      sender_number: null,
+      proof_path: "user/c.jpg",
+      receipt_check: "matched",
+      status: "pending",
+      listener_event: { amount_php: 1500, outcome: "accepted", device_online: true },
+    };
+    expect(evaluateMatch(request, rule, RECEIVING)).toBe("no_sender_number");
+  });
+
+  it("D: a reference already used by an earlier cash in is declined", () => {
+    expect(evaluateMatch({ ...req, duplicate_reference: true }, rule, RECEIVING)).toBe(
+      "duplicate_reference",
+    );
+  });
+
+  it("F: a late notification still approves — capture time is never a signal", () => {
+    const request: MatchableRequest = {
+      amount_php: 1500,
+      payer_reference: "ABC123",
+      sender_number: "09171234567",
+      proof_path: "user/f.jpg",
+      receipt_check: "matched",
+      status: "pending",
+      listener_event: {
+        amount_php: 1500,
+        sender_number: "09171234567",
+        outcome: "accepted",
+        device_online: true,
+      },
+    };
+    expect(evaluateMatch(request, rule, RECEIVING)).toBe("matched");
+  });
+});

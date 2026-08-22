@@ -3,13 +3,14 @@
 ## Non-negotiable matching rule (applies to every provider, now and later)
 
 1. Automatic approval requires **at least 2 independent pieces of information that agree** between the customer's receipt and the notification captured by the phone.
-2. At least one of them must be a **strong identity/payment signal**: full reference/transaction number, sender account identifier, receiver account identifier, masked account tail, or an explicitly defined equivalent added later.
-3. **Amount alone is never enough.**
-4. **Hard veto:** when both sides carry a reference and the two references disagree, the match is refused outright.
+2. **No particular signal is mandatory.** Amount + sending number is a valid pair. There is no "strong identity signal" requirement and no requirement that a reference exists on the notification.
+3. **Amount alone is never enough** (it is a single signal).
+4. **No reference/source-destination veto.** The receipt reference is customer-side evidence; a reference the notification lacks, or one that differs, is recorded as informational only. Source vs destination differences never veto a match on their own.
 5. **Time is never a required signal.** The listener's received/captured time and the payment time are contextual evidence only, held inside a generous window (up to 3 days before and 7 days after the payment). A notification captured minutes, hours or days after the payment must never fail an otherwise valid payment.
 6. Every decision writes a durable match record naming which signals agreed, with the listener's `received_at` stored separately as timing metadata — never as a signal.
+7. Duplicate protection is unchanged: a receipt reference that already settled a cash in, and a reused screenshot fingerprint, are both declined.
 
-**Status: implemented.** `listener_match_signals` + `listener_has_strong_signal` enforce 1–4 in both `match_listener_event` and `try_auto_approve_cash_in`; the window in `match_listener_event` is now anchored on the notification's own posted time and asymmetric (−3 days / +7 days) for 5; `payment_match_records` + `record_payment_match` + `listener_match_signal_details` cover 6. Regression test: `supabase/tests/cash-in-late-notification-capture.sql`.
+**Status: implemented (corrected).** `listener_match_signals` enforces 1–4 in both `match_listener_event` and `try_auto_approve_cash_in`; the window in `match_listener_event` is anchored on the notification's own posted time and asymmetric (−3 days / +7 days) for 5; `payment_match_records` + `record_payment_match` + `listener_match_signal_details` cover 6. Regression tests: `supabase/tests/cash-in-two-signal-rule.sql`, `supabase/tests/cash-in-late-notification-capture.sql`.
 
 
 
@@ -50,7 +51,7 @@ So GCash flow, the 1,500 payment path, pairing/revocation and the ≥2-signal ru
 - Extend `listener_match_signals` with two extra comparisons, still counting **one each**:
   - masked account tail agreement (last 4 of sender or receiving account, when both sides have one),
   - receiving-account agreement (event's reported receiver vs the shop's configured method).
-- `listener_has_strong_signal` stays reference-or-sender; add "matching reference tail + exact amount + same provider within 15 minutes" as a strong signal **only** when no full reference exists on either side. Amount alone still never qualifies.
+- No signal is privileged: any two agreeing comparisons approve. `listener_has_strong_signal` is retained only as metadata on the durable match record. Amount alone still never qualifies.
 - Everything GCash already satisfies keeps satisfying it — the current two signals are unchanged, these are additions.
 
 ### D. Durable, self-contained match record — SHIPPED

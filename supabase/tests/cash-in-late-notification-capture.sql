@@ -5,7 +5,7 @@
 -- The non-negotiable rule under test:
 --   * automatic approval needs >= 2 independent agreeing signals between the
 --     customer's receipt and the phone's notification, at least one of them a
---     strong identity signal (reference or sender account);
+--     two agreeing details (no particular signal is mandatory);
 --   * the amount alone is never enough;
 --   * the time the phone captured/delivered the notification is NEVER one of
 --     those signals and must never fail an otherwise valid payment;
@@ -78,9 +78,8 @@ begin
   if _rec.id is null then
     raise exception 'A: an auditable match record must be written on approval';
   end if;
-  if _rec.signal_count < 2 or not _rec.strong_signal then
-    raise exception 'A: the record must show >= 2 signals with a strong one (got % / %)',
-      _rec.signal_count, _rec.strong_signal;
+  if _rec.signal_count < 2 then
+    raise exception 'A: the record must show >= 2 agreeing signals (got %)', _rec.signal_count;
   end if;
   if (select count(*) from jsonb_array_elements(_rec.signals) s
        where (s->>'agreed')::boolean and s->>'strength' <> 'veto') < 2 then

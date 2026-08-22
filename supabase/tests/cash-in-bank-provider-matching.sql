@@ -62,8 +62,8 @@ begin
 
   select * into _rec from public.payment_match_records
    where cash_in_id = _row.id and decision = 'auto_approved';
-  if _rec.id is null or _rec.signal_count < 2 or not _rec.strong_signal then
-    raise exception 'A: the match record must show >= 2 signals with a strong one';
+  if _rec.id is null or _rec.signal_count < 2 then
+    raise exception 'A: the match record must show >= 2 agreeing signals';
   end if;
 
   -- B. Same bank, amount only => stays pending.
