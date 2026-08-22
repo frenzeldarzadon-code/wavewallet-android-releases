@@ -53,12 +53,13 @@ So GCash flow, the 1,500 payment path, pairing/revocation and the ≥2-signal ru
 - `listener_has_strong_signal` stays reference-or-sender; add "matching reference tail + exact amount + same provider within 15 minutes" as a strong signal **only** when no full reference exists on either side. Amount alone still never qualifies.
 - Everything GCash already satisfies keeps satisfying it — the current two signals are unchanged, these are additions.
 
-### D. Durable, self-contained match record
+### D. Durable, self-contained match record — SHIPPED
 
-- New table `public.payment_match_records`: `id`, `cash_in_id`, `listener_event_id`, `ecosystem_id`, `provider_id`, `matched_at`, `decision` (`auto_approved` | `staged` | `manual_approved`), `signals jsonb` (each signal with name, receipt value, notification value, agreed true/false), `receipt_snapshot jsonb`, `notification_snapshot jsonb` (normalised fields; raw text only for Super Admin), `reference_hash`, `rule_snapshot jsonb`.
-- Written inside `try_auto_approve_cash_in` (and on manual approval with a listener event) before settlement, in the same transaction.
-- RLS: shop admins read their own ecosystem's rows without raw text; Super Admin reads all. GRANTs per project convention.
+- Table `public.payment_match_records`: `cash_in_id`, `listener_event_id`, `ecosystem_id`, `provider_id`, `decision` (`auto_approved` | `staged` | `manual_approved`), `signal_count`, `strong_signal`, `signals jsonb` (each signal with name, strength, receipt value, notification value, agreed true/false), `receipt_snapshot`, `notification_snapshot` (normalised fields only, no raw text), `timing` (`paid_at`, `notification_posted_at`, `listener_received_at`, `capture_delay_minutes`), `reference_hash`, `matched_at`.
+- Written by `record_payment_match` inside `try_auto_approve_cash_in`, for both the staged and the approved decision, in the same transaction. Manual approval with a listener event will reuse the same function.
+- RLS: Super Admin reads all, shop admins read only their own ecosystem's rows; no insert/update/delete from the app.
 - Snapshots are literal copies, so history stays true even if a parser, a provider registry row, or a shop's configuration changes later.
+
 
 ### E. Learned provider patterns (assist only, never authority)
 
