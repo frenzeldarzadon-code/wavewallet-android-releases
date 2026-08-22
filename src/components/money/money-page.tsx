@@ -162,7 +162,11 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
       fetchMoneySettings(),
       fetchPlatformSettings(),
       fetchCreditBalance(userId, ecosystemDbId),
-      fetchPaymentMethods(true, ecosystemDbId ? { ecosystemId: ecosystemDbId } : {}).catch(() => []),
+      // Only the shop's own listener-associated receiving accounts are offered to payers.
+      // Platform-wide accounts exist solely for WaveWallet's own subscription collection.
+      ecosystemDbId
+        ? fetchPaymentMethods(true, { ecosystemId: ecosystemDbId, includeGlobal: false }).catch(() => [])
+        : Promise.resolve([]),
       fetchMyWithdrawals(userId).catch(() => []),
       fetchMyCashIns(userId).catch(() => []),
       fetchAdminCashInCapacity(ecosystemDbId).catch(() => EMPTY_CAPACITY),
@@ -586,7 +590,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
               {methods.length === 0 ? (
                 <EmptyState
                   title="No payment methods available"
-                  description="The platform owner has not published any cash in methods yet."
+                  description="This shop has not published any receiving accounts yet. Ask the shop admin to add one in Listener payment settings."
                 />
               ) : (
                 <>

@@ -379,14 +379,14 @@ function AdminSettings() {
         </p>
       </div>
 
-      <CashInNumberCard ecosystemId={ecosystemDbId ?? null} />
       {ecosystemDbId ? (
         <>
           <ReceivingAccountsCard
             ecosystemId={ecosystemDbId}
-            title="Your shop's receiving accounts"
-            description="Accounts your members pay into. Upload a QR code so they can scan or download it instead of typing details."
+            title="Listener payment methods (what members see)"
+            description="The only place your shop's payment options are configured. Accounts added here — GCash, Maya, banks — are exactly what your members see when they cash in. Upload a QR code so they can scan or download it instead of typing details."
           />
+          <CashInNumberCard ecosystemId={ecosystemDbId} />
           <ListenerDeviceScreenButton />
           <ListenerDevicesCard ecosystemId={ecosystemDbId} ecosystemName={ecosystem.name} />
           <ListenerSourceRulesCard ecosystemId={ecosystemDbId} ecosystemName={ecosystem.name} />
