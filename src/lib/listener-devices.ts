@@ -166,11 +166,9 @@ export type UnmatchedListenerEvent = {
     ecosystem_name: string | null;
     member_name: string | null;
     member_handle: string | null;
-    /** Independent details that agree: reference, sending account, amount. */
+    /** Independent details that agree: reference, sending account, name, amount. */
     signals?: number;
-    /** At least one non-amount detail agrees. */
-    strong?: boolean;
-    /** Two independent signals with a non-amount signal present. */
+    /** Two independent details agree, which is all automatic approval needs. */
     auto_matchable?: boolean;
   }[];
 
