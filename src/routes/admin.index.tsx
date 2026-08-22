@@ -12,6 +12,7 @@ import { useShopStatus } from "@/lib/shop-status";
 import { reviewCountdown } from "@/lib/review-demo";
 import { StatusBadge } from "@/components/ui-kit";
 import { pts } from "@/lib/points";
+import { DevSlot } from "@/components/dev/dev-slot";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
@@ -87,6 +88,7 @@ function AdminDashboard() {
 
   return (
     <>
+      <DevSlot name="dashboard.demo">
       {shop.isDemo ? (
         <Card className="mb-4 border-warning/60 bg-warning/10 shadow-[var(--shadow-card)]">
           <CardContent className="flex flex-wrap items-center justify-between gap-3 px-4">
@@ -109,8 +111,9 @@ function AdminDashboard() {
           </CardContent>
         </Card>
       ) : null}
+      </DevSlot>
 
-
+      <DevSlot name="dashboard.stats">
       <PageSection
         title={ecosystem.name}
         description="Live figures from your shop — nothing here is shared with other shops."
@@ -152,9 +155,13 @@ function AdminDashboard() {
         </div>
       </PageSection>
 
-      <AdminEarningsPanel ecosystemId={ecosystemDbId} adminId={account?.id ?? null} />
+      </DevSlot>
 
+      <DevSlot name="dashboard.earnings">
+        <AdminEarningsPanel ecosystemId={ecosystemDbId} adminId={account?.id ?? null} />
+      </DevSlot>
 
+      <DevSlot name="dashboard.sales">
       <PageSection title="Voucher sales" description="Voucher engine arrives in a later stage.">
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-2 text-center">
@@ -169,6 +176,9 @@ function AdminDashboard() {
       </PageSection>
 
 
+      </DevSlot>
+
+      <DevSlot name="dashboard.activity">
       <PageSection
         title="Recent activity"
         description="Audit trail for this shop."
@@ -206,6 +216,9 @@ function AdminDashboard() {
         </Card>
       </PageSection>
 
+      </DevSlot>
+
+      <DevSlot name="dashboard.signup-link">
       <Card className="shadow-[var(--shadow-card)]">
         <CardContent className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-start gap-3">
@@ -222,6 +235,7 @@ function AdminDashboard() {
           </Button>
         </CardContent>
       </Card>
+      </DevSlot>
     </>
   );
 }
