@@ -128,6 +128,66 @@ export const queuedInPeriod = (rows: QueuedEntry[], from: Date, to: Date) =>
   });
 
 /* ------------------------------------------------------------------ */
+/* Failure classification                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Transport failures — the request never produced a definitive answer, so the
+ * entry may or may not have reached the server. These are safe to queue and
+ * retry: the same `client_ref` makes the retry return the existing row when the
+ * first attempt actually succeeded but its response was lost.
+ */
+const TRANSPORT_PATTERNS = [
+  /failed to fetch/i,
+  /fetch failed/i,
+  /network\s*(request)?\s*(error|failed)/i,
+  /networkerror/i,
+  /load failed/i,
+  /timed? ?out/i,
+  /aborted/i,
+  /abort ?error/i,
+  /connection (closed|reset|refused|lost)/i,
+  /socket hang ?up/i,
+  /err_(network|internet_disconnected|connection|timed_out)/i,
+  /net::/i,
+  /(^|\D)(408|502|503|504)(\D|$)/,
+  /service unavailable/i,
+  /bad gateway/i,
+  /gateway time-?out/i,
+  /offline/i,
+  /internet connection required/i,
+];
+
+/**
+ * Definitive application answers — validation, permission, not-found and other
+ * server verdicts. These must be shown to the admin, never queued: retrying
+ * them would fail again forever and hide a real problem.
+ */
+const DEFINITIVE_PATTERNS = [
+  /amount must be/i,
+  /description is required/i,
+  /unknown .*category/i,
+  /not allowed/i,
+  /not signed in/i,
+  /only record income for your own shop/i,
+  /permission/i,
+  /violates row-level security/i,
+  /duplicate key/i,
+  /not found/i,
+  /jwt|token/i,
+];
+
+/** True when the failure is a transport problem worth queueing and retrying. */
+export function isTransportFailure(error: unknown): boolean {
+  if (isOffline()) return true;
+  const err = error as { message?: string; name?: string; code?: string } | null;
+  const text = `${err?.name ?? ""} ${err?.code ?? ""} ${err?.message ?? ""}`.trim();
+  if (!text) return true; // No message at all: treat as an inconclusive transport error.
+  if (DEFINITIVE_PATTERNS.some((p) => p.test(text))) return false;
+  return TRANSPORT_PATTERNS.some((p) => p.test(text));
+}
+
+/* ------------------------------------------------------------------ */
 /* Sync                                                                */
 /* ------------------------------------------------------------------ */
 
@@ -136,6 +196,7 @@ export interface FlushResult {
   failed: number;
   skipped: boolean;
 }
+
 
 /**
  * Sends every queued entry. An item is deleted from the queue only after the
