@@ -12,7 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge, EmptyState } from "@/components/ui-kit";
-import { ListenerAppDownload } from "@/components/money/listener-app-download";
 import { formatPairingCode } from "@/lib/listener-pairing-code";
 
 import {
@@ -146,7 +145,6 @@ export function ListenerDevicesCard({
         </p>
       </CardHeader>
       <CardContent className="space-y-5">
-        <ListenerAppDownload />
         <div className="grid gap-3 sm:grid-cols-[1fr_1fr_140px_auto] sm:items-end">
 
           <div className="space-y-1.5">
