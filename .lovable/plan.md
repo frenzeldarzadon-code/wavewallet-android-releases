@@ -51,7 +51,7 @@ So GCash flow, the 1,500 payment path, pairing/revocation and the ≥2-signal ru
 - Extend `listener_match_signals` with two extra comparisons, still counting **one each**:
   - masked account tail agreement (last 4 of sender or receiving account, when both sides have one),
   - receiving-account agreement (event's reported receiver vs the shop's configured method).
-- `listener_has_strong_signal` stays reference-or-sender; add "matching reference tail + exact amount + same provider within 15 minutes" as a strong signal **only** when no full reference exists on either side. Amount alone still never qualifies.
+- No signal is privileged: any two agreeing comparisons approve. `listener_has_strong_signal` is retained only as metadata on the durable match record. Amount alone still never qualifies.
 - Everything GCash already satisfies keeps satisfying it — the current two signals are unchanged, these are additions.
 
 ### D. Durable, self-contained match record — SHIPPED
