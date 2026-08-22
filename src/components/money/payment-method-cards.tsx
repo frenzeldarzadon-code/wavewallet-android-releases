@@ -1,10 +1,12 @@
 /**
- * Prominent, database-driven display of the ACTIVE cash in payment methods.
- * Presentation only — no accounting, conversion or approval logic lives here.
+ * Prominent, database-driven display of the ACTIVE receiving accounts a payer
+ * may use for cash in. Presentation only — no accounting, conversion or
+ * approval logic lives here.
  */
 import { Banknote, CreditCard, Landmark, Wallet } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui-kit";
+import { PaymentQrPreview } from "@/components/money/payment-qr";
 import { cn } from "@/lib/utils";
 import type { PaymentMethod } from "@/lib/wallet-money";
 
@@ -62,7 +64,12 @@ export function PaymentMethodCards({
                 <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <Icon className="size-5" />
                 </span>
-                <p className="text-lg font-bold">{m.name}</p>
+                <div>
+                  <p className="text-lg font-bold">{m.name}</p>
+                  {m.label?.trim() ? (
+                    <p className="text-xs text-muted-foreground">{m.label.trim()}</p>
+                  ) : null}
+                </div>
               </div>
               <Field label="Payment method" value={m.name} />
               <Field label="Account name" value={m.account_name?.trim() || "—"} />
@@ -72,6 +79,9 @@ export function PaymentMethodCards({
                 <p className="whitespace-pre-line rounded-md bg-muted/60 p-2 text-sm text-muted-foreground">
                   {m.instructions.trim()}
                 </p>
+              ) : null}
+              {m.qr_path ? (
+                <PaymentQrPreview path={m.qr_path} name={m.name} compact={!selected} />
               ) : null}
             </CardContent>
           </Card>

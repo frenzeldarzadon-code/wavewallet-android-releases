@@ -16,7 +16,7 @@ import { ListenerDeviceScreenButton } from "@/components/money/listener-device-s
 import { ListenerSourceRulesCard } from "@/components/money/listener-source-rules-card";
 
 
-import { PaymentMethodsCard } from "@/components/super/payment-methods-card";
+import { ReceivingAccountsCard } from "@/components/money/receiving-accounts-card";
 import { AppReleaseCard } from "@/components/super/app-release-card";
 import { SocialSettingsCard } from "@/components/social/social-settings-card";
 import { PromotionTiersCard } from "@/components/social/promotion-tiers-card";
@@ -178,7 +178,11 @@ function SuperSettings() {
       <MoneySettingsCard />
       <CashInNumbersCard />
       <CashInAutoCard />
-      <PaymentMethodsCard />
+      <ReceivingAccountsCard
+        ecosystemId={null}
+        title="Platform receiving accounts"
+        description="Accounts every shop may be paid through. Upload a QR code so payers can scan or download it instead of typing details."
+      />
       <CreditSupplyCard />
       <AppReleaseCard />
 

@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PageSection } from "@/components/ui-kit";
 import { RetentionPolicyCard } from "@/components/retention-policy-card";
 import { ListenerDevicesCard } from "@/components/super/listener-devices-card";
+import { ReceivingAccountsCard } from "@/components/money/receiving-accounts-card";
 import { ListenerDeviceScreenButton } from "@/components/money/listener-device-screen-button";
 import { ListenerSourceRulesCard } from "@/components/money/listener-source-rules-card";
 import { CashInNumberCard } from "@/components/money/cash-in-number-card";
@@ -381,6 +382,11 @@ function AdminSettings() {
       <CashInNumberCard ecosystemId={ecosystemDbId ?? null} />
       {ecosystemDbId ? (
         <>
+          <ReceivingAccountsCard
+            ecosystemId={ecosystemDbId}
+            title="Your shop's receiving accounts"
+            description="Accounts your members pay into. Upload a QR code so they can scan or download it instead of typing details."
+          />
           <ListenerDeviceScreenButton />
           <ListenerDevicesCard ecosystemId={ecosystemDbId} ecosystemName={ecosystem.name} />
           <ListenerSourceRulesCard ecosystemId={ecosystemDbId} ecosystemName={ecosystem.name} />
