@@ -27,6 +27,7 @@ import {
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { FacebookSupportCard } from "@/components/facebook-support-card";
 import { PaymentMethodCards } from "@/components/money/payment-method-cards";
+import { fetchPlatformPaymentOption } from "@/lib/platform-payment-option";
 import { CashInProofPicker, CashInProofViewer } from "@/components/money/cash-in-proof";
 import {
   extractCashInReceipt,
@@ -162,10 +163,18 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
       fetchMoneySettings(),
       fetchPlatformSettings(),
       fetchCreditBalance(userId, ecosystemDbId),
-      // Only the shop's own listener-associated receiving accounts are offered to payers.
-      // Platform-wide accounts exist solely for WaveWallet's own subscription collection.
+      // Only the shop's own listener-associated receiving accounts are offered to
+      // payers. Platform-wide accounts are WaveWallet's own collection accounts and
+      // appear only for a legacy shop that explicitly opted into them.
       ecosystemDbId
-        ? fetchPaymentMethods(true, { ecosystemId: ecosystemDbId, includeGlobal: false }).catch(() => [])
+        ? fetchPlatformPaymentOption(ecosystemDbId)
+            .then((opt) =>
+              fetchPaymentMethods(true, {
+                ecosystemId: ecosystemDbId,
+                includeGlobal: opt.enabled,
+              }),
+            )
+            .catch(() => [])
         : Promise.resolve([]),
       fetchMyWithdrawals(userId).catch(() => []),
       fetchMyCashIns(userId).catch(() => []),
