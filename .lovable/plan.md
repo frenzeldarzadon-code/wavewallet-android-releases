@@ -1,5 +1,18 @@
 # Provider-agnostic receipt ↔ notification matching
 
+## Non-negotiable matching rule (applies to every provider, now and later)
+
+1. Automatic approval requires **at least 2 independent pieces of information that agree** between the customer's receipt and the notification captured by the phone.
+2. At least one of them must be a **strong identity/payment signal**: full reference/transaction number, sender account identifier, receiver account identifier, masked account tail, or an explicitly defined equivalent added later.
+3. **Amount alone is never enough.**
+4. **Hard veto:** when both sides carry a reference and the two references disagree, the match is refused outright.
+5. **Time is never a required signal.** The listener's received/captured time and the payment time are contextual evidence only, held inside a generous window (up to 3 days before and 7 days after the payment). A notification captured minutes, hours or days after the payment must never fail an otherwise valid payment.
+6. Every decision writes a durable match record naming which signals agreed, with the listener's `received_at` stored separately as timing metadata — never as a signal.
+
+**Status: implemented.** `listener_match_signals` + `listener_has_strong_signal` enforce 1–4 in both `match_listener_event` and `try_auto_approve_cash_in`; the window in `match_listener_event` is now anchored on the notification's own posted time and asymmetric (−3 days / +7 days) for 5; `payment_match_records` + `record_payment_match` + `listener_match_signal_details` cover 6. Regression test: `supabase/tests/cash-in-late-notification-capture.sql`.
+
+
+
 ## What is already provider-agnostic (verified in the live database and code)
 
 - `record_listener_event` no longer requires the device's own package. It runs the source allow/deny rules first (`listener_source_allowed`), then resolves a provider with `payment_provider_for(package, text)` against `payment_provider_registry`. Unknown app → stored as `non_payment`; blocked app → `source_disabled`; provider known but no amount → `unparsed`.
