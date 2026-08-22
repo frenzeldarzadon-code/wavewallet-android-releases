@@ -158,12 +158,9 @@ export const Route = createFileRoute("/api/public/payments/listener")({
 
         // Payment-method recognition happens here, never on the phone. An
         // unrecognised app is stored as a non-payment event by the database.
-        const resolved = bodyText
-          ? parsePaymentNotification(parsed.package_name, bodyText)
-          : (resolvePaymentProvider(parsed.package_name, null) ?? null) && null;
-        const provider =
-          resolved?.provider ?? resolvePaymentProvider(parsed.package_name, bodyText) ?? null;
-        const reread = resolved?.parsed ?? null;
+        const provider = resolvePaymentProvider(parsed.package_name, bodyText);
+        const reread = provider && bodyText ? provider.parse(bodyText) : null;
+
 
         const args: Record<string, unknown> = {
           _device: deviceId,
