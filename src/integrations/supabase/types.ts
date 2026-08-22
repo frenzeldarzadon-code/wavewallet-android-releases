@@ -10620,89 +10620,50 @@ export type Database = {
         Args: { _ecosystem_id: string }
         Returns: number
       }
-      upsert_payment_method:
-        | {
-            Args: {
-              _account_name?: string
-              _account_number?: string
-              _active?: boolean
-              _id?: string
-              _instructions?: string
-              _method_type: string
-              _name: string
-              _notes?: string
-              _sort_order?: number
-            }
-            Returns: {
-              account_name: string | null
-              account_number: string | null
-              active: boolean
-              created_at: string
-              ecosystem_id: string | null
-              id: string
-              instructions: string
-              label: string | null
-              metadata: Json
-              method_type: string
-              name: string
-              notes: string | null
-              provider_id: string | null
-              qr_content: string | null
-              qr_path: string | null
-              sort_order: number
-              updated_at: string
-            }
-            SetofOptions: {
-              from: "*"
-              to: "payment_methods"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: {
-              _account_name?: string
-              _account_number?: string
-              _active?: boolean
-              _ecosystem_id?: string
-              _id?: string
-              _instructions?: string
-              _label?: string
-              _metadata?: Json
-              _method_type: string
-              _name: string
-              _notes?: string
-              _provider_id?: string
-              _qr_content?: string
-              _qr_path?: string
-              _sort_order?: number
-            }
-            Returns: {
-              account_name: string | null
-              account_number: string | null
-              active: boolean
-              created_at: string
-              ecosystem_id: string | null
-              id: string
-              instructions: string
-              label: string | null
-              metadata: Json
-              method_type: string
-              name: string
-              notes: string | null
-              provider_id: string | null
-              qr_content: string | null
-              qr_path: string | null
-              sort_order: number
-              updated_at: string
-            }
-            SetofOptions: {
-              from: "*"
-              to: "payment_methods"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
+      upsert_payment_method: {
+        Args: {
+          _account_name?: string
+          _account_number?: string
+          _active?: boolean
+          _ecosystem_id?: string
+          _id?: string
+          _instructions?: string
+          _label?: string
+          _metadata?: Json
+          _method_type: string
+          _name: string
+          _notes?: string
+          _provider_id?: string
+          _qr_content?: string
+          _qr_path?: string
+          _sort_order?: number
+        }
+        Returns: {
+          account_name: string | null
+          account_number: string | null
+          active: boolean
+          created_at: string
+          ecosystem_id: string | null
+          id: string
+          instructions: string
+          label: string | null
+          metadata: Json
+          method_type: string
+          name: string
+          notes: string | null
+          provider_id: string | null
+          qr_content: string | null
+          qr_path: string | null
+          sort_order: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payment_methods"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       upsert_social_promotion_tier: {
         Args: {
           _active: boolean
