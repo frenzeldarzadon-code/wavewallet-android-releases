@@ -297,6 +297,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
     const problem = validateCashIn(Number(amount), methodId || null, {
       hasProof: Boolean(proofPath),
       payerNumber,
+      payerAccount: extract?.senderAccountMasked ?? extract?.senderName ?? null,
     });
 
     if (problem) {
@@ -313,8 +314,8 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
       const submitted = await requestCashIn({
         methodId,
         amountPhp: Number(amount),
-        // A GCash send receipt never prints the payer's own number, so this is
-        // the number stated by the member — never their saved profile phone.
+        // Many "money sent" receipts never print the payer's own account, so
+        // this is the identity stated by the member when the receipt has none.
         payerNumber: extract?.senderNumber ?? payerNumber,
 
         payerReference: payerRef,
@@ -327,11 +328,14 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
               senderNumber: extract.senderNumber,
               senderName: extract.senderName,
               senderAccountMasked: extract.senderAccountMasked,
+              receivingNumber: extract.receivingNumber,
+              receivingAccountMasked: extract.receivingAccountMasked,
               paidAt: extract.paidAt,
               confidence: extract.confidence,
               readable: extract.readable,
             }
           : null,
+
         notes: cashInNotes,
         proofPath: proofPath as string,
         requestKey: newKey(),
