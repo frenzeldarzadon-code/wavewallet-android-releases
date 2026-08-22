@@ -23,6 +23,7 @@ import {
   MessageSquare,
   MessagesSquare,
   Package,
+  PieChart,
   ReceiptText,
   Rocket,
   ScrollText,
