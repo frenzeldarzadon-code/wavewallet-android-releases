@@ -162,7 +162,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
       fetchMoneySettings(),
       fetchPlatformSettings(),
       fetchCreditBalance(userId, ecosystemDbId),
-      fetchPaymentMethods(true, { ecosystemId: ecosystemDbId ?? undefined }).catch(() => []),
+      fetchPaymentMethods(true, ecosystemDbId ? { ecosystemId: ecosystemDbId } : {}).catch(() => []),
       fetchMyWithdrawals(userId).catch(() => []),
       fetchMyCashIns(userId).catch(() => []),
       fetchAdminCashInCapacity(ecosystemDbId).catch(() => EMPTY_CAPACITY),
