@@ -206,7 +206,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="wallet-center.my-wallets"
         title="My wallets"
         description={
           multiShop
@@ -257,7 +257,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
       </PageSection>
 
       {selected ? (
-        <PageSection
+        <PageSection devSlot="wallet-center.wallet-center"
           title={`Selected wallet — ${selected.ecosystemName}`}
           description={`Balances and transfer actions for this shop wallet${selected.role ? ` · you are ${roleLabel(selected.role)} here` : ""}.`}
         >
@@ -309,7 +309,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
 
       {/* 1. Send credits — one area, recipient type tabs. Always visible. */}
       {selected ? (
-        <PageSection
+        <PageSection devSlot="wallet-center.send-coins"
           title="Send coins"
           description={`${transferSectionTitle(selected.role)} · from your ${selected.ecosystemName} wallet, available ${peso(selected.balance)}. Only people you are allowed to send to are listed.`}
         >
@@ -486,7 +486,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
         }}
       />
 
-      <PageSection title="Quick links">
+      <PageSection devSlot="wallet-center.quick-links" title="Quick links">
         <div className="grid gap-2 sm:grid-cols-3">
           <Button asChild variant="outline" className="h-11">
             <Link to={base === "/app" ? "/app/shop" : base === "/reseller" ? "/reseller/shop" : "/admin/shop"}>
@@ -507,7 +507,7 @@ export function WalletCenter({ base, showSellerTotals = false }: WalletCenterPro
       </PageSection>
 
       {ecosystem ? (
-        <PageSection title="Contact us / Support">
+        <PageSection devSlot="wallet-center.contact-us-support" title="Contact us / Support">
           <FacebookSupportCard
             url={ecosystem.facebookPageUrl}
             pageName={ecosystem.facebookPageName}

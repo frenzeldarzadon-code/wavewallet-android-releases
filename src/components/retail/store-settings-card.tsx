@@ -76,7 +76,7 @@ export function StoreSettingsCard({ ecosystemId }: { ecosystemId: string | null 
   };
 
   return (
-    <PageSection
+    <PageSection devSlot="store-settings-card.stores"
       title="Stores"
       description="Choose which stores your shop offers and how customers can pay and receive orders."
     >

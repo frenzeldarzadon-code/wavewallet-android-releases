@@ -68,7 +68,7 @@ export function GoLiveRequestsCard({
   const needing = ordered.filter((r) => describeGoLiveRequest(r).actionRequired).length;
 
   return (
-    <PageSection
+    <PageSection devSlot="go-live-requests-card.go-live-payments"
       title="Go Live payments"
       description="Verified GCash payments activate a shop automatically. Only the states marked below need you."
     >

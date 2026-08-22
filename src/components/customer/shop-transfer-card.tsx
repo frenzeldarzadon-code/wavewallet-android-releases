@@ -96,7 +96,7 @@ export function ShopTransferCard({
     );
     if (embedded) return explain;
     return (
-      <PageSection
+      <PageSection devSlot="shop-transfer-card.transfer-coins-to-another-shop"
         title="Transfer Coins to Another Shop"
         description="Available once you are an approved member of more than one shop."
       >
@@ -153,7 +153,7 @@ export function ShopTransferCard({
         {children}
       </div>
     ) : (
-      <PageSection
+      <PageSection devSlot="shop-transfer-card.transfer-coins-to-another-shop-2"
         title="Transfer Coins to Another Shop"
         description="Move coins between two of your own shop wallets. Coins stay in your name; a flat platform fee applies."
       >

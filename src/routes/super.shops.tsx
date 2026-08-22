@@ -122,7 +122,7 @@ function SuperShops() {
 
   return (
     <div>
-      <PageSection
+      <PageSection devSlot="shops.subscription-shops"
         title="Subscription Shops"
         description="Plan-based shops with a revolving Coin allocation. Legacy shops keep their own area and are unaffected."
         action={
@@ -155,7 +155,7 @@ function SuperShops() {
           <TabsTrigger value="legacy">Legacy Shops</TabsTrigger>
         </TabsList>
         <TabsContent value="legacy">
-          <PageSection
+          <PageSection devSlot="shops.legacy-shops"
             title="Legacy Shops"
             description="Existing shops on the original WaveWallet architecture. They keep their own rules — no new Legacy Shop can be created."
           >
@@ -188,7 +188,7 @@ function SuperShops() {
           </PageSection>
         </TabsContent>
         <TabsContent value="new">
-      <PageSection title="Shops">
+      <PageSection devSlot="shops.shops" title="Shops">
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : shops.length === 0 ? (

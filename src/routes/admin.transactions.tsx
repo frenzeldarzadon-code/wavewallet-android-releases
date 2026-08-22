@@ -172,7 +172,7 @@ function AdminTransactions() {
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="transactions.transaction-history"
         title="Transaction history"
         description="Every financial movement in your shop — transfers, voucher sales, earnings, adjustments and reversals. Records older than 12 months are removed by the retention policy."
       >

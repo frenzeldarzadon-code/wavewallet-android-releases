@@ -75,7 +75,7 @@ export function AppReleaseCard() {
   };
 
   return (
-    <PageSection
+    <PageSection devSlot="app-release-card.official-android-app-release"
       title="Official Android app release"
       description="Paste the permanent public link to the signed APK. Only you can change this; the public download page reads it live."
     >

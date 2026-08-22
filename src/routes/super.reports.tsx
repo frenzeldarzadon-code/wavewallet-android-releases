@@ -179,7 +179,7 @@ function SuperReports() {
       />
 
 
-      <PageSection
+      <PageSection devSlot="reports.cross-tenant-reports"
         title="Cross-tenant reports"
         description={`${resolved.label}. Figures come from immutable ledger records; each ecosystem's snapshotted discounts, cashback rates and points ratios are preserved.`}
       >
@@ -208,7 +208,7 @@ function SuperReports() {
       <LovableCreditsCard onChange={() => setExpenseVersion((v) => v + 1)} />
 
 
-      <PageSection title="Platform totals">
+      <PageSection devSlot="reports.platform-totals" title="Platform totals">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="Gross sales" value={peso(salesTotals.gross)} tone="brand" />
           <StatCard label="Net collected" value={peso(salesTotals.net)} tone="positive" />
@@ -235,7 +235,7 @@ function SuperReports() {
         </div>
       </PageSection>
 
-      <PageSection title="Shop performance">
+      <PageSection devSlot="reports.shop-performance" title="Shop performance">
         {perEcosystem.length === 0 ? (
           <EmptyState title="No tenant activity in this range" description="Try a wider time window." />
         ) : (
@@ -277,7 +277,7 @@ function SuperReports() {
         )}
       </PageSection>
 
-      <PageSection title="Recent platform sales">
+      <PageSection devSlot="reports.recent-platform-sales" title="Recent platform sales">
         {sales.length === 0 ? (
           <EmptyState title="No sales in this range" />
         ) : (

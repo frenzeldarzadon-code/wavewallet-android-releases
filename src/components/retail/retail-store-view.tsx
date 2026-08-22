@@ -129,7 +129,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
 
   if (!RETAIL_VISIBLE || !settings.retailEnabled) {
     return (
-      <PageSection title="Retail store">
+      <PageSection devSlot="retail-store-view.retail-store" title="Retail store">
         <EmptyState
           title="The retail store is not available"
           description="The shop admin has not enabled a retail store yet."
@@ -140,7 +140,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="retail-store-view.retail-store-2"
         title="Retail store"
         description={`Physical goods from this shop · wallet: ${credits(balance)}`}
         action={
@@ -229,7 +229,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
         )}
       </PageSection>
 
-      <PageSection title="My orders" description="Every order stays pending until the shop admin reviews it.">
+      <PageSection devSlot="retail-store-view.my-orders" title="My orders" description="Every order stays pending until the shop admin reviews it.">
         {orders.length === 0 ? (
           <EmptyState title="No retail orders yet" />
         ) : (

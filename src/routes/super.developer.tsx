@@ -8,7 +8,7 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Eye, EyeOff, History, MoveRight, RotateCcw } from "lucide-react";
+import { ArrowDown, ArrowUp, Eye, EyeOff, History, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,25 +38,28 @@ import {
 } from "@/lib/dev-mode";
 import {
   DEV_MODE_ROLES,
+  bottomNavForRole,
   hiddenSlots,
+  isSlotHidden,
   isTabHidden,
-  moveSlotToTab,
-  nudgeSlot,
+  nudgeBottomTab,
   nudgeTab,
   resetLayout,
-  resolveSlots,
   roleTitle,
   setSlotHidden,
   setTabHidden,
+  slotGroupsForRole,
   slotsForRole,
   tabLabel,
-  tabsForRole,
+  applyBottomNavLayout,
   applyNavLayout,
   type LayoutPayload,
+  type SlotDefinition,
 } from "@/lib/ui-layout";
-import { navForRole } from "@/lib/navigation";
+import { navForRole, type NavItem } from "@/lib/navigation";
 import { isImpersonatable, startImpersonation } from "@/lib/impersonation";
 import { homeFor } from "@/lib/session";
+
 
 export const Route = createFileRoute("/super/developer")({
   head: () => ({
@@ -90,21 +93,26 @@ function DeveloperModePage() {
   const { account } = useSession("super_admin");
   const dev = useDeveloperMode(account?.role ?? null);
   const [role, setRole] = useState<Role>("customer");
-  const [tab, setTab] = useState<string>("/app");
+  const [search, setSearch] = useState("");
   const layout = useRoleLayout(role);
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState<LayoutHistoryRow[]>([]);
 
-  const tabs = useMemo(() => tabsForRole(role), [role]);
-  const orderedTabs = useMemo(
-    () => applyNavLayout(navForRole(role), { ...layout, tabs: { ...layout.tabs, hidden: [] } }).flatMap((g) => g.items),
+  const sideTabs = useMemo(
+    () =>
+      applyNavLayout(navForRole(role), { ...layout, tabs: { ...layout.tabs, hidden: [] } }).flatMap(
+        (g) => g.items,
+      ),
     [role, layout],
   );
-
-  useEffect(() => {
-    const first = tabsForRole(role)[0];
-    if (first) setTab(String(first.to));
-  }, [role]);
+  const bottomTabs = useMemo(
+    () =>
+      applyBottomNavLayout(bottomNavForRole(role), {
+        ...layout,
+        tabs: { ...layout.tabs, hidden: [] },
+      }),
+    [role, layout],
+  );
 
   const reloadHistory = useCallback(() => {
     void fetchLayoutHistory("all").then(setHistory);
@@ -126,11 +134,29 @@ function DeveloperModePage() {
     }
   };
 
+  const toggleSlot = (def: SlotDefinition, hide: boolean) =>
+    void apply(setSlotHidden(layout, def.id, hide), {
+      action: hide ? "hide" : "unhide",
+      targetKind: "component",
+      targetId: def.id,
+      targetLabel: def.label,
+    });
+
   if (!dev.allowed) return null;
 
-  const slots = resolveSlots(role, layout);
-  const tabSlots = slots.filter((s) => s.tab === tab);
+  const needle = search.trim().toLowerCase();
+  const groups = slotGroupsForRole(role)
+    .map((g) => ({
+      ...g,
+      slots: needle
+        ? g.slots.filter((s) =>
+            `${g.group} ${s.label} ${s.id}`.toLowerCase().includes(needle),
+          )
+        : g.slots,
+    }))
+    .filter((g) => g.slots.length > 0);
   const hidden = hiddenSlots(role, layout);
+
 
   return (
     <>
@@ -180,24 +206,19 @@ function DeveloperModePage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Dashboard / tab</Label>
-              <Select value={tab} onValueChange={setTab}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {tabs.map((t) => (
-                    <SelectItem key={String(t.to)} value={String(t.to)}>
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="dev-search">Find content</Label>
+              <Input
+                id="dev-search"
+                placeholder="Search sections, cards and panels"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </div>
             <p className="sm:col-span-2 text-xs text-muted-foreground">
-              Configuration is stored as <strong>{roleTitle(role)} → tab → component</strong>, never
-              against an individual account.
+              Configuration is stored as <strong>{roleTitle(role)} → content</strong>, never against
+              an individual account. Content is only shown or hidden — never moved to another page.
             </p>
+
           </CardContent>
         </Card>
       </PageSection>
@@ -205,186 +226,115 @@ function DeveloperModePage() {
       <InspectAccounts role={role} enabled={dev.enabled} />
 
       <PageSection
-        title="Tabs"
-        description="Reorder or hide navigation entries. A hidden tab keeps its route, data and permissions."
+        title="Left navigation"
+        description="Reorder or hide side navigation entries. A hidden entry keeps its route, data and permissions."
       >
-        <Card className="shadow-[var(--shadow-card)]">
-          <CardContent className="divide-y divide-border px-0 py-0">
-            {orderedTabs.map((t, i) => {
-              const path = String(t.to);
-              const isHidden = isTabHidden(layout, path);
-              return (
-                <div key={path} className="flex items-center justify-between gap-3 px-4 py-2.5">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{t.label}</p>
-                    <p className="truncate text-xs text-muted-foreground">{path}</p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    {isHidden ? <Badge variant="secondary">Hidden</Badge> : null}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      disabled={busy || i === 0}
-                      aria-label={`Move ${t.label} up`}
-                      onClick={() =>
-                        void apply(nudgeTab(layout, role, path, -1), {
-                          action: "reorder",
-                          targetKind: "tab",
-                          targetId: path,
-                          targetLabel: t.label,
-                        })
-                      }
-                    >
-                      <ArrowUp className="size-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      disabled={busy || i === orderedTabs.length - 1}
-                      aria-label={`Move ${t.label} down`}
-                      onClick={() =>
-                        void apply(nudgeTab(layout, role, path, 1), {
-                          action: "reorder",
-                          targetKind: "tab",
-                          targetId: path,
-                          targetLabel: t.label,
-                        })
-                      }
-                    >
-                      <ArrowDown className="size-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      disabled={busy}
-                      aria-label={isHidden ? `Unhide ${t.label}` : `Hide ${t.label}`}
-                      onClick={() =>
-                        void apply(setTabHidden(layout, path, !isHidden), {
-                          action: isHidden ? "unhide" : "hide",
-                          targetKind: "tab",
-                          targetId: path,
-                          targetLabel: t.label,
-                        })
-                      }
-                    >
-                      {isHidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
+        <NavEditor
+          items={sideTabs}
+          layout={layout}
+          busy={busy}
+          emptyLabel={`${roleTitle(role)} has no side navigation.`}
+          onNudge={(path, dir, label) =>
+            void apply(nudgeTab(layout, role, path, dir), {
+              action: "reorder",
+              targetKind: "tab",
+              targetId: path,
+              targetLabel: label,
+            })
+          }
+          onToggle={(path, hide, label) =>
+            void apply(setTabHidden(layout, path, hide), {
+              action: hide ? "hide" : "unhide",
+              targetKind: "tab",
+              targetId: path,
+              targetLabel: label,
+            })
+          }
+        />
       </PageSection>
 
       <PageSection
-        title={`Content on ${tabLabel(role, tab)}`}
-        description="Cards, panels and sections inside this tab. Hidden content stays mounted in the background."
+        title="Bottom navigation"
+        description="The mobile bar for this role. Ordering here is independent from the side navigation; entries never move between the two."
       >
-        <Card className="shadow-[var(--shadow-card)]">
-          <CardContent className="divide-y divide-border px-0 py-0">
-            {tabSlots.length === 0 ? (
-              <div className="px-4 py-6">
-                <EmptyState
-                  title="No configurable content here yet"
-                  description="This tab renders a single page body that is not split into configurable blocks."
-                />
-              </div>
-            ) : (
-              tabSlots.map((s, i) => (
-                <div
-                  key={s.definition.id}
-                  className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{s.definition.label}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {s.definition.id}
-                      {s.moved ? ` · moved from ${tabLabel(role, s.definition.defaultTab)}` : ""}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    {s.hidden ? <Badge variant="secondary">Hidden</Badge> : null}
-                    {s.definition.movable ? (
-                      <Select
-                        value={s.tab}
-                        onValueChange={(v) =>
-                          void apply(moveSlotToTab(layout, s.definition.id, v), {
-                            action: "move",
-                            targetKind: "component",
-                            targetId: s.definition.id,
-                            targetLabel: s.definition.label,
-                          })
-                        }
-                      >
-                        <SelectTrigger className="h-8 w-44 text-xs">
-                          <MoveRight className="size-3.5" />
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {tabs.map((t) => (
-                            <SelectItem key={String(t.to)} value={String(t.to)}>
-                              {t.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : null}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      disabled={busy || i === 0}
-                      aria-label={`Move ${s.definition.label} up`}
-                      onClick={() =>
-                        void apply(nudgeSlot(layout, role, s.definition.id, -1), {
-                          action: "reorder",
-                          targetKind: "component",
-                          targetId: s.definition.id,
-                          targetLabel: s.definition.label,
-                        })
-                      }
-                    >
-                      <ArrowUp className="size-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      disabled={busy || i === tabSlots.length - 1}
-                      aria-label={`Move ${s.definition.label} down`}
-                      onClick={() =>
-                        void apply(nudgeSlot(layout, role, s.definition.id, 1), {
-                          action: "reorder",
-                          targetKind: "component",
-                          targetId: s.definition.id,
-                          targetLabel: s.definition.label,
-                        })
-                      }
-                    >
-                      <ArrowDown className="size-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      disabled={busy}
-                      aria-label={`Hide ${s.definition.label}`}
-                      onClick={() =>
-                        void apply(setSlotHidden(layout, s.definition.id, true), {
-                          action: "hide",
-                          targetKind: "component",
-                          targetId: s.definition.id,
-                          targetLabel: s.definition.label,
-                        })
-                      }
-                    >
-                      <EyeOff className="size-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+        <NavEditor
+          items={bottomTabs}
+          layout={layout}
+          busy={busy}
+          emptyLabel={`${roleTitle(role)} has no bottom navigation.`}
+          onNudge={(path, dir, label) =>
+            void apply(nudgeBottomTab(layout, role, path, dir), {
+              action: "reorder",
+              targetKind: "tab",
+              targetId: path,
+              targetLabel: label,
+            })
+          }
+          onToggle={(path, hide, label) =>
+            void apply(setTabHidden(layout, path, hide), {
+              action: hide ? "hide" : "unhide",
+              targetKind: "tab",
+              targetId: path,
+              targetLabel: label,
+            })
+          }
+        />
       </PageSection>
+
+      <PageSection
+        title={`Content visible to ${roleTitle(role)}`}
+        description="Every configurable section, card and panel this role can see, grouped by screen. Hidden content stays mounted and keeps working in the background."
+      >
+        {groups.length === 0 ? (
+          <Card className="shadow-[var(--shadow-card)]">
+            <CardContent>
+              <EmptyState
+                title="No matching content"
+                description="Try a different search term, or clear the search to see everything for this role."
+              />
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {groups.map((g) => (
+              <Card key={g.group} className="shadow-[var(--shadow-card)]">
+                <CardHeader>
+                  <CardTitle className="text-sm">{g.group}</CardTitle>
+                </CardHeader>
+                <CardContent className="divide-y divide-border px-0 py-0">
+                  {g.slots.map((def) => {
+                    const isHidden = isSlotHidden(layout, def.id);
+                    return (
+                      <div
+                        key={def.id}
+                        className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">{def.label}</p>
+                          <p className="truncate text-xs text-muted-foreground">{def.id}</p>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2">
+                          {isHidden ? <Badge variant="secondary">Hidden</Badge> : null}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={busy}
+                            aria-label={`${isHidden ? "Show" : "Hide"} ${def.label}`}
+                            onClick={() => toggleSlot(def, !isHidden)}
+                          >
+                            {isHidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </PageSection>
+
 
       <PageSection
         title="Hidden items"
@@ -430,7 +380,7 @@ function DeveloperModePage() {
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{s.definition.label}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {roleTitle(role)} · {tabLabel(role, s.tab)} · component
+                    {roleTitle(role)} · {s.definition.group} · content
                   </p>
                 </div>
                 <Button
@@ -509,6 +459,79 @@ function DeveloperModePage() {
         </Card>
       </PageSection>
     </>
+  );
+}
+
+/**
+ * One navigation group (side or bottom). Reordering stays inside the group —
+ * an entry can never jump from the bottom bar into the side navigation.
+ */
+function NavEditor({
+  items,
+  layout,
+  busy,
+  emptyLabel,
+  onNudge,
+  onToggle,
+}: {
+  items: NavItem[];
+  layout: LayoutPayload;
+  busy: boolean;
+  emptyLabel: string;
+  onNudge: (path: string, direction: -1 | 1, label: string) => void;
+  onToggle: (path: string, hide: boolean, label: string) => void;
+}) {
+  return (
+    <Card className="shadow-[var(--shadow-card)]">
+      <CardContent className="divide-y divide-border px-0 py-0">
+        {items.length === 0 ? (
+          <p className="px-4 py-6 text-center text-sm text-muted-foreground">{emptyLabel}</p>
+        ) : (
+          items.map((t, i) => {
+            const path = String(t.to);
+            const isHidden = isTabHidden(layout, path);
+            return (
+              <div key={path} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{t.label}</p>
+                  <p className="truncate text-xs text-muted-foreground">{path}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  {isHidden ? <Badge variant="secondary">Hidden</Badge> : null}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={busy || i === 0}
+                    aria-label={`Move ${t.label} up`}
+                    onClick={() => onNudge(path, -1, t.label)}
+                  >
+                    <ArrowUp className="size-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={busy || i === items.length - 1}
+                    aria-label={`Move ${t.label} down`}
+                    onClick={() => onNudge(path, 1, t.label)}
+                  >
+                    <ArrowDown className="size-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={busy}
+                    aria-label={isHidden ? `Unhide ${t.label}` : `Hide ${t.label}`}
+                    onClick={() => onToggle(path, !isHidden, t.label)}
+                  >
+                    {isHidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+                  </Button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

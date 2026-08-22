@@ -17,7 +17,7 @@ export const Route = createFileRoute("/super/audit")({
 
 function SuperAudit() {
   return (
-    <PageSection
+    <PageSection devSlot="audit.audit-trail"
       title="Audit trail"
       description="Every Super Admin shop access and platform change is recorded."
     >

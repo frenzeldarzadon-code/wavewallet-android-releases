@@ -128,7 +128,7 @@ function AdminResellers() {
         </div>
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="resellers.reseller-network"
         title="Reseller network"
         description="Every reseller and subreseller has ONE Discount: their share of qualifying purchases and, automatically, their voucher shop discount. The shop admin always receives the remainder, and changes apply to future transactions only."
         action={

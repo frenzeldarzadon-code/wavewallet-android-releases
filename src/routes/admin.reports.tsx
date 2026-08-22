@@ -224,7 +224,7 @@ function AdminReports() {
       />
 
 
-      <PageSection
+      <PageSection devSlot="reports.earnings-reports"
         title="Earnings & reports"
         description={`${ecosystem.name} · ${resolved.label}. Every figure comes from immutable ledger records — historical discounts, commission rates and points ratios are never recalculated.`}
       >
@@ -251,7 +251,7 @@ function AdminReports() {
         onChange={() => setExpenseVersion((v) => v + 1)}
       />
 
-      <PageSection title="Revenue">
+      <PageSection devSlot="reports.revenue" title="Revenue">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="Gross sales" value={peso(salesTotals.gross)} tone="brand" />
           <StatCard
@@ -269,7 +269,7 @@ function AdminReports() {
         </div>
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="reports.coin-activity-earnings"
         title="Coin activity & earnings"
         description="Cashflow of this shop: completed sales in, downline cashback out, and what the shop keeps. Coins issued by the platform, approved cash-ins, wallet transfers and withdrawal holds move coins but are never shop earnings."
       >
@@ -350,7 +350,7 @@ function AdminReports() {
         </div>
       </PageSection>
 
-      <PageSection title="Points activity">
+      <PageSection devSlot="reports.points-activity" title="Points activity">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="Points earned" value={String(pointTotals.earned)} tone="positive" />
           <StatCard label="Points spent" value={String(pointTotals.spent)} tone="negative" />
@@ -359,7 +359,7 @@ function AdminReports() {
         </div>
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="reports.reseller-subreseller-performance"
         title="Reseller & subreseller performance"
         description="Margins use the discount captured at sale time; commission uses the rate snapshotted on each coin release."
       >
@@ -408,7 +408,7 @@ function AdminReports() {
         )}
       </PageSection>
 
-      <PageSection title="Voucher sales in range">
+      <PageSection devSlot="reports.voucher-sales-in-range" title="Voucher sales in range">
         {sales.length === 0 ? (
           <EmptyState title="No sales in this range" description="Try a wider time window." />
         ) : (
@@ -479,7 +479,7 @@ function AdminReports() {
         )}
       </PageSection>
 
-      <PageSection title="Coin movements in range">
+      <PageSection devSlot="reports.coin-movements-in-range" title="Coin movements in range">
         {credits.length === 0 ? (
           <EmptyState title="No coin movements in this range" />
         ) : (

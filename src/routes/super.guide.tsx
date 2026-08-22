@@ -134,7 +134,7 @@ function SuperGuide() {
 
   return (
     <div>
-      <PageSection
+      <PageSection devSlot="guide.public-guide-sections"
         title="Public guide sections"
         description="Shown on /guide to everyone, no sign-in required."
         action={
@@ -206,7 +206,7 @@ function SuperGuide() {
         </div>
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="guide.faqs"
         title="FAQs"
         description="Answers shown on the public guide."
         action={
@@ -261,7 +261,7 @@ function SuperGuide() {
         </div>
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="guide.visitor-questions"
         title="Visitor questions"
         description="Nothing appears on the public guide until you answer and publish it."
       >

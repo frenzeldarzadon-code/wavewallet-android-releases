@@ -273,7 +273,7 @@ export function SocialPage() {
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="social-page.community"
         title="Community"
         description={`Share updates and promote your products with the wider WaveWallet Universe.`}
       >

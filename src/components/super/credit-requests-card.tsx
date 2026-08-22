@@ -98,7 +98,7 @@ export function CreditRequestsCard({ onCountChange }: { onCountChange?: (n: numb
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="credit-requests-card.shop-coin-requests"
         title="Shop coin requests"
         description="Admins pay the platform GCash account, then submit the reference here. Approving releases the coins exactly once; rejecting releases nothing; freezing pulls released coins back with a recorded reversal."
       >

@@ -108,7 +108,7 @@ export function MemberInboxPanel() {
 
 
       {/* ---------------- Invites ---------------- */}
-      <PageSection
+      <PageSection devSlot="member-inbox-panel.invites"
         title="Invites"
         description="Invitations from shop admins, resellers or the platform owner."
       >
@@ -198,7 +198,7 @@ export function MemberInboxPanel() {
       </PageSection>
 
       {/* ---------------- Shop memberships ---------------- */}
-      <PageSection
+      <PageSection devSlot="member-inbox-panel.my-shops"
         title="My shops"
         description="Shops you joined. Joining is automatic — the shop admin reviews members afterwards."
       >

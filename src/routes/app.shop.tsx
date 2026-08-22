@@ -344,7 +344,7 @@ export function VoucherShopView({
       </section>
 
 
-      <PageSection title="Available vouchers" description="Codes come from your shop's uploaded inventory and are issued instantly.">
+      <PageSection devSlot="shop.available-vouchers" title="Available vouchers" description="Codes come from your shop's uploaded inventory and are issued instantly.">
         {loading ? (
           <EmptyState title="Loading products…" />
         ) : products.length === 0 ? (

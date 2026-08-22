@@ -162,7 +162,7 @@ export function MemberInviteCard({
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="member-invite-card.invite-a-member"
         title="Invite a member"
         description="Search the Universe by @handle, name, email or phone and invite someone to join your shop. They only become a member if they accept."
       >
@@ -254,7 +254,7 @@ export function MemberInviteCard({
       </PageSection>
 
       {sent.length > 0 ? (
-        <PageSection title="Invitations you sent" description={`For ${shopName}.`}>
+        <PageSection devSlot="member-invite-card.invitations-you-sent" title="Invitations you sent" description={`For ${shopName}.`}>
           <Card className="shadow-[var(--shadow-card)]">
             <CardContent className="space-y-2 py-4">
               {sent.map((inv) => {

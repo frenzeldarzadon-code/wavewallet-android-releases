@@ -120,7 +120,7 @@ function AdminSignupLink() {
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="signup-link.customer-signup-link"
         title="Customer signup link"
         description="Anyone who opens this link joins your shop as a customer. Admin and reseller accounts are never created here."
       >

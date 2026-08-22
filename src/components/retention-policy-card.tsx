@@ -60,7 +60,7 @@ export function RetentionPolicyCard({ canRun = false }: { canRun?: boolean }) {
   };
 
   return (
-    <PageSection
+    <PageSection devSlot="retention-policy-card.transaction-history-retention"
       title="Transaction history retention"
       description={`Operational history is kept for ${RETENTION_MONTHS} months. This policy is fixed platform-wide.`}
     >

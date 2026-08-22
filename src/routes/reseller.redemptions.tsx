@@ -105,7 +105,7 @@ function ResellerRedemptions() {
 
   return (
     <>
-      <PageSection title="Verify redemption" description="Key in or scan the customer's redemption code.">
+      <PageSection devSlot="redemptions.verify-redemption" title="Verify redemption" description="Key in or scan the customer's redemption code.">
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-3">
             <div className="flex flex-col gap-3 sm:flex-row">
@@ -158,7 +158,7 @@ function ResellerRedemptions() {
         </Card>
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="redemptions.redemption-queue"
         title="Redemption queue"
         description={`Approving deducts the held points and decrements stock. ${pending.length} pending.`}
       >

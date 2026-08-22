@@ -111,7 +111,7 @@ export function RewardsPage() {
 
   return (
     <>
-      <PageSection title="My points" description={`Earned from voucher purchases inside ${ecosystem.name}.`}>
+      <PageSection devSlot="rewards-page.my-points" title="My points" description={`Earned from voucher purchases inside ${ecosystem.name}.`}>
         <div className="grid gap-3 sm:grid-cols-3">
           <StatCard label="Points available" value={formatPoints(points.available)} icon={Sparkles} tone="brand" />
           <StatCard label="On hold" value={formatPoints(points.held)} hint="Reserved by pending redemptions" />
@@ -119,7 +119,7 @@ export function RewardsPage() {
         </div>
       </PageSection>
 
-      <PageSection title="Rewards shop" description="Physical rewards released by your shop or a partner reseller.">
+      <PageSection devSlot="rewards-page.rewards-shop" title="Rewards shop" description="Physical rewards released by your shop or a partner reseller.">
         {loading ? (
           <EmptyState title="Loading rewards…" />
         ) : rewards.length === 0 ? (
@@ -161,7 +161,7 @@ export function RewardsPage() {
         )}
       </PageSection>
 
-      <PageSection title="My redemptions" description="Pending requests hold your points until released.">
+      <PageSection devSlot="rewards-page.my-redemptions" title="My redemptions" description="Pending requests hold your points until released.">
         {loading ? null : mine.length === 0 ? (
           <EmptyState title="No redemptions yet" description="Redeem a reward to see it here." />
         ) : (

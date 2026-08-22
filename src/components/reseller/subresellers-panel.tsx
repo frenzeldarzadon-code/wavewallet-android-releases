@@ -109,7 +109,7 @@ export function SubresellersPanel({
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="subresellers-panel.your-subresellers"
         title="Your subresellers"
         description="Only the subresellers you own. Transfers move coins from your wallet with no commission."
       >

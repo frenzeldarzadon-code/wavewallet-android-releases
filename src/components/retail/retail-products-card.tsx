@@ -234,7 +234,7 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="retail-products-card.retail-products"
         title="Retail products"
         description="Your shop's own listing. Starter products arrive as drafts — set your prices and stock, then go live. Archiving keeps every past order intact."
         action={

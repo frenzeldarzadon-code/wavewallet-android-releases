@@ -91,7 +91,7 @@ export function AdminEarningsPanel({
   const hasExpenses = totals.expenses.total !== 0;
 
   return (
-    <PageSection
+    <PageSection devSlot="admin-earnings-panel.wallet-earnings"
       title="Wallet & earnings"
       description="Your shop wallet balance and what the shop keeps from completed purchases after reseller and subreseller cashback, less recorded expenses. Platform-issued coins, cash-ins, transfers and withdrawal holds are never earnings."
     >

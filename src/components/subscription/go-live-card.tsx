@@ -260,7 +260,7 @@ export function GoLiveCard({
   }
 
   return (
-    <PageSection
+    <PageSection devSlot="go-live-card.go-live"
       title="Go Live"
       description="Pick one of the WaveWallet plans and pay it with GCash. Your shop keeps the same login, name and settings — only the Demo label goes away."
     >

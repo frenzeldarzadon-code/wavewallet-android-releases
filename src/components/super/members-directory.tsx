@@ -82,7 +82,7 @@ export function MembersDirectory() {
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="members-directory.shop-members"
         title="Shop members"
         description="Every account on the platform, grouped by shop. Search by name, @handle, email or phone."
       >
@@ -130,7 +130,7 @@ export function MembersDirectory() {
         </Card>
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="members-directory.members-directory"
         title={loading ? "Loading members…" : `${rows.length} member(s)`}
         description="One row per real account. Someone who belongs to several shops appears once, with their wallets totalled."
       >

@@ -97,7 +97,7 @@ export function SocialSettingsCard() {
   };
 
   return (
-    <PageSection
+    <PageSection devSlot="social-settings-card.community-social-credits"
       title="Community & social credits"
       description="Free daily posts, exchange rates, promotion pricing and rewarded-ad limits for every shop."
     >

@@ -154,7 +154,7 @@ function AdminProducts() {
   };
 
   return (
-    <PageSection
+    <PageSection devSlot="products.voucher-products"
       title="Voucher products"
       description="Text-only products: name, description, prices and stock. No images."
       action={

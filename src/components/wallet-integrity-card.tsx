@@ -36,7 +36,7 @@ export function WalletIntegrityCard() {
   const totals = summary ? unexplainedTotals(summary.unexplained) : null;
 
   return (
-    <PageSection
+    <PageSection devSlot="wallet-integrity-card.wallet-integrity"
       title="Wallet integrity"
       description="Compares every coin and points wallet against its remaining transaction history. Differences caused by the 12-month history cleanup are listed separately and are expected."
     >

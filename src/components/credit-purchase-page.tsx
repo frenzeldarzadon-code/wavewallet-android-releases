@@ -146,7 +146,7 @@ export function CreditPurchasePage() {
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="credit-purchase-page.get-coins-for-your-shop"
         title="Get coins for your shop"
         description="Coins are created only by the platform owner. Request an allocation here — approved coins land in your own shop wallet, ready to spend on vouchers or to load to your resellers and customers."
       >
@@ -327,7 +327,7 @@ export function CreditPurchasePage() {
         </Card>
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="credit-purchase-page.allocation-history"
         title="Allocation history"
         description="Kept separate from voucher transactions and linked to the ledger entry each approval creates."
       >

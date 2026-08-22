@@ -321,7 +321,7 @@ export function MessagesPage() {
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="messages-page.messages"
         title="Messages"
         description="Private one-to-one conversations with members of your shop. Messages are free."
       >

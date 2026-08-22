@@ -134,7 +134,7 @@ export function InviteMemberCard({ ecosystemId }: { ecosystemId: string | null }
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="invite-member-card.invite-a-member-from-universe"
         title="Invite a member from Universe"
         description="Search the global directory by @handle, name, email or phone. The invitation only creates a membership once the person accepts it."
       >
@@ -198,7 +198,7 @@ export function InviteMemberCard({ ecosystemId }: { ecosystemId: string | null }
         </Card>
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="invite-member-card.invitations"
         title="Invitations"
         description="Who was invited, by whom, and whether they accepted."
       >

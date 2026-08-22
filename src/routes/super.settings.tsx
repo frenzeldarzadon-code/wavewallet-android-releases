@@ -50,7 +50,7 @@ function SuperSettings() {
     return (
       <>
         <p className="text-sm text-muted-foreground">Loading platform settings…</p>
-        <PageSection
+        <PageSection devSlot="settings.gcash-notification-listener"
           title="GCash notification listener"
           description="Register the paired Android phone and copy its one-time Device ID and pairing secret."
         >
@@ -91,7 +91,7 @@ function SuperSettings() {
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="settings.gcash-notification-listener-2"
         title="GCash notification listener"
         description="Register the paired Android phone and copy its one-time Device ID and pairing secret."
       >
@@ -102,7 +102,7 @@ function SuperSettings() {
 
 
 
-      <PageSection
+      <PageSection devSlot="settings.platform-subscription-collection"
         title="Platform subscription collection"
         description="WaveWallet's own account, used only when shop admins pay for their subscription or coin allocation. Members never see this — their cash in options come from their shop's listener payment methods."
       >
@@ -138,7 +138,7 @@ function SuperSettings() {
         </Card>
       </PageSection>
 
-      <PageSection title="Platform support">
+      <PageSection devSlot="settings.platform-support" title="Platform support">
         <Card className="shadow-[var(--shadow-card)]">
           <CardHeader>
             <CardTitle className="text-sm">Facebook support channel</CardTitle>

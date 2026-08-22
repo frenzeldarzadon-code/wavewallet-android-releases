@@ -60,7 +60,7 @@ export function OperatorAuditPanel({
   );
 
   return (
-    <PageSection
+    <PageSection devSlot="operator-audit-panel.operator-actions"
       title="Operator actions"
       description="Actions taken by an Admin or Super Admin while accessing a member's account. The operator's identity is always recorded."
     >
