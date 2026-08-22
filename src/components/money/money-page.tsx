@@ -317,8 +317,11 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
         ocr: extract
           ? {
               reference: extract.reference,
+              providerName: extract.providerName,
               amountPhp: extract.amountPhp,
               senderNumber: extract.senderNumber,
+              senderName: extract.senderName,
+              senderAccountMasked: extract.senderAccountMasked,
               paidAt: extract.paidAt,
               confidence: extract.confidence,
               readable: extract.readable,
