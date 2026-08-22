@@ -6,9 +6,22 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
-/** The phone must reach exactly the same verdict as listener_source_allowed. */
+/**
+ * The phone must reach exactly the same verdict as listener_source_allowed.
+ *
+ * Runs under Robolectric like the other listener tests: SourceRules.parse()
+ * uses android's org.json, which is an empty stub in a plain JVM unit test
+ * (unitTests.isReturnDefaultValues = true), so parsing would silently yield an
+ * empty rule set. Robolectric supplies the real implementation.
+ */
+@RunWith(RobolectricTestRunner::class)
+@Config(application = android.app.Application::class, sdk = [34])
 class SourceRulesTest {
+
 
     private val gcash = "com.globe.gcash.android"
 
