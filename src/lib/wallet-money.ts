@@ -588,8 +588,9 @@ export async function requestCashIn(input: {
           sender_account_masked: input.ocr.senderAccountMasked ?? null,
           receiving_number: input.ocr.receivingNumber ?? null,
           receiving_account_masked: input.ocr.receivingAccountMasked ?? null,
-
+          paid_at: input.ocr.paidAt ?? null,
           confidence: input.ocr.confidence ?? null,
+
           readable: input.ocr.readable ?? null,
         }
       : undefined,
