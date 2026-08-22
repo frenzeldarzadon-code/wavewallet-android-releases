@@ -65,7 +65,8 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
   // shown and in what order. Routes, data and permissions are untouched.
   const role = session.account?.role ?? null;
   const layout = useRoleLayout(role);
-  const dev = useDeveloperMode(role);
+  // While acting as a member, the operator is the one who may see Developer Mode.
+  const dev = useDeveloperMode(session.actingAs?.operatorRole ?? role);
   const groups = applyNavLayout(toGroups(nav), layout);
   const flat = groups.flatMap((g) => g.items);
   const bottom = applyBottomNavLayout(bottomNav ?? flat, layout).slice(0, 5);
@@ -167,6 +168,11 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
         </div>
       ) : null}
       <ReviewBanner />
+      {dev.enabled ? (
+        <DeveloperModeBanner
+          {...(session.actingAs ? { inspecting: session.actingAs.session.targetName } : {})}
+        />
+      ) : null}
       {session.actingAs ? (
         <div className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-2 bg-destructive px-4 py-2 text-destructive-foreground">
           <div className="flex items-center gap-2 text-xs font-semibold sm:text-sm">
@@ -283,7 +289,11 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
           </header>
 
           <main className="mx-auto w-full max-w-5xl px-4 pt-4 pb-28 lg:px-8 lg:pb-10">
-            {children}
+            <RoleLayoutProvider role={role}>
+              {children}
+              {/* Content blocks a Super Admin moved onto this tab. */}
+              <DevSlotHost tab={pathname} />
+            </RoleLayoutProvider>
           </main>
         </div>
       </div>
