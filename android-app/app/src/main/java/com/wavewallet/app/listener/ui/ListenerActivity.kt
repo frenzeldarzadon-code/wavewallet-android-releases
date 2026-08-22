@@ -275,10 +275,20 @@ private fun HomeScreen() {
                 Text("Notification Access: " + if (access) "granted" else "NOT granted")
                 Text("Listener service: ${status["listener"]}")
                 Text("Foreground service: ${status["foreground"]} (not proof of connection)")
-                Text("Last GCash notification received: ${status["lastReceived"]} (${status["lastReceivedAt"]})")
-                Text("GCash notifications received in total: ${status["receivedCount"]}")
+                Text("Notifications seen from all sources: ${status["seenCount"]}")
+                Text("Blocked — source disabled: ${status["disabledCount"]} (last: ${status["lastDisabled"]} ${status["lastDisabledAt"]})")
+                Text("Dropped — not a payment: ${status["nonPaymentCount"]}")
+                Text("Payment candidates sent for matching: ${status["candidateCount"]} (last: ${status["lastCandidate"]} ${status["lastCandidateAt"]})")
+                Text("Source rules: ${status["sourceRules"]} (${status["sourceRulesAt"]})")
+                Text("Last notification read: ${status["lastReceived"]} (${status["lastReceivedAt"]})")
+                Text("Readable notifications in total: ${status["receivedCount"]}")
                 Text("Last parser result: ${status["lastParse"]} (${status["lastParseAt"]})")
                 Text("Last recovery sweep: ${status["lastSweep"]} (${status["lastSweepAt"]})")
+                Text(
+                    "A source or an amount alone never credits anything — WaveWallet " +
+                        "requires at least two independent matching signals.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = {
                         runCatching {
