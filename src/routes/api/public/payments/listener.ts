@@ -20,7 +20,7 @@ import {
   timestampWithinSkew,
   timingSafeEqualHex,
 } from "@/lib/listener-signature";
-import { parseGcashNotification } from "@/lib/gcash-notification";
+import { resolvePaymentProvider } from "@/lib/payment-providers";
 
 
 /**
@@ -43,15 +43,24 @@ const eventSchema = z.object({
   kind: z.literal("event"),
   event_uid: z.string().min(6).max(200),
   package_name: z.string().min(3).max(160),
+  /** Human-readable app name, when the phone could read one. Newer builds only. */
+  app_label: z.string().max(160).nullable().optional(),
+  /** Notification title/text, sent separately by newer builds. */
+  title: z.string().max(1000).nullable().optional(),
+  text: z.string().max(2000).nullable().optional(),
   posted_at: z.string().datetime().optional(),
   amount_php: z.number().positive().max(1_000_000).nullable().optional(),
   sender_number: z.string().max(40).nullable().optional(),
   sender_name: z.string().max(160).nullable().optional(),
-  /** GCash reference number, when the phone could read one. */
+  /** Provider reference number, when the phone could read one. */
   gcash_reference: z.string().max(64).nullable().optional(),
+  reference: z.string().max(64).nullable().optional(),
   raw_text: z.string().max(2000).nullable().optional(),
   parser_version: z.string().max(40).optional(),
+  /** Provider the phone believes this is. The server re-resolves it anyway. */
+  provider_id: z.string().max(40).nullable().optional(),
 });
+
 
 
 const payloadSchema = z.discriminatedUnion("kind", [heartbeatSchema, eventSchema]);
@@ -136,9 +145,22 @@ export const Route = createFileRoute("/api/public/payments/listener")({
           return json({ accepted: true, kind: "heartbeat" });
         }
 
-        // Re-read the raw text server-side: an older phone build may have sent
-        // no amount or no reference. Values the phone did send always win.
-        const reread = parsed.raw_text ? parseGcashNotification(parsed.raw_text) : null;
+        // Newer phone builds forward every notification with title/text; older
+        // builds send a merged raw_text for GCash only. Both shapes work.
+        const bodyText =
+          parsed.raw_text ??
+          [parsed.title, parsed.text]
+            .filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+            .join(" ")
+            .replace(/\s+/g, " ")
+            .trim() ??
+          null;
+
+        // Payment-method recognition happens here, never on the phone. An
+        // unrecognised app is stored as a non-payment event by the database.
+        const provider = resolvePaymentProvider(parsed.package_name, bodyText);
+        const reread = provider && bodyText ? provider.parse(bodyText) : null;
+
 
         const args: Record<string, unknown> = {
           _device: deviceId,
@@ -147,17 +169,21 @@ export const Route = createFileRoute("/api/public/payments/listener")({
         };
         const amount =
           typeof parsed.amount_php === "number" ? parsed.amount_php : (reread?.amountPhp ?? null);
-        const reference = parsed.gcash_reference ?? reread?.reference ?? null;
+        const reference =
+          parsed.gcash_reference ?? parsed.reference ?? reread?.reference ?? null;
         const senderNumber = parsed.sender_number ?? reread?.senderNumber ?? null;
         const senderName = parsed.sender_name ?? reread?.senderName ?? null;
 
-        if (parsed.raw_text) args["_raw_text"] = parsed.raw_text;
+        if (bodyText) args["_raw_text"] = bodyText.slice(0, 2000);
         if (typeof amount === "number") args["_amount"] = amount;
         if (senderNumber) args["_sender_number"] = senderNumber;
         if (senderName) args["_sender_name"] = senderName;
         if (reference) args["_gcash_reference"] = reference;
         if (parsed.posted_at) args["_posted_at"] = parsed.posted_at;
         if (parsed.parser_version) args["_parser_version"] = parsed.parser_version;
+        if (provider) args["_provider"] = provider.id;
+        if (parsed.app_label) args["_app_label"] = parsed.app_label;
+
 
         const { data, error } = await (
           supabaseAdmin.rpc as unknown as (

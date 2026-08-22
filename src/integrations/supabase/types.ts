@@ -2231,6 +2231,7 @@ export type Database = {
       listener_events: {
         Row: {
           amount_php: number | null
+          app_label: string | null
           consumed_cash_in_id: string | null
           consumed_subscription_request_id: string | null
           created_at: string
@@ -2246,6 +2247,7 @@ export type Database = {
           package_name: string | null
           parser_version: string | null
           posted_at: string | null
+          provider_id: string | null
           raw_text: string | null
           recorded_by: string | null
           reference_key: string | null
@@ -2260,6 +2262,7 @@ export type Database = {
         }
         Insert: {
           amount_php?: number | null
+          app_label?: string | null
           consumed_cash_in_id?: string | null
           consumed_subscription_request_id?: string | null
           created_at?: string
@@ -2275,6 +2278,7 @@ export type Database = {
           package_name?: string | null
           parser_version?: string | null
           posted_at?: string | null
+          provider_id?: string | null
           raw_text?: string | null
           recorded_by?: string | null
           reference_key?: string | null
@@ -2289,6 +2293,7 @@ export type Database = {
         }
         Update: {
           amount_php?: number | null
+          app_label?: string | null
           consumed_cash_in_id?: string | null
           consumed_subscription_request_id?: string | null
           created_at?: string
@@ -2304,6 +2309,7 @@ export type Database = {
           package_name?: string | null
           parser_version?: string | null
           posted_at?: string | null
+          provider_id?: string | null
           raw_text?: string | null
           recorded_by?: string | null
           reference_key?: string | null
@@ -2781,6 +2787,94 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      payment_provider_registry: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          name: string
+          packages: string[]
+          text_markers: string[]
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id: string
+          name: string
+          packages?: string[]
+          text_markers?: string[]
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          name?: string
+          packages?: string[]
+          text_markers?: string[]
+        }
+        Relationships: []
+      }
+      payment_reference_salt: {
+        Row: {
+          id: boolean
+          salt: string
+        }
+        Insert: {
+          id?: boolean
+          salt?: string
+        }
+        Update: {
+          id?: boolean
+          salt?: string
+        }
+        Relationships: []
+      }
+      payment_reference_seen: {
+        Row: {
+          cash_in_id: string | null
+          ecosystem_id: string | null
+          first_seen_at: string
+          provider_id: string | null
+          reference_hash: string
+        }
+        Insert: {
+          cash_in_id?: string | null
+          ecosystem_id?: string | null
+          first_seen_at?: string
+          provider_id?: string | null
+          reference_hash: string
+        }
+        Update: {
+          cash_in_id?: string | null
+          ecosystem_id?: string | null
+          first_seen_at?: string
+          provider_id?: string | null
+          reference_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_reference_seen_cash_in_id_fkey"
+            columns: ["cash_in_id"]
+            isOneToOne: false
+            referencedRelation: "cash_in_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_reference_seen_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_reference_seen_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       platform_bootstrap: {
         Row: {
@@ -6460,6 +6554,7 @@ export type Database = {
       }
       cash_in_auto_status: { Args: never; Returns: Json }
       cash_in_conflict_snapshot: { Args: { _id: string }; Returns: Json }
+      cash_in_duplicate_indicator: { Args: { _id: string }; Returns: Json }
       cash_in_established_reference_key: {
         Args: { _row: Database["public"]["Tables"]["cash_in_requests"]["Row"] }
         Returns: string
@@ -7222,6 +7317,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      listener_has_strong_signal: {
+        Args: {
+          _ev: Database["public"]["Tables"]["listener_events"]["Row"]
+          _row: Database["public"]["Tables"]["cash_in_requests"]["Row"]
+        }
+        Returns: boolean
+      }
       listener_heartbeat: {
         Args: {
           _app_version?: string
@@ -7262,6 +7364,13 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      listener_match_signals: {
+        Args: {
+          _ev: Database["public"]["Tables"]["listener_events"]["Row"]
+          _row: Database["public"]["Tables"]["cash_in_requests"]["Row"]
+        }
+        Returns: number
       }
       listener_receiving_number_matches: {
         Args: { _device: string; _ecosystem: string; _method: string }
@@ -7570,6 +7679,18 @@ export type Database = {
         }
         Returns: undefined
       }
+      payment_provider_for: {
+        Args: { _package: string; _text?: string }
+        Returns: string
+      }
+      payment_reference_hash: {
+        Args: { _key: string; _provider: string }
+        Returns: string
+      }
+      payment_reference_used_elsewhere: {
+        Args: { _cash_in: string; _key: string; _provider: string }
+        Returns: boolean
+      }
       platform_credit_supply: {
         Args: never
         Returns: {
@@ -7851,21 +7972,39 @@ export type Database = {
               isSetofReturn: false
             }
           }
-      record_listener_event: {
-        Args: {
-          _amount?: number
-          _device: string
-          _event_uid: string
-          _gcash_reference?: string
-          _package: string
-          _parser_version?: string
-          _posted_at?: string
-          _raw_text?: string
-          _sender_name?: string
-          _sender_number?: string
-        }
-        Returns: Json
-      }
+      record_listener_event:
+        | {
+            Args: {
+              _amount?: number
+              _device: string
+              _event_uid: string
+              _gcash_reference?: string
+              _package: string
+              _parser_version?: string
+              _posted_at?: string
+              _raw_text?: string
+              _sender_name?: string
+              _sender_number?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _amount?: number
+              _app_label?: string
+              _device: string
+              _event_uid: string
+              _gcash_reference?: string
+              _package: string
+              _parser_version?: string
+              _posted_at?: string
+              _provider?: string
+              _raw_text?: string
+              _sender_name?: string
+              _sender_number?: string
+            }
+            Returns: Json
+          }
       record_manual_gcash_payment: {
         Args: {
           _amount: number
@@ -7931,6 +8070,15 @@ export type Database = {
       release_super_admin_bootstrap: {
         Args: { _email: string }
         Returns: undefined
+      }
+      remember_payment_reference: {
+        Args: {
+          _cash_in: string
+          _ecosystem: string
+          _key: string
+          _provider: string
+        }
+        Returns: string
       }
       remove_friend: { Args: { _user: string }; Returns: undefined }
       remove_push_device: { Args: { _id: string }; Returns: undefined }

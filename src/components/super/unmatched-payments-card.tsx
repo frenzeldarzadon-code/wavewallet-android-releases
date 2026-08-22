@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { EmptyState, StatusBadge } from "@/components/ui-kit";
+import { providerName } from "@/lib/payment-providers";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import { maskAccountNumber } from "@/lib/cash-in-receipt";
 import {
@@ -110,8 +111,9 @@ export function UnmatchedPaymentsCard() {
 
       <CardContent className="space-y-3">
         <p className="text-xs text-muted-foreground">
-          Money received on a paired GCash phone that no Cash In has claimed yet. Nothing here has
-          touched a wallet.
+          Money received on a paired phone that no Cash In has claimed yet. Nothing here has touched
+          a wallet. A Cash In is only attached automatically when at least two independent details
+          agree — the amount on its own is never enough.
         </p>
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
@@ -124,9 +126,16 @@ export function UnmatchedPaymentsCard() {
                 <p className="text-sm font-semibold">
                   {event.amount_php == null ? "Amount unknown" : peso(Number(event.amount_php))}
                 </p>
-                <StatusBadge tone="warning">{resultLabel(event)}</StatusBadge>
+                <div className="flex items-center gap-2">
+                  <StatusBadge tone="muted">
+                    {event.provider_id
+                      ? providerName(event.provider_id)
+                      : (event.app_label ?? "Unrecognised app")}
+                  </StatusBadge>
+                  <StatusBadge tone="warning">{resultLabel(event)}</StatusBadge>
+                </div>
               </div>
-              {line("GCash reference", event.gcash_reference ?? "not reported")}
+              {line("Payment reference", event.gcash_reference ?? "not reported")}
               {line("Paid from", maskAccountNumber(event.sender_number))}
               {line("Payer name", event.sender_name ?? "not reported")}
               {line("Received", when(event.posted_at ?? event.created_at))}
@@ -151,6 +160,12 @@ export function UnmatchedPaymentsCard() {
                         {peso(Number(candidate.amount_php))} ·{" "}
                         {candidate.member_handle ? `@${candidate.member_handle}` : (candidate.member_name ?? "member")}{" "}
                         · {candidate.ecosystem_name ?? "shop"} · {shortDateTime(candidate.created_at)}
+                        <span className="ml-1 text-foreground">
+                          ·{" "}
+                          {candidate.auto_matchable
+                            ? `${candidate.signals ?? 0} details agree`
+                            : `${candidate.signals ?? 0} detail${(candidate.signals ?? 0) === 1 ? "" : "s"} agree — needs your review`}
+                        </span>
                       </span>
                       <Button
                         size="sm"
@@ -163,6 +178,7 @@ export function UnmatchedPaymentsCard() {
                   ))
                 )}
               </div>
+
 
               <Input
                 value={note[event.id] ?? ""}

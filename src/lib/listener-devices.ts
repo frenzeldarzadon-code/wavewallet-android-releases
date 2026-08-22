@@ -143,6 +143,10 @@ export type UnmatchedListenerEvent = {
   receiving_number: string | null;
   ecosystem_id: string | null;
   ecosystem_name: string | null;
+  /** Which payment provider recognised this notification (e.g. "gcash"). */
+  provider_id: string | null;
+  /** App name the phone reported, when it could read one. */
+  app_label: string | null;
   amount_php: number | null;
   sender_number: string | null;
   sender_name: string | null;
@@ -162,7 +166,14 @@ export type UnmatchedListenerEvent = {
     ecosystem_name: string | null;
     member_name: string | null;
     member_handle: string | null;
+    /** Independent details that agree: reference, sending account, amount. */
+    signals?: number;
+    /** At least one non-amount detail agrees. */
+    strong?: boolean;
+    /** Two independent signals with a non-amount signal present. */
+    auto_matchable?: boolean;
   }[];
+
 };
 
 
