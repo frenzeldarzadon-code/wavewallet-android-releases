@@ -1839,6 +1839,7 @@ export type Database = {
           submitted_at: string | null
           subscription_state: Database["public"]["Enums"]["subscription_state"]
           updated_at: string
+          use_platform_payment_methods: boolean
         }
         Insert: {
           admin_assigned_at?: string | null
@@ -1900,6 +1901,7 @@ export type Database = {
           submitted_at?: string | null
           subscription_state?: Database["public"]["Enums"]["subscription_state"]
           updated_at?: string
+          use_platform_payment_methods?: boolean
         }
         Update: {
           admin_assigned_at?: string | null
@@ -1961,6 +1963,7 @@ export type Database = {
           submitted_at?: string | null
           subscription_state?: Database["public"]["Enums"]["subscription_state"]
           updated_at?: string
+          use_platform_payment_methods?: boolean
         }
         Relationships: []
       }
@@ -6845,6 +6848,7 @@ export type Database = {
           submitted_at: string | null
           subscription_state: Database["public"]["Enums"]["subscription_state"]
           updated_at: string
+          use_platform_payment_methods: boolean
         }
         SetofOptions: {
           from: "*"
@@ -6915,6 +6919,7 @@ export type Database = {
           submitted_at: string | null
           subscription_state: Database["public"]["Enums"]["subscription_state"]
           updated_at: string
+          use_platform_payment_methods: boolean
         }
         SetofOptions: {
           from: "*"
@@ -7062,6 +7067,10 @@ export type Database = {
       ecosystem_monthly_rate: {
         Args: { _ecosystem_id: string }
         Returns: number
+      }
+      ecosystem_platform_payment_option: {
+        Args: { _ecosystem: string }
+        Returns: Json
       }
       effective_uid: { Args: never; Returns: string }
       end_impersonation: { Args: never; Returns: undefined }
@@ -9098,6 +9107,7 @@ export type Database = {
           submitted_at: string | null
           subscription_state: Database["public"]["Enums"]["subscription_state"]
           updated_at: string
+          use_platform_payment_methods: boolean
         }
         SetofOptions: {
           from: "*"
@@ -9168,6 +9178,7 @@ export type Database = {
           submitted_at: string | null
           subscription_state: Database["public"]["Enums"]["subscription_state"]
           updated_at: string
+          use_platform_payment_methods: boolean
         }
         SetofOptions: {
           from: "*"
@@ -9175,6 +9186,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      set_ecosystem_platform_payment_methods: {
+        Args: { _ecosystem: string; _enabled: boolean }
+        Returns: boolean
       }
       set_ecosystem_rates: {
         Args: {
@@ -9245,6 +9260,7 @@ export type Database = {
           submitted_at: string | null
           subscription_state: Database["public"]["Enums"]["subscription_state"]
           updated_at: string
+          use_platform_payment_methods: boolean
         }
         SetofOptions: {
           from: "*"
@@ -10317,6 +10333,7 @@ export type Database = {
           submitted_at: string | null
           subscription_state: Database["public"]["Enums"]["subscription_state"]
           updated_at: string
+          use_platform_payment_methods: boolean
         }
         SetofOptions: {
           from: "*"
@@ -10392,6 +10409,7 @@ export type Database = {
           submitted_at: string | null
           subscription_state: Database["public"]["Enums"]["subscription_state"]
           updated_at: string
+          use_platform_payment_methods: boolean
         }
         SetofOptions: {
           from: "*"
