@@ -34,9 +34,8 @@ import {
   type SpendingEntry,
 } from "@/lib/spending-tracker";
 import {
-  enqueueEntry,
-  isTransportFailure,
   newClientRef,
+  submitNewEntry,
   updateQueuedEntry,
 } from "@/lib/offline-spending";
 import { isOffline } from "@/lib/offline-guard";
