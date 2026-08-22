@@ -1,10 +1,12 @@
 /**
- * Prominent, database-driven display of the ACTIVE cash in payment methods.
- * Presentation only — no accounting, conversion or approval logic lives here.
+ * Prominent, database-driven display of the ACTIVE receiving accounts a payer
+ * may use for cash in. Presentation only — no accounting, conversion or
+ * approval logic lives here.
  */
 import { Banknote, CreditCard, Landmark, Wallet } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui-kit";
+import { PaymentQrPreview } from "@/components/money/payment-qr";
 import { cn } from "@/lib/utils";
 import type { PaymentMethod } from "@/lib/wallet-money";
 
