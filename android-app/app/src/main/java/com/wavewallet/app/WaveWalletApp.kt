@@ -18,7 +18,12 @@ class WaveWalletApp : Application() {
         // The encrypted pairing store needs a working Android Keystore. Never let
         // an unavailable keystore crash app startup — the UI reports "not paired".
         runCatching {
-            if (PairingStore(this).isPaired) ListenerScheduler.scheduleHeartbeat(this)
+            if (PairingStore(this).isPaired) {
+                ListenerScheduler.scheduleHeartbeat(this)
+                // Refresh the notification-source allow/deny rules early so a
+                // disabled source is filtered before its content is ever read.
+                ListenerScheduler.syncSourceRules(this)
+            }
         }.onFailure { Log.w("WaveWalletApp", "Pairing store unavailable at startup: ${it.message}") }
     }
 }
