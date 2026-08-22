@@ -192,31 +192,43 @@ export function validateWithdrawal(
 }
 
 /**
- * Cash in now requires the amount, the GCash number the member paid FROM, the GCash payment
- * reference number and the payment screenshot. Notes stay optional. The same
- * rules are enforced again inside `request_cash_in`.
+ * Cash in requires the amount, the payment screenshot and SOME identifier of
+ * the account the money was paid from. That identifier is provider-agnostic: a
+ * mobile wallet prints a mobile number, a bank prints a masked account number
+ * or the payer's name. Notes stay optional. The same rules are enforced again
+ * inside `request_cash_in`, and the server alone decides approval.
  */
 export function validateCashIn(
   php: number,
   methodId: string | null,
-  input?: { payerNumber?: string | null; payerReference?: string | null; hasProof?: boolean },
+  input?: {
+    payerNumber?: string | null;
+    payerReference?: string | null;
+    hasProof?: boolean;
+    /** Any other payer identity read off the receipt (name, masked account). */
+    payerAccount?: string | null;
+  },
 ): string | null {
   if (!methodId) return "Choose a payment method.";
   if (!Number.isFinite(php) || php <= 0) return "Enter how much you are paying.";
   if (php > 10_000_000) return "A single cash in is limited to ₱10,000,000.";
   if (input) {
-    // The screenshot supplies the amount, reference and payment time. A GCash
-    // "money sent" receipt never prints the payer's OWN number, so the sending
-    // number is stated here — it is the identity matched against the real
-    // GCash notification.
+    // The screenshot supplies the amount, reference and payment time. Many
+    // "money sent" receipts never print the payer's OWN number, so the sending
+    // identity is stated here — it is what gets matched against a real payment
+    // notification.
     if (!input.hasProof) return "Attach your payment screenshot.";
-    if (!normalizePhMobile(input.payerNumber ?? null)) {
-      return "Enter the GCash number you paid from (09XXXXXXXXX).";
+    const number = normalizePhMobile(input.payerNumber ?? null);
+    const account = (input.payerAccount ?? "").trim();
+    const typed = (input.payerNumber ?? "").trim();
+    if (!number && !account && typed.length < 4) {
+      return "Enter the mobile number or account you paid from.";
     }
   }
 
   return null;
 }
+
 
 
 export type MoneyStatus = string;
@@ -529,9 +541,9 @@ export async function fetchAdminCashInCapacity(ecosystemId?: string | null): Pro
 export async function requestCashIn(input: {
   methodId: string;
   amountPhp: number;
-  /** GCash number the member paid FROM — read off the receipt, matched against the real notification. */
+  /** Account the member paid FROM — read off the receipt, matched against a real notification. */
   payerNumber?: string | null;
-  /** GCash payment reference — the member may correct what the receipt reader read. */
+  /** Payment reference — the member may correct what the receipt reader read. */
   payerReference?: string | null;
   /** Payment date/time the member confirmed, ISO 8601. */
   paidAt?: string | null;
@@ -544,10 +556,14 @@ export async function requestCashIn(input: {
     senderNumber?: string | null;
     senderName?: string | null;
     senderAccountMasked?: string | null;
+    /** Destination read off the receipt — evidence only, never required to agree. */
+    receivingNumber?: string | null;
+    receivingAccountMasked?: string | null;
     paidAt?: string | null;
     confidence?: number | null;
     readable?: boolean | null;
   } | null;
+
   /** Optional — cash in never requires notes. */
   notes?: string | null;
   /** Storage path of the payment screenshot (required supporting evidence). */
@@ -570,8 +586,11 @@ export async function requestCashIn(input: {
           sender_number: input.ocr.senderNumber ?? null,
           sender_name: input.ocr.senderName ?? null,
           sender_account_masked: input.ocr.senderAccountMasked ?? null,
+          receiving_number: input.ocr.receivingNumber ?? null,
+          receiving_account_masked: input.ocr.receivingAccountMasked ?? null,
           paid_at: input.ocr.paidAt ?? null,
           confidence: input.ocr.confidence ?? null,
+
           readable: input.ocr.readable ?? null,
         }
       : undefined,

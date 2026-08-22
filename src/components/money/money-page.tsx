@@ -275,12 +275,17 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
       setProofPath(path);
       const read = await extractCashInReceipt({ data: { proofPath: path } });
       setExtract(read);
+      // Provider-agnostic autofill: whatever the receipt printed is used, and
+      // the payer identity falls back to a printed account or name when the
+      // receipt has no mobile number (banks usually print those instead).
       if (read.reference) setPayerRef(read.reference);
       if (read.amountPhp) setAmount(String(read.amountPhp));
-      if (read.senderNumber) setPayerNumber(read.senderNumber);
+      const payerIdentity = read.senderNumber ?? read.senderAccountMasked ?? read.senderName ?? null;
+      if (payerIdentity) setPayerNumber(payerIdentity);
       if (read.paidAt) setPaidAt(toLocalInput(read.paidAt));
       if (read.readable) toast.success("Screenshot read — check the details before you submit.");
       else toast.info("We could not read this screenshot clearly. You can still submit it for manual review.");
+
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not read that screenshot.");
     } finally {
@@ -292,6 +297,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
     const problem = validateCashIn(Number(amount), methodId || null, {
       hasProof: Boolean(proofPath),
       payerNumber,
+      payerAccount: extract?.senderAccountMasked ?? extract?.senderName ?? null,
     });
 
     if (problem) {
@@ -308,8 +314,8 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
       const submitted = await requestCashIn({
         methodId,
         amountPhp: Number(amount),
-        // A GCash send receipt never prints the payer's own number, so this is
-        // the number stated by the member — never their saved profile phone.
+        // Many "money sent" receipts never print the payer's own account, so
+        // this is the identity stated by the member when the receipt has none.
         payerNumber: extract?.senderNumber ?? payerNumber,
 
         payerReference: payerRef,
@@ -322,11 +328,14 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
               senderNumber: extract.senderNumber,
               senderName: extract.senderName,
               senderAccountMasked: extract.senderAccountMasked,
+              receivingNumber: extract.receivingNumber,
+              receivingAccountMasked: extract.receivingAccountMasked,
               paidAt: extract.paidAt,
               confidence: extract.confidence,
               readable: extract.readable,
             }
           : null,
+
         notes: cashInNotes,
         proofPath: proofPath as string,
         requestKey: newKey(),
@@ -594,11 +603,12 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-                Start with your GCash payment screenshot — we read the amount, the sending number, the reference and the
-                payment date and time from it. Check the details, correct the reference or the date and time if needed,
-                then submit. The screenshot is supporting evidence, not a verification from GCash: coins are added only
-                once a real GCash notification confirms the payment.
+                Start with your payment screenshot from any e-wallet or bank — we read the amount, the sending account,
+                the reference and the payment date and time from it. Check the details, correct the reference or the
+                date and time if needed, then submit. The screenshot is supporting evidence, not proof of payment:
+                coins are added only once a real payment notification confirms it.
               </p>
+
               {methods.length === 0 ? (
                 <EmptyState
                   title="No payment methods available"
@@ -684,7 +694,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                           </p>
                         </div>
                         <div className="space-y-1.5">
-                          <Label htmlFor="ci-number">GCash number you paid from</Label>
+                          <Label htmlFor="ci-number">Mobile number or account you paid from</Label>
                           <Input
                             id="ci-number"
                             inputMode="tel"
@@ -692,17 +702,17 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                             readOnly={Boolean(extract?.senderNumber)}
                             disabled={Boolean(extract?.senderNumber)}
                             onChange={(e) => setPayerNumber(e.target.value)}
-                            placeholder="09XXXXXXXXX"
+                            placeholder="09XXXXXXXXX or account number"
                           />
                           <p className="text-[11px] text-muted-foreground">
                             {extract?.senderNumber
-                              ? "Extracted evidence — matched against the real GCash notification."
-                              : "GCash receipts do not print your own number, so type the number you paid from. It is matched against the real GCash notification."}
+                              ? "Extracted evidence — matched against the real payment notification."
+                              : "Many receipts do not print your own account, so enter the mobile number or account you paid from. It is matched against the real payment notification."}
                           </p>
                         </div>
 
                         <div className="space-y-1.5">
-                          <Label htmlFor="ci-ref">GCash reference number</Label>
+                          <Label htmlFor="ci-ref">Reference / transaction number</Label>
                           <Input
                             id="ci-ref"
                             value={payerRef}
@@ -726,6 +736,26 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                           </p>
                         </div>
                       </div>
+                      {extract ? (
+                        <dl className="grid gap-1 text-[11px] text-muted-foreground sm:grid-cols-2">
+                          {(
+                            [
+                              ["Payment app or bank", extract.providerName],
+                              ["Payer name on receipt", extract.senderName],
+                              ["Sending account", extract.senderAccountMasked],
+                              ["Received by", extract.receivingNumber ?? extract.receivingAccountMasked],
+                            ] as [string, string | null][]
+                          )
+                            .filter(([, value]) => Boolean(value))
+                            .map(([label, value]) => (
+                              <div key={label} className="flex justify-between gap-2">
+                                <dt>{label}</dt>
+                                <dd className="font-medium text-foreground">{value}</dd>
+                              </div>
+                            ))}
+                        </dl>
+                      ) : null}
+
                       {extract && !extract.readable ? (
                         <p className="text-[11px] text-muted-foreground">
                           We could not read this screenshot reliably, so nothing was guessed. You may still submit it — a
