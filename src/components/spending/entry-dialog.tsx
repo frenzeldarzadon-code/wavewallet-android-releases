@@ -4,7 +4,7 @@
  * Automatic entries (admin cashback per reseller, Admin Discount, Admin
  * Purchases) are derived from real transactions and are never editable here.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,7 +33,12 @@ import {
   type SpendingCategory,
   type SpendingEntry,
 } from "@/lib/spending-tracker";
-import { enqueueEntry, newClientRef, updateQueuedEntry } from "@/lib/offline-spending";
+import {
+  enqueueEntry,
+  isTransportFailure,
+  newClientRef,
+  updateQueuedEntry,
+} from "@/lib/offline-spending";
 import { isOffline } from "@/lib/offline-guard";
 
 const NONE = "__none__";
