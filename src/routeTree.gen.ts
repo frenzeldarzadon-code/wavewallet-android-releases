@@ -42,6 +42,7 @@ import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminShopRouteImport } from './routes/admin.shop'
 import { Route as AdminSignupLinkRouteImport } from './routes/admin.signup-link'
 import { Route as AdminSocialRouteImport } from './routes/admin.social'
+import { Route as AdminSpendingRouteImport } from './routes/admin.spending'
 import { Route as AdminTransactionsRouteImport } from './routes/admin.transactions'
 import { Route as AdminVouchersRouteImport } from './routes/admin.vouchers'
 import { Route as AdminWalletRouteImport } from './routes/admin.wallet'
@@ -265,6 +266,11 @@ const AdminSignupLinkRoute = AdminSignupLinkRouteImport.update({
 const AdminSocialRoute = AdminSocialRouteImport.update({
   id: '/social',
   path: '/social',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSpendingRoute = AdminSpendingRouteImport.update({
+  id: '/spending',
+  path: '/spending',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminTransactionsRoute = AdminTransactionsRouteImport.update({
@@ -597,6 +603,7 @@ export interface FileRoutesByFullPath {
   '/admin/shop': typeof AdminShopRoute
   '/admin/signup-link': typeof AdminSignupLinkRoute
   '/admin/social': typeof AdminSocialRoute
+  '/admin/spending': typeof AdminSpendingRoute
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/vouchers': typeof AdminVouchersRoute
   '/admin/wallet': typeof AdminWalletRoute
@@ -686,6 +693,7 @@ export interface FileRoutesByTo {
   '/admin/shop': typeof AdminShopRoute
   '/admin/signup-link': typeof AdminSignupLinkRoute
   '/admin/social': typeof AdminSocialRoute
+  '/admin/spending': typeof AdminSpendingRoute
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/vouchers': typeof AdminVouchersRoute
   '/admin/wallet': typeof AdminWalletRoute
@@ -781,6 +789,7 @@ export interface FileRoutesById {
   '/admin/shop': typeof AdminShopRoute
   '/admin/signup-link': typeof AdminSignupLinkRoute
   '/admin/social': typeof AdminSocialRoute
+  '/admin/spending': typeof AdminSpendingRoute
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/vouchers': typeof AdminVouchersRoute
   '/admin/wallet': typeof AdminWalletRoute
@@ -877,6 +886,7 @@ export interface FileRouteTypes {
     | '/admin/shop'
     | '/admin/signup-link'
     | '/admin/social'
+    | '/admin/spending'
     | '/admin/transactions'
     | '/admin/vouchers'
     | '/admin/wallet'
@@ -966,6 +976,7 @@ export interface FileRouteTypes {
     | '/admin/shop'
     | '/admin/signup-link'
     | '/admin/social'
+    | '/admin/spending'
     | '/admin/transactions'
     | '/admin/vouchers'
     | '/admin/wallet'
@@ -1060,6 +1071,7 @@ export interface FileRouteTypes {
     | '/admin/shop'
     | '/admin/signup-link'
     | '/admin/social'
+    | '/admin/spending'
     | '/admin/transactions'
     | '/admin/vouchers'
     | '/admin/wallet'
@@ -1376,6 +1388,13 @@ declare module '@tanstack/react-router' {
       path: '/social'
       fullPath: '/admin/social'
       preLoaderRoute: typeof AdminSocialRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/spending': {
+      id: '/admin/spending'
+      path: '/spending'
+      fullPath: '/admin/spending'
+      preLoaderRoute: typeof AdminSpendingRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/transactions': {
@@ -1812,6 +1831,7 @@ interface AdminRouteChildren {
   AdminShopRoute: typeof AdminShopRoute
   AdminSignupLinkRoute: typeof AdminSignupLinkRoute
   AdminSocialRoute: typeof AdminSocialRoute
+  AdminSpendingRoute: typeof AdminSpendingRoute
   AdminTransactionsRoute: typeof AdminTransactionsRoute
   AdminVouchersRoute: typeof AdminVouchersRoute
   AdminWalletRoute: typeof AdminWalletRoute
@@ -1837,6 +1857,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminShopRoute: AdminShopRoute,
   AdminSignupLinkRoute: AdminSignupLinkRoute,
   AdminSocialRoute: AdminSocialRoute,
+  AdminSpendingRoute: AdminSpendingRoute,
   AdminTransactionsRoute: AdminTransactionsRoute,
   AdminVouchersRoute: AdminVouchersRoute,
   AdminWalletRoute: AdminWalletRoute,
