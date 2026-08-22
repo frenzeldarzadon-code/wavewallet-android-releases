@@ -694,7 +694,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                           </p>
                         </div>
                         <div className="space-y-1.5">
-                          <Label htmlFor="ci-number">GCash number you paid from</Label>
+                          <Label htmlFor="ci-number">Mobile number or account you paid from</Label>
                           <Input
                             id="ci-number"
                             inputMode="tel"
@@ -702,17 +702,17 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                             readOnly={Boolean(extract?.senderNumber)}
                             disabled={Boolean(extract?.senderNumber)}
                             onChange={(e) => setPayerNumber(e.target.value)}
-                            placeholder="09XXXXXXXXX"
+                            placeholder="09XXXXXXXXX or account number"
                           />
                           <p className="text-[11px] text-muted-foreground">
                             {extract?.senderNumber
-                              ? "Extracted evidence — matched against the real GCash notification."
-                              : "GCash receipts do not print your own number, so type the number you paid from. It is matched against the real GCash notification."}
+                              ? "Extracted evidence — matched against the real payment notification."
+                              : "Many receipts do not print your own account, so enter the mobile number or account you paid from. It is matched against the real payment notification."}
                           </p>
                         </div>
 
                         <div className="space-y-1.5">
-                          <Label htmlFor="ci-ref">GCash reference number</Label>
+                          <Label htmlFor="ci-ref">Reference / transaction number</Label>
                           <Input
                             id="ci-ref"
                             value={payerRef}
@@ -736,6 +736,26 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                           </p>
                         </div>
                       </div>
+                      {extract ? (
+                        <dl className="grid gap-1 text-[11px] text-muted-foreground sm:grid-cols-2">
+                          {(
+                            [
+                              ["Payment app or bank", extract.providerName],
+                              ["Payer name on receipt", extract.senderName],
+                              ["Sending account", extract.senderAccountMasked],
+                              ["Received by", extract.receivingNumber ?? extract.receivingAccountMasked],
+                            ] as [string, string | null][]
+                          )
+                            .filter(([, value]) => Boolean(value))
+                            .map(([label, value]) => (
+                              <div key={label} className="flex justify-between gap-2">
+                                <dt>{label}</dt>
+                                <dd className="font-medium text-foreground">{value}</dd>
+                              </div>
+                            ))}
+                        </dl>
+                      ) : null}
+
                       {extract && !extract.readable ? (
                         <p className="text-[11px] text-muted-foreground">
                           We could not read this screenshot reliably, so nothing was guessed. You may still submit it — a
