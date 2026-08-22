@@ -18,15 +18,21 @@ import { LEDGER_COLUMNS, normalizeEntry, type CreditEntry } from "@/lib/wallet";
 export interface RangeOption {
   id: string;
   label: string;
+  /** Rolling window length. 0 for calendar periods and custom ranges. */
   days: number;
+  /** Calendar periods carry their selection in the `from` field. */
+  calendar?: "month" | "quarter" | "year";
 }
 
 export const RANGE_OPTIONS: RangeOption[] = [
   { id: "today", label: "Today", days: 1 },
   { id: "daily", label: "7 days", days: 7 },
-  { id: "monthly", label: "Monthly", days: 30 },
-  { id: "quarterly", label: "Quarterly", days: 90 },
-  { id: "yearly", label: "Yearly", days: 365 },
+  { id: "month", label: "Month", days: 0, calendar: "month" },
+  { id: "quarter", label: "Quarter", days: 0, calendar: "quarter" },
+  { id: "year", label: "Year", days: 0, calendar: "year" },
+  { id: "monthly", label: "Last 30 days", days: 30 },
+  { id: "quarterly", label: "Last 90 days", days: 90 },
+  { id: "yearly", label: "Last 365 days", days: 365 },
   { id: "custom", label: "Custom", days: 0 },
 ];
 
@@ -36,12 +42,75 @@ export interface ResolvedRange {
   label: string;
 }
 
-/** Turns a range id (+ optional custom bounds) into concrete timestamps. */
+export const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+/* -- Calendar helpers ------------------------------------------------
+ * All boundaries are built with local-time constructors, so a period always
+ * runs from 00:00:00.000 on its first day to 23:59:59.999 on its last day in
+ * the viewer's timezone — inclusive at both ends. Month lengths (including
+ * February in a leap year) come from the Date constructor's day-0 rollover, so
+ * Dec→Jan and Q4→Q1 transitions carry into the next year correctly.
+ */
+
+export const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/** `YYYY-MM` for a date. */
+export const monthValue = (d: Date = new Date()) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+/** `YYYY-Qn` for a date. */
+export const quarterValue = (d: Date = new Date()) =>
+  `${d.getFullYear()}-Q${Math.floor(d.getMonth() / 3) + 1}`;
+/** `YYYY` for a date. */
+export const yearValue = (d: Date = new Date()) => String(d.getFullYear());
+
+const startOf = (y: number, monthIndex: number) => new Date(y, monthIndex, 1, 0, 0, 0, 0);
+/** Last millisecond of the month BEFORE `monthIndex` — day 0 rolls back safely. */
+const endOf = (y: number, monthIndex: number) => new Date(y, monthIndex, 0, 23, 59, 59, 999);
+
+export function monthBounds(value: string, now = new Date()): ResolvedRange {
+  const [ys, ms] = value.split("-");
+  const y = Number(ys);
+  const m = Number(ms);
+  const year = Number.isFinite(y) && ys?.length === 4 ? y : now.getFullYear();
+  const idx = Number.isFinite(m) && m >= 1 && m <= 12 ? m - 1 : now.getMonth();
+  return {
+    start: startOf(year, idx),
+    end: endOf(year, idx + 1),
+    label: `${MONTH_NAMES[idx]} ${year}`,
+  };
+}
+
+export function quarterBounds(value: string, now = new Date()): ResolvedRange {
+  const match = /^(\d{4})-Q([1-4])$/.exec(value.trim().toUpperCase());
+  const year = match ? Number(match[1]) : now.getFullYear();
+  const q = match ? Number(match[2]) : Math.floor(now.getMonth() / 3) + 1;
+  const first = (q - 1) * 3;
+  return {
+    start: startOf(year, first),
+    end: endOf(year, first + 3),
+    label: `Q${q} ${year} · ${MONTH_NAMES[first]}–${MONTH_NAMES[first + 2]}`,
+  };
+}
+
+export function yearBounds(value: string, now = new Date()): ResolvedRange {
+  const y = Number(value);
+  const year = Number.isFinite(y) && String(value).trim().length === 4 ? y : now.getFullYear();
+  return { start: startOf(year, 0), end: endOf(year, 12), label: String(year) };
+}
+
+/** Turns a range id (+ optional period value / custom bounds) into timestamps. */
 export function resolveRange(id: string, from?: string, to?: string): ResolvedRange {
   const end = new Date();
+  if (id === "month") return monthBounds(from || monthValue(end), end);
+  if (id === "quarter") return quarterBounds(from || quarterValue(end), end);
+  if (id === "year") return yearBounds(from || yearValue(end), end);
   if (id === "custom") {
-    const start = from ? new Date(`${from}T00:00:00`) : new Date(end.getTime() - 30 * 86400000);
-    const stop = to ? new Date(`${to}T23:59:59`) : end;
+    const a = from && to && from > to ? to : from;
+    const b = from && to && from > to ? from : to;
+    const start = a ? new Date(`${a}T00:00:00`) : new Date(end.getTime() - 30 * 86400000);
+    const stop = b ? new Date(`${b}T23:59:59.999`) : end;
     return {
       start,
       end: stop,
@@ -56,6 +125,12 @@ export function resolveRange(id: string, from?: string, to?: string): ResolvedRa
   const days = RANGE_OPTIONS.find((r) => r.id === id)?.days ?? 30;
   const start = new Date(end.getTime() - days * 86400000);
   return { start, end, label: `Last ${days} days` };
+}
+
+/** Recent years offered by the year / quarter pickers, newest first. */
+export function yearChoices(now = new Date(), back = 5): number[] {
+  const y = now.getFullYear();
+  return Array.from({ length: back + 1 }, (_, i) => y - i);
 }
 
 const iso = (d: Date) => d.toISOString();

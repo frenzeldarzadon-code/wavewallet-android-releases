@@ -33,6 +33,8 @@ import {
   type SpendingCategory,
   type SpendingEntry,
 } from "@/lib/spending-tracker";
+import { enqueueEntry, newClientRef, updateQueuedEntry } from "@/lib/offline-spending";
+import { isOffline } from "@/lib/offline-guard";
 
 const NONE = "__none__";
 
@@ -80,21 +82,50 @@ export function EntryDialog({
       toast.error(problem);
       return;
     }
+    const chosen = categoryId === NONE ? null : categoryId;
+    const payload = {
+      ecosystemId,
+      kind,
+      amount: Number(amount),
+      description,
+      categoryId: chosen,
+      occurredAt: new Date(`${date}T12:00:00`),
+      notes,
+    };
     setBusy(true);
     try {
-      await saveManualEntry(
-        {
+      if (editing?.sync) {
+        // Still only on this device — edit the queued copy, keeping the same
+        // idempotency key so the eventual sync stays a single entry.
+        updateQueuedEntry(editing.id, {
+          amount: payload.amount,
+          description: payload.description.trim(),
+          categoryId: chosen,
+          categoryName: categories.find((c) => c.id === chosen)?.name ?? null,
+          occurredAt: payload.occurredAt.toISOString(),
+          notes: notes.trim() || null,
+          lastError: null,
+        });
+        toast.success("Saved on this device. It will sync when you are back online.");
+      } else if (!editing && isOffline()) {
+        enqueueEntry({
+          clientRef: newClientRef(),
           ecosystemId,
           kind,
-          amount: Number(amount),
-          description,
-          categoryId: categoryId === NONE ? null : categoryId,
-          occurredAt: new Date(`${date}T12:00:00`),
-          notes,
-        },
-        editing?.id,
-      );
-      toast.success(editing ? "Entry updated." : kind === "income" ? "Income added." : "Expense added.");
+          amount: payload.amount,
+          description: payload.description.trim(),
+          categoryId: chosen,
+          categoryName: categories.find((c) => c.id === chosen)?.name ?? null,
+          occurredAt: payload.occurredAt.toISOString(),
+          notes: notes.trim() || null,
+        });
+        toast.success("Saved offline. It will sync automatically when you reconnect.");
+      } else {
+        await saveManualEntry({ ...payload, clientRef: editing ? null : newClientRef() }, editing?.id);
+        toast.success(
+          editing ? "Entry updated." : kind === "income" ? "Income added." : "Expense added.",
+        );
+      }
       onOpenChange(false);
       onSaved();
     } catch (e) {
