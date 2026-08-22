@@ -168,6 +168,7 @@ export type Database = {
         Row: {
           amount: number
           category: string | null
+          category_id: string | null
           created_at: string
           created_by: string
           created_by_name: string | null
@@ -175,6 +176,7 @@ export type Database = {
           description: string
           ecosystem_id: string | null
           id: string
+          notes: string | null
           provider: string | null
           provider_reference: string | null
           scope: string
@@ -184,6 +186,7 @@ export type Database = {
         Insert: {
           amount: number
           category?: string | null
+          category_id?: string | null
           created_at?: string
           created_by: string
           created_by_name?: string | null
@@ -191,6 +194,7 @@ export type Database = {
           description: string
           ecosystem_id?: string | null
           id?: string
+          notes?: string | null
           provider?: string | null
           provider_reference?: string | null
           scope: string
@@ -200,6 +204,7 @@ export type Database = {
         Update: {
           amount?: number
           category?: string | null
+          category_id?: string | null
           created_at?: string
           created_by?: string
           created_by_name?: string | null
@@ -207,6 +212,7 @@ export type Database = {
           description?: string
           ecosystem_id?: string | null
           id?: string
+          notes?: string | null
           provider?: string | null
           provider_reference?: string | null
           scope?: string
@@ -214,6 +220,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "business_expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "spending_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "business_expenses_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -5363,6 +5376,125 @@ export type Database = {
         }
         Relationships: []
       }
+      spending_categories: {
+        Row: {
+          auto_key: string | null
+          created_at: string
+          ecosystem_id: string
+          id: string
+          kind: string
+          member_id: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          auto_key?: string | null
+          created_at?: string
+          ecosystem_id: string
+          id?: string
+          kind: string
+          member_id?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          auto_key?: string | null
+          created_at?: string
+          ecosystem_id?: string
+          id?: string
+          kind?: string
+          member_id?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spending_categories_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spending_categories_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spending_categories_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spending_income_entries: {
+        Row: {
+          amount: number
+          category_id: string | null
+          created_at: string
+          created_by: string
+          created_by_name: string | null
+          description: string
+          ecosystem_id: string
+          id: string
+          notes: string | null
+          occurred_at: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category_id?: string | null
+          created_at?: string
+          created_by: string
+          created_by_name?: string | null
+          description: string
+          ecosystem_id: string
+          id?: string
+          notes?: string | null
+          occurred_at?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          created_by?: string
+          created_by_name?: string | null
+          description?: string
+          ecosystem_id?: string
+          id?: string
+          notes?: string | null
+          occurred_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spending_income_entries_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "spending_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spending_income_entries_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spending_income_entries_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_adjustments: {
         Row: {
           actor_id: string | null
@@ -8174,6 +8306,7 @@ export type Database = {
             Returns: {
               amount: number
               category: string | null
+              category_id: string | null
               created_at: string
               created_by: string
               created_by_name: string | null
@@ -8181,6 +8314,7 @@ export type Database = {
               description: string
               ecosystem_id: string | null
               id: string
+              notes: string | null
               provider: string | null
               provider_reference: string | null
               scope: string
@@ -8208,6 +8342,7 @@ export type Database = {
             Returns: {
               amount: number
               category: string | null
+              category_id: string | null
               created_at: string
               created_by: string
               created_by_name: string | null
@@ -8215,6 +8350,7 @@ export type Database = {
               description: string
               ecosystem_id: string | null
               id: string
+              notes: string | null
               provider: string | null
               provider_reference: string | null
               scope: string
@@ -9993,6 +10129,150 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "social_credit_accounts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      spending_auto_entries: {
+        Args: { _ecosystem: string; _from: string; _to: string }
+        Returns: {
+          amount: number
+          auto_key: string
+          description: string
+          id: string
+          kind: string
+          member_id: string
+          member_name: string
+          occurred_at: string
+        }[]
+      }
+      spending_delete_income: { Args: { _id: string }; Returns: boolean }
+      spending_record_expense: {
+        Args: {
+          _amount: number
+          _category_id?: string
+          _description: string
+          _ecosystem: string
+          _notes?: string
+          _spent_at?: string
+        }
+        Returns: {
+          amount: number
+          category: string | null
+          category_id: string | null
+          created_at: string
+          created_by: string
+          created_by_name: string | null
+          currency: string
+          description: string
+          ecosystem_id: string | null
+          id: string
+          notes: string | null
+          provider: string | null
+          provider_reference: string | null
+          scope: string
+          spent_at: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "business_expenses"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      spending_record_income: {
+        Args: {
+          _amount: number
+          _category_id?: string
+          _description: string
+          _ecosystem: string
+          _notes?: string
+          _occurred_at?: string
+        }
+        Returns: {
+          amount: number
+          category_id: string | null
+          created_at: string
+          created_by: string
+          created_by_name: string | null
+          description: string
+          ecosystem_id: string
+          id: string
+          notes: string | null
+          occurred_at: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "spending_income_entries"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      spending_sync_categories: {
+        Args: { _ecosystem: string }
+        Returns: undefined
+      }
+      spending_update_expense: {
+        Args: {
+          _amount: number
+          _category_id?: string
+          _description: string
+          _id: string
+          _notes?: string
+          _spent_at?: string
+        }
+        Returns: {
+          amount: number
+          category: string | null
+          category_id: string | null
+          created_at: string
+          created_by: string
+          created_by_name: string | null
+          currency: string
+          description: string
+          ecosystem_id: string | null
+          id: string
+          notes: string | null
+          provider: string | null
+          provider_reference: string | null
+          scope: string
+          spent_at: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "business_expenses"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      spending_update_income: {
+        Args: {
+          _amount: number
+          _category_id?: string
+          _description: string
+          _id: string
+          _notes?: string
+          _occurred_at?: string
+        }
+        Returns: {
+          amount: number
+          category_id: string | null
+          created_at: string
+          created_by: string
+          created_by_name: string | null
+          description: string
+          ecosystem_id: string
+          id: string
+          notes: string | null
+          occurred_at: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "spending_income_entries"
           isOneToOne: true
           isSetofReturn: false
         }
