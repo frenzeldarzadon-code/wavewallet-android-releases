@@ -3,6 +3,7 @@ import { ArrowUpRight, Wallet } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, PageSection, StatCard } from "@/components/ui-kit";
+import { DevSlot } from "@/components/dev/dev-slot";
 import { SellerEarningsPanel } from "@/components/seller-earnings-panel";
 import { FacebookSupportCard } from "@/components/facebook-support-card";
 import { useSession } from "@/lib/session";
@@ -73,6 +74,7 @@ function ResellerDashboard() {
 
   return (
     <>
+      <DevSlot name="dashboard.summary">
       <PageSection
         title="Reseller wallet"
         description={`Closed-loop coins inside ${ecosystem.name}.`}
@@ -94,8 +96,11 @@ function ResellerDashboard() {
         </p>
       </PageSection>
 
+      </DevSlot>
+
       <SellerEarningsPanel recipientId={account.id} ecosystemId={ecosystemDbId} showBalance={false} />
 
+      <DevSlot name="dashboard.wallet-activity">
       <PageSection title="Wallet activity">
         {loading ? (
           <EmptyState title="Loading wallet…" />
@@ -141,6 +146,9 @@ function ResellerDashboard() {
         )}
       </PageSection>
 
+      </DevSlot>
+
+      <DevSlot name="dashboard.downlines">
       <PageSection
         title="Support"
         description={`Questions about coins, vouchers or payouts go to ${ecosystem.name}.`}
@@ -153,6 +161,7 @@ function ResellerDashboard() {
           emptyHint="Your shop admin has not added a Facebook support page yet. Contact them directly for now."
         />
       </PageSection>
+      </DevSlot>
     </>
   );
 }
