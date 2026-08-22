@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { EmptyState, StatusBadge } from "@/components/ui-kit";
+import { providerName } from "@/lib/payment-providers";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import { maskAccountNumber } from "@/lib/cash-in-receipt";
 import {
@@ -126,7 +127,7 @@ export function UnmatchedPaymentsCard() {
                   {event.amount_php == null ? "Amount unknown" : peso(Number(event.amount_php))}
                 </p>
                 <div className="flex items-center gap-2">
-                  <StatusBadge tone="info">
+                  <StatusBadge tone="muted">
                     {event.provider_id
                       ? providerName(event.provider_id)
                       : (event.app_label ?? "Unrecognised app")}
