@@ -4,7 +4,7 @@
  * Automatic entries (admin cashback per reseller, Admin Discount, Admin
  * Purchases) are derived from real transactions and are never editable here.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,8 +33,12 @@ import {
   type SpendingCategory,
   type SpendingEntry,
 } from "@/lib/spending-tracker";
-import { enqueueEntry, newClientRef, updateQueuedEntry } from "@/lib/offline-spending";
-import { isOffline } from "@/lib/offline-guard";
+import {
+  newClientRef,
+  submitNewEntry,
+  updateQueuedEntry,
+} from "@/lib/offline-spending";
+
 
 const NONE = "__none__";
 
@@ -61,6 +65,12 @@ export function EntryDialog({
   const [date, setDate] = useState(dayKey(new Date()));
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
+  /**
+   * Idempotency key for the entry being written. Minted once when the form is
+   * opened for a NEW entry and kept across retries, so a resend after a lost
+   * response returns the existing row instead of creating a second one.
+   */
+  const clientRef = useRef<string>(newClientRef());
 
   useEffect(() => {
     if (!open) return;
@@ -72,6 +82,8 @@ export function EntryDialog({
       ? editing.categoryKey.slice(4)
       : NONE;
     setCategoryId(cat);
+    // A queued entry keeps the key it was created with; a new form gets one.
+    clientRef.current = editing?.sync ? editing.id : newClientRef();
   }, [open, editing]);
 
   const options = categories.filter((c) => c.kind === kind && !c.auto_key);
@@ -87,10 +99,11 @@ export function EntryDialog({
       ecosystemId,
       kind,
       amount: Number(amount),
-      description,
+      description: description.trim(),
       categoryId: chosen,
+      categoryName: categories.find((c) => c.id === chosen)?.name ?? null,
       occurredAt: new Date(`${date}T12:00:00`),
-      notes,
+      notes: notes.trim() || null,
     };
     setBusy(true);
     try {
@@ -99,31 +112,30 @@ export function EntryDialog({
         // idempotency key so the eventual sync stays a single entry.
         updateQueuedEntry(editing.id, {
           amount: payload.amount,
-          description: payload.description.trim(),
+          description: payload.description,
           categoryId: chosen,
-          categoryName: categories.find((c) => c.id === chosen)?.name ?? null,
+          categoryName: payload.categoryName,
           occurredAt: payload.occurredAt.toISOString(),
-          notes: notes.trim() || null,
+          notes: payload.notes,
           lastError: null,
         });
         toast.success("Saved on this device. It will sync when you are back online.");
-      } else if (!editing && isOffline()) {
-        enqueueEntry({
-          clientRef: newClientRef(),
-          ecosystemId,
-          kind,
-          amount: payload.amount,
-          description: payload.description.trim(),
-          categoryId: chosen,
-          categoryName: categories.find((c) => c.id === chosen)?.name ?? null,
-          occurredAt: payload.occurredAt.toISOString(),
-          notes: notes.trim() || null,
-        });
-        toast.success("Saved offline. It will sync automatically when you reconnect.");
+      } else if (editing) {
+        await saveManualEntry(
+          { ...payload, clientRef: null },
+          editing.id,
+        );
+        toast.success("Entry updated.");
       } else {
-        await saveManualEntry({ ...payload, clientRef: editing ? null : newClientRef() }, editing?.id);
+        const status = await submitNewEntry({ ...payload, clientRef: clientRef.current });
         toast.success(
-          editing ? "Entry updated." : kind === "income" ? "Income added." : "Expense added.",
+          status === "saved"
+            ? kind === "income"
+              ? "Income added."
+              : "Expense added."
+            : status === "queued-offline"
+              ? "Saved offline. It will sync automatically when you reconnect."
+              : "Connection problem — saved on this device and will sync automatically.",
         );
       }
       onOpenChange(false);
@@ -134,6 +146,7 @@ export function EntryDialog({
       setBusy(false);
     }
   }
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

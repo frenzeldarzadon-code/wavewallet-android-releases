@@ -128,6 +128,66 @@ export const queuedInPeriod = (rows: QueuedEntry[], from: Date, to: Date) =>
   });
 
 /* ------------------------------------------------------------------ */
+/* Failure classification                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Transport failures — the request never produced a definitive answer, so the
+ * entry may or may not have reached the server. These are safe to queue and
+ * retry: the same `client_ref` makes the retry return the existing row when the
+ * first attempt actually succeeded but its response was lost.
+ */
+const TRANSPORT_PATTERNS = [
+  /failed to fetch/i,
+  /fetch failed/i,
+  /network\s*(request)?\s*(error|failed)/i,
+  /networkerror/i,
+  /load failed/i,
+  /timed? ?out/i,
+  /aborted/i,
+  /abort ?error/i,
+  /connection (closed|reset|refused|lost)/i,
+  /socket hang ?up/i,
+  /err_(network|internet_disconnected|connection|timed_out)/i,
+  /net::/i,
+  /(^|\D)(408|502|503|504)(\D|$)/,
+  /service unavailable/i,
+  /bad gateway/i,
+  /gateway time-?out/i,
+  /offline/i,
+  /internet connection required/i,
+];
+
+/**
+ * Definitive application answers — validation, permission, not-found and other
+ * server verdicts. These must be shown to the admin, never queued: retrying
+ * them would fail again forever and hide a real problem.
+ */
+const DEFINITIVE_PATTERNS = [
+  /amount must be/i,
+  /description is required/i,
+  /unknown .*category/i,
+  /not allowed/i,
+  /not signed in/i,
+  /only record income for your own shop/i,
+  /permission/i,
+  /violates row-level security/i,
+  /duplicate key/i,
+  /not found/i,
+  /jwt|token/i,
+];
+
+/** True when the failure is a transport problem worth queueing and retrying. */
+export function isTransportFailure(error: unknown): boolean {
+  if (isOffline()) return true;
+  const err = error as { message?: string; name?: string; code?: string } | null;
+  const text = `${err?.name ?? ""} ${err?.code ?? ""} ${err?.message ?? ""}`.trim();
+  if (!text) return true; // No message at all: treat as an inconclusive transport error.
+  if (DEFINITIVE_PATTERNS.some((p) => p.test(text))) return false;
+  return TRANSPORT_PATTERNS.some((p) => p.test(text));
+}
+
+/* ------------------------------------------------------------------ */
 /* Sync                                                                */
 /* ------------------------------------------------------------------ */
 
@@ -136,6 +196,7 @@ export interface FlushResult {
   failed: number;
   skipped: boolean;
 }
+
 
 /**
  * Sends every queued entry. An item is deleted from the queue only after the
@@ -175,3 +236,75 @@ export async function flushQueue(
   }
   return { synced, failed, skipped: false };
 }
+
+/* ------------------------------------------------------------------ */
+/* Single entry point for saving a NEW manual entry                    */
+/* ------------------------------------------------------------------ */
+
+export type SubmitStatus = "saved" | "queued-offline" | "queued-retry";
+
+export interface SubmitInput {
+  /** Generated ONCE per form submission and kept for the entry's whole life. */
+  clientRef: string;
+  ecosystemId: string;
+  kind: EntryKind;
+  amount: number;
+  description: string;
+  categoryId: string | null;
+  categoryName: string | null;
+  occurredAt: Date;
+  notes: string | null;
+}
+
+/**
+ * Saves a new manual entry, never losing what the admin typed.
+ *
+ * - Known offline → queued straight away.
+ * - Sent but the transport failed (browser still claims to be online, request
+ *   timed out, gateway error, connection dropped) → queued with the SAME
+ *   `client_ref`, so the retry returns the row the server may already have
+ *   created instead of adding a second one.
+ * - Definitive server answer (validation, permission, unknown category) →
+ *   rethrown so the admin sees and fixes it; queueing it would only repeat it.
+ */
+export async function submitNewEntry(
+  input: SubmitInput,
+  send: typeof saveManualEntry = saveManualEntry,
+): Promise<SubmitStatus> {
+  const queued = {
+    clientRef: input.clientRef,
+    ecosystemId: input.ecosystemId,
+    kind: input.kind,
+    amount: input.amount,
+    description: input.description,
+    categoryId: input.categoryId,
+    categoryName: input.categoryName,
+    occurredAt: input.occurredAt.toISOString(),
+    notes: input.notes,
+  };
+
+  if (isOffline()) {
+    enqueueEntry(queued);
+    return "queued-offline";
+  }
+
+  try {
+    await send({
+      ecosystemId: input.ecosystemId,
+      kind: input.kind,
+      amount: input.amount,
+      description: input.description,
+      categoryId: input.categoryId,
+      occurredAt: input.occurredAt,
+      notes: input.notes,
+      clientRef: input.clientRef,
+    });
+    return "saved";
+  } catch (e) {
+    if (!isTransportFailure(e)) throw e;
+    enqueueEntry(queued);
+    updateQueuedEntry(input.clientRef, { attempts: 1, lastError: (e as Error).message });
+    return "queued-retry";
+  }
+}
+
