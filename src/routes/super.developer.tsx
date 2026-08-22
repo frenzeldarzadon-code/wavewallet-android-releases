@@ -528,13 +528,23 @@ function InspectAccounts({ role, enabled }: { role: Role; enabled: boolean }) {
     let active = true;
     setLoading(true);
     void (async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, full_name, email, role")
+      // Roles live in user_roles — never on the profile row.
+      const { data: roleRows } = await supabase
+        .from("user_roles")
+        .select("user_id")
         .eq("role", role)
-        .limit(25);
+        .limit(50);
+      const ids = (roleRows ?? []).map((r) => r.user_id);
+      const { data } = ids.length
+        ? await supabase.from("profiles").select("id, full_name, email").in("id", ids).limit(25)
+        : { data: [] };
       if (!active) return;
-      setRows((data as AccountRow[] | null) ?? []);
+      setRows(
+        ((data ?? []) as { id: string; full_name: string | null; email: string }[]).map((p) => ({
+          ...p,
+          role,
+        })),
+      );
       setLoading(false);
     })();
     return () => {
