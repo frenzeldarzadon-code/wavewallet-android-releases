@@ -11,6 +11,7 @@ import { PageSection } from "@/components/ui-kit";
 import { RetentionPolicyCard } from "@/components/retention-policy-card";
 import { ListenerDevicesCard } from "@/components/super/listener-devices-card";
 import { ListenerDeviceScreenButton } from "@/components/money/listener-device-screen-button";
+import { ListenerSourceRulesCard } from "@/components/money/listener-source-rules-card";
 import { CashInNumberCard } from "@/components/money/cash-in-number-card";
 import { ShopIdentityCard } from "@/components/shop/shop-identity-card";
 import { useSession } from "@/lib/session";
@@ -382,6 +383,7 @@ function AdminSettings() {
         <>
           <ListenerDeviceScreenButton />
           <ListenerDevicesCard ecosystemId={ecosystemDbId} ecosystemName={ecosystem.name} />
+          <ListenerSourceRulesCard ecosystemId={ecosystemDbId} ecosystemName={ecosystem.name} />
         </>
       ) : null}
       <RetentionPolicyCard />

@@ -2372,6 +2372,74 @@ export type Database = {
           },
         ]
       }
+      listener_source_rules: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          device_id: string | null
+          ecosystem_id: string | null
+          id: string
+          mode: string
+          note: string | null
+          package_name: string
+          provider_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          device_id?: string | null
+          ecosystem_id?: string | null
+          id?: string
+          mode: string
+          note?: string | null
+          package_name: string
+          provider_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          device_id?: string | null
+          ecosystem_id?: string | null
+          id?: string
+          mode?: string
+          note?: string | null
+          package_name?: string
+          provider_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listener_source_rules_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "listener_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listener_source_rules_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listener_source_rules_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listener_source_rules_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "payment_provider_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       login_attempts: {
         Row: {
           attempted_at: string
@@ -6829,6 +6897,7 @@ export type Database = {
         Returns: undefined
       }
       delete_expense: { Args: { _id: string }; Returns: boolean }
+      delete_listener_source_rule: { Args: { _rule: string }; Returns: boolean }
       delete_payment_method: { Args: { _id: string }; Returns: undefined }
       delete_social_promotion_tier: {
         Args: { _tier_id: string }
@@ -7379,6 +7448,14 @@ export type Database = {
       listener_serves_destination: {
         Args: { _device: string; _ecosystem: string; _method: string }
         Returns: boolean
+      }
+      listener_source_allowed: {
+        Args: { _device: string; _package: string }
+        Returns: boolean
+      }
+      listener_source_rules_list: {
+        Args: { _ecosystem?: string }
+        Returns: Json
       }
       listener_unmatched_events: { Args: { _limit?: number }; Returns: Json }
       live_shop_name: { Args: { _name: string }; Returns: string }
@@ -7972,39 +8049,23 @@ export type Database = {
               isSetofReturn: false
             }
           }
-      record_listener_event:
-        | {
-            Args: {
-              _amount?: number
-              _device: string
-              _event_uid: string
-              _gcash_reference?: string
-              _package: string
-              _parser_version?: string
-              _posted_at?: string
-              _raw_text?: string
-              _sender_name?: string
-              _sender_number?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              _amount?: number
-              _app_label?: string
-              _device: string
-              _event_uid: string
-              _gcash_reference?: string
-              _package: string
-              _parser_version?: string
-              _posted_at?: string
-              _provider?: string
-              _raw_text?: string
-              _sender_name?: string
-              _sender_number?: string
-            }
-            Returns: Json
-          }
+      record_listener_event: {
+        Args: {
+          _amount?: number
+          _app_label?: string
+          _device: string
+          _event_uid: string
+          _gcash_reference?: string
+          _package: string
+          _parser_version?: string
+          _posted_at?: string
+          _provider?: string
+          _raw_text?: string
+          _sender_name?: string
+          _sender_number?: string
+        }
+        Returns: Json
+      }
       record_manual_gcash_payment: {
         Args: {
           _amount: number
@@ -9158,6 +9219,16 @@ export type Database = {
           _subreseller_percent: number
         }
         Returns: undefined
+      }
+      set_listener_source_rule: {
+        Args: {
+          _device?: string
+          _ecosystem?: string
+          _mode: string
+          _note?: string
+          _package: string
+        }
+        Returns: Json
       }
       set_login_username: {
         Args: { _target: string; _username: string }

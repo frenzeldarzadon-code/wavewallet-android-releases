@@ -244,7 +244,14 @@ export function deviceHealthLine(device: ListenerDevice) {
 
 /** Plain-language outcome of one forwarded notification. */
 export function eventResultLabel(event: ListenerEvent) {
+  if (event.outcome === "source_disabled") {
+    return "Source disabled — this app is switched off for this phone, so nothing was read";
+  }
+  if (event.outcome === "non_payment") {
+    return "Not a recognised payment app — ignored";
+  }
   if (event.outcome === "unparsed") return "Could not read an amount — kept for review";
+
   const result = event.match_result ?? "";
   if (result.startsWith("matched:approved")) return "Matched and approved automatically";
   if (result.startsWith("matched:staged")) return "Matched — staged mode, nothing was settled";
@@ -266,3 +273,56 @@ export function eventResultLabel(event: ListenerEvent) {
   return "Recorded";
 }
 
+
+/**
+ * Configurable notification-source filtering.
+ *
+ * A rule says whether one Android app (package name, or `*` for every app) may
+ * be read by the listener. With no rules saved everything stays allowed, so
+ * existing installations keep working. The most specific scope wins:
+ * device rule > shop rule > platform rule.
+ */
+export type ListenerSourceRule = {
+  id: string;
+  ecosystem_id: string | null;
+  ecosystem_name: string | null;
+  device_id: string | null;
+  device_label: string | null;
+  package_name: string;
+  mode: "allow" | "deny";
+  provider_id: string | null;
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function fetchListenerSourceRules(
+  ecosystemId: string | null = null,
+): Promise<ListenerSourceRule[]> {
+  const { data, error } = await rpc("listener_source_rules_list", { _ecosystem: ecosystemId });
+  if (error) throw new Error(error.message);
+  return (data as ListenerSourceRule[] | null) ?? [];
+}
+
+export async function setListenerSourceRule(input: {
+  packageName: string;
+  mode: "allow" | "deny";
+  ecosystemId?: string | null;
+  deviceId?: string | null;
+  note?: string | null;
+}): Promise<ListenerSourceRule> {
+  const { data, error } = await rpc("set_listener_source_rule", {
+    _package: input.packageName,
+    _mode: input.mode,
+    _ecosystem: input.ecosystemId ?? null,
+    _device: input.deviceId ?? null,
+    _note: input.note ?? null,
+  });
+  if (error) throw new Error(error.message);
+  return data as ListenerSourceRule;
+}
+
+export async function deleteListenerSourceRule(id: string): Promise<void> {
+  const { error } = await rpc("delete_listener_source_rule", { _rule: id });
+  if (error) throw new Error(error.message);
+}
