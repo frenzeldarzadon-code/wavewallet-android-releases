@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.upsert_payment_method(text, text, boolean, uuid, text, text, text, text, integer);
