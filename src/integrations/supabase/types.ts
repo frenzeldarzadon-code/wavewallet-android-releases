@@ -2817,6 +2817,72 @@ export type Database = {
           },
         ]
       }
+      payment_match_records: {
+        Row: {
+          cash_in_id: string
+          decision: string
+          ecosystem_id: string | null
+          id: string
+          listener_event_id: string | null
+          matched_at: string
+          notification_snapshot: Json
+          provider_id: string | null
+          receipt_snapshot: Json
+          reference_hash: string | null
+          signal_count: number
+          signals: Json
+          strong_signal: boolean
+          timing: Json
+        }
+        Insert: {
+          cash_in_id: string
+          decision: string
+          ecosystem_id?: string | null
+          id?: string
+          listener_event_id?: string | null
+          matched_at?: string
+          notification_snapshot?: Json
+          provider_id?: string | null
+          receipt_snapshot?: Json
+          reference_hash?: string | null
+          signal_count?: number
+          signals?: Json
+          strong_signal?: boolean
+          timing?: Json
+        }
+        Update: {
+          cash_in_id?: string
+          decision?: string
+          ecosystem_id?: string | null
+          id?: string
+          listener_event_id?: string | null
+          matched_at?: string
+          notification_snapshot?: Json
+          provider_id?: string | null
+          receipt_snapshot?: Json
+          reference_hash?: string | null
+          signal_count?: number
+          signals?: Json
+          strong_signal?: boolean
+          timing?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_match_records_cash_in_id_fkey"
+            columns: ["cash_in_id"]
+            isOneToOne: false
+            referencedRelation: "cash_in_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_match_records_listener_event_id_fkey"
+            columns: ["listener_event_id"]
+            isOneToOne: false
+            referencedRelation: "listener_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_methods: {
         Row: {
           account_name: string | null
@@ -7484,6 +7550,13 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      listener_match_signal_details: {
+        Args: {
+          _ev: Database["public"]["Tables"]["listener_events"]["Row"]
+          _row: Database["public"]["Tables"]["cash_in_requests"]["Row"]
+        }
+        Returns: Json
+      }
       listener_match_signals: {
         Args: {
           _ev: Database["public"]["Tables"]["listener_events"]["Row"]
@@ -8129,6 +8202,15 @@ export type Database = {
           _sender_number?: string
         }
         Returns: Json
+      }
+      record_payment_match: {
+        Args: {
+          _cash_in: string
+          _decision: string
+          _provider: string
+          _reference_hash?: string
+        }
+        Returns: string
       }
       record_verified_payment: {
         Args: {

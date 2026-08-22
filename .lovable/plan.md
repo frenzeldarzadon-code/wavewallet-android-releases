@@ -1,5 +1,18 @@
 # Provider-agnostic receipt ↔ notification matching
 
+## Non-negotiable matching rule (applies to every provider, now and later)
+
+1. Automatic approval requires **at least 2 independent pieces of information that agree** between the customer's receipt and the notification captured by the phone.
+2. At least one of them must be a **strong identity/payment signal**: full reference/transaction number, sender account identifier, receiver account identifier, masked account tail, or an explicitly defined equivalent added later.
+3. **Amount alone is never enough.**
+4. **Hard veto:** when both sides carry a reference and the two references disagree, the match is refused outright.
+5. **Time is never a required signal.** The listener's received/captured time and the payment time are contextual evidence only, held inside a generous window (up to 3 days before and 7 days after the payment). A notification captured minutes, hours or days after the payment must never fail an otherwise valid payment.
+6. Every decision writes a durable match record naming which signals agreed, with the listener's `received_at` stored separately as timing metadata — never as a signal.
+
+**Status: implemented.** `listener_match_signals` + `listener_has_strong_signal` enforce 1–4 in both `match_listener_event` and `try_auto_approve_cash_in`; the window in `match_listener_event` is now anchored on the notification's own posted time and asymmetric (−3 days / +7 days) for 5; `payment_match_records` + `record_payment_match` + `listener_match_signal_details` cover 6. Regression test: `supabase/tests/cash-in-late-notification-capture.sql`.
+
+
+
 ## What is already provider-agnostic (verified in the live database and code)
 
 - `record_listener_event` no longer requires the device's own package. It runs the source allow/deny rules first (`listener_source_allowed`), then resolves a provider with `payment_provider_for(package, text)` against `payment_provider_registry`. Unknown app → stored as `non_payment`; blocked app → `source_disabled`; provider known but no amount → `unparsed`.
@@ -14,7 +27,7 @@ So GCash flow, the 1,500 payment path, pairing/revocation and the ≥2-signal ru
 
 1. **Receipt reading is GCash-only.** The vision prompt in `src/lib/cash-in-receipt.server.ts` says "You are reading a GCash payment receipt" and only names GCash fields. A Maya or bank receipt is read badly or marked unreadable.
 2. **No provider on the receipt/request side.** `cash_in_requests` has no provider column, so `try_auto_approve_cash_in` falls back to `coalesce(_provider, 'gcash')` when there is no listener event — the wrong namespace for a non-GCash reference hash.
-3. **No durable match record.** Which signals matched and why approval happened lives only in an `audit_logs` JSON blob and in mutable joins; nothing snapshots the receipt values and the notification values at approval time. Point 5 (history must not depend on current parser/config) is not satisfied.
+3. ~~**No durable match record.**~~ **Done** — `payment_match_records` now snapshots the receipt values, the notification values, the agreeing signals and the timing metadata at decision time, so history no longer depends on the current parser or provider configuration.
 4. **No learned provider patterns.** Nothing records observed notification shapes per provider, so extraction never improves (point 6).
 5. **Signals are number-shaped only.** `sender_number_key` uses `normalize_ph_mobile`; bank receipts often expose a masked account or a payer name instead, so a valid bank payment can reach only 1 signal and stall in review (safe, but never auto-approves).
 
@@ -40,12 +53,13 @@ So GCash flow, the 1,500 payment path, pairing/revocation and the ≥2-signal ru
 - `listener_has_strong_signal` stays reference-or-sender; add "matching reference tail + exact amount + same provider within 15 minutes" as a strong signal **only** when no full reference exists on either side. Amount alone still never qualifies.
 - Everything GCash already satisfies keeps satisfying it — the current two signals are unchanged, these are additions.
 
-### D. Durable, self-contained match record
+### D. Durable, self-contained match record — SHIPPED
 
-- New table `public.payment_match_records`: `id`, `cash_in_id`, `listener_event_id`, `ecosystem_id`, `provider_id`, `matched_at`, `decision` (`auto_approved` | `staged` | `manual_approved`), `signals jsonb` (each signal with name, receipt value, notification value, agreed true/false), `receipt_snapshot jsonb`, `notification_snapshot jsonb` (normalised fields; raw text only for Super Admin), `reference_hash`, `rule_snapshot jsonb`.
-- Written inside `try_auto_approve_cash_in` (and on manual approval with a listener event) before settlement, in the same transaction.
-- RLS: shop admins read their own ecosystem's rows without raw text; Super Admin reads all. GRANTs per project convention.
+- Table `public.payment_match_records`: `cash_in_id`, `listener_event_id`, `ecosystem_id`, `provider_id`, `decision` (`auto_approved` | `staged` | `manual_approved`), `signal_count`, `strong_signal`, `signals jsonb` (each signal with name, strength, receipt value, notification value, agreed true/false), `receipt_snapshot`, `notification_snapshot` (normalised fields only, no raw text), `timing` (`paid_at`, `notification_posted_at`, `listener_received_at`, `capture_delay_minutes`), `reference_hash`, `matched_at`.
+- Written by `record_payment_match` inside `try_auto_approve_cash_in`, for both the staged and the approved decision, in the same transaction. Manual approval with a listener event will reuse the same function.
+- RLS: Super Admin reads all, shop admins read only their own ecosystem's rows; no insert/update/delete from the app.
 - Snapshots are literal copies, so history stays true even if a parser, a provider registry row, or a shop's configuration changes later.
+
 
 ### E. Learned provider patterns (assist only, never authority)
 
