@@ -34,6 +34,10 @@ import { platformSettings } from "@/lib/wavewallet";
 import type { Nav, NavGroup, NavItem } from "@/lib/navigation";
 
 export type { NavItem } from "@/lib/navigation";
+import { applyBottomNavLayout, applyNavLayout } from "@/lib/ui-layout";
+import { useDeveloperMode, useRoleLayout } from "@/lib/dev-mode";
+import { DevSlotHost, RoleLayoutProvider } from "@/components/dev/dev-slot";
+import { DeveloperModeBanner } from "@/components/dev/developer-mode-banner";
 
 const COLLAPSE_KEY = "ww.sidebar.collapsed";
 
