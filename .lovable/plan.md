@@ -1,115 +1,57 @@
-# Push Notification Audit — WaveWallet (inspection only, no changes made)
+# Payment-method-agnostic notification listener
 
-**Verdict: there are NO true OS-level push notifications today.** The app has a complete
-in-app notification centre plus an honest "device registry" scaffold, but no push provider,
-no FCM, no VAPID keys, and no server-side sender. Nothing can reach a phone whose app is
-closed.
+## What the current system actually does (verified)
 
-## 1. Android APK / native wrapper — no push provider
+**Android (in-app listener)**
+- `GcashNotificationListener` hard-filters on `sbn.packageName != BuildConfig.GCASH_PACKAGE` ("com.globe.gcash.android") in both `onNotificationPosted` and the reconnect sweep. Everything else is dropped in memory and never counted or stored.
+- `GcashParser` (v2) then classifies: `Ignored` (dropped), `Unparsed` (queued with no amount), `Payment` (queued with amount/sender/reference).
+- The pairing screen sends a manual "WAVEWALLET TEST EVENT" with `packageName = BuildConfig.GCASH_PACKAGE`.
 
-`android-app/` is a plain WebView shell (`MainActivity.kt`, `AboutActivity.kt`,
-`ImageSaver.kt`, `NetworkStatus.kt`).
+**Server ingest** — `src/routes/api/public/payments/listener.ts`
+- HMAC-signed (device + ts + nonce + body), replay-protected, revoked devices get 403.
+- Re-parses `raw_text` with `src/lib/gcash-notification.ts` (mirror of the Android parser), then calls `record_listener_event`.
 
-- `android-app/app/build.gradle.kts` dependencies: `core-ktx`, `appcompat`, `activity-ktx`,
-  `webkit`, `swiperefreshlayout`, `junit`. **No `firebase-bom`, no `firebase-messaging`,
-  no `com.google.gms.google-services` plugin** (root `build.gradle.kts` has only AGP +
-  Kotlin). No `google-services.json` anywhere in the repo.
-- No OneSignal / Airship / Pusher / any alternative provider.
-- The only push-adjacent Android code in the repo belongs to a different app,
-  `android-gcash-listener/`, which *reads* GCash notifications (`NotificationListenerService`)
-  and posts them to the backend. It does not deliver notifications to customers.
+**Database**
+- `record_listener_event` **rejects any package other than the device's own `package_name`** ("Only % notifications are accepted"). Events with no positive amount are stored with `outcome='unparsed'` and never matched.
+- `match_listener_event` requires amount + sender number key + 3-day time window + shop scope (`listener_serves_destination`). Multiple candidates → `ambiguous`.
+- `try_auto_approve_cash_in` additionally requires receipt/OCR agreement, a reference key, sender/amount match, listener device online, and no duplicate reference.
+- Duplicate protection is **already global** (`cash_in_reference_duplicate` scans all `cash_in_requests` with no ecosystem filter, plus a global check against `listener_events.reference_key`).
 
-## 2. Android 13+ permission and channels — missing in the customer app
+**Diagnosis of the screenshots (confirmed by data)**
+- Active device `…f753327`: `listener_connected=true`, `notification_access=true`, `received_count=0`, `app_version 1.3.0`.
+- The three newest server events on that device all have `raw_text = "WAVEWALLET TEST EVENT — not a payment, no amount, cannot credit any wallet."` and `outcome='unparsed'`.
+- So the "Unreadable" rows on the server are **the app's own test events**, working as designed — not failed GCash parses. "GCash notifications received 0" means Android delivered zero notifications from `com.globe.gcash.android` to the app. That is the **native package filter combined with no real GCash notification arriving** (or a GCash build using a different package id) — the parser is not the failing layer here. Making the listener read all packages will make this immediately visible.
 
-`android-app/app/src/main/AndroidManifest.xml` declares only `INTERNET` and
-`ACCESS_NETWORK_STATE`. **No `POST_NOTIFICATIONS`**, no runtime permission request, no
-`NotificationChannel` creation, no notification-posting code in `MainActivity.kt`.
+## Proposed changes
 
-(The listener app does declare `POST_NOTIFICATIONS` and creates a channel in
-`service/ListenerForegroundService.kt` — that is the operator's own tool, not the customer APK.)
+### A. Android (requires the next APK release — versionCode 6 / 1.4.0)
+1. Remove the package whitelist. Capture every posted notification; keep a small ignore list for WaveWallet's own notifications and empty-text ones.
+2. Send `package_name`, `app_label`, `title`, `text`, `posted_at`, plus existing signed device identity. Keep sending the phone-side parsed fields **only** when the provider is recognised locally; otherwise send the text and let the server decide.
+3. Two counters in diagnostics: "notifications seen (all apps)" and "payment-provider notifications". This makes the 0-vs-unreadable confusion self-diagnosing.
+4. Permission wording updated: "WaveWallet reads notifications on this phone locally and only uploads ones that match a configured payment provider."
+5. `android-gcash-listener` standalone project untouched.
 
-## 3. Token collection — no FCM tokens; browser-subscription scaffold only
+### B. Server (can ship now, web-only)
+6. New provider registry `src/lib/payment-providers/` with a `PaymentProvider` interface (`id`, `packages[]`, `matches(text)`, `parse(text)` → amount / sender / reference / receiver). GCash moves in behind the existing parser unchanged; adding a provider later is one file.
+7. Ingest route accepts the richer payload (`app_label`, `title`, `text`), resolves the provider from package + text, and forwards `provider_id`. Old payloads keep working (fields optional).
+8. `record_listener_event`: replace the hard "package must equal device package" rejection with — accepted providers are stored as payment events; unrecognised packages are stored as `outcome='non_payment'` (or dropped by policy) and are never eligible for matching. Device stays shop-scoped exactly as today.
 
-- No `FirebaseMessaging.getInstance().token`, no `onNewToken` anywhere.
-- The web app has `public.push_devices` (migration `20260817065540…`) with
-  `endpoint`, `p256dh`, `auth`, `push_enabled`, `expired_at`, RLS scoped to `auth.uid()`,
-  written through `public.register_push_device(...)` (EXECUTE revoked from `anon`).
-  So there *is* a secure, user-associated device registry — it is just fed by the Web Push
-  API, not FCM.
-- `src/lib/financial-notifications.ts` → `browserSubscription()` returns `null` unless
-  `VITE_VAPID_PUBLIC_KEY` is set. **It is not set in `.env`**, so every registration stores a
-  local device id with no real push endpoint.
+### C. Two-independent-signals rule (the core safety change)
+9. Add a scoring function `listener_event_match_confidence(event, cash_in)` returning the count of **independent** agreeing signals from: exact reference, sender account key, amount (within tolerance), receiving account. Amount alone counts as one signal and can never reach the bar.
+10. `match_listener_event` / `link_cash_in_listener_event` require **≥ 2 independent signals** and exactly one candidate. Today amount+sender is effectively required, so GCash behaviour is preserved; the rule becomes explicit and provider-agnostic.
+11. `unparsed` / ambiguous / single-signal events stay `review_state='pending'` and never auto-approve. All existing OCR/receipt corroboration in `try_auto_approve_cash_in` is untouched.
 
-## 4. Background/closed-app receiver — none
+### D. Global duplicate protection without cross-shop leakage
+12. New table `public.payment_reference_seen (provider_id, reference_hash, first_used_at, cash_in_id, ecosystem_id)` — `reference_hash` is a salted SHA-256 of the normalised reference; no amounts, names or raw text. Written on successful corroboration.
+13. Duplicate check consults this table platform-wide. Shop admins see only a boolean "this reference was already used on the platform"; the owning shop, amount and payer are visible to Super Admin only (RLS + a `security definer` indicator function). Existing global reference checks remain as a second net.
 
-- No `FirebaseMessagingService` subclass in the APK.
-- The service worker (`vite-plugin-pwa` in `vite.config.ts`, emitted as `/sw.js`) is
-  Workbox caching only: `globPatterns`, `runtimeCaching`. **No `push` event listener and no
-  `notificationclick` handler.** A WebView also does not run a site service worker for push.
-- Consequence: nothing can display a notification while WaveWallet is backgrounded or closed.
+### E. Isolation and UI
+14. No pairing/revocation changes. Device → ecosystem binding stays authoritative for which shop an event may serve.
+15. Admin UI shows provider, amount, masked sender, reference tail and matched signals — **not** raw notification text. Raw text stays Super Admin only, as today.
 
-## 5. Server-side sender — does not exist
+## Ordering
 
-- `public.notify_financial` / `notify_financial_safe` (migration `20260817070138…`) insert a
-  row into `member_notifications` (idempotent on `event_key`), then insert
-  `notification_deliveries` rows with status `pending` per active device — or `skipped` with
-  reason `category_muted` / `account_push_disabled` / `no_active_device`.
-- **Nothing ever moves a row from `pending` to `sent`.** There is no web-push library, no FCM
-  HTTP v1 call, no Admin SDK, no Edge Function or server route that sends. `src/routes/api/public/`
-  contains only `app-version.ts` and `payments/listener.ts`.
+1. Ship B + C + D + E (database migration + web) — no APK needed, existing GCash flow keeps working.
+2. Then the Android change (A) in the next signed release; the server already accepts both old and new payloads.
 
-## 6. Financial events → push? No; in-app rows only
-
-The financial wiring itself is correct and post-commit: money RPCs call `notify_financial_safe`
-after the ledger write, with categories in `src/lib/financial-notifications.ts`
-(`cash_in`, `purchase`, `cashback`, `transfer`, `points`, `reward_redemption`, `refund`,
-`withdrawal`, `wallet_adjustment`). A raw GCash listener detection does **not** notify — only a
-confirmed transaction does, which already matches your desired rule. But the outcome is an
-in-app row plus, at best, `showBrowserNotification()` in `src/lib/notifications.ts`, which
-only fires while a tab is open and focused.
-
-## 7. Deep links — half present
-
-`member_notifications.link` is stored and `notificationLink()` (`src/lib/notifications.ts`)
-routes in-app taps via `NotificationBell` / `universe/notifications-page.tsx`. There is no
-`notificationclick` handler and no Android intent/deep-link path, so a *system* notification
-tap has no route today.
-
-## 8. In-app centre vs real push
-
-| Layer | Status |
-| --- | --- |
-| In-app notification centre (bell, `/universe/notifications`, prefs, delivery log) | Implemented |
-| Foreground browser alert while a tab is open | Implemented (`showBrowserNotification`) |
-| Device registry + per-category preferences + delivery audit | Implemented, unused for sending |
-| OS push with app closed | **Not implemented** |
-
-`src/lib/notifications.ts` already documents this honestly in `PUSH_REQUIREMENTS`.
-
-## 9. Minimum work to get GCash-style push on the current APK
-
-Recommended path: **FCM in the native APK** (a WebView cannot receive Web Push reliably on Android).
-
-1. Add Firebase to `android-app`: `google-services` plugin, `firebase-messaging`,
-   `google-services.json`.
-2. Add `POST_NOTIFICATIONS` to the manifest, request it at runtime on Android 13+, and create
-   a high-importance "Money alerts" channel.
-3. Add a `FirebaseMessagingService` (`onNewToken`, `onMessageReceived`) that posts a
-   notification with a `PendingIntent` carrying the `link`, and have `MainActivity` load that
-   path in the WebView.
-4. Bridge the signed-in user to the token: a JS interface exposing the FCM token to the web
-   layer so it can call `register_push_device` with a new `provider='fcm'` / `token` column —
-   the existing table, RLS and preferences then apply unchanged.
-5. Backend sender: a TanStack server route/cron that reads `notification_deliveries` rows with
-   status `pending`, calls FCM HTTP v1 with a service-account secret, and marks
-   `sent`/`failed` + `expired_at` on `UNREGISTERED`. Keep it triggered only by committed
-   financial events (already the case).
-6. Optional web parity: generate VAPID keys, set `VITE_VAPID_PUBLIC_KEY`, add `push` +
-   `notificationclick` handlers to the service worker, and send via `web-push` for desktop
-   browsers.
-
-iOS: nothing in the current architecture supports it — there is no iOS app and no APNs
-configuration. It would require a separate wrapper plus APNs (reachable through the same FCM
-sender once built).
-
-No files were changed, no commit made, nothing published.
+Nothing is built, published or deployed as part of this plan.
