@@ -55,7 +55,7 @@ export function PointsEarningsPanel({
   }, [userId, ecosystemId]);
 
   return (
-    <PageSection
+    <PageSection devSlot="points-earnings-panel.points-earnings"
       title="Points earnings"
       description="Points you earned from purchases. Open your transaction history for the full detail."
     >

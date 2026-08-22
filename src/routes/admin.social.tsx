@@ -104,7 +104,7 @@ function AdminSocial() {
 
       <HiddenPostsCard ecosystemId={ecosystemDbId} />
 
-      <PageSection
+      <PageSection devSlot="social.reported-content"
         title="Reported content"
         description="Members can report posts, replies and other members. Everything here is scoped to your shop only."
       >
@@ -144,7 +144,7 @@ function AdminSocial() {
         )}
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="social.social-coin-activity"
         title="Social coin activity"
         description="Immutable ledger of daily allowances, exchanges, promotions and spending in your shop."
       >

@@ -227,7 +227,7 @@ function AdminRewards() {
       </TabsList>
 
       <TabsContent value="catalog">
-        <PageSection
+        <PageSection devSlot="rewards.physical-rewards"
           title="Physical rewards"
           description="Name, description, points price, stock and an optional image."
           action={
@@ -300,7 +300,7 @@ function AdminRewards() {
       </TabsContent>
 
       <TabsContent value="redemptions">
-        <PageSection
+        <PageSection devSlot="rewards.verify-a-redemption"
           title="Verify a redemption"
           description="Enter or scan the redemption code presented by the customer."
         >
@@ -332,7 +332,7 @@ function AdminRewards() {
           </Card>
         </PageSection>
 
-        <PageSection
+        <PageSection devSlot="rewards.redemption-history"
           title="Redemption history"
           description="Points stay on hold until approval; rejection releases them."
           action={

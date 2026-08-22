@@ -104,7 +104,7 @@ export function ManualCreditCard() {
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="manual-credit-card.issue-coins"
         title="Issue coins"
         description="Super Admin Coin Issuance: new coins are minted from the platform issuance authority straight into an account. Nothing is deducted from your own wallet — you can issue with a zero balance. Recorded with your name, the amount, the reason and the resulting balance. It creates no vouchers and no commission."
       >

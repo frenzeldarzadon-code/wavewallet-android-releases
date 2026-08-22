@@ -138,7 +138,7 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
 
 
   return (
-    <PageSection
+    <PageSection devSlot="history-page.all-wallet-transactions"
       title="All wallet transactions"
       description={
         shopName

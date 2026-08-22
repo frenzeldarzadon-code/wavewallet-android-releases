@@ -381,7 +381,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="money-page.cash-out-cash-in"
         title="Cash out & cash in"
         description={`Cash in fee ${settings.cashInFeePercent}% · cash out fee ${settings.feePercent}%. Balances and requests are shown in coins.`}
       >
@@ -528,7 +528,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
             </CardContent>
           </Card>
 
-          <PageSection title="My withdrawal requests">
+          <PageSection devSlot="money-page.my-withdrawal-requests" title="My withdrawal requests">
             {withdrawals.length === 0 ? (
               <EmptyState title="No withdrawals yet" description="Your cash out history will appear here." />
             ) : (
@@ -588,7 +588,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
         </TabsContent>
 
         <TabsContent value="in" className="mt-4 space-y-4">
-          <PageSection
+          <PageSection devSlot="money-page.where-to-send-your-payment"
             title="Where to send your payment"
             description="Pay to one of the accounts below, then submit your cash in request with the reference number."
           >
@@ -812,7 +812,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
             </CardContent>
           </Card>
 
-          <PageSection title="My cash in requests">
+          <PageSection devSlot="money-page.my-cash-in-requests" title="My cash in requests">
             {cashIns.length === 0 ? (
               <EmptyState title="No cash in requests yet" />
             ) : (

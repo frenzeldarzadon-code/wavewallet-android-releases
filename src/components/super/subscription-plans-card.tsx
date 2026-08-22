@@ -48,7 +48,7 @@ export function SubscriptionPlansCard({ onSaved }: { onSaved?: () => void }) {
   }, [load]);
 
   return (
-    <PageSection
+    <PageSection devSlot="subscription-plans-card.subscription-plans-rates"
       title="Subscription plans & rates"
       description="Subscription Shops only. These monthly rates and Coin allocations are used by the public guide, activation, renewal and upgrade proration. Legacy Shops are not affected."
     >

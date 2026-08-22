@@ -90,7 +90,7 @@ export function LovableCreditsCard({ onChange }: { onChange?: () => void }) {
   };
 
   return (
-    <PageSection
+    <PageSection devSlot="lovable-credits-card.lovable-ai-credits"
       title="Lovable AI credits"
       description="Record what you actually paid for Lovable credits. Lovable billing offers no purchase webhook to this app, so entries are added from your receipt — they are never estimated. Each one is a platform operating expense counted in total expenses and net earnings."
     >

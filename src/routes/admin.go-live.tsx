@@ -52,7 +52,7 @@ function AdminGoLivePage() {
 
   if (!status.isNewGeneration) {
     return (
-      <PageSection title="Go Live" description="This page is for New Generation shops.">
+      <PageSection devSlot="go-live.go-live" title="Go Live" description="This page is for New Generation shops.">
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="px-4 text-sm text-muted-foreground">
             This shop keeps its existing WaveWallet subscription arrangement, so there is nothing to
@@ -66,7 +66,7 @@ function AdminGoLivePage() {
   if (!status.isDemo) {
     return (
       <>
-        <PageSection
+        <PageSection devSlot="go-live.your-shop-is-live"
           title="Your shop is live"
           description="Demo mode is finished — everything in this console now moves real Coins."
         >
@@ -99,7 +99,7 @@ function AdminGoLivePage() {
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="go-live.demo-shop-not-live-yet"
         title="Demo shop — not live yet"
         description="Everything you have done so far used simulated Demo Coins. Subscribing keeps the same shop, login, name and settings."
       >

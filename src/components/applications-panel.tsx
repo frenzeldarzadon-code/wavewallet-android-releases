@@ -101,7 +101,7 @@ export function ApplicationsPanel({
   const openCount = rows.filter((r) => r.status === "pending").length;
 
   return (
-    <PageSection
+    <PageSection devSlot="applications-panel.applications"
       title={title}
       description={description}
       action={

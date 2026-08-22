@@ -36,7 +36,7 @@ import type { Nav, NavGroup, NavItem } from "@/lib/navigation";
 export type { NavItem } from "@/lib/navigation";
 import { applyBottomNavLayout, applyNavLayout } from "@/lib/ui-layout";
 import { useDeveloperMode, useRoleLayout } from "@/lib/dev-mode";
-import { DevSlotHost, RoleLayoutProvider } from "@/components/dev/dev-slot";
+import { RoleLayoutProvider } from "@/components/dev/dev-slot";
 import { DeveloperModeBanner } from "@/components/dev/developer-mode-banner";
 
 const COLLAPSE_KEY = "ww.sidebar.collapsed";
@@ -291,8 +291,6 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
           <main className="mx-auto w-full max-w-5xl px-4 pt-4 pb-28 lg:px-8 lg:pb-10">
             <RoleLayoutProvider role={role}>
               {children}
-              {/* Content blocks a Super Admin moved onto this tab. */}
-              <DevSlotHost tab={pathname} />
             </RoleLayoutProvider>
           </main>
         </div>

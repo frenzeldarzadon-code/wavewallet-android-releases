@@ -66,7 +66,7 @@ export function EarningsSummaryCards({
   const show = (v: number) => (loading ? "—" : peso(v));
 
   return (
-    <PageSection title={title} description={description}>
+    <PageSection devSlot="earnings-summary-cards.earnings-summary-s" title={title} description={description}>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Today" value={show(totals.today)} tone="positive" />
         <StatCard label="This month" value={show(totals.month)} tone="positive" />

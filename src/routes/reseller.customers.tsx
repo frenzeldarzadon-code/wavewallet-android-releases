@@ -130,7 +130,7 @@ function ResellerCustomers() {
           </TabsList>
         ) : null}
         <TabsContent value="customers" className="mt-0">
-      <PageSection
+      <PageSection devSlot="customers.load-customer-coins"
         title="Load customer coins"
         description={`Available in your wallet: ${peso(balance)} · any customer in ${ecosystem.name}, plus the subresellers you own.`}
       >
@@ -214,7 +214,7 @@ function ResellerCustomers() {
 
 
 
-      <PageSection title="Load history">
+      <PageSection devSlot="customers.load-history" title="Load history">
         {history.length === 0 ? (
           <EmptyState title="No loads yet" />
         ) : (

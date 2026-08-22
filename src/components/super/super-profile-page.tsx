@@ -235,7 +235,7 @@ export function SuperProfilePage() {
 
   if (actingAs) {
     return (
-      <PageSection title="Profile" description={`You are acting as ${actingAs.session.targetName}.`}>
+      <PageSection devSlot="super-profile-page.profile" title="Profile" description={`You are acting as ${actingAs.session.targetName}.`}>
         <Card>
           <CardContent className="space-y-2 p-5">
             <p className="text-sm font-medium">
@@ -358,7 +358,7 @@ export function SuperProfilePage() {
       </Card>
 
       {/* ------------------------------------------------- Platform cards */}
-      <PageSection
+      <PageSection devSlot="super-profile-page.platform-overview"
         title="Platform overview"
         description="Live counters across every tenant. Archived shops are excluded."
       >
@@ -409,7 +409,7 @@ export function SuperProfilePage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* ------------------------------------------------ At a glance */}
-        <PageSection
+        <PageSection devSlot="super-profile-page.super-admin-at-a-glance"
           title="Super Admin at a glance"
           description="Your access level and current session."
           className="mb-0"
@@ -449,7 +449,7 @@ export function SuperProfilePage() {
         </PageSection>
 
         {/* ------------------------------------------- Security centre */}
-        <PageSection
+        <PageSection devSlot="super-profile-page.security-centre"
           title="Security centre"
           description="What protects the platform owner account today."
           className="mb-0"
@@ -502,7 +502,7 @@ export function SuperProfilePage() {
       </div>
 
       {/* ------------------------------------------------------ Activity */}
-      <PageSection
+      <PageSection devSlot="super-profile-page.recent-activity"
         title="Recent activity"
         description="Your own recorded actions across the platform."
         action={
@@ -557,7 +557,7 @@ export function SuperProfilePage() {
       </PageSection>
 
       {/* ---------------------------------------------------- Privileges */}
-      <PageSection
+      <PageSection devSlot="super-profile-page.platform-privileges"
         title="Platform privileges"
         description="Capabilities granted to the platform owner. Every use is audited."
       >
@@ -600,7 +600,7 @@ export function SuperProfilePage() {
       </PageSection>
 
       {/* --------------------------------------------------- Preferences */}
-      <PageSection
+      <PageSection devSlot="super-profile-page.account-preferences"
         title="Account preferences"
         description="Saved to your profile, so they follow you to any device."
       >
@@ -699,7 +699,7 @@ export function SuperProfilePage() {
       </PageSection>
 
       {/* --------------------------------------------------- Danger zone */}
-      <PageSection title="Danger zone" description="Actions that affect access to your account.">
+      <PageSection devSlot="super-profile-page.danger-zone" title="Danger zone" description="Actions that affect access to your account.">
         <Card className="border-destructive/30 shadow-[var(--shadow-card)]">
           <CardContent className="space-y-4 p-4 sm:p-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

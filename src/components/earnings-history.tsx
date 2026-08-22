@@ -157,7 +157,7 @@ export function EarningsHistory({
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="earnings-history.earnings-history"
         title={title}
         description={
           description ??
@@ -279,7 +279,7 @@ export function EarningsHistory({
         </div>
       </PageSection>
 
-      <PageSection>
+      <PageSection devSlot="earnings-history.earnings-history-2">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard
             label={netLabel}
@@ -321,7 +321,7 @@ export function EarningsHistory({
         ) : null}
       </PageSection>
 
-      <PageSection title="Period summary" description="Totals per calendar period for the current filters.">
+      <PageSection devSlot="earnings-history.period-summary" title="Period summary" description="Totals per calendar period for the current filters.">
         {buckets.length === 0 ? (
           <EmptyState title="No earnings yet" description="Finalized sales will appear here." />
         ) : (
@@ -368,7 +368,7 @@ export function EarningsHistory({
         )}
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="earnings-history.earning-transactions"
         title="Earning transactions"
         description={`${filtered.length} records · earnings ${peso(totals.cash)}${
           showBenefit ? ` · discounts saved ${peso(totals.discountSaved)}` : ""

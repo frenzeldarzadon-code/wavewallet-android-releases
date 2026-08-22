@@ -106,7 +106,7 @@ export function ExpensesCard({
   };
 
   return (
-    <PageSection
+    <PageSection devSlot="expenses-card.expenses"
       title={title}
       description={
         description ??

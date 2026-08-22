@@ -42,7 +42,7 @@ function SuperMembers() {
     <>
       <MembersDirectory />
 
-      <PageSection
+      <PageSection devSlot="members.invite-into-a-shop"
         title="Invite into a shop"
         description="Pick the shop the invitation is for, then search the Universe directory. The invited member still has to accept."
       >

@@ -332,7 +332,7 @@ function SuperAdmins() {
         </div>
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="admins.tenant-shops"
         title="Tenant shops"
         description="One shop = one isolated shop. Counts come straight from the database."
       >
@@ -479,7 +479,7 @@ function SuperAdmins() {
         </Card>
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="admins.operator-invitations"
         title="Operator invitations"
         description="Admins exist only by invitation. There is no open operator registration."
       >

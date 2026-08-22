@@ -108,7 +108,7 @@ function SuperExport() {
   };
 
   return (
-    <PageSection
+    <PageSection devSlot="export.data-export-backup"
       title="Data export & backup"
       description="Read-only CSV copies of operational records for recovery and audit. Nothing here changes or deletes production data."
       className="space-y-4"

@@ -194,7 +194,7 @@ function AdminVouchers() {
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="vouchers.code-inventory"
         title="Code inventory"
         description="Voucher codes are imported manually. They are never generated or synced from any external system."
         action={
@@ -210,7 +210,7 @@ function AdminVouchers() {
         </div>
       </PageSection>
 
-      <PageSection title="Per product">
+      <PageSection devSlot="vouchers.per-product" title="Per product">
         {products.length === 0 ? (
           <EmptyState title="No products yet" description="Create a voucher product first." />
         ) : (

@@ -44,7 +44,7 @@ export function ConnectedLoginsCard() {
   const connected = (provider: string) => identities.find((i) => i.provider === provider) ?? null;
 
   return (
-    <PageSection
+    <PageSection devSlot="connected-logins-card.connected-logins"
       title="Connected logins"
       description="Ways you can sign in to this WaveWallet account. One person, one account — connecting a social login never creates a second identity."
     >

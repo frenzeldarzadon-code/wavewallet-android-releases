@@ -186,7 +186,7 @@ export function SpendingTrackerPage({ ecosystemId }: { ecosystemId: string | nul
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="spending-tracker-page.spending-tracker"
         title="Spending Tracker"
         description="Income and expenses for this shop only. Reporting view — no balance, earning or transaction is changed here."
         action={
@@ -370,7 +370,7 @@ export function SpendingTrackerPage({ ecosystemId }: { ecosystemId: string | nul
         </div>
       </PageSection>
 
-      <PageSection title="Breakdown" description="Where the money came from and where it went.">
+      <PageSection devSlot="spending-tracker-page.breakdown" title="Breakdown" description="Where the money came from and where it went.">
         <div className="grid gap-3 lg:grid-cols-2">
           <Card className="shadow-[var(--shadow-card)]">
             <CardContent className="space-y-3">
@@ -461,7 +461,7 @@ export function SpendingTrackerPage({ ecosystemId }: { ecosystemId: string | nul
         </div>
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="spending-tracker-page.entries"
         title="Entries"
         description="Automatic entries come from real transactions and cannot be edited. Manual entries are yours to change."
       >

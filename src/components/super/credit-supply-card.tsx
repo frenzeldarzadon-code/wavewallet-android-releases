@@ -80,7 +80,7 @@ export function CreditSupplyCard() {
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="credit-supply-card.coin-supply"
         title="Coin supply"
         description="Only you can create coins. Each package is a shop allocation: the base rate is its complete value."
       >
@@ -260,7 +260,7 @@ export function CreditSupplyCard() {
       </PageSection>
 
       {settings ? (
-        <PageSection
+        <PageSection devSlot="credit-supply-card.admin-pricing-settings"
           title="Admin pricing settings"
           description="Two separate settings: what an admin pays for a coin allocation, and the discount an admin gets when buying vouchers from their own uploaded inventory."
         >

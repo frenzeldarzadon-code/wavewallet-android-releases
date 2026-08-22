@@ -285,7 +285,7 @@ function AdminWallets() {
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="wallets.wallet-management"
         title="Wallet management"
         description="Load coins from your shop wallet to members, or post a correction. Every movement is audited."
       >
@@ -393,7 +393,7 @@ function AdminWallets() {
         )}
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="wallets.shop-coin-ledger"
         title="Shop coin ledger"
         description="Latest 60 movements across all wallets. Transfers move exact amounts; sale earnings appear as their own entries."
       >
@@ -477,7 +477,7 @@ function AdminWallets() {
         )}
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="wallets.transfer-reversals"
         title="Transfer reversals"
         description="Dispute corrections. Original transfers are never edited — each reversal is a linked ledger entry."
       >

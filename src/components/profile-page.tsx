@@ -204,7 +204,7 @@ export function ProfilePage() {
   if (actingAs) {
     return (
       <div className="mx-auto w-full max-w-2xl">
-        <PageSection
+        <PageSection devSlot="profile-page.profile"
           title="Profile"
           description={`You are acting as ${actingAs.session.targetName}.`}
         >
@@ -225,7 +225,7 @@ export function ProfilePage() {
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-4">
-      <PageSection
+      <PageSection devSlot="profile-page.my-profile"
         title="My profile"
         description="Your display name, @handle and photo are visible to your shop when you send or receive coins."
       >

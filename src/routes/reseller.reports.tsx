@@ -207,7 +207,7 @@ function ResellerReports() {
         </div>
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="reports.sales-cashback-upline-commission"
         title="Sales cashback & upline commission"
         description="Cashback is paid on coins you personally funded when they are spent on vouchers; upline is paid on your subresellers' sales. Historical credit-loading commissions stay visible but no longer occur."
       >
@@ -234,7 +234,7 @@ function ResellerReports() {
         )}
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="reports.credit-back-by-customer-purchase"
         title="Credit-back by customer purchase"
         description="Each line shows whose purchase paid you, how much of your funded coins it consumed, and the rate used."
       >
@@ -285,7 +285,7 @@ function ResellerReports() {
       </PageSection>
 
 
-      <PageSection title="My voucher purchases">
+      <PageSection devSlot="reports.my-voucher-purchases" title="My voucher purchases">
         {sales.length === 0 ? (
           <EmptyState title="No purchases in this range" />
         ) : (
@@ -335,7 +335,7 @@ function ResellerReports() {
         )}
       </PageSection>
 
-      <PageSection title="Coin movements">
+      <PageSection devSlot="reports.coin-movements" title="Coin movements">
         {credits.length === 0 ? (
           <EmptyState title="No coin activity in this range" />
         ) : (

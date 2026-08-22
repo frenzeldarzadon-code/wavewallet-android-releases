@@ -1,4 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
+import { DevSlot } from "@/components/dev/dev-slot";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,14 +10,17 @@ export function PageSection({
   action,
   children,
   className,
+  devSlot,
 }: {
   title?: string;
   description?: string;
   action?: ReactNode;
   children: ReactNode;
   className?: string;
+  /** Developer Mode visibility slot name; hidden sections stay mounted. */
+  devSlot?: string;
 }) {
-  return (
+  const section = (
     <section className={cn("mb-6", className)}>
       {title ? (
         <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
@@ -32,6 +36,7 @@ export function PageSection({
       {children}
     </section>
   );
+  return devSlot ? <DevSlot name={devSlot}>{section}</DevSlot> : section;
 }
 
 export function StatCard({

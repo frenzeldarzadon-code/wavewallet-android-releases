@@ -161,7 +161,7 @@ function SuperSubscriptions() {
         </div>
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="subscriptions.approval-queue"
         title="Approval queue"
         description="Legacy shop payments. Each card explains exactly why it is still open."
       >
@@ -183,7 +183,7 @@ function SuperSubscriptions() {
         </div>
       </PageSection>
 
-      <PageSection title="Tenant statuses" description="Monthly rate is set per shop. Expiration adjustments are platform-owner only and never rewrite a payment.">
+      <PageSection devSlot="subscriptions.tenant-statuses" title="Tenant statuses" description="Monthly rate is set per shop. Expiration adjustments are platform-owner only and never rewrite a payment.">
         <div className="mb-3 flex flex-wrap gap-2">
           {FILTERS.map((f) => (
             <Button
@@ -247,7 +247,7 @@ function SuperSubscriptions() {
         </Card>
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="subscriptions.expiration-adjustments"
         title="Expiration adjustments"
         description="Courtesy and dispute changes, kept separate from payment extensions."
       >
@@ -287,7 +287,7 @@ function SuperSubscriptions() {
         }}
       />
 
-      <PageSection title="Decision history" description="Approved amounts and periods are immutable records.">
+      <PageSection devSlot="subscriptions.decision-history" title="Decision history" description="Approved amounts and periods are immutable records.">
         {requests.filter((r) => r.status !== "pending").length === 0 ? (
           <p className="text-sm text-muted-foreground">No decisions recorded yet.</p>
         ) : (

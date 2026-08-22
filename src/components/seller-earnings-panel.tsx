@@ -62,7 +62,7 @@ export function SellerEarningsPanel({
   }, [recipientId, ecosystemId, showBalance]);
 
   return (
-    <PageSection
+    <PageSection devSlot="seller-earnings-panel.wallet-earnings"
       title="Wallet & earnings"
       description="Your shop wallet balance, plus cashback allocated to you on completed downline purchases and your own wholesale discount savings. Receiving or sending coins is never an earning."
     >

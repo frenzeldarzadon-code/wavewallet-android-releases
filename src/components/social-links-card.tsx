@@ -121,7 +121,7 @@ export function SocialLinksCard({
   };
 
   return (
-    <PageSection
+    <PageSection devSlot="social-links-card.social-accounts-optional"
       title="Social accounts (optional)"
       description="Add links to your pages if you want to. Nothing is required, and only the links you mark public are visible to other members of your shop."
     >

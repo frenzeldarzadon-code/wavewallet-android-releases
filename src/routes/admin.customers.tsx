@@ -461,7 +461,7 @@ function AdminCustomers() {
 
 
 
-      <PageSection
+      <PageSection devSlot="customers.customer-directory"
         title="Customer directory"
         description="Scoped strictly to this shop by database row-level security."
       >

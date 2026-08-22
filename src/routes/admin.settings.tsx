@@ -163,7 +163,7 @@ function AdminSettings() {
 
   return (
     <>
-      <PageSection title="Shop identity" description="Your name appears throughout the app for your resellers and customers.">
+      <PageSection devSlot="settings.shop-identity" title="Shop identity" description="Your name appears throughout the app for your resellers and customers.">
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
@@ -194,14 +194,14 @@ function AdminSettings() {
         </Card>
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="settings.shop-id-sign-up-link-address"
         title="Shop ID, sign-up link & address"
         description="New members join with your 7-digit Shop ID. The optional shop address decides where your shop appears in municipality discovery."
       >
         <ShopIdentityCard ecosystemId={ecosystemDbId} />
       </PageSection>
 
-      <PageSection title="Contact information">
+      <PageSection devSlot="settings.contact-information" title="Contact information">
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
@@ -232,7 +232,7 @@ function AdminSettings() {
         </Card>
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="settings.facebook-support"
         title="Facebook support"
         description="Your own shop's support page. Your resellers and subresellers see this link on their dashboard. Leave it empty to remove the link."
       >
@@ -289,7 +289,7 @@ function AdminSettings() {
       </PageSection>
 
 
-      <PageSection
+      <PageSection devSlot="settings.voucher-sale-earnings"
         title="Voucher sale earnings"
         description="Each reseller and subreseller has ONE Discount, set on that member only. It is both their share of a purchase and their voucher shop discount — the shop keeps the remainder."
       >
@@ -308,7 +308,7 @@ function AdminSettings() {
         </Card>
       </PageSection>
 
-      <PageSection title="Points rule" description="Points are earned on coin-funded voucher purchases only — never on coin loads or transfers.">
+      <PageSection devSlot="settings.points-rule" title="Points rule" description="Points are earned on coin-funded voucher purchases only — never on coin loads or transfers.">
 
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">

@@ -114,7 +114,7 @@ export function PromotionTiersCard({
   );
 
   return (
-    <PageSection title={title} description={description}>
+    <PageSection devSlot="promotion-tiers-card.promotion-tiers" title={title} description={description}>
       <div className="space-y-2">
         {tiers.map((t) => (
           <Card key={t.id} className="shadow-[var(--shadow-card)]">

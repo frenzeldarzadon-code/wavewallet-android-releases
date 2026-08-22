@@ -71,7 +71,7 @@ export function SuperEarningsPanel({ showLink = true }: { showLink?: boolean }) 
   }, [load]);
 
   return (
-    <PageSection
+    <PageSection devSlot="super-earnings-panel.platform-earnings"
       title="Platform earnings"
       description="Fees actually collected — cash-out fees on released withdrawals and cash-in fees on verified payments — less recorded platform expenses. Coin issuance and other coin movements are not earnings."
     >

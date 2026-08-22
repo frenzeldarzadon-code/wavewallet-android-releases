@@ -83,7 +83,7 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
   };
 
   return (
-    <PageSection
+    <PageSection devSlot="retail-orders-panel.retail-orders"
       title="Retail orders"
       description="Every order stays pending until you approve or reject it."
       action={

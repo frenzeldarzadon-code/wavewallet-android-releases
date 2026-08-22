@@ -83,7 +83,7 @@ export function ShopAdminQueue() {
 
   return (
     <>
-      <PageSection
+      <PageSection devSlot="shop-admin-queue.settled-by-you"
         title="Settled by you"
         description="Cash you hand over in person, and payments made into your own GCash. No fee is charged on either — the coins simply move inside your shop."
       >
@@ -105,7 +105,7 @@ export function ShopAdminQueue() {
         ) : null}
       </PageSection>
 
-      <PageSection title="Cash out requests to settle">
+      <PageSection devSlot="shop-admin-queue.cash-out-requests-to-settle" title="Cash out requests to settle">
         {cashouts.length === 0 ? (
           <EmptyState
             title="Nothing to settle"
@@ -165,7 +165,7 @@ export function ShopAdminQueue() {
         )}
       </PageSection>
 
-      <PageSection
+      <PageSection devSlot="shop-admin-queue.cash-in-paid-to-your-gcash"
         title="Cash in paid to your GCash"
         description="Approve only after you can see the payment in your own GCash account. Approving moves your coins to the member."
       >
