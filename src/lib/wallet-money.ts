@@ -541,9 +541,9 @@ export async function fetchAdminCashInCapacity(ecosystemId?: string | null): Pro
 export async function requestCashIn(input: {
   methodId: string;
   amountPhp: number;
-  /** GCash number the member paid FROM — read off the receipt, matched against the real notification. */
+  /** Account the member paid FROM — read off the receipt, matched against a real notification. */
   payerNumber?: string | null;
-  /** GCash payment reference — the member may correct what the receipt reader read. */
+  /** Payment reference — the member may correct what the receipt reader read. */
   payerReference?: string | null;
   /** Payment date/time the member confirmed, ISO 8601. */
   paidAt?: string | null;
@@ -556,10 +556,14 @@ export async function requestCashIn(input: {
     senderNumber?: string | null;
     senderName?: string | null;
     senderAccountMasked?: string | null;
+    /** Destination read off the receipt — evidence only, never required to agree. */
+    receivingNumber?: string | null;
+    receivingAccountMasked?: string | null;
     paidAt?: string | null;
     confidence?: number | null;
     readable?: boolean | null;
   } | null;
+
   /** Optional — cash in never requires notes. */
   notes?: string | null;
   /** Storage path of the payment screenshot (required supporting evidence). */
