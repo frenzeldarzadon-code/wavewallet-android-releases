@@ -275,12 +275,17 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
       setProofPath(path);
       const read = await extractCashInReceipt({ data: { proofPath: path } });
       setExtract(read);
+      // Provider-agnostic autofill: whatever the receipt printed is used, and
+      // the payer identity falls back to a printed account or name when the
+      // receipt has no mobile number (banks usually print those instead).
       if (read.reference) setPayerRef(read.reference);
       if (read.amountPhp) setAmount(String(read.amountPhp));
-      if (read.senderNumber) setPayerNumber(read.senderNumber);
+      const payerIdentity = read.senderNumber ?? read.senderAccountMasked ?? read.senderName ?? null;
+      if (payerIdentity) setPayerNumber(payerIdentity);
       if (read.paidAt) setPaidAt(toLocalInput(read.paidAt));
       if (read.readable) toast.success("Screenshot read — check the details before you submit.");
       else toast.info("We could not read this screenshot clearly. You can still submit it for manual review.");
+
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not read that screenshot.");
     } finally {
