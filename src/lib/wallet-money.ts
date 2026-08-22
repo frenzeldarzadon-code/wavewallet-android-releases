@@ -192,31 +192,43 @@ export function validateWithdrawal(
 }
 
 /**
- * Cash in now requires the amount, the GCash number the member paid FROM, the GCash payment
- * reference number and the payment screenshot. Notes stay optional. The same
- * rules are enforced again inside `request_cash_in`.
+ * Cash in requires the amount, the payment screenshot and SOME identifier of
+ * the account the money was paid from. That identifier is provider-agnostic: a
+ * mobile wallet prints a mobile number, a bank prints a masked account number
+ * or the payer's name. Notes stay optional. The same rules are enforced again
+ * inside `request_cash_in`, and the server alone decides approval.
  */
 export function validateCashIn(
   php: number,
   methodId: string | null,
-  input?: { payerNumber?: string | null; payerReference?: string | null; hasProof?: boolean },
+  input?: {
+    payerNumber?: string | null;
+    payerReference?: string | null;
+    hasProof?: boolean;
+    /** Any other payer identity read off the receipt (name, masked account). */
+    payerAccount?: string | null;
+  },
 ): string | null {
   if (!methodId) return "Choose a payment method.";
   if (!Number.isFinite(php) || php <= 0) return "Enter how much you are paying.";
   if (php > 10_000_000) return "A single cash in is limited to ₱10,000,000.";
   if (input) {
-    // The screenshot supplies the amount, reference and payment time. A GCash
-    // "money sent" receipt never prints the payer's OWN number, so the sending
-    // number is stated here — it is the identity matched against the real
-    // GCash notification.
+    // The screenshot supplies the amount, reference and payment time. Many
+    // "money sent" receipts never print the payer's OWN number, so the sending
+    // identity is stated here — it is what gets matched against a real payment
+    // notification.
     if (!input.hasProof) return "Attach your payment screenshot.";
-    if (!normalizePhMobile(input.payerNumber ?? null)) {
-      return "Enter the GCash number you paid from (09XXXXXXXXX).";
+    const number = normalizePhMobile(input.payerNumber ?? null);
+    const account = (input.payerAccount ?? "").trim();
+    const typed = (input.payerNumber ?? "").trim();
+    if (!number && !account && typed.length < 4) {
+      return "Enter the mobile number or account you paid from.";
     }
   }
 
   return null;
 }
+
 
 
 export type MoneyStatus = string;
