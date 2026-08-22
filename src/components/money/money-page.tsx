@@ -603,11 +603,12 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-                Start with your GCash payment screenshot — we read the amount, the sending number, the reference and the
-                payment date and time from it. Check the details, correct the reference or the date and time if needed,
-                then submit. The screenshot is supporting evidence, not a verification from GCash: coins are added only
-                once a real GCash notification confirms the payment.
+                Start with your payment screenshot from any e-wallet or bank — we read the amount, the sending account,
+                the reference and the payment date and time from it. Check the details, correct the reference or the
+                date and time if needed, then submit. The screenshot is supporting evidence, not proof of payment:
+                coins are added only once a real payment notification confirms it.
               </p>
+
               {methods.length === 0 ? (
                 <EmptyState
                   title="No payment methods available"
