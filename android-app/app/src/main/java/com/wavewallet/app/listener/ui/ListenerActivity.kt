@@ -170,6 +170,7 @@ private fun HomeScreen() {
                                 store.revokedByServer = false
                                 knownDeviceId = store.lastKnownDeviceId
                                 ListenerScheduler.scheduleHeartbeat(context)
+                            ListenerScheduler.syncSourceRules(context)
                                 message = "Re-paired. Code discarded from memory."
                             } else {
                                 message = "No device is known on this phone yet — pair it first."
@@ -229,6 +230,7 @@ private fun HomeScreen() {
                             paired = true
                             knownDeviceId = store.lastKnownDeviceId
                             ListenerScheduler.scheduleHeartbeat(context)
+                            ListenerScheduler.syncSourceRules(context)
                             message = "Paired. Secret discarded from memory."
                         },
                     ) { Text("Pair") }
