@@ -1,5 +1,5 @@
 /**
- * Reads the GCash reference off an uploaded Cash In receipt.
+ * Reads a payment receipt uploaded with a Cash In.
  *
  * Runs on the server only: it signs a short-lived URL for the private
  * screenshot, asks a vision model to transcribe the receipt fields, and hands
@@ -12,14 +12,17 @@ import { parseReceiptReading, type ReceiptReading } from "./cash-in-receipt";
 const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MODEL = "google/gemini-3.6-flash";
 
-const PROMPT = `You are reading a GCash payment receipt screenshot.
+const PROMPT = `You are reading a payment receipt / transfer confirmation screenshot from an e-wallet or bank app (for example GCash, Maya, GoTyme, BPI, BDO, UnionBank, SeaBank or any other Philippine provider).
 Return ONLY JSON with these keys and nothing else:
-{"reference": string|null, "amount_php": number|null, "sender_number": string|null, "receiving_number": string|null, "paid_at": string|null, "readable": boolean, "confidence": number}
-- "reference" is the GCash reference number printed on the receipt (often labelled "Ref No." or "Reference No."). Copy the digits exactly as printed.
-- "sender_number" is the mobile number the money was sent FROM; "receiving_number" is the GCash account/number the money was sent TO. Copy digits exactly, including masked characters as printed; use null when a field is not shown.
+{"provider_name": string|null, "reference": string|null, "amount_php": number|null, "sender_number": string|null, "sender_name": string|null, "sender_account_masked": string|null, "receiving_number": string|null, "receiving_account_masked": string|null, "paid_at": string|null, "readable": boolean, "confidence": number}
+- "provider_name" is the app or bank the receipt came from, exactly as printed (e.g. "GCash", "Maya", "BPI"). Use null when it is not shown.
+- "reference" is the transaction / reference / trace number printed on the receipt (labels vary: "Ref No.", "Reference No.", "Transaction ID", "Trace No."). Copy the characters exactly as printed.
+- "sender_number" is the mobile number the money was sent FROM; "receiving_number" is the mobile number it was sent TO. Copy digits exactly, including masked characters as printed.
+- "sender_name" is the payer's printed name; "sender_account_masked" and "receiving_account_masked" are masked account or card numbers as printed (e.g. "****1234"). Banks usually print these instead of a mobile number.
+- Use null for any field the receipt does not show. Never move a value into a field it was not printed under.
 - "paid_at" is the payment date AND time printed on the receipt, as an ISO 8601 string (assume Asia/Manila when no zone is shown). Use null when it is not legible.
 - "confidence" is 0..1: how certain you are that you read the reference correctly.
-- If the image is not a payment receipt, is cropped, blurred or the reference is not fully legible, set "readable": false and "reference": null. Never guess or reconstruct a reference.`;
+- If the image is not a payment receipt, is cropped, blurred or the reference is not fully legible, set "readable": false and "reference": null. Never guess or reconstruct a reference, a name or an account number.`;
 
 export async function readReceipt(imageUrl: string): Promise<ReceiptReading> {
   const key = process.env["LOVABLE_API_KEY"];
