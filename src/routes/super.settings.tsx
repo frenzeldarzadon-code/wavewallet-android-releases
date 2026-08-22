@@ -13,6 +13,8 @@ import { CashInAutoCard } from "@/components/super/cash-in-auto-card";
 import { CashInNumbersCard } from "@/components/super/cash-in-numbers-card";
 import { ListenerDevicesCard } from "@/components/super/listener-devices-card";
 import { ListenerDeviceScreenButton } from "@/components/money/listener-device-screen-button";
+import { ListenerSourceRulesCard } from "@/components/money/listener-source-rules-card";
+
 
 import { PaymentMethodsCard } from "@/components/super/payment-methods-card";
 import { AppReleaseCard } from "@/components/super/app-release-card";
