@@ -38,7 +38,7 @@ import {
   submitNewEntry,
   updateQueuedEntry,
 } from "@/lib/offline-spending";
-import { isOffline } from "@/lib/offline-guard";
+
 
 const NONE = "__none__";
 
