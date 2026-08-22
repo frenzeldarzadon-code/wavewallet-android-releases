@@ -20,7 +20,7 @@ import {
   timestampWithinSkew,
   timingSafeEqualHex,
 } from "@/lib/listener-signature";
-import { parseGcashNotification } from "@/lib/gcash-notification";
+import { resolvePaymentProvider } from "@/lib/payment-providers";
 
 
 /**
