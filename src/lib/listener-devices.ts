@@ -244,7 +244,14 @@ export function deviceHealthLine(device: ListenerDevice) {
 
 /** Plain-language outcome of one forwarded notification. */
 export function eventResultLabel(event: ListenerEvent) {
+  if (event.outcome === "source_disabled") {
+    return "Source disabled — this app is switched off for this phone, so nothing was read";
+  }
+  if (event.outcome === "non_payment") {
+    return "Not a recognised payment app — ignored";
+  }
   if (event.outcome === "unparsed") return "Could not read an amount — kept for review";
+
   const result = event.match_result ?? "";
   if (result.startsWith("matched:approved")) return "Matched and approved automatically";
   if (result.startsWith("matched:staged")) return "Matched — staged mode, nothing was settled";
