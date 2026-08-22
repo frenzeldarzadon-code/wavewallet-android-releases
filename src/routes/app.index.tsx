@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { WalletCenter } from "@/components/wallet/wallet-center";
+import { DevSlot } from "@/components/dev/dev-slot";
 
 export const Route = createFileRoute("/app/")({
   head: () => ({
@@ -16,5 +17,9 @@ export const Route = createFileRoute("/app/")({
 });
 
 function CustomerWallet() {
-  return <WalletCenter base="/app" />;
+  return (
+    <DevSlot name="wallet.center">
+      <WalletCenter base="/app" />
+    </DevSlot>
+  );
 }

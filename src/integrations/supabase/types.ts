@@ -5906,6 +5906,96 @@ export type Database = {
           },
         ]
       }
+      ui_layout_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_name: string | null
+          created_at: string
+          ecosystem_id: string | null
+          id: string
+          next_payload: Json | null
+          previous_payload: Json | null
+          role: Database["public"]["Enums"]["app_role"]
+          target_id: string | null
+          target_kind: string
+          target_label: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_name?: string | null
+          created_at?: string
+          ecosystem_id?: string | null
+          id?: string
+          next_payload?: Json | null
+          previous_payload?: Json | null
+          role: Database["public"]["Enums"]["app_role"]
+          target_id?: string | null
+          target_kind?: string
+          target_label?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_name?: string | null
+          created_at?: string
+          ecosystem_id?: string | null
+          id?: string
+          next_payload?: Json | null
+          previous_payload?: Json | null
+          role?: Database["public"]["Enums"]["app_role"]
+          target_id?: string | null
+          target_kind?: string
+          target_label?: string | null
+        }
+        Relationships: []
+      }
+      ui_layout_configs: {
+        Row: {
+          created_at: string
+          ecosystem_id: string | null
+          id: string
+          payload: Json
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          ecosystem_id?: string | null
+          id?: string
+          payload?: Json
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          ecosystem_id?: string | null
+          id?: string
+          payload?: Json
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ui_layout_configs_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ui_layout_configs_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -8718,6 +8808,7 @@ export type Database = {
         Args: { _accept: boolean; _invitation_id: string }
         Returns: undefined
       }
+      restore_ui_layout: { Args: { _audit_id: string }; Returns: Json }
       restructure_member_role: {
         Args: {
           _child_reassignments?: Json
@@ -9699,6 +9790,18 @@ export type Database = {
       set_subreseller_parent: {
         Args: { _ecosystem_id?: string; _reseller_id: string; _user_id: string }
         Returns: undefined
+      }
+      set_ui_layout: {
+        Args: {
+          _action?: string
+          _ecosystem_id?: string
+          _payload: Json
+          _role: Database["public"]["Enums"]["app_role"]
+          _target_id?: string
+          _target_kind?: string
+          _target_label?: string
+        }
+        Returns: Json
       }
       settle_cash_in_approval: {
         Args: {

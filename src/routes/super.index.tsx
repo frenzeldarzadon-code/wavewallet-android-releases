@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageSection, StatCard, StatusBadge, subscriptionTone } from "@/components/ui-kit";
+import { DevSlot } from "@/components/dev/dev-slot";
 import { supabase } from "@/integrations/supabase/client";
 import { writeSession } from "@/lib/session";
 import {
@@ -79,6 +80,7 @@ function SuperOverview() {
 
   return (
     <>
+      <DevSlot name="overview.stats">
       <PageSection>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
           <StatCard
@@ -103,8 +105,11 @@ function SuperOverview() {
         </div>
       </PageSection>
 
+      </DevSlot>
+
       <SuperEarningsPanel />
 
+      <DevSlot name="overview.shops">
       <PageSection title="Shops" description="Each Admin owns exactly one isolated tenant.">
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading live counters…</p>
@@ -167,6 +172,8 @@ function SuperOverview() {
           </div>
         )}
       </PageSection>
+
+      </DevSlot>
 
       <PageSection
         title="Recent platform activity"

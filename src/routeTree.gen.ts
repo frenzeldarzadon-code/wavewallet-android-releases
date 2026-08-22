@@ -82,6 +82,7 @@ import { Route as SuperApplicationsRouteImport } from './routes/super.applicatio
 import { Route as SuperApprovalsRouteImport } from './routes/super.approvals'
 import { Route as SuperAuditRouteImport } from './routes/super.audit'
 import { Route as SuperCreditsRouteImport } from './routes/super.credits'
+import { Route as SuperDeveloperRouteImport } from './routes/super.developer'
 import { Route as SuperExportRouteImport } from './routes/super.export'
 import { Route as SuperGuideRouteImport } from './routes/super.guide'
 import { Route as SuperMembersRouteImport } from './routes/super.members'
@@ -468,6 +469,11 @@ const SuperCreditsRoute = SuperCreditsRouteImport.update({
   path: '/credits',
   getParentRoute: () => SuperRoute,
 } as any)
+const SuperDeveloperRoute = SuperDeveloperRouteImport.update({
+  id: '/developer',
+  path: '/developer',
+  getParentRoute: () => SuperRoute,
+} as any)
 const SuperExportRoute = SuperExportRouteImport.update({
   id: '/export',
   path: '/export',
@@ -640,6 +646,7 @@ export interface FileRoutesByFullPath {
   '/super/approvals': typeof SuperApprovalsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/credits': typeof SuperCreditsRoute
+  '/super/developer': typeof SuperDeveloperRoute
   '/super/export': typeof SuperExportRoute
   '/super/guide': typeof SuperGuideRoute
   '/super/members': typeof SuperMembersRoute
@@ -730,6 +737,7 @@ export interface FileRoutesByTo {
   '/super/approvals': typeof SuperApprovalsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/credits': typeof SuperCreditsRoute
+  '/super/developer': typeof SuperDeveloperRoute
   '/super/export': typeof SuperExportRoute
   '/super/guide': typeof SuperGuideRoute
   '/super/members': typeof SuperMembersRoute
@@ -826,6 +834,7 @@ export interface FileRoutesById {
   '/super/approvals': typeof SuperApprovalsRoute
   '/super/audit': typeof SuperAuditRoute
   '/super/credits': typeof SuperCreditsRoute
+  '/super/developer': typeof SuperDeveloperRoute
   '/super/export': typeof SuperExportRoute
   '/super/guide': typeof SuperGuideRoute
   '/super/members': typeof SuperMembersRoute
@@ -923,6 +932,7 @@ export interface FileRouteTypes {
     | '/super/approvals'
     | '/super/audit'
     | '/super/credits'
+    | '/super/developer'
     | '/super/export'
     | '/super/guide'
     | '/super/members'
@@ -1013,6 +1023,7 @@ export interface FileRouteTypes {
     | '/super/approvals'
     | '/super/audit'
     | '/super/credits'
+    | '/super/developer'
     | '/super/export'
     | '/super/guide'
     | '/super/members'
@@ -1108,6 +1119,7 @@ export interface FileRouteTypes {
     | '/super/approvals'
     | '/super/audit'
     | '/super/credits'
+    | '/super/developer'
     | '/super/export'
     | '/super/guide'
     | '/super/members'
@@ -1670,6 +1682,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperCreditsRouteImport
       parentRoute: typeof SuperRoute
     }
+    '/super/developer': {
+      id: '/super/developer'
+      path: '/developer'
+      fullPath: '/super/developer'
+      preLoaderRoute: typeof SuperDeveloperRouteImport
+      parentRoute: typeof SuperRoute
+    }
     '/super/export': {
       id: '/super/export'
       path: '/export'
@@ -1945,6 +1964,7 @@ interface SuperRouteChildren {
   SuperApprovalsRoute: typeof SuperApprovalsRoute
   SuperAuditRoute: typeof SuperAuditRoute
   SuperCreditsRoute: typeof SuperCreditsRoute
+  SuperDeveloperRoute: typeof SuperDeveloperRoute
   SuperExportRoute: typeof SuperExportRoute
   SuperGuideRoute: typeof SuperGuideRoute
   SuperMembersRoute: typeof SuperMembersRoute
@@ -1964,6 +1984,7 @@ const SuperRouteChildren: SuperRouteChildren = {
   SuperApprovalsRoute: SuperApprovalsRoute,
   SuperAuditRoute: SuperAuditRoute,
   SuperCreditsRoute: SuperCreditsRoute,
+  SuperDeveloperRoute: SuperDeveloperRoute,
   SuperExportRoute: SuperExportRoute,
   SuperGuideRoute: SuperGuideRoute,
   SuperMembersRoute: SuperMembersRoute,

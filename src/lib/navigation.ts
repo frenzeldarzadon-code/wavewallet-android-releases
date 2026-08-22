@@ -14,6 +14,7 @@ import {
   Globe,
   BarChart3,
   Building2,
+  Code2,
   Coins,
   DatabaseBackup,
   Gift,
@@ -371,6 +372,7 @@ export function superAdminNav(): Nav {
       label: "Account",
       items: [
         { to: "/super/settings", label: "Platform", icon: Settings },
+        { to: "/super/developer", label: "Developer Mode", icon: Code2 },
         { to: "/super/profile", label: "Profile", icon: User },
         { to: "/help", label: "Guide & Help", icon: BookOpen },
       ],

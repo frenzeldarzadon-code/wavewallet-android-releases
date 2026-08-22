@@ -34,6 +34,10 @@ import { platformSettings } from "@/lib/wavewallet";
 import type { Nav, NavGroup, NavItem } from "@/lib/navigation";
 
 export type { NavItem } from "@/lib/navigation";
+import { applyBottomNavLayout, applyNavLayout } from "@/lib/ui-layout";
+import { useDeveloperMode, useRoleLayout } from "@/lib/dev-mode";
+import { DevSlotHost, RoleLayoutProvider } from "@/components/dev/dev-slot";
+import { DeveloperModeBanner } from "@/components/dev/developer-mode-banner";
 
 const COLLAPSE_KEY = "ww.sidebar.collapsed";
 
@@ -57,9 +61,15 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
   const [drawer, setDrawer] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const groups = toGroups(nav);
+  // Developer Mode: the stored layout for this ROLE decides which tabs are
+  // shown and in what order. Routes, data and permissions are untouched.
+  const role = session.account?.role ?? null;
+  const layout = useRoleLayout(role);
+  // While acting as a member, the operator is the one who may see Developer Mode.
+  const dev = useDeveloperMode(session.actingAs?.operatorRole ?? role);
+  const groups = applyNavLayout(toGroups(nav), layout);
   const flat = groups.flatMap((g) => g.items);
-  const bottom = (bottomNav ?? flat).slice(0, 5);
+  const bottom = applyBottomNavLayout(bottomNav ?? flat, layout).slice(0, 5);
   const superMode = session.session?.superAdminMode && session.account?.role === "super_admin";
   const isDemo =
     session.ecosystem?.slug === DEMO_ECOSYSTEM_SLUG ||
@@ -158,6 +168,11 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
         </div>
       ) : null}
       <ReviewBanner />
+      {dev.enabled ? (
+        <DeveloperModeBanner
+          {...(session.actingAs ? { inspecting: session.actingAs.session.targetName } : {})}
+        />
+      ) : null}
       {session.actingAs ? (
         <div className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-2 bg-destructive px-4 py-2 text-destructive-foreground">
           <div className="flex items-center gap-2 text-xs font-semibold sm:text-sm">
@@ -274,7 +289,11 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
           </header>
 
           <main className="mx-auto w-full max-w-5xl px-4 pt-4 pb-28 lg:px-8 lg:pb-10">
-            {children}
+            <RoleLayoutProvider role={role}>
+              {children}
+              {/* Content blocks a Super Admin moved onto this tab. */}
+              <DevSlotHost tab={pathname} />
+            </RoleLayoutProvider>
           </main>
         </div>
       </div>
