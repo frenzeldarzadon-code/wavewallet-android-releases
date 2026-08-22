@@ -57,9 +57,14 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
   const [drawer, setDrawer] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const groups = toGroups(nav);
+  // Developer Mode: the stored layout for this ROLE decides which tabs are
+  // shown and in what order. Routes, data and permissions are untouched.
+  const role = session.account?.role ?? null;
+  const layout = useRoleLayout(role);
+  const dev = useDeveloperMode(role);
+  const groups = applyNavLayout(toGroups(nav), layout);
   const flat = groups.flatMap((g) => g.items);
-  const bottom = (bottomNav ?? flat).slice(0, 5);
+  const bottom = applyBottomNavLayout(bottomNav ?? flat, layout).slice(0, 5);
   const superMode = session.session?.superAdminMode && session.account?.role === "super_admin";
   const isDemo =
     session.ecosystem?.slug === DEMO_ECOSYSTEM_SLUG ||
