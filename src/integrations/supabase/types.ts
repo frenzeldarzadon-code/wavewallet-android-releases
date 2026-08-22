@@ -416,6 +416,8 @@ export type Database = {
           credits: number
           decision_reason: string | null
           duplicate_of: string | null
+          duplicate_receipt: boolean
+          duplicate_receipt_of: string | null
           duplicate_reference: boolean
           ecosystem_id: string | null
           fee_percent: number
@@ -447,7 +449,10 @@ export type Database = {
           payer_reference: string | null
           payer_reference_key: string | null
           payment_authenticated: boolean
+          proof_hash: string | null
           proof_path: string | null
+          provider_id: string | null
+          provider_source: string | null
           rate_credits: number
           rate_php: number
           receipt_amount_php: number | null
@@ -455,10 +460,13 @@ export type Database = {
           receipt_checked_at: string | null
           receipt_details: Json | null
           receipt_paid_at: string | null
+          receipt_receiving_account_masked: string | null
           receipt_receiving_number: string | null
           receipt_receiving_number_key: string | null
           receipt_reference: string | null
           receipt_reference_key: string | null
+          receipt_sender_account_masked: string | null
+          receipt_sender_name: string | null
           receipt_sender_number: string | null
           receipt_sender_number_key: string | null
           receipt_verified: boolean
@@ -490,6 +498,8 @@ export type Database = {
           credits: number
           decision_reason?: string | null
           duplicate_of?: string | null
+          duplicate_receipt?: boolean
+          duplicate_receipt_of?: string | null
           duplicate_reference?: boolean
           ecosystem_id?: string | null
           fee_percent?: number
@@ -521,7 +531,10 @@ export type Database = {
           payer_reference?: string | null
           payer_reference_key?: string | null
           payment_authenticated?: boolean
+          proof_hash?: string | null
           proof_path?: string | null
+          provider_id?: string | null
+          provider_source?: string | null
           rate_credits: number
           rate_php: number
           receipt_amount_php?: number | null
@@ -529,10 +542,13 @@ export type Database = {
           receipt_checked_at?: string | null
           receipt_details?: Json | null
           receipt_paid_at?: string | null
+          receipt_receiving_account_masked?: string | null
           receipt_receiving_number?: string | null
           receipt_receiving_number_key?: string | null
           receipt_reference?: string | null
           receipt_reference_key?: string | null
+          receipt_sender_account_masked?: string | null
+          receipt_sender_name?: string | null
           receipt_sender_number?: string | null
           receipt_sender_number_key?: string | null
           receipt_verified?: boolean
@@ -564,6 +580,8 @@ export type Database = {
           credits?: number
           decision_reason?: string | null
           duplicate_of?: string | null
+          duplicate_receipt?: boolean
+          duplicate_receipt_of?: string | null
           duplicate_reference?: boolean
           ecosystem_id?: string | null
           fee_percent?: number
@@ -595,7 +613,10 @@ export type Database = {
           payer_reference?: string | null
           payer_reference_key?: string | null
           payment_authenticated?: boolean
+          proof_hash?: string | null
           proof_path?: string | null
+          provider_id?: string | null
+          provider_source?: string | null
           rate_credits?: number
           rate_php?: number
           receipt_amount_php?: number | null
@@ -603,10 +624,13 @@ export type Database = {
           receipt_checked_at?: string | null
           receipt_details?: Json | null
           receipt_paid_at?: string | null
+          receipt_receiving_account_masked?: string | null
           receipt_receiving_number?: string | null
           receipt_receiving_number_key?: string | null
           receipt_reference?: string | null
           receipt_reference_key?: string | null
+          receipt_sender_account_masked?: string | null
+          receipt_sender_name?: string | null
           receipt_sender_number?: string | null
           receipt_sender_number_key?: string | null
           receipt_verified?: boolean
@@ -632,6 +656,13 @@ export type Database = {
           {
             foreignKeyName: "cash_in_requests_duplicate_of_fkey"
             columns: ["duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "cash_in_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_in_requests_duplicate_receipt_of_fkey"
+            columns: ["duplicate_receipt_of"]
             isOneToOne: false
             referencedRelation: "cash_in_requests"
             referencedColumns: ["id"]
@@ -6483,10 +6514,15 @@ export type Database = {
           _details?: Json
           _id: string
           _paid_at?: string
+          _proof_hash?: string
+          _provider?: string
           _readable?: boolean
           _receiving?: string
+          _receiving_account?: string
           _reference?: string
           _sender?: string
+          _sender_account?: string
+          _sender_name?: string
         }
         Returns: string
       }
@@ -6588,6 +6624,8 @@ export type Database = {
           credits: number
           decision_reason: string | null
           duplicate_of: string | null
+          duplicate_receipt: boolean
+          duplicate_receipt_of: string | null
           duplicate_reference: boolean
           ecosystem_id: string | null
           fee_percent: number
@@ -6619,7 +6657,10 @@ export type Database = {
           payer_reference: string | null
           payer_reference_key: string | null
           payment_authenticated: boolean
+          proof_hash: string | null
           proof_path: string | null
+          provider_id: string | null
+          provider_source: string | null
           rate_credits: number
           rate_php: number
           receipt_amount_php: number | null
@@ -6627,10 +6668,13 @@ export type Database = {
           receipt_checked_at: string | null
           receipt_details: Json | null
           receipt_paid_at: string | null
+          receipt_receiving_account_masked: string | null
           receipt_receiving_number: string | null
           receipt_receiving_number_key: string | null
           receipt_reference: string | null
           receipt_reference_key: string | null
+          receipt_sender_account_masked: string | null
+          receipt_sender_name: string | null
           receipt_sender_number: string | null
           receipt_sender_number_key: string | null
           receipt_verified: boolean
@@ -6706,6 +6750,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      cash_in_account_tail: {
+        Args: { _row: Database["public"]["Tables"]["cash_in_requests"]["Row"] }
+        Returns: string
       }
       cash_in_auth_blockers: { Args: { _id: string }; Returns: string[] }
       cash_in_auth_explain: { Args: { _codes: string[] }; Returns: string }
@@ -7495,6 +7543,10 @@ export type Database = {
       }
       listener_device_source_rules: { Args: { _device: string }; Returns: Json }
       listener_device_status: { Args: never; Returns: Json }
+      listener_event_account_tail: {
+        Args: { _ev: Database["public"]["Tables"]["listener_events"]["Row"] }
+        Returns: string
+      }
       listener_event_fits_cash_in: {
         Args: {
           _ev: Database["public"]["Tables"]["listener_events"]["Row"]
@@ -7879,6 +7931,9 @@ export type Database = {
         }
         Returns: undefined
       }
+      payment_account_tail: { Args: { _value: string }; Returns: string }
+      payment_name_key: { Args: { _value: string }; Returns: string }
+      payment_provider_by_name: { Args: { _name: string }; Returns: string }
       payment_provider_for: {
         Args: { _package: string; _text?: string }
         Returns: string
@@ -8300,6 +8355,8 @@ export type Database = {
           credits: number
           decision_reason: string | null
           duplicate_of: string | null
+          duplicate_receipt: boolean
+          duplicate_receipt_of: string | null
           duplicate_reference: boolean
           ecosystem_id: string | null
           fee_percent: number
@@ -8331,7 +8388,10 @@ export type Database = {
           payer_reference: string | null
           payer_reference_key: string | null
           payment_authenticated: boolean
+          proof_hash: string | null
           proof_path: string | null
+          provider_id: string | null
+          provider_source: string | null
           rate_credits: number
           rate_php: number
           receipt_amount_php: number | null
@@ -8339,10 +8399,13 @@ export type Database = {
           receipt_checked_at: string | null
           receipt_details: Json | null
           receipt_paid_at: string | null
+          receipt_receiving_account_masked: string | null
           receipt_receiving_number: string | null
           receipt_receiving_number_key: string | null
           receipt_reference: string | null
           receipt_reference_key: string | null
+          receipt_sender_account_masked: string | null
+          receipt_sender_name: string | null
           receipt_sender_number: string | null
           receipt_sender_number_key: string | null
           receipt_verified: boolean
@@ -8570,6 +8633,8 @@ export type Database = {
           credits: number
           decision_reason: string | null
           duplicate_of: string | null
+          duplicate_receipt: boolean
+          duplicate_receipt_of: string | null
           duplicate_reference: boolean
           ecosystem_id: string | null
           fee_percent: number
@@ -8601,7 +8666,10 @@ export type Database = {
           payer_reference: string | null
           payer_reference_key: string | null
           payment_authenticated: boolean
+          proof_hash: string | null
           proof_path: string | null
+          provider_id: string | null
+          provider_source: string | null
           rate_credits: number
           rate_php: number
           receipt_amount_php: number | null
@@ -8609,10 +8677,13 @@ export type Database = {
           receipt_checked_at: string | null
           receipt_details: Json | null
           receipt_paid_at: string | null
+          receipt_receiving_account_masked: string | null
           receipt_receiving_number: string | null
           receipt_receiving_number_key: string | null
           receipt_reference: string | null
           receipt_reference_key: string | null
+          receipt_sender_account_masked: string | null
+          receipt_sender_name: string | null
           receipt_sender_number: string | null
           receipt_sender_number_key: string | null
           receipt_verified: boolean
@@ -8696,6 +8767,8 @@ export type Database = {
           credits: number
           decision_reason: string | null
           duplicate_of: string | null
+          duplicate_receipt: boolean
+          duplicate_receipt_of: string | null
           duplicate_reference: boolean
           ecosystem_id: string | null
           fee_percent: number
@@ -8727,7 +8800,10 @@ export type Database = {
           payer_reference: string | null
           payer_reference_key: string | null
           payment_authenticated: boolean
+          proof_hash: string | null
           proof_path: string | null
+          provider_id: string | null
+          provider_source: string | null
           rate_credits: number
           rate_php: number
           receipt_amount_php: number | null
@@ -8735,10 +8811,13 @@ export type Database = {
           receipt_checked_at: string | null
           receipt_details: Json | null
           receipt_paid_at: string | null
+          receipt_receiving_account_masked: string | null
           receipt_receiving_number: string | null
           receipt_receiving_number_key: string | null
           receipt_reference: string | null
           receipt_reference_key: string | null
+          receipt_sender_account_masked: string | null
+          receipt_sender_name: string | null
           receipt_sender_number: string | null
           receipt_sender_number_key: string | null
           receipt_verified: boolean
@@ -9497,6 +9576,8 @@ export type Database = {
           credits: number
           decision_reason: string | null
           duplicate_of: string | null
+          duplicate_receipt: boolean
+          duplicate_receipt_of: string | null
           duplicate_reference: boolean
           ecosystem_id: string | null
           fee_percent: number
@@ -9528,7 +9609,10 @@ export type Database = {
           payer_reference: string | null
           payer_reference_key: string | null
           payment_authenticated: boolean
+          proof_hash: string | null
           proof_path: string | null
+          provider_id: string | null
+          provider_source: string | null
           rate_credits: number
           rate_php: number
           receipt_amount_php: number | null
@@ -9536,10 +9620,13 @@ export type Database = {
           receipt_checked_at: string | null
           receipt_details: Json | null
           receipt_paid_at: string | null
+          receipt_receiving_account_masked: string | null
           receipt_receiving_number: string | null
           receipt_receiving_number_key: string | null
           receipt_reference: string | null
           receipt_reference_key: string | null
+          receipt_sender_account_masked: string | null
+          receipt_sender_name: string | null
           receipt_sender_number: string | null
           receipt_sender_number_key: string | null
           receipt_verified: boolean

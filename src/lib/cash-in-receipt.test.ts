@@ -213,3 +213,36 @@ describe("reference normalization boundaries", () => {
     expect(decideReceiptCheck("9044011942642", reading)).toBe("unreadable");
   });
 });
+
+describe("provider-agnostic receipt reading", () => {
+  it("reads the provider, payer name and masked accounts off a bank receipt", () => {
+    const read = parseReceiptReading(
+      JSON.stringify({
+        provider_name: "BPI",
+        reference: "BPI-8891023",
+        amount_php: 1500,
+        sender_number: null,
+        sender_name: "Juan Dela Cruz",
+        sender_account_masked: "****4321",
+        receiving_account_masked: "****9087",
+        paid_at: "2026-02-01T10:15:00+08:00",
+        readable: true,
+        confidence: 0.9,
+      }),
+    );
+    expect(read.providerName).toBe("BPI");
+    expect(read.senderName).toBe("Juan Dela Cruz");
+    expect(read.senderAccountMasked).toBe("****4321");
+    expect(read.receivingAccountMasked).toBe("****9087");
+    expect(read.reference).toBe("BPI-8891023");
+  });
+
+  it("leaves the new fields null when the receipt does not print them", () => {
+    const read = parseReceiptReading(
+      JSON.stringify({ reference: "9044011942642", amount_php: 200, readable: true, confidence: 0.95 }),
+    );
+    expect(read.providerName).toBeNull();
+    expect(read.senderName).toBeNull();
+    expect(read.senderAccountMasked).toBeNull();
+  });
+});

@@ -20,10 +20,18 @@ export type ReceiptCheck = "pending" | "matched" | "mismatch" | "unreadable" | "
 /** What a reader (OCR / vision model) claims it saw on the receipt. */
 export interface ReceiptReading {
   reference: string | null;
+  /** The app or bank the receipt came from, as printed. Never invented. */
+  providerName?: string | null;
   amountPhp: number | null;
   senderNumber: string | null;
-  /** The GCash account the money was sent TO, when the receipt shows it. */
+  /** The payer's printed name — banks often print this instead of a number. */
+  senderName?: string | null;
+  /** Masked sending account/card, e.g. "****1234", when the receipt prints one. */
+  senderAccountMasked?: string | null;
+  /** The account the money was sent TO, when the receipt shows it. */
   receivingNumber?: string | null;
+  /** Masked receiving account/card, when the receipt prints one. */
+  receivingAccountMasked?: string | null;
   /** Payment date/time printed on the receipt, ISO 8601, when it was legible. */
   paidAt?: string | null;
   /** The reader's own confidence that it read the reference correctly, 0..1. */
@@ -98,9 +106,13 @@ const isoDateTime = (value: unknown): string | null => {
 export function parseReceiptReading(raw: string): ReceiptReading {
   const unreadable: ReceiptReading = {
     reference: null,
+    providerName: null,
     amountPhp: null,
     senderNumber: null,
+    senderName: null,
+    senderAccountMasked: null,
     receivingNumber: null,
+    receivingAccountMasked: null,
     paidAt: null,
     confidence: 0,
     readable: false,
@@ -120,8 +132,12 @@ export function parseReceiptReading(raw: string): ReceiptReading {
   const confidence = confidenceValue === null ? (reference ? 1 : 0) : Math.min(confidenceValue, 1);
   return {
     reference,
+    providerName: text(parsed["provider_name"] ?? parsed["provider"]),
     amountPhp: numeric(parsed["amount_php"] ?? parsed["amount"]),
     senderNumber: text(parsed["sender_number"] ?? parsed["sender"]),
+    senderName: text(parsed["sender_name"] ?? parsed["payer_name"]),
+    senderAccountMasked: text(parsed["sender_account_masked"] ?? parsed["sender_account"]),
+    receivingAccountMasked: text(parsed["receiving_account_masked"] ?? parsed["receiving_account"]),
     receivingNumber: text(parsed["receiving_number"] ?? parsed["receiver_number"] ?? parsed["recipient_number"]),
     paidAt: isoDateTime(parsed["paid_at"] ?? parsed["datetime"] ?? parsed["date_time"]),
     confidence,

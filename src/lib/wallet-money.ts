@@ -538,8 +538,12 @@ export async function requestCashIn(input: {
   /** The ORIGINAL screenshot reading, kept as evidence and never overwritten. */
   ocr?: {
     reference?: string | null;
+    /** App or bank printed on the receipt — resolves the payment provider. */
+    providerName?: string | null;
     amountPhp?: number | null;
     senderNumber?: string | null;
+    senderName?: string | null;
+    senderAccountMasked?: string | null;
     paidAt?: string | null;
     confidence?: number | null;
     readable?: boolean | null;
@@ -561,8 +565,11 @@ export async function requestCashIn(input: {
     _ocr: input.ocr
       ? {
           reference: input.ocr.reference ?? null,
+          provider_name: input.ocr.providerName ?? null,
           amount_php: input.ocr.amountPhp ?? null,
           sender_number: input.ocr.senderNumber ?? null,
+          sender_name: input.ocr.senderName ?? null,
+          sender_account_masked: input.ocr.senderAccountMasked ?? null,
           paid_at: input.ocr.paidAt ?? null,
           confidence: input.ocr.confidence ?? null,
           readable: input.ocr.readable ?? null,

@@ -21,10 +21,17 @@ export interface ReceiptCheckResult {
 /** What the screenshot reader extracted, offered to the member for review. */
 export interface ReceiptExtraction {
   reference: string | null;
+  /** The app or bank the receipt came from, as printed on it. */
+  providerName: string | null;
   amountPhp: number | null;
   senderNumber: string | null;
-  /** Receiving GCash account read off the receipt, when it was printed. */
+  /** Payer name printed on the receipt — common on bank transfers. */
+  senderName: string | null;
+  /** Masked sending account/card, when the receipt prints one instead of a number. */
+  senderAccountMasked: string | null;
+  /** Receiving account read off the receipt, when it was printed. */
   receivingNumber: string | null;
+  receivingAccountMasked: string | null;
   paidAt: string | null;
   confidence: number;
   readable: boolean;
@@ -60,14 +67,32 @@ export const extractCashInReceipt = createServerFn({ method: "POST" })
     const reading = await readReceipt(signed.data.signedUrl);
     return {
       reference: reading.reference,
+      providerName: reading.providerName ?? null,
       amountPhp: reading.amountPhp,
       senderNumber: reading.senderNumber,
+      senderName: reading.senderName ?? null,
+      senderAccountMasked: reading.senderAccountMasked ?? null,
       receivingNumber: reading.receivingNumber ?? null,
+      receivingAccountMasked: reading.receivingAccountMasked ?? null,
       paidAt: reading.paidAt ?? null,
       confidence: reading.confidence,
       readable: reading.readable,
     };
   });
+
+/** SHA-256 of the uploaded screenshot bytes, or null when it cannot be read. */
+async function hashProof(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const digest = await crypto.subtle.digest("SHA-256", await res.arrayBuffer());
+    return Array.from(new Uint8Array(digest))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  } catch {
+    return null;
+  }
+}
 
 export const verifyCashInReceipt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -112,15 +137,24 @@ export const verifyCashInReceipt = createServerFn({ method: "POST" })
     } catch {
       reading = {
         reference: null,
+        providerName: null,
         amountPhp: null,
         senderNumber: null,
+        senderName: null,
+        senderAccountMasked: null,
         receivingNumber: null,
+        receivingAccountMasked: null,
         paidAt: null,
         confidence: 0,
         readable: false,
       };
       check = "error";
     }
+
+    // Fingerprint the screenshot itself so the same image can never settle two
+    // cash ins. Failing to hash it is never fatal — the request simply keeps
+    // the protections it already had.
+    const proofHash = await hashProof(signed.data.signedUrl);
 
     await supabaseAdmin.rpc("apply_cash_in_receipt_ocr", {
       _id: data.cashInId,
@@ -130,12 +164,21 @@ export const verifyCashInReceipt = createServerFn({ method: "POST" })
       _readable: check !== "error" && reading.readable,
       _paid_at: reading.paidAt ?? null,
       _receiving: reading.receivingNumber ?? null,
+      _provider: reading.providerName ?? null,
+      _sender_name: reading.senderName ?? null,
+      _sender_account: reading.senderAccountMasked ?? null,
+      _receiving_account: reading.receivingAccountMasked ?? null,
+      _proof_hash: proofHash,
       _details: {
         confidence: reading.confidence,
         check,
         read_at: new Date().toISOString(),
         paid_at: reading.paidAt ?? null,
+        provider_name: reading.providerName ?? null,
+        sender_name: reading.senderName ?? null,
+        sender_account_masked: reading.senderAccountMasked ?? null,
         receiving_number: reading.receivingNumber ?? null,
+        receiving_account_masked: reading.receivingAccountMasked ?? null,
       },
     } as never);
 
