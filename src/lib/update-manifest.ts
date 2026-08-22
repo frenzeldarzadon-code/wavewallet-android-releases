@@ -24,8 +24,8 @@ export const WEB_BUILD_ID: string =
   typeof __WW_BUILD__ === "string" && __WW_BUILD__ ? __WW_BUILD__ : "dev";
 
 /** Latest published native Android release. Must match android-app/app/build.gradle.kts. */
-export const ANDROID_VERSION_CODE = 3;
-export const ANDROID_VERSION_NAME = "1.1.1";
+export const ANDROID_VERSION_CODE = 6;
+export const ANDROID_VERSION_NAME = "1.4.0";
 /**
  * Oldest native build still considered compatible. Anything below this is
  * missing native capabilities the web layer relies on (voucher image saving).
