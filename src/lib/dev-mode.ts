@@ -144,12 +144,11 @@ export interface SaveLayoutMeta {
 export async function saveLayout(role: Role, payload: LayoutPayload, meta: SaveLayoutMeta) {
   const { error } = await supabase.rpc("set_ui_layout", {
     _role: role,
-    _payload: payload as unknown as Record<string, unknown>,
+    _payload: JSON.parse(JSON.stringify(payload)),
     _action: meta.action,
     _target_kind: meta.targetKind ?? "layout",
-    _target_id: meta.targetId ?? null,
-    _target_label: meta.targetLabel ?? null,
-    _ecosystem_id: null,
+    ...(meta.targetId ? { _target_id: meta.targetId } : {}),
+    ...(meta.targetLabel ? { _target_label: meta.targetLabel } : {}),
   });
   if (error) throw new Error(error.message);
   primeLayout(role, payload);
