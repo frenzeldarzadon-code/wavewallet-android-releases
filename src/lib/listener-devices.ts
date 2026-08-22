@@ -273,3 +273,56 @@ export function eventResultLabel(event: ListenerEvent) {
   return "Recorded";
 }
 
+
+/**
+ * Configurable notification-source filtering.
+ *
+ * A rule says whether one Android app (package name, or `*` for every app) may
+ * be read by the listener. With no rules saved everything stays allowed, so
+ * existing installations keep working. The most specific scope wins:
+ * device rule > shop rule > platform rule.
+ */
+export type ListenerSourceRule = {
+  id: string;
+  ecosystem_id: string | null;
+  ecosystem_name: string | null;
+  device_id: string | null;
+  device_label: string | null;
+  package_name: string;
+  mode: "allow" | "deny";
+  provider_id: string | null;
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function fetchListenerSourceRules(
+  ecosystemId: string | null = null,
+): Promise<ListenerSourceRule[]> {
+  const { data, error } = await rpc("listener_source_rules_list", { _ecosystem: ecosystemId });
+  if (error) throw new Error(error.message);
+  return (data as ListenerSourceRule[] | null) ?? [];
+}
+
+export async function setListenerSourceRule(input: {
+  packageName: string;
+  mode: "allow" | "deny";
+  ecosystemId?: string | null;
+  deviceId?: string | null;
+  note?: string | null;
+}): Promise<ListenerSourceRule> {
+  const { data, error } = await rpc("set_listener_source_rule", {
+    _package: input.packageName,
+    _mode: input.mode,
+    _ecosystem: input.ecosystemId ?? null,
+    _device: input.deviceId ?? null,
+    _note: input.note ?? null,
+  });
+  if (error) throw new Error(error.message);
+  return data as ListenerSourceRule;
+}
+
+export async function deleteListenerSourceRule(id: string): Promise<void> {
+  const { error } = await rpc("delete_listener_source_rule", { _rule: id });
+  if (error) throw new Error(error.message);
+}
