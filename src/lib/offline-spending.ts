@@ -236,3 +236,75 @@ export async function flushQueue(
   }
   return { synced, failed, skipped: false };
 }
+
+/* ------------------------------------------------------------------ */
+/* Single entry point for saving a NEW manual entry                    */
+/* ------------------------------------------------------------------ */
+
+export type SubmitStatus = "saved" | "queued-offline" | "queued-retry";
+
+export interface SubmitInput {
+  /** Generated ONCE per form submission and kept for the entry's whole life. */
+  clientRef: string;
+  ecosystemId: string;
+  kind: EntryKind;
+  amount: number;
+  description: string;
+  categoryId: string | null;
+  categoryName: string | null;
+  occurredAt: Date;
+  notes: string | null;
+}
+
+/**
+ * Saves a new manual entry, never losing what the admin typed.
+ *
+ * - Known offline → queued straight away.
+ * - Sent but the transport failed (browser still claims to be online, request
+ *   timed out, gateway error, connection dropped) → queued with the SAME
+ *   `client_ref`, so the retry returns the row the server may already have
+ *   created instead of adding a second one.
+ * - Definitive server answer (validation, permission, unknown category) →
+ *   rethrown so the admin sees and fixes it; queueing it would only repeat it.
+ */
+export async function submitNewEntry(
+  input: SubmitInput,
+  send: typeof saveManualEntry = saveManualEntry,
+): Promise<SubmitStatus> {
+  const queued = {
+    clientRef: input.clientRef,
+    ecosystemId: input.ecosystemId,
+    kind: input.kind,
+    amount: input.amount,
+    description: input.description,
+    categoryId: input.categoryId,
+    categoryName: input.categoryName,
+    occurredAt: input.occurredAt.toISOString(),
+    notes: input.notes,
+  };
+
+  if (isOffline()) {
+    enqueueEntry(queued);
+    return "queued-offline";
+  }
+
+  try {
+    await send({
+      ecosystemId: input.ecosystemId,
+      kind: input.kind,
+      amount: input.amount,
+      description: input.description,
+      categoryId: input.categoryId,
+      occurredAt: input.occurredAt,
+      notes: input.notes,
+      clientRef: input.clientRef,
+    });
+    return "saved";
+  } catch (e) {
+    if (!isTransportFailure(e)) throw e;
+    enqueueEntry(queued);
+    updateQueuedEntry(input.clientRef, { attempts: 1, lastError: (e as Error).message });
+    return "queued-retry";
+  }
+}
+
