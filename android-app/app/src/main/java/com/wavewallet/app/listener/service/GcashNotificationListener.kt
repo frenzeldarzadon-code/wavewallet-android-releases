@@ -1,14 +1,16 @@
 package com.wavewallet.app.listener.service
 
 import android.content.ComponentName
+import android.content.pm.PackageManager
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import com.wavewallet.app.BuildConfig
 import com.wavewallet.app.listener.crypto.EventUid
 import com.wavewallet.app.listener.data.ListenerDb
 import com.wavewallet.app.listener.data.QueuedEvent
 import com.wavewallet.app.listener.parser.GcashParser
 import com.wavewallet.app.listener.parser.NotificationText
+import com.wavewallet.app.listener.parser.PaymentSignals
+import com.wavewallet.app.listener.source.SourceRules
 import com.wavewallet.app.listener.util.LastStatus
 import com.wavewallet.app.listener.work.ListenerScheduler
 import kotlinx.coroutines.CoroutineScope
@@ -19,14 +21,23 @@ import kotlinx.coroutines.launch
 /**
  * Reads notifications only after the user grants Notification Access.
  *
- * Everything that is not a GCash incoming-payment notification is discarded in
- * memory and never stored or transmitted. On (re)connect the service also
- * sweeps the notifications still on the status bar, so a payment that arrived
- * while the service was disconnected is still captured.
+ * The class name is kept for backwards compatibility: renaming it would revoke
+ * the Notification Access grant on every phone that already has it. The
+ * behaviour is provider-agnostic — it reads every source Android delivers,
+ * not just GCash.
  *
- * Diagnostics are deliberately layered: connection, reception and parsing are
- * recorded separately so an admin can tell whether Android failed to deliver
- * the notification or the parser failed to read it.
+ * Layered filtering, strictest first:
+ *  1. Our own notifications are ignored outright.
+ *  2. Sources disabled by listener_source_rules are dropped before their text
+ *     is read into anything durable. This is a privacy/bandwidth optimisation;
+ *     the server enforces the same rule again on every event.
+ *  3. Notifications with no money shape at all are counted and dropped locally.
+ *  4. Everything else is queued as a payment CANDIDATE. Classification,
+ *     matching and any crediting happen exclusively on the server.
+ *
+ * Diagnostics are deliberately layered: notifications seen, source-filtered,
+ * candidates and non-payment are separate counters so an admin can tell which
+ * stage discarded something.
  */
 class GcashNotificationListener : NotificationListenerService() {
 
@@ -38,6 +49,7 @@ class GcashNotificationListener : NotificationListenerService() {
         ListenerForegroundService.start(this)
         ListenerScheduler.scheduleHeartbeat(this)
         ListenerScheduler.heartbeatNow(this)
+        ListenerScheduler.syncSourceRules(this)
         recoverActiveNotifications()
     }
 
@@ -62,79 +74,136 @@ class GcashNotificationListener : NotificationListenerService() {
             null
         } ?: return
 
-        var gcash = 0
+        var considered = 0
         var recovered = 0
         for (sbn in active) {
-            if (sbn.packageName != BuildConfig.GCASH_PACKAGE) continue
-            gcash++
+            if (sbn.packageName == packageName) continue
+            if (!SourceRules.allows(this, sbn.packageName)) continue
+            considered++
             if (handle(sbn, source = "recovery")) recovered++
         }
-        LastStatus.recordSweep(this, active.size, gcash, recovered)
+        LastStatus.recordSweep(this, active.size, considered, recovered)
         if (recovered > 0) {
-            LastStatus.recordNotification(this, "Recovered $recovered GCash notification(s) after reconnect")
+            LastStatus.recordNotification(this, "Recovered $recovered payment candidate(s) after reconnect")
         }
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
-        if (sbn.packageName != BuildConfig.GCASH_PACKAGE) return
+        // Never read ourselves back: WaveWallet's own notifications can never
+        // be a payment and would otherwise loop through the queue.
+        if (sbn.packageName == packageName) return
+
+        LastStatus.recordSeen(this)
+
+        // Earliest safe filter point. Nothing of a disabled source is read into
+        // the queue, uploaded or persisted — only the app identity is counted.
+        if (!SourceRules.allows(this, sbn.packageName)) {
+            LastStatus.recordSourceDisabled(this, sbn.packageName)
+            return
+        }
         handle(sbn, source = "posted")
     }
 
-    /** Returns true when the notification was a GCash payment worth keeping. */
+    /** Returns true when the notification was queued as a payment candidate. */
     private fun handle(sbn: StatusBarNotification, source: String): Boolean {
         val extras = sbn.notification?.extras
         val title = NotificationText.titleOf(extras)
         val body = NotificationText.bodyOf(extras)
         val raw = NotificationText.merge(listOf(title, body))
+        val provider = PaymentSignals.providerFor(sbn.packageName)
+        val label = appLabelOf(sbn.packageName)
 
         // Recorded BEFORE parsing: proves Android delivered the notification
-        // even when the parser later rejects it.
-        LastStatus.recordReceived(this, source, raw.length)
+        // even when triage or the parser later rejects it.
+        LastStatus.recordReceived(this, "$source · ${label ?: sbn.packageName}", raw.length)
         if (raw.isEmpty()) {
             LastStatus.recordParseResult(this, "empty notification — no readable text")
             return false
         }
 
-        return when (val result = GcashParser.parse(title, body)) {
-            is GcashParser.Result.Ignored -> {
-                LastStatus.recordParseResult(this, "IGNORED — not an incoming-payment notification")
-                false // not a payment: drop, never stored
-            }
-            is GcashParser.Result.Unparsed -> {
-                LastStatus.recordParseResult(this, "UNPARSED — ${result.reason} (never credited)")
-                LastStatus.recordNotification(this, "Unreadable GCash payment notification (${result.reason})")
-                enqueue(sbn, raw, null, null, null, null, status = "unparsed")
-                true
-            }
-            is GcashParser.Result.Payment -> {
-                LastStatus.recordParseResult(
-                    this,
-                    "PAYMENT read via $source%s".format(result.reference?.let { " (ref present)" } ?: ""),
-                )
-                LastStatus.recordNotification(
-                    this,
-                    "PHP %.2f from %s%s".format(
-                        result.amountPhp,
-                        result.senderNumber ?: result.senderName ?: "unknown",
-                        result.reference?.let { " (ref $it)" } ?: "",
-                    ),
-                )
-                enqueue(
-                    sbn, raw, result.amountPhp, result.senderNumber, result.senderName,
-                    result.reference, status = "queued",
-                )
-                true
-            }
+        // GCash keeps its dedicated parser so existing behaviour is unchanged.
+        if (provider == "gcash") return handleGcash(sbn, title, body, raw, label)
+
+        if (!PaymentSignals.looksLikeMoney(raw)) {
+            LastStatus.recordNonPayment(this, sbn.packageName)
+            LastStatus.recordParseResult(this, "NON-PAYMENT — no amount or money wording")
+            return false
+        }
+
+        // Unknown provider: send the facts, let WaveWallet classify. The phone
+        // never guesses an amount, a sender or a reference for a new provider.
+        LastStatus.recordCandidate(this, sbn.packageName, provider)
+        LastStatus.recordParseResult(this, "CANDIDATE — sent to WaveWallet for classification")
+        enqueue(
+            sbn = sbn, raw = raw, title = title, text = body, label = label, provider = null,
+            amount = null, number = null, name = null, reference = null,
+            parserVersion = PaymentSignals.VERSION, status = "queued",
+        )
+        return true
+    }
+
+    private fun handleGcash(
+        sbn: StatusBarNotification,
+        title: String?,
+        body: String,
+        raw: String,
+        label: String?,
+    ): Boolean = when (val result = GcashParser.parse(title, body)) {
+        is GcashParser.Result.Ignored -> {
+            LastStatus.recordNonPayment(this, sbn.packageName)
+            LastStatus.recordParseResult(this, "IGNORED — not an incoming-payment notification")
+            false // not a payment: drop, never stored
+        }
+        is GcashParser.Result.Unparsed -> {
+            LastStatus.recordCandidate(this, sbn.packageName, "gcash")
+            LastStatus.recordParseResult(this, "UNPARSED — ${result.reason} (never credited)")
+            LastStatus.recordNotification(this, "Unreadable GCash payment notification (${result.reason})")
+            enqueue(
+                sbn, raw, title, body, label, "gcash",
+                null, null, null, null, GcashParser.VERSION, status = "unparsed",
+            )
+            true
+        }
+        is GcashParser.Result.Payment -> {
+            LastStatus.recordCandidate(this, sbn.packageName, "gcash")
+            LastStatus.recordParseResult(
+                this,
+                "PAYMENT read%s".format(result.reference?.let { " (ref present)" } ?: ""),
+            )
+            LastStatus.recordNotification(
+                this,
+                "PHP %.2f from %s%s".format(
+                    result.amountPhp,
+                    result.senderNumber ?: result.senderName ?: "unknown",
+                    result.reference?.let { " (ref $it)" } ?: "",
+                ),
+            )
+            enqueue(
+                sbn, raw, title, body, label, "gcash",
+                result.amountPhp, result.senderNumber, result.senderName, result.reference,
+                GcashParser.VERSION, status = "queued",
+            )
+            true
         }
     }
+
+    private fun appLabelOf(packageName: String): String? = runCatching {
+        val pm = packageManager
+        pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString().take(160)
+    }.getOrElse { if (it is PackageManager.NameNotFoundException) null else null }
 
     private fun enqueue(
         sbn: StatusBarNotification,
         raw: String,
+        title: String?,
+        text: String?,
+        label: String?,
+        provider: String?,
         amount: Double?,
         number: String?,
         name: String?,
         reference: String?,
+        parserVersion: String,
         status: String,
     ) {
         val event = QueuedEvent(
@@ -149,7 +218,11 @@ class GcashNotificationListener : NotificationListenerService() {
             senderName = name,
             gcashReference = reference,
             rawText = raw,
-            parserVersion = GcashParser.VERSION,
+            title = title,
+            text = text?.takeIf { it.isNotBlank() },
+            appLabel = label,
+            providerId = provider,
+            parserVersion = parserVersion,
             status = status,
         )
         scope.launch {
