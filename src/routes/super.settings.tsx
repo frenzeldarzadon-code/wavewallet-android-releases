@@ -96,7 +96,9 @@ function SuperSettings() {
       >
         <ListenerDeviceScreenButton />
         <ListenerDevicesCard />
+        <ListenerSourceRulesCard />
       </PageSection>
+
 
 
       <PageSection title="Collection details" description="The platform GCash account shop admins pay when buying a coin allocation.">
