@@ -43,15 +43,24 @@ const eventSchema = z.object({
   kind: z.literal("event"),
   event_uid: z.string().min(6).max(200),
   package_name: z.string().min(3).max(160),
+  /** Human-readable app name, when the phone could read one. Newer builds only. */
+  app_label: z.string().max(160).nullable().optional(),
+  /** Notification title/text, sent separately by newer builds. */
+  title: z.string().max(1000).nullable().optional(),
+  text: z.string().max(2000).nullable().optional(),
   posted_at: z.string().datetime().optional(),
   amount_php: z.number().positive().max(1_000_000).nullable().optional(),
   sender_number: z.string().max(40).nullable().optional(),
   sender_name: z.string().max(160).nullable().optional(),
-  /** GCash reference number, when the phone could read one. */
+  /** Provider reference number, when the phone could read one. */
   gcash_reference: z.string().max(64).nullable().optional(),
+  reference: z.string().max(64).nullable().optional(),
   raw_text: z.string().max(2000).nullable().optional(),
   parser_version: z.string().max(40).optional(),
+  /** Provider the phone believes this is. The server re-resolves it anyway. */
+  provider_id: z.string().max(40).nullable().optional(),
 });
+
 
 
 const payloadSchema = z.discriminatedUnion("kind", [heartbeatSchema, eventSchema]);
