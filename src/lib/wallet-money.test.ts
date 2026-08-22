@@ -157,7 +157,22 @@ describe("cash in validation", () => {
     expect(validateCashIn(0, "m1")).toMatch(/how much/);
     expect(validateCashIn(100, "m1")).toBeNull();
   });
+
+  it("accepts any provider's payer identity, not just a GCash mobile number", () => {
+    const base = { hasProof: true };
+    // e-wallet: mobile number read off the receipt
+    expect(validateCashIn(100, "m1", { ...base, payerNumber: "09171234567" })).toBeNull();
+    // bank: masked account / payer name instead of a mobile number
+    expect(validateCashIn(100, "m1", { ...base, payerNumber: "", payerAccount: "****1234" })).toBeNull();
+    expect(validateCashIn(100, "m1", { ...base, payerNumber: "", payerAccount: "JUAN D." })).toBeNull();
+    // bank account number typed by hand
+    expect(validateCashIn(100, "m1", { ...base, payerNumber: "0012 3456 7890" })).toBeNull();
+    // nothing at all still fails, and the screenshot stays required
+    expect(validateCashIn(100, "m1", { ...base, payerNumber: "" })).toMatch(/account you paid from/);
+    expect(validateCashIn(100, "m1", { hasProof: false, payerNumber: "09171234567" })).toMatch(/screenshot/);
+  });
 });
+
 
 describe("queues", () => {
   const rows = [{ status: "pending" }, { status: "pending" }, { status: "released" }, { status: "rejected" }];
