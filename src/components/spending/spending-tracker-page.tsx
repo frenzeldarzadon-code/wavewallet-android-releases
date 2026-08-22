@@ -274,7 +274,7 @@ export function SpendingTrackerPage({ ecosystemId }: { ecosystemId: string | nul
                           />
                           <span className="truncate text-sm">{s.name}</span>
                           {s.automatic ? (
-                            <StatusBadge tone="neutral">Auto</StatusBadge>
+                            <StatusBadge tone="muted">Auto</StatusBadge>
                           ) : null}
                         </div>
                         <div className="shrink-0 text-right">
