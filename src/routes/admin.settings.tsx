@@ -14,6 +14,7 @@ import { ReceivingAccountsCard } from "@/components/money/receiving-accounts-car
 import { ListenerDeviceScreenButton } from "@/components/money/listener-device-screen-button";
 import { ListenerSourceRulesCard } from "@/components/money/listener-source-rules-card";
 import { CashInNumberCard } from "@/components/money/cash-in-number-card";
+import { PlatformPaymentOptionCard } from "@/components/money/platform-payment-option-card";
 import { ShopIdentityCard } from "@/components/shop/shop-identity-card";
 import { useSession } from "@/lib/session";
 import {
@@ -386,6 +387,7 @@ function AdminSettings() {
             title="Listener payment methods (what members see)"
             description="The only place your shop's payment options are configured. Accounts added here — GCash, Maya, banks — are exactly what your members see when they cash in. Upload a QR code so they can scan or download it instead of typing details."
           />
+          <PlatformPaymentOptionCard ecosystemId={ecosystemDbId} />
           <CashInNumberCard ecosystemId={ecosystemDbId} />
           <ListenerDeviceScreenButton />
           <ListenerDevicesCard ecosystemId={ecosystemDbId} ecosystemName={ecosystem.name} />
