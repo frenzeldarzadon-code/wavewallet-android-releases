@@ -177,13 +177,15 @@ export function GoLiveCard({
         fetchPaymentMethods(true, { ecosystemId: null }).catch(() => [] as PaymentMethod[]),
         // The shop's existing subscription record — the current plan comes
         // from there, never from a guess.
-        supabase
-          .from("shop_subscriptions")
-          .select("plan_id")
-          .eq("ecosystem_id", ecosystemId)
-          .maybeSingle()
-          .then(({ data }) => (data?.plan_id as string | null) ?? null)
-          .catch(() => null),
+        (async () => {
+          const { data } = await supabase
+            .from("shop_subscriptions")
+            .select("plan_id")
+            .eq("ecosystem_id", ecosystemId)
+            .maybeSingle();
+          return (data?.plan_id as string | null) ?? null;
+        })().catch(() => null),
+
       ]);
       setPlans(p);
       setGcash(g);
