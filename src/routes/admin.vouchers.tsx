@@ -137,6 +137,9 @@ function AdminVouchers() {
 
   const pasted = useMemo(() => parsePastedCodes(raw), [raw]);
   const pending = fileCodes ?? pasted;
+  const selectableProducts = useMemo(() => products.filter((p) => !p.archived), [products]);
+  const selectedProduct = selectableProducts.find((p) => p.id === productId) ?? null;
+  const noProducts = products.length === 0;
 
   if (!ecosystemDbId) return null;
 
@@ -146,14 +149,16 @@ function AdminVouchers() {
   );
 
   const runImport = async () => {
-    if (!productId || pending.length === 0) return;
+    // Guarded twice on purpose: nothing is ever written without a confirmed product.
+    if (!selectedProduct || pending.length === 0) return;
     setBusy(true);
     try {
-      const res = await importVoucherCodes(productId, pending, fileCodes ? "file" : "paste");
-      setResult({ ...res, productName: products.find((p) => p.id === productId)?.name ?? "" });
+      const res = await importVoucherCodes(selectedProduct.id, pending, fileCodes ? "file" : "paste");
+      setResult({ ...res, productName: selectedProduct.name });
       setRaw("");
       setFileCodes(null);
       setFileName("");
+      setConfirmOpen(false);
       setOpen(false);
       await load();
     } catch (e) {
@@ -162,6 +167,7 @@ function AdminVouchers() {
       setBusy(false);
     }
   };
+
 
   const runDelete = async () => {
     if (!pendingDelete) return;
