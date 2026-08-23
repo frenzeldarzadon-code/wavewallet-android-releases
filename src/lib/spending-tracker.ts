@@ -254,26 +254,7 @@ export async function fetchSpendingEntries(
 
   const byId = new Map(categories.map((c) => [c.id, c]));
 
-  const autoRows = ((auto.data ?? []) as unknown as AutoRow[]).filter(isAutomaticIncome);
-  const seenAuto = new Set<string>();
-  const autoEntries: SpendingEntry[] = autoRows
-    // Stable source ids (`cb:<earning>`, `ad:<sale>`) guarantee one entry per
-    // source transaction even if the server ever returns a row twice.
-    .filter((r) => (seenAuto.has(r.id) ? false : (seenAuto.add(r.id), true)))
-    .map((r) => ({
-      id: r.id,
-      kind: "income" as const,
-      occurredAt: r.occurred_at,
-      description: r.description,
-      amount: Number(r.amount ?? 0),
-      source: "automatic" as const,
-      categoryKey: r.auto_key,
-      categoryName: autoCategoryName(r.auto_key, categories, "income", r.member_name),
-      memberId: r.member_id,
-      memberName: r.member_name,
-      notes: null,
-      editable: false,
-    }));
+  const autoEntries = automaticEntries((auto.data ?? []) as unknown as AutoRow[], categories);
 
   const manualIncome: SpendingEntry[] = (
     (income.data ?? []) as unknown as {
