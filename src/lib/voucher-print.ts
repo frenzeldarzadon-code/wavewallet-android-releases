@@ -23,7 +23,13 @@ export type VoucherTemplateId =
   | "pop"
   | "organic"
   | "neon"
-  | "mono";
+  | "mono"
+  | "mist"
+  | "terraces"
+  | "pines"
+  | "falls"
+  | "cave"
+  | "sunrise";
 
 export interface VoucherTemplate {
   id: VoucherTemplateId;
@@ -45,7 +51,38 @@ export const voucherTemplates: VoucherTemplate[] = [
   { id: "organic", name: "Organic", description: "Earthy palette with soft natural curves." },
   { id: "neon", name: "Neon Night", description: "Dark nightlife card with controlled neon accents." },
   { id: "mono", name: "Mono Press", description: "Inked editorial press stub in monospace." },
+  {
+    id: "mist",
+    name: "Sagada Mist",
+    description: "Misty mountain ridges behind a frosted white reading panel.",
+  },
+  {
+    id: "terraces",
+    name: "Rice Terraces",
+    description: "Warm terrace contours as a quiet band beneath the price.",
+  },
+  {
+    id: "pines",
+    name: "Pine Forest",
+    description: "Slender pine strip on the left, clean ink column on the right.",
+  },
+  {
+    id: "falls",
+    name: "Bomod-ok Falls",
+    description: "Airy waterfall wash with a crisp centred code plate.",
+  },
+  {
+    id: "cave",
+    name: "Limestone",
+    description: "Limestone cliffs in the corner over warm paper stock.",
+  },
+  {
+    id: "sunrise",
+    name: "Kiltepan Sunrise",
+    description: "Sunrise ridge glow softened by a bright reading scrim.",
+  },
 ];
+
 
 export function isVoucherTemplate(v: string): v is VoucherTemplateId {
   return voucherTemplates.some((t) => t.id === v);
