@@ -112,7 +112,7 @@ begin
   if _req.super_review_state = _decision then return 'unchanged'; end if;
 
   select * into _eco from public.ecosystems where id = _req.ecosystem_id;
-  select coalesce(p.display_name, 'Platform owner') into _name
+  select coalesce(p.full_name, 'Platform owner') into _name
     from public.profiles p where p.id = _actor;
 
   update public.subscription_requests
