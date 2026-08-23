@@ -63,9 +63,9 @@ describe("go live readiness", () => {
   });
 
   it("rejects out-of-range months and malformed numbers", () => {
-    const e = goLiveFieldErrors({ ...ready, months: 30, payerNumber: "abc", reference: "12" });
+    const e = goLiveFieldErrors({ ...ready, months: 30, payerNumber: "ab", reference: "12" });
     expect(e.months).toMatch(/1 and 24/);
-    expect(e.payerNumber).toMatch(/09XXXXXXXXX/);
+    expect(e.payerNumber).toMatch(/account number or mobile number/i);
     expect(e.reference).toMatch(/longer/);
   });
 
@@ -77,5 +77,13 @@ describe("go live readiness", () => {
     expect(dup.message).toMatch(/already been used/);
     expect(mapGoLiveError("Months must be between 1 and 24").field).toBe("months");
     expect(mapGoLiveError("A payment for this shop is already awaiting verification").field).toBeUndefined();
+  });
+});
+
+describe("provider-neutral sender identifiers", () => {
+  it("accepts a bank account number and a GCash number alike", () => {
+    expect(goLiveFieldErrors({ ...ready, payerNumber: "15976553427" }).payerNumber).toBeUndefined();
+    expect(goLiveFieldErrors({ ...ready, payerNumber: "09541230072" }).payerNumber).toBeUndefined();
+    expect(goLiveFieldErrors({ ...ready, payerNumber: "" }).payerNumber).toBeTruthy();
   });
 });
