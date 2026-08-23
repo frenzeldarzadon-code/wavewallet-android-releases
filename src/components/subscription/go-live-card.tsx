@@ -38,7 +38,8 @@ import {
 import { CashInProofPicker } from "@/components/money/cash-in-proof";
 import { uploadCashInProof, removeCashInProof, fetchPaymentMethods, type PaymentMethod } from "@/lib/wallet-money";
 import { PaymentMethodCards } from "@/components/money/payment-method-cards";
-import { extractCashInReceipt } from "@/lib/cash-in-receipt.functions";
+import { extractCashInReceipt, type ReceiptExtraction } from "@/lib/cash-in-receipt.functions";
+import { receiptEvidence } from "@/lib/receipt-evidence";
 import { verifyGoLiveReceipt } from "@/lib/go-live-receipt.functions";
 import { RECEIPT_CHECK_LABEL } from "@/lib/cash-in-receipt";
 import { supabase } from "@/integrations/supabase/client";
@@ -88,6 +89,16 @@ export function GoLiveCard({
   const [proofPath, setProofPath] = useState<string | null>(null);
   const [reading, setReading] = useState(false);
   const [receiptNote, setReceiptNote] = useState<string | null>(null);
+  /** Everything the reader saw — provider-neutral, kept verbatim as evidence. */
+  const [extract, setExtract] = useState<ReceiptExtraction | null>(null);
+  /** Which autofilled fields the applicant has since edited by hand. */
+  const [edited, setEdited] = useState<{ reference: boolean; payerNumber: boolean }>({
+    reference: false,
+    payerNumber: false,
+  });
+  const [showRaw, setShowRaw] = useState(false);
+  /** Set once the applicant accepts that thin evidence means manual review. */
+  const [acceptManual, setAcceptManual] = useState(false);
 
 
   /** Upload immediately, then read it with the existing Cash In receipt reader. */
@@ -95,6 +106,10 @@ export function GoLiveCard({
     if (proofPath) void removeCashInProof(proofPath).catch(() => {});
     setProofPath(null);
     setReceiptNote(null);
+    setExtract(null);
+    setEdited({ reference: false, payerNumber: false });
+    setAcceptManual(false);
+    setShowRaw(false);
     setProofFile(file);
     if (!file) return;
     setReading(true);
@@ -105,13 +120,12 @@ export function GoLiveCard({
       const path = await uploadCashInProof(ownerId, file);
       setProofPath(path);
       const read = await extractCashInReceipt({ data: { proofPath: path } });
+      setExtract(read);
+      // Provider-neutral autofill: whatever this receipt actually printed is
+      // used. Nothing is invented, and nothing is prefilled from GCash.
       if (read.reference) setReference(read.reference);
       if (read.senderNumber) setPayerNumber(read.senderNumber);
-      setReceiptNote(
-        read.readable
-          ? "Screenshot read — check the reference and sending number below before you submit."
-          : "We could not read this screenshot clearly. Type the reference and sending number yourself; the payment still goes for review.",
-      );
+      setReceiptNote(receiptEvidence(read, { expectedAmountPhp: null }).message);
     } catch (e) {
       setProofFile(null);
       setServerField("proof");
