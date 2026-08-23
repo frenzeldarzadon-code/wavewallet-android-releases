@@ -51,6 +51,7 @@ export const voucherPrintCss = `
   pointer-events: none;
   z-index: 0;
 }
+.vp-voucher p { margin: 0; }
 .vp-head, .vp-body, .vp-meta { position: relative; z-index: 1; min-width: 0; }
 .vp-head { min-height: 0; flex: 1 1 auto; overflow: hidden; }
 .vp-body { min-height: 0; flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center; gap: 0.01in; }
