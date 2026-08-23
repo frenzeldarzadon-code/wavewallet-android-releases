@@ -206,6 +206,7 @@ const SLOT_SOURCE: SlotSource[] = [
   { name: "settings.points-rule", label: "Points rule", group: "Settings", roles: ["admin"] },
   { name: "settings.shop-id-sign-up-link-address", label: "Shop ID, sign-up link & address", group: "Settings", roles: ["admin"] },
   { name: "settings.shop-identity", label: "Shop identity", group: "Settings", roles: ["admin"] },
+  { name: "settings.delete-shop", label: "Delete this shop", group: "Settings", roles: ["admin"] },
   { name: "settings.voucher-sale-earnings", label: "Voucher sale earnings", group: "Settings", roles: ["admin"] },
   { name: "shop.available-vouchers", label: "Available vouchers", group: "Shop", roles: ["customer"] },
   { name: "shop-admin-queue.cash-in-paid-to-your-gcash", label: "Cash in paid to your GCash", group: "Shop Admin Queue", roles: ["customer", "reseller", "subreseller", "admin", "super_admin"] },
