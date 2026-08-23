@@ -122,6 +122,7 @@ function AdminDashboard() {
             periodEnd={ecosystem.subscription?.currentPeriodEnd}
             graceDays={Number(ecosystem.subscription?.gracePeriodDays ?? 0)}
             state={ecosystem.subscription?.status}
+            monthlyPrice={ecosystem.subscription?.priceMonthly}
           />
         </DevSlot>
       ) : null}

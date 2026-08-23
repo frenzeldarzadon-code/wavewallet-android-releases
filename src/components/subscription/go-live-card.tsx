@@ -31,6 +31,7 @@ import { fetchPlans, fetchQuote, type SubscriptionPlan, type SubscriptionQuote }
 import {
   fetchGoLiveRequest,
   fetchPlatformGcash,
+  activateFreeSubscription,
   goLiveStatusLine,
   submitGoLivePayment,
   type SubscriptionRequest,
@@ -208,6 +209,10 @@ export function GoLiveCard({
       : null;
   const coverage = coveragePeriod(currentEnd, monthCount);
 
+  // Zero-priced = deliberately free. Nothing is charged, so no payment fields,
+  // no reference and no screenshot. The database enforces the same rule.
+  const isFree = Boolean(plan) && due <= 0;
+
   const pending = request?.status === "pending";
   // How much INDEPENDENT evidence the screenshot itself produced. This never
   // approves anything — the platform listener and the database rules still
@@ -304,6 +309,24 @@ export function GoLiveCard({
       setServerError(mapped.message);
       setServerField(mapped.field ?? null);
       toast.error(mapped.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const activateFree = async () => {
+    if (!plan) return;
+    setBusy(true);
+    setServerError(null);
+    try {
+      await activateFreeSubscription({ ecosystemId, planId: plan.id, months: monthCount });
+      toast.success("Free subscription activated — no payment was required.");
+      onLive?.();
+      await load();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "That could not be activated.";
+      setServerError(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -458,6 +481,36 @@ export function GoLiveCard({
                   </p>
                 )}
               </div>
+
+              {isFree ? (
+                /* Zero-priced subscription — the platform owner set this shop or
+                   plan to no charge, so no payment is requested at all. */
+                <div className="space-y-3 rounded-xl border border-success/40 bg-success/5 px-3 py-3">
+                  <p className="flex items-center gap-1.5 text-sm font-semibold text-success">
+                    <CheckCircle2 className="size-4" /> No payment required
+                  </p>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    This subscription is set to no monthly charge. There is nothing to send, no
+                    reference number and no screenshot — just activate it. It will not expire or be
+                    frozen for non-payment while it stays free.
+                  </p>
+                  {serverError ? (
+                    <p role="alert" className="text-xs font-medium text-destructive">
+                      {serverError}
+                    </p>
+                  ) : null}
+                  <Button className="w-full" disabled={busy || !plan} onClick={activateFree}>
+                    {busy ? (
+                      <Loader2 className="mr-1 size-4 animate-spin" />
+                    ) : (
+                      <Rocket className="mr-1 size-4" />
+                    )}
+                    Activate free subscription
+                  </Button>
+                </div>
+              ) : (
+                <>
+
 
 
 
@@ -780,6 +833,9 @@ export function GoLiveCard({
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+
+                </>
+              )}
 
             </>
           )}

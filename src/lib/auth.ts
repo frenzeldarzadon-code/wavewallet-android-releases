@@ -83,11 +83,27 @@ export interface AuthContext {
   } | null;
 }
 
+/**
+ * Mirrors the database `subscription_is_free()` rule: a shop the platform owner
+ * priced at zero pays nothing. Demo/review shops are excluded — their price is
+ * only 0 because they have not subscribed yet.
+ */
+export function isFreeSubscription(
+  eco: Pick<DbEcosystem, "plan_price"> & { is_review?: boolean | null } | null,
+): boolean {
+  if (!eco) return false;
+  if (eco.is_review) return false;
+  return Number(eco.plan_price ?? 0) <= 0;
+}
+
 /** Mirrors the database `subscription_ok()` rule so the UI can gate without a round trip. */
 export function isSubscriptionOk(eco: DbEcosystem | null): boolean {
   if (!eco) return false;
   if (eco.subscription_state !== "active") return false;
   if (!eco.current_period_end) return true;
+  // A deliberately zero-priced shop owes nothing, so it never expires and is
+  // never frozen for non-payment (mirrors `subscription_is_free` in the DB).
+  if (isFreeSubscription(eco)) return true;
   const end = new Date(eco.current_period_end).getTime();
   return end + eco.grace_period_days * 86_400_000 > Date.now();
 }

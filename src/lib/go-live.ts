@@ -109,6 +109,25 @@ export async function submitGoLivePayment(input: {
 }
 
 
+/**
+ * Zero-priced subscription: the platform owner set this shop (or plan) to no
+ * charge, so there is nothing to pay, no reference and no screenshot. The
+ * database refuses this call whenever real money is actually due.
+ */
+export async function activateFreeSubscription(input: {
+  ecosystemId: string;
+  planId: string;
+  months?: number;
+}) {
+  requireOnline();
+  const { error } = await supabase.rpc("activate_free_subscription", {
+    _ecosystem_id: input.ecosystemId,
+    _plan_id: input.planId,
+    _months: input.months ?? 1,
+  } as never);
+  if (error) throw new Error(error.message);
+}
+
 /** Platform owner override: any plan, any discount, or free (100% off). */
 export async function superadminSetShopPlan(input: {
   ecosystemId: string;
