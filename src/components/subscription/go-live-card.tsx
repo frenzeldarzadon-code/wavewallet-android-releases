@@ -42,7 +42,6 @@ import { PaymentMethodCards } from "@/components/money/payment-method-cards";
 import { extractCashInReceipt, type ReceiptExtraction } from "@/lib/cash-in-receipt.functions";
 import { receiptEvidence } from "@/lib/receipt-evidence";
 import { verifyGoLiveReceipt } from "@/lib/go-live-receipt.functions";
-import { RECEIPT_CHECK_LABEL } from "@/lib/cash-in-receipt";
 import { supabase } from "@/integrations/supabase/client";
 import {
   goLiveChecklist,
@@ -68,6 +67,9 @@ import {
 
 
 type Gcash = Awaited<ReturnType<typeof fetchPlatformGcash>>;
+
+const PANEL_NOTE =
+  "These details were read from your screenshot. Check they match your receipt before submitting.";
 
 export function GoLiveCard({
   ecosystemId,
@@ -263,7 +265,7 @@ export function GoLiveCard({
     }
     if (thinEvidence && !acceptManual) {
       setServerError(
-        `${evidence.message} Automatic activation needs at least two details read from the screenshot. Tick the box below to submit it for manual review instead.`,
+        "We could not read enough from this screenshot. Upload a clearer receipt, or tick the box below to submit it for review instead.",
       );
       document.getElementById("gl-evidence")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
@@ -294,15 +296,16 @@ export function GoLiveCard({
       // reading — not anything sent by this browser — is what gets stored.
       try {
         const checked = await verifyGoLiveReceipt({ data: { requestId: r.id } });
-        setReceiptNote(RECEIPT_CHECK_LABEL[checked.check] ?? null);
+        void checked;
+        setReceiptNote(null);
       } catch {
-        setReceiptNote("The receipt could not be checked automatically — it goes to manual review.");
+        setReceiptNote(null);
       }
       if (r.status === "approved") {
         toast.success("Payment verified — activating your shop now.");
         onLive?.();
       } else {
-        toast.success("Payment submitted. It goes live the moment the GCash payment is recognised.");
+        toast.success("Payment submitted — verification in progress.");
       }
     } catch (e) {
       const mapped = mapGoLiveError(e instanceof Error ? e.message : "");
@@ -364,11 +367,10 @@ export function GoLiveCard({
 
           {pending ? (
             <div className="rounded-xl border border-warning/40 bg-warning/10 px-3 py-2.5 text-xs leading-relaxed">
-              <StatusBadge tone="warning">Awaiting payment verification</StatusBadge>
+              <StatusBadge tone="warning">Verification in progress</StatusBadge>
               <p className="mt-1.5">
-                {goLiveStatusLine(request, isLive)} Reference {request?.payment_reference} ·{" "}
-                {peso(Number(request?.amount_due ?? 0))}. Your shop activates automatically once the
-                platform GCash notification for this exact amount and sending number arrives.
+                Payment submitted — verification in progress. Your subscription will activate after
+                verification is completed.
               </p>
             </div>
           ) : (
@@ -560,9 +562,7 @@ export function GoLiveCard({
                   <p className="text-sm font-semibold">Step 2 — Tell us about that payment</p>
                   <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                     Pay from your own account first, then enter that exact sending number, copy the
-                    reference number from the receipt and attach the receipt screenshot. A payment
-                    is recognised automatically only when the details match, and each reference can
-                    only ever be used once in any shop.
+                    reference number from the receipt and attach the receipt screenshot.
                   </p>
                 </div>
               </div>
@@ -676,7 +676,7 @@ export function GoLiveCard({
                         </div>
                       ))}
                     </dl>
-                    <p className="text-xs leading-relaxed text-muted-foreground">{receiptNote ?? evidence.message}</p>
+                    <p className="text-xs leading-relaxed text-muted-foreground">{PANEL_NOTE}</p>
                     {extract.rawText ? (
                       <>
                         <button
@@ -702,14 +702,11 @@ export function GoLiveCard({
                           onChange={(e) => setAcceptManual(e.target.checked)}
                         />
                         <span>
-                          Submit anyway — I understand this payment cannot be activated automatically
-                          and will wait for a person to review it.
+                          Submit anyway — I understand this payment will wait for review.
                         </span>
                       </label>
                     ) : null}
                   </div>
-                ) : receiptNote ? (
-                  <p className="text-xs text-muted-foreground">{receiptNote}</p>
                 ) : null}
                 {errorFor("proof") ? (
                   <p role="alert" className="text-xs font-medium text-destructive">

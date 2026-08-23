@@ -166,7 +166,7 @@ export function goLiveStatusLine(r: SubscriptionRequest | null, isLive?: boolean
       ? "Payment verified — finishing activation. Refresh in a moment; if this stays, the platform owner needs to complete the activation."
       : "Payment verified — your shop is live.";
   if (r.status === "rejected") return r.decision_reason || "That payment was rejected.";
-  const auto = (r as { auto_reason?: string | null }).auto_reason;
-  return auto || "Waiting for the GCash payment to be recognised.";
+  // Applicant-facing: never expose internal verification mechanics or reasons.
+  return "Payment submitted — verification in progress. Your subscription will activate after verification is completed.";
 }
 
