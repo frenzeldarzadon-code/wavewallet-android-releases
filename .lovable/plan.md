@@ -1,42 +1,78 @@
-# Go Live stuck on "Verification in progress" — SW Demo 2 Final Test
+# Verification: what permanent shop deletion actually removes
 
-## What the data actually says
+No code or database was changed. Findings come from reading `delete_own_shop`,
+`purge_ecosystem_internal`, the foreign keys on `ecosystems` / `profiles`, and current row counts.
 
-The payment is **genuinely not approved**. Nothing in the UI is lying.
+## Short answer
 
-Shop `SW Demo 2 Final Test`: still `is_review = true`, `subscription_state = awaiting_approval`.
+**No — the current implementation does not preserve members in the Universe.**
+It is tenant-scoped for *most* data, but it permanently deletes the profile rows of every
+member whose "home" shop (`profiles.ecosystem_id`) is the deleted shop — including members who
+also belong to other shops.
 
-Its latest Go Live request (submitted 23 Aug 2026 12:26 UTC):
+## 1) Users / members
 
-- `status = pending`, `auto_state = pending`
-- `auto_reason` = waiting for a payment notification matching at least two details
-- Receipt was read fine: `receipt_check = matched`, reference `104116`, amount `150.00`, payer `15976553427`, plan `Standard` at ₱150 × 1 month
-- `listener_event_id` is empty — no payment notification was ever matched to it
+`purge_ecosystem_internal` collects:
 
-So the UI state is correct: the receipt was accepted, but the second, authoritative side of the rule (a real notification from the platform listener) never arrived or never matched.
+```text
+_members := all profiles where profiles.ecosystem_id = <deleted shop>  (super admins excluded)
+```
 
-## Why no match happened — three separate causes
+and near the end runs `delete from public.profiles where id = any(_members)`.
 
-**1. No qualifying notification exists at all.**
-The only active listener device last delivered a GCash payment notification on **22 Aug**. Every event since then (up to 12:40 today) is from Shopee, Lazada, SeaBank, Gmail, etc. and is recorded as `non_payment`. There is no accepted GCash event after the 12:26 submission, so `reconcile_go_live_request` correctly returns `no_match`.
+So membership in the deleted shop is not what is scoped — the *home shop pointer* is. Any member
+whose home pointer is that shop is deleted outright, not just unlinked.
 
-**2. The receipt is a bank-to-GCash transfer, and the matching trigger can't see it.**
-The receipt is MariBank account `15976553427` → GCash `09541230072` via InstaPay. The database trigger that re-runs reconciliation when a new notification arrives only looks for pending requests whose `payer_number_key` **equals the notification's sender number**. A GCash "received from InstaPay" notification will not carry the sender's MariBank account number, so that trigger would never fire for this request — even if the right notification did arrive. The reference number (`104116`) plus amount would satisfy the ≥2-signal rule, but reconciliation is never invoked to evaluate it.
+## 2) Global identity / account
 
-**3. The receipt's own date pushes it outside the match window.**
-The screenshot text reads "23 Aug **2024** 19:07", so `receipt_paid_at` was stored as 2024-08-23. Reconciliation only accepts notifications within ±3 days of that timestamp — a window two years in the past. Any notification arriving today is excluded by date alone.
+- The `profiles` row is the global Universe identity (name, unique @handle, avatar). It is deleted.
+- Rows that cascade off `profiles` go with it: `login_usernames`, `notification_preferences`,
+  `social_follows`, `social_friendships` (all `ON DELETE CASCADE`).
+- The `auth` login itself is *not* deleted by this function (unlike
+  `superadmin_delete_platform_user`, which anonymises the profile and keeps history). The result is
+  a login that still exists but has no profile — an orphaned account that cannot present an identity
+  in the Universe.
+- Contrast: `profiles.ecosystem_id` and `profiles.active_ecosystem_id` are both
+  `ON DELETE SET NULL`, so the database was already designed to let a profile survive its shop.
+  The explicit `delete from public.profiles` overrides that design.
 
-## Recommended changes (not applied yet)
+## 3) Membership in the deleted shop
 
-1. **Broaden the re-match trigger.** When an accepted notification arrives, also re-run reconciliation for pending requests whose stored reference matches the notification's reference — not only those matching on sender number. This is the actual blocker for bank-to-wallet payments and does not weaken the ≥2-signal rule (reference remains one signal, amount the second, reference still counts as the strong signal).
-2. **Make the time window robust against a misread receipt date.** Anchor the window on the request's submission time when the receipt date is implausible (far in the past or in the future relative to submission), instead of trusting the OCR year blindly. Keep the window itself narrow.
-3. **Refresh the operator's screen.** The Go Live card fetches the request once on mount with no polling or realtime subscription, so even after activation the operator can sit on the old screen until a manual reload. Add a light poll or realtime subscription while a request is pending, so the congratulations/live transition appears on its own.
-4. **This specific shop still needs a real payment notification** (or a deliberate platform-owner decision) before it can activate. No code change should auto-approve it — the listener has not corroborated the payment.
+`ecosystem_memberships.ecosystem_id` is `ON DELETE CASCADE`, so membership rows for the deleted shop
+disappear correctly and automatically. Per-shop wallets, roles, ledgers, vouchers, rewards,
+subscriptions, cash-in, listener config, payment methods, spending categories and audit rows are all
+deleted by explicit `ecosystem_id`-scoped statements. That part is correct and properly isolated.
 
-## Technical notes
+## 4) Other shops' data
 
-- Path traced: `submit_go_live_payment` → inline `reconcile_go_live_request` → `go_live_match_signals` / `go_live_has_strong_signal` → `activate_go_live_request`.
-- Re-match trigger: `tg_listener_event_subscription_match` (the `payer_number_key = new.sender_number_key` filter is cause 2).
-- Window: `coalesce(receipt_paid_at, created_at) ± 3 days` inside `reconcile_go_live_request` (cause 3).
-- UI: `fetchGoLiveRequest` in `src/lib/go-live.ts`, called once from `load()` in `src/components/subscription/go-live-card.tsx` (cause of the stale screen).
-- No live data was modified during this investigation.
+Other shops are unaffected. Every delete in the function is filtered by `ecosystem_id`, and
+platform-level history is detached rather than destroyed (`platform_credit_issuances.ledger_id`,
+`listener_events.consumed_cash_in_id`, `verified_payments.consumed_cash_in_id` set to null).
+The `platform_deletion_log` record and the platform-level audit entry are written outside the shop
+and survive.
+
+**But** a member of another shop is affected if the deleted shop was their home pointer: their
+profile deletion cascades their follows/friendships and their identity, so their remaining
+memberships in surviving shops point at a user with no profile.
+
+## Current exposure in live data
+
+- 41 shop memberships; 6 users belong to more than one shop; 9 profiles have a membership in a shop
+  other than their home shop; 13 profiles are Universe-only (no home shop).
+- So the risk is real today, not theoretical: deleting a shop that is the home pointer for any of
+  those 9 profiles would remove Universe identities that still belong elsewhere.
+
+## What would need to change (not implemented)
+
+1. In `purge_ecosystem_internal`, stop deleting `profiles`. Instead, for each affected member:
+   - clear `ecosystem_id` / `active_ecosystem_id` (or repoint `active_ecosystem_id` at another
+     surviving membership), and
+   - delete only the shop-scoped `user_roles` rows (already done).
+2. Keep the profile, @handle and Universe presence intact so the member remains a Universe user with
+   zero shops — which the product already supports (13 such profiles exist).
+3. Optionally, only for members left with no profile-worthy trace, route them through the existing
+   `superadmin_delete_platform_user` anonymisation path rather than a hard delete.
+4. Add regression coverage: shop A deleted while member also belongs to shop B ⇒ profile, handle and
+   shop B membership all survive; member with only shop A ⇒ profile survives as Universe-only.
+
+Say the word if you want this change implemented; nothing has been modified.
