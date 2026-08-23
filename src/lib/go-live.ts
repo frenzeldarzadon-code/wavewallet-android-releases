@@ -128,6 +128,35 @@ export async function activateFreeSubscription(input: {
   if (error) throw new Error(error.message);
 }
 
+/**
+ * Withdraw a subscription payment that is still awaiting verification.
+ *
+ * Reuses the same `subscription_requests` record (it is marked rejected with a
+ * "withdrawn" reason, so Super Admin sees the same history) — no new payment
+ * workflow, no change to listener matching or auto-approval. The database
+ * refuses this once a payment has been verified or activated.
+ */
+export async function cancelGoLivePayment(requestId: string) {
+  requireOnline();
+  const { error } = await supabase.rpc("cancel_go_live_payment", { _request_id: requestId } as never);
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * Whether the Renew / Extend / Change plan controls belong on screen.
+ *
+ * A live shop always keeps them: a payment awaiting verification is shown as
+ * its own notice, it never removes self-service. A Demo shop that has already
+ * submitted a payment waits for that one payment first.
+ */
+export function goLiveControlsVisible(
+  r: Pick<SubscriptionRequest, "status"> | null,
+  isLive?: boolean,
+): boolean {
+  if (isLive) return true;
+  return r?.status !== "pending";
+}
+
 /** Platform owner override: any plan, any discount, or free (100% off). */
 export async function superadminSetShopPlan(input: {
   ecosystemId: string;
