@@ -260,13 +260,13 @@ export const voucherPrintCss = `
 .vp-t-terraces { border: 1px solid #d9cba4; background: #fdfaf0; color: #3a3320; }
 .vp-t-terraces .vp-art {
   background-image: url("${terracesArt.url}");
-  background-size: 100% 0.62in;
+  background-size: 100% 0.5in;
   background-position: left bottom;
   opacity: 1;
   filter: saturate(1.5) contrast(1.12);
 }
 .vp-t-terraces .vp-body {
-  background: rgba(253,250,240,.94);
+  background: rgba(253,250,240,.9);
   border: 1px solid rgba(190,167,110,.45);
   box-shadow: none;
 }
@@ -315,7 +315,7 @@ export const voucherPrintCss = `
 .vp-t-cave { border: 1px solid #ded2bd; background: #fbf7ef; color: #33291c; }
 .vp-t-cave .vp-art {
   background-image: url("${caveArt.url}");
-  background-size: 1.15in auto;
+  background-size: 0.95in auto;
   background-position: right bottom;
   opacity: .95;
   filter: saturate(1.15);
@@ -323,7 +323,7 @@ export const voucherPrintCss = `
 .vp-t-cave .vp-head { padding-right: .1in; }
 .vp-t-cave .vp-shop { color: #8a6a2f; letter-spacing: .12em; }
 .vp-t-cave .vp-body {
-  background: rgba(251,247,239,.95);
+  background: rgba(251,247,239,.9);
   border: 1px solid rgba(138,106,47,.35);
   border-radius: .03in;
   box-shadow: none;
