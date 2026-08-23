@@ -1,38 +1,29 @@
 import { describe, expect, it } from "vitest";
-import {
-  isStrongPassword,
-  newPasswordIssue,
-  passwordChecklist,
-  passwordIssue,
-} from "@/lib/password-policy";
+import { isStrongPassword, newPasswordIssue, passwordIssue } from "@/lib/password-policy";
 
 describe("password policy", () => {
-  it("accepts a password meeting every rule", () => {
+  it("accepts any non-empty password of at least the provider minimum", () => {
     expect(isStrongPassword("Wave!2026")).toBe(true);
-    expect(passwordIssue("Wave!2026")).toBeNull();
+    expect(isStrongPassword("wavewallet")).toBe(true);
+    expect(isStrongPassword("simple")).toBe(true);
+    expect(passwordIssue("123456")).toBeNull();
   });
 
-  it("names exactly what is missing", () => {
-    const issue = passwordIssue("wavewallet");
-    expect(issue).toContain("uppercase");
-    expect(issue).toContain("number");
-    expect(issue).toContain("special");
-    expect(issue).not.toContain("lowercase");
+  it("adds no uppercase, number or special-character requirement", () => {
+    expect(passwordIssue("aaaaaa")).toBeNull();
   });
 
-  it("flags short passwords", () => {
-    expect(passwordIssue("Aa1!")).toContain("8 characters");
+  it("still requires a password", () => {
+    expect(passwordIssue("")).toBe("Enter a password.");
   });
 
-  it("marks each rule satisfied or not as the user types", () => {
-    const list = passwordChecklist("Aa1");
-    expect(list.find((c) => c.rule.id === "upper")?.ok).toBe(true);
-    expect(list.find((c) => c.rule.id === "special")?.ok).toBe(false);
-    expect(list.find((c) => c.rule.id === "length")?.ok).toBe(false);
+  it("surfaces the provider's own minimum length", () => {
+    expect(passwordIssue("Aa1!")).toContain("6 characters");
   });
 
   it("requires the confirmation to match", () => {
     expect(newPasswordIssue("Wave!2026", "Wave!2027")).toBe("The two passwords do not match.");
     expect(newPasswordIssue("Wave!2026", "Wave!2026")).toBeNull();
+    expect(newPasswordIssue("simple", "simple")).toBeNull();
   });
 });
