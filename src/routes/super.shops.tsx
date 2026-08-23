@@ -28,6 +28,7 @@ import { superadminSetShopPlan } from "@/lib/go-live";
 import { SubscriptionPlansCard } from "@/components/super/subscription-plans-card";
 import { GoLiveRequestsCard } from "@/components/super/go-live-requests-card";
 import { planLabel } from "@/lib/subscription-plan-label";
+import { SubscriptionHistoryCard } from "@/components/subscription/subscription-history-card";
 import { peso, shortDate } from "@/lib/wavewallet";
 import {
   fetchPaymentRequests,
@@ -75,6 +76,7 @@ function SuperShops() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [target, setTarget] = useState<SubscriptionShop | null>(null);
+  const [history, setHistory] = useState<SubscriptionShop | null>(null);
   const [override, setOverride] = useState<SubscriptionShop | null>(null);
   const [legacy, setLegacy] = useState<Ecosystem[]>([]);
   const [requests, setRequests] = useState<PendingPaymentShop[]>([]);
@@ -259,6 +261,9 @@ function SuperShops() {
                         <Button size="sm" variant="outline" onClick={() => setOverride(s)}>
                           Override / discount
                         </Button>
+                        <Button size="sm" variant="outline" onClick={() => setHistory(s)}>
+                          History
+                        </Button>
                         {req && req.status === "pending" ? (
                           <Button size="sm" variant="outline" onClick={() => setPayTarget(s)}>
                             Override payment requirement
@@ -282,6 +287,21 @@ function SuperShops() {
       </Tabs>
 
       <SubscriptionPlansCard onSaved={() => void load()} />
+
+      <Dialog open={Boolean(history)} onOpenChange={(o) => (!o ? setHistory(null) : undefined)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Subscription history — {history?.name}</DialogTitle>
+            <DialogDescription>
+              The same activations, renewals, extensions, plan changes, payments and manual
+              adjustments this shop&apos;s admin sees.
+            </DialogDescription>
+          </DialogHeader>
+          {history ? (
+            <SubscriptionHistoryCard ecosystemId={history.id} audience="owner" bare />
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       <PaymentOverrideDialog
         shop={payTarget}
