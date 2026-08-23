@@ -94,4 +94,59 @@ class GcashParserTest {
         assertEquals("09070321959", GcashParser.normalizePhMobile("639070321959"))
         assertEquals("09070321959", GcashParser.normalizePhMobile("09070321959"))
     }
+
+    @Test
+    fun `parses a bank to GCash InstaPay credit with a bank account payer`() {
+        val result = GcashParser.parse(
+            "GCash",
+            "You have received PHP 150.00 from MARIBANK 15976553427 via InstaPay. Ref. No. 104116.",
+        ) as GcashParser.Result.Payment
+        assertEquals(150.00, result.amountPhp, 0.001)
+        assertEquals("15976553427", result.senderNumber)
+        assertEquals("MARIBANK", result.senderName)
+        assertEquals("104116", result.reference)
+    }
+
+    @Test
+    fun `parses the credited to your GCash account wording`() {
+        val result = GcashParser.parse(
+            "GCash",
+            "PHP 150.00 has been credited to your GCash account via InstaPay from SEABANK. Reference No. 104116",
+        ) as GcashParser.Result.Payment
+        assertEquals(150.00, result.amountPhp, 0.001)
+        assertEquals("104116", result.reference)
+        assertEquals("SEABANK", result.senderName)
+    }
+
+    @Test
+    fun `parses a PESONet credit with a transaction number`() {
+        val result = GcashParser.parse(
+            "GCash",
+            "Fund transfer received: your GCash was credited with PHP 1,250.00 via PESONet. Transaction No. AB1234567890",
+        ) as GcashParser.Result.Payment
+        assertEquals(1250.00, result.amountPhp, 0.001)
+        assertEquals("AB1234567890", result.reference)
+    }
+
+    @Test
+    fun `ignores the sender side bank transfer notification`() {
+        assertEquals(
+            GcashParser.Result.Ignored,
+            GcashParser.parse("MariBank", "Your InstaPay transfer of PHP 150.00 to 09541230072 was successful. Ref No. 104116"),
+        )
+        assertEquals(
+            GcashParser.Result.Ignored,
+            GcashParser.parse("MariBank", "PHP 150.00 has been debited from your account via InstaPay. Ref No. 104116"),
+        )
+    }
+
+    @Test
+    fun `never mistakes the reference number for the sending account`() {
+        val result = GcashParser.parse(
+            "GCash",
+            "PHP 150.00 has been credited to your GCash account from MARIBANK. Ref. No. 104116104116",
+        ) as GcashParser.Result.Payment
+        assertEquals(null, result.senderNumber)
+        assertEquals("104116104116", result.reference)
+    }
 }
