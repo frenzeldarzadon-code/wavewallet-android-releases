@@ -4,7 +4,7 @@
  * The success screen shows the issued CODES only — no voucher pictures are
  * rendered until the buyer picks an action. Download Picture and Share render
  * images on demand (one file per code, never a combined sheet); Print opens the
- * existing 2in x 2in voucher template flow for this exact transaction.
+ * existing 2in x 1.5in voucher template flow for this exact transaction.
  *
  * Presentation only: the codes shown here are exactly what the purchase RPC
  * returned; nothing in this component can issue, price or reprice a voucher.
