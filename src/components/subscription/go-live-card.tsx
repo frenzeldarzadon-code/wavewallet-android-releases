@@ -49,6 +49,21 @@ import {
   mapGoLiveError,
   type GoLiveField,
 } from "@/lib/go-live-readiness";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DURATION_OPTIONS,
+  coveragePeriod,
+  monthsLabel,
+  normalizeMonths,
+  planTotalPhp,
+} from "@/lib/subscription-duration";
+
 
 
 type Gcash = Awaited<ReturnType<typeof fetchPlatformGcash>>;
@@ -178,13 +193,21 @@ export function GoLiveCard({
   }, [ecosystemId, planId]);
 
   const plan = plans.find((p) => p.id === planId) ?? null;
-  const monthCount = Math.max(1, Math.min(24, Number(months) || 1));
+  const monthCount = normalizeMonths(months);
   const isPlanChange = Boolean(quote && !quote.is_first_activation);
-  const due = isPlanChange
-    ? Number(quote?.amount_due ?? 0)
-    : plan
-      ? Number(plan.monthly_price) * monthCount
-      : 0;
+  // Plans are all billed monthly, so the total is simply the configured
+  // monthly price × the duration chosen. Plan CHANGES keep using the server's
+  // own prorated quote — no pricing rule is invented in the browser.
+  const lineTotal = planTotalPhp(plan?.monthly_price, monthCount);
+  const due = isPlanChange ? Number(quote?.amount_due ?? 0) : lineTotal;
+  // What the payment buys. An early renewal is appended to the period that is
+  // still running, exactly like the database does on activation.
+  const currentEnd =
+    quote && quote.days_remaining > 0
+      ? new Date(Date.now() + quote.days_remaining * 86_400_000)
+      : null;
+  const coverage = coveragePeriod(currentEnd, monthCount);
+
   const pending = request?.status === "pending";
   // How much INDEPENDENT evidence the screenshot itself produced. This never
   // approves anything — the platform listener and the database rules still
