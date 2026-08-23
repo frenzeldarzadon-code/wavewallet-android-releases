@@ -1,14 +1,12 @@
 /**
- * Password input with a show/hide toggle, plus an optional live requirements
- * checklist. The toggle only reveals what the person typed in this browser —
+ * Password input with a show/hide toggle, plus an optional short hint. The toggle only reveals what the person typed in this browser —
  * a stored password is never read back from anywhere.
  */
-import { Check, Eye, EyeOff, X } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useId, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
-import { passwordChecklist } from "@/lib/password-policy";
+import { PASSWORD_HINT } from "@/lib/password-policy";
 
 interface Props {
   label: string;
@@ -18,8 +16,8 @@ interface Props {
   placeholder?: string;
   autoComplete?: string;
   disabled?: boolean;
-  /** Shows the live "what is still missing" checklist while typing. */
-  requirements?: boolean;
+  /** Shows the short "any password" hint under the field. */
+  hint?: boolean;
   onEnter?: () => void;
 }
 
@@ -31,7 +29,7 @@ export function PasswordField({
   placeholder,
   autoComplete,
   disabled,
-  requirements,
+  hint,
   onEnter,
 }: Props) {
   const generated = useId();
@@ -65,27 +63,7 @@ export function PasswordField({
           {shown ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
         </button>
       </div>
-      {requirements ? <PasswordRequirements value={value} /> : null}
+      {hint ? <p className="text-[11px] text-muted-foreground">{PASSWORD_HINT}</p> : null}
     </div>
-  );
-}
-
-export function PasswordRequirements({ value }: { value: string }) {
-  const list = passwordChecklist(value);
-  return (
-    <ul className="mt-1 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px]">
-      {list.map(({ rule, ok }) => (
-        <li
-          key={rule.id}
-          className={cn(
-            "flex items-center gap-1.5",
-            ok ? "text-success" : "text-muted-foreground",
-          )}
-        >
-          {ok ? <Check className="size-3.5" /> : <X className="size-3.5 opacity-60" />}
-          {rule.label}
-        </li>
-      ))}
-    </ul>
   );
 }

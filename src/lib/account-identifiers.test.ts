@@ -37,7 +37,8 @@ describe("global account identifiers", () => {
     expect(validateGlobalSignup(draft({ email: "nope" }))).toMatch(/email/i);
     expect(validateGlobalSignup(draft({ phone: "12" }))).toMatch(/mobile/i);
     expect(validateGlobalSignup(draft({ name: "  " }))).toMatch(/name/i);
-    expect(validateGlobalSignup(draft({ password: "Short1!", confirm: "Short1!" }))).toMatch(/8/);
+    expect(validateGlobalSignup(draft({ password: "short", confirm: "short" }))).toMatch(/6/);
+    expect(validateGlobalSignup(draft({ password: "simple", confirm: "simple" }))).toBeNull();
     expect(validateGlobalSignup(draft({ confirm: "Other-pass1!" }))).toMatch(/match/i);
   });
 

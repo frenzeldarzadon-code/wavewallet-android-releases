@@ -288,8 +288,9 @@ export function friendlyAuthError(message: string): string {
     return "That email or mobile number already has an account. Sign in instead.";
   if (m.includes("valid ecosystem invite link"))
     return "This signup link is no longer active. Ask your operator for their current link.";
-  if (m.includes("password"))
-    return "That password does not meet the password policy — see the requirements listed under the field.";
+  // WaveWallet adds no password rules of its own; only the provider's own
+  // minimum can still reject one, so show what it actually said.
+  if (m.includes("password should be at least")) return "Password must contain at least 6 characters.";
   if (m.includes("rate limit") || m.includes("too many"))
     return "Too many attempts. Please wait a minute and try again.";
   // Deliberately generic: never reveal whether the identifier exists.

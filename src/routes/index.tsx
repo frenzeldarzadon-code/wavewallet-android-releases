@@ -510,7 +510,7 @@ function LoginPage() {
                   value={form.password}
                   onChange={(v) => setForm({ ...form, password: v })}
                   autoComplete="new-password"
-                  requirements
+                  hint
                 />
                 <PasswordField
                   id="su-confirm"
