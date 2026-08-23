@@ -291,3 +291,26 @@ export function subscriptionCharge(input: {
     noPaymentRequired: amountDue <= 0 && (freePlan || creditApplied >= baseAmount),
   };
 }
+
+/**
+ * FIXED 30-DAY PRORATION — mirrors `subscription_quote` exactly.
+ *
+ * Daily value is always `monthlyPrice / 30`. Remaining eligible days are
+ * capped at the fixed length of the periods actually paid for
+ * (`paidMonths × 30`), so a legacy 31-day calendar period can never bill 31
+ * days for one month: a fully unused ₱150 month is worth exactly ₱150.
+ */
+export function unusedValuePhp(input: {
+  monthlyPrice: number | string | null | undefined;
+  daysRemaining: number;
+  /** Subscription months paid for on the running period (default 1). */
+  paidMonths?: number;
+}): number {
+  const price = Number(input.monthlyPrice ?? 0);
+  if (!Number.isFinite(price) || price <= 0) return 0;
+  const paidMonths = Math.max(1, Math.floor(Number(input.paidMonths ?? 1)) || 1);
+  const maxDays = paidMonths * DAYS_PER_SUBSCRIPTION_MONTH;
+  const days = Math.min(maxDays, Math.max(0, Math.ceil(Number(input.daysRemaining) || 0)));
+  const daily = Math.round((price / DAYS_PER_SUBSCRIPTION_MONTH) * 10_000) / 10_000;
+  return Math.min(round2(daily * days), round2(price * paidMonths));
+}
