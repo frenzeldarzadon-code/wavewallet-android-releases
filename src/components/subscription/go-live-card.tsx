@@ -323,7 +323,8 @@ export function GoLiveCard({
     setServerError(null);
     try {
       await activateFreeSubscription({ ecosystemId, planId: plan.id, months: monthCount });
-      toast.success("Free subscription activated — no payment was required.");
+      setCelebrating(true);
+      toast.success("Congratulations! Your shop is now LIVE.");
       onLive?.();
       await load();
     } catch (e) {
