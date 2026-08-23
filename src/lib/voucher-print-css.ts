@@ -81,7 +81,7 @@ export const voucherPrintCss = `
   opacity: .82;
   overflow-wrap: anywhere;
   overflow: hidden;
-  max-height: 1.15em;
+  max-height: 2.2em;
 }
 .vp-code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
