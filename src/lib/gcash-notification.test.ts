@@ -58,3 +58,55 @@ describe("GCash Express Send notification", () => {
     expect(normalizePhMobile("09752505196")).toBe("09752505196");
   });
 });
+
+describe("bank-to-GCash (InstaPay / PESONet) credits", () => {
+  it("reads a MariBank -> GCash InstaPay transfer with a bank account payer", () => {
+    const result = parseGcashNotification(
+      "GCash",
+      "You have received PHP 150.00 from MARIBANK 15976553427 via InstaPay. Ref. No. 104116.",
+    );
+    expect(result.incoming).toBe(true);
+    expect(result.amountPhp).toBe(150);
+    expect(result.senderNumber).toBe("15976553427");
+    expect(result.senderName).toBe("MARIBANK");
+    expect(result.reference).toBe("104116");
+  });
+
+  it("reads the 'has been credited to your GCash account' wording", () => {
+    const result = parseGcashNotification(
+      "GCash",
+      "PHP 150.00 has been credited to your GCash account via InstaPay from SEABANK. Reference No. 104116",
+    );
+    expect(result.incoming).toBe(true);
+    expect(result.amountPhp).toBe(150);
+    expect(result.reference).toBe("104116");
+    expect(result.senderName).toBe("SEABANK");
+  });
+
+  it("reads a PESONet credit with a transaction number", () => {
+    const result = parseGcashNotification(
+      "GCash",
+      "Fund transfer received: your GCash was credited with PHP 1,250.00 via PESONet. Transaction No. AB1234567890",
+    );
+    expect(result.amountPhp).toBe(1250);
+    expect(result.reference).toBe("AB1234567890");
+  });
+
+  it("never treats the sender-side bank transfer notification as incoming", () => {
+    for (const text of [
+      "Your InstaPay transfer of PHP 150.00 to 09541230072 was successful. Ref No. 104116",
+      "PHP 150.00 has been debited from your account via InstaPay. Ref No. 104116",
+    ]) {
+      expect(parseGcashNotification("MariBank", text).incoming).toBe(false);
+    }
+  });
+
+  it("never mistakes the reference number for the sending account", () => {
+    const result = parseGcashNotification(
+      "GCash",
+      "PHP 150.00 has been credited to your GCash account from MARIBANK. Ref. No. 104116104116",
+    );
+    expect(result.senderNumber).toBeNull();
+    expect(result.reference).toBe("104116104116");
+  });
+});
