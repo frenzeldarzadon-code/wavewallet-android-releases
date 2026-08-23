@@ -137,7 +137,7 @@ function ResetPasswordPage() {
                   value={password}
                   onChange={setPassword}
                   autoComplete="new-password"
-                  requirements
+                  hint
                 />
                 <PasswordField
                   id="confirm-password"

@@ -76,7 +76,7 @@ export function AccountSecurityCard({ username }: { username: string | null }) {
               value={next}
               onChange={setNext}
               autoComplete="new-password"
-              requirements
+              hint
             />
             <PasswordField
               label="Confirm new password"
