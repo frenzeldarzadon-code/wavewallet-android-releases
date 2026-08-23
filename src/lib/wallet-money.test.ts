@@ -262,3 +262,17 @@ describe("admin cash in capacity", () => {
     expect(cashOutPathLabel(null)).toBe("Platform cash out");
   });
 });
+
+describe("cash in sender identifier is provider-neutral", () => {
+  const b = { hasProof: true, payerReference: "9044057598177" };
+  it("accepts a bank account number and a GCash number", () => {
+    expect(validateCashIn(100, "m1", { ...b, payerNumber: "15976553427" })).toBeNull();
+    expect(validateCashIn(100, "m1", { ...b, payerNumber: "09541230072" })).toBeNull();
+    expect(validateCashIn(100, "m1", { ...b, payerNumber: "ACCT-9931-XY" })).toBeNull();
+  });
+  it("still asks for something when nothing identifies the sender", () => {
+    expect(validateCashIn(100, "m1", { ...b, payerNumber: "" })).toMatch(
+      /account number or mobile number/i,
+    );
+  });
+});
