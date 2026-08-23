@@ -425,9 +425,14 @@ export function GoLiveCard({
 
   return (
     <PageSection devSlot="go-live-card.go-live"
-      title="Go Live"
-      description="Pick one of the WaveWallet plans and pay it with GCash. Your shop keeps the same login, name and settings — only the Demo label goes away."
+      title={isLive ? "Renew, extend or change your plan" : "Go Live"}
+      description={
+        isLive
+          ? "These are the plans WaveWallet currently offers. Renew or extend your current plan, or move to another one — your shop, login and settings stay exactly as they are."
+          : "Pick one of the WaveWallet plans and pay it with GCash. Your shop keeps the same login, name and settings — only the Demo label goes away."
+      }
     >
+
       <Card className="shadow-[var(--shadow-card)]">
         <CardContent className="space-y-4 px-4">
           {request?.status === "approved" ? (
