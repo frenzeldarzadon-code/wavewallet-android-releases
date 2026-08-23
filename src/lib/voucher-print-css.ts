@@ -41,10 +41,10 @@ export const voucherPrintCss = `
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 0.015in;
-  padding: 0.06in 0.065in;
+  gap: 0.01in;
+  padding: 0.045in 0.055in;
   border: 1px dashed #cbd5e1;
-  border-radius: 0.06in;
+  border-radius: 0.05in;
   background: #ffffff;
   color: #0f172a;
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -61,43 +61,43 @@ export const voucherPrintCss = `
 .vp-voucher p { margin: 0; }
 .vp-head, .vp-body, .vp-meta { position: relative; z-index: 1; min-width: 0; }
 .vp-head { min-height: 0; flex: 0 0 auto; overflow: hidden; }
-.vp-body { min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; gap: 0.01in; }
-.vp-shop { font-size: 8pt; font-weight: 800; letter-spacing: .02em; text-transform: uppercase; line-height: 1.08; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.vp-brand { font-size: 5pt; letter-spacing: .16em; text-transform: uppercase; opacity: .6; line-height: 1.1; }
+.vp-body { min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; gap: 0.005in; }
+.vp-shop { font-size: 6.5pt; font-weight: 800; letter-spacing: .02em; text-transform: uppercase; line-height: 1.05; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vp-brand { font-size: 4.2pt; letter-spacing: .16em; text-transform: uppercase; opacity: .6; line-height: 1.1; }
 .vp-product {
-  font-size: 9pt;
+  font-size: 7pt;
   font-weight: 700;
-  line-height: 1.1;
-  margin-top: .005in;
+  line-height: 1.08;
   overflow: hidden;
   overflow-wrap: anywhere;
-  max-height: 2.2em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-height: 1.1em;
 }
 /* The shop's stored description, wrapped and clipped — never overflowing. */
 .vp-desc {
-  font-size: 6pt;
-  line-height: 1.15;
+  font-size: 5pt;
+  line-height: 1.1;
   opacity: .82;
   overflow-wrap: anywhere;
   overflow: hidden;
-  max-height: 2.3em;
-  margin-top: .01in;
+  max-height: 1.15em;
 }
 .vp-code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 19pt;
+  font-size: 17pt;
   font-weight: 800;
   letter-spacing: .03em;
-  line-height: 1.02;
+  line-height: 1.0;
   word-break: break-all;
   text-align: center;
 }
-.vp-code-long { font-size: 14pt; letter-spacing: .01em; }
-.vp-code-xs { font-size: 10.5pt; letter-spacing: 0; }
-.vp-code-label { font-size: 5.5pt; letter-spacing: .16em; text-transform: uppercase; text-align: center; opacity: .65; line-height: 1.1; }
-.vp-meta { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: flex-end; gap: .04in; font-size: 5.5pt; opacity: .78; line-height: 1.05; }
+.vp-code-long { font-size: 12.5pt; letter-spacing: .01em; }
+.vp-code-xs { font-size: 9pt; letter-spacing: 0; }
+.vp-code-label { font-size: 4.6pt; letter-spacing: .16em; text-transform: uppercase; text-align: center; opacity: .65; line-height: 1.05; }
+.vp-meta { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: flex-end; gap: .04in; font-size: 4.8pt; opacity: .78; line-height: 1.05; }
 .vp-meta span:last-child { text-align: right; white-space: nowrap; opacity: .85; }
-.vp-price { font-size: 28pt; font-weight: 900; opacity: 1; letter-spacing: -.02em; line-height: .92; }
+.vp-price { font-size: 24pt; font-weight: 900; opacity: 1; letter-spacing: -.02em; line-height: .9; }
 
 
 /* ------------------------------------------------------------------ */
