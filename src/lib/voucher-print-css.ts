@@ -245,7 +245,7 @@ export const voucherPrintCss = `
 .vp-t-mist { border: 1px solid #b8c9cd; background: #f2f7f8; color: #10262b; }
 .vp-t-mist .vp-art {
   background-image:
-    linear-gradient(180deg, rgba(255,255,255,.78) 0%, rgba(255,255,255,.3) 45%, rgba(255,255,255,.62) 100%),
+    linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,.08) 45%, rgba(255,255,255,.35) 100%),
     url("${mistArt.url}");
   background-size: cover, cover;
   background-position: center, center bottom;
@@ -297,11 +297,11 @@ export const voucherPrintCss = `
 .vp-t-falls { border: 1px solid #cfe0dd; background: #f6fbfa; color: #123033; }
 .vp-t-falls .vp-art {
   background-image:
-    linear-gradient(90deg, rgba(232,245,243,.92) 0%, rgba(232,245,243,.08) 50%, rgba(232,245,243,.92) 100%),
+    linear-gradient(90deg, rgba(232,245,243,.85) 0%, rgba(232,245,243,0) 50%, rgba(232,245,243,.85) 100%),
     url("${fallsArt.url}");
-  background-size: cover, auto 150%;
-  background-position: center, center;
-  filter: saturate(1.6) contrast(1.15);
+  background-size: cover, auto 230%;
+  background-position: center, center bottom;
+  filter: saturate(1.9) contrast(1.2);
 }
 .vp-t-falls .vp-head { text-align: center; }
 .vp-t-falls .vp-shop { color: #0f6b6b; letter-spacing: .14em; }
@@ -315,7 +315,7 @@ export const voucherPrintCss = `
 .vp-t-cave { border: 1px solid #ded2bd; background: #fbf7ef; color: #33291c; }
 .vp-t-cave .vp-art {
   background-image: url("${caveArt.url}");
-  background-size: 1.25in auto;
+  background-size: 1.5in auto;
   background-position: right bottom;
   opacity: .95;
   filter: saturate(1.15);
@@ -336,7 +336,7 @@ export const voucherPrintCss = `
 .vp-t-sunrise { border: 1px solid #f0d3bb; background: #fff6ef; color: #2c2118; }
 .vp-t-sunrise .vp-art {
   background-image:
-    linear-gradient(180deg, rgba(255,246,239,.22) 0%, rgba(255,246,239,.85) 40%, rgba(255,246,239,.5) 100%),
+    linear-gradient(180deg, rgba(255,246,239,.05) 0%, rgba(255,246,239,.72) 38%, rgba(255,246,239,.25) 100%),
     url("${sunriseArt.url}");
   background-size: cover, cover;
   background-position: center, center top;
