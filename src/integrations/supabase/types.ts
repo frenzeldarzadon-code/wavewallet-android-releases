@@ -8117,6 +8117,7 @@ export type Database = {
       normalize_handle: { Args: { _handle: string }; Returns: string }
       normalize_payment_reference: { Args: { _ref: string }; Returns: string }
       normalize_ph_mobile: { Args: { _n: string }; Returns: string }
+      normalize_sender_identifier: { Args: { _raw: string }; Returns: string }
       notify_financial: {
         Args: {
           _body?: string
