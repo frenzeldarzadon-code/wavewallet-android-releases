@@ -459,9 +459,29 @@ export function GoLiveCard({
                 Payment submitted — verification in progress. Your subscription will activate after
                 verification is completed.
               </p>
+              <p className="mt-1.5 text-muted-foreground">
+                This only applies to that one payment
+                {request?.payment_reference ? ` (reference ${request.payment_reference})` : ""}. If
+                you did not make it, or it will never be completed, you can withdraw it and submit
+                a new one.
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="mt-2"
+                disabled={busy}
+                onClick={cancelPending}
+              >
+                {busy ? <Loader2 className="mr-1 size-4 animate-spin" /> : null}
+                Withdraw this pending payment
+              </Button>
             </div>
-          ) : (
+          ) : null}
+
+          {!pending || isLive ? (
             <>
+
               {isLive && currentPlanId ? (
                 /* A live shop manages the SAME subscription from here: renew
                    it, extend it for longer, or move to another published
