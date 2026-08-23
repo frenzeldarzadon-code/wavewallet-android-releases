@@ -32,6 +32,16 @@ export interface ReceiptExtraction {
   /** Receiving account read off the receipt, when it was printed. */
   receivingNumber: string | null;
   receivingAccountMasked: string | null;
+  /** Payee name printed on the receipt, when it shows one. */
+  receivingName: string | null;
+  /** How the money moved, as printed ("Send Money", "InstaPay", "QR Ph"…). */
+  transferMethod: string | null;
+  /** Printed outcome ("Successful", "Completed"…). */
+  statusText: string | null;
+  /** Transfer/service fee printed on the receipt. */
+  feePhp: number | null;
+  /** Everything the reader could read, kept verbatim as evidence. */
+  rawText: string | null;
   paidAt: string | null;
   confidence: number;
   readable: boolean;
@@ -74,6 +84,11 @@ export const extractCashInReceipt = createServerFn({ method: "POST" })
       senderAccountMasked: reading.senderAccountMasked ?? null,
       receivingNumber: reading.receivingNumber ?? null,
       receivingAccountMasked: reading.receivingAccountMasked ?? null,
+      receivingName: reading.receivingName ?? null,
+      transferMethod: reading.transferMethod ?? null,
+      statusText: reading.statusText ?? null,
+      feePhp: reading.feePhp ?? null,
+      rawText: reading.rawText ?? null,
       paidAt: reading.paidAt ?? null,
       confidence: reading.confidence,
       readable: reading.readable,
@@ -144,6 +159,11 @@ export const verifyCashInReceipt = createServerFn({ method: "POST" })
         senderAccountMasked: null,
         receivingNumber: null,
         receivingAccountMasked: null,
+        receivingName: null,
+        transferMethod: null,
+        statusText: null,
+        feePhp: null,
+        rawText: null,
         paidAt: null,
         confidence: 0,
         readable: false,
@@ -179,6 +199,11 @@ export const verifyCashInReceipt = createServerFn({ method: "POST" })
         sender_account_masked: reading.senderAccountMasked ?? null,
         receiving_number: reading.receivingNumber ?? null,
         receiving_account_masked: reading.receivingAccountMasked ?? null,
+        receiving_name: reading.receivingName ?? null,
+        transfer_method: reading.transferMethod ?? null,
+        status_text: reading.statusText ?? null,
+        fee_php: reading.feePhp ?? null,
+        raw_text: reading.rawText ?? null,
       },
     } as never);
 
