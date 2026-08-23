@@ -31,6 +31,7 @@ import {
   Send,
   Settings,
   ShieldCheck,
+  BadgeCheck,
   ShoppingBag,
   ShoppingCart,
   Store,
