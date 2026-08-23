@@ -168,7 +168,7 @@ describe("cash in validation", () => {
     // bank account number typed by hand
     expect(validateCashIn(100, "m1", { ...base, payerNumber: "0012 3456 7890" })).toBeNull();
     // nothing at all still fails, and the screenshot stays required
-    expect(validateCashIn(100, "m1", { ...base, payerNumber: "" })).toMatch(/account you paid from/);
+    expect(validateCashIn(100, "m1", { ...base, payerNumber: "" })).toMatch(/account number or mobile number/i);
     expect(validateCashIn(100, "m1", { hasProof: false, payerNumber: "09171234567" })).toMatch(/screenshot/);
   });
 });
