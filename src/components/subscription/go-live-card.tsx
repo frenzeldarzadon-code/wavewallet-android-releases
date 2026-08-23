@@ -65,7 +65,7 @@ import {
   coveragePeriod,
   monthsLabel,
   normalizeMonths,
-  planTotalPhp,
+  subscriptionCharge,
 } from "@/lib/subscription-duration";
 
 
