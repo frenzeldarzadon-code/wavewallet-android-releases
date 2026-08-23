@@ -147,7 +147,15 @@ describe("Spending Tracker category attribution", () => {
     entry({ amount: 45, categoryKey: "reseller:a", categoryName: "Reseller A", memberId: "a" }),
     entry({ amount: 20, categoryKey: "reseller:b", categoryName: "Reseller B", memberId: "b" }),
     entry({ amount: 5, categoryKey: "direct", categoryName: "Direct sales" }),
-    entry({ kind: "expense", amount: 60, categoryKey: "admin_purchases", categoryName: "Admin Purchases" }),
+    // Admin Purchases is a MANUAL expense now — nothing automatic on this side.
+    entry({
+      kind: "expense",
+      amount: 60,
+      source: "manual",
+      editable: true,
+      categoryKey: "cat:2",
+      categoryName: "Admin Purchases",
+    }),
     entry({
       kind: "expense",
       amount: 90,
