@@ -32,6 +32,16 @@ export interface ReceiptReading {
   receivingNumber?: string | null;
   /** Masked receiving account/card, when the receipt prints one. */
   receivingAccountMasked?: string | null;
+  /** The payee's printed name, when the receipt shows it. */
+  receivingName?: string | null;
+  /** "Send Money", "InstaPay", "Bank transfer"… exactly as printed. */
+  transferMethod?: string | null;
+  /** "Successful", "Completed", "Pending"… exactly as printed. */
+  statusText?: string | null;
+  /** Any transfer/service fee printed on the receipt. */
+  feePhp?: number | null;
+  /** Every line of text the reader could read, in the order it appears. */
+  rawText?: string | null;
   /** Payment date/time printed on the receipt, ISO 8601, when it was legible. */
   paidAt?: string | null;
   /** The reader's own confidence that it read the reference correctly, 0..1. */
@@ -113,6 +123,11 @@ export function parseReceiptReading(raw: string): ReceiptReading {
     senderAccountMasked: null,
     receivingNumber: null,
     receivingAccountMasked: null,
+    receivingName: null,
+    transferMethod: null,
+    statusText: null,
+    feePhp: null,
+    rawText: null,
     paidAt: null,
     confidence: 0,
     readable: false,
@@ -139,6 +154,11 @@ export function parseReceiptReading(raw: string): ReceiptReading {
     senderAccountMasked: text(parsed["sender_account_masked"] ?? parsed["sender_account"]),
     receivingAccountMasked: text(parsed["receiving_account_masked"] ?? parsed["receiving_account"]),
     receivingNumber: text(parsed["receiving_number"] ?? parsed["receiver_number"] ?? parsed["recipient_number"]),
+    receivingName: text(parsed["receiving_name"] ?? parsed["recipient_name"] ?? parsed["receiver_name"]),
+    transferMethod: text(parsed["transfer_method"] ?? parsed["method"] ?? parsed["transaction_type"]),
+    statusText: text(parsed["status"] ?? parsed["status_text"]),
+    feePhp: numeric(parsed["fee_php"] ?? parsed["fee"]),
+    rawText: text(parsed["raw_text"] ?? parsed["all_text"]),
     paidAt: isoDateTime(parsed["paid_at"] ?? parsed["datetime"] ?? parsed["date_time"]),
     confidence,
     readable: parsed["readable"] === false ? false : Boolean(reference),

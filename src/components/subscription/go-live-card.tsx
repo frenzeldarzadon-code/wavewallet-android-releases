@@ -38,7 +38,8 @@ import {
 import { CashInProofPicker } from "@/components/money/cash-in-proof";
 import { uploadCashInProof, removeCashInProof, fetchPaymentMethods, type PaymentMethod } from "@/lib/wallet-money";
 import { PaymentMethodCards } from "@/components/money/payment-method-cards";
-import { extractCashInReceipt } from "@/lib/cash-in-receipt.functions";
+import { extractCashInReceipt, type ReceiptExtraction } from "@/lib/cash-in-receipt.functions";
+import { receiptEvidence } from "@/lib/receipt-evidence";
 import { verifyGoLiveReceipt } from "@/lib/go-live-receipt.functions";
 import { RECEIPT_CHECK_LABEL } from "@/lib/cash-in-receipt";
 import { supabase } from "@/integrations/supabase/client";
@@ -88,6 +89,16 @@ export function GoLiveCard({
   const [proofPath, setProofPath] = useState<string | null>(null);
   const [reading, setReading] = useState(false);
   const [receiptNote, setReceiptNote] = useState<string | null>(null);
+  /** Everything the reader saw — provider-neutral, kept verbatim as evidence. */
+  const [extract, setExtract] = useState<ReceiptExtraction | null>(null);
+  /** Which autofilled fields the applicant has since edited by hand. */
+  const [edited, setEdited] = useState<{ reference: boolean; payerNumber: boolean }>({
+    reference: false,
+    payerNumber: false,
+  });
+  const [showRaw, setShowRaw] = useState(false);
+  /** Set once the applicant accepts that thin evidence means manual review. */
+  const [acceptManual, setAcceptManual] = useState(false);
 
 
   /** Upload immediately, then read it with the existing Cash In receipt reader. */
@@ -95,6 +106,10 @@ export function GoLiveCard({
     if (proofPath) void removeCashInProof(proofPath).catch(() => {});
     setProofPath(null);
     setReceiptNote(null);
+    setExtract(null);
+    setEdited({ reference: false, payerNumber: false });
+    setAcceptManual(false);
+    setShowRaw(false);
     setProofFile(file);
     if (!file) return;
     setReading(true);
@@ -105,13 +120,12 @@ export function GoLiveCard({
       const path = await uploadCashInProof(ownerId, file);
       setProofPath(path);
       const read = await extractCashInReceipt({ data: { proofPath: path } });
+      setExtract(read);
+      // Provider-neutral autofill: whatever this receipt actually printed is
+      // used. Nothing is invented, and nothing is prefilled from GCash.
       if (read.reference) setReference(read.reference);
       if (read.senderNumber) setPayerNumber(read.senderNumber);
-      setReceiptNote(
-        read.readable
-          ? "Screenshot read — check the reference and sending number below before you submit."
-          : "We could not read this screenshot clearly. Type the reference and sending number yourself; the payment still goes for review.",
-      );
+      setReceiptNote(receiptEvidence(read, { expectedAmountPhp: null }).message);
     } catch (e) {
       setProofFile(null);
       setServerField("proof");
@@ -172,6 +186,11 @@ export function GoLiveCard({
       ? Number(plan.monthly_price) * monthCount
       : 0;
   const pending = request?.status === "pending";
+  // How much INDEPENDENT evidence the screenshot itself produced. This never
+  // approves anything — the platform listener and the database rules still
+  // decide — it only tells the applicant what was read and what is missing.
+  const evidence = receiptEvidence(extract, { expectedAmountPhp: due > 0 ? due : null });
+  const thinEvidence = Boolean(proofPath && extract && !evidence.sufficient);
 
   // Everything the existing payment RPC already requires, told up-front.
   const checklist = goLiveChecklist({
@@ -212,6 +231,13 @@ export function GoLiveCard({
     }
     if (checklist.length > 0) {
       focusItem(checklist.find((i) => i.fieldId) ?? {});
+      return;
+    }
+    if (thinEvidence && !acceptManual) {
+      setServerError(
+        `${evidence.message} Automatic activation needs at least two details read from the screenshot. Tick the box below to submit it for manual review instead.`,
+      );
+      document.getElementById("gl-evidence")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     setConfirming(true);
@@ -401,7 +427,7 @@ export function GoLiveCard({
                   ) : null}
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="gl-number">GCash number you paid from</Label>
+                  <Label htmlFor="gl-number">Mobile number or account you paid from</Label>
                   <Input
                     id="gl-number"
                     inputMode="numeric"
@@ -409,8 +435,20 @@ export function GoLiveCard({
                     aria-invalid={Boolean(errorFor("payerNumber"))}
                     className={errorFor("payerNumber") ? "border-destructive" : undefined}
                     value={payerNumber}
-                    onChange={(e) => setPayerNumber(e.target.value)}
+                    onChange={(e) => {
+                      setPayerNumber(e.target.value);
+                      if (extract?.senderNumber) setEdited((v) => ({ ...v, payerNumber: true }));
+                    }}
                   />
+                  {extract ? (
+                    <p className="text-[11px] text-muted-foreground">
+                      {extract.senderNumber
+                        ? edited.payerNumber
+                          ? `You changed this. Read from the screenshot: ${extract.senderNumber}`
+                          : "Read from your screenshot."
+                        : "Not printed on your screenshot — enter it yourself."}
+                    </p>
+                  ) : null}
                   {errorFor("payerNumber") ? (
                     <p role="alert" className="text-xs font-medium text-destructive">
                       {errorFor("payerNumber")}
@@ -418,7 +456,7 @@ export function GoLiveCard({
                   ) : null}
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="gl-ref">GCash reference number</Label>
+                  <Label htmlFor="gl-ref">Reference / transaction number</Label>
                   <Input
                     id="gl-ref"
                     inputMode="numeric"
@@ -426,8 +464,20 @@ export function GoLiveCard({
                     aria-invalid={Boolean(errorFor("reference"))}
                     className={errorFor("reference") ? "border-destructive" : undefined}
                     value={reference}
-                    onChange={(e) => setReference(e.target.value)}
+                    onChange={(e) => {
+                      setReference(e.target.value);
+                      if (extract?.reference) setEdited((v) => ({ ...v, reference: true }));
+                    }}
                   />
+                  {extract ? (
+                    <p className="text-[11px] text-muted-foreground">
+                      {extract.reference
+                        ? edited.reference
+                          ? `You changed this. Read from the screenshot: ${extract.reference}`
+                          : "Read from your screenshot."
+                        : "Not readable on your screenshot — enter it yourself."}
+                    </p>
+                  ) : null}
                   {errorFor("reference") ? (
                     <p role="alert" className="text-xs font-medium text-destructive">
                       {errorFor("reference")}
@@ -452,7 +502,70 @@ export function GoLiveCard({
                     <Loader2 className="size-3.5 animate-spin" /> Reading your receipt…
                   </p>
                 ) : null}
-                {receiptNote ? (
+                {extract ? (
+                  <div
+                    id="gl-evidence"
+                    className={`space-y-2 rounded-xl border px-3 py-2.5 ${
+                      evidence.sufficient ? "border-success/40 bg-success/5" : "border-warning/50 bg-warning/5"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold">Payment details detected from screenshot</p>
+                    <dl className="space-y-1 text-xs">
+                      {[
+                        ["Provider", extract.providerName],
+                        ["Reference / transaction no.", extract.reference],
+                        ["Amount", extract.amountPhp === null ? null : peso(extract.amountPhp)],
+                        ["Fee", extract.feePhp === null || extract.feePhp === undefined ? null : peso(extract.feePhp)],
+                        ["Paid from", extract.senderNumber ?? extract.senderAccountMasked ?? extract.senderName],
+                        [
+                          "Paid to",
+                          extract.receivingNumber ?? extract.receivingAccountMasked ?? extract.receivingName,
+                        ],
+                        ["Method", extract.transferMethod],
+                        ["Status", extract.statusText],
+                        ["Date / time", extract.paidAt],
+                      ].map(([label, value]) => (
+                        <div key={label as string} className="flex justify-between gap-3">
+                          <dt className="text-muted-foreground">{label}</dt>
+                          <dd className={value ? "font-medium" : "text-muted-foreground"}>
+                            {(value as string) || "not detected"}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <p className="text-xs leading-relaxed text-muted-foreground">{receiptNote ?? evidence.message}</p>
+                    {extract.rawText ? (
+                      <>
+                        <button
+                          type="button"
+                          className="text-xs font-semibold underline underline-offset-2"
+                          onClick={() => setShowRaw((v) => !v)}
+                        >
+                          {showRaw ? "Hide all text read" : "Show all text read from the screenshot"}
+                        </button>
+                        {showRaw ? (
+                          <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-md bg-muted/60 p-2 text-[11px] leading-relaxed">
+                            {extract.rawText}
+                          </pre>
+                        ) : null}
+                      </>
+                    ) : null}
+                    {thinEvidence ? (
+                      <label className="flex items-start gap-2 text-xs leading-relaxed">
+                        <input
+                          type="checkbox"
+                          className="mt-0.5"
+                          checked={acceptManual}
+                          onChange={(e) => setAcceptManual(e.target.checked)}
+                        />
+                        <span>
+                          Submit anyway — I understand this payment cannot be activated automatically
+                          and will wait for a person to review it.
+                        </span>
+                      </label>
+                    ) : null}
+                  </div>
+                ) : receiptNote ? (
                   <p className="text-xs text-muted-foreground">{receiptNote}</p>
                 ) : null}
                 {errorFor("proof") ? (
