@@ -77,24 +77,30 @@ function SuperShops() {
   const [target, setTarget] = useState<SubscriptionShop | null>(null);
   const [override, setOverride] = useState<SubscriptionShop | null>(null);
   const [legacy, setLegacy] = useState<Ecosystem[]>([]);
+  const [requests, setRequests] = useState<PendingPaymentShop[]>([]);
+  const [payTarget, setPayTarget] = useState<SubscriptionShop | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [s, p, l] = await Promise.all([
+      const [s, p, l, r] = await Promise.all([
         fetchSubscriptionShops(),
         fetchPlans(),
         fetchLegacyShops(),
+        fetchPaymentRequests().catch(() => [] as PendingPaymentShop[]),
       ]);
       setShops(s);
       setPlans(p);
       setLegacy(l);
+      setRequests(r);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not load Subscription Shops");
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const requestByShop = useMemo(() => latestPerShop(requests), [requests]);
 
   useEffect(() => {
     void load();
