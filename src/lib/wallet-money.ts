@@ -222,7 +222,7 @@ export function validateCashIn(
     const account = (input.payerAccount ?? "").trim();
     const typed = (input.payerNumber ?? "").trim();
     if (!number && !account && typed.length < 4) {
-      return "Enter the mobile number or account you paid from.";
+      return "Enter the account number or mobile number you used to send the payment.";
     }
   }
 

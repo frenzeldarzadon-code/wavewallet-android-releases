@@ -694,20 +694,22 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                           </p>
                         </div>
                         <div className="space-y-1.5">
-                          <Label htmlFor="ci-number">Mobile number or account you paid from</Label>
+                          <Label htmlFor="ci-number">Account number or mobile number you paid from</Label>
                           <Input
                             id="ci-number"
-                            inputMode="tel"
+                            inputMode="text"
                             value={payerNumber}
                             readOnly={Boolean(extract?.senderNumber)}
                             disabled={Boolean(extract?.senderNumber)}
                             onChange={(e) => setPayerNumber(e.target.value)}
-                            placeholder="09XXXXXXXXX or account number"
+                            placeholder="Account number or 09XXXXXXXXX"
                           />
                           <p className="text-[11px] text-muted-foreground">
                             {extract?.senderNumber
-                              ? "Extracted evidence — matched against the real payment notification."
-                              : "Many receipts do not print your own account, so enter the mobile number or account you paid from. It is matched against the real payment notification."}
+                              ? "Read from your screenshot — matched against the real payment notification."
+                              : extract?.senderAccountMasked || extract?.senderName
+                                ? "Taken from the sending details on your screenshot — correct it if it is not the account you paid from."
+                                : "Not detected on your screenshot — enter the account number or mobile number you used to send the payment."}
                           </p>
                         </div>
 
