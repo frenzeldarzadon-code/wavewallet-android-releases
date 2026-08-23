@@ -182,11 +182,40 @@ export function autoCategoryName(
 }
 
 /**
- * Automatic entries are INCOME ONLY. Expenses are manual, so any automatic
- * expense row (a legacy `admin_purchases` row from an older database function)
- * is dropped here as a second line of defence against double counting.
+ * Automatic entries are INCOME ONLY (admin cashback + admin discount).
+ * Expenses are manual, so any automatic expense row (a legacy
+ * `admin_purchases` row from an older database function) is dropped here as a
+ * second line of defence against double counting. Stable source ids
+ * (`cb:<earning id>`, `ad:<sale id>`) also de-duplicate one source transaction
+ * into exactly one automatic income entry.
  */
-const isAutomaticIncome = (r: AutoRow) => r.kind !== "expense";
+export function automaticEntries(
+  rows: AutoRow[],
+  categories: SpendingCategory[],
+): SpendingEntry[] {
+  const seen = new Set<string>();
+  const out: SpendingEntry[] = [];
+  for (const r of rows) {
+    if (r.kind === "expense") continue;
+    if (seen.has(r.id)) continue;
+    seen.add(r.id);
+    out.push({
+      id: r.id,
+      kind: "income",
+      occurredAt: r.occurred_at,
+      description: r.description,
+      amount: Number(r.amount ?? 0),
+      source: "automatic",
+      categoryKey: r.auto_key,
+      categoryName: autoCategoryName(r.auto_key, categories, "income", r.member_name),
+      memberId: r.member_id,
+      memberName: r.member_name,
+      notes: null,
+      editable: false,
+    });
+  }
+  return out;
+}
 
 export async function fetchSpendingEntries(
   ecosystemId: string,
