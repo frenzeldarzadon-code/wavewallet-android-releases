@@ -119,6 +119,8 @@ const SLOT_SOURCE: SlotSource[] = [
   { name: "dashboard.sales", label: "Voucher sales", group: "Dashboard", roles: ["admin"] },
   { name: "dashboard.signup-link", label: "Customer signup link card", group: "Dashboard", roles: ["admin"] },
   { name: "dashboard.stats", label: "Shop figures", group: "Dashboard", roles: ["admin"] },
+  { name: "dashboard.subscription", label: "Subscription countdown", group: "Dashboard", roles: ["admin"] },
+
   { name: "dashboard.summary", label: "Shop summary", group: "Dashboard", roles: ["reseller", "subreseller"] },
   { name: "dashboard.wallet-activity", label: "Wallet activity", group: "Dashboard", roles: ["reseller", "subreseller"] },
   { name: "wallet.center", label: "Wallet Center panel", group: "Dashboard", roles: ["customer"] },
