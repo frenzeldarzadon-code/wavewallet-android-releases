@@ -49,6 +49,21 @@ import {
   mapGoLiveError,
   type GoLiveField,
 } from "@/lib/go-live-readiness";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DURATION_OPTIONS,
+  coveragePeriod,
+  monthsLabel,
+  normalizeMonths,
+  planTotalPhp,
+} from "@/lib/subscription-duration";
+
 
 
 type Gcash = Awaited<ReturnType<typeof fetchPlatformGcash>>;
@@ -178,13 +193,21 @@ export function GoLiveCard({
   }, [ecosystemId, planId]);
 
   const plan = plans.find((p) => p.id === planId) ?? null;
-  const monthCount = Math.max(1, Math.min(24, Number(months) || 1));
+  const monthCount = normalizeMonths(months);
   const isPlanChange = Boolean(quote && !quote.is_first_activation);
-  const due = isPlanChange
-    ? Number(quote?.amount_due ?? 0)
-    : plan
-      ? Number(plan.monthly_price) * monthCount
-      : 0;
+  // Plans are all billed monthly, so the total is simply the configured
+  // monthly price × the duration chosen. Plan CHANGES keep using the server's
+  // own prorated quote — no pricing rule is invented in the browser.
+  const lineTotal = planTotalPhp(plan?.monthly_price, monthCount);
+  const due = isPlanChange ? Number(quote?.amount_due ?? 0) : lineTotal;
+  // What the payment buys. An early renewal is appended to the period that is
+  // still running, exactly like the database does on activation.
+  const currentEnd =
+    quote && quote.days_remaining > 0
+      ? new Date(Date.now() + quote.days_remaining * 86_400_000)
+      : null;
+  const coverage = coveragePeriod(currentEnd, monthCount);
+
   const pending = request?.status === "pending";
   // How much INDEPENDENT evidence the screenshot itself produced. This never
   // approves anything — the platform listener and the database rules still
@@ -356,6 +379,88 @@ export function GoLiveCard({
                 </p>
               ) : null}
 
+              {/* Duration + exact total — nothing is estimated: the amount is
+                  the plan's configured monthly price × the chosen duration
+                  (or, for a plan change, the server's own prorated quote). */}
+              <div className="space-y-3 rounded-xl border bg-background px-3 py-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="gl-months">How long are you paying for?</Label>
+                  <Select value={String(monthCount)} onValueChange={(v) => setMonths(v)}>
+                    <SelectTrigger
+                      id="gl-months"
+                      aria-invalid={Boolean(errorFor("months"))}
+                      className={errorFor("months") ? "border-destructive" : undefined}
+                    >
+                      <SelectValue placeholder="Choose a duration" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-64">
+                      {DURATION_OPTIONS.map((m) => (
+                        <SelectItem key={m} value={String(m)}>
+                          {monthsLabel(m)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errorFor("months") ? (
+                    <p role="alert" className="text-xs font-medium text-destructive">
+                      {errorFor("months")}
+                    </p>
+                  ) : null}
+                </div>
+
+                {plan ? (
+                  <dl className="space-y-1 text-xs">
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-muted-foreground">Package</dt>
+                      <dd className="font-medium">{plan.name}</dd>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-muted-foreground">Price per month</dt>
+                      <dd className="font-medium">{peso(Number(plan.monthly_price))}</dd>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-muted-foreground">Duration</dt>
+                      <dd className="font-medium">{monthsLabel(monthCount)}</dd>
+                    </div>
+                    {isPlanChange ? (
+                      <div className="flex justify-between gap-3">
+                        <dt className="text-muted-foreground">Plan change credit applied</dt>
+                        <dd className="font-medium">−{peso(Number(quote?.unused_value ?? 0))}</dd>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between gap-3">
+                        <dt className="text-muted-foreground">
+                          {peso(Number(plan.monthly_price))} × {monthCount}
+                        </dt>
+                        <dd className="font-medium">{peso(lineTotal)}</dd>
+                      </div>
+                    )}
+                    <div className="flex justify-between gap-3 border-t pt-1.5 text-sm">
+                      <dt className="font-semibold">Total amount due</dt>
+                      <dd className="font-bold text-primary">{peso(due)}</dd>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-muted-foreground">Period being purchased</dt>
+                      <dd className="font-medium">
+                        {coverage.start.toLocaleDateString()} – {coverage.end.toLocaleDateString()}
+                      </dd>
+                    </div>
+                    {coverage.extendsExisting ? (
+                      <p className="pt-1 text-[11px] leading-relaxed text-muted-foreground">
+                        Your current period is still running — this payment is added on top of it,
+                        it does not replace it.
+                      </p>
+                    ) : null}
+                  </dl>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Pick a package above to see the exact total for this duration.
+                  </p>
+                )}
+              </div>
+
+
+
               <div className="space-y-3 rounded-xl border bg-muted/40 px-3 py-3">
                 <div>
                   <p className="flex items-center gap-1.5 text-sm font-semibold">
@@ -409,23 +514,8 @@ export function GoLiveCard({
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="gl-months">Months (1–24)</Label>
-                  <Input
-                    id="gl-months"
-                    inputMode="numeric"
-                    aria-invalid={Boolean(errorFor("months"))}
-                    className={errorFor("months") ? "border-destructive" : undefined}
-                    value={months}
-                    onChange={(e) => setMonths(e.target.value)}
-                  />
-                  {errorFor("months") ? (
-                    <p role="alert" className="text-xs font-medium text-destructive">
-                      {errorFor("months")}
-                    </p>
-                  ) : null}
-                </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+
                 <div className="space-y-1.5">
                   <Label htmlFor="gl-number">Account number or mobile number you paid from</Label>
                   <Input

@@ -13,6 +13,8 @@ import { reviewCountdown } from "@/lib/review-demo";
 import { StatusBadge } from "@/components/ui-kit";
 import { pts } from "@/lib/points";
 import { DevSlot } from "@/components/dev/dev-slot";
+import { SubscriptionCountdownCard } from "@/components/subscription/subscription-countdown-card";
+
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
@@ -112,6 +114,19 @@ function AdminDashboard() {
         </Card>
       ) : null}
       </DevSlot>
+
+      {!shop.isDemo ? (
+        <DevSlot name="dashboard.subscription">
+          <SubscriptionCountdownCard
+            planName={ecosystem.subscription?.planName}
+            periodEnd={ecosystem.subscription?.currentPeriodEnd}
+            graceDays={Number(ecosystem.subscription?.gracePeriodDays ?? 0)}
+            state={ecosystem.subscription?.status}
+          />
+        </DevSlot>
+      ) : null}
+
+
 
       <DevSlot name="dashboard.stats">
       <PageSection
