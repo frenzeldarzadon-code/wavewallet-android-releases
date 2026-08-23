@@ -432,23 +432,8 @@ export function GoLiveCard({
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="gl-months">Months (1–24)</Label>
-                  <Input
-                    id="gl-months"
-                    inputMode="numeric"
-                    aria-invalid={Boolean(errorFor("months"))}
-                    className={errorFor("months") ? "border-destructive" : undefined}
-                    value={months}
-                    onChange={(e) => setMonths(e.target.value)}
-                  />
-                  {errorFor("months") ? (
-                    <p role="alert" className="text-xs font-medium text-destructive">
-                      {errorFor("months")}
-                    </p>
-                  ) : null}
-                </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+
                 <div className="space-y-1.5">
                   <Label htmlFor="gl-number">Account number or mobile number you paid from</Label>
                   <Input
