@@ -31,6 +31,7 @@ import {
   Send,
   Settings,
   ShieldCheck,
+  BadgeCheck,
   ShoppingBag,
   ShoppingCart,
   Store,
@@ -350,6 +351,7 @@ export function superAdminNav(): Nav {
       label: "Subscriptions",
       items: [
         { to: "/super/shops", label: "Subscription Shops", icon: Store },
+        { to: "/super/auto-payments", label: "Auto-approved payments", icon: BadgeCheck },
         { to: "/super/guide", label: "Guide content", icon: BookOpen },
       ],
     },
