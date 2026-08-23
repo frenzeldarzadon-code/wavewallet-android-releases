@@ -53,15 +53,24 @@ export function monthsLabel(months: number): string {
   return m === 1 ? "1 month" : `${m} months`;
 }
 
-/** Adds whole months the same way Postgres `+ interval 'n months'` does. */
-export function addMonths(from: Date, months: number): Date {
-  const d = new Date(from.getTime());
-  const day = d.getDate();
-  d.setMonth(d.getMonth() + normalizeMonths(months));
-  // Postgres clamps 31 Jan + 1 month to 28/29 Feb; JS rolls over — clamp back.
-  if (d.getDate() < day) d.setDate(0);
-  return d;
+/**
+ * FIXED 30-DAY SUBSCRIPTION MONTH.
+ * WaveWallet does not bill on calendar months: 1 month = 30 days, always
+ * (2 = 60, 3 = 90, 6 = 180, 12 = 360). Mirrors `apply_subscription_plan`,
+ * which adds `months × 30 days`.
+ */
+export const DAYS_PER_SUBSCRIPTION_MONTH = 30;
+
+/** Days a duration in subscription months covers — months × 30. */
+export function monthsToDays(months: number): number {
+  return normalizeMonths(months) * DAYS_PER_SUBSCRIPTION_MONTH;
 }
+
+/** Adds subscription months as a fixed number of days (30 per month). */
+export function addMonths(from: Date, months: number): Date {
+  return new Date(from.getTime() + monthsToDays(months) * DAY_MS);
+}
+
 
 /**
  * The period a payment buys. An early renewal never overwrites a still-active
