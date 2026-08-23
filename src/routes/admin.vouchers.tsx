@@ -194,11 +194,53 @@ function AdminVouchers() {
 
   return (
     <>
+      <PageSection devSlot="vouchers.setup-guide">
+        <Card
+          className={cn(
+            "shadow-[var(--shadow-card)]",
+            noProducts ? "border-warning bg-warning/10" : "border-border",
+          )}
+        >
+          <CardContent className="space-y-2">
+            <p className="flex items-center gap-2 text-sm font-semibold">
+              {noProducts ? (
+                <AlertTriangle className="size-4 text-warning-foreground" />
+              ) : (
+                <Info className="size-4 text-primary" />
+              )}
+              {noProducts
+                ? "Set up your voucher products first"
+                : "How to upload voucher codes"}
+            </p>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Voucher codes always belong to a voucher product. The order is:{" "}
+              <strong>1. Set up your voucher products</strong> →{" "}
+              <strong>2. Select the product here in Code inventory</strong> →{" "}
+              <strong>3. Paste or upload the codes</strong> →{" "}
+              <strong>4. Confirm the product</strong> → codes are imported.
+            </p>
+            {noProducts ? (
+              <>
+                <p className="text-xs font-medium text-warning-foreground">
+                  You have no voucher products yet, so importing codes is disabled. Create at least one
+                  product first — otherwise codes have nowhere to go.
+                </p>
+                <Button size="sm" asChild>
+                  <Link to="/admin/products">
+                    <Package className="size-4" /> Go to voucher products
+                  </Link>
+                </Button>
+              </>
+            ) : null}
+          </CardContent>
+        </Card>
+      </PageSection>
+
       <PageSection devSlot="vouchers.code-inventory"
         title="Code inventory"
         description="Voucher codes are imported manually. They are never generated or synced from any external system."
         action={
-          <Button size="sm" onClick={() => setOpen(true)} disabled={products.length === 0}>
+          <Button size="sm" onClick={() => setOpen(true)} disabled={selectableProducts.length === 0}>
             <Upload className="size-4" /> Import codes
           </Button>
         }
@@ -209,6 +251,7 @@ function AdminVouchers() {
           <StatCard label="Sold" value={String(totals.sold)} tone="negative" />
         </div>
       </PageSection>
+
 
       <PageSection devSlot="vouchers.per-product" title="Per product">
         {products.length === 0 ? (
