@@ -1,539 +1,219 @@
--- Per-shop reseller hierarchy.
---
--- A member's role, parent reseller, discount and commission belong to ONE
--- (member, shop) membership. Being a subreseller in Shop A must place no
--- requirement whatsoever on Shop B: the parent check applies only inside the
--- shop the change is being made in.
---
--- The bug: every role RPC derived the shop from `profiles.ecosystem_id` (a
--- mirror of the member's CURRENTLY ACTIVE shop) and `validate_member_parent`
--- compared the parent's `profiles.ecosystem_id`. Assigning a parent in Shop B
--- for someone whose active shop is Shop A therefore raised
--- "The parent reseller must belong to the same shop".
+-- Super Admin review of automatically approved subscription payments.
+-- The listener may activate a shop on its own; the platform owner still has to
+-- confirm the money afterwards. Until then the payment sits in an explicit
+-- "Pending Super Admin Review" state, and marking it Invalid freezes the shop's
+-- paid entitlements without deleting anything.
 
--- ---------------------------------------------------------------------------
--- Which shop is a role change being made in?
--- ---------------------------------------------------------------------------
-create or replace function public.member_ecosystem_scope(
-  _user_id uuid, _ecosystem_id uuid default null)
-returns uuid
-language plpgsql
-stable
-security definer
-set search_path to 'public'
-as $$
-declare _eco uuid; _actor_eco uuid;
+ALTER TABLE public.subscription_requests
+  ADD COLUMN IF NOT EXISTS super_review_state text NOT NULL DEFAULT 'not_required',
+  ADD COLUMN IF NOT EXISTS super_reviewed_by uuid,
+  ADD COLUMN IF NOT EXISTS super_reviewed_by_name text,
+  ADD COLUMN IF NOT EXISTS super_reviewed_at timestamptz,
+  ADD COLUMN IF NOT EXISTS super_review_reason text,
+  ADD COLUMN IF NOT EXISTS entitlement_hold boolean NOT NULL DEFAULT false;
+
+DO $$ BEGIN
+  ALTER TABLE public.subscription_requests
+    ADD CONSTRAINT subscription_requests_super_review_state_check
+    CHECK (super_review_state IN ('not_required','pending','verified','invalid'));
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE INDEX IF NOT EXISTS subscription_requests_super_review_idx
+  ON public.subscription_requests (super_review_state, reviewed_at DESC);
+
+-- Automatic activation now always opens a review record.
+CREATE OR REPLACE FUNCTION public.activate_go_live_request(_request_id uuid)
+ RETURNS text
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare _req public.subscription_requests; _eco public.ecosystems; _su uuid;
 begin
-  if _ecosystem_id is not null then
-    return _ecosystem_id;
-  end if;
+  select * into _req from public.subscription_requests where id = _request_id for update;
+  if _req.id is null then return 'not_found'; end if;
+  if _req.status <> 'pending' then return 'already_activated'; end if;
+  if _req.plan_id is null then return 'no_plan'; end if;
+  select * into _eco from public.ecosystems where id = _req.ecosystem_id;
 
-  select coalesce(p.active_ecosystem_id, p.ecosystem_id) into _actor_eco
-    from public.profiles p where p.id = auth.uid();
+  perform public.apply_subscription_plan(
+    _req.ecosystem_id, _req.plan_id, coalesce(_req.months_purchased, 1),
+    _req.amount_paid, _req.payment_reference,
+    case when _req.purpose = 'go_live' then 'GO_LIVE — verified GCash subscription payment'
+         else 'PLAN_CHANGE — verified GCash subscription payment' end);
 
-  -- The shop the operator is currently working in, when the target is a
-  -- member of it. This is what makes Shop B changes independent of Shop A.
-  if _actor_eco is not null then
-    select m.ecosystem_id into _eco
-      from public.ecosystem_memberships m
-     where m.user_id = _user_id
-       and m.ecosystem_id = _actor_eco
-       and m.membership_state = 'active'
-     limit 1;
-    if _eco is not null then return _eco; end if;
-    if public.is_super_admin(auth.uid()) then return _actor_eco; end if;
-  end if;
+  update public.subscription_requests
+     set status = 'approved', reviewed_at = now(),
+         reviewed_by_name = 'WaveWallet GCash listener',
+         auto_state = 'activated',
+         auto_reason = 'Verified payment — the shop is live on the ' || _req.plan_name || ' plan',
+         period_start = now(),
+         -- Automatic approval always awaits an explicit platform-owner review.
+         super_review_state = 'pending',
+         entitlement_hold = false
+   where id = _request_id;
 
-  select p.ecosystem_id into _eco from public.profiles p where p.id = _user_id;
-  return _eco;
-end $$;
-
-comment on function public.member_ecosystem_scope(uuid, uuid) is
-  'Resolves which shop a member-management action applies to: the explicit shop, else the operator''s current shop when the member belongs to it, else the member''s active shop.';
-
--- ---------------------------------------------------------------------------
--- Parent validation: membership-scoped, never cross-shop
--- ---------------------------------------------------------------------------
-create or replace function public.validate_member_parent()
-returns trigger
-language plpgsql
-security definer
-set search_path to 'public'
-as $$
-declare _is_sub boolean;
-begin
-  -- Role is per shop: only consider the role held in THIS profile's shop.
-  select exists (
-    select 1 from public.user_roles ur
-    where ur.user_id = new.id and ur.role = 'subreseller'
-      and ur.ecosystem_id is not distinct from new.ecosystem_id
-  ) into _is_sub;
-
-  if new.reseller_id is null then
-    if _is_sub then
-      raise exception 'A subreseller must always belong to a parent reseller';
-    end if;
-    return new;
-  end if;
-
-  if new.reseller_id = new.id then
-    raise exception 'A member cannot be their own parent reseller';
-  end if;
-
-  -- The parent only has to be a member of THIS shop. Their standing in any
-  -- other shop is irrelevant.
-  if new.ecosystem_id is not null and not exists (
-    select 1 from public.ecosystem_memberships m
-     where m.user_id = new.reseller_id
-       and m.ecosystem_id = new.ecosystem_id
-       and m.membership_state = 'active'
-  ) then
-    raise exception 'The parent reseller must be a member of this shop';
-  end if;
-
-  if _is_sub and not exists (
-    select 1 from public.ecosystem_memberships m
-     where m.user_id = new.reseller_id
-       and m.ecosystem_id = new.ecosystem_id
-       and m.membership_state = 'active'
-       and m.role = 'reseller'
-  ) and not exists (
-    select 1 from public.user_roles ur
-     where ur.user_id = new.reseller_id and ur.role = 'reseller'
-       and ur.ecosystem_id = new.ecosystem_id
-  ) then
-    raise exception 'A subreseller can only be owned by a reseller in the same shop';
-  end if;
-
-  if exists (select 1 from public.profiles p
-              where p.id = new.reseller_id and p.reseller_id = new.id) then
-    raise exception 'Circular reseller ownership is not allowed';
-  end if;
-
-  return new;
-end $$;
-
--- Authoritative check on the membership row itself.
-create or replace function public.validate_membership_parent()
-returns trigger
-language plpgsql
-security definer
-set search_path to 'public'
-as $$
-begin
-  if new.reseller_id is null then return new; end if;
-  -- Only validate when the parent link is actually being set or changed, so
-  -- unrelated updates to legacy rows are never blocked.
-  if tg_op = 'UPDATE' and new.reseller_id is not distinct from old.reseller_id then
-    return new;
-  end if;
-  if new.reseller_id = new.user_id then
-    raise exception 'A member cannot be their own parent reseller';
-  end if;
-  if not exists (
-    select 1 from public.ecosystem_memberships m
-     where m.user_id = new.reseller_id
-       and m.ecosystem_id = new.ecosystem_id
-       and m.membership_state = 'active'
-       and m.role in ('reseller','admin')
-  ) then
-    raise exception 'The parent must be a reseller in this shop';
-  end if;
-  if exists (
-    select 1 from public.ecosystem_memberships m
-     where m.user_id = new.reseller_id
-       and m.ecosystem_id = new.ecosystem_id
-       and m.reseller_id = new.user_id
-  ) then
-    raise exception 'Circular reseller ownership is not allowed';
-  end if;
-  return new;
-end $$;
-
-drop trigger if exists ecosystem_memberships_validate_parent on public.ecosystem_memberships;
-create trigger ecosystem_memberships_validate_parent
-before insert or update of reseller_id, role on public.ecosystem_memberships
-for each row execute function public.validate_membership_parent();
-
--- ---------------------------------------------------------------------------
--- Shop-scoped role management
--- ---------------------------------------------------------------------------
-drop function if exists public.promote_to_reseller(uuid, integer);
-create or replace function public.promote_to_reseller(
-  _user_id uuid, _discount integer, _ecosystem_id uuid default null)
-returns void
-language plpgsql
-security definer
-set search_path to 'public'
-as $$
-declare _eco uuid; _actor_name text; _role public.app_role;
-begin
-  perform public.require_operational();
-  _eco := public.member_ecosystem_scope(_user_id, _ecosystem_id);
-  if _eco is null then raise exception 'Shop not found for this member'; end if;
-  if not (public.is_ecosystem_admin(auth.uid(), _eco) or public.is_super_admin(auth.uid())) then
-    raise exception 'Not authorized to manage this ecosystem';
-  end if;
-  if _discount is null or _discount < 0 or _discount > 100 then
-    raise exception 'Discount must be between 0 and 100 percent';
-  end if;
-
-  select m.role into _role from public.ecosystem_memberships m
-   where m.user_id = _user_id and m.ecosystem_id = _eco and m.membership_state = 'active';
-  if _role is null then raise exception 'That member does not belong to this shop'; end if;
-  if _role <> 'customer' then
-    raise exception 'Only customers can be promoted to reseller';
-  end if;
-
-  delete from public.user_roles
-   where user_id = _user_id and role = 'customer' and ecosystem_id = _eco;
-  insert into public.user_roles (user_id, role, ecosystem_id)
-  values (_user_id, 'reseller', _eco) on conflict do nothing;
-
-  update public.ecosystem_memberships
-     set role = 'reseller', reseller_id = null,
-         reseller_discount_percent = _discount,
-         sale_commission_percent = _discount, updated_at = now()
-   where user_id = _user_id and ecosystem_id = _eco;
-
-  -- The profile is only a mirror of the member's CURRENT shop.
-  update public.profiles
-     set reseller_discount_percent = _discount,
-         sale_commission_percent = _discount,
-         reseller_id = null
-   where id = _user_id and ecosystem_id = _eco;
-
-  select full_name into _actor_name from public.profiles where id = auth.uid();
   insert into public.audit_logs (ecosystem_id, actor_id, actor_name, action, target, metadata)
-  values (_eco, auth.uid(), coalesce(_actor_name,'Admin'),
-          'Promoted customer to reseller',
-          (select full_name || ' — ' || email from public.profiles where id = _user_id),
-          jsonb_build_object('previous_role','customer','new_role','reseller',
-                             'shop_id',_eco,'discount_percent',_discount));
-end $$;
+  values (_req.ecosystem_id, _req.requested_by, 'WaveWallet GCash listener',
+          'Activated shop from verified GCash payment', coalesce(_eco.name,'Shop'),
+          jsonb_build_object('request_id', _req.id, 'plan', _req.plan_name,
+                             'reference', _req.payment_reference,
+                             'listener_event_id', _req.listener_event_id,
+                             'months', _req.months_purchased,
+                             'super_review_state', 'pending'));
 
-drop function if exists public.promote_to_subreseller(uuid, integer, uuid);
-create or replace function public.promote_to_subreseller(
-  _user_id uuid, _discount integer, _parent_reseller_id uuid default null,
-  _ecosystem_id uuid default null)
-returns void
-language plpgsql
-security definer
-set search_path to 'public'
-as $$
-declare _eco uuid; _actor_name text; _parent_pct integer; _role public.app_role;
+  if _req.requested_by is not null then
+    perform public.notify_member(
+      _req.requested_by, _req.ecosystem_id, 'subscription',
+      'Congratulations! Your shop is now LIVE',
+      coalesce(_eco.name,'Your shop') || ' is live on the ' || coalesce(_req.plan_name,'selected') || ' plan.',
+      '/admin');
+  end if;
+
+  for _su in select ur.user_id from public.user_roles ur where ur.role = 'super_admin' loop
+    perform public.notify_member(
+      _su, _req.ecosystem_id, 'subscription',
+      'New shop went live',
+      coalesce(_eco.name,'A shop') || ' activated the ' || coalesce(_req.plan_name,'selected')
+        || ' plan (' || to_char(coalesce(_req.monthly_rate, _req.plan_price, 0),'FM999999990.00')
+        || '/month × ' || coalesce(_req.months_purchased,1) || '). Confirm the payment in Auto-approved payments.',
+      '/super/auto-payments');
+  end loop;
+
+  return 'activated';
+end $function$;
+
+-- Platform-owner decision on an automatically approved payment.
+CREATE OR REPLACE FUNCTION public.review_auto_approved_payment(
+  _request_id uuid, _decision text, _reason text DEFAULT NULL)
+ RETURNS text
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare _req public.subscription_requests; _eco public.ecosystems;
+        _actor uuid := auth.uid(); _name text; _reason_txt text := nullif(btrim(coalesce(_reason,'')),'');
 begin
-  perform public.require_operational();
-  _eco := public.member_ecosystem_scope(_user_id, _ecosystem_id);
-  if _eco is null then raise exception 'Shop not found for this member'; end if;
-  if not (public.is_ecosystem_admin(auth.uid(), _eco) or public.is_super_admin(auth.uid())) then
-    raise exception 'Not authorized to manage this ecosystem';
+  if not public.is_super_admin(_actor) then
+    raise exception 'Only the platform owner can review automatic payments';
   end if;
-  if _discount is null or _discount < 0 or _discount > 100 then
-    raise exception 'Discount must be between 0 and 100 percent';
+  if _decision not in ('verified','invalid') then
+    raise exception 'Decision must be verified or invalid';
   end if;
-
-  select m.role into _role from public.ecosystem_memberships m
-   where m.user_id = _user_id and m.ecosystem_id = _eco and m.membership_state = 'active';
-  if _role is null then raise exception 'That member does not belong to this shop'; end if;
-  if _role <> 'customer' then
-    raise exception 'Only customers can be promoted to subreseller';
+  if _decision = 'invalid' and _reason_txt is null then
+    raise exception 'A reason is required when marking a payment invalid';
   end if;
 
-  if _parent_reseller_id is null then
-    raise exception 'Choose the parent reseller who will own this subreseller';
+  select * into _req from public.subscription_requests where id = _request_id for update;
+  if _req.id is null then raise exception 'Payment not found'; end if;
+  if coalesce(_req.super_review_state,'not_required') = 'not_required' then
+    raise exception 'This payment was not approved automatically';
   end if;
-  -- The parent only needs to be a reseller in THIS shop.
-  if not exists (
-    select 1 from public.ecosystem_memberships m
-     where m.user_id = _parent_reseller_id and m.ecosystem_id = _eco
-       and m.membership_state = 'active' and m.role = 'reseller') then
-    raise exception 'The parent must be a reseller in this shop';
-  end if;
+  if _req.super_review_state = _decision then return 'unchanged'; end if;
 
-  _parent_pct := coalesce(public.member_cashback_rate(_parent_reseller_id, _eco), 0);
-  if _discount > _parent_pct then
-    raise exception 'A subreseller discount comes out of the parent reseller discount (parent is % percent)', _parent_pct;
-  end if;
+  select * into _eco from public.ecosystems where id = _req.ecosystem_id;
+  select coalesce(p.display_name, 'Platform owner') into _name
+    from public.profiles p where p.id = _actor;
 
-  delete from public.user_roles
-   where user_id = _user_id and role = 'customer' and ecosystem_id = _eco;
-  insert into public.user_roles (user_id, role, ecosystem_id)
-  values (_user_id, 'subreseller', _eco) on conflict do nothing;
+  update public.subscription_requests
+     set super_review_state = _decision,
+         super_reviewed_by = _actor,
+         super_reviewed_by_name = coalesce(_name,'Platform owner'),
+         super_reviewed_at = now(),
+         super_review_reason = _reason_txt,
+         entitlement_hold = (_decision = 'invalid')
+   where id = _request_id;
 
-  update public.ecosystem_memberships
-     set role = 'subreseller', reseller_id = _parent_reseller_id,
-         reseller_discount_percent = _discount,
-         sale_commission_percent = _discount,
-         reseller_commission_percent = 0, updated_at = now()
-   where user_id = _user_id and ecosystem_id = _eco;
+  if _decision = 'invalid' then
+    -- Hold the paid entitlements. Nothing is deleted; the shop and its history stay.
+    update public.ecosystems
+       set operations_frozen = true,
+           frozen_reason = 'Payment under review — marked invalid: ' || _reason_txt
+     where id = _req.ecosystem_id;
 
-  update public.profiles
-     set reseller_discount_percent = _discount,
-         sale_commission_percent = _discount,
-         reseller_commission_percent = 0,
-         reseller_id = _parent_reseller_id
-   where id = _user_id and ecosystem_id = _eco;
-
-  select full_name into _actor_name from public.profiles where id = auth.uid();
-  insert into public.audit_logs (ecosystem_id, actor_id, actor_name, action, target, metadata)
-  values (_eco, auth.uid(), coalesce(_actor_name,'Admin'),
-          'Promoted customer to subreseller',
-          (select full_name || ' — ' || email from public.profiles where id = _user_id),
-          jsonb_build_object('previous_role','customer','new_role','subreseller',
-                             'shop_id',_eco,
-                             'discount_percent',_discount,'loading_commission_percent',0,
-                             'parent_reseller_id',_parent_reseller_id,
-                             'parent_reseller_name',(select full_name from public.profiles where id = _parent_reseller_id)));
-end $$;
-
-drop function if exists public.set_subreseller_parent(uuid, uuid);
-create or replace function public.set_subreseller_parent(
-  _user_id uuid, _reseller_id uuid, _ecosystem_id uuid default null)
-returns void
-language plpgsql
-security definer
-set search_path to 'public'
-as $$
-declare _eco uuid; _prev uuid; _actor_name text; _own integer; _parent_pct integer;
-begin
-  perform public.require_operational();
-  _eco := public.member_ecosystem_scope(_user_id, _ecosystem_id);
-  if _eco is null then raise exception 'Member not found'; end if;
-  if not (public.is_ecosystem_admin(auth.uid(), _eco) or public.is_super_admin(auth.uid())) then
-    raise exception 'Not authorized to manage this ecosystem';
-  end if;
-
-  select m.reseller_id into _prev from public.ecosystem_memberships m
-   where m.user_id = _user_id and m.ecosystem_id = _eco;
-
-  if not exists (
-    select 1 from public.ecosystem_memberships m
-     where m.user_id = _user_id and m.ecosystem_id = _eco
-       and m.membership_state = 'active' and m.role = 'subreseller') then
-    raise exception 'Only subresellers have a parent reseller';
-  end if;
-  if _reseller_id is null then raise exception 'Choose a parent reseller'; end if;
-  if not exists (
-    select 1 from public.ecosystem_memberships m
-     where m.user_id = _reseller_id and m.ecosystem_id = _eco
-       and m.membership_state = 'active' and m.role = 'reseller') then
-    raise exception 'The parent must be a reseller in this shop';
-  end if;
-
-  _own := coalesce(public.member_cashback_rate(_user_id, _eco), 0);
-  _parent_pct := coalesce(public.member_cashback_rate(_reseller_id, _eco), 0);
-  if _own > _parent_pct then
-    raise exception 'This subreseller discount is % percent but the new parent reseller is only % percent — lower the subreseller discount first', _own, _parent_pct;
-  end if;
-
-  update public.ecosystem_memberships set reseller_id = _reseller_id, updated_at = now()
-   where user_id = _user_id and ecosystem_id = _eco;
-  update public.profiles set reseller_id = _reseller_id
-   where id = _user_id and ecosystem_id = _eco;
-
-  select full_name into _actor_name from public.profiles where id = auth.uid();
-  insert into public.audit_logs (ecosystem_id, actor_id, actor_name, action, target, metadata)
-  values (_eco, auth.uid(), coalesce(_actor_name,'Admin'), 'Reassigned subreseller owner',
-          (select full_name || ' — ' || email from public.profiles where id = _user_id),
-          jsonb_build_object('previous_parent_id',_prev,'new_parent_id',_reseller_id,
-                             'shop_id',_eco,
-                             'new_parent_name',(select full_name from public.profiles where id = _reseller_id)));
-end $$;
-
--- ---------------------------------------------------------------------------
--- Restructuring: same shop scoping
--- ---------------------------------------------------------------------------
-drop function if exists public.restructure_member_role(uuid, public.app_role, text, uuid, jsonb);
-create or replace function public.restructure_member_role(
-  _user_id uuid, _new_role public.app_role, _reason text,
-  _parent_reseller_id uuid default null,
-  _child_reassignments jsonb default '[]'::jsonb,
-  _ecosystem_id uuid default null)
-returns jsonb
-language plpgsql
-security definer
-set search_path to 'public'
-as $$
-declare
-  _eco uuid; _role public.app_role; _prev_parent uuid; _actor_name text;
-  _reason_clean text; _child record; _new_parent uuid; _moved jsonb := '[]'::jsonb;
-  _remaining integer; _target text; _keep_parent uuid;
-begin
-  perform public.require_operational();
-
-  _reason_clean := nullif(trim(coalesce(_reason, '')), '');
-  if _reason_clean is null or length(_reason_clean) < 5 then
-    raise exception 'A reason of at least 5 characters is required for a role change';
-  end if;
-
-  select p.full_name || ' — ' || p.email into _target
-    from public.profiles p where p.id = _user_id and p.deleted_at is null;
-  if _target is null then raise exception 'Member not found'; end if;
-
-  _eco := public.member_ecosystem_scope(_user_id, _ecosystem_id);
-  if _eco is null then raise exception 'Member not found'; end if;
-
-  if not (public.is_ecosystem_admin(auth.uid(), _eco) or public.is_super_admin(auth.uid())) then
-    raise exception 'Not authorized to manage this ecosystem';
-  end if;
-
-  if _user_id = auth.uid() then raise exception 'You cannot change your own role'; end if;
-
-  if exists (select 1 from public.user_roles r
-              where r.user_id = _user_id and r.role in ('super_admin','admin')) then
-    raise exception 'Admin and platform owner roles cannot be changed here';
-  end if;
-
-  select m.role, m.reseller_id into _role, _prev_parent
-    from public.ecosystem_memberships m
-   where m.user_id = _user_id and m.ecosystem_id = _eco and m.membership_state = 'active';
-  if _role is null or _role not in ('reseller','subreseller') then
-    raise exception 'Only resellers and subresellers can be restructured here';
-  end if;
-
-  if _new_role not in ('reseller','subreseller','customer') then
-    raise exception 'Only reseller, subreseller and customer are allowed as the new role';
-  end if;
-  if _new_role = _role then raise exception 'That member already has this role'; end if;
-
-  -- Children are counted inside THIS shop only.
-  if _new_role in ('subreseller','customer') then
-    for _child in
-      select m.user_id as id, p.full_name
-        from public.ecosystem_memberships m
-        join public.profiles p on p.id = m.user_id and p.deleted_at is null
-       where m.ecosystem_id = _eco and m.role = 'subreseller'
-         and m.membership_state = 'active' and m.reseller_id = _user_id
-    loop
-      select nullif(x.value ->> 'new_parent_id','')::uuid into _new_parent
-        from jsonb_array_elements(coalesce(_child_reassignments,'[]'::jsonb)) x
-       where (x.value ->> 'child_id')::uuid = _child.id
-       limit 1;
-
-      if _new_parent is null then
-        raise exception 'Reassign % to another reseller before demoting this reseller', _child.full_name;
-      end if;
-      if _new_parent = _user_id or _new_parent = _child.id then
-        raise exception 'Choose a different reseller for %', _child.full_name;
-      end if;
-      if not exists (select 1 from public.ecosystem_memberships m
-                      where m.user_id = _new_parent and m.ecosystem_id = _eco
-                        and m.membership_state = 'active' and m.role = 'reseller') then
-        raise exception 'The new owner of % must be a reseller in this shop', _child.full_name;
-      end if;
-
-      update public.ecosystem_memberships set reseller_id = _new_parent, updated_at = now()
-       where user_id = _child.id and ecosystem_id = _eco;
-      update public.profiles set reseller_id = _new_parent
-       where id = _child.id and ecosystem_id = _eco;
-
-      _moved := _moved || jsonb_build_object(
-        'child_id', _child.id, 'child_name', _child.full_name,
-        'previous_parent_id', _user_id, 'new_parent_id', _new_parent,
-        'new_parent_name', (select full_name from public.profiles where id = _new_parent));
-    end loop;
-
-    select count(*) into _remaining
-      from public.ecosystem_memberships m
-     where m.ecosystem_id = _eco and m.role = 'subreseller'
-       and m.membership_state = 'active' and m.reseller_id = _user_id;
-    if _remaining > 0 then
-      raise exception 'This reseller still owns % subreseller(s)', _remaining;
+    if _req.requested_by is not null then
+      perform public.notify_member(
+        _req.requested_by, _req.ecosystem_id, 'subscription',
+        'Action needed: your payment was marked invalid',
+        'The payment ' || coalesce(_req.payment_reference,'') || ' for the '
+          || coalesce(_req.plan_name,'selected') || ' plan was marked invalid by the platform owner. '
+          || 'Reason: ' || _reason_txt || '. Your subscription benefits are on hold until this is resolved.',
+        '/admin/go-live');
     end if;
-  end if;
-
-  if _new_role = 'subreseller' then
-    if _parent_reseller_id is null then
-      raise exception 'Choose the parent reseller who will own this subreseller';
-    end if;
-    if _parent_reseller_id = _user_id then
-      raise exception 'A member cannot be their own parent reseller';
-    end if;
-    if not exists (select 1 from public.ecosystem_memberships m
-                    where m.user_id = _parent_reseller_id and m.ecosystem_id = _eco
-                      and m.membership_state = 'active' and m.role = 'reseller') then
-      raise exception 'The parent must be a reseller in this shop';
-    end if;
-
-    update public.ecosystem_memberships
-       set role = 'subreseller', reseller_id = _parent_reseller_id,
-           reseller_commission_percent = 0, updated_at = now()
-     where user_id = _user_id and ecosystem_id = _eco;
-    update public.profiles
-       set reseller_id = _parent_reseller_id, reseller_commission_percent = 0
-     where id = _user_id and ecosystem_id = _eco;
-
-    delete from public.user_roles where user_id = _user_id and role = 'reseller' and ecosystem_id = _eco;
-    insert into public.user_roles (user_id, role, ecosystem_id)
-    values (_user_id, 'subreseller', _eco) on conflict do nothing;
-
-  elsif _new_role = 'customer' then
-    _keep_parent := case when _role = 'subreseller' then _prev_parent else null end;
-    update public.ecosystem_memberships
-       set role = 'customer', reseller_id = _keep_parent,
-           reseller_discount_percent = 0, reseller_commission_percent = 0,
-           sale_commission_percent = null, updated_at = now()
-     where user_id = _user_id and ecosystem_id = _eco;
-    update public.profiles
-       set reseller_id = _keep_parent, reseller_discount_percent = 0,
-           reseller_commission_percent = 0, sale_commission_percent = null
-     where id = _user_id and ecosystem_id = _eco;
-
-    delete from public.user_roles
-     where user_id = _user_id and role in ('reseller','subreseller') and ecosystem_id = _eco;
-    insert into public.user_roles (user_id, role, ecosystem_id)
-    values (_user_id, 'customer', _eco) on conflict do nothing;
-
   else
-    update public.ecosystem_memberships
-       set role = 'reseller', reseller_id = null, updated_at = now()
-     where user_id = _user_id and ecosystem_id = _eco;
-    update public.profiles set reseller_id = null
-     where id = _user_id and ecosystem_id = _eco;
+    -- Release only a hold this review created; unrelated freezes stay in place.
+    update public.ecosystems
+       set operations_frozen = false, frozen_reason = null
+     where id = _req.ecosystem_id
+       and coalesce(frozen_reason,'') like 'Payment under review%';
 
-    delete from public.user_roles where user_id = _user_id and role = 'subreseller' and ecosystem_id = _eco;
-    insert into public.user_roles (user_id, role, ecosystem_id)
-    values (_user_id, 'reseller', _eco) on conflict do nothing;
+    if _req.requested_by is not null then
+      perform public.notify_member(
+        _req.requested_by, _req.ecosystem_id, 'subscription',
+        'Your payment has been verified',
+        'The payment ' || coalesce(_req.payment_reference,'') || ' for the '
+          || coalesce(_req.plan_name,'selected') || ' plan is verified. '
+          || 'Your subscription is fully active.',
+        '/admin');
+    end if;
   end if;
 
-  select full_name into _actor_name from public.profiles where id = auth.uid();
   insert into public.audit_logs (ecosystem_id, actor_id, actor_name, action, target, metadata)
-  values (_eco, auth.uid(), coalesce(_actor_name, 'Admin'),
-          case when _new_role = 'customer' and _role = 'reseller' then 'Restructured reseller to customer'
-               when _new_role = 'customer' then 'Restructured subreseller to customer'
-               when _new_role = 'reseller' then 'Restructured subreseller to reseller'
-               else 'Restructured reseller to subreseller' end,
-          coalesce(_target, ''),
-          jsonb_build_object(
-            'user_id', _user_id,
-            'shop_id', _eco,
-            'previous_role', _role,
-            'new_role', _new_role,
-            'previous_parent_id', _prev_parent,
-            'previous_parent_name', (select full_name from public.profiles where id = _prev_parent),
-            'new_parent_id', case when _new_role = 'subreseller' then _parent_reseller_id
-                                  when _new_role = 'customer' then _keep_parent else null end,
-            'new_parent_name', (select full_name from public.profiles
-                                 where id = case when _new_role = 'subreseller' then _parent_reseller_id
-                                                 when _new_role = 'customer' then _keep_parent end),
-            'reassigned_children', _moved,
-            'reason', _reason_clean));
+  values (_req.ecosystem_id, _actor, coalesce(_name,'Platform owner'),
+          case when _decision = 'invalid'
+               then 'Marked automatic payment invalid'
+               else 'Verified automatic payment' end,
+          coalesce(_eco.name,'Shop'),
+          jsonb_build_object('request_id', _req.id, 'plan', _req.plan_name,
+                             'reference', _req.payment_reference,
+                             'months', _req.months_purchased,
+                             'amount_paid', _req.amount_paid,
+                             'previous_state', _req.super_review_state,
+                             'new_state', _decision,
+                             'reason', _reason_txt,
+                             'entitlement_hold', (_decision = 'invalid')));
 
-  return jsonb_build_object(
-    'user_id', _user_id, 'shop_id', _eco, 'previous_role', _role, 'new_role', _new_role,
-    'new_parent_id', case when _new_role = 'subreseller' then _parent_reseller_id
-                          when _new_role = 'customer' then _keep_parent else null end,
-    'reassigned_children', _moved);
-end $$;
+  return _decision;
+end $function$;
 
-revoke all on function public.member_ecosystem_scope(uuid, uuid) from public, anon;
-grant execute on function public.member_ecosystem_scope(uuid, uuid) to authenticated, service_role;
-revoke all on function public.promote_to_reseller(uuid, integer, uuid) from public, anon;
-grant execute on function public.promote_to_reseller(uuid, integer, uuid) to authenticated, service_role;
-revoke all on function public.promote_to_subreseller(uuid, integer, uuid, uuid) from public, anon;
-grant execute on function public.promote_to_subreseller(uuid, integer, uuid, uuid) to authenticated, service_role;
-revoke all on function public.set_subreseller_parent(uuid, uuid, uuid) from public, anon;
-grant execute on function public.set_subreseller_parent(uuid, uuid, uuid) to authenticated, service_role;
-revoke all on function public.restructure_member_role(uuid, public.app_role, text, uuid, jsonb, uuid) from public, anon;
-grant execute on function public.restructure_member_role(uuid, public.app_role, text, uuid, jsonb, uuid) to authenticated, service_role;
+REVOKE ALL ON FUNCTION public.review_auto_approved_payment(uuid, text, text) FROM public, anon;
+GRANT EXECUTE ON FUNCTION public.review_auto_approved_payment(uuid, text, text) TO authenticated;
+
+-- Platform-owner list of every automatically approved payment.
+CREATE OR REPLACE FUNCTION public.auto_approved_payments(_state text DEFAULT NULL)
+ RETURNS TABLE(
+   id uuid, ecosystem_id uuid, shop_name text, operator_name text,
+   plan_name text, monthly_rate numeric, months_purchased integer,
+   amount_due numeric, amount_paid numeric,
+   payment_reference text, payer_number text, payment_method_name text,
+   purpose text, submitted_at timestamptz, auto_approved_at timestamptz,
+   auto_reason text, review_state text, reviewed_by_name text,
+   reviewed_at timestamptz, review_reason text, entitlement_hold boolean,
+   operations_frozen boolean, frozen_reason text,
+   listener_provider text, listener_sender text, listener_reference text,
+   listener_amount numeric, listener_posted_at timestamptz)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  select r.id, r.ecosystem_id, e.name, r.requested_by_name,
+         r.plan_name, coalesce(r.monthly_rate, r.plan_price), coalesce(r.months_purchased, 1),
+         r.amount_due, r.amount_paid,
+         r.payment_reference, r.payer_number, r.payment_method_name,
+         r.purpose, r.created_at, r.reviewed_at,
+         r.auto_reason, r.super_review_state, r.super_reviewed_by_name,
+         r.super_reviewed_at, r.super_review_reason, r.entitlement_hold,
+         coalesce(e.operations_frozen, false), e.frozen_reason,
+         coalesce(le.app_label, le.package_name), le.sender_number, le.gcash_reference,
+         le.amount_php, le.posted_at
+    from public.subscription_requests r
+    join public.ecosystems e on e.id = r.ecosystem_id
+    left join public.listener_events le on le.id = r.listener_event_id
+   where public.is_super_admin(auth.uid())
+     and coalesce(r.super_review_state,'not_required') <> 'not_required'
+     and (_state is null or r.super_review_state = _state)
+   order by (r.super_review_state = 'pending') desc, r.reviewed_at desc nulls last;
+$function$;
+
+REVOKE ALL ON FUNCTION public.auto_approved_payments(text) FROM public, anon;
+GRANT EXECUTE ON FUNCTION public.auto_approved_payments(text) TO authenticated;
