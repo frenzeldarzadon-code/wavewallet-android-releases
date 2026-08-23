@@ -81,8 +81,8 @@ BEGIN
   -- 5. Zero-priced plan: no payment, activation through the free path.
   PERFORM set_config('request.jwt.claims', json_build_object('sub', _op)::text, true);
   SELECT * INTO _eco FROM public.create_review_shop('Demo: QA FreeLive', 'zero price test');
-  INSERT INTO public.subscription_plans (name, monthly_price, coin_allocation, active, display_order)
-  VALUES ('QA Free Plan', 0, 0, true, 999) RETURNING id INTO _free;
+  INSERT INTO public.subscription_plans (code, name, monthly_price, coin_allocation, active, display_order)
+  VALUES ('qa_free_plan', 'QA Free Plan', 0, 0, true, 999) RETURNING id INTO _free;
   UPDATE public.ecosystems SET plan_price = 0 WHERE id = _eco.id;
   PERFORM public.activate_free_subscription(_eco.id, _free, 1);
   SELECT * INTO _eco FROM public.ecosystems WHERE id = _eco.id;
