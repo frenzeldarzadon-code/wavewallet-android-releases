@@ -207,3 +207,78 @@ export function subscriptionCountdown(input: {
     detail: `Paid until ${end.toLocaleDateString()}. ${graceText}`,
   };
 }
+
+/**
+ * RENEW / EXTEND / CHANGE PLAN — the exact amount owed.
+ *
+ * The previous screen handed the whole calculation to `subscription_quote`
+ * for every live shop, but that RPC only ever prices ONE month of the new
+ * plan and always subtracts the unused value of the running period. On a
+ * renewal or extension of the SAME plan that produced a phantom
+ * "plan change credit" that wiped out the total (₱150 − ₱150 = ₱0) and
+ * dropped the admin into the free-subscription branch.
+ *
+ * Correct rules, one per intent:
+ *   • renew / extend — configured monthly price × the chosen months. No
+ *     credit: nothing is being given up, the months are simply appended.
+ *   • change         — same duration maths, minus the server's existing
+ *     prorated `unused_value`, and only when the plan really differs from
+ *     the one currently running. The credit can never exceed the amount.
+ */
+export interface SubscriptionChargeQuote {
+  current_plan_id?: string | null;
+  unused_value?: number | string | null;
+  is_first_activation?: boolean | null;
+}
+
+export interface SubscriptionCharge {
+  /** monthly price × months, before any credit. */
+  baseAmount: number;
+  /** Legitimate, explicitly applicable prorated credit (0 when none). */
+  creditApplied: number;
+  /** What must actually be paid. */
+  amountDue: number;
+  /** The selected plan itself is priced at zero by the platform owner. */
+  freePlan: boolean;
+  /** No payment is requested — only when nothing is genuinely owed. */
+  noPaymentRequired: boolean;
+}
+
+export function subscriptionCharge(input: {
+  monthlyPrice: number | string | null | undefined;
+  months: number;
+  /** "renew" | "extend" | "change"; a first activation is priced like a renew. */
+  intent?: string | null;
+  selectedPlanId?: string | null;
+  quote?: SubscriptionChargeQuote | null;
+}): SubscriptionCharge {
+  const months = normalizeMonths(input.months);
+  const baseAmount = planTotalPhp(input.monthlyPrice, months);
+  const freePlan = isFreePrice(input.monthlyPrice);
+
+  const q = input.quote ?? null;
+  const changingPlan =
+    input.intent === "change" &&
+    Boolean(q) &&
+    q?.is_first_activation !== true &&
+    Boolean(q?.current_plan_id) &&
+    Boolean(input.selectedPlanId) &&
+    q?.current_plan_id !== input.selectedPlanId;
+
+  const rawCredit = Number(q?.unused_value ?? 0);
+  const creditApplied =
+    changingPlan && Number.isFinite(rawCredit) && rawCredit > 0
+      ? round2(Math.min(rawCredit, baseAmount))
+      : 0;
+
+  const amountDue = round2(Math.max(0, baseAmount - creditApplied));
+  return {
+    baseAmount,
+    creditApplied,
+    amountDue,
+    freePlan,
+    // Genuinely nothing to pay: a zero-priced plan, or a real credit that
+    // fully covers a correctly calculated total.
+    noPaymentRequired: amountDue <= 0 && (freePlan || creditApplied >= baseAmount),
+  };
+}

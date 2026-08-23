@@ -7,6 +7,7 @@ import {
   normalizeMonths,
   planTotalPhp,
   subscriptionCountdown,
+  subscriptionCharge,
 } from "./subscription-duration";
 import { isFreeSubscription, isSubscriptionOk } from "./auth";
 
@@ -184,5 +185,105 @@ describe("isSubscriptionOk with a zero price", () => {
   it("does not treat a Demo/review shop as free", () => {
     const demo = { ...(base as object), is_review: true } as never;
     expect(isFreeSubscription(demo)).toBe(false);
+  });
+});
+
+describe("subscriptionCharge — renew / extend / change", () => {
+  const plan = "plan-standard";
+  const other = "plan-pro";
+
+  it("renew of ₱150/month for 6 months is ₱900 with no invented credit", () => {
+    const c = subscriptionCharge({
+      monthlyPrice: 150,
+      months: 6,
+      intent: "renew",
+      selectedPlanId: plan,
+      quote: { current_plan_id: plan, unused_value: 150, is_first_activation: false },
+    });
+    expect(c.baseAmount).toBe(900);
+    expect(c.creditApplied).toBe(0);
+    expect(c.amountDue).toBe(900);
+    expect(c.noPaymentRequired).toBe(false);
+  });
+
+  it("extend never applies a plan-change credit", () => {
+    const c = subscriptionCharge({
+      monthlyPrice: 150,
+      months: 6,
+      intent: "extend",
+      selectedPlanId: plan,
+      quote: { current_plan_id: plan, unused_value: 150, is_first_activation: false },
+    });
+    expect(c.amountDue).toBe(900);
+    expect(c.noPaymentRequired).toBe(false);
+  });
+
+  it("change plan subtracts the real prorated credit: ₱900 − ₱150 = ₱750", () => {
+    const c = subscriptionCharge({
+      monthlyPrice: 150,
+      months: 6,
+      intent: "change",
+      selectedPlanId: other,
+      quote: { current_plan_id: plan, unused_value: 150, is_first_activation: false },
+    });
+    expect(c.baseAmount).toBe(900);
+    expect(c.creditApplied).toBe(150);
+    expect(c.amountDue).toBe(750);
+    expect(c.noPaymentRequired).toBe(false);
+  });
+
+  it("change to the SAME plan is a renewal — no credit", () => {
+    const c = subscriptionCharge({
+      monthlyPrice: 150,
+      months: 6,
+      intent: "change",
+      selectedPlanId: plan,
+      quote: { current_plan_id: plan, unused_value: 150, is_first_activation: false },
+    });
+    expect(c.creditApplied).toBe(0);
+    expect(c.amountDue).toBe(900);
+  });
+
+  it("zero-priced plan needs no payment", () => {
+    const c = subscriptionCharge({ monthlyPrice: 0, months: 6, intent: "renew", selectedPlanId: plan });
+    expect(c.amountDue).toBe(0);
+    expect(c.freePlan).toBe(true);
+    expect(c.noPaymentRequired).toBe(true);
+  });
+
+  it("a credit that genuinely covers the whole amount needs no payment", () => {
+    const c = subscriptionCharge({
+      monthlyPrice: 150,
+      months: 1,
+      intent: "change",
+      selectedPlanId: other,
+      quote: { current_plan_id: plan, unused_value: 150, is_first_activation: false },
+    });
+    expect(c.amountDue).toBe(0);
+    expect(c.noPaymentRequired).toBe(true);
+  });
+
+  it("a credit can never exceed the amount being purchased", () => {
+    const c = subscriptionCharge({
+      monthlyPrice: 150,
+      months: 1,
+      intent: "change",
+      selectedPlanId: other,
+      quote: { current_plan_id: plan, unused_value: 5000, is_first_activation: false },
+    });
+    expect(c.creditApplied).toBe(150);
+    expect(c.amountDue).toBe(0);
+  });
+
+  it("first activation of a paid plan is never free", () => {
+    const c = subscriptionCharge({
+      monthlyPrice: 150,
+      months: 6,
+      intent: "change",
+      selectedPlanId: plan,
+      quote: { current_plan_id: null, unused_value: 0, is_first_activation: true },
+    });
+    expect(c.amountDue).toBe(900);
+    expect(c.noPaymentRequired).toBe(false);
   });
 });
