@@ -108,7 +108,11 @@ function SuperAutoPayments() {
   const decide = async (row: AutoApprovedPayment, decision: "verified" | "invalid", reason?: string) => {
     setBusy(row.id);
     try {
-      await reviewAutoApprovedPayment({ requestId: row.id, decision, reason });
+      await reviewAutoApprovedPayment({
+        requestId: row.id,
+        decision,
+        ...(reason ? { reason } : {}),
+      });
       await load();
       if (decision === "verified")
         toast.success("Payment verified", { description: `${row.shop_name ?? "Shop"} keeps full access.` });
