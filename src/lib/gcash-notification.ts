@@ -6,10 +6,14 @@
  * re-reads the raw text with this parser so a real payment is never lost just
  * because the phone shipped with an older parser.
  *
+ * v3 adds bank-to-GCash wording (InstaPay / PESONet / "credited to your GCash
+ * account"), reads bank reference numbers, and can carry a bank account number
+ * as the sending account when the payer is not a mobile wallet.
+ *
  * This parser never decides anything financial — it only reads text.
  */
 
-export const GCASH_PARSER_VERSION = "gcash-ph-v2";
+export const GCASH_PARSER_VERSION = "gcash-ph-v3";
 
 export type GcashNotification = {
   incoming: boolean;
@@ -27,6 +31,9 @@ const REJECT = [
   /payment\s+sent/i,
   /cash\s*out/i,
   /has\s+been\s+debited/i,
+  /debited\s+from/i,
+  /your\s+(?:instapay|pesonet|fund)\s+transfer/i,
+  /transfer(?:red)?\s+to\s+(?:account|[A-Z*]{2,})/i,
   /paid\s+php/i,
   /refund/i,
   /bills?\s+payment/i,
@@ -39,16 +46,31 @@ const REJECT = [
 /** Phrases that positively identify an incoming payment. */
 const INCOMING = [
   /you\s+have\s+received\s+money\s+in\s+gcash/i,
-  /you\s+have\s+received\s+php\s*[\d,]+(?:\.\d{1,2})?/i,
-  /received\s+php\s*[\d,]+(?:\.\d{1,2})?\s+from/i,
+  /you\s+(?:have\s+)?received\s+php\s*[\d,]+(?:\.\d{1,2})?/i,
+  /received\s+php\s*[\d,]+(?:\.\d{1,2})?\s+(?:from|via|through)/i,
   /express\s+send/i,
+  // Bank -> GCash (InstaPay / PESONet) credit wording.
+  /credited\s+to\s+your\s+gcash/i,
+  /has\s+been\s+credited/i,
+  /credited\s+with\s+php/i,
+  /(?:instapay|pesonet)\b/i,
+  /(?:bank\s+transfer|fund\s+transfer)\s+(?:received|credit)/i,
 ];
 
-const AMOUNT = /received\s+PHP\s*([\d,]+(?:\.\d{1,2})?)/i;
+/** Amount candidates, most specific first. Balances are never read as amounts. */
+const AMOUNTS = [
+  /(?:received|credited\s+with|credit\s+of)\s*(?:PHP|Php|₱)\s*([\d,]+(?:\.\d{1,2})?)/i,
+  /(?:PHP|₱)\s*([\d,]+(?:\.\d{1,2})?)\s+(?:has\s+been\s+|was\s+)?(?:credited|received)/i,
+  /(?:amount|amt)\s*[:\-]?\s*(?:PHP|₱)\s*([\d,]+(?:\.\d{1,2})?)/i,
+];
 const PH_NUMBER = /(?:^|[^\d])(09\d{9}|639\d{9}|\+639\d{9})(?!\d)/;
-const REFERENCE = /\bref(?:erence)?\.?\s*(?:no\.?|number|#)?\s*[:.\-]?\s*([A-Za-z0-9-]{6,32})/i;
+/** A bank account number when the payer is not a mobile wallet. */
+const ACCOUNT_NUMBER = /(?:^|[^\d])(\d{8,19})(?!\d)/;
+const REFERENCE =
+  /\b(?:ref(?:erence)?|transaction|trace|txn)\.?\s*(?:no\.?|number|id|#)?\s*[:.\-]?\s*([A-Za-z0-9-]{6,32})/i;
 /** Everything between "from" and the message/balance/reference tail. */
-const SENDER_SEGMENT = /\bfrom\s+([\s\S]+?)(?=\s*(?:w\/\s*msg|with\s+msg|your\s+new\s+balance|ref\b|reference\b)|\.?\s*$)/i;
+const SENDER_SEGMENT =
+  /\bfrom\s+([\s\S]+?)(?=\s*(?:w\/\s*msg|with\s+msg|your\s+new\s+balance|new\s+balance|via\b|ref\b|reference\b|transaction\b|trace\b)|\.?\s*$)/i;
 
 export function normalizePhMobile(raw: string | null | undefined): string | null {
   if (!raw) return null;
@@ -80,13 +102,28 @@ export function parseGcashNotification(
   if (REJECT.some((r) => r.test(body))) return empty;
   if (!INCOMING.some((r) => r.test(body))) return empty;
 
-  const amountRaw = AMOUNT.exec(body)?.[1] ?? null;
+  let amountRaw: string | null = null;
+  for (const re of AMOUNTS) {
+    const hit = re.exec(body)?.[1];
+    if (hit) {
+      amountRaw = hit;
+      break;
+    }
+  }
   const amount = amountRaw ? Number(amountRaw.replace(/,/g, "")) : NaN;
+  const reference = REFERENCE.exec(body)?.[1] ?? null;
   const segment = SENDER_SEGMENT.exec(body)?.[1]?.trim() ?? null;
-  const number = (segment ? PH_NUMBER.exec(segment)?.[1] : null) ?? PH_NUMBER.exec(body)?.[1] ?? null;
+  const mobile = (segment ? PH_NUMBER.exec(segment)?.[1] : null) ?? PH_NUMBER.exec(body)?.[1] ?? null;
+  // A bank payer has an account number, not a mobile number. Only the "from"
+  // segment is trusted for this, and never the reference number itself.
+  const account =
+    !mobile && segment
+      ? (ACCOUNT_NUMBER.exec(segment)?.[1] ?? null)
+      : null;
+  const payer = mobile ?? (account && account !== reference ? account : null);
   const name =
     segment
-      ?.replace(number ?? "", "")
+      ?.replace(payer ?? "", "")
       .replace(/\s+/g, " ")
       .trim()
       .replace(/^[,\-.\s]+|[,\-\s]+$/g, "")
@@ -95,8 +132,8 @@ export function parseGcashNotification(
   return {
     incoming: true,
     amountPhp: Number.isFinite(amount) && amount > 0 ? Number(amount.toFixed(2)) : null,
-    senderNumber: number ? normalizePhMobile(number) : null,
+    senderNumber: payer ? normalizePhMobile(payer) : null,
     senderName: name && name.length <= 160 ? name : null,
-    reference: REFERENCE.exec(body)?.[1] ?? null,
+    reference,
   };
 }
