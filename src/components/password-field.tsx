@@ -1,6 +1,5 @@
 /**
- * Password input with a show/hide toggle, plus an optional live requirements
- * checklist. The toggle only reveals what the person typed in this browser —
+ * Password input with a show/hide toggle, plus an optional short hint. The toggle only reveals what the person typed in this browser —
  * a stored password is never read back from anywhere.
  */
 import { Eye, EyeOff } from "lucide-react";
