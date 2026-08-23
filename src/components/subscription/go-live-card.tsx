@@ -431,7 +431,7 @@ export function GoLiveCard({
                   <Input
                     id="gl-number"
                     inputMode="numeric"
-                    placeholder="Account number or 09XXXXXXXXX"
+                    placeholder="Account number or mobile number"
                     aria-invalid={Boolean(errorFor("payerNumber"))}
                     className={errorFor("payerNumber") ? "border-destructive" : undefined}
                     value={payerNumber}
