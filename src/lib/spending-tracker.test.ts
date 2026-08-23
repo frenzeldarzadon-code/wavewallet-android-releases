@@ -135,8 +135,8 @@ describe("Spending Tracker totals", () => {
       [],
     );
     expect(rows).toHaveLength(1);
-    expect(rows[0].amount).toBe(4.5);
-    expect(rows[0].categoryKey).toBe("reseller:a");
+    expect(rows[0]?.amount).toBe(4.5);
+    expect(rows[0]?.categoryKey).toBe("reseller:a");
   });
 });
 
