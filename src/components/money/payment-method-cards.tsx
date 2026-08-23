@@ -69,6 +69,9 @@ export function PaymentMethodCards({
                   {m.label?.trim() ? (
                     <p className="text-xs text-muted-foreground">{m.label.trim()}</p>
                   ) : null}
+                  <span className="mt-0.5 inline-flex rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {paymentMethodScopeLabel(m)}
+                  </span>
                 </div>
               </div>
               <Field label="Payment method" value={m.name} />
