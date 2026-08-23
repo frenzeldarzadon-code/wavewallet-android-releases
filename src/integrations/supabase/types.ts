@@ -5724,6 +5724,7 @@ export type Database = {
           currency: string
           decision_reason: string | null
           ecosystem_id: string
+          entitlement_hold: boolean
           id: string
           listener_event_id: string | null
           monthly_rate: number | null
@@ -5755,6 +5756,11 @@ export type Database = {
           reviewed_by: string | null
           reviewed_by_name: string | null
           status: string
+          super_review_reason: string | null
+          super_review_state: string
+          super_reviewed_at: string | null
+          super_reviewed_by: string | null
+          super_reviewed_by_name: string | null
           updated_at: string
         }
         Insert: {
@@ -5767,6 +5773,7 @@ export type Database = {
           currency?: string
           decision_reason?: string | null
           ecosystem_id: string
+          entitlement_hold?: boolean
           id?: string
           listener_event_id?: string | null
           monthly_rate?: number | null
@@ -5798,6 +5805,11 @@ export type Database = {
           reviewed_by?: string | null
           reviewed_by_name?: string | null
           status?: string
+          super_review_reason?: string | null
+          super_review_state?: string
+          super_reviewed_at?: string | null
+          super_reviewed_by?: string | null
+          super_reviewed_by_name?: string | null
           updated_at?: string
         }
         Update: {
@@ -5810,6 +5822,7 @@ export type Database = {
           currency?: string
           decision_reason?: string | null
           ecosystem_id?: string
+          entitlement_hold?: boolean
           id?: string
           listener_event_id?: string | null
           monthly_rate?: number | null
@@ -5841,6 +5854,11 @@ export type Database = {
           reviewed_by?: string | null
           reviewed_by_name?: string | null
           status?: string
+          super_review_reason?: string | null
+          super_review_state?: string
+          super_reviewed_at?: string | null
+          super_reviewed_by?: string | null
+          super_reviewed_by_name?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -6836,6 +6854,39 @@ export type Database = {
       assign_shop_admin: {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: undefined
+      }
+      auto_approved_payments: {
+        Args: { _state?: string }
+        Returns: {
+          amount_due: number
+          amount_paid: number
+          auto_approved_at: string
+          auto_reason: string
+          ecosystem_id: string
+          entitlement_hold: boolean
+          frozen_reason: string
+          id: string
+          listener_amount: number
+          listener_posted_at: string
+          listener_provider: string
+          listener_reference: string
+          listener_sender: string
+          monthly_rate: number
+          months_purchased: number
+          operations_frozen: boolean
+          operator_name: string
+          payer_number: string
+          payment_method_name: string
+          payment_reference: string
+          plan_name: string
+          purpose: string
+          review_reason: string
+          review_state: string
+          reviewed_at: string
+          reviewed_by_name: string
+          shop_name: string
+          submitted_at: string
+        }[]
       }
       auto_process_membership_application: {
         Args: { _application_id: string }
@@ -9045,6 +9096,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      review_auto_approved_payment: {
+        Args: { _decision: string; _reason?: string; _request_id: string }
+        Returns: string
+      }
       review_cash_in: {
         Args: { _action: string; _id: string; _reason?: string }
         Returns: {
@@ -9197,6 +9252,7 @@ export type Database = {
           currency: string
           decision_reason: string | null
           ecosystem_id: string
+          entitlement_hold: boolean
           id: string
           listener_event_id: string | null
           monthly_rate: number | null
@@ -9228,6 +9284,11 @@ export type Database = {
           reviewed_by: string | null
           reviewed_by_name: string | null
           status: string
+          super_review_reason: string | null
+          super_review_state: string
+          super_reviewed_at: string | null
+          super_reviewed_by: string | null
+          super_reviewed_by_name: string | null
           updated_at: string
         }
         SetofOptions: {
@@ -10476,6 +10537,7 @@ export type Database = {
           currency: string
           decision_reason: string | null
           ecosystem_id: string
+          entitlement_hold: boolean
           id: string
           listener_event_id: string | null
           monthly_rate: number | null
@@ -10507,6 +10569,11 @@ export type Database = {
           reviewed_by: string | null
           reviewed_by_name: string | null
           status: string
+          super_review_reason: string | null
+          super_review_state: string
+          super_reviewed_at: string | null
+          super_reviewed_by: string | null
+          super_reviewed_by_name: string | null
           updated_at: string
         }
         SetofOptions: {
@@ -10537,6 +10604,7 @@ export type Database = {
           currency: string
           decision_reason: string | null
           ecosystem_id: string
+          entitlement_hold: boolean
           id: string
           listener_event_id: string | null
           monthly_rate: number | null
@@ -10568,6 +10636,11 @@ export type Database = {
           reviewed_by: string | null
           reviewed_by_name: string | null
           status: string
+          super_review_reason: string | null
+          super_review_state: string
+          super_reviewed_at: string | null
+          super_reviewed_by: string | null
+          super_reviewed_by_name: string | null
           updated_at: string
         }
         SetofOptions: {
