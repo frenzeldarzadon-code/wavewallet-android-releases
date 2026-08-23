@@ -23,7 +23,6 @@ import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StartShopRouteImport } from './routes/start-shop'
 import { Route as SuperRouteImport } from './routes/super'
-import { Route as TmpGolivePreviewRouteImport } from './routes/tmp-golive-preview'
 import { Route as UniverseRouteImport } from './routes/universe'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
@@ -174,11 +173,6 @@ const StartShopRoute = StartShopRouteImport.update({
 const SuperRoute = SuperRouteImport.update({
   id: '/super',
   path: '/super',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TmpGolivePreviewRoute = TmpGolivePreviewRouteImport.update({
-  id: '/tmp-golive-preview',
-  path: '/tmp-golive-preview',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UniverseRoute = UniverseRouteImport.update({
@@ -603,7 +597,6 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/start-shop': typeof StartShopRoute
   '/super': typeof SuperRouteWithChildren
-  '/tmp-golive-preview': typeof TmpGolivePreviewRoute
   '/universe': typeof UniverseRouteWithChildren
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
@@ -697,7 +690,6 @@ export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/start-shop': typeof StartShopRoute
-  '/tmp-golive-preview': typeof TmpGolivePreviewRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -795,7 +787,6 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/start-shop': typeof StartShopRoute
   '/super': typeof SuperRouteWithChildren
-  '/tmp-golive-preview': typeof TmpGolivePreviewRoute
   '/universe': typeof UniverseRouteWithChildren
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
@@ -895,7 +886,6 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/start-shop'
     | '/super'
-    | '/tmp-golive-preview'
     | '/universe'
     | '/admin/applications'
     | '/admin/credits'
@@ -989,7 +979,6 @@ export interface FileRouteTypes {
     | '/setup'
     | '/sitemap.xml'
     | '/start-shop'
-    | '/tmp-golive-preview'
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
@@ -1086,7 +1075,6 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/start-shop'
     | '/super'
-    | '/tmp-golive-preview'
     | '/universe'
     | '/admin/applications'
     | '/admin/credits'
@@ -1185,7 +1173,6 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StartShopRoute: typeof StartShopRoute
   SuperRoute: typeof SuperRouteWithChildren
-  TmpGolivePreviewRoute: typeof TmpGolivePreviewRoute
   UniverseRoute: typeof UniverseRouteWithChildren
   JoinSlugRoute: typeof JoinSlugRoute
   ShopSlugRoute: typeof ShopSlugRoute
@@ -1292,13 +1279,6 @@ declare module '@tanstack/react-router' {
       path: '/super'
       fullPath: '/super'
       preLoaderRoute: typeof SuperRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tmp-golive-preview': {
-      id: '/tmp-golive-preview'
-      path: '/tmp-golive-preview'
-      fullPath: '/tmp-golive-preview'
-      preLoaderRoute: typeof TmpGolivePreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/universe': {
@@ -2080,7 +2060,6 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StartShopRoute: StartShopRoute,
   SuperRoute: SuperRouteWithChildren,
-  TmpGolivePreviewRoute: TmpGolivePreviewRoute,
   UniverseRoute: UniverseRouteWithChildren,
   JoinSlugRoute: JoinSlugRoute,
   ShopSlugRoute: ShopSlugRoute,
