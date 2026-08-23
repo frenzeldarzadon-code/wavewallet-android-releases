@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  automaticEntries,
   categoryHighlights,
   categoryTotals,
   resolvePeriod,
   summarize,
   timeBuckets,
   validateManualEntry,
+  type AutoRow,
   type SpendingEntry,
 } from "@/lib/spending-tracker";
 
