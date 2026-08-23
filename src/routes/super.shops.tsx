@@ -216,6 +216,8 @@ function SuperShops() {
             {shops.map((s) => {
               const sub = s.subscription;
               const left = daysUntil(sub?.period_end ?? s.review_ends_at);
+              const req = requestByShop[s.id];
+              const note = paymentNote(req);
               return (
                 <Card key={s.id} className="shadow-[var(--shadow-card)]">
                   <CardContent className="px-4">
@@ -227,6 +229,9 @@ function SuperShops() {
                           <StatusBadge tone={subscriptionStateTone(sub?.state)}>
                             {subscriptionStateLabel(sub?.state)}
                           </StatusBadge>
+                          {req?.payment_override ? (
+                            <StatusBadge tone="warning">Payment overridden</StatusBadge>
+                          ) : null}
                         </div>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {planLabel(s.plan_name, s.plan_price)} ·{" "}
@@ -240,6 +245,12 @@ function SuperShops() {
                               : "Not activated"}
                           {left !== null ? ` · ${left} day${left === 1 ? "" : "s"} left` : ""}
                         </p>
+                        {note ? (
+                          <p className="mt-1 text-xs font-medium text-warning">
+                            {note}
+                            {req?.payment_reference ? ` · Ref ${req.payment_reference}` : ""}
+                          </p>
+                        ) : null}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <Button size="sm" onClick={() => setTarget(s)}>
@@ -248,8 +259,14 @@ function SuperShops() {
                         <Button size="sm" variant="outline" onClick={() => setOverride(s)}>
                           Override / discount
                         </Button>
+                        {req && req.status === "pending" ? (
+                          <Button size="sm" variant="outline" onClick={() => setPayTarget(s)}>
+                            Override payment requirement
+                          </Button>
+                        ) : null}
                       </div>
                     </div>
+
                   </CardContent>
                 </Card>
               );
