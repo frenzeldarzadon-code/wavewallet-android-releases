@@ -15,8 +15,8 @@ android {
         // Native release containing the voucher ImageSaver bridge, the update
         // centre and the integrated GCash notification listener (previously a
         // separate app). Must match ANDROID_VERSION_* in src/lib/update-manifest.ts.
-        versionCode = 6
-        versionName = "1.4.0"
+        versionCode = 7
+        versionName = "1.5.0"
 
         // The one and only backend: the published WaveWallet web app.
         buildConfigField("String", "APP_URL", "\"https://wallet.sagadawave.com\"")

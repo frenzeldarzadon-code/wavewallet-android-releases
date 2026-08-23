@@ -9,23 +9,29 @@ package com.wavewallet.app.listener.parser
  *  - When the text looks like an incoming payment but cannot be read
  *    confidently, the result is [Unparsed] — never a guessed amount.
  *
- * v2 adds the "Express Send Notification" wording and reads the GCash
- * reference number as a first-class field so the backend can identify the
- * exact payment even when no Cash In request exists yet.
+ * v2 added the "Express Send Notification" wording and the reference number.
+ * v3 adds bank-to-GCash credits (InstaPay / PESONet / "credited to your GCash
+ * account"), bank reference numbers, and a bank account number as the sending
+ * account when the payer is not a mobile wallet.
  *
  * The parser NEVER decides anything financial; WaveWallet does the matching.
  */
 object GcashParser {
 
     /** Bump when patterns change; sent to the server as `parser_version`. */
-    const val VERSION: String = "gcash-ph-v2"
+    const val VERSION: String = "gcash-ph-v3"
 
     /** Phrases that positively identify an incoming payment. */
     private val INCOMING_MARKERS = listOf(
         Regex("""you\s+have\s+received\s+money\s+in\s+gcash""", RegexOption.IGNORE_CASE),
-        Regex("""you\s+have\s+received\s+php\s*[\d,]+(?:\.\d{1,2})?""", RegexOption.IGNORE_CASE),
-        Regex("""received\s+php\s*[\d,]+(?:\.\d{1,2})?\s+from""", RegexOption.IGNORE_CASE),
+        Regex("""you\s+(?:have\s+)?received\s+php\s*[\d,]+(?:\.\d{1,2})?""", RegexOption.IGNORE_CASE),
+        Regex("""received\s+php\s*[\d,]+(?:\.\d{1,2})?\s+(?:from|via|through)""", RegexOption.IGNORE_CASE),
         Regex("""express\s+send""", RegexOption.IGNORE_CASE),
+        Regex("""credited\s+to\s+your\s+gcash""", RegexOption.IGNORE_CASE),
+        Regex("""has\s+been\s+credited""", RegexOption.IGNORE_CASE),
+        Regex("""credited\s+with\s+php""", RegexOption.IGNORE_CASE),
+        Regex("""(?:instapay|pesonet)\b""", RegexOption.IGNORE_CASE),
+        Regex("""(?:bank\s+transfer|fund\s+transfer)\s+(?:received|credit)""", RegexOption.IGNORE_CASE),
     )
 
     /** Phrases that mean this is NOT an incoming payment. Checked first. */
@@ -37,6 +43,9 @@ object GcashParser {
         Regex("""cash\s*out""", RegexOption.IGNORE_CASE),
         Regex("""cash\s*-?in\s+to""", RegexOption.IGNORE_CASE),
         Regex("""has\s+been\s+debited""", RegexOption.IGNORE_CASE),
+        Regex("""debited\s+from""", RegexOption.IGNORE_CASE),
+        Regex("""your\s+(?:instapay|pesonet|fund)\s+transfer""", RegexOption.IGNORE_CASE),
+        Regex("""transfer(?:red)?\s+to\s+(?:account|[A-Z*]{2,})"""),
         Regex("""paid\s+php""", RegexOption.IGNORE_CASE),
         Regex("""refund""", RegexOption.IGNORE_CASE),
         Regex("""bills?\s+payment""", RegexOption.IGNORE_CASE),
@@ -46,16 +55,22 @@ object GcashParser {
         Regex("""reminder|verify\s+your""", RegexOption.IGNORE_CASE),
     )
 
-    private val AMOUNT = Regex("""received\s+PHP\s*([\d,]+(?:\.\d{1,2})?)""", RegexOption.IGNORE_CASE)
+    /** Amount candidates, most specific first. Balances are never read as amounts. */
+    private val AMOUNTS = listOf(
+        Regex("""(?:received|credited\s+with|credit\s+of)\s*(?:PHP|₱)\s*([\d,]+(?:\.\d{1,2})?)""", RegexOption.IGNORE_CASE),
+        Regex("""(?:PHP|₱)\s*([\d,]+(?:\.\d{1,2})?)\s+(?:has\s+been\s+|was\s+)?(?:credited|received)""", RegexOption.IGNORE_CASE),
+        Regex("""(?:amount|amt)\s*[:\-]?\s*(?:PHP|₱)\s*([\d,]+(?:\.\d{1,2})?)""", RegexOption.IGNORE_CASE),
+    )
     private val PH_NUMBER = Regex("""(?<!\d)(09\d{9}|639\d{9}|\+639\d{9})(?!\d)""")
+    private val ACCOUNT_NUMBER = Regex("""(?<!\d)(\d{8,19})(?!\d)""")
     private val REFERENCE = Regex(
-        """\bref(?:erence)?\.?\s*(?:no\.?|number|#)?\s*[:.\-]?\s*([A-Za-z0-9-]{6,32})""",
+        """\b(?:ref(?:erence)?|transaction|trace|txn)\.?\s*(?:no\.?|number|id|#)?\s*[:.\-]?\s*([A-Za-z0-9-]{6,32})""",
         RegexOption.IGNORE_CASE,
     )
 
     /** Sender text between "from" and the message / balance / reference tail. */
     private val SENDER_SEGMENT = Regex(
-        """\bfrom\s+(.+?)(?:\s*(?:w/\s*msg|with\s+msg|your\s+new\s+balance|ref\b|reference\b)|\.?\s*$)""",
+        """\bfrom\s+(.+?)(?:[.,]?\s*(?:w/\s*msg|with\s+msg|your\s+new\s+balance|new\s+balance|via\b|ref\b|reference\b|transaction\b|trace\b)|\.?\s*$)""",
         RegexOption.IGNORE_CASE,
     )
 
@@ -87,16 +102,24 @@ object GcashParser {
 
         val reference = REFERENCE.find(body)?.groupValues?.get(1)
 
-        val amountRaw = AMOUNT.find(body)?.groupValues?.get(1)
+        val amountRaw = AMOUNTS.firstNotNullOfOrNull { it.find(body)?.groupValues?.get(1) }
             ?: return Result.Unparsed("no amount found in an incoming-payment notification")
         val amount = amountRaw.replace(",", "").toDoubleOrNull()
             ?: return Result.Unparsed("amount \"$amountRaw\" is not a number")
         if (amount <= 0.0) return Result.Unparsed("non-positive amount")
 
         val segment = SENDER_SEGMENT.find(body)?.groupValues?.get(1)?.trim()?.trimEnd('.')
-        val number = segment?.let { PH_NUMBER.find(it)?.value } ?: PH_NUMBER.find(body)?.value
+        val mobile = segment?.let { PH_NUMBER.find(it)?.value } ?: PH_NUMBER.find(body)?.value
+        // A bank payer has an account number, not a mobile number. Only the
+        // "from" segment is trusted, and never the reference number itself.
+        val account = if (mobile == null && segment != null) {
+            ACCOUNT_NUMBER.find(segment)?.value?.takeIf { it != reference }
+        } else {
+            null
+        }
+        val payer = mobile ?: account
         val name = segment
-            ?.let { if (number != null) it.replace(number, "") else it }
+            ?.let { if (payer != null) it.replace(payer, "") else it }
             ?.replace(Regex("""\s+"""), " ")
             ?.trim()
             ?.trim(',', '.', '-', ' ')
@@ -104,7 +127,7 @@ object GcashParser {
 
         return Result.Payment(
             amountPhp = amount,
-            senderNumber = number?.let(::normalizePhMobile),
+            senderNumber = mobile?.let(::normalizePhMobile) ?: account,
             senderName = name,
             reference = reference,
         )
