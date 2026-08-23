@@ -31,3 +31,16 @@ describe("voucher quantity input", () => {
     expect(quantityFromInput("9", 1)).toBe(1);
   });
 });
+
+describe("500-voucher purchase limit", () => {
+  it("accepts 1 through 500", () => {
+    expect(quantityFromInput("1", 500)).toBe(1);
+    expect(quantityFromInput("250", 500)).toBe(250);
+    expect(quantityFromInput("500", 500)).toBe(500);
+  });
+
+  it("rejects 501 by clamping to the 500 limit", () => {
+    expect(quantityFromInput("501", 500)).toBe(500);
+    expect(commitQuantity("501", 500)).toBe(500);
+  });
+});
