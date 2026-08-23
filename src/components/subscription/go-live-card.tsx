@@ -274,6 +274,15 @@ export function GoLiveCard({
   const plan = plans.find((p) => p.id === planId) ?? null;
   const monthCount = normalizeMonths(months);
   const isPlanChange = Boolean(quote && !quote.is_first_activation);
+  // One card, three named actions — all of them submit through the same
+  // existing payment + listener verification flow.
+  const submitLabel = !isLive
+    ? "Subscribe & Go Live"
+    : intent === "change"
+      ? "Review and confirm plan change"
+      : intent === "extend"
+        ? `Extend by ${monthsLabel(normalizeMonths(months))}`
+        : `Renew for ${monthsLabel(normalizeMonths(months))}`;
   // Plans are all billed monthly, so the total is simply the configured
   // monthly price × the duration chosen. Plan CHANGES keep using the server's
   // own prorated quote — no pricing rule is invented in the browser.
@@ -509,7 +518,7 @@ export function GoLiveCard({
           {goLiveControlsVisible(request, isLive) ? (
             <>
 
-              {isLive && currentPlanId ? (
+              {isLive ? (
                 /* A live shop manages the SAME subscription from here: renew
                    it, extend it for longer, or move to another published
                    plan. All three use this one existing payment flow. */
@@ -542,11 +551,15 @@ export function GoLiveCard({
                   <p className="text-xs text-muted-foreground">
                     Current plan:{" "}
                     <strong>
-                      {plans.find((p) => p.id === currentPlanId)?.name ?? "current plan"}
+                      {plans.find((p) => p.id === currentPlanId)?.name ??
+                        plan?.name ??
+                        "not recorded"}
                     </strong>
                     {intent === "change"
                       ? " — pick the plan you want below."
-                      : " — choose how many months below."}
+                      : intent === "extend"
+                        ? " — choose how many extra months to add below."
+                        : " — choose how many months to renew for below."}
                   </p>
                 </div>
               ) : null}
@@ -596,7 +609,13 @@ export function GoLiveCard({
                   (or, for a plan change, the server's own prorated quote). */}
               <div className="space-y-3 rounded-xl border bg-background px-3 py-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="gl-months">How long are you paying for?</Label>
+                  <Label htmlFor="gl-months">
+                    {isLive && intent === "extend"
+                      ? "How many extra months do you want to add?"
+                      : isLive && intent === "renew"
+                        ? "How many months do you want to renew for?"
+                        : "How long are you paying for?"}
+                  </Label>
                   <Select value={String(monthCount)} onValueChange={(v) => setMonths(v)}>
                     <SelectTrigger
                       id="gl-months"
@@ -983,7 +1002,7 @@ export function GoLiveCard({
                 ) : (
                   <Rocket className="mr-1 size-4" />
                 )}
-                {isPlanChange ? "Review and confirm plan change" : "Subscribe & Go Live"}
+                {submitLabel}
               </Button>
 
 
