@@ -1,6 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { FileUp, Trash2, Upload } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { AlertTriangle, CheckCircle2, FileUp, Info, Package, Trash2, Upload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -28,6 +30,8 @@ import {
   fetchProducts,
   fetchSales,
   importVoucherCodes,
+  listPrice,
+
   parseCodeFile,
   parsePastedCodes,
   fetchVoucherBatches,
@@ -92,6 +96,8 @@ function AdminVouchers() {
   const [fileCodes, setFileCodes] = useState<string[] | null>(null);
   const [fileName, setFileName] = useState("");
   const [open, setOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<(ImportResult & { productName: string }) | null>(null);
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
@@ -135,6 +141,9 @@ function AdminVouchers() {
 
   const pasted = useMemo(() => parsePastedCodes(raw), [raw]);
   const pending = fileCodes ?? pasted;
+  const selectableProducts = useMemo(() => products.filter((p) => !p.archived), [products]);
+  const selectedProduct = selectableProducts.find((p) => p.id === productId) ?? null;
+  const noProducts = products.length === 0;
 
   if (!ecosystemDbId) return null;
 
@@ -144,14 +153,16 @@ function AdminVouchers() {
   );
 
   const runImport = async () => {
-    if (!productId || pending.length === 0) return;
+    // Guarded twice on purpose: nothing is ever written without a confirmed product.
+    if (!selectedProduct || pending.length === 0) return;
     setBusy(true);
     try {
-      const res = await importVoucherCodes(productId, pending, fileCodes ? "file" : "paste");
-      setResult({ ...res, productName: products.find((p) => p.id === productId)?.name ?? "" });
+      const res = await importVoucherCodes(selectedProduct.id, pending, fileCodes ? "file" : "paste");
+      setResult({ ...res, productName: selectedProduct.name });
       setRaw("");
       setFileCodes(null);
       setFileName("");
+      setConfirmOpen(false);
       setOpen(false);
       await load();
     } catch (e) {
@@ -160,6 +171,7 @@ function AdminVouchers() {
       setBusy(false);
     }
   };
+
 
   const runDelete = async () => {
     if (!pendingDelete) return;
@@ -194,11 +206,53 @@ function AdminVouchers() {
 
   return (
     <>
+      <PageSection devSlot="vouchers.setup-guide">
+        <Card
+          className={cn(
+            "shadow-[var(--shadow-card)]",
+            noProducts ? "border-warning bg-warning/10" : "border-border",
+          )}
+        >
+          <CardContent className="space-y-2">
+            <p className="flex items-center gap-2 text-sm font-semibold">
+              {noProducts ? (
+                <AlertTriangle className="size-4 text-warning-foreground" />
+              ) : (
+                <Info className="size-4 text-primary" />
+              )}
+              {noProducts
+                ? "Set up your voucher products first"
+                : "How to upload voucher codes"}
+            </p>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Voucher codes always belong to a voucher product. The order is:{" "}
+              <strong>1. Set up your voucher products</strong> →{" "}
+              <strong>2. Select the product here in Code inventory</strong> →{" "}
+              <strong>3. Paste or upload the codes</strong> →{" "}
+              <strong>4. Confirm the product</strong> → codes are imported.
+            </p>
+            {noProducts ? (
+              <>
+                <p className="text-xs font-medium text-warning-foreground">
+                  You have no voucher products yet, so importing codes is disabled. Create at least one
+                  product first — otherwise codes have nowhere to go.
+                </p>
+                <Button size="sm" asChild>
+                  <Link to="/admin/products">
+                    <Package className="size-4" /> Go to voucher products
+                  </Link>
+                </Button>
+              </>
+            ) : null}
+          </CardContent>
+        </Card>
+      </PageSection>
+
       <PageSection devSlot="vouchers.code-inventory"
         title="Code inventory"
         description="Voucher codes are imported manually. They are never generated or synced from any external system."
         action={
-          <Button size="sm" onClick={() => setOpen(true)} disabled={products.length === 0}>
+          <Button size="sm" onClick={() => setOpen(true)} disabled={selectableProducts.length === 0}>
             <Upload className="size-4" /> Import codes
           </Button>
         }
@@ -209,6 +263,7 @@ function AdminVouchers() {
           <StatCard label="Sold" value={String(totals.sold)} tone="negative" />
         </div>
       </PageSection>
+
 
       <PageSection devSlot="vouchers.per-product" title="Per product">
         {products.length === 0 ? (
@@ -430,32 +485,69 @@ function AdminVouchers() {
         </TabsContent>
       </Tabs>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(o) => { if (!busy) setOpen(o); }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Import voucher codes</DialogTitle>
             <DialogDescription>
-              Paste one code per line, or upload a .txt, .csv or .xlsx with one code per row. Duplicates
-              are detected and skipped automatically.
+              Step 1 — pick the voucher product these codes belong to. Step 2 — paste one code per line,
+              or upload a .txt, .csv or .xlsx with one code per row. Duplicates are detected and skipped
+              automatically.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label>Product</Label>
-              <Select value={productId} onValueChange={setProductId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a voucher product" />
-                </SelectTrigger>
-                <SelectContent>
-                  {products
-                    .filter((p) => !p.archived)
-                    .map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+              <Label>Which product are these codes for?</Label>
+              {selectableProducts.length === 0 ? (
+                <EmptyState
+                  title="No active voucher products"
+                  description="Create or unarchive a voucher product before importing codes."
+                />
+              ) : (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {selectableProducts.map((p) => {
+                    const c = counts[p.id];
+                    const active = p.id === productId;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => setProductId(p.id)}
+                        className={cn(
+                          "rounded-xl border p-3 text-left transition-colors",
+                          active
+                            ? "border-primary bg-brand-soft ring-2 ring-primary"
+                            : "border-border bg-card hover:border-primary/50",
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="truncate text-sm font-semibold">{p.name}</p>
+                          {active ? <CheckCircle2 className="size-4 shrink-0 text-primary" /> : null}
+                        </div>
+                        <p className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">
+                          {p.description || "No description"}
+                        </p>
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                          <StatusBadge tone="brand">{peso(listPrice(p))}</StatusBadge>
+                          <StatusBadge tone={c && c.unused > 0 ? "success" : "muted"}>
+                            {(c?.unused ?? 0)} unused
+                          </StatusBadge>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {selectedProduct ? (
+                <p className="rounded-lg bg-brand-soft px-3 py-2 text-xs font-medium text-accent-foreground">
+                  Selected product: {selectedProduct.name}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Click a product card above to choose where these codes go.
+                </p>
+              )}
             </div>
 
             <Tabs defaultValue="paste">
@@ -496,12 +588,47 @@ function AdminVouchers() {
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={() => void runImport()} disabled={busy || !productId || pending.length === 0}>
-              {busy ? "Importing…" : "Import codes"}
+            <Button
+              onClick={() => setConfirmOpen(true)}
+              disabled={busy || !selectedProduct || pending.length === 0}
+            >
+              <Upload className="size-4" /> Import codes
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={confirmOpen} onOpenChange={(o) => { if (!busy) setConfirmOpen(o); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Are you sure you are uploading these codes under “{selectedProduct?.name ?? ""}”?
+            </DialogTitle>
+            <DialogDescription>
+              {pending.length} code{pending.length === 1 ? "" : "s"} will be added to{" "}
+              <strong>{selectedProduct?.name ?? ""}</strong>. Choose No to go back and pick a different
+              product — nothing is imported until you confirm.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              disabled={busy}
+              onClick={() => {
+                setConfirmOpen(false);
+                setProductId("");
+                setOpen(true);
+              }}
+            >
+              No, choose another product
+            </Button>
+            <Button onClick={() => void runImport()} disabled={busy}>
+              {busy ? "Importing…" : `Yes, import under ${selectedProduct?.name ?? ""}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <Dialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
         <DialogContent className="sm:max-w-md">

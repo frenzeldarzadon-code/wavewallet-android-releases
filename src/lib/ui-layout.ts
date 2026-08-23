@@ -242,7 +242,9 @@ const SLOT_SOURCE: SlotSource[] = [
   { name: "super-profile-page.security-centre", label: "Security centre", group: "Super Profile Page", roles: ["super_admin"] },
   { name: "super-profile-page.super-admin-at-a-glance", label: "Super Admin at a glance", group: "Super Profile Page", roles: ["super_admin"] },
   { name: "transactions.transaction-history", label: "Transaction history", group: "Transactions", roles: ["admin"] },
+  { name: "vouchers.setup-guide", label: "Setup guide", group: "Vouchers", roles: ["admin"] },
   { name: "vouchers.code-inventory", label: "Code inventory", group: "Vouchers", roles: ["admin"] },
+
   { name: "vouchers.per-product", label: "Per product", group: "Vouchers", roles: ["admin"] },
   { name: "wallet-center.contact-us-support", label: "Contact us / Support", group: "Wallet Center", roles: ["customer", "reseller", "subreseller", "admin", "super_admin"] },
   { name: "wallet-center.my-wallets", label: "My wallets", group: "Wallet Center", roles: ["customer", "reseller", "subreseller", "admin", "super_admin"] },
