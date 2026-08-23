@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui-kit";
 import { PaymentQrPreview } from "@/components/money/payment-qr";
 import { cn } from "@/lib/utils";
+import { paymentMethodScopeLabel } from "@/lib/payment-method-scope";
 import type { PaymentMethod } from "@/lib/wallet-money";
 
 const ICONS: Record<string, typeof Wallet> = {
