@@ -8,6 +8,8 @@ import {
   planTotalPhp,
   subscriptionCountdown,
   subscriptionCharge,
+  monthsToDays,
+  unusedValuePhp,
 } from "./subscription-duration";
 import { isFreeSubscription, isSubscriptionOk } from "./auth";
 
@@ -284,6 +286,71 @@ describe("subscriptionCharge — renew / extend / change", () => {
       quote: { current_plan_id: null, unused_value: 0, is_first_activation: true },
     });
     expect(c.amountDue).toBe(900);
+    expect(c.noPaymentRequired).toBe(false);
+  });
+});
+
+describe("fixed 30-day subscription month", () => {
+  const base = new Date("2026-01-15T00:00:00Z");
+  const daysBetween = (a: Date, b: Date) => Math.round((b.getTime() - a.getTime()) / DAY);
+
+  it("1/2/3/6/12 months are exactly 30/60/90/180/360 days", () => {
+    expect(monthsToDays(1)).toBe(30);
+    expect(monthsToDays(2)).toBe(60);
+    expect(monthsToDays(3)).toBe(90);
+    expect(monthsToDays(6)).toBe(180);
+    expect(monthsToDays(12)).toBe(360);
+    for (const [m, d] of [[1, 30], [2, 60], [3, 90], [6, 180], [12, 360]] as const) {
+      expect(daysBetween(base, addMonths(base, m))).toBe(d);
+    }
+  });
+
+  it("never uses calendar-month length (Feb and 31-day months are still 30 days)", () => {
+    expect(daysBetween(new Date("2026-02-01T00:00:00Z"), addMonths(new Date("2026-02-01T00:00:00Z"), 1))).toBe(30);
+    expect(daysBetween(new Date("2026-01-31T00:00:00Z"), addMonths(new Date("2026-01-31T00:00:00Z"), 1))).toBe(30);
+  });
+
+  it("coverage of a 6-month Standard purchase is 180 days and ₱900", () => {
+    const p = coveragePeriod(null, 6, base);
+    expect(daysBetween(p.start, p.end)).toBe(180);
+    expect(planTotalPhp(150, 6)).toBe(900);
+  });
+
+  it("a fully unused Standard month credits exactly ₱150 — never ₱155", () => {
+    expect(unusedValuePhp({ monthlyPrice: 150, daysRemaining: 30 })).toBe(150);
+    // Legacy 31-day calendar period: still capped at the fixed 30-day value.
+    expect(unusedValuePhp({ monthlyPrice: 150, daysRemaining: 31 })).toBe(150);
+  });
+
+  it("prorates partial periods against /30, never calendar length", () => {
+    expect(unusedValuePhp({ monthlyPrice: 150, daysRemaining: 15 })).toBe(75);
+    expect(unusedValuePhp({ monthlyPrice: 150, daysRemaining: 10 })).toBe(50);
+    expect(unusedValuePhp({ monthlyPrice: 100, daysRemaining: 31 })).toBe(100);
+    expect(unusedValuePhp({ monthlyPrice: 150, daysRemaining: 0 })).toBe(0);
+  });
+
+  it("multi-month periods may credit more, but never above what was paid", () => {
+    expect(unusedValuePhp({ monthlyPrice: 150, daysRemaining: 180, paidMonths: 6 })).toBe(900);
+    expect(unusedValuePhp({ monthlyPrice: 150, daysRemaining: 200, paidMonths: 6 })).toBe(900);
+    expect(unusedValuePhp({ monthlyPrice: 150, daysRemaining: 45, paidMonths: 6 })).toBe(225);
+  });
+
+  it("a zero-priced plan credits nothing and stays free", () => {
+    expect(unusedValuePhp({ monthlyPrice: 0, daysRemaining: 30 })).toBe(0);
+    expect(subscriptionCharge({ monthlyPrice: 0, months: 6, intent: "renew" }).noPaymentRequired).toBe(true);
+  });
+
+  it("a paid 6-month plan with a legitimate ₱150 credit still owes ₱750", () => {
+    const c = subscriptionCharge({
+      monthlyPrice: 150,
+      months: 6,
+      intent: "change",
+      selectedPlanId: "new-plan",
+      quote: { current_plan_id: "old-plan", unused_value: unusedValuePhp({ monthlyPrice: 150, daysRemaining: 31 }) },
+    });
+    expect(c.baseAmount).toBe(900);
+    expect(c.creditApplied).toBe(150);
+    expect(c.amountDue).toBe(750);
     expect(c.noPaymentRequired).toBe(false);
   });
 });

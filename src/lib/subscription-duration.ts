@@ -53,15 +53,24 @@ export function monthsLabel(months: number): string {
   return m === 1 ? "1 month" : `${m} months`;
 }
 
-/** Adds whole months the same way Postgres `+ interval 'n months'` does. */
-export function addMonths(from: Date, months: number): Date {
-  const d = new Date(from.getTime());
-  const day = d.getDate();
-  d.setMonth(d.getMonth() + normalizeMonths(months));
-  // Postgres clamps 31 Jan + 1 month to 28/29 Feb; JS rolls over — clamp back.
-  if (d.getDate() < day) d.setDate(0);
-  return d;
+/**
+ * FIXED 30-DAY SUBSCRIPTION MONTH.
+ * WaveWallet does not bill on calendar months: 1 month = 30 days, always
+ * (2 = 60, 3 = 90, 6 = 180, 12 = 360). Mirrors `apply_subscription_plan`,
+ * which adds `months × 30 days`.
+ */
+export const DAYS_PER_SUBSCRIPTION_MONTH = 30;
+
+/** Days a duration in subscription months covers — months × 30. */
+export function monthsToDays(months: number): number {
+  return normalizeMonths(months) * DAYS_PER_SUBSCRIPTION_MONTH;
 }
+
+/** Adds subscription months as a fixed number of days (30 per month). */
+export function addMonths(from: Date, months: number): Date {
+  return new Date(from.getTime() + monthsToDays(months) * DAY_MS);
+}
+
 
 /**
  * The period a payment buys. An early renewal never overwrites a still-active
@@ -281,4 +290,27 @@ export function subscriptionCharge(input: {
     // fully covers a correctly calculated total.
     noPaymentRequired: amountDue <= 0 && (freePlan || creditApplied >= baseAmount),
   };
+}
+
+/**
+ * FIXED 30-DAY PRORATION — mirrors `subscription_quote` exactly.
+ *
+ * Daily value is always `monthlyPrice / 30`. Remaining eligible days are
+ * capped at the fixed length of the periods actually paid for
+ * (`paidMonths × 30`), so a legacy 31-day calendar period can never bill 31
+ * days for one month: a fully unused ₱150 month is worth exactly ₱150.
+ */
+export function unusedValuePhp(input: {
+  monthlyPrice: number | string | null | undefined;
+  daysRemaining: number;
+  /** Subscription months paid for on the running period (default 1). */
+  paidMonths?: number;
+}): number {
+  const price = Number(input.monthlyPrice ?? 0);
+  if (!Number.isFinite(price) || price <= 0) return 0;
+  const paidMonths = Math.max(1, Math.floor(Number(input.paidMonths ?? 1)) || 1);
+  const maxDays = paidMonths * DAYS_PER_SUBSCRIPTION_MONTH;
+  const days = Math.min(maxDays, Math.max(0, Math.ceil(Number(input.daysRemaining) || 0)));
+  const daily = Math.round((price / DAYS_PER_SUBSCRIPTION_MONTH) * 10_000) / 10_000;
+  return Math.min(round2(daily * days), round2(price * paidMonths));
 }
