@@ -430,32 +430,69 @@ function AdminVouchers() {
         </TabsContent>
       </Tabs>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(o) => { if (!busy) setOpen(o); }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Import voucher codes</DialogTitle>
             <DialogDescription>
-              Paste one code per line, or upload a .txt, .csv or .xlsx with one code per row. Duplicates
-              are detected and skipped automatically.
+              Step 1 — pick the voucher product these codes belong to. Step 2 — paste one code per line,
+              or upload a .txt, .csv or .xlsx with one code per row. Duplicates are detected and skipped
+              automatically.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label>Product</Label>
-              <Select value={productId} onValueChange={setProductId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a voucher product" />
-                </SelectTrigger>
-                <SelectContent>
-                  {products
-                    .filter((p) => !p.archived)
-                    .map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+              <Label>Which product are these codes for?</Label>
+              {selectableProducts.length === 0 ? (
+                <EmptyState
+                  title="No active voucher products"
+                  description="Create or unarchive a voucher product before importing codes."
+                />
+              ) : (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {selectableProducts.map((p) => {
+                    const c = counts[p.id];
+                    const active = p.id === productId;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => setProductId(p.id)}
+                        className={cn(
+                          "rounded-xl border p-3 text-left transition-colors",
+                          active
+                            ? "border-primary bg-brand-soft ring-2 ring-primary"
+                            : "border-border bg-card hover:border-primary/50",
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="truncate text-sm font-semibold">{p.name}</p>
+                          {active ? <CheckCircle2 className="size-4 shrink-0 text-primary" /> : null}
+                        </div>
+                        <p className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">
+                          {p.description || "No description"}
+                        </p>
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                          <StatusBadge tone="brand">{peso(listPrice(p))}</StatusBadge>
+                          <StatusBadge tone={c && c.unused > 0 ? "success" : "muted"}>
+                            {(c?.unused ?? 0)} unused
+                          </StatusBadge>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {selectedProduct ? (
+                <p className="rounded-lg bg-brand-soft px-3 py-2 text-xs font-medium text-accent-foreground">
+                  Selected product: {selectedProduct.name}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Click a product card above to choose where these codes go.
+                </p>
+              )}
             </div>
 
             <Tabs defaultValue="paste">
@@ -496,12 +533,47 @@ function AdminVouchers() {
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={() => void runImport()} disabled={busy || !productId || pending.length === 0}>
-              {busy ? "Importing…" : "Import codes"}
+            <Button
+              onClick={() => setConfirmOpen(true)}
+              disabled={busy || !selectedProduct || pending.length === 0}
+            >
+              <Upload className="size-4" /> Import codes
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={confirmOpen} onOpenChange={(o) => { if (!busy) setConfirmOpen(o); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Are you sure you are uploading these codes under “{selectedProduct?.name ?? ""}”?
+            </DialogTitle>
+            <DialogDescription>
+              {pending.length} code{pending.length === 1 ? "" : "s"} will be added to{" "}
+              <strong>{selectedProduct?.name ?? ""}</strong>. Choose No to go back and pick a different
+              product — nothing is imported until you confirm.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              disabled={busy}
+              onClick={() => {
+                setConfirmOpen(false);
+                setProductId("");
+                setOpen(true);
+              }}
+            >
+              No, choose another product
+            </Button>
+            <Button onClick={() => void runImport()} disabled={busy}>
+              {busy ? "Importing…" : `Yes, import under ${selectedProduct?.name ?? ""}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <Dialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
         <DialogContent className="sm:max-w-md">
