@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 /** Physical size of one printed voucher. Never scaled. */
 export const VOUCHER_PRINT_WIDTH_IN = 2;
-export const VOUCHER_PRINT_HEIGHT_IN = 2;
+export const VOUCHER_PRINT_HEIGHT_IN = 1.5;
 
 export type VoucherTemplateId =
   | "classic"

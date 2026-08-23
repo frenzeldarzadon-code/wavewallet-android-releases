@@ -43,7 +43,7 @@ export const Route = createFileRoute("/print/vouchers/$saleId")({
   component: PrintVouchersPage,
 });
 
-/** Keeps even very long codes on one or two readable lines inside 2in x 2in. */
+/** Keeps even very long codes on one or two readable lines inside 2in x 1.5in. */
 function codeClass(code: string) {
   if (code.length > 16) return "vp-code vp-code-xs";
   if (code.length > 10) return "vp-code vp-code-long";
@@ -172,7 +172,7 @@ function PrintVouchersPage() {
               For accurate voucher size, print at 100% / Actual Size. Do not use Fit to Page.
             </p>
             <p className="text-[11px] text-muted-foreground">
-              Each card prints at exactly 2in × 2in. Vouchers are arranged several per sheet and
+              Each card prints at exactly 2in × 1.5in. Vouchers are arranged several per sheet and
               continue onto more pages automatically. Template choice changes the design only —
               never the voucher data.
             </p>
