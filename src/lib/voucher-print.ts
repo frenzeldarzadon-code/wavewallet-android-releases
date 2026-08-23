@@ -131,3 +131,18 @@ export async function fetchPrintableSale(saleId: string): Promise<PrintableVouch
     codes: (codes ?? []).map((c) => c.code),
   };
 }
+
+/** Templates whose artwork is a photographic/nature background layer. */
+const natureTemplateIds = new Set<VoucherTemplateId>([
+  "mist",
+  "terraces",
+  "pines",
+  "falls",
+  "cave",
+  "sunrise",
+]);
+
+/** Class list for one voucher card. Presentation only. */
+export function voucherTemplateClass(id: VoucherTemplateId) {
+  return `vp-voucher vp-t-${id}${natureTemplateIds.has(id) ? " vp-nature" : ""}`;
+}
