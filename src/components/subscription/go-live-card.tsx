@@ -72,19 +72,34 @@ type Gcash = Awaited<ReturnType<typeof fetchPlatformGcash>>;
 const PANEL_NOTE =
   "These details were read from your screenshot. Check they match your receipt before submitting.";
 
+/**
+ * What a LIVE shop wants to do with the same existing payment flow:
+ *   renew  — pay the current plan again (period is appended, never replaced)
+ *   extend — the same, with a longer duration chosen up-front
+ *   change — move to another plan the platform owner has published
+ * All three end in `submit_go_live_payment` / `activate_free_subscription`.
+ */
+export type SubscriptionIntent = "renew" | "extend" | "change";
+
 export function GoLiveCard({
   ecosystemId,
   shopName,
   isLive,
   onLive,
+  initialIntent = "renew",
 }: {
   ecosystemId: string;
   shopName?: string | null;
   /** The shop's own persisted Demo/Live state — the single source of truth. */
   isLive?: boolean;
   onLive?: () => void;
+  initialIntent?: SubscriptionIntent;
 }) {
+  const [intent, setIntent] = useState<SubscriptionIntent>(initialIntent);
+  /** The plan this shop is on right now, from its own subscription record. */
+  const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+
   const [gcash, setGcash] = useState<Gcash>(null);
   // Every ACTIVE platform-wide receiving account the platform owner published.
   // Nothing here is invented: the list is exactly what is configured.
