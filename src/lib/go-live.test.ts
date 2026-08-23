@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { isLegacyShop, isNewGenerationShop, normalizePhMobile, validateGoLive } from "@/lib/go-live";
+import {
+  isLegacyShop,
+  isNewGenerationShop,
+  normalizePhMobile,
+  normalizeSenderIdentifier,
+  validateGoLive,
+} from "@/lib/go-live";
 
 describe("shop kind", () => {
   it("separates New Generation from Legacy", () => {
@@ -24,9 +30,19 @@ describe("normalizePhMobile", () => {
 
 describe("validateGoLive", () => {
   it("requires a valid sending number and a reference", () => {
-    expect(validateGoLive({ payerNumber: "123", reference: "9044057598177" })).toMatch(/GCash number/);
+    expect(validateGoLive({ payerNumber: "12", reference: "9044057598177" })).toMatch(
+      /account number or mobile number/i,
+    );
     expect(validateGoLive({ payerNumber: "09171234567", reference: "12" })).toMatch(/reference/);
     expect(validateGoLive({ payerNumber: "09171234567", reference: "9044057598177" })).toBeNull();
+  });
+  it("accepts any provider sender identifier, not just 09 numbers", () => {
+    // MariBank / bank account number
+    expect(validateGoLive({ payerNumber: "15976553427", reference: "9044057598177" })).toBeNull();
+    // GCash mobile number
+    expect(validateGoLive({ payerNumber: "09541230072", reference: "9044057598177" })).toBeNull();
+    // Alphanumeric wallet/bank identifier
+    expect(validateGoLive({ payerNumber: "ACCT-9931-XY", reference: "9044057598177" })).toBeNull();
   });
   it("requires a payment screenshot when one is expected", () => {
     expect(
@@ -35,5 +51,17 @@ describe("validateGoLive", () => {
     expect(
       validateGoLive({ payerNumber: "09171234567", reference: "9044057598177", proofPath: "u/1.jpg" }),
     ).toBeNull();
+  });
+});
+
+describe("normalizeSenderIdentifier", () => {
+  it("keeps PH mobiles normalised and accepts bank account numbers", () => {
+    expect(normalizeSenderIdentifier("09541230072")).toBe("639541230072");
+    expect(normalizeSenderIdentifier("15976553427")).toBe("15976553427");
+    expect(normalizeSenderIdentifier("ACCT-9931-XY")).toBe("acct9931xy");
+  });
+  it("still rejects empty or too-short values", () => {
+    expect(normalizeSenderIdentifier("")).toBeNull();
+    expect(normalizeSenderIdentifier("12")).toBeNull();
   });
 });

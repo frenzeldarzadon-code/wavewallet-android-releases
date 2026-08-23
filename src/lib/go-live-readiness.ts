@@ -51,6 +51,17 @@ export function normalizeSenderNumber(input: string): string | null {
   return null;
 }
 
+/**
+ * Provider-neutral sender identity — a PH mobile number when it looks like
+ * one, otherwise any bank/e-wallet account identifier of 4+ characters.
+ */
+export function normalizeSenderIdentifier(input: string): string | null {
+  const mobile = normalizeSenderNumber(input);
+  if (mobile) return mobile;
+  const key = (input || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  return key.length >= 4 ? key : null;
+}
+
 /** Per-field messages, shown in red under the field itself. */
 export function goLiveFieldErrors(
   input: Pick<GoLiveReadinessInput, "planId" | "months" | "payerNumber" | "reference" | "proofPath">,
@@ -60,9 +71,10 @@ export function goLiveFieldErrors(
   if (!Number.isFinite(input.months) || input.months < 1 || input.months > 24)
     errors.months = "Enter how many months you paid for, between 1 and 24.";
   if (!input.payerNumber.trim())
-    errors.payerNumber = "Enter the GCash number you sent the payment from.";
-  else if (!normalizeSenderNumber(input.payerNumber))
-    errors.payerNumber = "That is not a valid GCash mobile number. Use the 09XXXXXXXXX format.";
+    errors.payerNumber = "Enter the account number or mobile number you sent the payment from.";
+  else if (!normalizeSenderIdentifier(input.payerNumber))
+    errors.payerNumber =
+      "Enter the full account number or mobile number you sent the payment from, exactly as printed on your receipt.";
   const ref = (input.reference || "").replace(/\s/g, "");
   if (!ref) errors.reference = "Enter the reference number printed on your GCash receipt.";
   else if (ref.length < 6)
@@ -121,7 +133,7 @@ export function goLiveChecklist(input: GoLiveReadinessInput): GoLiveItem[] {
   if (fields.payerNumber)
     items.push({
       id: "payerNumber",
-      label: "GCash number you paid from",
+      label: "Account number or mobile number you paid from",
       how: fields.payerNumber,
       fieldId: "gl-number",
     });
@@ -171,7 +183,7 @@ export function mapGoLiveError(message: string): { field?: GoLiveField; message:
   if (m.includes("09xxxxxxxxx") || m.includes("paying from"))
     return {
       field: "payerNumber",
-      message: "Enter the GCash number you sent the payment from, in the 09XXXXXXXXX format.",
+      message: "Enter the account number or mobile number you sent the payment from.",
     };
   if (m.includes("months must be"))
     return { field: "months", message: "Enter how many months you paid for, between 1 and 24." };

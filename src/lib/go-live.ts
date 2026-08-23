@@ -42,13 +42,25 @@ export function normalizePhMobile(input: string): string | null {
   return null;
 }
 
+/**
+ * Provider-neutral sender identity: a GCash mobile number, a bank account
+ * number (e.g. MariBank 15976553427) or any other wallet/bank identifier.
+ * No 09 prefix and no phone-number shape is required.
+ */
+export function normalizeSenderIdentifier(input: string): string | null {
+  const mobile = normalizePhMobile(input);
+  if (mobile) return mobile;
+  const key = (input || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  return key.length >= 4 ? key : null;
+}
+
 export function validateGoLive(input: {
   payerNumber: string;
   reference: string;
   proofPath?: string | null;
 }): string | null {
-  if (!normalizePhMobile(input.payerNumber))
-    return "Enter the GCash number you paid from (09XXXXXXXXX).";
+  if (!normalizeSenderIdentifier(input.payerNumber))
+    return "Enter the account number or mobile number you paid from.";
   const ref = (input.reference || "").replace(/\s/g, "");
   if (ref.length < 6) return "Enter the GCash reference number from your receipt.";
   if (input.proofPath !== undefined && !input.proofPath?.trim())
