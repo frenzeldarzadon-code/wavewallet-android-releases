@@ -605,3 +605,82 @@ function Row({ label, value, strong }: { label: string; value: string; strong?: 
     </div>
   );
 }
+
+/**
+ * Payment-requirement override.
+ *
+ * Reusable for any shop whose payment cannot be verified (bank transfer with
+ * no notification, unreadable receipt, final-test shop). The override
+ * activates the plan the operator actually requested and is audit-logged with
+ * the reason the platform owner gives here.
+ */
+function PaymentOverrideDialog({
+  shop,
+  request,
+  onClose,
+  onDone,
+}: {
+  shop: SubscriptionShop | null;
+  request: PendingPaymentShop | undefined;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setReason("");
+  }, [shop?.id]);
+
+  const submit = async () => {
+    if (!shop) return;
+    setBusy(true);
+    try {
+      await overrideSubscriptionPayment(shop.id, reason);
+      toast.success(`${shop.name} activated — payment requirement overridden.`);
+      onDone();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not override the payment");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open={Boolean(shop)} onOpenChange={(o) => (!o ? onClose() : undefined)}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Override payment requirement</DialogTitle>
+          <DialogDescription>
+            Activates {shop?.name} on the plan it requested
+            {request?.plan_name ? ` (${request.plan_name})` : ""} without a verified payment. The
+            override, your name and this reason are recorded permanently.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-1.5">
+          <Label htmlFor="payoverride">Reason (required)</Label>
+          <Textarea
+            id="payoverride"
+            rows={3}
+            value={reason}
+            placeholder="Why can this payment not be verified normally?"
+            onChange={(e) => setReason(e.target.value)}
+          />
+          {request?.payment_reference ? (
+            <p className="text-xs text-muted-foreground">
+              Submitted reference: {request.payment_reference}
+            </p>
+          ) : null}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button disabled={busy || reason.trim().length === 0} onClick={() => void submit()}>
+            {busy ? "Overriding…" : "Override and activate"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
