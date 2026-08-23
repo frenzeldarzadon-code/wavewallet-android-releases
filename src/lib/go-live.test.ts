@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  GO_LIVE_POLL_MS,
+  goLivePollIntervalMs,
   isLegacyShop,
   isNewGenerationShop,
   normalizePhMobile,
@@ -63,5 +65,17 @@ describe("normalizeSenderIdentifier", () => {
   it("still rejects empty or too-short values", () => {
     expect(normalizeSenderIdentifier("")).toBeNull();
     expect(normalizeSenderIdentifier("12")).toBeNull();
+  });
+});
+
+describe("goLivePollIntervalMs", () => {
+  const req = (status: string) => ({ status }) as never;
+  it("watches a pending request so the live transition needs no manual refresh", () => {
+    expect(goLivePollIntervalMs(req("pending"))).toBe(GO_LIVE_POLL_MS);
+  });
+  it("stops once the request is decided", () => {
+    expect(goLivePollIntervalMs(req("approved"))).toBe(0);
+    expect(goLivePollIntervalMs(req("rejected"))).toBe(0);
+    expect(goLivePollIntervalMs(null)).toBe(0);
   });
 });
