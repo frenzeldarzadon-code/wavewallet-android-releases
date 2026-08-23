@@ -502,7 +502,70 @@ export function GoLiveCard({
                     <Loader2 className="size-3.5 animate-spin" /> Reading your receipt…
                   </p>
                 ) : null}
-                {receiptNote ? (
+                {extract ? (
+                  <div
+                    id="gl-evidence"
+                    className={`space-y-2 rounded-xl border px-3 py-2.5 ${
+                      evidence.sufficient ? "border-success/40 bg-success/5" : "border-warning/50 bg-warning/5"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold">Payment details detected from screenshot</p>
+                    <dl className="space-y-1 text-xs">
+                      {[
+                        ["Provider", extract.providerName],
+                        ["Reference / transaction no.", extract.reference],
+                        ["Amount", extract.amountPhp === null ? null : peso(extract.amountPhp)],
+                        ["Fee", extract.feePhp === null || extract.feePhp === undefined ? null : peso(extract.feePhp)],
+                        ["Paid from", extract.senderNumber ?? extract.senderAccountMasked ?? extract.senderName],
+                        [
+                          "Paid to",
+                          extract.receivingNumber ?? extract.receivingAccountMasked ?? extract.receivingName,
+                        ],
+                        ["Method", extract.transferMethod],
+                        ["Status", extract.statusText],
+                        ["Date / time", extract.paidAt],
+                      ].map(([label, value]) => (
+                        <div key={label as string} className="flex justify-between gap-3">
+                          <dt className="text-muted-foreground">{label}</dt>
+                          <dd className={value ? "font-medium" : "text-muted-foreground"}>
+                            {(value as string) || "not detected"}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <p className="text-xs leading-relaxed text-muted-foreground">{receiptNote ?? evidence.message}</p>
+                    {extract.rawText ? (
+                      <>
+                        <button
+                          type="button"
+                          className="text-xs font-semibold underline underline-offset-2"
+                          onClick={() => setShowRaw((v) => !v)}
+                        >
+                          {showRaw ? "Hide all text read" : "Show all text read from the screenshot"}
+                        </button>
+                        {showRaw ? (
+                          <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-md bg-muted/60 p-2 text-[11px] leading-relaxed">
+                            {extract.rawText}
+                          </pre>
+                        ) : null}
+                      </>
+                    ) : null}
+                    {thinEvidence ? (
+                      <label className="flex items-start gap-2 text-xs leading-relaxed">
+                        <input
+                          type="checkbox"
+                          className="mt-0.5"
+                          checked={acceptManual}
+                          onChange={(e) => setAcceptManual(e.target.checked)}
+                        />
+                        <span>
+                          Submit anyway — I understand this payment cannot be activated automatically
+                          and will wait for a person to review it.
+                        </span>
+                      </label>
+                    ) : null}
+                  </div>
+                ) : receiptNote ? (
                   <p className="text-xs text-muted-foreground">{receiptNote}</p>
                 ) : null}
                 {errorFor("proof") ? (
