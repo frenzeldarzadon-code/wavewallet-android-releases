@@ -53,8 +53,8 @@ export const voucherPrintCss = `
 }
 .vp-voucher p { margin: 0; }
 .vp-head, .vp-body, .vp-meta { position: relative; z-index: 1; min-width: 0; }
-.vp-head { min-height: 0; flex: 1 1 auto; overflow: hidden; }
-.vp-body { min-height: 0; flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center; gap: 0.01in; }
+.vp-head { min-height: 0; flex: 0 0 auto; overflow: hidden; }
+.vp-body { min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; gap: 0.01in; }
 .vp-shop { font-size: 8pt; font-weight: 800; letter-spacing: .02em; text-transform: uppercase; line-height: 1.08; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vp-brand { font-size: 5pt; letter-spacing: .16em; text-transform: uppercase; opacity: .6; line-height: 1.1; }
 .vp-product {
@@ -214,6 +214,10 @@ export const voucherPrintCss = `
 .vp-t-mono .vp-shop { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em; }
 .vp-t-mono .vp-body { border-top: 0.015in solid #111827; border-bottom: 0.015in solid #111827; padding: .02in 0; }
 .vp-t-mono .vp-meta { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+/* Long codes must never inherit a template's wide tracking. */
+.vp-voucher .vp-code-long { letter-spacing: .01em; }
+.vp-voucher .vp-code-xs { letter-spacing: 0; }
 
 @page { margin: 0.25in; }
 
