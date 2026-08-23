@@ -122,7 +122,6 @@ export function GoLiveCard({
   const handlePickProof = async (file: File | null) => {
     if (proofPath) void removeCashInProof(proofPath).catch(() => {});
     setProofPath(null);
-    setReceiptNote(null);
     setExtract(null);
     setEdited({ reference: false, payerNumber: false });
     setAcceptManual(false);
@@ -142,7 +141,6 @@ export function GoLiveCard({
       // used. Nothing is invented, and nothing is prefilled from GCash.
       if (read.reference) setReference(read.reference);
       if (read.senderNumber) setPayerNumber(read.senderNumber);
-      setReceiptNote(receiptEvidence(read, { expectedAmountPhp: null }).message);
     } catch (e) {
       setProofFile(null);
       setServerField("proof");
