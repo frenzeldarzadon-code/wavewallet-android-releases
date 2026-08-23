@@ -95,7 +95,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "WaveWallet — Voucher & Wallet Platform for Hotspot Operators" },
       { name: "twitter:description", content: "WaveWallet is a multi-tenant coin wallet, voucher marketplace and rewards platform for Omada hotspot operators, resellers and their customers." },
       { name: "google-site-verification", content: "UnARDDxep_CFJhJiBRoKdtC14Xd_YQtLq2R6mtfyB-M" },
@@ -105,8 +104,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-title", content: "WaveWallet" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "mobile-web-app-capable", content: "yes" },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/81b0d65a2043abe4f2bcdf4ae733e17b/id-preview-a7c88392--c55ae295-3a69-4d32-ac4d-3325efdee786.lovable.app-1786539511713.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/81b0d65a2043abe4f2bcdf4ae733e17b/id-preview-a7c88392--c55ae295-3a69-4d32-ac4d-3325efdee786.lovable.app-1786539511713.png" },
     ],
     links: [
       {
