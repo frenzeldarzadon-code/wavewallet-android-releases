@@ -42,7 +42,7 @@ begin
   from (values (_owner, _slugA), (_only, _slugA), (_both, _slugA), (_other, _slugC)) as u(id, slug);
 
   update public.user_roles set role = 'super_admin' where user_id = _owner;
-  update public.profiles set ecosystem_id = null, active_ecosystem_id = null where id = _owner;
+  
 
   -- _both also belongs to surviving Shop B.
   insert into public.ecosystem_memberships (user_id, ecosystem_id, role, status, membership_state)
