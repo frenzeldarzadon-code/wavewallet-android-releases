@@ -180,9 +180,9 @@ describe("Spending Tracker category attribution", () => {
     expect(h.topExpense?.total).toBe(90);
   });
 
-  it("keeps manual and automatic categories side by side", () => {
+  it("keeps every expense category manual", () => {
     const expense = categoryTotals(rows, "expense");
-    expect(expense.map((c) => c.automatic)).toEqual([false, true]);
+    expect(expense.map((c) => c.automatic)).toEqual([false, false]);
   });
 });
 
