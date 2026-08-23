@@ -132,7 +132,7 @@ export function parseGcashNotification(
   return {
     incoming: true,
     amountPhp: Number.isFinite(amount) && amount > 0 ? Number(amount.toFixed(2)) : null,
-    senderNumber: payer ? normalizePhMobile(payer) : null,
+    senderNumber: mobile ? normalizePhMobile(mobile) : payer,
     senderName: name && name.length <= 160 ? name : null,
     reference,
   };
