@@ -702,7 +702,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                             readOnly={Boolean(extract?.senderNumber)}
                             disabled={Boolean(extract?.senderNumber)}
                             onChange={(e) => setPayerNumber(e.target.value)}
-                            placeholder="Account number or 09XXXXXXXXX"
+                            placeholder="Account number or mobile number"
                           />
                           <p className="text-[11px] text-muted-foreground">
                             {extract?.senderNumber
