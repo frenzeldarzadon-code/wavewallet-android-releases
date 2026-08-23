@@ -205,6 +205,11 @@ export function GoLiveCard({
     setServerError(null);
     setServerField(null);
     setAttempted(true);
+    if (methods.length > 1 && !methodId) {
+      setServerError("Tap the WaveWallet payment account you paid into.");
+      document.getElementById("gl-methods")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     if (checklist.length > 0) {
       focusItem(checklist.find((i) => i.fieldId) ?? {});
       return;
@@ -340,11 +345,13 @@ export function GoLiveCard({
                 </div>
 
                 {methods.length > 0 ? (
+                  <div id="gl-methods">
                   <PaymentMethodCards
                     methods={methods}
                     selectedId={methodId}
                     onSelect={(id) => setMethodId(id)}
                   />
+                  </div>
                 ) : gcash?.gcash_number ? (
                   <div className="rounded-lg border bg-background px-3 py-2 text-xs">
                     <p className="font-semibold">GCash</p>
