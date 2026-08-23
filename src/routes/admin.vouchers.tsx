@@ -94,6 +94,8 @@ function AdminVouchers() {
   const [fileCodes, setFileCodes] = useState<string[] | null>(null);
   const [fileName, setFileName] = useState("");
   const [open, setOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<(ImportResult & { productName: string }) | null>(null);
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
