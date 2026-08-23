@@ -661,19 +661,18 @@ export function GoLiveCard({
                       <dt className="text-muted-foreground">Duration</dt>
                       <dd className="font-medium">{monthsLabel(monthCount)}</dd>
                     </div>
-                    {isPlanChange ? (
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-muted-foreground">
+                        {peso(Number(plan.monthly_price))} × {monthCount}
+                      </dt>
+                      <dd className="font-medium">{peso(lineTotal)}</dd>
+                    </div>
+                    {charge.creditApplied > 0 ? (
                       <div className="flex justify-between gap-3">
                         <dt className="text-muted-foreground">Plan change credit applied</dt>
-                        <dd className="font-medium">−{peso(Number(quote?.unused_value ?? 0))}</dd>
+                        <dd className="font-medium">−{peso(charge.creditApplied)}</dd>
                       </div>
-                    ) : (
-                      <div className="flex justify-between gap-3">
-                        <dt className="text-muted-foreground">
-                          {peso(Number(plan.monthly_price))} × {monthCount}
-                        </dt>
-                        <dd className="font-medium">{peso(lineTotal)}</dd>
-                      </div>
-                    )}
+                    ) : null}
                     <div className="flex justify-between gap-3 border-t pt-1.5 text-sm">
                       <dt className="font-semibold">Total amount due</dt>
                       <dd className="font-bold text-primary">{peso(due)}</dd>
