@@ -26,6 +26,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { PageSection, StatCard, StatusBadge, subscriptionTone } from "@/components/ui-kit";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { planLabel, requestRateLabel } from "@/lib/subscription-plan-label";
 import { peso, shortDate, statusLabel } from "@/lib/wavewallet";
 import {
   ADJUSTMENT_REASONS,
@@ -216,7 +217,7 @@ function SuperSubscriptions() {
                     <TableRow key={eco.id}>
                       <TableCell className="font-medium">{eco.name}</TableCell>
                       <TableCell className="text-sm">
-                        {eco.plan_name} · {peso(Number(eco.plan_price))}
+                        {planLabel(eco.plan_name, eco.plan_price)}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
                         {eco.payment_reference ?? "—"}
@@ -301,7 +302,7 @@ function SuperSubscriptions() {
                       <p className="text-sm font-medium">
                         {ecoName[r.ecosystem_id] ?? "Shop"} · {peso(Number(r.amount_due))} ·{" "}
                         {monthsLabel(requestMonths(r))}
-                        {r.monthly_rate ? ` @ ${peso(Number(r.monthly_rate))}/month` : ""}
+                        {requestRateLabel(r)}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Ref {r.payment_reference} · {r.reviewed_by_name ?? "—"} ·{" "}
@@ -385,7 +386,7 @@ function PendingCard({
             <dt className="text-muted-foreground">Months covered</dt>
             <dd className="font-medium">
               {monthsLabel(requestMonths(request))}
-              {request.monthly_rate ? ` @ ${peso(Number(request.monthly_rate))}/mo` : ""}
+              {requestRateLabel(request)}
             </dd>
           </div>
           <div>
