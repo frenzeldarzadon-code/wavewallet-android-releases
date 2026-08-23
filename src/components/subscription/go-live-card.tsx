@@ -186,6 +186,11 @@ export function GoLiveCard({
       ? Number(plan.monthly_price) * monthCount
       : 0;
   const pending = request?.status === "pending";
+  // How much INDEPENDENT evidence the screenshot itself produced. This never
+  // approves anything — the platform listener and the database rules still
+  // decide — it only tells the applicant what was read and what is missing.
+  const evidence = receiptEvidence(extract, { expectedAmountPhp: due > 0 ? due : null });
+  const thinEvidence = Boolean(proofPath && extract && !evidence.sufficient);
 
   // Everything the existing payment RPC already requires, told up-front.
   const checklist = goLiveChecklist({
@@ -226,6 +231,13 @@ export function GoLiveCard({
     }
     if (checklist.length > 0) {
       focusItem(checklist.find((i) => i.fieldId) ?? {});
+      return;
+    }
+    if (thinEvidence && !acceptManual) {
+      setServerError(
+        `${evidence.message} Automatic activation needs at least two details read from the screenshot. Tick the box below to submit it for manual review instead.`,
+      );
+      document.getElementById("gl-evidence")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     setConfirming(true);
@@ -415,7 +427,7 @@ export function GoLiveCard({
                   ) : null}
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="gl-number">GCash number you paid from</Label>
+                  <Label htmlFor="gl-number">Mobile number or account you paid from</Label>
                   <Input
                     id="gl-number"
                     inputMode="numeric"
@@ -423,8 +435,20 @@ export function GoLiveCard({
                     aria-invalid={Boolean(errorFor("payerNumber"))}
                     className={errorFor("payerNumber") ? "border-destructive" : undefined}
                     value={payerNumber}
-                    onChange={(e) => setPayerNumber(e.target.value)}
+                    onChange={(e) => {
+                      setPayerNumber(e.target.value);
+                      if (extract?.senderNumber) setEdited((v) => ({ ...v, payerNumber: true }));
+                    }}
                   />
+                  {extract ? (
+                    <p className="text-[11px] text-muted-foreground">
+                      {extract.senderNumber
+                        ? edited.payerNumber
+                          ? `You changed this. Read from the screenshot: ${extract.senderNumber}`
+                          : "Read from your screenshot."
+                        : "Not printed on your screenshot — enter it yourself."}
+                    </p>
+                  ) : null}
                   {errorFor("payerNumber") ? (
                     <p role="alert" className="text-xs font-medium text-destructive">
                       {errorFor("payerNumber")}
@@ -432,7 +456,7 @@ export function GoLiveCard({
                   ) : null}
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="gl-ref">GCash reference number</Label>
+                  <Label htmlFor="gl-ref">Reference / transaction number</Label>
                   <Input
                     id="gl-ref"
                     inputMode="numeric"
@@ -440,8 +464,20 @@ export function GoLiveCard({
                     aria-invalid={Boolean(errorFor("reference"))}
                     className={errorFor("reference") ? "border-destructive" : undefined}
                     value={reference}
-                    onChange={(e) => setReference(e.target.value)}
+                    onChange={(e) => {
+                      setReference(e.target.value);
+                      if (extract?.reference) setEdited((v) => ({ ...v, reference: true }));
+                    }}
                   />
+                  {extract ? (
+                    <p className="text-[11px] text-muted-foreground">
+                      {extract.reference
+                        ? edited.reference
+                          ? `You changed this. Read from the screenshot: ${extract.reference}`
+                          : "Read from your screenshot."
+                        : "Not readable on your screenshot — enter it yourself."}
+                    </p>
+                  ) : null}
                   {errorFor("reference") ? (
                     <p role="alert" className="text-xs font-medium text-destructive">
                       {errorFor("reference")}
