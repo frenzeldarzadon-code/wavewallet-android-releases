@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui-kit";
 import { PaymentQrPreview } from "@/components/money/payment-qr";
 import { cn } from "@/lib/utils";
+import { paymentMethodScopeLabel } from "@/lib/payment-method-scope";
 import type { PaymentMethod } from "@/lib/wallet-money";
 
 const ICONS: Record<string, typeof Wallet> = {
@@ -69,6 +70,9 @@ export function PaymentMethodCards({
                   {m.label?.trim() ? (
                     <p className="text-xs text-muted-foreground">{m.label.trim()}</p>
                   ) : null}
+                  <span className="mt-0.5 inline-flex rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {paymentMethodScopeLabel(m)}
+                  </span>
                 </div>
               </div>
               <Field label="Payment method" value={m.name} />

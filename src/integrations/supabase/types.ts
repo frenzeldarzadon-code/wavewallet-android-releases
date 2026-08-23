@@ -5757,6 +5757,7 @@ export type Database = {
           receipt_check: string
           receipt_details: Json | null
           receipt_paid_at: string | null
+          receipt_receiving_key: string | null
           receipt_reference_key: string | null
           receipt_sender_key: string | null
           remainder_amount: number
@@ -5810,6 +5811,7 @@ export type Database = {
           receipt_check?: string
           receipt_details?: Json | null
           receipt_paid_at?: string | null
+          receipt_receiving_key?: string | null
           receipt_reference_key?: string | null
           receipt_sender_key?: string | null
           remainder_amount?: number
@@ -5863,6 +5865,7 @@ export type Database = {
           receipt_check?: string
           receipt_details?: Json | null
           receipt_paid_at?: string | null
+          receipt_receiving_key?: string | null
           receipt_reference_key?: string | null
           receipt_sender_key?: string | null
           remainder_amount?: number
@@ -7073,6 +7076,7 @@ export type Database = {
           receipt_check: string
           receipt_details: Json | null
           receipt_paid_at: string | null
+          receipt_receiving_key: string | null
           receipt_reference_key: string | null
           receipt_sender_key: string | null
           remainder_amount: number
@@ -7677,6 +7681,13 @@ export type Database = {
           _req: Database["public"]["Tables"]["subscription_requests"]["Row"]
         }
         Returns: number
+      }
+      go_live_receiving_matches: {
+        Args: {
+          _ev: Database["public"]["Tables"]["listener_events"]["Row"]
+          _req: Database["public"]["Tables"]["subscription_requests"]["Row"]
+        }
+        Returns: boolean
       }
       go_live_reference_duplicate: {
         Args: { _id?: string; _key: string }
@@ -9377,6 +9388,7 @@ export type Database = {
           receipt_check: string
           receipt_details: Json | null
           receipt_paid_at: string | null
+          receipt_receiving_key: string | null
           receipt_reference_key: string | null
           receipt_sender_key: string | null
           remainder_amount: number
@@ -10689,6 +10701,7 @@ export type Database = {
           receipt_check: string
           receipt_details: Json | null
           receipt_paid_at: string | null
+          receipt_receiving_key: string | null
           receipt_reference_key: string | null
           receipt_sender_key: string | null
           remainder_amount: number
@@ -10760,6 +10773,7 @@ export type Database = {
           receipt_check: string
           receipt_details: Json | null
           receipt_paid_at: string | null
+          receipt_receiving_key: string | null
           receipt_reference_key: string | null
           receipt_sender_key: string | null
           remainder_amount: number
