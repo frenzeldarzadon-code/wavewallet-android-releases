@@ -168,6 +168,7 @@ export function VoucherShopView({
 
   const openBuy = (product: ShopProduct, method: Method) => {
     setQty(1);
+    setQtyText("1");
     setCustomerName("");
     setPayment(null);
     setBuying({ product, method });
