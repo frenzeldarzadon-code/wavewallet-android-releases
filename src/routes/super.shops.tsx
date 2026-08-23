@@ -283,6 +283,16 @@ function SuperShops() {
 
       <SubscriptionPlansCard onSaved={() => void load()} />
 
+      <PaymentOverrideDialog
+        shop={payTarget}
+        request={payTarget ? requestByShop[payTarget.id] : undefined}
+        onClose={() => setPayTarget(null)}
+        onDone={() => {
+          setPayTarget(null);
+          void load();
+        }}
+      />
+
       <OverrideDialog
         shop={override}
         plans={plans}
@@ -292,6 +302,7 @@ function SuperShops() {
           void load();
         }}
       />
+
 
       <ActivateDialog
         shop={target}
