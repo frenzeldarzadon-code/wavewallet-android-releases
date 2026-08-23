@@ -14,7 +14,8 @@ import { CheckCircle2, FlaskConical, Loader2, Rocket } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageSection, StatusBadge } from "@/components/ui-kit";
-import { GoLiveCard } from "@/components/subscription/go-live-card";
+import { GoLiveCard, type SubscriptionIntent } from "@/components/subscription/go-live-card";
+import { SubscriptionHistoryCard } from "@/components/subscription/subscription-history-card";
 import { useSession } from "@/lib/session";
 import { useShopStatus } from "@/lib/shop-status";
 import { reviewCountdown } from "@/lib/review-demo";
@@ -27,7 +28,7 @@ export const Route = createFileRoute("/admin/go-live")({
   // Which of the three intents the operator arrived with. The card still shows
   // all three; this only preselects the one they tapped.
   validateSearch: (search: Record<string, unknown>): { intent?: SubscriptionIntent } => {
-    const raw = search.intent;
+    const raw = search['intent'];
     return raw === "renew" || raw === "extend" || raw === "change" ? { intent: raw } : {};
   },
   head: () => ({
@@ -46,6 +47,7 @@ export const Route = createFileRoute("/admin/go-live")({
 
 function AdminGoLivePage() {
   const { ecosystemDbId } = useSession("admin");
+  const { intent } = Route.useSearch();
   const [refresh, setRefresh] = useState(0);
   const status = useShopStatus(ecosystemDbId, refresh);
 
@@ -97,9 +99,11 @@ function AdminGoLivePage() {
             ecosystemId={ecosystemDbId}
             shopName={status.name}
             isLive
+            initialIntent={intent ?? "renew"}
             onLive={() => setRefresh((n) => n + 1)}
           />
         ) : null}
+        {ecosystemDbId ? <SubscriptionHistoryCard ecosystemId={ecosystemDbId} refreshKey={refresh} /> : null}
       </>
     );
   }
@@ -144,6 +148,7 @@ function AdminGoLivePage() {
           }}
         />
       ) : null}
+      {ecosystemDbId ? <SubscriptionHistoryCard ecosystemId={ecosystemDbId} refreshKey={refresh} /> : null}
     </>
   );
 }
