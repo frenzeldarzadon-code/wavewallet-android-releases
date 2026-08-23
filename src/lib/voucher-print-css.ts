@@ -7,9 +7,16 @@
  * every template renders the identical voucher data at the identical size.
  */
 import { VOUCHER_PRINT_HEIGHT_IN, VOUCHER_PRINT_WIDTH_IN } from "./voucher-print";
+import mistArt from "@/assets/voucher-art/mist.jpg.asset.json";
+import terracesArt from "@/assets/voucher-art/terraces.jpg.asset.json";
+import pinesArt from "@/assets/voucher-art/pines.jpg.asset.json";
+import fallsArt from "@/assets/voucher-art/falls.jpg.asset.json";
+import caveArt from "@/assets/voucher-art/cave.jpg.asset.json";
+import sunriseArt from "@/assets/voucher-art/sunrise.jpg.asset.json";
 
 const W = `${VOUCHER_PRINT_WIDTH_IN}in`;
 const H = `${VOUCHER_PRINT_HEIGHT_IN}in`;
+
 
 export const voucherPrintCss = `
 .vp-sheet {
@@ -214,6 +221,137 @@ export const voucherPrintCss = `
 .vp-t-mono .vp-shop { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em; }
 .vp-t-mono .vp-body { border-top: 0.015in solid #111827; border-bottom: 0.015in solid #111827; padding: .02in 0; }
 .vp-t-mono .vp-meta { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+/* ------------------------------------------------------------------ */
+/* Nature series — Sagada-inspired decorative artwork.                 */
+/* The artwork is always a background layer: every text block sits on  */
+/* an opaque or near-opaque reading surface so print contrast holds.   */
+/* ------------------------------------------------------------------ */
+.vp-nature .vp-art {
+  background-repeat: no-repeat;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+/* Shared frosted reading plate used by the photographic templates. */
+.vp-nature .vp-body {
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(255,255,255,.95);
+  border-radius: .05in;
+  padding: .022in .02in;
+  box-shadow: 0 0 .04in rgba(255,255,255,.9);
+}
+
+/* 13. SAGADA MIST — full-bleed ridges, frosted column of text. */
+.vp-t-mist { border: 1px solid #b8c9cd; background: #f2f7f8; color: #10262b; }
+.vp-t-mist .vp-art {
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,.08) 45%, rgba(255,255,255,.35) 100%),
+    url("${mistArt.url}");
+  background-size: cover, cover;
+  background-position: center, center bottom;
+}
+.vp-t-mist .vp-head { background: rgba(255,255,255,.86); border-radius: .04in; padding: .015in .02in; }
+.vp-t-mist .vp-shop { color: #14555f; letter-spacing: .1em; }
+.vp-t-mist .vp-code { color: #0b3138; }
+.vp-t-mist .vp-price { color: #14555f; }
+.vp-t-mist .vp-meta { background: rgba(255,255,255,.82); border-radius: .04in; padding: .012in .018in; opacity: 1; }
+
+/* 14. RICE TERRACES — artwork as a grounded band under the price. */
+.vp-t-terraces { border: 1px solid #d9cba4; background: #fdfaf0; color: #3a3320; }
+.vp-t-terraces .vp-art {
+  background-image: url("${terracesArt.url}");
+  background-size: 100% 0.85in;
+  background-position: left bottom;
+  opacity: 1;
+  filter: saturate(1.5) contrast(1.12);
+}
+.vp-t-terraces .vp-body {
+  background: rgba(253,250,240,.94);
+  border: 1px solid rgba(190,167,110,.45);
+  box-shadow: none;
+}
+.vp-t-terraces .vp-shop { color: #7a5f16; letter-spacing: .11em; }
+.vp-t-terraces .vp-code { color: #2f2a17; }
+.vp-t-terraces .vp-meta { background: rgba(253,250,240,.9); border-radius: .04in; padding: .012in .018in; opacity: 1; }
+.vp-t-terraces .vp-price { color: #6b5310; }
+
+/* 15. PINE FOREST — vertical forest strip, ink column beside it. */
+.vp-t-pines { border: 1px solid #cbd5d1; background: #f7faf8; color: #16241f; }
+.vp-t-pines .vp-art {
+  background-image: url("${pinesArt.url}");
+  background-size: 0.5in 100%;
+  background-position: left top;
+  opacity: .95;
+  filter: saturate(1.2) contrast(1.08);
+}
+.vp-t-pines .vp-head,
+.vp-t-pines .vp-body,
+.vp-t-pines .vp-meta { margin-left: 0.42in; }
+.vp-t-pines .vp-body { background: rgba(247,250,248,.95); box-shadow: none; border-color: rgba(120,150,135,.4); }
+.vp-t-pines .vp-shop { color: #2f6b4f; letter-spacing: .09em; }
+.vp-t-pines .vp-code { color: #14301f; text-align: left; }
+.vp-t-pines .vp-code-label { text-align: left; }
+.vp-t-pines .vp-price { color: #2f6b4f; }
+
+/* 16. BOMOD-OK FALLS — airy wash, centred code plate. */
+.vp-t-falls { border: 1px solid #cfe0dd; background: #f6fbfa; color: #123033; }
+.vp-t-falls .vp-art {
+  background-image:
+    linear-gradient(90deg, rgba(232,245,243,.85) 0%, rgba(232,245,243,0) 50%, rgba(232,245,243,.85) 100%),
+    url("${fallsArt.url}");
+  background-size: cover, auto 230%;
+  background-position: center, center bottom;
+  filter: saturate(1.9) contrast(1.2);
+}
+.vp-t-falls .vp-head { text-align: center; }
+.vp-t-falls .vp-shop { color: #0f6b6b; letter-spacing: .14em; }
+.vp-t-falls .vp-body { border-radius: .07in; border-color: rgba(15,107,107,.25); }
+.vp-t-falls .vp-code { color: #0b3a3c; }
+.vp-t-falls .vp-meta { justify-content: center; text-align: center; }
+.vp-t-falls .vp-meta span:last-child { text-align: center; }
+.vp-t-falls .vp-price { color: #0f6b6b; }
+
+/* 17. LIMESTONE — cliffs in the corner over warm paper stock. */
+.vp-t-cave { border: 1px solid #ded2bd; background: #fbf7ef; color: #33291c; }
+.vp-t-cave .vp-art {
+  background-image: url("${caveArt.url}");
+  background-size: 1.5in auto;
+  background-position: right bottom;
+  opacity: .95;
+  filter: saturate(1.15);
+}
+.vp-t-cave .vp-head { padding-right: .12in; }
+.vp-t-cave .vp-shop { color: #8a6a2f; letter-spacing: .12em; }
+.vp-t-cave .vp-body {
+  background: rgba(251,247,239,.95);
+  border: 1px solid rgba(138,106,47,.35);
+  border-radius: .03in;
+  box-shadow: none;
+}
+.vp-t-cave .vp-code { color: #2b2114; }
+.vp-t-cave .vp-price { color: #8a6a2f; }
+.vp-t-cave .vp-meta { background: rgba(251,247,239,.88); border-radius: .03in; padding: .012in .018in; opacity: 1; }
+
+/* 18. KILTEPAN SUNRISE — warm ridge glow behind a bright scrim. */
+.vp-t-sunrise { border: 1px solid #f0d3bb; background: #fff6ef; color: #2c2118; }
+.vp-t-sunrise .vp-art {
+  background-image:
+    linear-gradient(180deg, rgba(255,246,239,.05) 0%, rgba(255,246,239,.72) 38%, rgba(255,246,239,.25) 100%),
+    url("${sunriseArt.url}");
+  background-size: cover, cover;
+  background-position: center, center top;
+}
+.vp-t-sunrise .vp-shop { color: #a4552a; letter-spacing: .12em; }
+.vp-t-sunrise .vp-body {
+  background: rgba(255,255,255,.9);
+  border: 1px solid rgba(164,85,42,.28);
+  border-radius: .05in;
+  box-shadow: none;
+}
+.vp-t-sunrise .vp-code { color: #3a2415; }
+.vp-t-sunrise .vp-price { color: #b3541f; }
+.vp-t-sunrise .vp-meta { background: rgba(255,246,239,.85); border-radius: .04in; padding: .012in .018in; opacity: 1; }
+
 
 /* Long codes must never inherit a template's wide tracking. */
 .vp-voucher .vp-code-long { letter-spacing: .01em; }

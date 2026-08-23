@@ -18,6 +18,7 @@ import {
   fetchPrintableSale,
   voucherTemplates,
   type PrintableVoucherSale,
+  voucherTemplateClass,
   type VoucherTemplateId,
 } from "@/lib/voucher-print";
 
@@ -73,7 +74,7 @@ function PrintVouchersPage() {
   };
 
   const card = (code: string, i: number, count: number) => (
-    <div key={`${code}-${i}`} className={`vp-voucher vp-t-${template}`}>
+    <div key={`${code}-${i}`} className={voucherTemplateClass(template)}>
       <span className="vp-art" aria-hidden />
       <div className="vp-head">
         <p className="vp-brand">WaveWallet</p>
@@ -141,7 +142,7 @@ function PrintVouchersPage() {
                     }`}
                   >
                     <div className="vp-thumb-frame mx-auto">
-                      <div className={`vp-voucher vp-t-${t.id}`} aria-hidden>
+                      <div className={voucherTemplateClass(t.id)} aria-hidden>
                         <span className="vp-art" />
                         <div className="vp-head">
                           <p className="vp-brand">WaveWallet</p>
