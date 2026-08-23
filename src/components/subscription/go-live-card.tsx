@@ -944,7 +944,13 @@ export function GoLiveCard({
                 </p>
               ) : null}
 
-              <Button className="w-full" disabled={busy} onClick={tryConfirm}>
+              {pending ? (
+                <p className="text-xs font-medium text-warning">
+                  Withdraw the payment awaiting verification above before submitting another one.
+                </p>
+              ) : null}
+
+              <Button className="w-full" disabled={busy || pending} onClick={tryConfirm}>
                 {busy ? (
                   <Loader2 className="mr-1 size-4 animate-spin" />
                 ) : (
@@ -952,6 +958,7 @@ export function GoLiveCard({
                 )}
                 {isPlanChange ? "Review and confirm plan change" : "Subscribe & Go Live"}
               </Button>
+
 
               <AlertDialog open={confirming} onOpenChange={setConfirming}>
                 <AlertDialogContent>
