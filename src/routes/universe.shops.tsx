@@ -153,7 +153,7 @@ function UniverseShops() {
 
         <PageSection
           title="Create a new shop"
-          description="Run your own WiFi voucher operation. Shops start free in Demo mode; you Go Live when you are ready."
+          description="Run your own WiFi voucher operation — set up your shop and go live when you are ready."
         >
           <Button asChild variant="outline" className="w-full">
             <Link to="/start-shop">

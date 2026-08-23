@@ -22,7 +22,7 @@ import { reviewCountdown } from "@/lib/review-demo";
 
 const TITLE = "Go Live — WaveWallet shop subscription";
 const DESCRIPTION =
-  "Turn your free Demo shop into a live WaveWallet shop: pick a plan, pay it with GCash and keep the same login, name and settings.";
+  "Manage your WaveWallet shop subscription: pick a plan, pay it and renew, extend or change plan at any time.";
 
 export const Route = createFileRoute("/admin/go-live")({
   // Which of the three intents the operator arrived with. The card still shows
@@ -77,7 +77,7 @@ function AdminGoLivePage() {
       <>
         <PageSection devSlot="go-live.your-shop-is-live"
           title="Your shop is live"
-          description="Demo mode is finished — everything in this console now moves real Coins."
+          description="Everything in this console moves real Coins."
         >
           <Card className="border-success/40 shadow-[var(--shadow-card)]">
             <CardContent className="space-y-2 px-4">
@@ -85,9 +85,10 @@ function AdminGoLivePage() {
                 <CheckCircle2 className="size-4" /> Live on the {status.planName ?? "current"} plan
               </p>
               <p className="text-xs leading-relaxed text-muted-foreground">
-                Your Demo Coins were removed and your plan&apos;s real Coin allocation was issued
-                once. You can change plan or renew below at any time.
+                Your plan&apos;s Coin allocation was issued once. You can change plan or renew below
+                at any time.
               </p>
+
               <Button asChild size="sm">
                 <Link to="/admin">Open my shop dashboard</Link>
               </Button>

@@ -262,17 +262,16 @@ function GuidePage() {
       </section>
 
       <section className="mb-12">
-        <h2 className="text-lg font-semibold tracking-tight">Try it for 5 days</h2>
+        <h2 className="text-lg font-semibold tracking-tight">Start your own shop</h2>
         <Card className="mt-3 shadow-[var(--shadow-card)]">
           <CardContent className="px-4">
             <Sparkles className="size-5 text-primary" />
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Sign up for a free WaveWallet account and create one review shop. For 5 days you can
-              explore the whole flow — loading resellers, selling WiFi vouchers, cashback and points
-              — using 1,000 simulated <strong>Demo Coins</strong>. Demo Coins have no monetary
-              value, never touch real balances, and are removed when your shop goes live. Your
-              account and shop always stay yours.
+              Sign up for a free WaveWallet account and set up your own shop — loading resellers,
+              selling WiFi vouchers, cashback and points. Pick a plan whenever you are ready to go
+              live. Your account and shop always stay yours.
             </p>
+
             <Button asChild className="mt-3">
               <Link to="/start-shop">Sign up and create your shop</Link>
             </Button>
