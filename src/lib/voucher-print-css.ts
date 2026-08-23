@@ -61,10 +61,8 @@ export const voucherPrintCss = `
   font-weight: 700;
   line-height: 1.1;
   margin-top: .005in;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
   overflow: hidden;
+  overflow-wrap: anywhere;
   max-height: 2.2em;
 }
 /* The shop's stored description, wrapped and clipped — never overflowing. */
@@ -73,11 +71,8 @@ export const voucherPrintCss = `
   line-height: 1.15;
   opacity: .82;
   overflow-wrap: anywhere;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
   overflow: hidden;
-  max-height: 2.36em;
+  max-height: 2.3em;
   margin-top: .01in;
 }
 .vp-code {
