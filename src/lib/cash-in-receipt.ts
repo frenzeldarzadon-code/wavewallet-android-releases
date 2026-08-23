@@ -32,6 +32,16 @@ export interface ReceiptReading {
   receivingNumber?: string | null;
   /** Masked receiving account/card, when the receipt prints one. */
   receivingAccountMasked?: string | null;
+  /** The payee's printed name, when the receipt shows it. */
+  receivingName?: string | null;
+  /** "Send Money", "InstaPay", "Bank transfer"… exactly as printed. */
+  transferMethod?: string | null;
+  /** "Successful", "Completed", "Pending"… exactly as printed. */
+  statusText?: string | null;
+  /** Any transfer/service fee printed on the receipt. */
+  feePhp?: number | null;
+  /** Every line of text the reader could read, in the order it appears. */
+  rawText?: string | null;
   /** Payment date/time printed on the receipt, ISO 8601, when it was legible. */
   paidAt?: string | null;
   /** The reader's own confidence that it read the reference correctly, 0..1. */
