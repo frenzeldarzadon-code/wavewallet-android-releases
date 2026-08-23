@@ -44,8 +44,8 @@ export const Route = createFileRoute("/print/vouchers/$saleId")({
 
 /** Keeps even very long codes on one or two readable lines inside 2in x 2in. */
 function codeClass(code: string) {
-  if (code.length > 18) return "vp-code vp-code-xs";
-  if (code.length > 12) return "vp-code vp-code-long";
+  if (code.length > 16) return "vp-code vp-code-xs";
+  if (code.length > 10) return "vp-code vp-code-long";
   return "vp-code";
 }
 
