@@ -457,8 +457,55 @@ export function GoLiveCard({
             </div>
           ) : (
             <>
+              {isLive && currentPlanId ? (
+                /* A live shop manages the SAME subscription from here: renew
+                   it, extend it for longer, or move to another published
+                   plan. All three use this one existing payment flow. */
+                <div className="space-y-2 rounded-xl border bg-muted/40 px-3 py-3">
+                  <p className="text-sm font-semibold">What would you like to do?</p>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    {(
+                      [
+                        ["renew", "Renew", "Pay the current plan again"],
+                        ["extend", "Extend plan", "Add more months up-front"],
+                        ["change", "Change plan", "Move to another plan"],
+                      ] as const
+                    ).map(([value, label, hint]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => {
+                          setIntent(value);
+                          if (value !== "change" && currentPlanId) setPlanId(currentPlanId);
+                        }}
+                        className={`rounded-xl border px-3 py-2 text-left transition ${
+                          intent === value ? "border-primary bg-primary/5" : "border-border"
+                        }`}
+                      >
+                        <span className="block text-sm font-semibold">{label}</span>
+                        <span className="block text-xs text-muted-foreground">{hint}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Current plan:{" "}
+                    <strong>
+                      {plans.find((p) => p.id === currentPlanId)?.name ?? "current plan"}
+                    </strong>
+                    {intent === "change"
+                      ? " — pick the plan you want below."
+                      : " — choose how many months below."}
+                  </p>
+                </div>
+              ) : null}
+
               <div id="gl-plans" className="grid gap-2 sm:grid-cols-2">
-                {plans.map((p) => (
+                {plans
+                  .filter(
+                    (p) =>
+                      !(isLive && currentPlanId && intent !== "change") || p.id === currentPlanId,
+                  )
+                  .map((p) => (
                   <button
                     key={p.id}
                     type="button"
@@ -468,7 +515,12 @@ export function GoLiveCard({
                     }`}
                   >
                     <span className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-semibold">{p.name}</span>
+                      <span className="flex items-center gap-1.5 text-sm font-semibold">
+                        {p.name}
+                        {p.id === currentPlanId ? (
+                          <StatusBadge tone="brand">Current plan</StatusBadge>
+                        ) : null}
+                      </span>
                       <span className="text-sm font-semibold text-primary">
                         {peso(Number(p.monthly_price))}/mo
                       </span>
@@ -480,6 +532,7 @@ export function GoLiveCard({
                   </button>
                 ))}
               </div>
+
               {errorFor("plan") ? (
                 <p role="alert" className="text-xs font-medium text-destructive">
                   {errorFor("plan")}
