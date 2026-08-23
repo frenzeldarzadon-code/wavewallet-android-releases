@@ -155,7 +155,7 @@ export async function fetchSpendingCategories(
   return (data ?? []) as unknown as SpendingCategory[];
 }
 
-interface AutoRow {
+export interface AutoRow {
   id: string;
   kind: string;
   occurred_at: string;
