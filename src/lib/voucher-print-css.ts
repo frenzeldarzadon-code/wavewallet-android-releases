@@ -245,7 +245,7 @@ export const voucherPrintCss = `
 .vp-t-mist { border: 1px solid #b8c9cd; background: #f2f7f8; color: #10262b; }
 .vp-t-mist .vp-art {
   background-image:
-    linear-gradient(180deg, rgba(255,255,255,.9) 0%, rgba(255,255,255,.55) 42%, rgba(255,255,255,.86) 100%),
+    linear-gradient(180deg, rgba(255,255,255,.78) 0%, rgba(255,255,255,.3) 45%, rgba(255,255,255,.62) 100%),
     url("${mistArt.url}");
   background-size: cover, cover;
   background-position: center, center bottom;
@@ -260,9 +260,10 @@ export const voucherPrintCss = `
 .vp-t-terraces { border: 1px solid #d9cba4; background: #fdfaf0; color: #3a3320; }
 .vp-t-terraces .vp-art {
   background-image: url("${terracesArt.url}");
-  background-size: 100% 0.72in;
+  background-size: 100% 0.85in;
   background-position: left bottom;
-  opacity: .78;
+  opacity: 1;
+  filter: saturate(1.5) contrast(1.12);
 }
 .vp-t-terraces .vp-body {
   background: rgba(253,250,240,.94);
@@ -278,13 +279,14 @@ export const voucherPrintCss = `
 .vp-t-pines { border: 1px solid #cbd5d1; background: #f7faf8; color: #16241f; }
 .vp-t-pines .vp-art {
   background-image: url("${pinesArt.url}");
-  background-size: 0.62in 100%;
+  background-size: 0.5in 100%;
   background-position: left top;
-  opacity: .9;
+  opacity: .95;
+  filter: saturate(1.2) contrast(1.08);
 }
 .vp-t-pines .vp-head,
 .vp-t-pines .vp-body,
-.vp-t-pines .vp-meta { margin-left: 0.5in; }
+.vp-t-pines .vp-meta { margin-left: 0.42in; }
 .vp-t-pines .vp-body { background: rgba(247,250,248,.95); box-shadow: none; border-color: rgba(120,150,135,.4); }
 .vp-t-pines .vp-shop { color: #2f6b4f; letter-spacing: .09em; }
 .vp-t-pines .vp-code { color: #14301f; text-align: left; }
@@ -295,10 +297,11 @@ export const voucherPrintCss = `
 .vp-t-falls { border: 1px solid #cfe0dd; background: #f6fbfa; color: #123033; }
 .vp-t-falls .vp-art {
   background-image:
-    linear-gradient(90deg, rgba(246,251,250,.95) 0%, rgba(246,251,250,.25) 50%, rgba(246,251,250,.95) 100%),
+    linear-gradient(90deg, rgba(232,245,243,.92) 0%, rgba(232,245,243,.08) 50%, rgba(232,245,243,.92) 100%),
     url("${fallsArt.url}");
-  background-size: cover, cover;
+  background-size: cover, auto 150%;
   background-position: center, center;
+  filter: saturate(1.6) contrast(1.15);
 }
 .vp-t-falls .vp-head { text-align: center; }
 .vp-t-falls .vp-shop { color: #0f6b6b; letter-spacing: .14em; }
@@ -312,9 +315,10 @@ export const voucherPrintCss = `
 .vp-t-cave { border: 1px solid #ded2bd; background: #fbf7ef; color: #33291c; }
 .vp-t-cave .vp-art {
   background-image: url("${caveArt.url}");
-  background-size: 1.05in auto;
+  background-size: 1.25in auto;
   background-position: right bottom;
-  opacity: .7;
+  opacity: .95;
+  filter: saturate(1.15);
 }
 .vp-t-cave .vp-head { padding-right: .12in; }
 .vp-t-cave .vp-shop { color: #8a6a2f; letter-spacing: .12em; }
@@ -332,7 +336,7 @@ export const voucherPrintCss = `
 .vp-t-sunrise { border: 1px solid #f0d3bb; background: #fff6ef; color: #2c2118; }
 .vp-t-sunrise .vp-art {
   background-image:
-    linear-gradient(180deg, rgba(255,246,239,.5) 0%, rgba(255,246,239,.92) 38%, rgba(255,246,239,.72) 100%),
+    linear-gradient(180deg, rgba(255,246,239,.22) 0%, rgba(255,246,239,.85) 40%, rgba(255,246,239,.5) 100%),
     url("${sunriseArt.url}");
   background-size: cover, cover;
   background-position: center, center top;
