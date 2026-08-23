@@ -1,93 +1,42 @@
-# Provider-agnostic receipt ↔ notification matching
+# Go Live stuck on "Verification in progress" — SW Demo 2 Final Test
 
-## Non-negotiable matching rule (applies to every provider, now and later)
+## What the data actually says
 
-1. Automatic approval requires **at least 2 independent pieces of information that agree** between the customer's receipt and the notification captured by the phone.
-2. **No particular signal is mandatory.** Amount + sending number is a valid pair. There is no "strong identity signal" requirement and no requirement that a reference exists on the notification.
-3. **Amount alone is never enough** (it is a single signal).
-4. **No reference/source-destination veto.** The receipt reference is customer-side evidence; a reference the notification lacks, or one that differs, is recorded as informational only. Source vs destination differences never veto a match on their own.
-5. **Time is never a required signal.** The listener's received/captured time and the payment time are contextual evidence only, held inside a generous window (up to 3 days before and 7 days after the payment). A notification captured minutes, hours or days after the payment must never fail an otherwise valid payment.
-6. Every decision writes a durable match record naming which signals agreed, with the listener's `received_at` stored separately as timing metadata — never as a signal.
-7. Duplicate protection is unchanged: a receipt reference that already settled a cash in, and a reused screenshot fingerprint, are both declined.
+The payment is **genuinely not approved**. Nothing in the UI is lying.
 
-**Status: implemented (corrected).** `listener_match_signals` enforces 1–4 in both `match_listener_event` and `try_auto_approve_cash_in`; the window in `match_listener_event` is anchored on the notification's own posted time and asymmetric (−3 days / +7 days) for 5; `payment_match_records` + `record_payment_match` + `listener_match_signal_details` cover 6. Regression tests: `supabase/tests/cash-in-two-signal-rule.sql`, `supabase/tests/cash-in-late-notification-capture.sql`.
+Shop `SW Demo 2 Final Test`: still `is_review = true`, `subscription_state = awaiting_approval`.
 
+Its latest Go Live request (submitted 23 Aug 2026 12:26 UTC):
 
+- `status = pending`, `auto_state = pending`
+- `auto_reason` = waiting for a payment notification matching at least two details
+- Receipt was read fine: `receipt_check = matched`, reference `104116`, amount `150.00`, payer `15976553427`, plan `Standard` at ₱150 × 1 month
+- `listener_event_id` is empty — no payment notification was ever matched to it
 
-## What is already provider-agnostic (verified in the live database and code)
+So the UI state is correct: the receipt was accepted, but the second, authoritative side of the rule (a real notification from the platform listener) never arrived or never matched.
 
-- `record_listener_event` no longer requires the device's own package. It runs the source allow/deny rules first (`listener_source_allowed`), then resolves a provider with `payment_provider_for(package, text)` against `payment_provider_registry`. Unknown app → stored as `non_payment`; blocked app → `source_disabled`; provider known but no amount → `unparsed`.
-- `listener_events` already carries `provider_id`, `app_label`, `reference_key`, `sender_number_key`, `amount_php`.
-- Matching already enforces the rule you asked for: `listener_match_signals(...) >= 2` **and** `listener_has_strong_signal(...)` (reference or sender must agree; amount alone can never pass), plus a hard veto when both references exist and disagree.
-- Duplicate protection is already platform-wide: `payment_reference_seen` (salted hash), `payment_reference_used_elsewhere`, plus a scan of consumed `listener_events`.
-- Android already captures every allowed package, applies the cached source rules and a generic money-shape triage, and uploads `title`/`text`/`app_label`/`provider_id`.
+## Why no match happened — three separate causes
 
-So GCash flow, the 1,500 payment path, pairing/revocation and the ≥2-signal rule stay exactly as they are. The gaps below are what actually needs work.
+**1. No qualifying notification exists at all.**
+The only active listener device last delivered a GCash payment notification on **22 Aug**. Every event since then (up to 12:40 today) is from Shopee, Lazada, SeaBank, Gmail, etc. and is recorded as `non_payment`. There is no accepted GCash event after the 12:26 submission, so `reconcile_go_live_request` correctly returns `no_match`.
 
-## Confirmed gaps
+**2. The receipt is a bank-to-GCash transfer, and the matching trigger can't see it.**
+The receipt is MariBank account `15976553427` → GCash `09541230072` via InstaPay. The database trigger that re-runs reconciliation when a new notification arrives only looks for pending requests whose `payer_number_key` **equals the notification's sender number**. A GCash "received from InstaPay" notification will not carry the sender's MariBank account number, so that trigger would never fire for this request — even if the right notification did arrive. The reference number (`104116`) plus amount would satisfy the ≥2-signal rule, but reconciliation is never invoked to evaluate it.
 
-1. **Receipt reading is GCash-only.** The vision prompt in `src/lib/cash-in-receipt.server.ts` says "You are reading a GCash payment receipt" and only names GCash fields. A Maya or bank receipt is read badly or marked unreadable.
-2. **No provider on the receipt/request side.** `cash_in_requests` has no provider column, so `try_auto_approve_cash_in` falls back to `coalesce(_provider, 'gcash')` when there is no listener event — the wrong namespace for a non-GCash reference hash.
-3. ~~**No durable match record.**~~ **Done** — `payment_match_records` now snapshots the receipt values, the notification values, the agreeing signals and the timing metadata at decision time, so history no longer depends on the current parser or provider configuration.
-4. **No learned provider patterns.** Nothing records observed notification shapes per provider, so extraction never improves (point 6).
-5. **Signals are number-shaped only.** `sender_number_key` uses `normalize_ph_mobile`; bank receipts often expose a masked account or a payer name instead, so a valid bank payment can reach only 1 signal and stall in review (safe, but never auto-approves).
+**3. The receipt's own date pushes it outside the match window.**
+The screenshot text reads "23 Aug **2024** 19:07", so `receipt_paid_at` was stored as 2024-08-23. Reconciliation only accepts notifications within ±3 days of that timestamp — a window two years in the past. Any notification arriving today is excluded by date alone.
 
-## Plan
+## Recommended changes (not applied yet)
 
-### A. Provider on the receipt side (database + web)
+1. **Broaden the re-match trigger.** When an accepted notification arrives, also re-run reconciliation for pending requests whose stored reference matches the notification's reference — not only those matching on sender number. This is the actual blocker for bank-to-wallet payments and does not weaken the ≥2-signal rule (reference remains one signal, amount the second, reference still counts as the strong signal).
+2. **Make the time window robust against a misread receipt date.** Anchor the window on the request's submission time when the receipt date is implausible (far in the past or in the future relative to submission), instead of trusting the OCR year blindly. Keep the window itself narrow.
+3. **Refresh the operator's screen.** The Go Live card fetches the request once on mount with no polling or realtime subscription, so even after activation the operator can sit on the old screen until a manual reload. Add a light poll or realtime subscription while a request is pending, so the congratulations/live transition appears on its own.
+4. **This specific shop still needs a real payment notification** (or a deliberate platform-owner decision) before it can activate. No code change should auto-approve it — the listener has not corroborated the payment.
 
-- Add `cash_in_requests.provider_id text` (nullable, FK-less, references registry by id) and `provider_source text` (`member`, `receipt`, `listener`, `method`).
-- Resolve it in this order: the payment method the member paid to (`payment_methods.provider_id`) → the OCR reading → the matched listener event. Default stays `gcash` only when nothing else resolves, so existing rows behave identically.
-- Use `_row.provider_id` instead of the hardcoded `'gcash'` in `try_auto_approve_cash_in` for reference hashing.
+## Technical notes
 
-### B. Generic receipt reading with provider hints
-
-- Rewrite the prompt in `cash-in-receipt.server.ts` to be provider-neutral: "reading a payment receipt / transfer confirmation screenshot from an e-wallet or bank app", asking for `provider_name`, `reference`, `amount_php`, `sender_number`, `sender_name`, `sender_account_masked`, `receiving_number`, `receiving_account_masked`, `paid_at`, `readable`, `confidence`.
-- Pass the expected provider (from A) and its known receipt vocabulary as a hint when available; never let the hint invent a value.
-- Extend `parseReceiptReading` and `receipt_details` to keep the new fields. `receipt_reference`/`receipt_amount_php`/`receipt_sender_number` keep their current meaning, so `apply_cash_in_receipt_ocr` and every existing test keep passing.
-
-### C. Signals that work for banks as well as wallets
-
-- Extend `listener_match_signals` with two extra comparisons, still counting **one each**:
-  - masked account tail agreement (last 4 of sender or receiving account, when both sides have one),
-  - receiving-account agreement (event's reported receiver vs the shop's configured method).
-- No signal is privileged: any two agreeing comparisons approve. `listener_has_strong_signal` is retained only as metadata on the durable match record. Amount alone still never qualifies.
-- Everything GCash already satisfies keeps satisfying it — the current two signals are unchanged, these are additions.
-
-### D. Durable, self-contained match record — SHIPPED
-
-- Table `public.payment_match_records`: `cash_in_id`, `listener_event_id`, `ecosystem_id`, `provider_id`, `decision` (`auto_approved` | `staged` | `manual_approved`), `signal_count`, `strong_signal`, `signals jsonb` (each signal with name, strength, receipt value, notification value, agreed true/false), `receipt_snapshot`, `notification_snapshot` (normalised fields only, no raw text), `timing` (`paid_at`, `notification_posted_at`, `listener_received_at`, `capture_delay_minutes`), `reference_hash`, `matched_at`.
-- Written by `record_payment_match` inside `try_auto_approve_cash_in`, for both the staged and the approved decision, in the same transaction. Manual approval with a listener event will reuse the same function.
-- RLS: Super Admin reads all, shop admins read only their own ecosystem's rows; no insert/update/delete from the app.
-- Snapshots are literal copies, so history stays true even if a parser, a provider registry row, or a shop's configuration changes later.
-
-
-### E. Learned provider patterns (assist only, never authority)
-
-- New table `public.payment_provider_patterns`: `provider_id`, `pattern_kind` (`notification_template`, `reference_shape`, `receipt_label`), `signature text` (text with digits/amounts masked out), `field_map jsonb`, `observed_count`, `first_seen_at`, `last_seen_at`, `confirmed_matches`. Platform-scoped, Super-Admin-readable only — no shop text or payer data.
-- On every **successful** match, upsert the masked signature of the notification and of the receipt labels, incrementing counters.
-- Patterns feed extraction only: server-side parsing may use a learned signature to pull an amount or a reference the generic parser missed. The extracted value then goes through the identical signal counting and duplicate checks. A pattern is never a signal, never raises confidence, and can never approve on its own.
-
-### F. Duplicate and reuse protection
-
-- Keep the existing hash table; namespace by the resolved provider from A so two providers can legitimately share a reference string.
-- Add reuse protection for the receipt itself: store a hash of the receipt image (already uploaded) in the match record, and reject a pending request whose receipt hash was already consumed by another approved request.
-- Continue rejecting a listener event that is already consumed by a different cash in.
-
-### G. Android
-
-- No new APK required for A–F. The v1.4.0 code already sends everything the server needs.
-- Only documentation/diagnostics wording is touched if anything: no version bump, no build, no publish in this phase.
-
-## What explicitly does not change
-
-Pairing, re-pairing, device revocation, HMAC signing, shop/ecosystem isolation, source allow/deny rules, the ≥2-independent-signal rule, receipt/OCR corroboration requirements, `require_listener_match`, the platform payment option for legacy shops, and the tested GCash 1,500 path.
-
-## Order of work
-
-1. A + B (provider identity end-to-end, generic receipt reading).
-2. D (match records) — history becomes durable before matching gets smarter.
-3. C (extra signals) + F (receipt reuse).
-4. E (pattern learning), last, since it only assists extraction.
-
-Each step ships with SQL tests under `supabase/tests/` and unit tests next to the touched `src/lib` modules. Nothing is published or released.
+- Path traced: `submit_go_live_payment` → inline `reconcile_go_live_request` → `go_live_match_signals` / `go_live_has_strong_signal` → `activate_go_live_request`.
+- Re-match trigger: `tg_listener_event_subscription_match` (the `payer_number_key = new.sender_number_key` filter is cause 2).
+- Window: `coalesce(receipt_paid_at, created_at) ± 3 days` inside `reconcile_go_live_request` (cause 3).
+- UI: `fetchGoLiveRequest` in `src/lib/go-live.ts`, called once from `load()` in `src/components/subscription/go-live-card.tsx` (cause of the stale screen).
+- No live data was modified during this investigation.
