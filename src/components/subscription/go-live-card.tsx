@@ -33,6 +33,7 @@ import {
   fetchPlatformGcash,
   activateFreeSubscription,
   cancelGoLivePayment,
+  goLiveControlsVisible,
   goLivePollIntervalMs,
   goLiveStatusLine,
   submitGoLivePayment,
@@ -505,7 +506,7 @@ export function GoLiveCard({
             </div>
           ) : null}
 
-          {!pending || isLive ? (
+          {goLiveControlsVisible(request, isLive) ? (
             <>
 
               {isLive && currentPlanId ? (
@@ -687,7 +688,7 @@ export function GoLiveCard({
                       {serverError}
                     </p>
                   ) : null}
-                  <Button className="w-full" disabled={busy || !plan} onClick={activateFree}>
+                  <Button className="w-full" disabled={busy || !plan || pending} onClick={activateFree}>
                     {busy ? (
                       <Loader2 className="mr-1 size-4 animate-spin" />
                     ) : (
