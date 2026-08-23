@@ -10114,6 +10114,24 @@ export type Database = {
           voucher_enabled: boolean
         }[]
       }
+      shop_subscription_history: {
+        Args: { _ecosystem_id: string }
+        Returns: {
+          actor_name: string
+          amount_php: number
+          coins: number
+          detail: string
+          event_type: string
+          id: string
+          new_plan_name: string
+          occurred_at: string
+          period_end: string
+          period_start: string
+          previous_plan_name: string
+          reference: string
+          source: string
+        }[]
+      }
       shops_in_municipality: {
         Args: { _city: string; _province: string }
         Returns: {
