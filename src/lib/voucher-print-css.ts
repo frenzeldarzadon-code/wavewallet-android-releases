@@ -34,8 +34,8 @@ export const voucherPrintCss = `
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 0.02in;
-  padding: 0.09in 0.1in;
+  gap: 0.015in;
+  padding: 0.06in 0.065in;
   border: 1px dashed #cbd5e1;
   border-radius: 0.06in;
   background: #ffffff;
@@ -51,77 +51,74 @@ export const voucherPrintCss = `
   pointer-events: none;
   z-index: 0;
 }
+.vp-voucher p { margin: 0; }
 .vp-head, .vp-body, .vp-meta { position: relative; z-index: 1; min-width: 0; }
-.vp-head { min-height: 0; flex: 0 0 auto; }
-.vp-body { min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; gap: 0.015in; }
-.vp-shop { font-size: 7pt; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.vp-brand { font-size: 4.5pt; letter-spacing: .16em; text-transform: uppercase; opacity: .6; line-height: 1.1; }
+.vp-head { min-height: 0; flex: 0 0 auto; overflow: hidden; }
+.vp-body { min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; gap: 0.01in; }
+.vp-shop { font-size: 8pt; font-weight: 800; letter-spacing: .02em; text-transform: uppercase; line-height: 1.08; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vp-brand { font-size: 5pt; letter-spacing: .16em; text-transform: uppercase; opacity: .6; line-height: 1.1; }
 .vp-product {
-  font-size: 7.5pt;
+  font-size: 9pt;
   font-weight: 700;
-  line-height: 1.12;
-  margin-top: .01in;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  line-height: 1.1;
+  margin-top: .005in;
   overflow: hidden;
-  max-height: 2.24em;
+  overflow-wrap: anywhere;
+  max-height: 2.2em;
 }
 /* The shop's stored description, wrapped and clipped — never overflowing. */
 .vp-desc {
-  font-size: 5.5pt;
-  line-height: 1.22;
-  opacity: .8;
+  font-size: 6pt;
+  line-height: 1.15;
+  opacity: .82;
   overflow-wrap: anywhere;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
   overflow: hidden;
-  max-height: 2.44em;
-  margin-top: .015in;
+  max-height: 2.3em;
+  margin-top: .01in;
 }
 .vp-code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 17pt;
+  font-size: 19pt;
   font-weight: 800;
-  letter-spacing: .04em;
-  line-height: 1.05;
+  letter-spacing: .03em;
+  line-height: 1.02;
   word-break: break-all;
   text-align: center;
 }
-.vp-code-long { font-size: 12.5pt; letter-spacing: .01em; }
-.vp-code-xs { font-size: 9.5pt; letter-spacing: 0; }
-.vp-code-label { font-size: 4.5pt; letter-spacing: .16em; text-transform: uppercase; text-align: center; opacity: .6; line-height: 1.1; }
-.vp-meta { display: flex; justify-content: space-between; align-items: flex-end; gap: .05in; font-size: 4.8pt; opacity: .75; line-height: 1.1; }
-.vp-meta span:last-child { text-align: right; white-space: nowrap; }
-.vp-price { font-size: 9pt; font-weight: 800; opacity: 1; letter-spacing: -.01em; }
+.vp-code-long { font-size: 14pt; letter-spacing: .01em; }
+.vp-code-xs { font-size: 10.5pt; letter-spacing: 0; }
+.vp-code-label { font-size: 5.5pt; letter-spacing: .16em; text-transform: uppercase; text-align: center; opacity: .65; line-height: 1.1; }
+.vp-meta { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: flex-end; gap: .04in; font-size: 5.5pt; opacity: .78; line-height: 1.05; }
+.vp-meta span:last-child { text-align: right; white-space: nowrap; opacity: .85; }
+.vp-price { font-size: 28pt; font-weight: 900; opacity: 1; letter-spacing: -.02em; line-height: .92; }
+
 
 /* ------------------------------------------------------------------ */
 /* Templates — visual design only.                                     */
 /* ------------------------------------------------------------------ */
 
 /* 1. CLASSIC PREMIUM — refined ticket with a hairline rule and cut line. */
-.vp-t-classic { border: 1px solid #0f172a; padding: 0.085in 0.095in; }
+.vp-t-classic { border: 1px solid #0f172a; padding: 0.065in 0.07in; }
 .vp-t-classic .vp-art {
   border: 1px solid rgba(15,23,42,.25);
   border-radius: 0.03in;
-  margin: 0.045in;
+  margin: 0.03in;
 }
 .vp-t-classic .vp-shop { letter-spacing: .1em; }
-.vp-t-classic .vp-code { border-top: 1px dashed rgba(15,23,42,.35); border-bottom: 1px dashed rgba(15,23,42,.35); padding: .025in 0; }
+.vp-t-classic .vp-code { border-top: 1px dashed rgba(15,23,42,.35); border-bottom: 1px dashed rgba(15,23,42,.35); padding: .015in 0; }
 
 /* 2. MINIMAL — quiet Swiss card, maximum legibility. */
 .vp-t-minimal { border: 1px solid #e5e7eb; }
 .vp-t-minimal .vp-brand { display: none; }
-.vp-t-minimal .vp-shop { font-weight: 600; letter-spacing: .14em; font-size: 5.5pt; opacity: .6; }
+.vp-t-minimal .vp-shop { font-weight: 700; letter-spacing: .1em; font-size: 7.5pt; opacity: .7; }
 .vp-t-minimal .vp-code { letter-spacing: .08em; }
 
 /* 3. VERY MODERN — editorial product card, generous type hierarchy. */
 .vp-t-modern { border: 1px solid #e2e8f0; }
 .vp-t-modern .vp-art { border-left: 0.045in solid #1d4ed8; }
 .vp-t-modern .vp-head { padding-left: .02in; }
-.vp-t-modern .vp-shop { color: #1d4ed8; letter-spacing: .12em; font-size: 5.5pt; }
-.vp-t-modern .vp-product { font-size: 8.5pt; letter-spacing: -.01em; }
+.vp-t-modern .vp-shop { color: #1d4ed8; letter-spacing: .08em; font-size: 7.5pt; }
+.vp-t-modern .vp-product { font-size: 9.5pt; letter-spacing: -.01em; }
 .vp-t-modern .vp-code { text-align: left; }
 .vp-t-modern .vp-code-label { text-align: left; }
 
@@ -134,7 +131,7 @@ export const voucherPrintCss = `
 }
 .vp-t-geometric .vp-head { padding-right: .2in; }
 .vp-t-geometric .vp-shop { letter-spacing: .12em; }
-.vp-t-geometric .vp-code { background: #0f172a; color: #ffffff; padding: .04in .02in; border-radius: .02in; }
+.vp-t-geometric .vp-code { background: #0f172a; color: #ffffff; padding: .022in .02in; border-radius: .02in; }
 .vp-t-geometric .vp-price { color: #0f172a; }
 
 /* 5. FUTURISTIC — sleek tech surface, controlled grid. */
@@ -159,10 +156,10 @@ export const voucherPrintCss = `
 
 /* 7. LUXURY — black-tie card with restrained metallic accents. */
 .vp-t-luxury { background: #0c0a09; color: #f5f0e6; border: 1px solid #0c0a09; }
-.vp-t-luxury .vp-art { border: 0.008in solid rgba(212,175,55,.6); margin: 0.05in; border-radius: 0.02in; }
+.vp-t-luxury .vp-art { border: 0.008in solid rgba(212,175,55,.6); margin: 0.03in; border-radius: 0.02in; }
 .vp-t-luxury .vp-brand { color: #d4af37; opacity: .95; }
-.vp-t-luxury .vp-shop { color: #f5f0e6; letter-spacing: .18em; font-size: 6pt; }
-.vp-t-luxury .vp-product { font-family: Georgia, "Times New Roman", serif; font-size: 8pt; }
+.vp-t-luxury .vp-shop { color: #f5f0e6; letter-spacing: .12em; font-size: 8pt; }
+.vp-t-luxury .vp-product { font-family: Georgia, "Times New Roman", serif; font-size: 9pt; }
 .vp-t-luxury .vp-code { color: #d4af37; letter-spacing: .06em; }
 .vp-t-luxury .vp-code-label { color: rgba(212,175,55,.85); }
 .vp-t-luxury .vp-price { color: #d4af37; }
@@ -175,17 +172,17 @@ export const voucherPrintCss = `
     radial-gradient(circle at 5% 100%, rgba(45,212,191,.32) 0 0.45in, transparent 0.45in);
 }
 .vp-t-aurora .vp-shop { color: #4338ca; }
-.vp-t-aurora .vp-body { background: rgba(255,255,255,.62); border: 1px solid rgba(255,255,255,.9); border-radius: .04in; padding: .03in; }
+.vp-t-aurora .vp-body { background: rgba(255,255,255,.62); border: 1px solid rgba(255,255,255,.9); border-radius: .04in; padding: .018in; }
 .vp-t-aurora .vp-code { color: #1e1b4b; }
 .vp-t-aurora .vp-price { color: #0f766e; }
 
 /* 9. BOLD POP — confident shapes and heavy type. */
 .vp-t-pop { border: 0.02in solid #111827; background: #fde047; color: #111827; }
-.vp-t-pop .vp-art { background: linear-gradient(0deg, #fb7185 0 0.16in, transparent 0.16in); }
-.vp-t-pop .vp-shop { font-size: 7.5pt; letter-spacing: 0; }
-.vp-t-pop .vp-code { background: #111827; color: #fde047; padding: .045in .02in; border-radius: .03in; letter-spacing: .02em; }
+.vp-t-pop .vp-art { background: linear-gradient(0deg, #fb7185 0 0.1in, transparent 0.1in); }
+.vp-t-pop .vp-shop { font-size: 9pt; letter-spacing: 0; }
+.vp-t-pop .vp-code { background: #111827; color: #fde047; padding: .025in .02in; border-radius: .03in; letter-spacing: .02em; }
 .vp-t-pop .vp-meta { opacity: .9; }
-.vp-t-pop .vp-price { font-size: 9.5pt; }
+.vp-t-pop .vp-price { font-size: 29pt; }
 
 /* 10. ORGANIC — earthy palette and soft curves. */
 .vp-t-organic { border: 1px solid #d6cbb8; background: #faf7f0; color: #3f3a2f; border-radius: 0.14in; }
@@ -206,7 +203,7 @@ export const voucherPrintCss = `
     linear-gradient(20deg, rgba(34,211,238,.3), transparent 45%);
 }
 .vp-t-neon .vp-shop { color: #f472b6; letter-spacing: .16em; }
-.vp-t-neon .vp-code { color: #22d3ee; border: 0.01in solid rgba(34,211,238,.55); border-radius: .03in; padding: .035in .02in; }
+.vp-t-neon .vp-code { color: #22d3ee; border: 0.01in solid rgba(34,211,238,.55); border-radius: .03in; padding: .02in .02in; }
 .vp-t-neon .vp-code-label { color: #f9a8d4; opacity: .9; }
 .vp-t-neon .vp-price { color: #f472b6; }
 
@@ -215,8 +212,12 @@ export const voucherPrintCss = `
 .vp-t-mono .vp-art { background: repeating-linear-gradient(90deg, rgba(17,24,39,.08) 0 1px, transparent 1px 0.05in); }
 .vp-t-mono .vp-brand { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 .vp-t-mono .vp-shop { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em; }
-.vp-t-mono .vp-body { border-top: 0.015in solid #111827; border-bottom: 0.015in solid #111827; padding: .035in 0; }
+.vp-t-mono .vp-body { border-top: 0.015in solid #111827; border-bottom: 0.015in solid #111827; padding: .02in 0; }
 .vp-t-mono .vp-meta { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+/* Long codes must never inherit a template's wide tracking. */
+.vp-voucher .vp-code-long { letter-spacing: .01em; }
+.vp-voucher .vp-code-xs { letter-spacing: 0; }
 
 @page { margin: 0.25in; }
 
