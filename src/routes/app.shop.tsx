@@ -518,25 +518,55 @@ export function VoucherShopView({
                         variant="outline"
                         className="size-8"
                         disabled={qty <= 1}
-                        onClick={() => setQty((q) => Math.max(1, q - 1))}
+                        onClick={() => {
+                          const next = Math.max(1, qty - 1);
+                          setQty(next);
+                          setQtyText(String(next));
+                        }}
                         aria-label="Decrease quantity"
                       >
                         −
                       </Button>
-                      <span className="w-8 text-center font-semibold tabular-nums">{qty}</span>
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        aria-label="Quantity"
+                        className="h-8 w-16 text-center font-semibold tabular-nums"
+                        value={qtyText}
+                        onChange={(e) => {
+                          const digits = sanitizeQuantityInput(e.target.value);
+                          const parsed = quantityFromInput(digits, maxQty);
+                          setQtyText(parsed === null ? digits : String(parsed));
+                          if (parsed !== null) setQty(parsed);
+                        }}
+                        onBlur={() => {
+                          const next = commitQuantity(qtyText, maxQty);
+                          setQty(next);
+                          setQtyText(String(next));
+                        }}
+                      />
                       <Button
                         type="button"
                         size="icon"
                         variant="outline"
                         className="size-8"
                         disabled={qty >= maxQty}
-                        onClick={() => setQty((q) => Math.min(maxQty, q + 1))}
+                        onClick={() => {
+                          const next = Math.min(maxQty, qty + 1);
+                          setQty(next);
+                          setQtyText(String(next));
+                        }}
                         aria-label="Increase quantity"
                       >
                         +
                       </Button>
                     </div>
                   </div>
+                  <p className="text-right text-[11px] text-muted-foreground">
+                    Type any quantity from 1 to {maxQty}.
+                  </p>
+
                   <p className="flex justify-between">
                     <span className="text-muted-foreground">Unit price</span>
                     <span className="font-medium">{peso(unit)}</span>
