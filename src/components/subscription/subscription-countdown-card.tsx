@@ -17,13 +17,18 @@ export function SubscriptionCountdownCard({
   periodEnd,
   graceDays,
   state,
+  monthlyPrice,
 }: {
   planName?: string | null;
   periodEnd: string | null | undefined;
   graceDays: number;
   state?: string | null;
+  /** `ecosystems.plan_price`. Zero = free shop: no countdown at all. */
+  monthlyPrice?: number | string | null;
 }) {
-  const c = subscriptionCountdown({ periodEnd, graceDays, state });
+  const c = subscriptionCountdown({ periodEnd, graceDays, state, monthlyPrice });
+  // A zero-priced shop has nothing to renew, so no timer is shown at all.
+  if (c.free) return null;
   const border =
     c.tone === "danger"
       ? "border-destructive/50 bg-destructive/5"

@@ -39,6 +39,15 @@ export function planTotalPhp(monthlyPrice: number | string | null | undefined, m
   return round2(price * normalizeMonths(months));
 }
 
+/**
+ * A deliberately zero-priced subscription. Mirrors `subscription_is_free` in
+ * the database: nothing is owed, so nothing expires and no timer is shown.
+ */
+export function isFreePrice(monthlyPrice: number | string | null | undefined): boolean {
+  const n = Number(monthlyPrice ?? 0);
+  return !Number.isFinite(n) || n <= 0;
+}
+
 export function monthsLabel(months: number): string {
   const m = normalizeMonths(months);
   return m === 1 ? "1 month" : `${m} months`;
@@ -83,6 +92,8 @@ export interface SubscriptionCountdown {
   freezeAt: Date | null;
   expired: boolean;
   frozen: boolean;
+  /** True when the shop is priced at zero — no payment, no countdown, no freeze. */
+  free: boolean;
   /** Longer sentence naming the actual configured deadline. */
   detail: string;
 }
@@ -106,9 +117,24 @@ export function subscriptionCountdown(input: {
   graceDays: number;
   /** `ecosystems.subscription_state`. */
   state?: string | null | undefined;
+  /** `ecosystems.plan_price` — 0 means the platform owner made this shop free. */
+  monthlyPrice?: number | string | null | undefined;
   now?: Date;
 }): SubscriptionCountdown {
   const now = input.now ?? new Date();
+  if (input.monthlyPrice !== undefined && isFreePrice(input.monthlyPrice)) {
+    return {
+      label: "Free subscription",
+      tone: "muted",
+      daysRemaining: 0,
+      daysUntilFreeze: 0,
+      freezeAt: null,
+      expired: false,
+      frozen: false,
+      free: true,
+      detail: "This shop is set to no monthly charge, so there is nothing to renew and it is never frozen for non-payment.",
+    };
+  }
   const end = input.periodEnd ? new Date(input.periodEnd) : null;
   const grace = Math.max(0, Math.floor(Number(input.graceDays) || 0));
 
@@ -121,6 +147,7 @@ export function subscriptionCountdown(input: {
       freezeAt: null,
       expired: false,
       frozen: false,
+      free: false,
       detail: "This shop has no subscription end date recorded yet.",
     };
   }
@@ -144,6 +171,7 @@ export function subscriptionCountdown(input: {
       freezeAt,
       expired: true,
       frozen: true,
+      free: false,
       detail: `The subscription ended on ${end.toLocaleDateString()} and the grace period is over, so shop operations are frozen until a payment is recognised.`,
     };
   }
@@ -162,6 +190,7 @@ export function subscriptionCountdown(input: {
       freezeAt,
       expired: true,
       frozen: false,
+      free: false,
       detail: `The subscription ended on ${end.toLocaleDateString()}. ${graceText}`,
     };
   }
@@ -174,6 +203,7 @@ export function subscriptionCountdown(input: {
     freezeAt,
     expired: false,
     frozen: false,
+    free: false,
     detail: `Paid until ${end.toLocaleDateString()}. ${graceText}`,
   };
 }

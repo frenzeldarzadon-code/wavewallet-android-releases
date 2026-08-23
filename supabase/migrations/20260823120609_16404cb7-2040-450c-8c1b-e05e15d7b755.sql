@@ -1,0 +1,1 @@
+revoke execute on function public.subscription_is_free(uuid) from anon;

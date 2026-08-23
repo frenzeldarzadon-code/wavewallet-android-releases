@@ -6620,6 +6620,27 @@ export type Database = {
     }
     Functions: {
       acting_as: { Args: never; Returns: string }
+      activate_free_subscription: {
+        Args: { _ecosystem_id: string; _months?: number; _plan_id: string }
+        Returns: {
+          allocation_total: number
+          created_at: string
+          demo_seed_credits: number
+          ecosystem_id: string
+          period_end: string | null
+          period_start: string | null
+          plan_id: string | null
+          review_ends_at: string | null
+          state: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "shop_subscriptions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       activate_go_live_request: {
         Args: { _request_id: string }
         Returns: string
@@ -10549,6 +10570,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      subscription_is_free: {
+        Args: { _ecosystem_id: string }
+        Returns: boolean
       }
       subscription_ok: { Args: { _ecosystem_id: string }; Returns: boolean }
       subscription_quote: {

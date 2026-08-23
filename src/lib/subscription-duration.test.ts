@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   DURATION_OPTIONS,
   addMonths,
+  isFreePrice,
   coveragePeriod,
   normalizeMonths,
   planTotalPhp,
   subscriptionCountdown,
 } from "./subscription-duration";
+import { isFreeSubscription, isSubscriptionOk } from "./auth";
 
 const DAY = 86_400_000;
 const at = (days: number) => new Date(Date.now() + days * DAY);
@@ -110,5 +112,77 @@ describe("dashboard countdown", () => {
     const c = subscriptionCountdown({ periodEnd: null, graceDays: 5 });
     expect(c.label).toBe("No renewal date set");
     expect(c.freezeAt).toBeNull();
+  });
+});
+
+/* ------------------------------------------------------------------ *
+ * Zero-priced (free) subscriptions — Super Admin set the price to 0.
+ * ------------------------------------------------------------------ */
+describe("zero-priced subscriptions", () => {
+  it("recognises only a zero/blank price as free", () => {
+    expect(isFreePrice(0)).toBe(true);
+    expect(isFreePrice("0")).toBe(true);
+    expect(isFreePrice(null)).toBe(true);
+    expect(isFreePrice(150)).toBe(false);
+    expect(isFreePrice("0.01")).toBe(false);
+  });
+
+  it("charges nothing for any duration of a free plan", () => {
+    expect(planTotalPhp(0, 1)).toBe(0);
+    expect(planTotalPhp(0, 24)).toBe(0);
+    expect(planTotalPhp(150, 2)).toBe(300);
+  });
+
+  it("shows no countdown and never freezes a free shop, even long past its period end", () => {
+    const c = subscriptionCountdown({
+      periodEnd: new Date("2020-01-01T00:00:00Z"),
+      graceDays: 5,
+      state: "active",
+      monthlyPrice: 0,
+      now: new Date("2026-01-01T00:00:00Z"),
+    });
+    expect(c.free).toBe(true);
+    expect(c.frozen).toBe(false);
+    expect(c.expired).toBe(false);
+    expect(c.freezeAt).toBeNull();
+    expect(c.label).not.toMatch(/remaining|Expires|Frozen/);
+  });
+
+  it("keeps a paid shop on the normal expiry/grace/freeze path", () => {
+    const c = subscriptionCountdown({
+      periodEnd: new Date("2026-01-01T00:00:00Z"),
+      graceDays: 5,
+      state: "active",
+      monthlyPrice: 150,
+      now: new Date("2026-01-10T00:00:00Z"),
+    });
+    expect(c.free).toBe(false);
+    expect(c.frozen).toBe(true);
+  });
+});
+
+describe("isSubscriptionOk with a zero price", () => {
+  const base = {
+    subscription_state: "active",
+    current_period_end: new Date(Date.now() - 90 * 86_400_000).toISOString(),
+    grace_period_days: 5,
+    plan_price: 0,
+    is_review: false,
+  } as never;
+
+  it("keeps a free live shop operational after its period end", () => {
+    expect(isFreeSubscription(base)).toBe(true);
+    expect(isSubscriptionOk(base)).toBe(true);
+  });
+
+  it("still freezes a priced shop after its period end", () => {
+    const paid = { ...(base as object), plan_price: 150 } as never;
+    expect(isFreeSubscription(paid)).toBe(false);
+    expect(isSubscriptionOk(paid)).toBe(false);
+  });
+
+  it("does not treat a Demo/review shop as free", () => {
+    const demo = { ...(base as object), is_review: true } as never;
+    expect(isFreeSubscription(demo)).toBe(false);
   });
 });
