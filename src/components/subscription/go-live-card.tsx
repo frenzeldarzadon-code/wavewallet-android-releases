@@ -170,24 +170,35 @@ export function GoLiveCard({
 
   const load = useCallback(async () => {
     try {
-      const [p, g, r, m] = await Promise.all([
+      const [p, g, r, m, sub] = await Promise.all([
         fetchPlans(),
         fetchPlatformGcash(),
         fetchGoLiveRequest(ecosystemId),
         fetchPaymentMethods(true, { ecosystemId: null }).catch(() => [] as PaymentMethod[]),
+        // The shop's existing subscription record — the current plan comes
+        // from there, never from a guess.
+        supabase
+          .from("shop_subscriptions")
+          .select("plan_id")
+          .eq("ecosystem_id", ecosystemId)
+          .maybeSingle()
+          .then(({ data }) => (data?.plan_id as string | null) ?? null)
+          .catch(() => null),
       ]);
       setPlans(p);
       setGcash(g);
       setRequest(r);
       setMethods(m);
+      setCurrentPlanId(sub);
       setMethodId((v) => v || (m.length === 1 ? m[0]!.id : null));
-      setPlanId((v) => v || p[0]?.id || "");
+      setPlanId((v) => v || sub || p[0]?.id || "");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not load the Go Live details");
     } finally {
       setLoading(false);
     }
   }, [ecosystemId]);
+
 
   useEffect(() => {
     void load();
