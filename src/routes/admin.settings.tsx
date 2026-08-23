@@ -396,6 +396,10 @@ function AdminSettings() {
         </>
       ) : null}
       <RetentionPolicyCard />
+      {ecosystemDbId ? (
+        <DeleteShopCard ecosystemId={ecosystemDbId} shopName={ecosystem.name} />
+      ) : null}
     </>
+
   );
 }
