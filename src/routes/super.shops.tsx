@@ -30,6 +30,13 @@ import { GoLiveRequestsCard } from "@/components/super/go-live-requests-card";
 import { planLabel } from "@/lib/subscription-plan-label";
 import { peso, shortDate } from "@/lib/wavewallet";
 import {
+  fetchPaymentRequests,
+  latestPerShop,
+  overrideSubscriptionPayment,
+  paymentNote,
+  type PendingPaymentShop,
+} from "@/lib/payment-override";
+import {
   activateSubscription,
   daysUntil,
   fetchPlans,
@@ -70,24 +77,30 @@ function SuperShops() {
   const [target, setTarget] = useState<SubscriptionShop | null>(null);
   const [override, setOverride] = useState<SubscriptionShop | null>(null);
   const [legacy, setLegacy] = useState<Ecosystem[]>([]);
+  const [requests, setRequests] = useState<PendingPaymentShop[]>([]);
+  const [payTarget, setPayTarget] = useState<SubscriptionShop | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [s, p, l] = await Promise.all([
+      const [s, p, l, r] = await Promise.all([
         fetchSubscriptionShops(),
         fetchPlans(),
         fetchLegacyShops(),
+        fetchPaymentRequests().catch(() => [] as PendingPaymentShop[]),
       ]);
       setShops(s);
       setPlans(p);
       setLegacy(l);
+      setRequests(r);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not load Subscription Shops");
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const requestByShop = useMemo(() => latestPerShop(requests), [requests]);
 
   useEffect(() => {
     void load();
@@ -203,6 +216,8 @@ function SuperShops() {
             {shops.map((s) => {
               const sub = s.subscription;
               const left = daysUntil(sub?.period_end ?? s.review_ends_at);
+              const req = requestByShop[s.id];
+              const note = paymentNote(req);
               return (
                 <Card key={s.id} className="shadow-[var(--shadow-card)]">
                   <CardContent className="px-4">
@@ -214,6 +229,9 @@ function SuperShops() {
                           <StatusBadge tone={subscriptionStateTone(sub?.state)}>
                             {subscriptionStateLabel(sub?.state)}
                           </StatusBadge>
+                          {req?.payment_override ? (
+                            <StatusBadge tone="warning">Payment overridden</StatusBadge>
+                          ) : null}
                         </div>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {planLabel(s.plan_name, s.plan_price)} ·{" "}
@@ -227,6 +245,12 @@ function SuperShops() {
                               : "Not activated"}
                           {left !== null ? ` · ${left} day${left === 1 ? "" : "s"} left` : ""}
                         </p>
+                        {note ? (
+                          <p className="mt-1 text-xs font-medium text-warning">
+                            {note}
+                            {req?.payment_reference ? ` · Ref ${req.payment_reference}` : ""}
+                          </p>
+                        ) : null}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <Button size="sm" onClick={() => setTarget(s)}>
@@ -235,8 +259,14 @@ function SuperShops() {
                         <Button size="sm" variant="outline" onClick={() => setOverride(s)}>
                           Override / discount
                         </Button>
+                        {req && req.status === "pending" ? (
+                          <Button size="sm" variant="outline" onClick={() => setPayTarget(s)}>
+                            Override payment requirement
+                          </Button>
+                        ) : null}
                       </div>
                     </div>
+
                   </CardContent>
                 </Card>
               );
@@ -253,6 +283,16 @@ function SuperShops() {
 
       <SubscriptionPlansCard onSaved={() => void load()} />
 
+      <PaymentOverrideDialog
+        shop={payTarget}
+        request={payTarget ? requestByShop[payTarget.id] : undefined}
+        onClose={() => setPayTarget(null)}
+        onDone={() => {
+          setPayTarget(null);
+          void load();
+        }}
+      />
+
       <OverrideDialog
         shop={override}
         plans={plans}
@@ -262,6 +302,7 @@ function SuperShops() {
           void load();
         }}
       />
+
 
       <ActivateDialog
         shop={target}
@@ -562,5 +603,84 @@ function Row({ label, value, strong }: { label: string; value: string; strong?: 
       <span className="text-muted-foreground">{label}</span>
       <span className={strong ? "font-semibold" : ""}>{value}</span>
     </div>
+  );
+}
+
+/**
+ * Payment-requirement override.
+ *
+ * Reusable for any shop whose payment cannot be verified (bank transfer with
+ * no notification, unreadable receipt, final-test shop). The override
+ * activates the plan the operator actually requested and is audit-logged with
+ * the reason the platform owner gives here.
+ */
+function PaymentOverrideDialog({
+  shop,
+  request,
+  onClose,
+  onDone,
+}: {
+  shop: SubscriptionShop | null;
+  request: PendingPaymentShop | undefined;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setReason("");
+  }, [shop?.id]);
+
+  const submit = async () => {
+    if (!shop) return;
+    setBusy(true);
+    try {
+      await overrideSubscriptionPayment(shop.id, reason);
+      toast.success(`${shop.name} activated — payment requirement overridden.`);
+      onDone();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not override the payment");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open={Boolean(shop)} onOpenChange={(o) => (!o ? onClose() : undefined)}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Override payment requirement</DialogTitle>
+          <DialogDescription>
+            Activates {shop?.name} on the plan it requested
+            {request?.plan_name ? ` (${request.plan_name})` : ""} without a verified payment. The
+            override, your name and this reason are recorded permanently.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-1.5">
+          <Label htmlFor="payoverride">Reason (required)</Label>
+          <Textarea
+            id="payoverride"
+            rows={3}
+            value={reason}
+            placeholder="Why can this payment not be verified normally?"
+            onChange={(e) => setReason(e.target.value)}
+          />
+          {request?.payment_reference ? (
+            <p className="text-xs text-muted-foreground">
+              Submitted reference: {request.payment_reference}
+            </p>
+          ) : null}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button disabled={busy || reason.trim().length === 0} onClick={() => void submit()}>
+            {busy ? "Overriding…" : "Override and activate"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

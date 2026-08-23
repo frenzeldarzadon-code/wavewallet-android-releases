@@ -3218,10 +3218,12 @@ export type Database = {
           actor_name: string
           counts: Json
           created_at: string
+          deletion_kind: string
           ecosystem_id: string
           ecosystem_name: string
           ecosystem_slug: string
           id: string
+          outstanding_snapshot: Json | null
           reason: string
         }
         Insert: {
@@ -3229,10 +3231,12 @@ export type Database = {
           actor_name: string
           counts?: Json
           created_at?: string
+          deletion_kind?: string
           ecosystem_id: string
           ecosystem_name: string
           ecosystem_slug: string
           id?: string
+          outstanding_snapshot?: Json | null
           reason: string
         }
         Update: {
@@ -3240,10 +3244,12 @@ export type Database = {
           actor_name?: string
           counts?: Json
           created_at?: string
+          deletion_kind?: string
           ecosystem_id?: string
           ecosystem_name?: string
           ecosystem_slug?: string
           id?: string
+          outstanding_snapshot?: Json | null
           reason?: string
         }
         Relationships: []
@@ -5734,6 +5740,10 @@ export type Database = {
           payer_reference_key: string | null
           payment_method_id: string | null
           payment_method_name: string | null
+          payment_override: boolean
+          payment_override_at: string | null
+          payment_override_by: string | null
+          payment_override_reason: string | null
           payment_reference: string
           period_end: string | null
           period_start: string | null
@@ -5783,6 +5793,10 @@ export type Database = {
           payer_reference_key?: string | null
           payment_method_id?: string | null
           payment_method_name?: string | null
+          payment_override?: boolean
+          payment_override_at?: string | null
+          payment_override_by?: string | null
+          payment_override_reason?: string | null
           payment_reference: string
           period_end?: string | null
           period_start?: string | null
@@ -5832,6 +5846,10 @@ export type Database = {
           payer_reference_key?: string | null
           payment_method_id?: string | null
           payment_method_name?: string | null
+          payment_override?: boolean
+          payment_override_at?: string | null
+          payment_override_by?: string | null
+          payment_override_reason?: string | null
           payment_reference?: string
           period_end?: string | null
           period_start?: string | null
@@ -7370,6 +7388,10 @@ export type Database = {
       }
       delete_expense: { Args: { _id: string }; Returns: boolean }
       delete_listener_source_rule: { Args: { _rule: string }; Returns: boolean }
+      delete_own_shop: {
+        Args: { _confirm_name: string; _ecosystem_id: string; _reason: string }
+        Returns: Json
+      }
       delete_payment_method: { Args: { _id: string }; Returns: undefined }
       delete_social_promotion_tier: {
         Args: { _tier_id: string }
@@ -8265,6 +8287,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      override_subscription_payment: {
+        Args: { _ecosystem_id: string; _reason: string }
+        Returns: Json
+      }
       payment_account_tail: { Args: { _value: string }; Returns: string }
       payment_name_key: { Args: { _value: string }; Returns: string }
       payment_provider_by_name: { Args: { _name: string }; Returns: string }
@@ -8454,6 +8480,16 @@ export type Database = {
       }
       purge_ecosystem: {
         Args: { _confirm_name: string; _ecosystem_id: string; _reason: string }
+        Returns: Json
+      }
+      purge_ecosystem_internal: {
+        Args: {
+          _actor: string
+          _deletion_kind: string
+          _ecosystem_id: string
+          _outstanding?: Json
+          _reason: string
+        }
         Returns: Json
       }
       rate_retail_product: {
@@ -9262,6 +9298,10 @@ export type Database = {
           payer_reference_key: string | null
           payment_method_id: string | null
           payment_method_name: string | null
+          payment_override: boolean
+          payment_override_at: string | null
+          payment_override_by: string | null
+          payment_override_reason: string | null
           payment_reference: string
           period_end: string | null
           period_start: string | null
@@ -10020,6 +10060,11 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      shop_deletion_check: { Args: { _ecosystem_id: string }; Returns: Json }
+      shop_deletion_check_unchecked: {
+        Args: { _ecosystem_id: string }
+        Returns: Json
+      }
       shop_discovery_municipalities: {
         Args: never
         Returns: {
@@ -10547,6 +10592,10 @@ export type Database = {
           payer_reference_key: string | null
           payment_method_id: string | null
           payment_method_name: string | null
+          payment_override: boolean
+          payment_override_at: string | null
+          payment_override_by: string | null
+          payment_override_reason: string | null
           payment_reference: string
           period_end: string | null
           period_start: string | null
@@ -10614,6 +10663,10 @@ export type Database = {
           payer_reference_key: string | null
           payment_method_id: string | null
           payment_method_name: string | null
+          payment_override: boolean
+          payment_override_at: string | null
+          payment_override_by: string | null
+          payment_override_reason: string | null
           payment_reference: string
           period_end: string | null
           period_start: string | null
