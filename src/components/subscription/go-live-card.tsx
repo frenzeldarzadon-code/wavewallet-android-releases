@@ -995,7 +995,8 @@ export function GoLiveCard({
               )}
 
             </>
-          )}
+          ) : null}
+
         </CardContent>
       </Card>
     </PageSection>
