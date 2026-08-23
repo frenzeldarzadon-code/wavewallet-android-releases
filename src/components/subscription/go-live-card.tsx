@@ -427,11 +427,11 @@ export function GoLiveCard({
                   ) : null}
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="gl-number">Mobile number or account you paid from</Label>
+                  <Label htmlFor="gl-number">Account number or mobile number you paid from</Label>
                   <Input
                     id="gl-number"
                     inputMode="numeric"
-                    placeholder="09XXXXXXXXX"
+                    placeholder="Account number or 09XXXXXXXXX"
                     aria-invalid={Boolean(errorFor("payerNumber"))}
                     className={errorFor("payerNumber") ? "border-destructive" : undefined}
                     value={payerNumber}
