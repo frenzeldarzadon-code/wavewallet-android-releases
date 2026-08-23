@@ -391,7 +391,31 @@ export function GoLiveCard({
     }
   };
 
+  /**
+   * Withdraw a payment that is still waiting for verification, so the operator
+   * is never locked out of Renew / Extend / Change by a payment that will
+   * never complete. Verified or already-activated payments are refused by the
+   * database — this never touches the listener or matching rules.
+   */
+  const cancelPending = async () => {
+    if (!request) return;
+    setBusy(true);
+    setServerError(null);
+    try {
+      await cancelGoLivePayment(request.id);
+      toast.success("That pending payment was withdrawn.");
+      await load();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "That payment could not be withdrawn.";
+      setServerError(msg);
+      toast.error(msg);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const activateFree = async () => {
+
     if (!plan) return;
     setBusy(true);
     setServerError(null);
