@@ -8482,6 +8482,16 @@ export type Database = {
         Args: { _confirm_name: string; _ecosystem_id: string; _reason: string }
         Returns: Json
       }
+      purge_ecosystem_internal: {
+        Args: {
+          _actor: string
+          _deletion_kind: string
+          _ecosystem_id: string
+          _outstanding?: Json
+          _reason: string
+        }
+        Returns: Json
+      }
       rate_retail_product: {
         Args: {
           _comment?: string
@@ -10051,6 +10061,10 @@ export type Database = {
         }
       }
       shop_deletion_check: { Args: { _ecosystem_id: string }; Returns: Json }
+      shop_deletion_check_unchecked: {
+        Args: { _ecosystem_id: string }
+        Returns: Json
+      }
       shop_discovery_municipalities: {
         Args: never
         Returns: {
