@@ -10428,128 +10428,67 @@ export type Database = {
         Args: { _reason?: string; _target: string }
         Returns: string
       }
-      submit_go_live_payment:
-        | {
-            Args: {
-              _amount_paid?: number
-              _ecosystem_id: string
-              _months?: number
-              _payer_number: string
-              _plan_id: string
-              _proof_path?: string
-              _reference: string
-            }
-            Returns: {
-              amount_due: number
-              amount_paid: number | null
-              auto_reason: string | null
-              auto_state: string
-              billing_period: string
-              created_at: string
-              currency: string
-              decision_reason: string | null
-              ecosystem_id: string
-              id: string
-              listener_event_id: string | null
-              monthly_rate: number | null
-              months_purchased: number | null
-              payer_number: string | null
-              payer_number_key: string | null
-              payer_reference_key: string | null
-              payment_method_id: string | null
-              payment_method_name: string | null
-              payment_reference: string
-              period_end: string | null
-              period_start: string | null
-              plan_id: string | null
-              plan_name: string
-              plan_price: number
-              previous_period_end: string | null
-              proof_path: string | null
-              purpose: string
-              receipt_amount_php: number | null
-              receipt_check: string
-              receipt_details: Json | null
-              receipt_paid_at: string | null
-              receipt_reference_key: string | null
-              receipt_sender_key: string | null
-              remainder_amount: number
-              requested_by: string | null
-              requested_by_name: string
-              reviewed_at: string | null
-              reviewed_by: string | null
-              reviewed_by_name: string | null
-              status: string
-              updated_at: string
-            }
-            SetofOptions: {
-              from: "*"
-              to: "subscription_requests"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: {
-              _amount_paid?: number
-              _ecosystem_id: string
-              _months?: number
-              _payer_number: string
-              _payment_method_id?: string
-              _plan_id: string
-              _proof_path?: string
-              _reference: string
-            }
-            Returns: {
-              amount_due: number
-              amount_paid: number | null
-              auto_reason: string | null
-              auto_state: string
-              billing_period: string
-              created_at: string
-              currency: string
-              decision_reason: string | null
-              ecosystem_id: string
-              id: string
-              listener_event_id: string | null
-              monthly_rate: number | null
-              months_purchased: number | null
-              payer_number: string | null
-              payer_number_key: string | null
-              payer_reference_key: string | null
-              payment_method_id: string | null
-              payment_method_name: string | null
-              payment_reference: string
-              period_end: string | null
-              period_start: string | null
-              plan_id: string | null
-              plan_name: string
-              plan_price: number
-              previous_period_end: string | null
-              proof_path: string | null
-              purpose: string
-              receipt_amount_php: number | null
-              receipt_check: string
-              receipt_details: Json | null
-              receipt_paid_at: string | null
-              receipt_reference_key: string | null
-              receipt_sender_key: string | null
-              remainder_amount: number
-              requested_by: string | null
-              requested_by_name: string
-              reviewed_at: string | null
-              reviewed_by: string | null
-              reviewed_by_name: string | null
-              status: string
-              updated_at: string
-            }
-            SetofOptions: {
-              from: "*"
-              to: "subscription_requests"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
+      submit_go_live_payment: {
+        Args: {
+          _amount_paid?: number
+          _ecosystem_id: string
+          _months?: number
+          _payer_number: string
+          _payment_method_id?: string
+          _plan_id: string
+          _proof_path?: string
+          _reference: string
+        }
+        Returns: {
+          amount_due: number
+          amount_paid: number | null
+          auto_reason: string | null
+          auto_state: string
+          billing_period: string
+          created_at: string
+          currency: string
+          decision_reason: string | null
+          ecosystem_id: string
+          id: string
+          listener_event_id: string | null
+          monthly_rate: number | null
+          months_purchased: number | null
+          payer_number: string | null
+          payer_number_key: string | null
+          payer_reference_key: string | null
+          payment_method_id: string | null
+          payment_method_name: string | null
+          payment_reference: string
+          period_end: string | null
+          period_start: string | null
+          plan_id: string | null
+          plan_name: string
+          plan_price: number
+          previous_period_end: string | null
+          proof_path: string | null
+          purpose: string
+          receipt_amount_php: number | null
+          receipt_check: string
+          receipt_details: Json | null
+          receipt_paid_at: string | null
+          receipt_reference_key: string | null
+          receipt_sender_key: string | null
+          remainder_amount: number
+          requested_by: string | null
+          requested_by_name: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewed_by_name: string | null
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "subscription_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       submit_guide_question: {
         Args: { _contact?: string; _question: string }
         Returns: string

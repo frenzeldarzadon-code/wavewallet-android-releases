@@ -1,0 +1,1 @@
+drop function if exists public.submit_go_live_payment(uuid, uuid, text, text, integer, numeric, text);
