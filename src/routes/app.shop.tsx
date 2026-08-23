@@ -93,6 +93,9 @@ export function VoucherShopView({
   const [avail, setAvail] = useState<"all" | "in" | "points">("all");
   const [buying, setBuying] = useState<{ product: ShopProduct; method: Method } | null>(null);
   const [qty, setQty] = useState(1);
+  // The typed value, kept separate so the field may be briefly empty while the
+  // buyer replaces "1" with e.g. "50". `qty` always stays a valid quantity.
+  const [qtyText, setQtyText] = useState("1");
   const [customerName, setCustomerName] = useState("");
   const [payment, setPayment] = useState<PaymentStatus>(null);
   const [busy, setBusy] = useState(false);
