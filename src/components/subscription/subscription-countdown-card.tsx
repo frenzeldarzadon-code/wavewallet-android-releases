@@ -49,10 +49,12 @@ export function SubscriptionCountdownCard({
           <p className="text-xs leading-relaxed text-muted-foreground">{c.detail}</p>
         </div>
         <Button asChild variant={c.tone === "success" ? "outline" : "default"}>
-          <Link to="/admin/go-live">
-            <Rocket className="mr-1 size-4" /> {c.expired ? "Pay now" : "Renew or change plan"}
+          <Link to="/admin/go-live" search={{ intent: "renew" }}>
+            <Rocket className="mr-1 size-4" />{" "}
+            {c.expired ? "Pay now" : "Renew, extend or change plan"}
           </Link>
         </Button>
+
       </CardContent>
     </Card>
   );
