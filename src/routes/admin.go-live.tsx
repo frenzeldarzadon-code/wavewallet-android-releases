@@ -24,6 +24,12 @@ const DESCRIPTION =
   "Turn your free Demo shop into a live WaveWallet shop: pick a plan, pay it with GCash and keep the same login, name and settings.";
 
 export const Route = createFileRoute("/admin/go-live")({
+  // Which of the three intents the operator arrived with. The card still shows
+  // all three; this only preselects the one they tapped.
+  validateSearch: (search: Record<string, unknown>): { intent?: SubscriptionIntent } => {
+    const raw = search.intent;
+    return raw === "renew" || raw === "extend" || raw === "change" ? { intent: raw } : {};
+  },
   head: () => ({
     meta: [
       { title: TITLE },
@@ -36,6 +42,7 @@ export const Route = createFileRoute("/admin/go-live")({
   }),
   component: AdminGoLivePage,
 });
+
 
 function AdminGoLivePage() {
   const { ecosystemDbId } = useSession("admin");
