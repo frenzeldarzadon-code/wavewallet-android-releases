@@ -15,10 +15,10 @@ describe("goLiveStatusLine", () => {
     expect(line).toContain("finishing activation");
   });
 
-  it("reports the real pending reason", () => {
-    expect(goLiveStatusLine(req({ status: "pending", auto_reason: "Waiting for GCash" }), false)).toBe(
-      "Waiting for GCash",
-    );
+  it("never leaks internal verification reasons while pending", () => {
+    const line = goLiveStatusLine(req({ status: "pending", auto_reason: "Waiting for GCash" }), false);
+    expect(line).not.toMatch(/GCash/i);
+    expect(line).toContain("verification in progress");
     expect(goLiveStatusLine(null)).toBe("No payment submitted yet.");
   });
 });

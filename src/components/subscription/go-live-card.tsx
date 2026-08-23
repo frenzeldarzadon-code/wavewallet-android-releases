@@ -106,7 +106,6 @@ export function GoLiveCard({
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [proofPath, setProofPath] = useState<string | null>(null);
   const [reading, setReading] = useState(false);
-  const [receiptNote, setReceiptNote] = useState<string | null>(null);
   /** Everything the reader saw — provider-neutral, kept verbatim as evidence. */
   const [extract, setExtract] = useState<ReceiptExtraction | null>(null);
   /** Which autofilled fields the applicant has since edited by hand. */
@@ -295,11 +294,11 @@ export function GoLiveCard({
       // Second layer: the server reads the same screenshot again and that
       // reading — not anything sent by this browser — is what gets stored.
       try {
-        const checked = await verifyGoLiveReceipt({ data: { requestId: r.id } });
-        void checked;
-        setReceiptNote(null);
+        // Server-side receipt verification still runs exactly as before; its
+        // outcome is deliberately not surfaced to the applicant.
+        await verifyGoLiveReceipt({ data: { requestId: r.id } });
       } catch {
-        setReceiptNote(null);
+        /* verification outcome is never shown to the applicant */
       }
       if (r.status === "approved") {
         toast.success("Payment verified — activating your shop now.");
