@@ -22,7 +22,7 @@ import { reviewCountdown } from "@/lib/review-demo";
 
 const TITLE = "Go Live — WaveWallet shop subscription";
 const DESCRIPTION =
-  "Turn your free Demo shop into a live WaveWallet shop: pick a plan, pay it with GCash and keep the same login, name and settings.";
+  "Manage your WaveWallet shop subscription: pick a plan, pay it and renew, extend or change plan at any time.";
 
 export const Route = createFileRoute("/admin/go-live")({
   // Which of the three intents the operator arrived with. The card still shows
