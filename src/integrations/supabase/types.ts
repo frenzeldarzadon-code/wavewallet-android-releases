@@ -7502,6 +7502,20 @@ export type Database = {
           slug: string
         }[]
       }
+      go_live_has_strong_signal: {
+        Args: {
+          _ev: Database["public"]["Tables"]["listener_events"]["Row"]
+          _req: Database["public"]["Tables"]["subscription_requests"]["Row"]
+        }
+        Returns: boolean
+      }
+      go_live_match_signals: {
+        Args: {
+          _ev: Database["public"]["Tables"]["listener_events"]["Row"]
+          _req: Database["public"]["Tables"]["subscription_requests"]["Row"]
+        }
+        Returns: number
+      }
       go_live_reference_duplicate: {
         Args: { _id?: string; _key: string }
         Returns: string
