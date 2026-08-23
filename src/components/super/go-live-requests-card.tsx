@@ -153,7 +153,9 @@ function RequestRow({
             <p className="text-xs text-muted-foreground">
               {request.plan_name} · {peso(Number(request.amount_due))} ·{" "}
               {monthsLabel(requestMonths(request))} · Ref {request.payment_reference} ·{" "}
+              {request.payment_method_name ? `Paid to ${request.payment_method_name} · ` : ""}
               {shortDate(request.created_at)}
+
             </p>
           </div>
           <StatusBadge tone={status.tone}>{status.badge}</StatusBadge>

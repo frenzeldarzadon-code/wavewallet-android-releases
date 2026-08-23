@@ -76,6 +76,8 @@ export async function submitGoLivePayment(input: {
   amountPaid?: number | null;
   /** Required: object path in the shared private cash-in-proofs bucket. */
   proofPath: string;
+  /** Which published WaveWallet receiving account the applicant paid into. */
+  paymentMethodId?: string | null;
 }): Promise<SubscriptionRequest> {
   requireOnline();
   const problem = validateGoLive({ ...input, proofPath: input.proofPath });
@@ -88,10 +90,12 @@ export async function submitGoLivePayment(input: {
     _months: input.months ?? 1,
     ...(input.amountPaid != null ? { _amount_paid: input.amountPaid } : {}),
     ...(input.proofPath ? { _proof_path: input.proofPath } : {}),
-  });
+    ...(input.paymentMethodId ? { _payment_method_id: input.paymentMethodId } : {}),
+  } as never);
   if (error) throw new Error(error.message);
   return data as unknown as SubscriptionRequest;
 }
+
 
 /** Platform owner override: any plan, any discount, or free (100% off). */
 export async function superadminSetShopPlan(input: {

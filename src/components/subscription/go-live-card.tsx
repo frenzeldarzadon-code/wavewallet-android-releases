@@ -36,7 +36,8 @@ import {
   type SubscriptionRequest,
 } from "@/lib/go-live";
 import { CashInProofPicker } from "@/components/money/cash-in-proof";
-import { uploadCashInProof, removeCashInProof } from "@/lib/wallet-money";
+import { uploadCashInProof, removeCashInProof, fetchPaymentMethods, type PaymentMethod } from "@/lib/wallet-money";
+import { PaymentMethodCards } from "@/components/money/payment-method-cards";
 import { extractCashInReceipt } from "@/lib/cash-in-receipt.functions";
 import { verifyGoLiveReceipt } from "@/lib/go-live-receipt.functions";
 import { RECEIPT_CHECK_LABEL } from "@/lib/cash-in-receipt";
@@ -65,6 +66,10 @@ export function GoLiveCard({
 }) {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [gcash, setGcash] = useState<Gcash>(null);
+  // Every ACTIVE platform-wide receiving account the platform owner published.
+  // Nothing here is invented: the list is exactly what is configured.
+  const [methods, setMethods] = useState<PaymentMethod[]>([]);
+  const [methodId, setMethodId] = useState<string | null>(null);
   const [request, setRequest] = useState<SubscriptionRequest | null>(null);
   const [planId, setPlanId] = useState("");
   const [months, setMonths] = useState("1");
@@ -118,14 +123,17 @@ export function GoLiveCard({
 
   const load = useCallback(async () => {
     try {
-      const [p, g, r] = await Promise.all([
+      const [p, g, r, m] = await Promise.all([
         fetchPlans(),
         fetchPlatformGcash(),
         fetchGoLiveRequest(ecosystemId),
+        fetchPaymentMethods(true, { ecosystemId: null }).catch(() => [] as PaymentMethod[]),
       ]);
       setPlans(p);
       setGcash(g);
       setRequest(r);
+      setMethods(m);
+      setMethodId((v) => v || (m.length === 1 ? m[0]!.id : null));
       setPlanId((v) => v || p[0]?.id || "");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not load the Go Live details");
@@ -173,7 +181,7 @@ export function GoLiveCard({
     months: Number(months),
     payerNumber,
     reference,
-    platformGcashNumber: gcash?.gcash_number ?? null,
+    platformGcashNumber: gcash?.gcash_number ?? methods[0]?.account_number ?? null,
     hasPendingRequest: pending,
     proofPath,
   });
@@ -197,6 +205,11 @@ export function GoLiveCard({
     setServerError(null);
     setServerField(null);
     setAttempted(true);
+    if (methods.length > 1 && !methodId) {
+      setServerError("Tap the WaveWallet payment account you paid into.");
+      document.getElementById("gl-methods")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     if (checklist.length > 0) {
       focusItem(checklist.find((i) => i.fieldId) ?? {});
       return;
@@ -220,6 +233,7 @@ export function GoLiveCard({
         months: monthCount,
         amountPaid: due,
         proofPath: proofPath as string,
+        paymentMethodId: methodId,
       });
       setRequest(r);
       // Second layer: the server reads the same screenshot again and that
@@ -316,22 +330,57 @@ export function GoLiveCard({
                 </p>
               ) : null}
 
-              <div className="rounded-xl border bg-muted/40 px-3 py-2.5 text-xs leading-relaxed">
-                <p className="flex items-center gap-1.5 font-medium">
-                  <ShieldCheck className="size-3.5 text-primary" /> Send{" "}
-                  <strong>{peso(due)}</strong> to the WaveWallet GCash number
-                </p>
-                <p className="mt-1">
-                  {gcash?.gcash_number ?? "— not configured —"}
-                  {gcash?.gcash_account_name ? ` · ${gcash.gcash_account_name}` : ""}
-                </p>
-                <p className="mt-1 text-muted-foreground">
-                  Before you submit, three things are unavoidable: pay from your own GCash number
-                  first, enter that exact sending number, and copy the reference number from the
-                  receipt. Payment is recognised automatically only when the sending number,
-                  amount and reference all match, and each reference can only ever be used once in
-                  any shop.
-                </p>
+              <div className="space-y-3 rounded-xl border bg-muted/40 px-3 py-3">
+                <div>
+                  <p className="flex items-center gap-1.5 text-sm font-semibold">
+                    <ShieldCheck className="size-4 text-primary" /> Step 1 — Send{" "}
+                    <strong>{peso(due)}</strong> to WaveWallet
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    {methods.length > 1
+                      ? "Pay using any one of the WaveWallet accounts below, then tap the one you used so we can verify your payment against it."
+                      : "Pay using the WaveWallet account below, exactly as shown."}
+                    {" "}Scan the QR code or copy the account number — the account name must match before you send.
+                  </p>
+                </div>
+
+                {methods.length > 0 ? (
+                  <div id="gl-methods">
+                  <PaymentMethodCards
+                    methods={methods}
+                    selectedId={methodId}
+                    onSelect={(id) => setMethodId(id)}
+                  />
+                  </div>
+                ) : gcash?.gcash_number ? (
+                  <div className="rounded-lg border bg-background px-3 py-2 text-xs">
+                    <p className="font-semibold">GCash</p>
+                    <p className="mt-0.5">
+                      {gcash.gcash_number}
+                      {gcash.gcash_account_name ? ` \u00b7 ${gcash.gcash_account_name}` : ""}
+                    </p>
+                    {gcash.payment_instructions ? (
+                      <p className="mt-1 whitespace-pre-line text-muted-foreground">
+                        {gcash.payment_instructions}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : (
+                  <p className="text-xs font-medium text-destructive">
+                    WaveWallet has not published a payment account yet — please contact support
+                    before paying.
+                  </p>
+                )}
+
+                <div>
+                  <p className="text-sm font-semibold">Step 2 — Tell us about that payment</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    Pay from your own account first, then enter that exact sending number, copy the
+                    reference number from the receipt and attach the receipt screenshot. A payment
+                    is recognised automatically only when the details match, and each reference can
+                    only ever be used once in any shop.
+                  </p>
+                </div>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
