@@ -181,6 +181,13 @@ export function autoCategoryName(
   return fallbackMember ?? "Reseller";
 }
 
+/**
+ * Automatic entries are INCOME ONLY. Expenses are manual, so any automatic
+ * expense row (a legacy `admin_purchases` row from an older database function)
+ * is dropped here as a second line of defence against double counting.
+ */
+const isAutomaticIncome = (r: AutoRow) => r.kind !== "expense";
+
 export async function fetchSpendingEntries(
   ecosystemId: string,
   period: ResolvedPeriod,
