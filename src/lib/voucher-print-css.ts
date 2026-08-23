@@ -52,12 +52,12 @@ export const voucherPrintCss = `
   z-index: 0;
 }
 .vp-head, .vp-body, .vp-meta { position: relative; z-index: 1; min-width: 0; }
-.vp-head { min-height: 0; flex: 0 0 auto; }
-.vp-body { min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; gap: 0.01in; }
-.vp-shop { font-size: 8.5pt; font-weight: 800; letter-spacing: .02em; text-transform: uppercase; line-height: 1.08; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.vp-brand { font-size: 5.5pt; letter-spacing: .16em; text-transform: uppercase; opacity: .6; line-height: 1.1; }
+.vp-head { min-height: 0; flex: 1 1 auto; overflow: hidden; }
+.vp-body { min-height: 0; flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center; gap: 0.01in; }
+.vp-shop { font-size: 8pt; font-weight: 800; letter-spacing: .02em; text-transform: uppercase; line-height: 1.08; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vp-brand { font-size: 5pt; letter-spacing: .16em; text-transform: uppercase; opacity: .6; line-height: 1.1; }
 .vp-product {
-  font-size: 9.5pt;
+  font-size: 9pt;
   font-weight: 700;
   line-height: 1.1;
   margin-top: .005in;
@@ -69,8 +69,8 @@ export const voucherPrintCss = `
 }
 /* The shop's stored description, wrapped and clipped — never overflowing. */
 .vp-desc {
-  font-size: 6.5pt;
-  line-height: 1.18;
+  font-size: 6pt;
+  line-height: 1.15;
   opacity: .82;
   overflow-wrap: anywhere;
   display: -webkit-box;
@@ -82,19 +82,19 @@ export const voucherPrintCss = `
 }
 .vp-code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 20pt;
+  font-size: 19pt;
   font-weight: 800;
   letter-spacing: .03em;
   line-height: 1.02;
   word-break: break-all;
   text-align: center;
 }
-.vp-code-long { font-size: 15pt; letter-spacing: .01em; }
-.vp-code-xs { font-size: 11pt; letter-spacing: 0; }
+.vp-code-long { font-size: 14pt; letter-spacing: .01em; }
+.vp-code-xs { font-size: 10.5pt; letter-spacing: 0; }
 .vp-code-label { font-size: 5.5pt; letter-spacing: .16em; text-transform: uppercase; text-align: center; opacity: .65; line-height: 1.1; }
-.vp-meta { display: flex; justify-content: space-between; align-items: flex-end; gap: .04in; font-size: 5.5pt; opacity: .78; line-height: 1.05; }
+.vp-meta { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: flex-end; gap: .04in; font-size: 5.5pt; opacity: .78; line-height: 1.05; }
 .vp-meta span:last-child { text-align: right; white-space: nowrap; opacity: .85; }
-.vp-price { font-size: 30pt; font-weight: 900; opacity: 1; letter-spacing: -.02em; line-height: .92; }
+.vp-price { font-size: 28pt; font-weight: 900; opacity: 1; letter-spacing: -.02em; line-height: .92; }
 
 
 /* ------------------------------------------------------------------ */
@@ -122,7 +122,7 @@ export const voucherPrintCss = `
 .vp-t-modern .vp-art { border-left: 0.045in solid #1d4ed8; }
 .vp-t-modern .vp-head { padding-left: .02in; }
 .vp-t-modern .vp-shop { color: #1d4ed8; letter-spacing: .08em; font-size: 7.5pt; }
-.vp-t-modern .vp-product { font-size: 10pt; letter-spacing: -.01em; }
+.vp-t-modern .vp-product { font-size: 9.5pt; letter-spacing: -.01em; }
 .vp-t-modern .vp-code { text-align: left; }
 .vp-t-modern .vp-code-label { text-align: left; }
 
@@ -163,7 +163,7 @@ export const voucherPrintCss = `
 .vp-t-luxury .vp-art { border: 0.008in solid rgba(212,175,55,.6); margin: 0.03in; border-radius: 0.02in; }
 .vp-t-luxury .vp-brand { color: #d4af37; opacity: .95; }
 .vp-t-luxury .vp-shop { color: #f5f0e6; letter-spacing: .12em; font-size: 8pt; }
-.vp-t-luxury .vp-product { font-family: Georgia, "Times New Roman", serif; font-size: 9.5pt; }
+.vp-t-luxury .vp-product { font-family: Georgia, "Times New Roman", serif; font-size: 9pt; }
 .vp-t-luxury .vp-code { color: #d4af37; letter-spacing: .06em; }
 .vp-t-luxury .vp-code-label { color: rgba(212,175,55,.85); }
 .vp-t-luxury .vp-price { color: #d4af37; }
@@ -186,7 +186,7 @@ export const voucherPrintCss = `
 .vp-t-pop .vp-shop { font-size: 9pt; letter-spacing: 0; }
 .vp-t-pop .vp-code { background: #111827; color: #fde047; padding: .025in .02in; border-radius: .03in; letter-spacing: .02em; }
 .vp-t-pop .vp-meta { opacity: .9; }
-.vp-t-pop .vp-price { font-size: 31pt; }
+.vp-t-pop .vp-price { font-size: 29pt; }
 
 /* 10. ORGANIC — earthy palette and soft curves. */
 .vp-t-organic { border: 1px solid #d6cbb8; background: #faf7f0; color: #3f3a2f; border-radius: 0.14in; }
