@@ -88,8 +88,8 @@ describe("dashboard countdown", () => {
     const c = subscriptionCountdown({ periodEnd: at(-2).toISOString(), graceDays: 5 });
     expect(c.expired).toBe(true);
     expect(c.frozen).toBe(false);
-    expect(c.label).toBe("Expired — account freezes in 2 days");
-    expect(c.daysUntilFreeze).toBe(2);
+    expect(c.label).toBe("Expired — account freezes in 3 days");
+    expect(c.daysUntilFreeze).toBe(3);
   });
 
   it("honours a zero-day grace configuration without inventing one", () => {
