@@ -70,7 +70,7 @@ object GcashParser {
 
     /** Sender text between "from" and the message / balance / reference tail. */
     private val SENDER_SEGMENT = Regex(
-        """\bfrom\s+(.+?)(?:\s*(?:w/\s*msg|with\s+msg|your\s+new\s+balance|new\s+balance|via\b|ref\b|reference\b|transaction\b|trace\b)|\.?\s*$)""",
+        """\bfrom\s+(.+?)(?:[.,]?\s*(?:w/\s*msg|with\s+msg|your\s+new\s+balance|new\s+balance|via\b|ref\b|reference\b|transaction\b|trace\b)|\.?\s*$)""",
         RegexOption.IGNORE_CASE,
     )
 

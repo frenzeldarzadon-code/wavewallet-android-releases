@@ -70,7 +70,7 @@ const REFERENCE =
   /\b(?:ref(?:erence)?|transaction|trace|txn)\.?\s*(?:no\.?|number|id|#)?\s*[:.\-]?\s*([A-Za-z0-9-]{6,32})/i;
 /** Everything between "from" and the message/balance/reference tail. */
 const SENDER_SEGMENT =
-  /\bfrom\s+([\s\S]+?)(?=\s*(?:w\/\s*msg|with\s+msg|your\s+new\s+balance|new\s+balance|via\b|ref\b|reference\b|transaction\b|trace\b)|\.?\s*$)/i;
+  /\bfrom\s+([\s\S]+?)(?=[.,]?\s*(?:w\/\s*msg|with\s+msg|your\s+new\s+balance|new\s+balance|via\b|ref\b|reference\b|transaction\b|trace\b)|\.?\s*$)/i;
 
 export function normalizePhMobile(raw: string | null | undefined): string | null {
   if (!raw) return null;
