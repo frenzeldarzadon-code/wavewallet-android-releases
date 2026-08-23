@@ -32,11 +32,14 @@ import {
   fetchGoLiveRequest,
   fetchPlatformGcash,
   activateFreeSubscription,
+  cancelGoLivePayment,
+  goLiveControlsVisible,
   goLivePollIntervalMs,
   goLiveStatusLine,
   submitGoLivePayment,
   type SubscriptionRequest,
 } from "@/lib/go-live";
+
 import { CashInProofPicker } from "@/components/money/cash-in-proof";
 import { uploadCashInProof, removeCashInProof, fetchPaymentMethods, type PaymentMethod } from "@/lib/wallet-money";
 import { PaymentMethodCards } from "@/components/money/payment-method-cards";
@@ -391,7 +394,31 @@ export function GoLiveCard({
     }
   };
 
+  /**
+   * Withdraw a payment that is still waiting for verification, so the operator
+   * is never locked out of Renew / Extend / Change by a payment that will
+   * never complete. Verified or already-activated payments are refused by the
+   * database — this never touches the listener or matching rules.
+   */
+  const cancelPending = async () => {
+    if (!request) return;
+    setBusy(true);
+    setServerError(null);
+    try {
+      await cancelGoLivePayment(request.id);
+      toast.success("That pending payment was withdrawn.");
+      await load();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "That payment could not be withdrawn.";
+      setServerError(msg);
+      toast.error(msg);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const activateFree = async () => {
+
     if (!plan) return;
     setBusy(true);
     setServerError(null);
@@ -459,9 +486,29 @@ export function GoLiveCard({
                 Payment submitted — verification in progress. Your subscription will activate after
                 verification is completed.
               </p>
+              <p className="mt-1.5 text-muted-foreground">
+                This only applies to that one payment
+                {request?.payment_reference ? ` (reference ${request.payment_reference})` : ""}. If
+                you did not make it, or it will never be completed, you can withdraw it and submit
+                a new one.
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="mt-2"
+                disabled={busy}
+                onClick={cancelPending}
+              >
+                {busy ? <Loader2 className="mr-1 size-4 animate-spin" /> : null}
+                Withdraw this pending payment
+              </Button>
             </div>
-          ) : (
+          ) : null}
+
+          {goLiveControlsVisible(request, isLive) ? (
             <>
+
               {isLive && currentPlanId ? (
                 /* A live shop manages the SAME subscription from here: renew
                    it, extend it for longer, or move to another published
@@ -641,7 +688,7 @@ export function GoLiveCard({
                       {serverError}
                     </p>
                   ) : null}
-                  <Button className="w-full" disabled={busy || !plan} onClick={activateFree}>
+                  <Button className="w-full" disabled={busy || !plan || pending} onClick={activateFree}>
                     {busy ? (
                       <Loader2 className="mr-1 size-4 animate-spin" />
                     ) : (
@@ -924,7 +971,13 @@ export function GoLiveCard({
                 </p>
               ) : null}
 
-              <Button className="w-full" disabled={busy} onClick={tryConfirm}>
+              {pending ? (
+                <p className="text-xs font-medium text-warning">
+                  Withdraw the payment awaiting verification above before submitting another one.
+                </p>
+              ) : null}
+
+              <Button className="w-full" disabled={busy || pending} onClick={tryConfirm}>
                 {busy ? (
                   <Loader2 className="mr-1 size-4 animate-spin" />
                 ) : (
@@ -932,6 +985,7 @@ export function GoLiveCard({
                 )}
                 {isPlanChange ? "Review and confirm plan change" : "Subscribe & Go Live"}
               </Button>
+
 
               <AlertDialog open={confirming} onOpenChange={setConfirming}>
                 <AlertDialogContent>
@@ -975,7 +1029,8 @@ export function GoLiveCard({
               )}
 
             </>
-          )}
+          ) : null}
+
         </CardContent>
       </Card>
     </PageSection>
