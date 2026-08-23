@@ -174,7 +174,7 @@ export function VoucherShopView({
     setBuying({ product, method });
   };
 
-  const maxQty = buying ? Math.min(50, Math.max(1, buying.product.available)) : 1;
+  const maxQty = buying ? Math.min(500, Math.max(1, buying.product.available)) : 1;
   const unit = buying ? priceFor(buying.product) : 0;
   const total = Math.round(unit * qty * 100) / 100;
 
