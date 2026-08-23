@@ -7,9 +7,16 @@
  * every template renders the identical voucher data at the identical size.
  */
 import { VOUCHER_PRINT_HEIGHT_IN, VOUCHER_PRINT_WIDTH_IN } from "./voucher-print";
+import mistArt from "@/assets/voucher-art/mist.jpg.asset.json";
+import terracesArt from "@/assets/voucher-art/terraces.jpg.asset.json";
+import pinesArt from "@/assets/voucher-art/pines.jpg.asset.json";
+import fallsArt from "@/assets/voucher-art/falls.jpg.asset.json";
+import caveArt from "@/assets/voucher-art/cave.jpg.asset.json";
+import sunriseArt from "@/assets/voucher-art/sunrise.jpg.asset.json";
 
 const W = `${VOUCHER_PRINT_WIDTH_IN}in`;
 const H = `${VOUCHER_PRINT_HEIGHT_IN}in`;
+
 
 export const voucherPrintCss = `
 .vp-sheet {
