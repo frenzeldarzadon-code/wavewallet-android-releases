@@ -32,6 +32,7 @@ import {
   fetchGoLiveRequest,
   fetchPlatformGcash,
   activateFreeSubscription,
+  goLivePollIntervalMs,
   goLiveStatusLine,
   submitGoLivePayment,
   type SubscriptionRequest,
@@ -176,6 +177,51 @@ export function GoLiveCard({
   useEffect(() => {
     void load();
   }, [load]);
+
+  // While a payment is pending, verification completes server-side (a payment
+  // notification arrives after the receipt). Watch the request so the live
+  // transition happens on its own, with no manual refresh. Realtime plus a
+  // slow poll as a fallback; both stop once the request is decided.
+  const requestId = request?.id ?? null;
+  const requestStatus = request?.status ?? null;
+  useEffect(() => {
+    const every = goLivePollIntervalMs(request);
+    if (!requestId || every <= 0) return;
+    let stopped = false;
+    const refresh = () => {
+      if (stopped) return;
+      fetchGoLiveRequest(ecosystemId)
+        .then((r) => {
+          if (stopped || !r) return;
+          setRequest(r);
+          if (r.status === "approved") {
+            stopped = true;
+            setCelebrating(true);
+            onLive?.();
+          }
+        })
+        .catch(() => {
+          /* transient network trouble — the next tick retries */
+        });
+    };
+    const timer = window.setInterval(refresh, every);
+    const channel = supabase
+      .channel(`go-live-${requestId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "subscription_requests", filter: `id=eq.${requestId}` },
+        refresh,
+      )
+      .subscribe();
+    return () => {
+      stopped = true;
+      window.clearInterval(timer);
+      void supabase.removeChannel(channel);
+    };
+    // Keyed by id/status only, so a refresh that changes nothing does not
+    // tear down and rebuild the subscription.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ecosystemId, requestId, requestStatus, onLive]);
 
   // Existing server-side calculation engine (subscription_quote) — the single
   // source of truth for plan changes, prorated value and credit adjustment.

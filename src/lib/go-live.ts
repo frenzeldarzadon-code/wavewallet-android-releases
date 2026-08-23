@@ -170,3 +170,18 @@ export function goLiveStatusLine(r: SubscriptionRequest | null, isLive?: boolean
   return "Payment submitted — verification in progress. Your subscription will activate after verification is completed.";
 }
 
+
+/**
+ * How often the applicant's Go Live screen should re-read its request.
+ *
+ * Verification finishes on the server (a payment notification arrives minutes
+ * after the receipt is uploaded), so a pending screen must not wait for a
+ * manual reload. Once the request reaches a final state there is nothing left
+ * to watch and polling stops.
+ */
+export const GO_LIVE_POLL_MS = 10_000;
+
+export function goLivePollIntervalMs(r: SubscriptionRequest | null): number {
+  if (!r) return 0;
+  return r.status === "pending" ? GO_LIVE_POLL_MS : 0;
+}

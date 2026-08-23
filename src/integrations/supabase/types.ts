@@ -7530,6 +7530,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      go_live_match_anchor: {
+        Args: {
+          _req: Database["public"]["Tables"]["subscription_requests"]["Row"]
+        }
+        Returns: string
+      }
       go_live_match_signals: {
         Args: {
           _ev: Database["public"]["Tables"]["listener_events"]["Row"]
