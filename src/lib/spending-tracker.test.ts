@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  automaticEntries,
   categoryHighlights,
   categoryTotals,
   resolvePeriod,
   summarize,
   timeBuckets,
   validateManualEntry,
+  type AutoRow,
   type SpendingEntry,
 } from "@/lib/spending-tracker";
 
@@ -22,6 +24,16 @@ const entry = (over: Partial<SpendingEntry>): SpendingEntry => ({
   memberName: null,
   notes: null,
   editable: false,
+  ...over,
+});
+
+const autoRow = (over: Partial<AutoRow> & { id: string; auto_key: string }): AutoRow => ({
+  kind: "income",
+  occurred_at: "2026-08-10T02:00:00.000Z",
+  description: "Sale",
+  amount: 0,
+  member_id: null,
+  member_name: null,
   ...over,
 });
 
@@ -49,49 +61,82 @@ describe("Spending Tracker period filter", () => {
 });
 
 describe("Spending Tracker totals", () => {
-  it("balances income minus expense, keeping a loss negative", () => {
+  it("balances income minus MANUAL expense, keeping a loss negative", () => {
     const rows = [
       entry({ amount: 100 }),
-      entry({ kind: "expense", amount: 250, categoryKey: "admin_purchases" }),
+      entry({
+        kind: "expense",
+        amount: 250,
+        source: "manual",
+        editable: true,
+        categoryKey: "cat:1",
+        categoryName: "Admin Purchases",
+      }),
     ];
     expect(summarize(rows)).toEqual({ income: 100, expense: 250, balance: -150 });
   });
 
-  it("records a 100% admin discount as income with a zero purchase expense", () => {
-    // ₱10 original, 100% off, paid ₱0: discount income ₱10, purchase expense 0.
-    const rows = [
-      entry({ amount: 10, categoryKey: "admin_discount", categoryName: "Admin Discount" }),
-    ];
+  it("records a 100% admin discount as income exactly once with zero automatic expense", () => {
+    // ₱10 original, 100% off, paid ₱0: discount income ₱10, no expense at all.
+    const rows = automaticEntries(
+      [autoRow({ id: "ad:sale-1", auto_key: "admin_discount", amount: 10 })],
+      [],
+    );
+    expect(rows).toHaveLength(1);
     const s = summarize(rows);
-    expect(s.income).toBe(10);
-    expect(s.expense).toBe(0);
+    expect(s).toEqual({ income: 10, expense: 0, balance: 10 });
     expect(categoryTotals(rows, "expense")).toHaveLength(0);
   });
 
-  it("records a half-price admin purchase as paid amount plus discount income", () => {
-    // ₱100 original, 50% off, paid ₱50.
-    const rows = [
-      entry({ amount: 50, categoryKey: "admin_discount", categoryName: "Admin Discount" }),
-      entry({
-        kind: "expense",
-        amount: 50,
-        categoryKey: "admin_purchases",
-        categoryName: "Admin Purchases",
-      }),
-    ];
-    expect(summarize(rows)).toEqual({ income: 50, expense: 50, balance: 0 });
+  it("creates no automatic expense for an admin purchase", () => {
+    // Even if the server ever returned a legacy admin_purchases expense row.
+    const rows = automaticEntries(
+      [
+        autoRow({ id: "ad:sale-2", auto_key: "admin_discount", amount: 50 }),
+        autoRow({ id: "ap:sale-2", kind: "expense", auto_key: "admin_purchases", amount: 50 }),
+      ],
+      [],
+    );
+    expect(rows.map((r) => r.categoryKey)).toEqual(["admin_discount"]);
+    expect(summarize(rows)).toEqual({ income: 50, expense: 0, balance: 50 });
   });
 
-  it("never counts the pre-discount value as an expense", () => {
+  it("never emits duplicate automatic income for one source transaction", () => {
+    const rows = automaticEntries(
+      [
+        autoRow({ id: "cb:earn-1", auto_key: "reseller:a", amount: 3 }),
+        autoRow({ id: "cb:earn-1", auto_key: "reseller:a", amount: 3 }),
+      ],
+      [],
+    );
+    expect(rows).toHaveLength(1);
+    expect(summarize(rows).income).toBe(3);
+  });
+
+  it("counts a manual expense once alongside automatic income", () => {
     const rows = [
+      ...automaticEntries([autoRow({ id: "cb:earn-2", auto_key: "direct", amount: 20 })], []),
       entry({
         kind: "expense",
-        amount: 0.0,
-        categoryKey: "admin_purchases",
-        categoryName: "Admin Purchases",
+        amount: 8,
+        source: "manual",
+        editable: true,
+        categoryKey: "cat:9",
+        categoryName: "Load",
       }),
     ];
-    expect(summarize(rows).expense).toBe(0);
+    expect(summarize(rows)).toEqual({ income: 20, expense: 8, balance: 12 });
+    expect(categoryTotals(rows, "expense")).toHaveLength(1);
+  });
+
+  it("reports only the admin's cashback for a reseller sale, never the sale value", () => {
+    const rows = automaticEntries(
+      [autoRow({ id: "cb:earn-3", auto_key: "reseller:a", amount: 4.5, member_id: "a", member_name: "Reseller A" })],
+      [],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.amount).toBe(4.5);
+    expect(rows[0]?.categoryKey).toBe("reseller:a");
   });
 });
 
@@ -102,7 +147,15 @@ describe("Spending Tracker category attribution", () => {
     entry({ amount: 45, categoryKey: "reseller:a", categoryName: "Reseller A", memberId: "a" }),
     entry({ amount: 20, categoryKey: "reseller:b", categoryName: "Reseller B", memberId: "b" }),
     entry({ amount: 5, categoryKey: "direct", categoryName: "Direct sales" }),
-    entry({ kind: "expense", amount: 60, categoryKey: "admin_purchases", categoryName: "Admin Purchases" }),
+    // Admin Purchases is a MANUAL expense now — nothing automatic on this side.
+    entry({
+      kind: "expense",
+      amount: 60,
+      source: "manual",
+      editable: true,
+      categoryKey: "cat:2",
+      categoryName: "Admin Purchases",
+    }),
     entry({
       kind: "expense",
       amount: 90,
@@ -127,9 +180,9 @@ describe("Spending Tracker category attribution", () => {
     expect(h.topExpense?.total).toBe(90);
   });
 
-  it("keeps manual and automatic categories side by side", () => {
+  it("keeps every expense category manual", () => {
     const expense = categoryTotals(rows, "expense");
-    expect(expense.map((c) => c.automatic)).toEqual([false, true]);
+    expect(expense.map((c) => c.automatic)).toEqual([false, false]);
   });
 });
 

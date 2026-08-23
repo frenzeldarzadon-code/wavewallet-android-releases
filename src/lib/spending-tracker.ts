@@ -155,7 +155,7 @@ export async function fetchSpendingCategories(
   return (data ?? []) as unknown as SpendingCategory[];
 }
 
-interface AutoRow {
+export interface AutoRow {
   id: string;
   kind: string;
   occurred_at: string;
@@ -179,6 +179,42 @@ export function autoCategoryName(
   if (autoKey === "admin_purchases") return "Admin Purchases";
   if (autoKey === "direct") return "Direct sales";
   return fallbackMember ?? "Reseller";
+}
+
+/**
+ * Automatic entries are INCOME ONLY (admin cashback + admin discount).
+ * Expenses are manual, so any automatic expense row (a legacy
+ * `admin_purchases` row from an older database function) is dropped here as a
+ * second line of defence against double counting. Stable source ids
+ * (`cb:<earning id>`, `ad:<sale id>`) also de-duplicate one source transaction
+ * into exactly one automatic income entry.
+ */
+export function automaticEntries(
+  rows: AutoRow[],
+  categories: SpendingCategory[],
+): SpendingEntry[] {
+  const seen = new Set<string>();
+  const out: SpendingEntry[] = [];
+  for (const r of rows) {
+    if (r.kind === "expense") continue;
+    if (seen.has(r.id)) continue;
+    seen.add(r.id);
+    out.push({
+      id: r.id,
+      kind: "income",
+      occurredAt: r.occurred_at,
+      description: r.description,
+      amount: Number(r.amount ?? 0),
+      source: "automatic",
+      categoryKey: r.auto_key,
+      categoryName: autoCategoryName(r.auto_key, categories, "income", r.member_name),
+      memberId: r.member_id,
+      memberName: r.member_name,
+      notes: null,
+      editable: false,
+    });
+  }
+  return out;
 }
 
 export async function fetchSpendingEntries(
@@ -218,25 +254,7 @@ export async function fetchSpendingEntries(
 
   const byId = new Map(categories.map((c) => [c.id, c]));
 
-  const autoEntries: SpendingEntry[] = ((auto.data ?? []) as unknown as AutoRow[]).map((r) => ({
-    id: r.id,
-    kind: r.kind === "expense" ? "expense" : "income",
-    occurredAt: r.occurred_at,
-    description: r.description,
-    amount: Number(r.amount ?? 0),
-    source: "automatic",
-    categoryKey: r.auto_key,
-    categoryName: autoCategoryName(
-      r.auto_key,
-      categories,
-      r.kind === "expense" ? "expense" : "income",
-      r.member_name,
-    ),
-    memberId: r.member_id,
-    memberName: r.member_name,
-    notes: null,
-    editable: false,
-  }));
+  const autoEntries = automaticEntries((auto.data ?? []) as unknown as AutoRow[], categories);
 
   const manualIncome: SpendingEntry[] = (
     (income.data ?? []) as unknown as {
