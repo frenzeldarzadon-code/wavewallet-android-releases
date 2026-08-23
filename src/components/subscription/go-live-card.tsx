@@ -273,7 +273,6 @@ export function GoLiveCard({
 
   const plan = plans.find((p) => p.id === planId) ?? null;
   const monthCount = normalizeMonths(months);
-  const isPlanChange = Boolean(quote && !quote.is_first_activation);
   // One card, three named actions — all of them submit through the same
   // existing payment + listener verification flow.
   const submitLabel = !isLive
@@ -283,11 +282,19 @@ export function GoLiveCard({
       : intent === "extend"
         ? `Extend by ${monthsLabel(normalizeMonths(months))}`
         : `Renew for ${monthsLabel(normalizeMonths(months))}`;
-  // Plans are all billed monthly, so the total is simply the configured
-  // monthly price × the duration chosen. Plan CHANGES keep using the server's
-  // own prorated quote — no pricing rule is invented in the browser.
-  const lineTotal = planTotalPhp(plan?.monthly_price, monthCount);
-  const due = isPlanChange ? Number(quote?.amount_due ?? 0) : lineTotal;
+  // Duration always drives the amount: configured monthly price × months.
+  // A prorated credit is only subtracted for a REAL plan change (a different
+  // plan than the one running) — never for a renewal or an extension.
+  const charge = subscriptionCharge({
+    monthlyPrice: plan?.monthly_price,
+    months: monthCount,
+    intent: isLive ? intent : "renew",
+    selectedPlanId: planId,
+    quote,
+  });
+  const lineTotal = charge.baseAmount;
+  const due = charge.amountDue;
+  const isPlanChange = charge.creditApplied > 0;
   // What the payment buys. An early renewal is appended to the period that is
   // still running, exactly like the database does on activation.
   const currentEnd =
@@ -298,7 +305,8 @@ export function GoLiveCard({
 
   // Zero-priced = deliberately free. Nothing is charged, so no payment fields,
   // no reference and no screenshot. The database enforces the same rule.
-  const isFree = Boolean(plan) && due <= 0;
+  const isFree = Boolean(plan) && charge.noPaymentRequired;
+
 
   const pending = request?.status === "pending";
   // How much INDEPENDENT evidence the screenshot itself produced. This never
