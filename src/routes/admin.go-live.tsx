@@ -128,9 +128,12 @@ function AdminGoLivePage() {
           shopName={status.name}
           isLive={false}
           onLive={() => {
-            // A verified payment changes role, plan and wallet context — reload
-            // straight into the live Admin console so no Demo state lingers.
-            if (typeof window !== "undefined") window.location.assign("/admin");
+            // A verified payment changes role, plan and wallet context. Let the
+            // congratulations state land, then reload straight into the live
+            // Admin console so no Demo state lingers.
+            setRefresh((n) => n + 1);
+            if (typeof window !== "undefined")
+              window.setTimeout(() => window.location.assign("/admin"), 1800);
           }}
         />
       ) : null}

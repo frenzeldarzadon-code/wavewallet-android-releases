@@ -27,6 +27,7 @@ import { PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { superadminSetShopPlan } from "@/lib/go-live";
 import { SubscriptionPlansCard } from "@/components/super/subscription-plans-card";
 import { GoLiveRequestsCard } from "@/components/super/go-live-requests-card";
+import { planLabel } from "@/lib/subscription-plan-label";
 import { peso, shortDate } from "@/lib/wavewallet";
 import {
   activateSubscription,
@@ -215,7 +216,7 @@ function SuperShops() {
                           </StatusBadge>
                         </div>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {s.plan_name ?? "No plan"} · {peso(Number(s.plan_price ?? 0))}/mo ·{" "}
+                          {planLabel(s.plan_name, s.plan_price)} ·{" "}
                           {Number(sub?.allocation_total ?? 0).toLocaleString()} Coins allocated
                         </p>
                         <p className="text-xs text-muted-foreground">

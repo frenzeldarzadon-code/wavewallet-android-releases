@@ -116,6 +116,8 @@ export function GoLiveCard({
   const [showRaw, setShowRaw] = useState(false);
   /** Set once the applicant accepts that thin evidence means manual review. */
   const [acceptManual, setAcceptManual] = useState(false);
+  /** Set the instant verification succeeds, so the operator sees the win. */
+  const [celebrating, setCelebrating] = useState(false);
 
 
   /** Upload immediately, then read it with the existing Cash In receipt reader. */
@@ -299,7 +301,8 @@ export function GoLiveCard({
         /* verification outcome is never shown to the applicant */
       }
       if (r.status === "approved") {
-        toast.success("Payment verified — activating your shop now.");
+        setCelebrating(true);
+        toast.success("Congratulations! Your shop is now LIVE.");
         onLive?.();
       } else {
         toast.success("Payment submitted — verification in progress.");
@@ -320,7 +323,8 @@ export function GoLiveCard({
     setServerError(null);
     try {
       await activateFreeSubscription({ ecosystemId, planId: plan.id, months: monthCount });
-      toast.success("Free subscription activated — no payment was required.");
+      setCelebrating(true);
+      toast.success("Congratulations! Your shop is now LIVE.");
       onLive?.();
       await load();
     } catch (e) {
@@ -353,13 +357,20 @@ export function GoLiveCard({
       <Card className="shadow-[var(--shadow-card)]">
         <CardContent className="space-y-4 px-4">
           {request?.status === "approved" ? (
-            <p
-              className={`flex items-center gap-2 text-sm font-medium ${
-                isLive === false ? "text-warning" : "text-success"
-              }`}
-            >
-              <CheckCircle2 className="size-4" /> {goLiveStatusLine(request, isLive)}
-            </p>
+            celebrating || isLive !== false ? (
+              <div className="rounded-xl border border-success/40 bg-success/10 px-3 py-2.5">
+                <p className="flex items-center gap-2 text-sm font-semibold text-success">
+                  <CheckCircle2 className="size-4" /> Congratulations! Your shop is now LIVE.
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Taking you to your live shop…
+                </p>
+              </div>
+            ) : (
+              <p className="flex items-center gap-2 text-sm font-medium text-warning">
+                <CheckCircle2 className="size-4" /> {goLiveStatusLine(request, isLive)}
+              </p>
+            )
           ) : null}
 
           {pending ? (
