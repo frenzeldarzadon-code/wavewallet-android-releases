@@ -5,6 +5,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  commitQuantity,
+  quantityFromInput,
+  sanitizeQuantityInput,
+} from "@/lib/voucher-quantity";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -93,6 +98,9 @@ export function VoucherShopView({
   const [avail, setAvail] = useState<"all" | "in" | "points">("all");
   const [buying, setBuying] = useState<{ product: ShopProduct; method: Method } | null>(null);
   const [qty, setQty] = useState(1);
+  // The typed value, kept separate so the field may be briefly empty while the
+  // buyer replaces "1" with e.g. "50". `qty` always stays a valid quantity.
+  const [qtyText, setQtyText] = useState("1");
   const [customerName, setCustomerName] = useState("");
   const [payment, setPayment] = useState<PaymentStatus>(null);
   const [busy, setBusy] = useState(false);
@@ -160,6 +168,7 @@ export function VoucherShopView({
 
   const openBuy = (product: ShopProduct, method: Method) => {
     setQty(1);
+    setQtyText("1");
     setCustomerName("");
     setPayment(null);
     setBuying({ product, method });
@@ -518,25 +527,55 @@ export function VoucherShopView({
                         variant="outline"
                         className="size-8"
                         disabled={qty <= 1}
-                        onClick={() => setQty((q) => Math.max(1, q - 1))}
+                        onClick={() => {
+                          const next = Math.max(1, qty - 1);
+                          setQty(next);
+                          setQtyText(String(next));
+                        }}
                         aria-label="Decrease quantity"
                       >
                         −
                       </Button>
-                      <span className="w-8 text-center font-semibold tabular-nums">{qty}</span>
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        aria-label="Quantity"
+                        className="h-8 w-16 text-center font-semibold tabular-nums"
+                        value={qtyText}
+                        onChange={(e) => {
+                          const digits = sanitizeQuantityInput(e.target.value);
+                          const parsed = quantityFromInput(digits, maxQty);
+                          setQtyText(parsed === null ? digits : String(parsed));
+                          if (parsed !== null) setQty(parsed);
+                        }}
+                        onBlur={() => {
+                          const next = commitQuantity(qtyText, maxQty);
+                          setQty(next);
+                          setQtyText(String(next));
+                        }}
+                      />
                       <Button
                         type="button"
                         size="icon"
                         variant="outline"
                         className="size-8"
                         disabled={qty >= maxQty}
-                        onClick={() => setQty((q) => Math.min(maxQty, q + 1))}
+                        onClick={() => {
+                          const next = Math.min(maxQty, qty + 1);
+                          setQty(next);
+                          setQtyText(String(next));
+                        }}
                         aria-label="Increase quantity"
                       >
                         +
                       </Button>
                     </div>
                   </div>
+                  <p className="text-right text-[11px] text-muted-foreground">
+                    Type any quantity from 1 to {maxQty}.
+                  </p>
+
                   <p className="flex justify-between">
                     <span className="text-muted-foreground">Unit price</span>
                     <span className="font-medium">{peso(unit)}</span>
