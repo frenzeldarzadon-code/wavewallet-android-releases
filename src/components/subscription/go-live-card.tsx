@@ -182,8 +182,9 @@ export function GoLiveCard({
   // notification arrives after the receipt). Watch the request so the live
   // transition happens on its own, with no manual refresh. Realtime plus a
   // slow poll as a fallback; both stop once the request is decided.
+  const requestId = request?.id ?? null;
+  const requestStatus = request?.status ?? null;
   useEffect(() => {
-    const requestId = request?.id ?? null;
     const every = goLivePollIntervalMs(request);
     if (!requestId || every <= 0) return;
     let stopped = false;
@@ -217,7 +218,10 @@ export function GoLiveCard({
       window.clearInterval(timer);
       void supabase.removeChannel(channel);
     };
-  }, [ecosystemId, request, onLive]);
+    // Keyed by id/status only, so a refresh that changes nothing does not
+    // tear down and rebuild the subscription.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ecosystemId, requestId, requestStatus, onLive]);
 
   // Existing server-side calculation engine (subscription_quote) — the single
   // source of truth for plan changes, prorated value and credit adjustment.
