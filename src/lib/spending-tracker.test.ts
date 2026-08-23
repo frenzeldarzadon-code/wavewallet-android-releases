@@ -27,6 +27,16 @@ const entry = (over: Partial<SpendingEntry>): SpendingEntry => ({
   ...over,
 });
 
+const autoRow = (over: Partial<AutoRow> & { id: string; auto_key: string }): AutoRow => ({
+  kind: "income",
+  occurred_at: "2026-08-10T02:00:00.000Z",
+  description: "Sale",
+  amount: 0,
+  member_id: null,
+  member_name: null,
+  ...over,
+});
+
 describe("Spending Tracker period filter", () => {
   it("resolves a specific month", () => {
     const p = resolvePeriod({ mode: "month", month: "2026-08" });
