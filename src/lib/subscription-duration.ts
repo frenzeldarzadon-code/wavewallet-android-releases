@@ -105,7 +105,7 @@ export function subscriptionCountdown(input: {
   periodEnd: string | Date | null | undefined;
   graceDays: number;
   /** `ecosystems.subscription_state`. */
-  state?: string | null;
+  state?: string | null | undefined;
   now?: Date;
 }): SubscriptionCountdown {
   const now = input.now ?? new Date();
