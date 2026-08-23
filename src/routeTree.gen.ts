@@ -81,6 +81,7 @@ import { Route as SuperAdminsRouteImport } from './routes/super.admins'
 import { Route as SuperApplicationsRouteImport } from './routes/super.applications'
 import { Route as SuperApprovalsRouteImport } from './routes/super.approvals'
 import { Route as SuperAuditRouteImport } from './routes/super.audit'
+import { Route as SuperAutoPaymentsRouteImport } from './routes/super.auto-payments'
 import { Route as SuperCreditsRouteImport } from './routes/super.credits'
 import { Route as SuperDeveloperRouteImport } from './routes/super.developer'
 import { Route as SuperExportRouteImport } from './routes/super.export'
@@ -464,6 +465,11 @@ const SuperAuditRoute = SuperAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => SuperRoute,
 } as any)
+const SuperAutoPaymentsRoute = SuperAutoPaymentsRouteImport.update({
+  id: '/auto-payments',
+  path: '/auto-payments',
+  getParentRoute: () => SuperRoute,
+} as any)
 const SuperCreditsRoute = SuperCreditsRouteImport.update({
   id: '/credits',
   path: '/credits',
@@ -645,6 +651,7 @@ export interface FileRoutesByFullPath {
   '/super/applications': typeof SuperApplicationsRoute
   '/super/approvals': typeof SuperApprovalsRoute
   '/super/audit': typeof SuperAuditRoute
+  '/super/auto-payments': typeof SuperAutoPaymentsRoute
   '/super/credits': typeof SuperCreditsRoute
   '/super/developer': typeof SuperDeveloperRoute
   '/super/export': typeof SuperExportRoute
@@ -736,6 +743,7 @@ export interface FileRoutesByTo {
   '/super/applications': typeof SuperApplicationsRoute
   '/super/approvals': typeof SuperApprovalsRoute
   '/super/audit': typeof SuperAuditRoute
+  '/super/auto-payments': typeof SuperAutoPaymentsRoute
   '/super/credits': typeof SuperCreditsRoute
   '/super/developer': typeof SuperDeveloperRoute
   '/super/export': typeof SuperExportRoute
@@ -833,6 +841,7 @@ export interface FileRoutesById {
   '/super/applications': typeof SuperApplicationsRoute
   '/super/approvals': typeof SuperApprovalsRoute
   '/super/audit': typeof SuperAuditRoute
+  '/super/auto-payments': typeof SuperAutoPaymentsRoute
   '/super/credits': typeof SuperCreditsRoute
   '/super/developer': typeof SuperDeveloperRoute
   '/super/export': typeof SuperExportRoute
@@ -931,6 +940,7 @@ export interface FileRouteTypes {
     | '/super/applications'
     | '/super/approvals'
     | '/super/audit'
+    | '/super/auto-payments'
     | '/super/credits'
     | '/super/developer'
     | '/super/export'
@@ -1022,6 +1032,7 @@ export interface FileRouteTypes {
     | '/super/applications'
     | '/super/approvals'
     | '/super/audit'
+    | '/super/auto-payments'
     | '/super/credits'
     | '/super/developer'
     | '/super/export'
@@ -1118,6 +1129,7 @@ export interface FileRouteTypes {
     | '/super/applications'
     | '/super/approvals'
     | '/super/audit'
+    | '/super/auto-payments'
     | '/super/credits'
     | '/super/developer'
     | '/super/export'
@@ -1675,6 +1687,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperAuditRouteImport
       parentRoute: typeof SuperRoute
     }
+    '/super/auto-payments': {
+      id: '/super/auto-payments'
+      path: '/auto-payments'
+      fullPath: '/super/auto-payments'
+      preLoaderRoute: typeof SuperAutoPaymentsRouteImport
+      parentRoute: typeof SuperRoute
+    }
     '/super/credits': {
       id: '/super/credits'
       path: '/credits'
@@ -1963,6 +1982,7 @@ interface SuperRouteChildren {
   SuperApplicationsRoute: typeof SuperApplicationsRoute
   SuperApprovalsRoute: typeof SuperApprovalsRoute
   SuperAuditRoute: typeof SuperAuditRoute
+  SuperAutoPaymentsRoute: typeof SuperAutoPaymentsRoute
   SuperCreditsRoute: typeof SuperCreditsRoute
   SuperDeveloperRoute: typeof SuperDeveloperRoute
   SuperExportRoute: typeof SuperExportRoute
@@ -1983,6 +2003,7 @@ const SuperRouteChildren: SuperRouteChildren = {
   SuperApplicationsRoute: SuperApplicationsRoute,
   SuperApprovalsRoute: SuperApprovalsRoute,
   SuperAuditRoute: SuperAuditRoute,
+  SuperAutoPaymentsRoute: SuperAutoPaymentsRoute,
   SuperCreditsRoute: SuperCreditsRoute,
   SuperDeveloperRoute: SuperDeveloperRoute,
   SuperExportRoute: SuperExportRoute,
