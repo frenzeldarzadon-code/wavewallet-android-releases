@@ -162,6 +162,14 @@ function AdminSettings() {
     await reload?.();
   };
 
+  const nameProblem = !form.name.trim()
+    ? "Your shop needs a name."
+    : form.name.trim().length > 80
+      ? "Keep the shop name under 80 characters."
+      : form.description.length > 500
+        ? "Keep the description under 500 characters."
+        : "";
+
   return (
     <>
       <PageSection devSlot="settings.shop-identity" title="Shop identity" description="Your name appears throughout the app for your resellers and customers.">
@@ -172,14 +180,23 @@ function AdminSettings() {
               <Input
                 id="name"
                 value={form.name}
+                maxLength={80}
                 onChange={(e) => edit({ name: e.target.value })}
               />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="slug">URL slug</Label>
-              <Input id="slug" readOnly value={ecosystem.slug} className="font-mono text-xs" />
+              <Input
+                id="slug"
+                readOnly
+                disabled
+                value={ecosystem.slug}
+                className="font-mono text-xs"
+              />
               <p className="text-[11px] text-muted-foreground">
-                The slug drives /join/{ecosystem.slug}. Ask the platform owner to change it.
+                The slug is fixed by the platform owner because it powers your permanent
+                /join/{ecosystem.slug} link — changing it would break links already shared with
+                members. Ask the platform owner if it must change.
               </p>
             </div>
             <div className="space-y-1.5 sm:col-span-2">
@@ -187,13 +204,31 @@ function AdminSettings() {
               <Textarea
                 id="desc"
                 rows={2}
+                maxLength={500}
                 value={form.description}
                 onChange={(e) => edit({ description: e.target.value })}
               />
             </div>
+            <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
+              <Button
+                size="sm"
+                disabled={saving || !ecosystemDbId || Boolean(nameProblem)}
+                onClick={() => void save()}
+              >
+                {saving ? "Saving…" : "Save shop identity"}
+              </Button>
+              {nameProblem ? (
+                <p className="text-xs text-destructive">{nameProblem}</p>
+              ) : dirty ? (
+                <p className="text-xs text-muted-foreground">You have unsaved changes.</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">All changes saved.</p>
+              )}
+            </div>
           </CardContent>
         </Card>
       </PageSection>
+
 
       <PageSection devSlot="settings.shop-id-sign-up-link-address"
         title="Shop ID, sign-up link & address"
