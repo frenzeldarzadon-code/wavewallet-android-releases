@@ -599,20 +599,23 @@ function AdminVouchers() {
       </Dialog>
 
       <Dialog open={confirmOpen} onOpenChange={(o) => { if (!busy) setConfirmOpen(o); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>
-              Are you sure you are uploading these codes under “{selectedProduct?.name ?? ""}”?
+            <DialogTitle className="break-words text-balance">
+              Import codes under “{selectedProduct?.name ?? ""}”?
             </DialogTitle>
-            <DialogDescription>
-              {pending.length} code{pending.length === 1 ? "" : "s"} will be added to{" "}
-              <strong>{selectedProduct?.name ?? ""}</strong>. Choose No to go back and pick a different
-              product — nothing is imported until you confirm.
+            <DialogDescription className="break-words">
+              <strong>
+                {pending.length} code{pending.length === 1 ? "" : "s"}
+              </strong>{" "}
+              will be added to <strong>{selectedProduct?.name ?? ""}</strong>. Choose No to go back
+              and pick a different product — nothing is imported until you confirm.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="flex-row justify-end gap-2">
             <Button
               variant="outline"
+              className="min-w-20"
               disabled={busy}
               onClick={() => {
                 setConfirmOpen(false);
@@ -620,12 +623,13 @@ function AdminVouchers() {
                 setOpen(true);
               }}
             >
-              No, choose another product
+              No
             </Button>
-            <Button onClick={() => void runImport()} disabled={busy}>
-              {busy ? "Importing…" : `Yes, import under ${selectedProduct?.name ?? ""}`}
+            <Button className="min-w-20" onClick={() => void runImport()} disabled={busy}>
+              {busy ? "Importing…" : "Yes"}
             </Button>
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
 
