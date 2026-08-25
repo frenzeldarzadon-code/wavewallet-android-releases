@@ -2916,6 +2916,60 @@ export type Database = {
           },
         ]
       }
+      omada_voucher_batches: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          ecosystem_id: string
+          group_id: string | null
+          group_name: string
+          id: string
+          request: Json
+          response: Json | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          ecosystem_id: string
+          group_id?: string | null
+          group_name: string
+          id?: string
+          request?: Json
+          response?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          ecosystem_id?: string
+          group_id?: string | null
+          group_name?: string
+          id?: string
+          request?: Json
+          response?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "omada_voucher_batches_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "omada_voucher_batches_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_feed_sources: {
         Row: {
           created_at: string
