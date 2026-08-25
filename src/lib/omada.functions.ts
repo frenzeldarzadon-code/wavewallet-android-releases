@@ -83,8 +83,31 @@ export const getOmadaConnection = createServerFn({ method: "POST" })
       .eq("ecosystem_id", data.ecosystemId)
       .maybeSingle();
     if (error) throw new Error(error.message);
-    return view(row as Record<string, unknown> | null);
+    if (row) return view(row as Record<string, unknown>);
+
+    // Only pre-provisioned shops (their own, already-verified controller) get
+    // a row created for them; every other tenant stays unconfigured.
+    const { bootstrapProvisionedConnection, provisioningFor } = await import(
+      "./omada-provisioning.server"
+    );
+    const seeded = await bootstrapProvisionedConnection(supabaseAdmin, data.ecosystemId);
+    if (seeded) return view(seeded);
+
+    // Secret not available yet: still prefill this shop's own non-secret
+    // controller identity so its admin never retypes it.
+    const spec = await provisioningFor(supabaseAdmin, data.ecosystemId);
+    if (spec) {
+      return {
+        ...EMPTY,
+        baseUrl: spec.baseUrl,
+        omadacId: spec.omadacId,
+        clientId: spec.clientId,
+        siteName: spec.siteName,
+      };
+    }
+    return EMPTY;
   });
+
 
 export const saveOmadaConnection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
