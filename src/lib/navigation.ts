@@ -43,6 +43,7 @@ import {
   Users,
   UserSquare2,
   Wallet,
+  Wifi,
 } from "lucide-react";
 import { RETAIL_VISIBLE, SOCIAL_ENABLED } from "@/lib/features";
 import type { Role } from "@/lib/wavewallet";
@@ -271,6 +272,7 @@ export function adminNav(options?: { goLive?: boolean }): Nav {
             ] as NavItem[])
           : []),
         { to: "/admin/rewards", label: "Rewards", icon: Gift },
+        { to: "/admin/omada", label: "Omada", icon: Wifi },
       ],
     },
     {
