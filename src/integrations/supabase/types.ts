@@ -2819,51 +2819,84 @@ export type Database = {
       }
       omada_connections: {
         Row: {
+          access_token_ciphertext: string | null
           base_url: string
           client_id: string
           client_secret_ciphertext: string
+          consecutive_failures: number
           created_at: string
           created_by: string | null
           ecosystem_id: string
+          health_state: string
           id: string
           last_checked_at: string | null
           last_error: string | null
+          last_failure_at: string | null
+          last_failure_reason: string | null
+          last_recovered_at: string | null
           last_status: string
+          last_success_at: string | null
+          monitoring_enabled: boolean
+          next_check_at: string
+          offline_since: string | null
           omadac_id: string
           site_id: string | null
           site_name: string | null
+          token_expires_at: string | null
           updated_at: string
         }
         Insert: {
+          access_token_ciphertext?: string | null
           base_url: string
           client_id: string
           client_secret_ciphertext: string
+          consecutive_failures?: number
           created_at?: string
           created_by?: string | null
           ecosystem_id: string
+          health_state?: string
           id?: string
           last_checked_at?: string | null
           last_error?: string | null
+          last_failure_at?: string | null
+          last_failure_reason?: string | null
+          last_recovered_at?: string | null
           last_status?: string
+          last_success_at?: string | null
+          monitoring_enabled?: boolean
+          next_check_at?: string
+          offline_since?: string | null
           omadac_id: string
           site_id?: string | null
           site_name?: string | null
+          token_expires_at?: string | null
           updated_at?: string
         }
         Update: {
+          access_token_ciphertext?: string | null
           base_url?: string
           client_id?: string
           client_secret_ciphertext?: string
+          consecutive_failures?: number
           created_at?: string
           created_by?: string | null
           ecosystem_id?: string
+          health_state?: string
           id?: string
           last_checked_at?: string | null
           last_error?: string | null
+          last_failure_at?: string | null
+          last_failure_reason?: string | null
+          last_recovered_at?: string | null
           last_status?: string
+          last_success_at?: string | null
+          monitoring_enabled?: boolean
+          next_check_at?: string
+          offline_since?: string | null
           omadac_id?: string
           site_id?: string | null
           site_name?: string | null
+          token_expires_at?: string | null
           updated_at?: string
         }
         Relationships: [
