@@ -16,8 +16,6 @@ import { ListenerSourceRulesCard } from "@/components/money/listener-source-rule
 import { CashInNumberCard } from "@/components/money/cash-in-number-card";
 import { PlatformPaymentOptionCard } from "@/components/money/platform-payment-option-card";
 import { ShopIdentityCard } from "@/components/shop/shop-identity-card";
-import { OmadaConnectionCard } from "@/components/shop/omada-connection-card";
-import { OmadaHealthCard } from "@/components/shop/omada-health-card";
 import { DeleteShopCard } from "@/components/shop/delete-shop-card";
 import { useSession } from "@/lib/session";
 import {
