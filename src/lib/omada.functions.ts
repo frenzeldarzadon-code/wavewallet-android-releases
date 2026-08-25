@@ -233,3 +233,133 @@ export const disconnectOmada = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
+
+/* ------------------------------------------------------------------ *
+ * Health monitoring (tenant-scoped)
+ *
+ * WaveWallet can detect and automatically recover the API *session* to a
+ * tenant's controller. It cannot restart the operator's Omada server: there is
+ * no server-management connector (SSH/systemd/agent) in this project, so a
+ * genuinely down controller still needs server-level action by its owner.
+ * ------------------------------------------------------------------ */
+
+export interface OmadaHealthView {
+  configured: boolean;
+  monitoringEnabled: boolean;
+  state: "unknown" | "healthy" | "unreachable" | "auth_failed" | "degraded";
+  reason: string | null;
+  consecutiveFailures: number;
+  lastCheckedAt: string | null;
+  lastSuccessAt: string | null;
+  lastFailureAt: string | null;
+  lastFailureReason: string | null;
+  offlineSince: string | null;
+  lastRecoveredAt: string | null;
+  nextCheckAt: string | null;
+  /** True once downtime passes the warning threshold. */
+  offlineTooLong: boolean;
+}
+
+const HEALTH_COLUMNS =
+  "ecosystem_id, base_url, omadac_id, client_id, client_secret_ciphertext, site_name, access_token_ciphertext, token_expires_at, health_state, consecutive_failures, offline_since, monitoring_enabled, next_check_at, last_checked_at, last_success_at, last_failure_at, last_failure_reason, last_recovered_at";
+
+function healthView(row: Record<string, unknown> | null, offlineWarn: boolean): OmadaHealthView {
+  if (!row) {
+    return {
+      configured: false,
+      monitoringEnabled: false,
+      state: "unknown",
+      reason: null,
+      consecutiveFailures: 0,
+      lastCheckedAt: null,
+      lastSuccessAt: null,
+      lastFailureAt: null,
+      lastFailureReason: null,
+      offlineSince: null,
+      lastRecoveredAt: null,
+      nextCheckAt: null,
+      offlineTooLong: false,
+    };
+  }
+  return {
+    configured: true,
+    monitoringEnabled: Boolean(row["monitoring_enabled"]),
+    state: (row["health_state"] as OmadaHealthView["state"]) ?? "unknown",
+    reason: (row["last_failure_reason"] as string | null) ?? null,
+    consecutiveFailures: Number(row["consecutive_failures"] ?? 0),
+    lastCheckedAt: (row["last_checked_at"] as string | null) ?? null,
+    lastSuccessAt: (row["last_success_at"] as string | null) ?? null,
+    lastFailureAt: (row["last_failure_at"] as string | null) ?? null,
+    lastFailureReason: (row["last_failure_reason"] as string | null) ?? null,
+    offlineSince: (row["offline_since"] as string | null) ?? null,
+    lastRecoveredAt: (row["last_recovered_at"] as string | null) ?? null,
+    nextCheckAt: (row["next_check_at"] as string | null) ?? null,
+    offlineTooLong: offlineWarn,
+  };
+}
+
+/**
+ * Current health for one shop. When that shop's own check is due it is run
+ * inline (respecting the backoff), so an admin opening the page always sees a
+ * fresh state without hammering the controller.
+ */
+export const getOmadaHealth = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { ecosystemId: string; force?: boolean }) => {
+    if (!data?.ecosystemId) throw new Error("A shop is required.");
+    return { ecosystemId: data.ecosystemId, force: data.force === true };
+  })
+  .handler(async ({ data, context }): Promise<OmadaHealthView> => {
+    await assertShopAdmin(context as unknown as AuthContext, data.ecosystemId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { runOmadaHealthCheck, offlineTooLong } = await import("./omada-health.server");
+
+    const read = async () =>
+      supabaseAdmin
+        .from("omada_connections")
+        .select(HEALTH_COLUMNS)
+        .eq("ecosystem_id", data.ecosystemId)
+        .maybeSingle();
+
+    const { data: row, error } = await read();
+    if (error) throw new Error(error.message);
+    if (!row) return healthView(null, false);
+
+    const due =
+      Boolean(row["monitoring_enabled"]) &&
+      new Date(String(row["next_check_at"] ?? 0)).getTime() <= Date.now();
+
+    if (data.force || due) {
+      try {
+        await runOmadaHealthCheck(supabaseAdmin as never, row as never);
+        const again = await read();
+        const fresh = (again.data ?? row) as Record<string, unknown>;
+        return healthView(fresh, offlineTooLong(fresh["offline_since"] as string | null));
+      } catch {
+        /* fall through to the stored state */
+      }
+    }
+    const stored = row as Record<string, unknown>;
+    return healthView(stored, offlineTooLong(stored["offline_since"] as string | null));
+  });
+
+/** Turn periodic monitoring on/off for this shop only. */
+export const setOmadaMonitoring = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { ecosystemId: string; enabled: boolean }) => {
+    if (!data?.ecosystemId) throw new Error("A shop is required.");
+    return { ecosystemId: data.ecosystemId, enabled: Boolean(data.enabled) };
+  })
+  .handler(async ({ data, context }) => {
+    await assertShopAdmin(context as unknown as AuthContext, data.ecosystemId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("omada_connections")
+      .update({
+        monitoring_enabled: data.enabled,
+        next_check_at: new Date().toISOString(),
+      })
+      .eq("ecosystem_id", data.ecosystemId);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
