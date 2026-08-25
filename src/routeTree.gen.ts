@@ -30,6 +30,7 @@ import { Route as AdminCreditsRouteImport } from './routes/admin.credits'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
 import { Route as AdminGoLiveRouteImport } from './routes/admin.go-live'
 import { Route as AdminMoneyRouteImport } from './routes/admin.money'
+import { Route as AdminOmadaRouteImport } from './routes/admin.omada'
 import { Route as AdminOperatorLogRouteImport } from './routes/admin.operator-log'
 import { Route as AdminOrdersRouteImport } from './routes/admin.orders'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
@@ -52,6 +53,7 @@ import { Route as AppApplicationsRouteImport } from './routes/app.applications'
 import { Route as AppHistoryRouteImport } from './routes/app.history'
 import { Route as AppMessagesRouteImport } from './routes/app.messages'
 import { Route as AppMoneyRouteImport } from './routes/app.money'
+import { Route as AppOmadaRouteImport } from './routes/app.omada'
 import { Route as AppProfileRouteImport } from './routes/app.profile'
 import { Route as AppRewardsRouteImport } from './routes/app.rewards'
 import { Route as AppShopRouteImport } from './routes/app.shop'
@@ -211,6 +213,11 @@ const AdminMoneyRoute = AdminMoneyRouteImport.update({
   path: '/money',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminOmadaRoute = AdminOmadaRouteImport.update({
+  id: '/omada',
+  path: '/omada',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminOperatorLogRoute = AdminOperatorLogRouteImport.update({
   id: '/operator-log',
   path: '/operator-log',
@@ -319,6 +326,11 @@ const AppMessagesRoute = AppMessagesRouteImport.update({
 const AppMoneyRoute = AppMoneyRouteImport.update({
   id: '/money',
   path: '/money',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOmadaRoute = AppOmadaRouteImport.update({
+  id: '/omada',
+  path: '/omada',
   getParentRoute: () => AppRoute,
 } as any)
 const AppProfileRoute = AppProfileRouteImport.update({
@@ -610,6 +622,7 @@ export interface FileRoutesByFullPath {
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/go-live': typeof AdminGoLiveRoute
   '/admin/money': typeof AdminMoneyRoute
+  '/admin/omada': typeof AdminOmadaRoute
   '/admin/operator-log': typeof AdminOperatorLogRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
@@ -631,6 +644,7 @@ export interface FileRoutesByFullPath {
   '/app/history': typeof AppHistoryRoute
   '/app/messages': typeof AppMessagesRoute
   '/app/money': typeof AppMoneyRoute
+  '/app/omada': typeof AppOmadaRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
@@ -703,6 +717,7 @@ export interface FileRoutesByTo {
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/go-live': typeof AdminGoLiveRoute
   '/admin/money': typeof AdminMoneyRoute
+  '/admin/omada': typeof AdminOmadaRoute
   '/admin/operator-log': typeof AdminOperatorLogRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
@@ -724,6 +739,7 @@ export interface FileRoutesByTo {
   '/app/history': typeof AppHistoryRoute
   '/app/messages': typeof AppMessagesRoute
   '/app/money': typeof AppMoneyRoute
+  '/app/omada': typeof AppOmadaRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
@@ -802,6 +818,7 @@ export interface FileRoutesById {
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/go-live': typeof AdminGoLiveRoute
   '/admin/money': typeof AdminMoneyRoute
+  '/admin/omada': typeof AdminOmadaRoute
   '/admin/operator-log': typeof AdminOperatorLogRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
@@ -823,6 +840,7 @@ export interface FileRoutesById {
   '/app/history': typeof AppHistoryRoute
   '/app/messages': typeof AppMessagesRoute
   '/app/money': typeof AppMoneyRoute
+  '/app/omada': typeof AppOmadaRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/shop': typeof AppShopRoute
@@ -902,6 +920,7 @@ export interface FileRouteTypes {
     | '/admin/customers'
     | '/admin/go-live'
     | '/admin/money'
+    | '/admin/omada'
     | '/admin/operator-log'
     | '/admin/orders'
     | '/admin/products'
@@ -923,6 +942,7 @@ export interface FileRouteTypes {
     | '/app/history'
     | '/app/messages'
     | '/app/money'
+    | '/app/omada'
     | '/app/profile'
     | '/app/rewards'
     | '/app/shop'
@@ -995,6 +1015,7 @@ export interface FileRouteTypes {
     | '/admin/customers'
     | '/admin/go-live'
     | '/admin/money'
+    | '/admin/omada'
     | '/admin/operator-log'
     | '/admin/orders'
     | '/admin/products'
@@ -1016,6 +1037,7 @@ export interface FileRouteTypes {
     | '/app/history'
     | '/app/messages'
     | '/app/money'
+    | '/app/omada'
     | '/app/profile'
     | '/app/rewards'
     | '/app/shop'
@@ -1093,6 +1115,7 @@ export interface FileRouteTypes {
     | '/admin/customers'
     | '/admin/go-live'
     | '/admin/money'
+    | '/admin/omada'
     | '/admin/operator-log'
     | '/admin/orders'
     | '/admin/products'
@@ -1114,6 +1137,7 @@ export interface FileRouteTypes {
     | '/app/history'
     | '/app/messages'
     | '/app/money'
+    | '/app/omada'
     | '/app/profile'
     | '/app/rewards'
     | '/app/shop'
@@ -1344,6 +1368,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMoneyRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/omada': {
+      id: '/admin/omada'
+      path: '/omada'
+      fullPath: '/admin/omada'
+      preLoaderRoute: typeof AdminOmadaRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/operator-log': {
       id: '/admin/operator-log'
       path: '/operator-log'
@@ -1496,6 +1527,13 @@ declare module '@tanstack/react-router' {
       path: '/money'
       fullPath: '/app/money'
       preLoaderRoute: typeof AppMoneyRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/omada': {
+      id: '/app/omada'
+      path: '/omada'
+      fullPath: '/app/omada'
+      preLoaderRoute: typeof AppOmadaRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/profile': {
@@ -1878,6 +1916,7 @@ interface AdminRouteChildren {
   AdminCustomersRoute: typeof AdminCustomersRoute
   AdminGoLiveRoute: typeof AdminGoLiveRoute
   AdminMoneyRoute: typeof AdminMoneyRoute
+  AdminOmadaRoute: typeof AdminOmadaRoute
   AdminOperatorLogRoute: typeof AdminOperatorLogRoute
   AdminOrdersRoute: typeof AdminOrdersRoute
   AdminProductsRoute: typeof AdminProductsRoute
@@ -1904,6 +1943,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCustomersRoute: AdminCustomersRoute,
   AdminGoLiveRoute: AdminGoLiveRoute,
   AdminMoneyRoute: AdminMoneyRoute,
+  AdminOmadaRoute: AdminOmadaRoute,
   AdminOperatorLogRoute: AdminOperatorLogRoute,
   AdminOrdersRoute: AdminOrdersRoute,
   AdminProductsRoute: AdminProductsRoute,
@@ -1931,6 +1971,7 @@ interface AppRouteChildren {
   AppHistoryRoute: typeof AppHistoryRoute
   AppMessagesRoute: typeof AppMessagesRoute
   AppMoneyRoute: typeof AppMoneyRoute
+  AppOmadaRoute: typeof AppOmadaRoute
   AppProfileRoute: typeof AppProfileRoute
   AppRewardsRoute: typeof AppRewardsRoute
   AppShopRoute: typeof AppShopRoute
@@ -1945,6 +1986,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppHistoryRoute: AppHistoryRoute,
   AppMessagesRoute: AppMessagesRoute,
   AppMoneyRoute: AppMoneyRoute,
+  AppOmadaRoute: AppOmadaRoute,
   AppProfileRoute: AppProfileRoute,
   AppRewardsRoute: AppRewardsRoute,
   AppShopRoute: AppShopRoute,

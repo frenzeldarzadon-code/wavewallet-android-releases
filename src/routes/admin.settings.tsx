@@ -16,8 +16,6 @@ import { ListenerSourceRulesCard } from "@/components/money/listener-source-rule
 import { CashInNumberCard } from "@/components/money/cash-in-number-card";
 import { PlatformPaymentOptionCard } from "@/components/money/platform-payment-option-card";
 import { ShopIdentityCard } from "@/components/shop/shop-identity-card";
-import { OmadaConnectionCard } from "@/components/shop/omada-connection-card";
-import { OmadaHealthCard } from "@/components/shop/omada-health-card";
 import { DeleteShopCard } from "@/components/shop/delete-shop-card";
 import { useSession } from "@/lib/session";
 import {
@@ -438,8 +436,16 @@ function AdminSettings() {
           title="Omada integration"
           description="Optional. Connect your shop's own Omada controller. Your details are stored only for your shop."
         >
-          <OmadaConnectionCard ecosystemId={ecosystemDbId} />
-          <OmadaHealthCard ecosystemId={ecosystemDbId} />
+          <Card className="shadow-[var(--shadow-card)]">
+            <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+              <p className="text-sm text-muted-foreground">
+                Omada now has its own section with Connection, Generate voucher and Voucher status.
+              </p>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/admin/omada">Open Omada</Link>
+              </Button>
+            </CardContent>
+          </Card>
         </PageSection>
       ) : null}
       <RetentionPolicyCard />

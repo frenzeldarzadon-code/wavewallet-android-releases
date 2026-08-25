@@ -43,6 +43,7 @@ import {
   Users,
   UserSquare2,
   Wallet,
+  Wifi,
 } from "lucide-react";
 import { RETAIL_VISIBLE, SOCIAL_ENABLED } from "@/lib/features";
 import type { Role } from "@/lib/wavewallet";
@@ -130,6 +131,7 @@ export function customerNav(): Nav {
           ? ([{ to: "/app/store", label: "Retail store", icon: Store }] as NavItem[])
           : []),
         { to: "/app/rewards", label: "Rewards", icon: Gift },
+        { to: "/app/omada", label: "Wi-Fi voucher status", icon: Wifi },
       ],
     },
     {
@@ -271,6 +273,7 @@ export function adminNav(options?: { goLive?: boolean }): Nav {
             ] as NavItem[])
           : []),
         { to: "/admin/rewards", label: "Rewards", icon: Gift },
+        { to: "/admin/omada", label: "Omada", icon: Wifi },
       ],
     },
     {
