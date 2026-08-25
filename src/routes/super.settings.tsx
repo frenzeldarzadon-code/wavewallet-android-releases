@@ -17,6 +17,7 @@ import { ListenerSourceRulesCard } from "@/components/money/listener-source-rule
 
 import { ReceivingAccountsCard } from "@/components/money/receiving-accounts-card";
 import { AppReleaseCard } from "@/components/super/app-release-card";
+import { OmadaConnectionCard } from "@/components/super/omada-connection-card";
 import { SocialSettingsCard } from "@/components/social/social-settings-card";
 import { PromotionTiersCard } from "@/components/social/promotion-tiers-card";
 import { SOCIAL_ENABLED } from "@/lib/features";
@@ -186,6 +187,7 @@ function SuperSettings() {
       />
       <CreditSupplyCard />
       <AppReleaseCard />
+      <OmadaConnectionCard />
 
 
 
