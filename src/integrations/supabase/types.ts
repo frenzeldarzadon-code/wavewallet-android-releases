@@ -2817,6 +2817,72 @@ export type Database = {
           },
         ]
       }
+      omada_connections: {
+        Row: {
+          base_url: string
+          client_id: string
+          client_secret_ciphertext: string
+          created_at: string
+          created_by: string | null
+          ecosystem_id: string
+          id: string
+          last_checked_at: string | null
+          last_error: string | null
+          last_status: string
+          omadac_id: string
+          site_id: string | null
+          site_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          base_url: string
+          client_id: string
+          client_secret_ciphertext: string
+          created_at?: string
+          created_by?: string | null
+          ecosystem_id: string
+          id?: string
+          last_checked_at?: string | null
+          last_error?: string | null
+          last_status?: string
+          omadac_id: string
+          site_id?: string | null
+          site_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          base_url?: string
+          client_id?: string
+          client_secret_ciphertext?: string
+          created_at?: string
+          created_by?: string | null
+          ecosystem_id?: string
+          id?: string
+          last_checked_at?: string | null
+          last_error?: string | null
+          last_status?: string
+          omadac_id?: string
+          site_id?: string | null
+          site_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "omada_connections_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: true
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "omada_connections_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: true
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_feed_sources: {
         Row: {
           created_at: string
