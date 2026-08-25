@@ -8,6 +8,19 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { OmadaFieldSpec } from "./omada-vouchers.server";
 
+/** Controller rows are flattened to plain display values before crossing to the browser. */
+export type OmadaRow = Record<string, string | number | boolean | null>;
+
+function flatten(row: Record<string, unknown>): OmadaRow {
+  const out: OmadaRow = {};
+  for (const [k, v] of Object.entries(row)) {
+    if (v === null || v === undefined) out[k] = null;
+    else if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") out[k] = v;
+    else out[k] = JSON.stringify(v);
+  }
+  return out;
+}
+
 type AuthContext = {
   supabase: {
     rpc: (fn: string, args: unknown) => Promise<{ data: unknown; error: { message: string } | null }>;
@@ -52,7 +65,7 @@ export interface OmadaVoucherSetup {
   limitation: string | null;
   fields: OmadaFieldSpec[];
   /** Existing groups on the controller, used as calibration reference. */
-  groups: Array<Record<string, unknown>>;
+  groups: OmadaRow[];
   error: string | null;
 }
 
@@ -81,9 +94,9 @@ export const getOmadaVoucherSetup = createServerFn({ method: "POST" })
     try {
       const session = await openOmadaSession(supabaseAdmin as never, data.ecosystemId);
       const caps = voucherCapabilities(await loadOmadaSpec(session));
-      let groups: Array<Record<string, unknown>> = [];
+      let groups: OmadaRow[] = [];
       try {
-        groups = await listVoucherGroups(session, caps);
+        groups = (await listVoucherGroups(session, caps)).map(flatten);
       } catch {
         /* listing is best-effort; generation may still work */
       }
@@ -170,7 +183,7 @@ export const listOmadaVoucherBatches = createServerFn({ method: "POST" })
 export interface OmadaVoucherStatus {
   configured: boolean;
   groups: Array<{ id: string; name: string }>;
-  found: Record<string, unknown> | null;
+  found: OmadaRow | null;
   searched: boolean;
   error: string | null;
 }
@@ -217,7 +230,7 @@ export const lookupOmadaVoucher = createServerFn({ method: "POST" })
             configured: true,
             groups: list,
             searched: true,
-            found: { ...hit, groupName: group.name },
+            found: { ...flatten(hit), groupName: group.name },
           };
         }
       }
