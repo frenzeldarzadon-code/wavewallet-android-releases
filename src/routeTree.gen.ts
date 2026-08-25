@@ -30,6 +30,7 @@ import { Route as AdminCreditsRouteImport } from './routes/admin.credits'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
 import { Route as AdminGoLiveRouteImport } from './routes/admin.go-live'
 import { Route as AdminMoneyRouteImport } from './routes/admin.money'
+import { Route as AdminOmadaRouteImport } from './routes/admin.omada'
 import { Route as AdminOperatorLogRouteImport } from './routes/admin.operator-log'
 import { Route as AdminOrdersRouteImport } from './routes/admin.orders'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
@@ -209,6 +210,11 @@ const AdminGoLiveRoute = AdminGoLiveRouteImport.update({
 const AdminMoneyRoute = AdminMoneyRouteImport.update({
   id: '/money',
   path: '/money',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOmadaRoute = AdminOmadaRouteImport.update({
+  id: '/omada',
+  path: '/omada',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminOperatorLogRoute = AdminOperatorLogRouteImport.update({
@@ -610,6 +616,7 @@ export interface FileRoutesByFullPath {
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/go-live': typeof AdminGoLiveRoute
   '/admin/money': typeof AdminMoneyRoute
+  '/admin/omada': typeof AdminOmadaRoute
   '/admin/operator-log': typeof AdminOperatorLogRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
@@ -703,6 +710,7 @@ export interface FileRoutesByTo {
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/go-live': typeof AdminGoLiveRoute
   '/admin/money': typeof AdminMoneyRoute
+  '/admin/omada': typeof AdminOmadaRoute
   '/admin/operator-log': typeof AdminOperatorLogRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
@@ -802,6 +810,7 @@ export interface FileRoutesById {
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/go-live': typeof AdminGoLiveRoute
   '/admin/money': typeof AdminMoneyRoute
+  '/admin/omada': typeof AdminOmadaRoute
   '/admin/operator-log': typeof AdminOperatorLogRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
@@ -902,6 +911,7 @@ export interface FileRouteTypes {
     | '/admin/customers'
     | '/admin/go-live'
     | '/admin/money'
+    | '/admin/omada'
     | '/admin/operator-log'
     | '/admin/orders'
     | '/admin/products'
@@ -995,6 +1005,7 @@ export interface FileRouteTypes {
     | '/admin/customers'
     | '/admin/go-live'
     | '/admin/money'
+    | '/admin/omada'
     | '/admin/operator-log'
     | '/admin/orders'
     | '/admin/products'
@@ -1093,6 +1104,7 @@ export interface FileRouteTypes {
     | '/admin/customers'
     | '/admin/go-live'
     | '/admin/money'
+    | '/admin/omada'
     | '/admin/operator-log'
     | '/admin/orders'
     | '/admin/products'
@@ -1342,6 +1354,13 @@ declare module '@tanstack/react-router' {
       path: '/money'
       fullPath: '/admin/money'
       preLoaderRoute: typeof AdminMoneyRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/omada': {
+      id: '/admin/omada'
+      path: '/omada'
+      fullPath: '/admin/omada'
+      preLoaderRoute: typeof AdminOmadaRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/operator-log': {
@@ -1878,6 +1897,7 @@ interface AdminRouteChildren {
   AdminCustomersRoute: typeof AdminCustomersRoute
   AdminGoLiveRoute: typeof AdminGoLiveRoute
   AdminMoneyRoute: typeof AdminMoneyRoute
+  AdminOmadaRoute: typeof AdminOmadaRoute
   AdminOperatorLogRoute: typeof AdminOperatorLogRoute
   AdminOrdersRoute: typeof AdminOrdersRoute
   AdminProductsRoute: typeof AdminProductsRoute
@@ -1904,6 +1924,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCustomersRoute: AdminCustomersRoute,
   AdminGoLiveRoute: AdminGoLiveRoute,
   AdminMoneyRoute: AdminMoneyRoute,
+  AdminOmadaRoute: AdminOmadaRoute,
   AdminOperatorLogRoute: AdminOperatorLogRoute,
   AdminOrdersRoute: AdminOrdersRoute,
   AdminProductsRoute: AdminProductsRoute,
