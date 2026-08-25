@@ -214,17 +214,17 @@ export async function runOmadaProbe(): Promise<ProbeReport> {
     sample: snapshot({ groupShape: shapeOf(groupRows) }),
   });
 
-  // 5) Read one voucher from the first group, to learn the status fields.
+  // 5) Read one voucher group's detail (documented source of codes/status).
   const firstGroupId = groupRows?.[0]
     ? String(groupRows[0]['id'] ?? groupRows[0]['groupId'] ?? "")
     : "";
   if (firstGroupId) {
-    const vouchers = await jsonFetch(
-      `${base}/openapi/v1/${omadacId}/sites/${siteId}/hotspot/voucher-groups/${firstGroupId}/vouchers?page=1&pageSize=1`,
+    const detail = await jsonFetch(
+      `${base}/openapi/v1/${omadacId}/sites/${siteId}/hotspot/voucher-groups/${firstGroupId}?page=1&pageSize=1`,
       { method: "GET", headers: authHeaders },
       secrets,
     );
-    const vRes = omadaResult(vouchers.body);
+    const vRes = omadaResult(detail.body);
     const vRows =
       vRes.result && typeof vRes.result === "object"
         ? ((vRes.result as Record<string, unknown>)['data'] as
@@ -232,15 +232,16 @@ export async function runOmadaProbe(): Promise<ProbeReport> {
             | undefined)
         : undefined;
     steps.push({
-      step: "Read one voucher (status fields)",
+      step: "Read voucher group detail (status fields)",
       ok: Boolean(vRows),
       detail: vRows
         ? `${vRows.length} voucher record read.`
-        : `errorCode ${String(vRes.code)} ${scrub(vRes.msg || `HTTP ${vouchers.status}`, secrets)}`,
+        : `errorCode ${String(vRes.code)} ${scrub(vRes.msg || `HTTP ${detail.status}`, secrets)}`,
       // Field names only — no voucher codes are returned to the caller.
       sample: snapshot({ voucherFields: shapeOf(vRows) }),
     });
   }
+
 
   return { configured: true, missing: [], steps };
 }
