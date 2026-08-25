@@ -16,6 +16,7 @@ import { ListenerSourceRulesCard } from "@/components/money/listener-source-rule
 import { CashInNumberCard } from "@/components/money/cash-in-number-card";
 import { PlatformPaymentOptionCard } from "@/components/money/platform-payment-option-card";
 import { ShopIdentityCard } from "@/components/shop/shop-identity-card";
+import { OmadaConnectionCard } from "@/components/shop/omada-connection-card";
 import { DeleteShopCard } from "@/components/shop/delete-shop-card";
 import { useSession } from "@/lib/session";
 import {
@@ -429,6 +430,15 @@ function AdminSettings() {
           <ListenerDevicesCard ecosystemId={ecosystemDbId} ecosystemName={ecosystem.name} />
           <ListenerSourceRulesCard ecosystemId={ecosystemDbId} ecosystemName={ecosystem.name} />
         </>
+      ) : null}
+      {ecosystemDbId ? (
+        <PageSection
+          devSlot="settings.omada-integration"
+          title="Omada integration"
+          description="Optional. Connect your shop's own Omada controller. Your details are stored only for your shop."
+        >
+          <OmadaConnectionCard ecosystemId={ecosystemDbId} />
+        </PageSection>
       ) : null}
       <RetentionPolicyCard />
       {ecosystemDbId ? (
