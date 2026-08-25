@@ -351,7 +351,7 @@ export async function runOmadaHealthCheck(
   const update = nextHealthUpdate(row, outcome);
 
   if (outcome.token) {
-    // Store the session so a healthy controller is not re-authenticated每 check.
+    // Store the session so a healthy controller is not re-authenticated on every check.
     update.access_token_ciphertext = outcome.reusedToken
       ? row.access_token_ciphertext
       : encryptSecret(outcome.token.value);
