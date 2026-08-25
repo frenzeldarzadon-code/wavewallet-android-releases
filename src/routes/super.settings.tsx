@@ -187,6 +187,7 @@ function SuperSettings() {
       />
       <CreditSupplyCard />
       <AppReleaseCard />
+      <OmadaConnectionCard />
 
 
 
