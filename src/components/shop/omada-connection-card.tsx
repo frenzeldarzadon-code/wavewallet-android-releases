@@ -107,7 +107,7 @@ export function OmadaConnectionCard({ ecosystemId }: { ecosystemId: string | nul
         <CardTitle className="flex items-center justify-between gap-3 text-sm">
           <span>Omada integration</span>
           <StatusBadge
-            tone={status === "connected" ? "success" : status === "failed" ? "danger" : "neutral"}
+            tone={status === "connected" ? "success" : status === "failed" ? "danger" : "muted"}
           >
             {status === "connected" ? "Connected" : status === "failed" ? "Failed" : "Not tested"}
           </StatusBadge>
