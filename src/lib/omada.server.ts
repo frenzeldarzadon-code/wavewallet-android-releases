@@ -13,8 +13,8 @@ export interface ProbeStep {
   step: string;
   ok: boolean;
   detail: string;
-  /** Small, non-sensitive sample of the response shape, when useful. */
-  sample?: unknown;
+  /** Small, non-sensitive JSON snapshot of the response shape, when useful. */
+  sample?: string;
 }
 
 export interface ProbeReport {
@@ -76,6 +76,11 @@ function omadaResult(body: unknown): { code: number | null; msg: string; result:
   return { code: null, msg: "", result: null };
 }
 
+/** JSON-encodes a small shape snapshot so the payload stays serializable. */
+function snapshot(value: unknown): string {
+  return JSON.stringify(value ?? null).slice(0, 1200);
+}
+
 /** Keys only — never values — so we can learn the response shape safely. */
 function shapeOf(value: unknown): unknown {
   if (Array.isArray(value)) return value.length ? [shapeOf(value[0])] : [];
@@ -120,7 +125,7 @@ export async function runOmadaProbe(): Promise<ProbeReport> {
     step: "Controller reachable (TLS)",
     ok: true,
     detail: `HTTP ${info.status}; controller version ${String(infoRes?.['controllerVer'] ?? "unknown")}`,
-    sample: { omadacIdPresent: Boolean(omadacId), keys: shapeOf(infoRes) },
+    sample: snapshot({ omadacIdPresent: Boolean(omadacId), keys: shapeOf(infoRes) }),
   });
 
   if (!omadacId) {
@@ -183,7 +188,7 @@ export async function runOmadaProbe(): Promise<ProbeReport> {
     detail: siteId
       ? `Visible. ${rows?.length ?? 0} site(s) returned to this API application.`
       : `Not found. errorCode ${String(sitesRes.code)} ${scrub(sitesRes.msg || `HTTP ${sites.status}`, secrets)}`,
-    sample: { siteNames: rows?.map((r) => String(r['name'] ?? "")).slice(0, 10) },
+    sample: snapshot({ siteNames: rows?.map((r) => String(r['name'] ?? "")).slice(0, 10) }),
   });
   if (!siteId) return { configured: true, missing: [], steps };
 
@@ -206,7 +211,7 @@ export async function runOmadaProbe(): Promise<ProbeReport> {
     detail: groupRows
       ? `${groupRows.length} group(s) read.`
       : `errorCode ${String(groupsRes.code)} ${scrub(groupsRes.msg || `HTTP ${groups.status}`, secrets)} — the voucher path may differ on this build; the controller's own API Docs page is authoritative.`,
-    sample: { groupShape: shapeOf(groupRows) },
+    sample: snapshot({ groupShape: shapeOf(groupRows) }),
   });
 
   // 5) Read one voucher from the first group, to learn the status fields.
@@ -233,7 +238,7 @@ export async function runOmadaProbe(): Promise<ProbeReport> {
         ? `${vRows.length} voucher record read.`
         : `errorCode ${String(vRes.code)} ${scrub(vRes.msg || `HTTP ${vouchers.status}`, secrets)}`,
       // Field names only — no voucher codes are returned to the caller.
-      sample: { voucherFields: shapeOf(vRows) },
+      sample: snapshot({ voucherFields: shapeOf(vRows) }),
     });
   }
 
