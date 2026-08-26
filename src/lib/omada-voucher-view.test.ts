@@ -98,3 +98,29 @@ describe("toVoucherView", () => {
     expect(clientsForVoucher(clients, "00000000")).toHaveLength(0);
   });
 });
+
+describe("voucher-level usage totals", () => {
+  it("reports the controller's counted usage for an expired voucher", () => {
+    const view = toVoucherView("61851185", {
+      code: "61851185",
+      status: 2,
+      trafficUsed: 3221225472,
+      trafficUnused: 0,
+      trafficLimit: 3072,
+      timeUsedSec: 7720,
+      timeLeftSec: 17480,
+      startTime: 1786444891691,
+      endTime: 1786777745019,
+    });
+    expect(view?.state).toBe("expired");
+    expect(view?.dataUsed).toBe("3.0 GB");
+    expect(view?.timeUsed).toBe("2 hours");
+    expect(view?.devices).toHaveLength(0);
+  });
+
+  it("leaves usage null when the controller does not report it", () => {
+    const view = toVoucherView("11112222", { code: "11112222", status: 0 });
+    expect(view?.dataUsed).toBeNull();
+    expect(view?.timeUsed).toBeNull();
+  });
+});
