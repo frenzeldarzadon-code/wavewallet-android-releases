@@ -7,6 +7,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { OmadaFieldSpec } from "./omada-vouchers.server";
+import { toVoucherView, type VoucherView } from "./omada-voucher-view";
 
 /** Controller rows are flattened to plain display values before crossing to the browser. */
 export type OmadaRow = Record<string, string | number | boolean | null>;
@@ -183,11 +184,13 @@ export const listOmadaVoucherBatches = createServerFn({ method: "POST" })
 export interface OmadaVoucherStatus {
   configured: boolean;
   groups: Array<{ id: string; name: string }>;
-  found: OmadaRow | null;
+  /** Translated, customer-safe view. Raw controller fields never cross over. */
+  view: VoucherView | null;
   searched: boolean;
   outcome: "ready" | "found" | "not_found" | "invalid" | "unavailable" | "authentication_failed";
   error: string | null;
 }
+
 
 /** Any member of this shop: read-only voucher status from its own controller. */
 export const lookupOmadaVoucher = createServerFn({ method: "POST" })
@@ -210,7 +213,7 @@ export const lookupOmadaVoucher = createServerFn({ method: "POST" })
     const empty: OmadaVoucherStatus = {
       configured: false,
       groups: [],
-      found: null,
+      view: null,
       searched: false,
       outcome: "ready",
       error: null,
@@ -238,15 +241,13 @@ export const lookupOmadaVoucher = createServerFn({ method: "POST" })
         if (!group.id) continue;
         const hit = await findVoucherByCode(session, caps, group.id, data.code);
         if (hit) {
-          const status = Number(hit["status"]);
-          const statusLabel = status === 0 ? "Unused" : status === 1 ? "In use" : status === 2 ? "Expired" : "Unknown";
           return {
             ...empty,
             configured: true,
             groups: list,
             searched: true,
             outcome: "found",
-            found: { ...flatten(hit), statusLabel, groupName: group.name },
+            view: toVoucherView(data.code, hit),
           };
         }
       }
