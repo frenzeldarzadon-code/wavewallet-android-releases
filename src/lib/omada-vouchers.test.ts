@@ -4,7 +4,7 @@
  * Omada field list.
  */
 import { describe, expect, it } from "vitest";
-import { voucherCapabilities, validateAgainstSpec } from "./omada-vouchers.server";
+import { resolvePath, voucherCapabilities, validateAgainstSpec } from "./omada-vouchers.server";
 
 const spec = {
   paths: {
@@ -63,7 +63,21 @@ describe("omada voucher calibration", () => {
   it("refuses to generate when the controller does not describe vouchers", () => {
     const caps = voucherCapabilities(null);
     expect(caps.supported).toBe(false);
+    expect(caps.listPath).toContain("/hotspot/voucher-groups");
+    expect(caps.voucherListPath).toContain("/vouchers");
     expect(caps.limitation).toBeTruthy();
+  });
+
+  it("resolves the official read-only voucher status route without a Swagger document", () => {
+    const caps = voucherCapabilities(null);
+    const path = resolvePath(
+      { ecosystemId: "shop", base: "https://controller", omadacId: "controller-id", siteId: "site-id", token: "secret" },
+      caps.voucherListPath ?? "",
+      { groupId: "group-id" },
+    );
+    expect(path).toBe(
+      "/openapi/v1/controller-id/sites/site-id/hotspot/voucher-groups/group-id/vouchers",
+    );
   });
 
   it("validates a payload against the controller's declared rules", () => {

@@ -56,7 +56,7 @@ export function OmadaVoucherStatusPanel({ ecosystemId }: { ecosystemId: string |
     try {
       const next = await lookupOmadaVoucher({ data: { ecosystemId, code } });
       setState(next);
-      if (next.searched && !next.found) toast.info("No voucher with that code was found.");
+       if (next.outcome === "not_found") toast.info("No voucher with that code was found on Omada.");
     } catch (e) {
       toast.error("Could not check that voucher", { description: (e as Error).message });
     } finally {
@@ -106,8 +106,10 @@ export function OmadaVoucherStatusPanel({ ecosystemId }: { ecosystemId: string |
               </div>
             ))}
           </dl>
-        ) : state.searched ? (
-          <p className="text-xs text-muted-foreground">No voucher with that code was found.</p>
+        ) : state.outcome === "not_found" ? (
+          <p className="text-xs text-muted-foreground">
+            No voucher with that code was found on this shop's Omada controller.
+          </p>
         ) : null}
 
         {state.groups.length > 0 ? (
