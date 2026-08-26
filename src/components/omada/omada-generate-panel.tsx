@@ -34,6 +34,7 @@ import {
   type VoucherFieldSpec,
 } from "@/lib/omada-generation";
 import {
+  checkExistingVoucherCodes,
   generateVoucherGroupForProduct,
   getVoucherGenerationSetup,
   importGeneratedVoucherCodes,
@@ -237,10 +238,45 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
 
   const codeLength = Number(values["codeLength"] ?? 0) || undefined;
 
+  // Existing codes in THIS shop's inventory, re-checked live for whatever the
+  // admin currently has in the editable preview. Never overwritten, never
+  // imported again; the server re-checks and the per-shop unique index is the
+  // final race-safe guard.
+  const [existingInInventory, setExistingInInventory] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!ecosystemId || stage !== "preview" || previewCodes.length === 0) {
+      setExistingInInventory([]);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(() => {
+      void checkExistingVoucherCodes({ data: { ecosystemId, codes: previewCodes } })
+        .then((res) => {
+          if (!cancelled) setExistingInInventory(res.existing);
+        })
+        .catch(() => {
+          if (!cancelled) setExistingInInventory(outcome?.duplicateInInventory ?? []);
+        });
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [ecosystemId, stage, previewCodes, outcome]);
+
   const summary = useMemo(
-    () =>
-      reviewExtractedCodes(previewCodes, outcome?.duplicateInInventory ?? [], codeLength),
-    [previewCodes, outcome, codeLength],
+    () => reviewExtractedCodes(previewCodes, existingInInventory, codeLength),
+    [previewCodes, existingInInventory, codeLength],
+  );
+
+  const existingSet = useMemo(
+    () => new Set(existingInInventory.map((c) => c.toUpperCase())),
+    [existingInInventory],
+  );
+  const duplicateCodes = useMemo(
+    () => Array.from(new Set(previewCodes.filter((c) => existingSet.has(c.toUpperCase())))),
+    [previewCodes, existingSet],
   );
 
   if (!ecosystemId) return null;
@@ -491,12 +527,29 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
                   <div className="grid gap-1 text-xs sm:grid-cols-2">
                     <span>Extracted: {outcome.extracted.length}</span>
                     <span>In this list: {summary.extracted}</span>
-                    <span>New and importable: {summary.importable.length}</span>
-                    <span>
-                      Duplicates: {summary.duplicateInBatch + summary.duplicateInInventory}
+                    <span className="text-success">New: {summary.importable.length}</span>
+                    <span className="text-destructive">
+                      Already in this shop: {summary.duplicateInInventory}
                     </span>
+                    <span>Repeated in this list: {summary.duplicateInBatch}</span>
                     <span>Invalid format: {summary.invalid}</span>
                   </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    {summary.extracted} extracted · {summary.duplicateInInventory} already exist ·{" "}
+                    {summary.importable.length} new. Codes that already exist in this shop's Code
+                    Inventory are excluded and can never be re-imported or overwritten. Another
+                    shop having the same code does not block it here.
+                  </p>
+                  {duplicateCodes.length > 0 ? (
+                    <div className="space-y-1 rounded-md border border-destructive/40 p-2">
+                      <p className="text-[11px] font-medium text-destructive">
+                        Excluded — already in this shop's Code Inventory
+                      </p>
+                      <p className="break-words font-mono text-[11px] text-muted-foreground">
+                        {duplicateCodes.join(", ")}
+                      </p>
+                    </div>
+                  ) : null}
                   {previewCodes.some((c) => !isValidVoucherCode(c, codeLength)) ? (
                     <p className="text-[11px] text-destructive">
                       Some codes do not match the expected format and will be skipped.

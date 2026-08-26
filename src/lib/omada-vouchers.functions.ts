@@ -801,3 +801,34 @@ export const importGeneratedVoucherCodes = createServerFn({ method: "POST" })
   });
 
 export { controllerMismatch };
+
+/**
+ * Admin: which of these codes already exist in THIS shop's Code Inventory.
+ *
+ * Used by the editable preview so an admin sees exactly which codes are
+ * existing duplicates before importing. Inventory uniqueness is shop-scoped:
+ * the same code in another shop is irrelevant here. This is a convenience
+ * check only — the import path re-checks and the database's per-shop unique
+ * index is the final, race-safe guard.
+ */
+export const checkExistingVoucherCodes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { ecosystemId: string; codes: string[] }) => {
+    if (!data?.ecosystemId) throw new Error("A shop is required.");
+    if (!Array.isArray(data.codes)) throw new Error("Codes are required.");
+    return data;
+  })
+  .handler(async ({ data, context }): Promise<{ existing: string[] }> => {
+    const ctx = context as unknown as AuthContext;
+    await assertShopAdmin(ctx, data.ecosystemId);
+    const wanted = new Set(data.codes.map((c) => c.trim().toUpperCase()).filter(Boolean));
+    if (wanted.size === 0) return { existing: [] };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const rows = (
+      await supabaseAdmin.from("voucher_codes").select("code").eq("ecosystem_id", data.ecosystemId)
+    ).data as Array<{ code: string }> | null;
+    const existing = (rows ?? [])
+      .map((r) => r.code.trim().toUpperCase())
+      .filter((c) => wanted.has(c));
+    return { existing: Array.from(new Set(existing)) };
+  });

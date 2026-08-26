@@ -34,6 +34,9 @@ export interface VoucherView {
   price: string | null;
   remainingTime: string | null;
   remainingData: string | null;
+  /** Authoritative voucher-level totals the controller already counted. */
+  dataUsed: string | null;
+  timeUsed: string | null;
   startedAt: string | null;
   expiresAt: string | null;
   devices: VoucherDeviceView[];
@@ -133,6 +136,18 @@ function formatPrice(voucher: Row, group: Row | null): string | null {
   return currency && currency !== "PHP" ? `${currency} ${money}` : `₱${money}`;
 }
 
+function usedDataOf(voucher: Row): string | null {
+  const used = num(pick(voucher, ["trafficUsed", "trafficUsage"]));
+  return used === null ? null : used <= 0 ? "None yet" : formatData(used);
+}
+
+function usedTimeOf(voucher: Row): string | null {
+  const used = num(pick(voucher, ["timeUsedSec", "timeUsed"]));
+  if (used === null) return null;
+  if (used <= 0) return "None yet";
+  return formatDuration(used);
+}
+
 function remainingTimeOf(voucher: Row): string | null {
   const left = num(pick(voucher, ["timeLeftSec", "remainingTime", "timeLeft"]));
   return left === null ? null : formatDuration(left);
@@ -196,6 +211,8 @@ export function toVoucherView(
   const price = formatPrice(voucher, group);
   const remainingTime = remainingTimeOf(voucher);
   const remainingData = remainingDataOf(voucher);
+  const dataUsed = usedDataOf(voucher);
+  const timeUsed = usedTimeOf(voucher);
   const startedAt = formatMoment(pick(voucher, ["startTime", "beginTime", "inUseTime"]));
   const expiresAt = formatMoment(pick(voucher, ["endTime", "expirationTime", "expireTime"]));
 
@@ -218,6 +235,8 @@ export function toVoucherView(
     price,
     remainingTime,
     remainingData,
+    dataUsed,
+    timeUsed,
     startedAt,
     expiresAt,
     devices,
