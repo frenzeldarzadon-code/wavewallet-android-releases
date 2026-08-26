@@ -290,7 +290,13 @@ async function statusFor(ecosystemId: string, rawCode: string | undefined) {
   }
 }
 
-/** Any member of this shop: read-only voucher status from its own controller. */
+/**
+ * Any member of this shop: read-only voucher status from its own controller.
+ *
+ * The lookup is shop-scoped by construction — the code is only ever searched on
+ * the controller belonging to `ecosystemId`, and only members of that shop may
+ * call it. There is no global or cross-shop voucher search.
+ */
 export const lookupOmadaVoucher = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { ecosystemId: string; code?: string | undefined }) => {
@@ -301,42 +307,4 @@ export const lookupOmadaVoucher = createServerFn({ method: "POST" })
     await assertShopMember(context as unknown as AuthContext, data.ecosystemId);
     return statusFor(data.ecosystemId, data.code);
   });
-
-/**
- * Public Status Checker: anyone holding a voucher code may check it and label
- * the devices using it. No account, membership or role is required — the code
- * itself is the only thing being looked up, one code at a time, and nothing
- * about the shop's operations or controller is exposed.
- */
-export const lookupVoucherPublicly = createServerFn({ method: "POST" })
-  .inputValidator((data: { shopSlug: string; code?: string | undefined }) => {
-    if (!data?.shopSlug) throw new Error("A shop is required.");
-    return data;
-  })
-  .handler(async ({ data }): Promise<OmadaVoucherStatus & { ecosystemId: string | null }> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: shop } = await supabaseAdmin
-      .from("ecosystems")
-      .select("id")
-      .eq("slug", data.shopSlug)
-      .maybeSingle();
-    if (!shop) return { ...EMPTY_STATUS, ecosystemId: null };
-    const status = await statusFor(shop.id as string, data.code);
-    return { ...status, ecosystemId: shop.id as string };
-  });
-
-/** Public: shops whose hotspot controller is connected, for the public checker. */
-export const listVoucherStatusShops = createServerFn({ method: "GET" }).handler(async () => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data } = await supabaseAdmin
-    .from("omada_connections")
-    .select("ecosystem_id, ecosystems!inner(name, slug)");
-  return (data ?? [])
-    .map((row) => {
-      const shop = (row as { ecosystems: { name: string; slug: string } | null }).ecosystems;
-      return shop ? { name: shop.name, slug: shop.slug } : null;
-    })
-    .filter((row): row is { name: string; slug: string } => Boolean(row?.slug))
-    .sort((a, b) => a.name.localeCompare(b.name));
-});
 
