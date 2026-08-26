@@ -114,7 +114,7 @@ describe("voucher-level usage totals", () => {
     });
     expect(view?.state).toBe("expired");
     expect(view?.dataUsed).toBe("3.0 GB");
-    expect(view?.timeUsed).toBe("2 hours");
+    expect(view?.timeUsed).toBe("2 hours 8 min");
     expect(view?.devices).toHaveLength(0);
   });
 
