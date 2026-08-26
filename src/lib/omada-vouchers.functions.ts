@@ -308,3 +308,495 @@ export const lookupOmadaVoucher = createServerFn({ method: "POST" })
     return statusFor(data.ecosystemId, data.code);
   });
 
+
+/* ------------------------------------------------------------------ *
+ * Shop-specific voucher generation workflow.
+ *
+ * Every call re-derives the shop from `ecosystemId` and re-authorises the
+ * caller as that shop's admin (or the platform owner). Products, calibrations,
+ * controller sessions, generated groups and imported codes are all filtered by
+ * that same shop id server-side — the browser can never widen the scope.
+ * ------------------------------------------------------------------ */
+
+import {
+  VERIFIED_VOUCHER_FIELDS,
+  controllerMismatch,
+  defaultGenerationValues,
+  defaultGroupName,
+  reviewExtractedCodes,
+  validateGenerationPayload,
+  type ControllerIdentity,
+  type VoucherFieldSpec,
+} from "./omada-generation";
+
+export interface GenerationProduct {
+  id: string;
+  name: string;
+  credit_price: number;
+  points_price: number | null;
+  promo_price: number | null;
+}
+
+export interface GenerationCalibration {
+  id: string;
+  version: number;
+  payload: Record<string, unknown>;
+  controller_identity: Partial<ControllerIdentity>;
+  created_at: string;
+}
+
+export interface VoucherGenerationSetup {
+  configured: boolean;
+  error: string | null;
+  controller: ControllerIdentity | null;
+  fields: VoucherFieldSpec[];
+  defaults: Record<string, unknown>;
+  products: GenerationProduct[];
+  /** Current calibration per product id, when one has been saved. */
+  calibrations: Record<string, GenerationCalibration>;
+  /** Existing group names on the controller, used for safe default naming. */
+  groupNames: string[];
+}
+
+/** Admin: everything needed to prepare a generation for one shop. */
+export const getVoucherGenerationSetup = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { ecosystemId: string }) => {
+    if (!data?.ecosystemId) throw new Error("A shop is required.");
+    return data;
+  })
+  .handler(async ({ data, context }): Promise<VoucherGenerationSetup> => {
+    await assertShopAdmin(context as unknown as AuthContext, data.ecosystemId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { openOmadaSession } = await import("./omada-api.server");
+    const { readControllerInfo, listAllVoucherGroups, voucherCapabilities, VERIFIED_CREATE_PATH } =
+      await import("./omada-vouchers.server");
+
+    const products = (
+      await supabaseAdmin
+        .from("voucher_products")
+        .select("id, name, credit_price, points_price, promo_price")
+        .eq("ecosystem_id", data.ecosystemId)
+        .eq("archived", false)
+        .order("name")
+    ).data as GenerationProduct[] | null;
+
+    const calibrationRows = (
+      await supabaseAdmin
+        .from("omada_voucher_calibrations")
+        .select("id, product_id, version, payload, controller_identity, created_at")
+        .eq("ecosystem_id", data.ecosystemId)
+        .eq("is_current", true)
+    ).data as Array<GenerationCalibration & { product_id: string }> | null;
+
+    const calibrations: Record<string, GenerationCalibration> = {};
+    for (const row of calibrationRows ?? []) {
+      calibrations[row.product_id] = {
+        id: row.id,
+        version: row.version,
+        payload: (row.payload ?? {}) as Record<string, unknown>,
+        controller_identity: (row.controller_identity ?? {}) as Partial<ControllerIdentity>,
+        created_at: row.created_at,
+      };
+    }
+
+    const base: VoucherGenerationSetup = {
+      configured: false,
+      error: null,
+      controller: null,
+      fields: VERIFIED_VOUCHER_FIELDS,
+      defaults: defaultGenerationValues(),
+      products: products ?? [],
+      calibrations,
+      groupNames: [],
+    };
+
+    try {
+      const session = await openOmadaSession(supabaseAdmin as never, data.ecosystemId);
+      const info = await readControllerInfo(session);
+      let groupNames: string[] = [];
+      try {
+        const caps = voucherCapabilities(null);
+        const groups = await listAllVoucherGroups(session, {
+          ...caps,
+          listPath: caps.listPath ?? VERIFIED_CREATE_PATH,
+        });
+        groupNames = groups.map((g) => String(g["name"] ?? "")).filter(Boolean);
+      } catch {
+        /* naming help is best-effort */
+      }
+      return {
+        ...base,
+        configured: true,
+        controller: {
+          baseUrl: session.base,
+          omadacId: session.omadacId,
+          siteId: session.siteId,
+          controllerVersion: info.controllerVersion,
+        },
+        groupNames,
+      };
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      if (message.includes("no Omada controller connected")) return base;
+      return { ...base, configured: true, error: message };
+    }
+  });
+
+/** Group name suggestion, kept unique for the same product on the same day. */
+export function suggestGroupName(productName: string, existingNames: string[]): string {
+  return defaultGroupName(productName, existingNames);
+}
+
+export interface GenerationOutcome {
+  batchId: string;
+  groupId: string | null;
+  groupName: string;
+  calibrationVersion: number | null;
+  extracted: string[];
+  duplicateInInventory: string[];
+  retrievalNote: string | null;
+}
+
+/**
+ * Admin: send the reviewed request to this shop's own controller, then read the
+ * generated group back and extract ONLY the voucher codes. Nothing is imported
+ * into inventory here — the admin must confirm the preview separately.
+ */
+export const generateVoucherGroupForProduct = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (data: {
+      ecosystemId: string;
+      productId: string;
+      payload: Record<string, unknown>;
+      saveAsCalibration?: boolean;
+    }) => {
+      if (!data?.ecosystemId) throw new Error("A shop is required.");
+      if (!data?.productId) throw new Error("Choose a voucher product first.");
+      if (!data.payload || typeof data.payload !== "object") throw new Error("Nothing to send.");
+      return data;
+    },
+  )
+  .handler(async ({ data, context }): Promise<GenerationOutcome> => {
+    const ctx = context as unknown as AuthContext;
+    await assertShopAdmin(ctx, data.ecosystemId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { openOmadaSession } = await import("./omada-api.server");
+    const {
+      readControllerInfo,
+      createVoucherGroupVerified,
+      findGroupIdByName,
+      fetchGroupCodes,
+      voucherCapabilities,
+      VERIFIED_CREATE_PATH,
+    } = await import("./omada-vouchers.server");
+
+    // The product must belong to THIS shop; ids from the browser are never trusted.
+    const product = (
+      await supabaseAdmin
+        .from("voucher_products")
+        .select("id, name")
+        .eq("id", data.productId)
+        .eq("ecosystem_id", data.ecosystemId)
+        .maybeSingle()
+    ).data as { id: string; name: string } | null;
+    if (!product) throw new Error("That voucher product does not belong to this shop.");
+
+    const payload = { ...data.payload };
+    const groupName = String(payload["name"] ?? "").trim();
+    if (!groupName) throw new Error("A group name is required.");
+
+    const problems = validateGenerationPayload(payload);
+    if (problems.length > 0) throw new Error(problems.join(" "));
+
+    try {
+      const session = await openOmadaSession(supabaseAdmin as never, data.ecosystemId);
+      const info = await readControllerInfo(session);
+      const identity = {
+        baseUrl: session.base,
+        omadacId: session.omadacId,
+        siteId: session.siteId,
+        controllerVersion: info.controllerVersion,
+      };
+
+      const startedAt = Date.now();
+      const created = await createVoucherGroupVerified(session, payload);
+
+      let groupId = created.groupId;
+      let retrievalNote: string | null = null;
+      if (!groupId) {
+        const caps = voucherCapabilities(null);
+        groupId = await findGroupIdByName(
+          session,
+          { ...caps, listPath: caps.listPath ?? VERIFIED_CREATE_PATH },
+          groupName,
+          startedAt,
+        );
+        retrievalNote = groupId
+          ? "The controller did not return a group id, so the new group was matched by name and creation time."
+          : "The vouchers were created, but the controller did not return the new group. Open the Omada group and import its codes manually.";
+      }
+
+      let extracted: string[] = [];
+      if (groupId) {
+        const read = await fetchGroupCodes(session, groupId);
+        extracted = read.codes;
+      }
+
+      // Duplicate check against this shop's existing inventory only.
+      const inventory = (
+        await supabaseAdmin
+          .from("voucher_codes")
+          .select("code")
+          .eq("ecosystem_id", data.ecosystemId)
+      ).data as Array<{ code: string }> | null;
+      const existing = new Set((inventory ?? []).map((r) => r.code.trim().toUpperCase()));
+      const duplicateInInventory = extracted.filter((c) => existing.has(c.trim().toUpperCase()));
+
+      let calibrationVersion: number | null = null;
+      let calibrationId: string | null = null;
+      if (data.saveAsCalibration) {
+        const saved = await saveCalibrationRow(
+          supabaseAdmin,
+          data.ecosystemId,
+          data.productId,
+          payload,
+          identity,
+          ctx.userId,
+        );
+        calibrationVersion = saved.version;
+        calibrationId = saved.id;
+      } else {
+        const current = (
+          await supabaseAdmin
+            .from("omada_voucher_calibrations")
+            .select("id, version")
+            .eq("ecosystem_id", data.ecosystemId)
+            .eq("product_id", data.productId)
+            .eq("is_current", true)
+            .maybeSingle()
+        ).data as { id: string; version: number } | null;
+        calibrationVersion = current?.version ?? null;
+        calibrationId = current?.id ?? null;
+      }
+
+      const batch = (
+        await supabaseAdmin
+          .from("omada_voucher_batches")
+          .insert({
+            ecosystem_id: data.ecosystemId,
+            product_id: data.productId,
+            calibration_id: calibrationId,
+            calibration_version: calibrationVersion,
+            controller_identity: identity as never,
+            group_id: groupId,
+            group_name: groupName,
+            amount: Number(payload["amount"] ?? 0),
+            extracted_count: extracted.length,
+            request: payload as never,
+            response: (created.result ?? {}) as never,
+            created_by: ctx.userId,
+          })
+          .select("id")
+          .single()
+      ).data as { id: string } | null;
+
+      return {
+        batchId: batch?.id ?? "",
+        groupId,
+        groupName,
+        calibrationVersion,
+        extracted,
+        duplicateInInventory,
+        retrievalNote,
+      };
+    } catch (e) {
+      return friendly(e);
+    }
+  });
+
+async function saveCalibrationRow(
+  supabaseAdmin: {
+    from: (table: string) => {
+      select: (columns: string) => any;
+      update: (values: Record<string, unknown>) => any;
+      insert: (values: Record<string, unknown>) => any;
+    };
+  },
+  ecosystemId: string,
+  productId: string,
+  payload: Record<string, unknown>,
+  identity: ControllerIdentity,
+  userId: string,
+): Promise<{ id: string; version: number }> {
+  const latest = (
+    await supabaseAdmin
+      .from("omada_voucher_calibrations")
+      .select("version")
+      .eq("ecosystem_id", ecosystemId)
+      .eq("product_id", productId)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+  ).data as { version: number } | null;
+  const version = (latest?.version ?? 0) + 1;
+
+  await supabaseAdmin
+    .from("omada_voucher_calibrations")
+    .update({ is_current: false })
+    .eq("ecosystem_id", ecosystemId)
+    .eq("product_id", productId);
+
+  const inserted = (
+    await supabaseAdmin
+      .from("omada_voucher_calibrations")
+      .insert({
+        ecosystem_id: ecosystemId,
+        product_id: productId,
+        version,
+        payload: payload as never,
+        controller_identity: identity as never,
+        is_current: true,
+        created_by: userId,
+      })
+      .select("id, version")
+      .single()
+  ).data as { id: string; version: number } | null;
+  if (!inserted) throw new Error("The calibration could not be saved.");
+  return inserted;
+}
+
+/** Admin: explicitly save the settings just used as this product's calibration. */
+export const saveVoucherCalibration = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (data: { ecosystemId: string; productId: string; payload: Record<string, unknown> }) => {
+      if (!data?.ecosystemId || !data?.productId) throw new Error("A shop and product are required.");
+      if (!data.payload || typeof data.payload !== "object") throw new Error("Nothing to save.");
+      return data;
+    },
+  )
+  .handler(async ({ data, context }) => {
+    const ctx = context as unknown as AuthContext;
+    await assertShopAdmin(ctx, data.ecosystemId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { openOmadaSession } = await import("./omada-api.server");
+    const { readControllerInfo } = await import("./omada-vouchers.server");
+    const product = (
+      await supabaseAdmin
+        .from("voucher_products")
+        .select("id")
+        .eq("id", data.productId)
+        .eq("ecosystem_id", data.ecosystemId)
+        .maybeSingle()
+    ).data as { id: string } | null;
+    if (!product) throw new Error("That voucher product does not belong to this shop.");
+
+    const session = await openOmadaSession(supabaseAdmin as never, data.ecosystemId);
+    const info = await readControllerInfo(session);
+    const saved = await saveCalibrationRow(
+      supabaseAdmin as never,
+      data.ecosystemId,
+      data.productId,
+      data.payload,
+      {
+        baseUrl: session.base,
+        omadacId: session.omadacId,
+        siteId: session.siteId,
+        controllerVersion: info.controllerVersion,
+      },
+      ctx.userId,
+    );
+    return { ok: true as const, version: saved.version };
+  });
+
+export interface ImportOutcome {
+  importedCount: number;
+  duplicateCount: number;
+  invalidCount: number;
+  importId: string | null;
+}
+
+/**
+ * Admin: import the codes the admin confirmed in the preview into THIS shop's
+ * inventory. Duplicates are skipped, never overwritten, and the resulting
+ * import is linked back to the generation batch for full lineage.
+ */
+export const importGeneratedVoucherCodes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (data: { ecosystemId: string; productId: string; batchId?: string; codes: string[] }) => {
+      if (!data?.ecosystemId || !data?.productId) throw new Error("A shop and product are required.");
+      if (!Array.isArray(data.codes) || data.codes.length === 0)
+        throw new Error("Select at least one code to import.");
+      return data;
+    },
+  )
+  .handler(async ({ data, context }): Promise<ImportOutcome> => {
+    const ctx = context as unknown as AuthContext;
+    await assertShopAdmin(ctx, data.ecosystemId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const product = (
+      await supabaseAdmin
+        .from("voucher_products")
+        .select("id")
+        .eq("id", data.productId)
+        .eq("ecosystem_id", data.ecosystemId)
+        .maybeSingle()
+    ).data as { id: string } | null;
+    if (!product) throw new Error("That voucher product does not belong to this shop.");
+
+    const inventory = (
+      await supabaseAdmin.from("voucher_codes").select("code").eq("ecosystem_id", data.ecosystemId)
+    ).data as Array<{ code: string }> | null;
+    const review = reviewExtractedCodes(
+      data.codes,
+      (inventory ?? []).map((r) => r.code),
+    );
+    if (review.importable.length === 0) {
+      return {
+        importedCount: 0,
+        duplicateCount: review.duplicateInBatch + review.duplicateInInventory,
+        invalidCount: review.invalid,
+        importId: null,
+      };
+    }
+
+    // Runs as the signed-in admin, so the existing inventory rules and audit
+    // trail apply exactly as they do for a manual import.
+    const { data: rows, error } = await (
+      ctx.supabase as unknown as {
+        rpc: (fn: string, args: unknown) => Promise<{ data: unknown; error: { message: string } | null }>;
+      }
+    ).rpc("import_voucher_codes", {
+      _product_id: data.productId,
+      _codes: review.importable,
+      _source: "omada",
+    });
+    if (error) throw new Error(error.message);
+    const result = (rows as Array<{
+      batch_id: string;
+      imported_count: number;
+      duplicate_count: number;
+      invalid_count: number;
+    }> | null)?.[0];
+
+    if (data.batchId && result?.batch_id) {
+      await supabaseAdmin
+        .from("omada_voucher_batches")
+        .update({ import_id: result.batch_id, imported_count: result.imported_count })
+        .eq("id", data.batchId)
+        .eq("ecosystem_id", data.ecosystemId);
+    }
+
+    return {
+      importedCount: result?.imported_count ?? 0,
+      duplicateCount: (result?.duplicate_count ?? 0) + review.duplicateInInventory,
+      invalidCount: (result?.invalid_count ?? 0) + review.invalid,
+      importId: result?.batch_id ?? null,
+    };
+  });
+
+export { controllerMismatch };
