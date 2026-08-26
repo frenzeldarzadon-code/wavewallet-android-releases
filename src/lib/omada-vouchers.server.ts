@@ -435,3 +435,114 @@ export async function listAuthorizedClients(
   }
   return rows;
 }
+
+/**
+ * Verified generation surface for Omada Controller 6.2.x.
+ *
+ * This controller family does NOT publish an OpenAPI document, so the endpoints
+ * below were verified directly against the live controller, including its own
+ * validation messages for every required field and range. Nothing here is
+ * speculative: only paths that answered on the real controller are used.
+ */
+export const VERIFIED_CREATE_PATH =
+  "/openapi/v1/{omadacId}/sites/{siteId}/hotspot/voucher-groups";
+export const VERIFIED_GROUP_DETAIL_PATH = `${VERIFIED_CREATE_PATH}/{groupId}`;
+
+/** Controller identity + firmware version, from the controller's own /api/info. */
+export async function readControllerInfo(
+  session: OmadaSession,
+): Promise<{ controllerVersion: string | null }> {
+  try {
+    const res = await fetch(`${session.base}/api/info`, {
+      headers: { Authorization: `AccessToken=${session.token}` },
+    });
+    const body = (await res.json()) as unknown;
+    const result = omadaEnvelope(body).result as Record<string, unknown> | null;
+    const version = result?.["controllerVer"];
+    return { controllerVersion: typeof version === "string" ? version : null };
+  } catch {
+    return { controllerVersion: null };
+  }
+}
+
+/** Creates the voucher group on THIS shop's controller. Returns the raw result. */
+export async function createVoucherGroupVerified(
+  session: OmadaSession,
+  payload: Record<string, unknown>,
+): Promise<{ result: unknown; groupId: string | null }> {
+  const result = await call(session, resolvePath(session, VERIFIED_CREATE_PATH), {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  return { result: result ?? null, groupId: extractGroupId(result) };
+}
+
+/** The create response shape varies by build; read an id only when one is given. */
+export function extractGroupId(result: unknown): string | null {
+  if (typeof result === "string" && result.trim()) return result.trim();
+  if (result && typeof result === "object") {
+    const r = result as Record<string, unknown>;
+    for (const key of ["id", "groupId", "voucherGroupId"]) {
+      const value = r[key];
+      if (typeof value === "string" && value) return value;
+    }
+  }
+  return null;
+}
+
+/**
+ * Fallback when the create response carries no id: find the group the admin
+ * just created by its exact name, preferring the newest one created at or after
+ * the moment generation started.
+ */
+export async function findGroupIdByName(
+  session: OmadaSession,
+  caps: OmadaVoucherCapabilities,
+  name: string,
+  createdSinceMs: number,
+): Promise<string | null> {
+  const groups = await listAllVoucherGroups(session, {
+    ...caps,
+    listPath: caps.listPath ?? VOUCHER_GROUPS_FALLBACK,
+  });
+  const wanted = name.trim().toLowerCase();
+  const matches = groups
+    .filter((g) => String(g["name"] ?? "").trim().toLowerCase() === wanted)
+    .filter((g) => Number(g["createdTime"] ?? 0) >= createdSinceMs - 120_000)
+    .sort((a, b) => Number(b["createdTime"] ?? 0) - Number(a["createdTime"] ?? 0));
+  const hit = matches[0];
+  return hit ? (String(hit["id"] ?? "") || null) : null;
+}
+
+const VOUCHER_GROUPS_FALLBACK = OFFICIAL_VOUCHER_GROUPS;
+
+/**
+ * Reads back the generated group and extracts ONLY the voucher codes.
+ * Verified: GET .../voucher-groups/{groupId}?page&pageSize returns the group
+ * plus result.data[] rows carrying `code`. Pagination params are mandatory.
+ */
+export async function fetchGroupCodes(
+  session: OmadaSession,
+  groupId: string,
+): Promise<{ codes: string[]; groupName: string | null; total: number }> {
+  const pageSize = 100;
+  const codes: string[] = [];
+  let groupName: string | null = null;
+  let total = 0;
+  for (let page = 1; page <= 100; page += 1) {
+    const result = (await call(
+      session,
+      `${resolvePath(session, VERIFIED_GROUP_DETAIL_PATH, { groupId })}?page=${page}&pageSize=${pageSize}`,
+    )) as Record<string, unknown> | null;
+    if (!result) break;
+    if (groupName === null && typeof result["name"] === "string") groupName = result["name"];
+    total = Number(result["totalCount"] ?? result["totalRows"] ?? total);
+    const rows = Array.isArray(result["data"]) ? (result["data"] as Array<Record<string, unknown>>) : [];
+    for (const row of rows) {
+      const code = row["code"];
+      if (typeof code === "string" && code.trim()) codes.push(code.trim());
+    }
+    if (rows.length < pageSize) break;
+  }
+  return { codes, groupName, total: total || codes.length };
+}
