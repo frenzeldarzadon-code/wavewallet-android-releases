@@ -7082,6 +7082,10 @@ export type Database = {
         Returns: string
       }
       assert_actor_active: { Args: never; Returns: undefined }
+      assert_voucher_tracer_member: {
+        Args: { _ecosystem_id: string }
+        Returns: undefined
+      }
       assign_shop_admin: {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: undefined
