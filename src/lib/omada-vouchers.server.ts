@@ -133,6 +133,11 @@ function describe(
 const VOUCHER_GROUPS = /\/hotspot\/voucher-groups$/;
 const VOUCHER_GROUP_ONE = /\/hotspot\/voucher-groups\/\{[^}]+\}$/;
 const VOUCHER_LIST = /\/hotspot\/voucher-groups\/\{[^}]+\}\/vouchers$/;
+const OFFICIAL_VOUCHER_GROUPS =
+  "/openapi/v1/{omadacId}/sites/{siteId}/hotspot/voucher-groups";
+// On Controller 6.2, group detail includes the paginated voucher rows in
+// result.data. Some newer schemas additionally publish a /vouchers child.
+const OFFICIAL_VOUCHER_LIST = `${OFFICIAL_VOUCHER_GROUPS}/{groupId}`;
 
 /**
  * Derives the voucher endpoints and the exact create-request schema from the
@@ -155,8 +160,12 @@ export function voucherCapabilities(
   if (!spec) {
     return {
       ...empty,
+      // These read-only routes are part of Omada's published Northbound Open
+      // API. Reading status must not depend on the optional Swagger document.
+      listPath: OFFICIAL_VOUCHER_GROUPS,
+      voucherListPath: OFFICIAL_VOUCHER_LIST,
       limitation:
-        "This controller did not return its API description, so WaveWallet cannot verify the exact voucher fields it expects. Voucher generation stays disabled rather than sending a guessed request.",
+        "Voucher status is available through Omada's Open API, but this controller did not publish the voucher creation schema. Generation stays disabled rather than sending an unverified request.",
     };
   }
   const paths = (spec["paths"] as Record<string, Record<string, SchemaNode>>) ?? {};
@@ -281,6 +290,27 @@ export async function listVoucherGroups(
   return Array.isArray(rows) ? (rows as Array<Record<string, unknown>>) : [];
 }
 
+/** Reads every controller page; Omada remains the source of truth. */
+export async function listAllVoucherGroups(
+  session: OmadaSession,
+  caps: OmadaVoucherCapabilities,
+): Promise<Array<Record<string, unknown>>> {
+  if (!caps.listPath) return [];
+  const pageSize = 100;
+  const rows: Array<Record<string, unknown>> = [];
+  for (let page = 1; ; page += 1) {
+    const result = (await call(
+      session,
+      `${resolvePath(session, caps.listPath)}?page=${page}&pageSize=${pageSize}`,
+    )) as Record<string, unknown> | null;
+    const pageRows = (result?.["data"] ?? result) as unknown;
+    const batch = Array.isArray(pageRows) ? (pageRows as Array<Record<string, unknown>>) : [];
+    rows.push(...batch);
+    const total = Number(result?.["totalRows"] ?? rows.length);
+    if (batch.length === 0 || batch.length < pageSize || rows.length >= total) return rows;
+  }
+}
+
 export async function listVouchersInGroup(
   session: OmadaSession,
   caps: OmadaVoucherCapabilities,
@@ -303,6 +333,22 @@ export async function listVouchersInGroup(
     rows: Array.isArray(rows) ? (rows as Array<Record<string, unknown>>) : [],
     total: Number(result?.["totalRows"] ?? (Array.isArray(rows) ? rows.length : 0)),
   };
+}
+
+export async function findVoucherByCode(
+  session: OmadaSession,
+  caps: OmadaVoucherCapabilities,
+  groupId: string,
+  code: string,
+): Promise<Record<string, unknown> | null> {
+  const wanted = code.toUpperCase();
+  const pageSize = 100;
+  for (let page = 1; ; page += 1) {
+    const { rows, total } = await listVouchersInGroup(session, caps, groupId, page, pageSize);
+    const hit = rows.find((row) => String(row["code"] ?? "").toUpperCase() === wanted);
+    if (hit) return hit;
+    if (rows.length === 0 || rows.length < pageSize || page * pageSize >= total) return null;
+  }
 }
 
 export async function createVoucherGroup(

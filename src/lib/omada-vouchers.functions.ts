@@ -185,6 +185,7 @@ export interface OmadaVoucherStatus {
   groups: Array<{ id: string; name: string }>;
   found: OmadaRow | null;
   searched: boolean;
+  outcome: "ready" | "found" | "not_found" | "invalid" | "unavailable" | "authentication_failed";
   error: string | null;
 }
 
@@ -193,13 +194,17 @@ export const lookupOmadaVoucher = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { ecosystemId: string; code?: string }) => {
     if (!data?.ecosystemId) throw new Error("A shop is required.");
-    return { ecosystemId: data.ecosystemId, code: (data.code ?? "").trim() };
+    const code = (data.code ?? "").trim();
+    if (code && !/^[A-Za-z0-9-]{4,64}$/.test(code)) {
+      return { ecosystemId: data.ecosystemId, code, invalid: true };
+    }
+    return { ecosystemId: data.ecosystemId, code, invalid: false };
   })
   .handler(async ({ data, context }): Promise<OmadaVoucherStatus> => {
     await assertShopMember(context as unknown as AuthContext, data.ecosystemId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { openOmadaSession } = await import("./omada-api.server");
-    const { loadOmadaSpec, voucherCapabilities, listVoucherGroups, listVouchersInGroup } =
+    const { loadOmadaSpec, voucherCapabilities, listAllVoucherGroups, findVoucherByCode } =
       await import("./omada-vouchers.server");
 
     const empty: OmadaVoucherStatus = {
@@ -207,37 +212,57 @@ export const lookupOmadaVoucher = createServerFn({ method: "POST" })
       groups: [],
       found: null,
       searched: false,
+      outcome: "ready",
       error: null,
     };
+    if (data.invalid) {
+      return {
+        ...empty,
+        configured: true,
+        searched: true,
+        outcome: "invalid",
+        error: "Enter a valid Omada voucher code.",
+      };
+    }
     try {
       const session = await openOmadaSession(supabaseAdmin as never, data.ecosystemId);
       const caps = voucherCapabilities(await loadOmadaSpec(session));
-      const groups = await listVoucherGroups(session, caps);
+      const groups = await listAllVoucherGroups(session, caps);
       const list = groups.map((g) => ({
         id: String(g["id"] ?? g["groupId"] ?? ""),
         name: String(g["name"] ?? "Voucher group"),
       }));
       if (!data.code) return { ...empty, configured: true, groups: list };
 
-      const wanted = data.code.toUpperCase();
       for (const group of list) {
         if (!group.id) continue;
-        const { rows } = await listVouchersInGroup(session, caps, group.id);
-        const hit = rows.find((r) => String(r["code"] ?? "").toUpperCase() === wanted);
+        const hit = await findVoucherByCode(session, caps, group.id, data.code);
         if (hit) {
+          const status = Number(hit["status"]);
+          const statusLabel = status === 0 ? "Unused" : status === 1 ? "In use" : status === 2 ? "Expired" : "Unknown";
           return {
             ...empty,
             configured: true,
             groups: list,
             searched: true,
-            found: { ...flatten(hit), groupName: group.name },
+            outcome: "found",
+            found: { ...flatten(hit), statusLabel, groupName: group.name },
           };
         }
       }
-      return { ...empty, configured: true, groups: list, searched: true };
+      return { ...empty, configured: true, groups: list, searched: true, outcome: "not_found" };
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       if (message.includes("no Omada controller connected")) return empty;
-      return { ...empty, configured: true, error: message };
+      const authenticationFailed = /authentication|unauthorized|HTTP 401|HTTP 403/i.test(message);
+      return {
+        ...empty,
+        configured: true,
+        searched: Boolean(data.code),
+        outcome: authenticationFailed ? "authentication_failed" : "unavailable",
+        error: authenticationFailed
+          ? "Omada authentication failed. Ask the shop admin to reconnect the controller."
+          : message,
+      };
     }
   });
