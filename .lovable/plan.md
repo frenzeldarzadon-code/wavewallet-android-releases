@@ -1,112 +1,54 @@
-# Optional Omada integration — architecture plan (Phase 0/1)
+# Omada voucher generation — verification results and implementation plan
 
-This is an investigation + proof-of-concept plan. No production code, schema, UI or voucher-import behaviour changes are proposed for approval in this step beyond the isolated Phase 1 items listed at the end.
+## 1. What was verified on the live controller (Sagada Wave, 6.2.14.11)
 
-Note: a standing project rule currently says "No Omada API / auto voucher generation". This plan supersedes it only if you approve; otherwise the rule stays.
+Probes were run server-side with the shop's own stored credentials. **No voucher group was created** — every write probe deliberately carried one invalid field so the controller rejected it at validation.
 
-## 1. Where the integration attaches
+Verified facts:
 
-The existing model does not need to change:
+- The controller does **not** publish an OpenAPI document (`/openapi/v3|v2/api-docs` → 404). Schema-by-document discovery cannot work here; the schema had to be verified against the live endpoint itself.
+- Create endpoint exists: `POST /openapi/v1/{omadacId}/sites/{siteId}/hotspot/voucher-groups` (OPTIONS → `POST,GET,HEAD,OPTIONS`).
+- The controller enumerates its own **required** fields (from an empty-body probe):
+  `name, amount, codeLength, codeForm, limitType, duration, durationType, timingType, rateLimit, applyToAllPortals, trafficLimitEnable`
+- Verified ranges/allowed values (from the controller's own validation messages):
 
-- `voucher_products` — untouched (name, description, credit/points price, promo, active, archived).
-- `voucher_codes` — remains the single source of truth. Unique per `(ecosystem_id, upper(code))`, so duplicate protection already exists at the database level.
-- `voucher_imports` — every batch already records `source` ('paste' today). Omada generation becomes just another `source` value ('omada'), so batch history, deletion rules and Code Inventory UI keep working unchanged.
-- `import_voucher_codes(_product_id, _codes[], _source)` — the existing security-definer RPC already does authorization, duplicate/invalid counting, batch creation and audit logging. Omada import must call this exact function rather than inserting codes directly. That guarantees no second inventory and identical rules to manual import.
-
-So the integration is a thin **provider adapter** that produces `text[]` codes and hands them to the existing import RPC. Manual paste/file import is unaffected.
-
-New, additive-only storage (Phase 2, not Phase 1):
-- `omada_connections` — one row per ecosystem: controller base URL, omadac id, site id/name, connection status, last verified at. No secrets in this table.
-- `omada_product_links` — links one `voucher_product` to one Omada voucher configuration (duration, timing mode, usage limit, rate/traffic limit, code length/format). This is the "Voucher Calibration" record.
-- Both RLS-scoped by `ecosystem_id` with the project's standard `is_ecosystem_admin`/`is_super_admin` policies plus explicit GRANTs.
-
-## 2. Credential storage
-
-- Client Secret never reaches the browser and never lives in source.
-- Phase 1 (single tenant, your controller): store `OMADA_CLIENT_ID`, `OMADA_CLIENT_SECRET`, `OMADA_BASE_URL`, `OMADA_OMADAC_ID`, `OMADA_SITE_ID` in Project Settings → Secrets. Read them only inside a `createServerFn` handler (`process.env[...]`), never at module scope.
-- Phase 2 (multi-tenant): reuse the pattern this project already uses for app-user connector keys — AES-256-GCM ciphertext in a server-only table readable by `service_role` only, with the encryption key from a platform secret. Per-ecosystem rows, decrypted only inside a server function after the caller's admin role for that ecosystem is verified.
-- No secret is ever returned to the client; the UI only ever sees connection status and site name.
-
-## 3. Does the stack support the calls?
-
-Yes. Server functions run in a Cloudflare-Workers-style runtime with `fetch`, `crypto` and `Buffer`. Outbound HTTPS to `https://portal.sagadawave.com:8043` is fine. Two caveats to verify in the very first probe:
-
-- Non-standard port 8043 — allowed, but must be confirmed from the server runtime, not just from a browser.
-- Omada controllers commonly serve a **self-signed certificate**. Workers `fetch` cannot disable TLS verification. If the certificate is not publicly trusted, the integration is blocked until the controller is fronted by a trusted certificate (e.g. a proper cert on `portal.sagadawave.com`). This is the single biggest technical risk and Phase 1 exists mainly to answer it.
-
-## 4. Omada Open API operations required
-
-Stated with explicit confidence levels; nothing below is presented as verified for your exact build.
-
-| Need | Expected operation | Confidence |
-|---|---|---|
-| Auth (Client mode) | `POST /openapi/authorize/token?grant_type=client_credentials` with client id/secret → access token, then `Authorization: AccessToken=<token>` on subsequent calls | High |
-| Token refresh | `POST /openapi/authorize/token` re-issue, or refresh-token grant | Medium |
-| List sites | `GET /openapi/v1/{omadacId}/sites` | High |
-| List voucher groups | `GET /openapi/v1/{omadacId}/sites/{siteId}/hotspot/vouchers` (paged) | Medium |
-| Create voucher group | `POST` to the same collection with duration/limit/code-length payload | Medium |
-| Retrieve generated codes | A per-group detail/list endpoint returning individual voucher codes | Medium — this is the one that most often differs by version |
-| Voucher status / left time / remaining traffic | Same detail endpoint's per-voucher fields (`status`, `expirationTime`, `trafficLimit`/used) | Medium |
-| `omadacId` discovery | `GET /api/info` on the controller root | High |
-
-Uncertainty is real and version-specific. Standard Controller 6.2 exposes its own OpenAPI documentation on the controller itself (typically reachable from the controller UI under Global View → Platform Integration → Open API, "API Docs"). **The authoritative endpoint list must be read from your controller's own API Docs page before any code is written.** Phase 1 includes that as a deliverable.
-
-## 5. Least privilege
-
-- Testing with Role = Admin is fine.
-- Production target: an Open API application in **Client mode**, site-scoped to `Sagada Wave V2`, with the lowest role that still permits Hotspot → Voucher read and create. On Standard Controller this is usually a custom site role granting only Hotspot Manager / Voucher permissions; "Viewer" is enough for the read-only Phase 1 but not for generation.
-- Recommendation: create a second Open API application for read-only Phase 1 with Viewer role, and keep the Admin one out of production.
-
-## 6. Phase 1 — read-only proof of concept
-
-Deliberately tiny, no schema, no UI, no writes to Omada or to WaveWallet inventory.
-
-1. One server function file (e.g. `src/lib/omada.functions.ts` + `omada.server.ts`) exposing a single super-admin-gated `omadaProbe()`.
-2. It performs, in order, and returns a structured diagnostic report:
-   - TLS/connectivity check against the base URL (`GET /api/info`) → controller version + `omadacId`.
-   - Token request with client credentials → success/failure only, token never returned.
-   - `GET sites` → confirm `Sagada Wave V2` is visible and capture its site id.
-   - List voucher groups for that site → count + field shape of the response.
-   - Read one voucher group's codes/status → confirm which of code/status/left-time/remaining-traffic actually come back.
-3. Output rendered on an existing Super Admin diagnostics surface (or returned as JSON via the invoke tool) — no new user-facing route needed.
-4. Guards even in Phase 1: super-admin-only, 10 s timeout per call, no secret echoed, response bodies truncated in logs, no persistence.
-
-Exit criteria: we know whether TLS works, which endpoints exist on 6.2.0.17, and exactly which status fields are available.
-
-## 7. Later phases (not for approval now)
-
-- **Phase 2 — Calibration**: `omada_connections` + `omada_product_links` tables, Admin → Omada connection screen, per-product calibration form, connection test button.
-- **Phase 3 — Generation/import**: admin picks an existing product + quantity → server function creates the Omada voucher group, polls for codes, validates them (length/charset), then calls the existing `import_voucher_codes(..., 'omada')`. Idempotency key per generation request so a retry can never double-import; the DB unique index is the final backstop.
-- **Phase 4 — Status checker**: read-only lookup by code; shows Unused/In-use/Expired plus left time / remaining traffic when present. No device, MAC, IP or AP data.
-
-## 8. Security risks and safeguards
-
-| Risk | Safeguard |
+| Field | Rule (controller-stated) |
 |---|---|
-| Client Secret exposure | Secrets store only; read inside handlers; never returned, logged or rendered |
-| Cross-tenant credential use | Every server function resolves the ecosystem from the caller's verified admin membership, never from a client-supplied id |
-| Duplicate inventory | Import always goes through `import_voucher_codes`; `voucher_codes_unique_per_ecosystem` is the hard backstop; generation requests carry an idempotency key |
-| Second source of truth | No Omada-specific code table; Omada is only a `source` label on `voucher_imports` |
-| Runaway generation | Server-side quantity cap (mirror the existing 500 ceiling), per-ecosystem rate limit on generate calls, confirmation dialog reusing the current import confirm pattern |
-| Untrusted TLS | Fail closed; no verification bypass is possible or permitted |
-| Auditability | Every connect, calibrate, generate and status lookup writes an `audit_logs` row with ecosystem, actor and counts |
-| Omada outage | All Omada paths are optional; failure surfaces a clear message and manual import remains fully available |
+| `amount` | 1 – 5000 |
+| `codeLength` | 6 – 10 |
+| `limitType` | 0, 1 or 2 (`limitNum` used with 1/2) |
+| `durationType` | 0 or 1 |
+| `timingType` | 0 or 1 |
+| `duration` | 1 – 14400000 |
+| `rateLimit` | object; `mode` 0 = custom (`customRateLimit`), 1 = profile (`rateLimitProfileId`); mode 2 → "Invalid Number" |
+| `codeForm` | array (e.g. `[0]` digits) |
+| `trafficLimitEnable` | boolean; `trafficLimit` / `trafficLimitFrequency` when enabled |
+| optional, observed on real groups | `unitPrice`, `currency`, `description`, `validityType`, `logout`, `portalNames`, `voucherPattern`, `effectiveTime`/`expirationTime` |
 
-## 9. Effort estimate
+- Group read-back is confirmed: `GET .../hotspot/voucher-groups/{id}?page=1&pageSize=N` returns the group plus a paginated `result.data[]` of voucher rows with the real **`code`**, `id`, `status` (0 unused / 1 in-use / 2 expired), traffic and time fields. There is **no** `/vouchers` child route (404) — pagination params are required (no params → HTTP 400).
+- `rate-limit-profiles` and `portals` list endpoints are **not** exposed (404), so a profile id can only be reused from an existing group, not picked from a live list.
 
-- Phase 1 (read-only probe + endpoint discovery report): small — roughly a few hours of work, one focused session.
-- Phase 2 (connection + calibration schema and UI): medium.
-- Phase 3 (generation + import): medium, dominated by response-shape handling and idempotency tests.
-- Phase 4 (status checker): small once Phase 1 has confirmed the status fields.
+## 2. The one thing that cannot be verified without a real write
 
-## 10. What I need from you before the first live test
+The **response body shape of a successful create** (whether it returns the new `groupId`) is unknowable without actually generating a real voucher group on the production controller. Implementation handles both cases: use the returned id when present, otherwise re-read the group list and match the just-created group by name + `createdTime`. A one-off 1-code test batch (deletable) is the way to confirm it for real.
 
-1. Add these in **Project Settings → Secrets** (do not paste values in chat):
-   - `OMADA_CLIENT_ID`
-   - `OMADA_CLIENT_SECRET`
-   - `OMADA_BASE_URL` = `https://portal.sagadawave.com:8043`
-   - optionally `OMADA_OMADAC_ID` and `OMADA_SITE_ID` if you already have them
-2. Confirm whether the controller's certificate is publicly trusted or self-signed.
-3. From the controller's Open API Docs page, tell me the generation label shown (e.g. "Open API v1") and whether Hotspot/Voucher endpoints are listed.
-4. Confirm you accept that this supersedes the existing "no Omada API" project rule.
-5. Confirm whether Phase 1 may use the existing Admin-role "WaveWallet Test" application, or whether you prefer a new Viewer-role application first.
+## 3. Implementation plan (only after your go-ahead)
+
+**Data (all shop-scoped, RLS + GRANTs):**
+- `omada_voucher_calibrations` — versioned: `(ecosystem_id, product_id, version)`, `payload jsonb`, `controller_identity` (base URL, omadacId, siteId, controller version), `is_current`, actor, timestamps. Never silently overwritten; a new version is only written when the Admin explicitly saves after a successful generation.
+- Extend `omada_voucher_batches` with `product_id`, `calibration_id`, `group_id`, `group_name`, `requested_amount`, `imported_count`, `controller_identity`, actor. `voucher_codes.import_id` keeps the code→import→batch chain, giving the full Shop → Product → Calibration version → Omada group → code lineage.
+
+**Server functions (`assertShopAdmin` on every call, ecosystem id from the caller's shop, never the client's claim):**
+1. `getVoucherGenerationSetup({ecosystemId, productId})` — live-verified field template, product-derived prefills, current calibration + controller-mismatch warning.
+2. `generateVoucherGroup(...)` — validates required fields/ranges locally against the verified rules, then POSTs; on failure nothing is imported and the controller's message is surfaced.
+3. `fetchGeneratedGroupCodes({ecosystemId, groupId})` — re-reads the group and extracts **only** `code` values.
+4. `importGeneratedCodes(...)` — duplicate check within the extraction and against that shop's `voucher_codes`, then insert only confirmed codes; writes `voucher_imports` + batch audit.
+
+**UI (Admin → Omada → Generate, admin-only):**
+Product picker → prefilled calibration + full verified field template (required/optional/product-derived/calibrated clearly marked) → group name defaulting to `<Product> <YYYY-MM-DD>` with a numeric suffix when a same-day duplicate exists → review screen → generate → editable code preview with counts (extracted / new / duplicate / to import) → explicit final import confirm → optional "save these settings as the calibration".
+
+**Untouched:** Status Checker, tracer behaviour, multi-device handling, existing inventory import paths.
+
+## 4. Decision needed
+
+Do you want me to (a) implement the above now and confirm the create-response shape with a single deletable 1-code test group on the live controller, or (b) implement it without any live write and confirm the response shape on your first real generation?
