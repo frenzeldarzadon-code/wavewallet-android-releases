@@ -408,3 +408,30 @@ export function validateAgainstSpec(
   walk(fields, payload, "");
   return errors;
 }
+
+/**
+ * Authorized clients of this site, as shown on Omada's "Authorized Clients"
+ * page. Verified on Controller 6.2.14.11:
+ *   GET /openapi/v1/{omadacId}/sites/{siteId}/clients
+ * Each row carries `mac`, `name`/`hostName` and `authInfo[{authType, info}]`,
+ * where authType 3 is a hotspot voucher and `info` is the voucher code. This is
+ * the authoritative voucher -> device association; a voucher may match several.
+ */
+export async function listAuthorizedClients(
+  session: OmadaSession,
+): Promise<Array<Record<string, unknown>>> {
+  const pageSize = 100;
+  const rows: Array<Record<string, unknown>> = [];
+  for (let page = 1; page <= 20; page += 1) {
+    const result = (await call(
+      session,
+      `/openapi/v1/${session.omadacId}/sites/${session.siteId}/clients?page=${page}&pageSize=${pageSize}`,
+    )) as Record<string, unknown> | null;
+    const pageRows = (result?.["data"] ?? result) as unknown;
+    const batch = Array.isArray(pageRows) ? (pageRows as Array<Record<string, unknown>>) : [];
+    rows.push(...batch);
+    const total = Number(result?.["totalRows"] ?? rows.length);
+    if (batch.length === 0 || batch.length < pageSize || rows.length >= total) break;
+  }
+  return rows;
+}
