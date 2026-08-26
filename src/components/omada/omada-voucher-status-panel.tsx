@@ -6,7 +6,7 @@
  * words. Raw controller fields (ids, byte and second counters, internal limits)
  * are never shown. Every device authorized by the voucher is listed separately
  * with its own Tracer, a free-form label anyone may set for operational
- * tracking. A code that does not exist reads "Voucher not found"; a controller
+ * tracking by any member of that shop. A code that does not exist reads "Voucher not found"; a controller
  * problem reads as a controller problem — never as a missing voucher.
  */
 import { useCallback, useEffect, useState } from "react";
@@ -16,11 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  lookupOmadaVoucher,
-  lookupVoucherPublicly,
-  type OmadaVoucherStatus,
-} from "@/lib/omada-vouchers.functions";
+import { lookupOmadaVoucher, type OmadaVoucherStatus } from "@/lib/omada-vouchers.functions";
 import type { VoucherDeviceView } from "@/lib/omada-voucher-view";
 import {
   fetchVoucherTracers,
@@ -158,31 +154,21 @@ function Notice({ tone, children }: { tone: "muted" | "warn"; children: React.Re
 
 export function OmadaVoucherStatusPanel({
   ecosystemId,
-  shopSlug,
 }: {
-  /** Shop being checked when the visitor is signed in to that shop. */
+  /** The shop whose controller is searched. Members of this shop only. */
   ecosystemId?: string | null;
-  /** Public checker: the shop is chosen by slug and no account is required. */
-  shopSlug?: string;
 }) {
   const [state, setState] = useState<OmadaVoucherStatus | null>(null);
-  const [tracerShopId, setTracerShopId] = useState<string | null>(ecosystemId ?? null);
   const [records, setRecords] = useState<TracerRecord[]>([]);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
 
   const check = useCallback(
     async (searchCode?: string) => {
-      if (shopSlug) {
-        const next = await lookupVoucherPublicly({ data: { shopSlug, code: searchCode } });
-        setTracerShopId(next.ecosystemId);
-        return next as OmadaVoucherStatus;
-      }
       if (!ecosystemId) return null;
-      setTracerShopId(ecosystemId);
       return lookupOmadaVoucher({ data: { ecosystemId, code: searchCode } });
     },
-    [ecosystemId, shopSlug],
+    [ecosystemId],
   );
 
   useEffect(() => {
@@ -203,7 +189,7 @@ export function OmadaVoucherStatusPanel({
     [],
   );
 
-  if (!ecosystemId && !shopSlug) return null;
+  if (!ecosystemId) return null;
 
   if (!state) {
     return (
@@ -231,7 +217,7 @@ export function OmadaVoucherStatusPanel({
       if (!next) return;
       setState(next);
       if (next.outcome === "found") {
-        await loadTracers(code.trim(), shopSlug ? tracerShopId : (ecosystemId ?? null));
+        await loadTracers(code.trim(), ecosystemId);
       } else {
         setRecords([]);
       }
@@ -243,7 +229,7 @@ export function OmadaVoucherStatusPanel({
   };
 
   const onSaveTracer = async (mac: string, tracer: string) => {
-    const shopId = shopSlug ? tracerShopId : (ecosystemId ?? null);
+    const shopId = ecosystemId;
     if (!shopId) return;
     const voucherCode = state.view?.code ?? code.trim();
     try {
