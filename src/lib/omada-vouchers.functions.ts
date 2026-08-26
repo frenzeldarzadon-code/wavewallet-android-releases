@@ -183,87 +183,160 @@ export const listOmadaVoucherBatches = createServerFn({ method: "POST" })
 
 export interface OmadaVoucherStatus {
   configured: boolean;
-  groups: Array<{ id: string; name: string }>;
   /** Translated, customer-safe view. Raw controller fields never cross over. */
   view: VoucherView | null;
   searched: boolean;
-  outcome: "ready" | "found" | "not_found" | "invalid" | "unavailable" | "authentication_failed";
+  outcome:
+    | "ready"
+    | "found"
+    | "not_found"
+    | "invalid"
+    | "unavailable"
+    | "authentication_failed"
+    | "status_unreadable";
   error: string | null;
 }
 
+const EMPTY_STATUS: OmadaVoucherStatus = {
+  configured: false,
+  view: null,
+  searched: false,
+  outcome: "ready",
+  error: null,
+};
+
+function normaliseCode(raw: string | undefined) {
+  const code = (raw ?? "").trim();
+  const invalid = Boolean(code) && !/^[A-Za-z0-9-]{4,64}$/.test(code);
+  return { code, invalid };
+}
+
+/**
+ * Shared, tenant-scoped voucher lookup.
+ *
+ * Omada stays authoritative: the voucher row gives status/usage/timestamps, its
+ * group gives the price, and the site's authorized clients give every device
+ * (MAC) currently authorized by that code. A code that no group contains is a
+ * genuine "not found"; a controller problem is reported as such instead.
+ */
+async function statusFor(ecosystemId: string, rawCode: string | undefined) {
+  const { code, invalid } = normaliseCode(rawCode);
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { openOmadaSession } = await import("./omada-api.server");
+  const {
+    loadOmadaSpec,
+    voucherCapabilities,
+    listAllVoucherGroups,
+    findVoucherByCode,
+    listAuthorizedClients,
+  } = await import("./omada-vouchers.server");
+
+  if (invalid) {
+    return {
+      ...EMPTY_STATUS,
+      configured: true,
+      searched: true,
+      outcome: "invalid" as const,
+      error: "Enter a valid voucher code.",
+    };
+  }
+
+  try {
+    const session = await openOmadaSession(supabaseAdmin as never, ecosystemId);
+    const caps = voucherCapabilities(await loadOmadaSpec(session));
+    const groups = await listAllVoucherGroups(session, caps);
+    if (!code) return { ...EMPTY_STATUS, configured: true };
+
+    for (const group of groups) {
+      const groupId = String(group["id"] ?? group["groupId"] ?? "");
+      if (!groupId) continue;
+      const hit = await findVoucherByCode(session, caps, groupId, code);
+      if (!hit) continue;
+
+      const clients = await listAuthorizedClients(session).catch(() => []);
+      const view = toVoucherView(code, hit, group, clients);
+      if (!view) {
+        return {
+          ...EMPTY_STATUS,
+          configured: true,
+          searched: true,
+          outcome: "status_unreadable" as const,
+          error:
+            "The controller returned this voucher without a status it could read. Try again shortly.",
+        };
+      }
+      return {
+        ...EMPTY_STATUS,
+        configured: true,
+        searched: true,
+        outcome: "found" as const,
+        view,
+      };
+    }
+    return { ...EMPTY_STATUS, configured: true, searched: true, outcome: "not_found" as const };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    if (message.includes("no Omada controller connected")) return EMPTY_STATUS;
+    const authenticationFailed = /authentication|unauthorized|HTTP 401|HTTP 403/i.test(message);
+    return {
+      ...EMPTY_STATUS,
+      configured: true,
+      searched: Boolean(code),
+      outcome: authenticationFailed ? ("authentication_failed" as const) : ("unavailable" as const),
+      error: authenticationFailed
+        ? "The hotspot controller rejected this shop's connection. Ask the shop admin to reconnect it."
+        : "The hotspot controller could not be reached right now, so the voucher status is unavailable. Please try again shortly.",
+    };
+  }
+}
 
 /** Any member of this shop: read-only voucher status from its own controller. */
 export const lookupOmadaVoucher = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { ecosystemId: string; code?: string }) => {
     if (!data?.ecosystemId) throw new Error("A shop is required.");
-    const code = (data.code ?? "").trim();
-    if (code && !/^[A-Za-z0-9-]{4,64}$/.test(code)) {
-      return { ecosystemId: data.ecosystemId, code, invalid: true };
-    }
-    return { ecosystemId: data.ecosystemId, code, invalid: false };
+    return data;
   })
   .handler(async ({ data, context }): Promise<OmadaVoucherStatus> => {
     await assertShopMember(context as unknown as AuthContext, data.ecosystemId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { openOmadaSession } = await import("./omada-api.server");
-    const { loadOmadaSpec, voucherCapabilities, listAllVoucherGroups, findVoucherByCode } =
-      await import("./omada-vouchers.server");
-
-    const empty: OmadaVoucherStatus = {
-      configured: false,
-      groups: [],
-      view: null,
-      searched: false,
-      outcome: "ready",
-      error: null,
-    };
-    if (data.invalid) {
-      return {
-        ...empty,
-        configured: true,
-        searched: true,
-        outcome: "invalid",
-        error: "Enter a valid Omada voucher code.",
-      };
-    }
-    try {
-      const session = await openOmadaSession(supabaseAdmin as never, data.ecosystemId);
-      const caps = voucherCapabilities(await loadOmadaSpec(session));
-      const groups = await listAllVoucherGroups(session, caps);
-      const list = groups.map((g) => ({
-        id: String(g["id"] ?? g["groupId"] ?? ""),
-        name: String(g["name"] ?? "Voucher group"),
-      }));
-      if (!data.code) return { ...empty, configured: true, groups: list };
-
-      for (const group of list) {
-        if (!group.id) continue;
-        const hit = await findVoucherByCode(session, caps, group.id, data.code);
-        if (hit) {
-          return {
-            ...empty,
-            configured: true,
-            groups: list,
-            searched: true,
-            outcome: "found",
-            view: toVoucherView(data.code, hit),
-          };
-        }
-      }
-      return { ...empty, configured: true, groups: list, searched: true, outcome: "not_found" };
-    } catch (e) {
-      const message = e instanceof Error ? e.message : String(e);
-      if (message.includes("no Omada controller connected")) return empty;
-      const authenticationFailed = /authentication|unauthorized|HTTP 401|HTTP 403/i.test(message);
-      return {
-        ...empty,
-        configured: true,
-        searched: Boolean(data.code),
-        outcome: authenticationFailed ? "authentication_failed" : "unavailable",
-        error: authenticationFailed
-          ? "Omada authentication failed. Ask the shop admin to reconnect the controller."
-          : message,
-      };
-    }
+    return statusFor(data.ecosystemId, data.code);
   });
+
+/**
+ * Public Status Checker: anyone holding a voucher code may check it and label
+ * the devices using it. No account, membership or role is required — the code
+ * itself is the only thing being looked up, one code at a time, and nothing
+ * about the shop's operations or controller is exposed.
+ */
+export const lookupVoucherPublicly = createServerFn({ method: "POST" })
+  .inputValidator((data: { shopSlug: string; code?: string }) => {
+    if (!data?.shopSlug) throw new Error("A shop is required.");
+    return data;
+  })
+  .handler(async ({ data }): Promise<OmadaVoucherStatus & { ecosystemId: string | null }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: shop } = await supabaseAdmin
+      .from("ecosystems")
+      .select("id")
+      .eq("slug", data.shopSlug)
+      .maybeSingle();
+    if (!shop) return { ...EMPTY_STATUS, ecosystemId: null };
+    const status = await statusFor(shop.id as string, data.code);
+    return { ...status, ecosystemId: shop.id as string };
+  });
+
+/** Public: shops whose hotspot controller is connected, for the public checker. */
+export const listVoucherStatusShops = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("omada_connections")
+    .select("ecosystem_id, ecosystems!inner(name, slug)");
+  return (data ?? [])
+    .map((row) => {
+      const shop = (row as { ecosystems: { name: string; slug: string } | null }).ecosystems;
+      return shop ? { name: shop.name, slug: shop.slug } : null;
+    })
+    .filter((row): row is { name: string; slug: string } => Boolean(row?.slug))
+    .sort((a, b) => a.name.localeCompare(b.name));
+});
+
