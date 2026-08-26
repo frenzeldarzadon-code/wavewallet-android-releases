@@ -293,7 +293,7 @@ async function statusFor(ecosystemId: string, rawCode: string | undefined) {
 /** Any member of this shop: read-only voucher status from its own controller. */
 export const lookupOmadaVoucher = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { ecosystemId: string; code?: string }) => {
+  .inputValidator((data: { ecosystemId: string; code?: string | undefined }) => {
     if (!data?.ecosystemId) throw new Error("A shop is required.");
     return data;
   })
@@ -309,7 +309,7 @@ export const lookupOmadaVoucher = createServerFn({ method: "POST" })
  * about the shop's operations or controller is exposed.
  */
 export const lookupVoucherPublicly = createServerFn({ method: "POST" })
-  .inputValidator((data: { shopSlug: string; code?: string }) => {
+  .inputValidator((data: { shopSlug: string; code?: string | undefined }) => {
     if (!data?.shopSlug) throw new Error("A shop is required.");
     return data;
   })
