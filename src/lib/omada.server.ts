@@ -88,6 +88,14 @@ function normaliseBase(baseUrl: string): string {
   return baseUrl.trim().replace(/\/+$/, "");
 }
 
+/** Keep transport/certificate failures distinct from credential failures. */
+export function omadaHttpFailure(status: number, fallback: string): string {
+  if (status === 526) {
+    return "TLS certificate validation failed between the HTTPS gateway and the Omada controller (HTTP 526). Use an API hostname whose certificate and chain are valid, not the controller's self-signed HTTPS port.";
+  }
+  return fallback;
+}
+
 /**
  * Connection check for one shop's controller: reachability, client-credentials
  * authentication and (optionally) visibility of the configured site.
@@ -101,7 +109,7 @@ export async function checkOmadaConnection(config: OmadaConfig): Promise<ProbeRe
   if (!info.ok) {
     const detail = info.error
       ? `Could not reach the controller: ${info.error}. A certificate error here means the controller's HTTPS certificate is not valid for that address.`
-      : `HTTP ${info.status}`;
+      : omadaHttpFailure(info.status, `HTTP ${info.status}`);
     steps.push({ step: "Controller reachable (HTTPS)", ok: false, detail });
     return { ok: false, siteId: null, steps, error: detail };
   }
@@ -131,7 +139,12 @@ export async function checkOmadaConnection(config: OmadaConfig): Promise<ProbeRe
       ? ((tokenRes.result as Record<string, unknown>)["accessToken"] as string | undefined)
       : undefined;
   if (!accessToken) {
-    const detail = `Authentication failed: ${scrub(tokenRes.msg || `HTTP ${token.status}`, secrets)}`;
+    const transportFailure = !token.ok
+      ? omadaHttpFailure(token.status, "")
+      : "";
+    const detail = transportFailure
+      ? transportFailure
+      : `Authentication failed: ${scrub(tokenRes.msg || `HTTP ${token.status}`, secrets)}`;
     steps.push({ step: "API authentication (client credentials)", ok: false, detail });
     return { ok: false, siteId: null, steps, error: detail };
   }

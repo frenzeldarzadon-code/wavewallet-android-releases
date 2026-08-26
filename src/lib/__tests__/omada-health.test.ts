@@ -7,6 +7,7 @@ import {
   offlineTooLong,
   type OmadaHealthOutcome,
 } from "../omada-health.server";
+import { omadaHttpFailure } from "../omada.server";
 
 const outcome = (o: Partial<OmadaHealthOutcome>): OmadaHealthOutcome => ({
   state: "healthy",
@@ -18,6 +19,11 @@ const outcome = (o: Partial<OmadaHealthOutcome>): OmadaHealthOutcome => ({
 });
 
 describe("omada health backoff", () => {
+  it("identifies an HTTP 526 as a TLS certificate path failure", () => {
+    expect(omadaHttpFailure(526, "HTTP 526")).toContain("TLS certificate validation failed");
+    expect(omadaHttpFailure(401, "HTTP 401")).toBe("HTTP 401");
+  });
+
   it("uses the calm interval while healthy", () => {
     expect(backoffDelayMs(0)).toBe(HEALTHY_INTERVAL_MS);
   });
