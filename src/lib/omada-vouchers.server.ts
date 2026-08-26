@@ -135,7 +135,9 @@ const VOUCHER_GROUP_ONE = /\/hotspot\/voucher-groups\/\{[^}]+\}$/;
 const VOUCHER_LIST = /\/hotspot\/voucher-groups\/\{[^}]+\}\/vouchers$/;
 const OFFICIAL_VOUCHER_GROUPS =
   "/openapi/v1/{omadacId}/sites/{siteId}/hotspot/voucher-groups";
-const OFFICIAL_VOUCHER_LIST = `${OFFICIAL_VOUCHER_GROUPS}/{groupId}/vouchers`;
+// On Controller 6.2, group detail includes the paginated voucher rows in
+// result.data. Some newer schemas additionally publish a /vouchers child.
+const OFFICIAL_VOUCHER_LIST = `${OFFICIAL_VOUCHER_GROUPS}/{groupId}`;
 
 /**
  * Derives the voucher endpoints and the exact create-request schema from the

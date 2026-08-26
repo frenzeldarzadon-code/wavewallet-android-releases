@@ -76,7 +76,7 @@ describe("omada voucher calibration", () => {
       { groupId: "group-id" },
     );
     expect(path).toBe(
-      "/openapi/v1/controller-id/sites/site-id/hotspot/voucher-groups/group-id/vouchers",
+      "/openapi/v1/controller-id/sites/site-id/hotspot/voucher-groups/group-id",
     );
   });
 
