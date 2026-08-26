@@ -24,6 +24,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StartShopRouteImport } from './routes/start-shop'
 import { Route as SuperRouteImport } from './routes/super'
 import { Route as UniverseRouteImport } from './routes/universe'
+import { Route as VoucherStatusRouteImport } from './routes/voucher-status'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
 import { Route as AdminCreditsRouteImport } from './routes/admin.credits'
@@ -182,6 +183,11 @@ const SuperRoute = SuperRouteImport.update({
 const UniverseRoute = UniverseRouteImport.update({
   id: '/universe',
   path: '/universe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VoucherStatusRoute = VoucherStatusRouteImport.update({
+  id: '/voucher-status',
+  path: '/voucher-status',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -623,6 +629,7 @@ export interface FileRoutesByFullPath {
   '/start-shop': typeof StartShopRoute
   '/super': typeof SuperRouteWithChildren
   '/universe': typeof UniverseRouteWithChildren
+  '/voucher-status': typeof VoucherStatusRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -719,6 +726,7 @@ export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/start-shop': typeof StartShopRoute
+  '/voucher-status': typeof VoucherStatusRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -821,6 +829,7 @@ export interface FileRoutesById {
   '/start-shop': typeof StartShopRoute
   '/super': typeof SuperRouteWithChildren
   '/universe': typeof UniverseRouteWithChildren
+  '/voucher-status': typeof VoucherStatusRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -924,6 +933,7 @@ export interface FileRouteTypes {
     | '/start-shop'
     | '/super'
     | '/universe'
+    | '/voucher-status'
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
@@ -1020,6 +1030,7 @@ export interface FileRouteTypes {
     | '/setup'
     | '/sitemap.xml'
     | '/start-shop'
+    | '/voucher-status'
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
@@ -1121,6 +1132,7 @@ export interface FileRouteTypes {
     | '/start-shop'
     | '/super'
     | '/universe'
+    | '/voucher-status'
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
@@ -1223,6 +1235,7 @@ export interface RootRouteChildren {
   StartShopRoute: typeof StartShopRoute
   SuperRoute: typeof SuperRouteWithChildren
   UniverseRoute: typeof UniverseRouteWithChildren
+  VoucherStatusRoute: typeof VoucherStatusRoute
   JoinSlugRoute: typeof JoinSlugRoute
   ShopSlugRoute: typeof ShopSlugRoute
   ApiPublicAppVersionRoute: typeof ApiPublicAppVersionRoute
@@ -1336,6 +1349,13 @@ declare module '@tanstack/react-router' {
       path: '/universe'
       fullPath: '/universe'
       preLoaderRoute: typeof UniverseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/voucher-status': {
+      id: '/voucher-status'
+      path: '/voucher-status'
+      fullPath: '/voucher-status'
+      preLoaderRoute: typeof VoucherStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -2145,6 +2165,7 @@ const rootRouteChildren: RootRouteChildren = {
   StartShopRoute: StartShopRoute,
   SuperRoute: SuperRouteWithChildren,
   UniverseRoute: UniverseRouteWithChildren,
+  VoucherStatusRoute: VoucherStatusRoute,
   JoinSlugRoute: JoinSlugRoute,
   ShopSlugRoute: ShopSlugRoute,
   ApiPublicAppVersionRoute: ApiPublicAppVersionRoute,
