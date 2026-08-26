@@ -238,13 +238,15 @@ export const lookupOmadaVoucher = createServerFn({ method: "POST" })
         if (!group.id) continue;
         const hit = await findVoucherByCode(session, caps, group.id, data.code);
         if (hit) {
+          const status = Number(hit["status"]);
+          const statusLabel = status === 0 ? "Unused" : status === 1 ? "In use" : status === 2 ? "Expired" : "Unknown";
           return {
             ...empty,
             configured: true,
             groups: list,
             searched: true,
             outcome: "found",
-            found: { ...flatten(hit), groupName: group.name },
+            found: { ...flatten(hit), statusLabel, groupName: group.name },
           };
         }
       }

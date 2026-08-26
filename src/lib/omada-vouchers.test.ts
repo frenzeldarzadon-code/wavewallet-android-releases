@@ -64,7 +64,7 @@ describe("omada voucher calibration", () => {
     const caps = voucherCapabilities(null);
     expect(caps.supported).toBe(false);
     expect(caps.listPath).toContain("/hotspot/voucher-groups");
-    expect(caps.voucherListPath).toContain("/vouchers");
+    expect(caps.voucherListPath).toContain("/{groupId}");
     expect(caps.limitation).toBeTruthy();
   });
 
