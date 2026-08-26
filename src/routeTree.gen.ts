@@ -68,6 +68,7 @@ import { Route as ResellerEarningsRouteImport } from './routes/reseller.earnings
 import { Route as ResellerHistoryRouteImport } from './routes/reseller.history'
 import { Route as ResellerMessagesRouteImport } from './routes/reseller.messages'
 import { Route as ResellerMoneyRouteImport } from './routes/reseller.money'
+import { Route as ResellerOmadaRouteImport } from './routes/reseller.omada'
 import { Route as ResellerProfileRouteImport } from './routes/reseller.profile'
 import { Route as ResellerRedemptionsRouteImport } from './routes/reseller.redemptions'
 import { Route as ResellerReportsRouteImport } from './routes/reseller.reports'
@@ -403,6 +404,11 @@ const ResellerMoneyRoute = ResellerMoneyRouteImport.update({
   path: '/money',
   getParentRoute: () => ResellerRoute,
 } as any)
+const ResellerOmadaRoute = ResellerOmadaRouteImport.update({
+  id: '/omada',
+  path: '/omada',
+  getParentRoute: () => ResellerRoute,
+} as any)
 const ResellerProfileRoute = ResellerProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -658,6 +664,7 @@ export interface FileRoutesByFullPath {
   '/reseller/history': typeof ResellerHistoryRoute
   '/reseller/messages': typeof ResellerMessagesRoute
   '/reseller/money': typeof ResellerMoneyRoute
+  '/reseller/omada': typeof ResellerOmadaRoute
   '/reseller/profile': typeof ResellerProfileRoute
   '/reseller/redemptions': typeof ResellerRedemptionsRoute
   '/reseller/reports': typeof ResellerReportsRoute
@@ -753,6 +760,7 @@ export interface FileRoutesByTo {
   '/reseller/history': typeof ResellerHistoryRoute
   '/reseller/messages': typeof ResellerMessagesRoute
   '/reseller/money': typeof ResellerMoneyRoute
+  '/reseller/omada': typeof ResellerOmadaRoute
   '/reseller/profile': typeof ResellerProfileRoute
   '/reseller/redemptions': typeof ResellerRedemptionsRoute
   '/reseller/reports': typeof ResellerReportsRoute
@@ -854,6 +862,7 @@ export interface FileRoutesById {
   '/reseller/history': typeof ResellerHistoryRoute
   '/reseller/messages': typeof ResellerMessagesRoute
   '/reseller/money': typeof ResellerMoneyRoute
+  '/reseller/omada': typeof ResellerOmadaRoute
   '/reseller/profile': typeof ResellerProfileRoute
   '/reseller/redemptions': typeof ResellerRedemptionsRoute
   '/reseller/reports': typeof ResellerReportsRoute
@@ -956,6 +965,7 @@ export interface FileRouteTypes {
     | '/reseller/history'
     | '/reseller/messages'
     | '/reseller/money'
+    | '/reseller/omada'
     | '/reseller/profile'
     | '/reseller/redemptions'
     | '/reseller/reports'
@@ -1051,6 +1061,7 @@ export interface FileRouteTypes {
     | '/reseller/history'
     | '/reseller/messages'
     | '/reseller/money'
+    | '/reseller/omada'
     | '/reseller/profile'
     | '/reseller/redemptions'
     | '/reseller/reports'
@@ -1151,6 +1162,7 @@ export interface FileRouteTypes {
     | '/reseller/history'
     | '/reseller/messages'
     | '/reseller/money'
+    | '/reseller/omada'
     | '/reseller/profile'
     | '/reseller/redemptions'
     | '/reseller/reports'
@@ -1634,6 +1646,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResellerMoneyRouteImport
       parentRoute: typeof ResellerRoute
     }
+    '/reseller/omada': {
+      id: '/reseller/omada'
+      path: '/omada'
+      fullPath: '/reseller/omada'
+      preLoaderRoute: typeof ResellerOmadaRouteImport
+      parentRoute: typeof ResellerRoute
+    }
     '/reseller/profile': {
       id: '/reseller/profile'
       path: '/profile'
@@ -2005,6 +2024,7 @@ interface ResellerRouteChildren {
   ResellerHistoryRoute: typeof ResellerHistoryRoute
   ResellerMessagesRoute: typeof ResellerMessagesRoute
   ResellerMoneyRoute: typeof ResellerMoneyRoute
+  ResellerOmadaRoute: typeof ResellerOmadaRoute
   ResellerProfileRoute: typeof ResellerProfileRoute
   ResellerRedemptionsRoute: typeof ResellerRedemptionsRoute
   ResellerReportsRoute: typeof ResellerReportsRoute
@@ -2024,6 +2044,7 @@ const ResellerRouteChildren: ResellerRouteChildren = {
   ResellerHistoryRoute: ResellerHistoryRoute,
   ResellerMessagesRoute: ResellerMessagesRoute,
   ResellerMoneyRoute: ResellerMoneyRoute,
+  ResellerOmadaRoute: ResellerOmadaRoute,
   ResellerProfileRoute: ResellerProfileRoute,
   ResellerRedemptionsRoute: ResellerRedemptionsRoute,
   ResellerReportsRoute: ResellerReportsRoute,

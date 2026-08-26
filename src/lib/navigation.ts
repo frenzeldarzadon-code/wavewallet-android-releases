@@ -131,7 +131,7 @@ export function customerNav(): Nav {
           ? ([{ to: "/app/store", label: "Retail store", icon: Store }] as NavItem[])
           : []),
         { to: "/app/rewards", label: "Rewards", icon: Gift },
-        { to: "/app/omada", label: "Wi-Fi voucher status", icon: Wifi },
+        { to: "/app/omada", label: "Voucher status checker", icon: Wifi },
       ],
     },
     {
@@ -200,6 +200,7 @@ export function resellerNav(role: Role = "reseller"): Nav {
           ? ([{ to: "/reseller/store", label: "Retail store", icon: Store }] as NavItem[])
           : []),
         { to: "/reseller/rewards", label: "Rewards", icon: Gift },
+        { to: "/reseller/omada", label: "Voucher status checker", icon: Wifi },
       ],
     },
     {
@@ -273,7 +274,7 @@ export function adminNav(options?: { goLive?: boolean }): Nav {
             ] as NavItem[])
           : []),
         { to: "/admin/rewards", label: "Rewards", icon: Gift },
-        { to: "/admin/omada", label: "Omada", icon: Wifi },
+        { to: "/admin/omada", label: "Omada management", icon: Wifi },
       ],
     },
     {

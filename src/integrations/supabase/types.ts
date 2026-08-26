@@ -6394,6 +6394,63 @@ export type Database = {
           },
         ]
       }
+      voucher_device_tracers: {
+        Row: {
+          created_by: string | null
+          device_mac: string
+          ecosystem_id: string
+          id: string
+          in_conflict: boolean
+          is_primary: boolean
+          recorded_at: string
+          resolved_at: string | null
+          resolved_by: string | null
+          tracer: string
+          voucher_code: string
+        }
+        Insert: {
+          created_by?: string | null
+          device_mac: string
+          ecosystem_id: string
+          id?: string
+          in_conflict?: boolean
+          is_primary?: boolean
+          recorded_at?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          tracer: string
+          voucher_code: string
+        }
+        Update: {
+          created_by?: string | null
+          device_mac?: string
+          ecosystem_id?: string
+          id?: string
+          in_conflict?: boolean
+          is_primary?: boolean
+          recorded_at?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          tracer?: string
+          voucher_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_device_tracers_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_device_tracers_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voucher_imports: {
         Row: {
           actor_id: string | null
@@ -9168,6 +9225,7 @@ export type Database = {
         Args: { _ecosystem_id?: string; _user_id: string }
         Returns: string
       }
+      resolve_voucher_tracer: { Args: { _id: string }; Returns: Json }
       respond_friend_request: {
         Args: { _accept: boolean; _id: string }
         Returns: undefined
@@ -10185,6 +10243,15 @@ export type Database = {
           _target_id?: string
           _target_kind?: string
           _target_label?: string
+        }
+        Returns: Json
+      }
+      set_voucher_tracer: {
+        Args: {
+          _device_mac: string
+          _ecosystem_id: string
+          _tracer: string
+          _voucher_code: string
         }
         Returns: Json
       }
@@ -11708,6 +11775,29 @@ export type Database = {
       voucher_discount_percent_for:
         | { Args: { _user_id: string }; Returns: number }
         | { Args: { _ecosystem_id: string; _user_id: string }; Returns: number }
+      voucher_tracer_conflicts: {
+        Args: { _ecosystem_id: string }
+        Returns: {
+          device_mac: string
+          id: string
+          is_primary: boolean
+          recorded_at: string
+          tracer: string
+          voucher_code: string
+        }[]
+      }
+      voucher_tracer_history: {
+        Args: { _ecosystem_id: string; _voucher_code: string }
+        Returns: {
+          device_mac: string
+          id: string
+          in_conflict: boolean
+          is_primary: boolean
+          recorded_at: string
+          tracer: string
+          voucher_code: string
+        }[]
+      }
       wallet_id_for: {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: string
