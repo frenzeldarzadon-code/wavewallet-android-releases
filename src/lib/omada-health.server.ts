@@ -227,7 +227,18 @@ export async function probeOmadaHealth(input: OmadaHealthInput): Promise<OmadaHe
   let sites = await readSites(token);
   // A cached token can be revoked early; re-establish the session once, silently.
   if (!sites.ok && reusedToken) {
-    const fresh = await authenticate();
+    let fresh: string | null = null;
+    try {
+      fresh = await authenticate();
+    } catch (error) {
+      return {
+        state: "unreachable",
+        reason: error instanceof Error ? error.message : "Controller API is unreachable.",
+        siteId: null,
+        token: null,
+        reusedToken: false,
+      };
+    }
     if (!fresh) {
       return {
         state: "auth_failed",
