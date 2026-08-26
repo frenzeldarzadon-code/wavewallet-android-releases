@@ -2919,41 +2919,69 @@ export type Database = {
       omada_voucher_batches: {
         Row: {
           amount: number
+          calibration_id: string | null
+          calibration_version: number | null
+          controller_identity: Json
           created_at: string
           created_by: string | null
           ecosystem_id: string
+          extracted_count: number
           group_id: string | null
           group_name: string
           id: string
+          import_id: string | null
+          imported_count: number
+          product_id: string | null
           request: Json
           response: Json | null
           updated_at: string
         }
         Insert: {
           amount: number
+          calibration_id?: string | null
+          calibration_version?: number | null
+          controller_identity?: Json
           created_at?: string
           created_by?: string | null
           ecosystem_id: string
+          extracted_count?: number
           group_id?: string | null
           group_name: string
           id?: string
+          import_id?: string | null
+          imported_count?: number
+          product_id?: string | null
           request?: Json
           response?: Json | null
           updated_at?: string
         }
         Update: {
           amount?: number
+          calibration_id?: string | null
+          calibration_version?: number | null
+          controller_identity?: Json
           created_at?: string
           created_by?: string | null
           ecosystem_id?: string
+          extracted_count?: number
           group_id?: string | null
           group_name?: string
           id?: string
+          import_id?: string | null
+          imported_count?: number
+          product_id?: string | null
           request?: Json
           response?: Json | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "omada_voucher_batches_calibration_id_fkey"
+            columns: ["calibration_id"]
+            isOneToOne: false
+            referencedRelation: "omada_voucher_calibrations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "omada_voucher_batches_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -2966,6 +2994,81 @@ export type Database = {
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "omada_voucher_batches_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "omada_voucher_batches_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      omada_voucher_calibrations: {
+        Row: {
+          controller_identity: Json
+          created_at: string
+          created_by: string | null
+          ecosystem_id: string
+          id: string
+          is_current: boolean
+          payload: Json
+          product_id: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          controller_identity?: Json
+          created_at?: string
+          created_by?: string | null
+          ecosystem_id: string
+          id?: string
+          is_current?: boolean
+          payload: Json
+          product_id: string
+          updated_at?: string
+          version: number
+        }
+        Update: {
+          controller_identity?: Json
+          created_at?: string
+          created_by?: string | null
+          ecosystem_id?: string
+          id?: string
+          is_current?: boolean
+          payload?: Json
+          product_id?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "omada_voucher_calibrations_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "omada_voucher_calibrations_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "omada_voucher_calibrations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_products"
             referencedColumns: ["id"]
           },
         ]
