@@ -12,6 +12,7 @@ import { OmadaConnectionCard } from "@/components/shop/omada-connection-card";
 import { OmadaHealthCard } from "@/components/shop/omada-health-card";
 import { OmadaGeneratePanel } from "@/components/omada/omada-generate-panel";
 import { OmadaVoucherStatusPanel } from "@/components/omada/omada-voucher-status-panel";
+import { TracerConflictsPanel } from "@/components/omada/tracer-conflicts-panel";
 import { useSession } from "@/lib/session";
 
 export const Route = createFileRoute("/admin/omada")({
@@ -66,8 +67,9 @@ function AdminOmada() {
           <OmadaGeneratePanel ecosystemId={ecosystemDbId} />
         </TabsContent>
 
-        <TabsContent value="status" className="mt-4">
+        <TabsContent value="status" className="mt-4 space-y-4">
           <OmadaVoucherStatusPanel ecosystemId={ecosystemDbId} />
+          <TracerConflictsPanel ecosystemId={ecosystemDbId} />
         </TabsContent>
       </Tabs>
     </PageSection>
