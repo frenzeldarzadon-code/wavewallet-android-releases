@@ -22,7 +22,10 @@ export interface ProvisionedOmada {
 /** Keyed by ecosystem slug — non-secret controller identity only. */
 export const PROVISIONED_OMADA: Record<string, ProvisionedOmada> = {
   sagadawave: {
-    baseUrl: "https://portal.sagadawave.com:8043",
+    // Port 8043 is the controller's direct listener and presents Omada's
+    // self-signed CN=localhost certificate. The HTTPS reverse proxy on 443
+    // exposes the same Open API with a certificate valid for this hostname.
+    baseUrl: "https://portal.sagadawave.com",
     omadacId: "c113a909b51676083a4ae67dc55af386",
     clientId: "4280c2d475fb481181f080c95e1ff191",
     siteName: "Sagada Wave V2",

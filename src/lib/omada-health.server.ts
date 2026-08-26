@@ -82,6 +82,13 @@ function normaliseBase(baseUrl: string): string {
   return baseUrl.trim().replace(/\/+$/, "");
 }
 
+function httpFailure(status: number, fallback: string): string {
+  if (status === 526) {
+    return "TLS certificate validation failed between the HTTPS gateway and the Omada controller (HTTP 526). Configure an API hostname with a valid certificate and chain.";
+  }
+  return fallback;
+}
+
 async function jsonFetch(url: string, init: RequestInit, secrets: string[]) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -140,7 +147,7 @@ export async function probeOmadaHealth(input: OmadaHealthInput): Promise<OmadaHe
       state: "unreachable",
       reason: info.error
         ? `Controller not reachable: ${info.error}`
-        : `Controller answered HTTP ${info.status}`,
+        : httpFailure(info.status, `Controller answered HTTP ${info.status}`),
       siteId: null,
       token: null,
       reusedToken: false,
@@ -173,6 +180,10 @@ export async function probeOmadaHealth(input: OmadaHealthInput): Promise<OmadaHe
       secrets,
     );
     const parsed = omadaResult(res.body);
+    if (!res.ok) {
+      const reason = httpFailure(res.status, "");
+      if (reason) throw new Error(reason);
+    }
     const result = parsed.result as Record<string, unknown> | null;
     const value = result?.["accessToken"];
     if (typeof value !== "string" || !value) {
@@ -184,7 +195,17 @@ export async function probeOmadaHealth(input: OmadaHealthInput): Promise<OmadaHe
   };
 
   if (!token) {
-    token = await authenticate();
+    try {
+      token = await authenticate();
+    } catch (error) {
+      return {
+        state: "unreachable",
+        reason: error instanceof Error ? error.message : "Controller API is unreachable.",
+        siteId: null,
+        token: null,
+        reusedToken: false,
+      };
+    }
     if (!token) {
       return {
         state: "auth_failed",
