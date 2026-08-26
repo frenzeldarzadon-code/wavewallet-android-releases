@@ -105,6 +105,7 @@ import { Route as UniverseProfileRouteImport } from './routes/universe.profile'
 import { Route as UniverseShopsRouteImport } from './routes/universe.shops'
 import { Route as ApiPublicAppVersionRouteImport } from './routes/api/public/app-version'
 import { Route as ApiPublicOmadaHealthSweepRouteImport } from './routes/api/public/omada-health-sweep'
+import { Route as ApiPublicOmadaProbeRouteImport } from './routes/api/public/omada-probe'
 import { Route as PrintVouchersSaleIdRouteImport } from './routes/print.vouchers.$saleId'
 import { Route as UniverseUHandleRouteImport } from './routes/universe.u.$handle'
 import { Route as ApiPublicPaymentsListenerRouteImport } from './routes/api/public/payments/listener'
@@ -590,6 +591,11 @@ const ApiPublicOmadaHealthSweepRoute =
     path: '/api/public/omada-health-sweep',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicOmadaProbeRoute = ApiPublicOmadaProbeRouteImport.update({
+  id: '/api/public/omada-probe',
+  path: '/api/public/omada-probe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrintVouchersSaleIdRoute = PrintVouchersSaleIdRouteImport.update({
   id: '/print/vouchers/$saleId',
   path: '/print/vouchers/$saleId',
@@ -704,6 +710,7 @@ export interface FileRoutesByFullPath {
   '/universe/': typeof UniverseIndexRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/omada-health-sweep': typeof ApiPublicOmadaHealthSweepRoute
+  '/api/public/omada-probe': typeof ApiPublicOmadaProbeRoute
   '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
   '/api/public/payments/listener': typeof ApiPublicPaymentsListenerRoute
@@ -800,6 +807,7 @@ export interface FileRoutesByTo {
   '/universe': typeof UniverseIndexRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/omada-health-sweep': typeof ApiPublicOmadaHealthSweepRoute
+  '/api/public/omada-probe': typeof ApiPublicOmadaProbeRoute
   '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
   '/api/public/payments/listener': typeof ApiPublicPaymentsListenerRoute
@@ -902,6 +910,7 @@ export interface FileRoutesById {
   '/universe/': typeof UniverseIndexRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/omada-health-sweep': typeof ApiPublicOmadaHealthSweepRoute
+  '/api/public/omada-probe': typeof ApiPublicOmadaProbeRoute
   '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
   '/api/public/payments/listener': typeof ApiPublicPaymentsListenerRoute
@@ -1005,6 +1014,7 @@ export interface FileRouteTypes {
     | '/universe/'
     | '/api/public/app-version'
     | '/api/public/omada-health-sweep'
+    | '/api/public/omada-probe'
     | '/print/vouchers/$saleId'
     | '/universe/u/$handle'
     | '/api/public/payments/listener'
@@ -1101,6 +1111,7 @@ export interface FileRouteTypes {
     | '/universe'
     | '/api/public/app-version'
     | '/api/public/omada-health-sweep'
+    | '/api/public/omada-probe'
     | '/print/vouchers/$saleId'
     | '/universe/u/$handle'
     | '/api/public/payments/listener'
@@ -1202,6 +1213,7 @@ export interface FileRouteTypes {
     | '/universe/'
     | '/api/public/app-version'
     | '/api/public/omada-health-sweep'
+    | '/api/public/omada-probe'
     | '/print/vouchers/$saleId'
     | '/universe/u/$handle'
     | '/api/public/payments/listener'
@@ -1227,6 +1239,7 @@ export interface RootRouteChildren {
   ShopSlugRoute: typeof ShopSlugRoute
   ApiPublicAppVersionRoute: typeof ApiPublicAppVersionRoute
   ApiPublicOmadaHealthSweepRoute: typeof ApiPublicOmadaHealthSweepRoute
+  ApiPublicOmadaProbeRoute: typeof ApiPublicOmadaProbeRoute
   PrintVouchersSaleIdRoute: typeof PrintVouchersSaleIdRoute
   ApiPublicPaymentsListenerRoute: typeof ApiPublicPaymentsListenerRoute
 }
@@ -1905,6 +1918,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicOmadaHealthSweepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/omada-probe': {
+      id: '/api/public/omada-probe'
+      path: '/api/public/omada-probe'
+      fullPath: '/api/public/omada-probe'
+      preLoaderRoute: typeof ApiPublicOmadaProbeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/print/vouchers/$saleId': {
       id: '/print/vouchers/$saleId'
       path: '/print/vouchers/$saleId'
@@ -2149,6 +2169,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShopSlugRoute: ShopSlugRoute,
   ApiPublicAppVersionRoute: ApiPublicAppVersionRoute,
   ApiPublicOmadaHealthSweepRoute: ApiPublicOmadaHealthSweepRoute,
+  ApiPublicOmadaProbeRoute: ApiPublicOmadaProbeRoute,
   PrintVouchersSaleIdRoute: PrintVouchersSaleIdRoute,
   ApiPublicPaymentsListenerRoute: ApiPublicPaymentsListenerRoute,
 }
