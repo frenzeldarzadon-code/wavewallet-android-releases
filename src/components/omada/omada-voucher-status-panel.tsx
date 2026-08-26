@@ -253,6 +253,15 @@ export function OmadaVoucherStatusPanel({
   };
 
   const view = state.view;
+  const currentMacs = new Set(
+    (view?.devices ?? []).map((d) => d.mac).filter((m): m is string => Boolean(m)),
+  );
+  // Devices this shop recorded against the voucher earlier. Omada 6.2.14.11's
+  // Open API does not link past clients back to a voucher, so this is
+  // WaveWallet's own record — never invented controller history.
+  const previousMacs = Array.from(
+    new Set(records.map((r) => r.device_mac).filter((m) => m && !currentMacs.has(m))),
+  );
 
   return (
     <Card className="shadow-[var(--shadow-card)]">
@@ -312,21 +321,21 @@ export function OmadaVoucherStatusPanel({
               <p className="text-xs text-muted-foreground">
                 This voucher has not been used yet, so no device is connected to it.
               </p>
-            ) : view.devicesUnavailable ? (
+            ) : (
               <div className="space-y-3">
-                <Notice tone="muted">
-                  No device is currently authorized with this voucher, so the hotspot controller has
-                  no device details to show. The voucher's own usage is below.
-                </Notice>
                 <dl className="grid gap-3 rounded-lg border p-3 sm:grid-cols-2">
+                  <Detail label="Data used" value={view.dataUsed} />
+                  <Detail label="Time used" value={view.timeUsed} />
                   <Detail label="Remaining time" value={view.remainingTime} />
                   <Detail label="Remaining data" value={view.remainingData} />
                   <Detail label="Initially entered" value={view.startedAt} />
                   <Detail label="Expires" value={view.expiresAt} />
                 </dl>
-              </div>
-            ) : (
-              <div className="space-y-3">
+                <p className="text-[11px] text-muted-foreground">
+                  These totals are the voucher's own usage as counted by the hotspot controller,
+                  not one device's usage.
+                </p>
+
                 {view.devices.map((device, i) => (
                   <DeviceCard
                     key={device.mac ?? i}
@@ -336,6 +345,42 @@ export function OmadaVoucherStatusPanel({
                     onSave={onSaveTracer}
                   />
                 ))}
+
+                {previousMacs.length > 0 ? (
+                  <div className="space-y-3">
+                    <p className="text-xs font-medium">Devices recorded earlier</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      These devices were seen on this voucher before and are no longer connected.
+                      The hotspot controller does not keep a device-by-device history for a
+                      voucher, so no per-device usage is available for them.
+                    </p>
+                    {previousMacs.map((mac, i) => (
+                      <DeviceCard
+                        key={mac}
+                        device={{
+                          mac,
+                          deviceName: null,
+                          state: view.state,
+                          remainingTime: null,
+                          remainingData: null,
+                          startedAt: null,
+                          expiresAt: null,
+                          price: null,
+                        }}
+                        index={view.devices.length + i}
+                        records={records}
+                        onSave={onSaveTracer}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+
+                {view.devices.length === 0 && previousMacs.length === 0 ? (
+                  <Notice tone="muted">
+                    No device is connected to this voucher right now, and this shop has no earlier
+                    device record for it. The voucher's own usage is shown above.
+                  </Notice>
+                ) : null}
               </div>
             )}
           </div>
