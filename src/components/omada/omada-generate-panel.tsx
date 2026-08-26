@@ -27,8 +27,8 @@ import { StatusBadge } from "@/components/ui-kit";
 import {
   controllerMismatch,
   isValidVoucherCode,
+  defaultGroupName,
   reviewExtractedCodes,
-  suggestGroupName,
   validateGenerationPayload,
   type GenValue,
   type VoucherFieldSpec,
@@ -207,7 +207,7 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
     const chosen = setup.products.find((p) => p.id === id);
     const saved = setup.calibrations[id]?.payload ?? null;
     const next: Values = { ...setup.defaults, ...(saved ?? {}) };
-    next["name"] = suggestGroupName(chosen?.name ?? "Vouchers", setup.groupNames);
+    next["name"] = defaultGroupName(chosen?.name ?? "Vouchers", setup.groupNames);
     // Product-derived: the shop's own selling price is carried into Omada so the
     // two definitions cannot drift apart by mistake.
     if (chosen) next["unitPrice"] = String(chosen.promo_price ?? chosen.credit_price ?? "");
@@ -292,7 +292,7 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
         data: {
           ecosystemId,
           productId,
-          batchId: outcome?.batchId,
+          ...(outcome?.batchId ? { batchId: outcome.batchId } : {}),
           codes: summary.importable,
         },
       });
