@@ -328,7 +328,7 @@ export function validateGenerationPayload(payload: Record<string, GenValue>): st
         if (!Array.isArray(raw) || raw.length === 0) errors.push(`${label} must have a value.`);
       } else if (field.type === "object") {
         if (typeof raw !== "object") errors.push(`${label} must be a set of values.`);
-        else if (field.fields) walk(field.fields, raw as Record<string, unknown>, `${label}.`);
+        else if (field.fields) walk(field.fields, raw as Record<string, GenValue>, `${label}.`);
       }
     }
   };
