@@ -1,14 +1,19 @@
 /**
- * Translates ONE authoritative Omada voucher row into the customer-facing view.
+ * Translates the authoritative Omada voucher + authorized-client data into the
+ * customer-facing Status Checker view.
  *
  * Omada stays the source of truth: nothing here invents, caches or corrects
- * network data. This module only decides which of the controller's fields are
- * meaningful to a person at the counter and renders them in plain words. Raw
- * identifiers, byte counters, second counters and internal limit fields are
- * deliberately dropped so the Status Checker never leaks controller internals.
+ * network data. Verified against Controller 6.2.14.11:
+ *   - voucher row:  { code, status 0|1|2, timeLeftSec, trafficUnused (bytes),
+ *                     trafficLimit (MB, 0 = unlimited), startTime, endTime }
+ *   - voucher group: { unitPrice, currency, duration, trafficLimit }
+ *   - authorized client: { mac, name, hostName, authInfo:[{authType:3, info:<voucher code>}] }
+ * Raw identifiers, byte/second counters and internal limits are deliberately
+ * dropped so the checker never leaks controller internals.
  */
 
-export type VoucherState = "unused" | "in_use" | "expired" | "unknown";
+/** Only these three states are ever shown to a person. */
+export type VoucherState = "unused" | "in_use" | "expired";
 
 export interface VoucherDeviceView {
   /** Device/client MAC as reported by Omada — the device identity. */
@@ -27,19 +32,24 @@ export interface VoucherView {
   state: VoucherState;
   stateLabel: string;
   price: string | null;
+  remainingTime: string | null;
+  remainingData: string | null;
+  startedAt: string | null;
+  expiresAt: string | null;
   devices: VoucherDeviceView[];
+  /** True when the voucher is in use/expired but no device is currently authorized. */
+  devicesUnavailable: boolean;
 }
 
 const LABELS: Record<VoucherState, string> = {
   unused: "Unused",
   in_use: "In-use",
   expired: "Expired",
-  unknown: "Unknown",
 };
 
 export const stateLabel = (s: VoucherState) => LABELS[s];
 
-type Row = Record<string, unknown>;
+export type Row = Record<string, unknown>;
 
 function pick(row: Row, keys: string[]): unknown {
   for (const key of Object.keys(row)) {
@@ -57,30 +67,35 @@ function num(value: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** Omada publishes status as 0 unused / 1 in use / 2 expired. */
-export function voucherState(raw: unknown): VoucherState {
+/**
+ * Omada publishes voucher status as 0 unused / 1 in use / 2 expired.
+ * Anything the controller does not express as one of those is reported as
+ * `null` so the caller can say "status unavailable" instead of "Unknown".
+ */
+export function voucherState(raw: unknown): VoucherState | null {
   const n = num(raw);
   if (n === 0) return "unused";
   if (n === 1) return "in_use";
   if (n === 2) return "expired";
   const text = String(raw ?? "").toLowerCase();
-  if (text.includes("unused") || text === "valid") return "unused";
-  if (text.includes("use")) return "in_use";
+  if (text.includes("unused")) return "unused";
   if (text.includes("expire")) return "expired";
-  return "unknown";
+  if (text.includes("use")) return "in_use";
+  return null;
 }
 
-/** Omada timestamps are epoch milliseconds (sometimes seconds). */
+/** Omada timestamps are epoch milliseconds; unset/never is 0 or a sentinel. */
 export function formatMoment(raw: unknown): string | null {
   const n = num(raw);
-  if (n === null || n <= 0) {
-    const text = typeof raw === "string" ? raw.trim() : "";
-    if (!text) return null;
-    const parsed = Date.parse(text);
-    return Number.isNaN(parsed) ? null : new Date(parsed).toLocaleString();
+  if (n !== null) {
+    if (n <= 0 || n > 4.1e12) return null; // 0 = not started, huge = "no expiry"
+    const ms = n < 1e12 ? n * 1000 : n;
+    return new Date(ms).toLocaleString();
   }
-  const ms = n < 1e12 ? n * 1000 : n;
-  return new Date(ms).toLocaleString();
+  const text = typeof raw === "string" ? raw.trim() : "";
+  if (!text) return null;
+  const parsed = Date.parse(text);
+  return Number.isNaN(parsed) ? null : new Date(parsed).toLocaleString();
 }
 
 export function formatDuration(seconds: number | null): string | null {
@@ -110,32 +125,28 @@ export function formatData(bytes: number | null): string | null {
   return `${value.toFixed(value >= 10 || unit === 0 ? 0 : 1)} ${units[unit]}`;
 }
 
-function formatPrice(row: Row): string | null {
-  const price = num(pick(row, ["unitPrice", "price", "amount"]));
+function formatPrice(voucher: Row, group: Row | null): string | null {
+  const price = num(pick(voucher, ["unitPrice", "price"]) ?? pick(group ?? {}, ["unitPrice", "price"]));
   if (price === null) return null;
-  const currency = String(pick(row, ["currency"]) ?? "").trim();
+  const currency = String(pick(group ?? {}, ["currency"]) ?? pick(voucher, ["currency"]) ?? "").trim();
   const money = price.toLocaleString(undefined, { maximumFractionDigits: 2 });
-  return currency ? `${currency} ${money}` : `₱${money}`;
+  return currency && currency !== "PHP" ? `${currency} ${money}` : `₱${money}`;
 }
 
-function remainingTimeOf(row: Row, parent: Row): string | null {
-  const left = num(pick(row, ["timeLeftSec", "remainingTime", "timeLeft", "leftTime"]));
-  if (left !== null) return formatDuration(left);
-  const limit = num(pick(parent, ["duration", "durationLimit", "timeLimit", "durationSec"]));
-  const used = num(pick(row, ["timeUsedSec", "usedTime", "timeUsed"]));
-  if (limit === null) return null;
-  const limitSec = limit > 100000 ? Math.round(limit / 1000) : limit * (limit < 1000 ? 60 : 1);
-  return formatDuration(Math.max(0, limitSec - (used ?? 0)));
+function remainingTimeOf(voucher: Row): string | null {
+  const left = num(pick(voucher, ["timeLeftSec", "remainingTime", "timeLeft"]));
+  return left === null ? null : formatDuration(left);
 }
 
-function remainingDataOf(row: Row, parent: Row): string | null {
-  const left = num(pick(row, ["trafficLeft", "remainingTraffic", "trafficUnusedBytes"]));
-  if (left !== null) return formatData(left);
-  const limit = num(pick(parent, ["trafficLimit", "trafficLimitBytes", "dataLimit"]));
-  if (limit === null || limit <= 0) return "Unlimited";
-  const used = num(pick(row, ["trafficUsed", "trafficUsedBytes", "usedTraffic"])) ?? 0;
-  return formatData(Math.max(0, limit - used));
+function remainingDataOf(voucher: Row): string | null {
+  const limit = num(pick(voucher, ["trafficLimit"]));
+  if (limit !== null && limit <= 0) return "Unlimited";
+  const left = num(pick(voucher, ["trafficUnused", "trafficLeft", "remainingTraffic"]));
+  return left === null ? null : formatData(left);
 }
+
+/** Omada tags a client's authorization source; 3 is a hotspot voucher. */
+const VOUCHER_AUTH_TYPE = 3;
 
 function macOf(row: Row): string | null {
   const raw = pick(row, ["mac", "clientMac", "deviceMac", "macAddress"]);
@@ -144,45 +155,72 @@ function macOf(row: Row): string | null {
 }
 
 function nameOf(row: Row): string | null {
-  const raw = pick(row, ["name", "deviceName", "clientName", "hostName", "hostname"]);
+  const raw = pick(row, ["hostName", "name", "deviceName", "clientName", "hostname"]);
   const text = typeof raw === "string" ? raw.trim() : "";
-  return text ? text : null;
+  if (!text) return null;
+  // Omada falls back to the MAC as the name; that is not a useful device name.
+  return text.toUpperCase() === macOf(row) ? null : text;
 }
 
-function deviceRows(row: Row): Row[] {
-  for (const value of Object.values(row)) {
-    if (!Array.isArray(value) || value.length === 0) continue;
-    const objects = value.filter((v): v is Row => Boolean(v) && typeof v === "object");
-    if (objects.length > 0 && objects.some((o) => macOf(o) !== null)) return objects;
-  }
-  return [];
+/** Every authorized client whose voucher authorization matches this code. */
+export function clientsForVoucher(clients: Row[], code: string): Row[] {
+  const wanted = code.trim().toUpperCase();
+  return clients.filter((client) => {
+    const info = client["authInfo"];
+    if (!Array.isArray(info)) return false;
+    return info.some((entry) => {
+      if (!entry || typeof entry !== "object") return false;
+      const e = entry as Row;
+      const type = num(e["authType"]);
+      const value = String(e["info"] ?? "").trim().toUpperCase();
+      return (type === null || type === VOUCHER_AUTH_TYPE) && value === wanted;
+    });
+  });
 }
 
 /**
  * Builds the view for one Omada voucher. A voucher may be used by several
- * devices; each one keeps its own complete set of details.
+ * devices; each authorized client is returned separately with its own details.
+ * Returns null when the controller's status value cannot be mapped, so the
+ * caller reports a controller problem rather than a made-up state.
  */
-export function toVoucherView(code: string, row: Row): VoucherView {
-  const state = voucherState(pick(row, ["status", "state"]));
-  const price = formatPrice(row);
-  const expiry = pick(row, ["expirationTime", "expireTime", "endTime", "expiredTime"]);
+export function toVoucherView(
+  code: string,
+  voucher: Row,
+  group: Row | null = null,
+  clients: Row[] = [],
+): VoucherView | null {
+  const state = voucherState(pick(voucher, ["status", "state"]));
+  if (!state) return null;
 
-  const rows = deviceRows(row);
-  const source: Row[] = rows.length > 0 ? rows : state === "unused" ? [] : [row];
+  const price = formatPrice(voucher, group);
+  const remainingTime = remainingTimeOf(voucher);
+  const remainingData = remainingDataOf(voucher);
+  const startedAt = formatMoment(pick(voucher, ["startTime", "beginTime", "inUseTime"]));
+  const expiresAt = formatMoment(pick(voucher, ["endTime", "expirationTime", "expireTime"]));
 
-  const devices = source.map<VoucherDeviceView>((d) => ({
-    mac: macOf(d),
-    deviceName: nameOf(d),
-    state: rows.length > 0 ? voucherState(pick(d, ["status", "state"]) ?? pick(row, ["status"])) : state,
-    remainingTime: remainingTimeOf(d, row),
-    remainingData: remainingDataOf(d, row),
-    startedAt: formatMoment(
-      pick(d, ["beginTime", "startTime", "inUseTime", "firstSeen", "usedTime", "createdTime"]) ??
-        pick(row, ["beginTime", "startTime", "inUseTime", "createdTime"]),
-    ),
-    expiresAt: formatMoment(pick(d, ["expirationTime", "expireTime", "endTime"]) ?? expiry),
+  const matched = state === "unused" ? [] : clientsForVoucher(clients, code);
+  const devices = matched.map<VoucherDeviceView>((client) => ({
+    mac: macOf(client),
+    deviceName: nameOf(client),
+    state,
+    remainingTime,
+    remainingData,
+    startedAt,
+    expiresAt,
     price,
   }));
 
-  return { code: code.toUpperCase(), state, stateLabel: LABELS[state], price, devices };
+  return {
+    code: code.trim().toUpperCase(),
+    state,
+    stateLabel: LABELS[state],
+    price,
+    remainingTime,
+    remainingData,
+    startedAt,
+    expiresAt,
+    devices,
+    devicesUnavailable: state !== "unused" && devices.length === 0,
+  };
 }
