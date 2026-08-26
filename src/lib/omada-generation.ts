@@ -16,6 +16,9 @@
  *   limitType 0|1|2 · durationType 0|1 · timingType 0|1
  */
 
+/** JSON-safe value: generation payloads cross the server boundary. */
+export type GenValue = string | number | boolean | null | GenValue[] | { [key: string]: GenValue };
+
 export interface VoucherFieldSpec {
   name: string;
   type: "string" | "integer" | "boolean" | "array" | "object";
@@ -229,7 +232,7 @@ export const VERIFIED_VOUCHER_FIELDS: VoucherFieldSpec[] = [
 ];
 
 /** Sensible starting values that still satisfy every verified controller rule. */
-export function defaultGenerationValues(): Record<string, unknown> {
+export function defaultGenerationValues(): Record<string, GenValue> {
   return {
     name: "",
     amount: 10,
@@ -297,9 +300,9 @@ export function defaultGroupName(
 }
 
 /** Validation against the verified controller rules, before anything is sent. */
-export function validateGenerationPayload(payload: Record<string, unknown>): string[] {
+export function validateGenerationPayload(payload: Record<string, GenValue>): string[] {
   const errors: string[] = [];
-  const walk = (specs: VoucherFieldSpec[], value: Record<string, unknown>, prefix: string) => {
+  const walk = (specs: VoucherFieldSpec[], value: Record<string, GenValue>, prefix: string) => {
     for (const field of specs) {
       const raw = value[field.name];
       const label = `${prefix}${field.name}`;
@@ -335,7 +338,7 @@ export function validateGenerationPayload(payload: Record<string, unknown>): str
   if ((limitType === 0 || limitType === 1) && !Number(payload["limitNum"])) {
     errors.push("limitNum is required for the limited user options.");
   }
-  const rateLimit = payload["rateLimit"] as Record<string, unknown> | undefined;
+  const rateLimit = payload["rateLimit"] as Record<string, GenValue> | undefined;
   if (rateLimit && Number(rateLimit["mode"]) === 1 && !rateLimit["rateLimitProfileId"]) {
     errors.push("rateLimit.rateLimitProfileId is required when using a rate limit profile.");
   }

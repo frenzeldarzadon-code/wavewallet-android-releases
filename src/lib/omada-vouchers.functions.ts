@@ -326,6 +326,7 @@ import {
   reviewExtractedCodes,
   validateGenerationPayload,
   type ControllerIdentity,
+  type GenValue,
   type VoucherFieldSpec,
 } from "./omada-generation";
 
@@ -340,7 +341,7 @@ export interface GenerationProduct {
 export interface GenerationCalibration {
   id: string;
   version: number;
-  payload: Record<string, unknown>;
+  payload: Record<string, GenValue>;
   controller_identity: Partial<ControllerIdentity>;
   created_at: string;
 }
@@ -350,7 +351,7 @@ export interface VoucherGenerationSetup {
   error: string | null;
   controller: ControllerIdentity | null;
   fields: VoucherFieldSpec[];
-  defaults: Record<string, unknown>;
+  defaults: Record<string, GenValue>;
   products: GenerationProduct[];
   /** Current calibration per product id, when one has been saved. */
   calibrations: Record<string, GenerationCalibration>;
@@ -394,7 +395,7 @@ export const getVoucherGenerationSetup = createServerFn({ method: "POST" })
       calibrations[row.product_id] = {
         id: row.id,
         version: row.version,
-        payload: (row.payload ?? {}) as Record<string, unknown>,
+        payload: (row.payload ?? {}) as Record<string, GenValue>,
         controller_identity: (row.controller_identity ?? {}) as Partial<ControllerIdentity>,
         created_at: row.created_at,
       };
@@ -469,7 +470,7 @@ export const generateVoucherGroupForProduct = createServerFn({ method: "POST" })
     (data: {
       ecosystemId: string;
       productId: string;
-      payload: Record<string, unknown>;
+      payload: Record<string, GenValue>;
       saveAsCalibration?: boolean;
     }) => {
       if (!data?.ecosystemId) throw new Error("A shop is required.");
@@ -626,7 +627,7 @@ async function saveCalibrationRow(
   },
   ecosystemId: string,
   productId: string,
-  payload: Record<string, unknown>,
+  payload: Record<string, GenValue>,
   identity: ControllerIdentity,
   userId: string,
 ): Promise<{ id: string; version: number }> {
@@ -671,7 +672,7 @@ async function saveCalibrationRow(
 export const saveVoucherCalibration = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (data: { ecosystemId: string; productId: string; payload: Record<string, unknown> }) => {
+    (data: { ecosystemId: string; productId: string; payload: Record<string, GenValue> }) => {
       if (!data?.ecosystemId || !data?.productId) throw new Error("A shop and product are required.");
       if (!data.payload || typeof data.payload !== "object") throw new Error("Nothing to save.");
       return data;
