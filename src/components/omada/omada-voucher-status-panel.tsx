@@ -1,11 +1,13 @@
 /**
- * Customer-facing voucher Status Checker.
+ * Voucher Status Checker.
  *
- * Omada stays authoritative for status, usage, remaining time/data and device
- * information; this panel only translates it into plain words. Raw controller
- * fields (ids, byte and second counters, internal limits) are never shown.
- * Each device using the voucher is listed separately with its own Tracer, a
- * free-form label anyone may set for operational tracking.
+ * The hotspot controller stays authoritative for status, usage, remaining
+ * time/data and device information; this panel only translates it into plain
+ * words. Raw controller fields (ids, byte and second counters, internal limits)
+ * are never shown. Every device authorized by the voucher is listed separately
+ * with its own Tracer, a free-form label anyone may set for operational
+ * tracking. A code that does not exist reads "Voucher not found"; a controller
+ * problem reads as a controller problem — never as a missing voucher.
  */
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -14,7 +16,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { lookupOmadaVoucher, type OmadaVoucherStatus } from "@/lib/omada-vouchers.functions";
+import {
+  lookupOmadaVoucher,
+  lookupVoucherPublicly,
+  type OmadaVoucherStatus,
+} from "@/lib/omada-vouchers.functions";
 import type { VoucherDeviceView } from "@/lib/omada-voucher-view";
 import {
   fetchVoucherTracers,
@@ -28,7 +34,6 @@ const stateTone: Record<string, string> = {
   unused: "bg-primary/10 text-primary border-primary/30",
   in_use: "bg-success/10 text-success border-success/30",
   expired: "bg-destructive/10 text-destructive border-destructive/30",
-  unknown: "bg-muted text-muted-foreground",
 };
 
 function Detail({ label, value }: { label: string; value: string | null }) {
@@ -74,13 +79,15 @@ function DeviceCard({
   return (
     <div className="space-y-3 rounded-lg border p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-semibold">
-          {device.deviceName ?? `Device ${index + 1}`}
-        </p>
+        <p className="text-sm font-semibold">{device.deviceName ?? `Device ${index + 1}`}</p>
         <Badge variant="outline" className={stateTone[device.state]}>
-          {device.state === "in_use" ? "In-use" : device.state === "unused" ? "Unused" : device.state === "expired" ? "Expired" : "Unknown"}
+          {device.state === "in_use" ? "In-use" : device.state === "unused" ? "Unused" : "Expired"}
         </Badge>
       </div>
+
+      {device.mac ? (
+        <p className="text-[11px] text-muted-foreground">Device address {device.mac}</p>
+      ) : null}
 
       <dl className="grid gap-3 sm:grid-cols-2">
         <Detail label="Price" value={device.price} />
@@ -135,32 +142,68 @@ function DeviceCard({
   );
 }
 
-export function OmadaVoucherStatusPanel({ ecosystemId }: { ecosystemId: string | null }) {
+function Notice({ tone, children }: { tone: "muted" | "warn"; children: React.ReactNode }) {
+  return (
+    <p
+      className={
+        tone === "warn"
+          ? "break-words rounded-md border border-destructive/40 p-3 text-xs text-destructive"
+          : "break-words rounded-md border p-3 text-xs text-muted-foreground"
+      }
+    >
+      {children}
+    </p>
+  );
+}
+
+export function OmadaVoucherStatusPanel({
+  ecosystemId,
+  shopSlug,
+}: {
+  /** Shop being checked when the visitor is signed in to that shop. */
+  ecosystemId?: string | null;
+  /** Public checker: the shop is chosen by slug and no account is required. */
+  shopSlug?: string;
+}) {
   const [state, setState] = useState<OmadaVoucherStatus | null>(null);
+  const [tracerShopId, setTracerShopId] = useState<string | null>(ecosystemId ?? null);
   const [records, setRecords] = useState<TracerRecord[]>([]);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const check = useCallback(
+    async (searchCode?: string) => {
+      if (shopSlug) {
+        const next = await lookupVoucherPublicly({ data: { shopSlug, code: searchCode } });
+        setTracerShopId(next.ecosystemId);
+        return next as OmadaVoucherStatus;
+      }
+      if (!ecosystemId) return null;
+      setTracerShopId(ecosystemId);
+      return lookupOmadaVoucher({ data: { ecosystemId, code: searchCode } });
+    },
+    [ecosystemId, shopSlug],
+  );
+
   useEffect(() => {
-    if (!ecosystemId) return;
-    void lookupOmadaVoucher({ data: { ecosystemId } })
-      .then(setState)
+    void check()
+      .then((next) => setState(next))
       .catch(() => setState(null));
-  }, [ecosystemId]);
+  }, [check]);
 
   const loadTracers = useCallback(
-    async (voucherCode: string) => {
-      if (!ecosystemId) return;
+    async (voucherCode: string, shopId: string | null) => {
+      if (!shopId) return;
       try {
-        setRecords(await fetchVoucherTracers(ecosystemId, voucherCode));
+        setRecords(await fetchVoucherTracers(shopId, voucherCode));
       } catch {
         setRecords([]);
       }
     },
-    [ecosystemId],
+    [],
   );
 
-  if (!ecosystemId) return null;
+  if (!ecosystemId && !shopSlug) return null;
 
   if (!state) {
     return (
@@ -175,7 +218,6 @@ export function OmadaVoucherStatusPanel({ ecosystemId }: { ecosystemId: string |
       <Card className="shadow-[var(--shadow-card)]">
         <CardContent className="p-4 text-sm text-muted-foreground">
           This shop has not connected a hotspot controller yet, so voucher status is not available.
-          Ask your shop admin to set it up.
         </CardContent>
       </Card>
     );
@@ -185,11 +227,14 @@ export function OmadaVoucherStatusPanel({ ecosystemId }: { ecosystemId: string |
     if (!code.trim()) return;
     setBusy(true);
     try {
-      const next = await lookupOmadaVoucher({ data: { ecosystemId, code } });
+      const next = await check(code);
+      if (!next) return;
       setState(next);
-      if (next.outcome === "found") await loadTracers(code.trim());
-      else setRecords([]);
-      if (next.outcome === "not_found") toast.info("No voucher with that code was found.");
+      if (next.outcome === "found") {
+        await loadTracers(code.trim(), shopSlug ? tracerShopId : (ecosystemId ?? null));
+      } else {
+        setRecords([]);
+      }
     } catch (e) {
       toast.error("Could not check that voucher", { description: (e as Error).message });
     } finally {
@@ -198,10 +243,13 @@ export function OmadaVoucherStatusPanel({ ecosystemId }: { ecosystemId: string |
   };
 
   const onSaveTracer = async (mac: string, tracer: string) => {
+    const shopId = shopSlug ? tracerShopId : (ecosystemId ?? null);
+    if (!shopId) return;
+    const voucherCode = state.view?.code ?? code.trim();
     try {
       const result = await saveVoucherTracer({
-        ecosystemId,
-        voucherCode: state.view?.code ?? code.trim(),
+        ecosystemId: shopId,
+        voucherCode,
         deviceMac: mac,
         tracer,
       });
@@ -212,7 +260,7 @@ export function OmadaVoucherStatusPanel({ ecosystemId }: { ecosystemId: string |
       } else if (result.outcome === "recorded") {
         toast.success("Tracer saved");
       }
-      await loadTracers(state.view?.code ?? code.trim());
+      await loadTracers(voucherCode, shopId);
     } catch (e) {
       toast.error("Could not save the tracer", { description: (e as Error).message });
     }
@@ -227,12 +275,6 @@ export function OmadaVoucherStatusPanel({ ecosystemId }: { ecosystemId: string |
         <CardDescription>Search a voucher code to see its current status.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {state.error ? (
-          <p className="break-words rounded-md border border-destructive/40 p-3 text-xs text-destructive">
-            {state.error}
-          </p>
-        ) : null}
-
         <div className="space-y-1.5">
           <Label htmlFor="omadaVoucherCode">Voucher code</Label>
           <div className="flex flex-wrap gap-2">
@@ -251,6 +293,23 @@ export function OmadaVoucherStatusPanel({ ecosystemId }: { ecosystemId: string |
           </div>
         </div>
 
+        {state.outcome === "not_found" ? (
+          <Notice tone="muted">
+            Voucher not found. No voucher with that code exists on this shop's hotspot controller.
+          </Notice>
+        ) : null}
+        {state.outcome === "invalid" ? (
+          <Notice tone="muted">{state.error}</Notice>
+        ) : null}
+        {state.outcome === "unavailable" ||
+        state.outcome === "authentication_failed" ||
+        state.outcome === "status_unreadable" ? (
+          <Notice tone="warn">
+            {state.error} This does not mean the voucher is invalid — the status simply could not be
+            read right now.
+          </Notice>
+        ) : null}
+
         {view ? (
           <div className="space-y-3">
             <div
@@ -265,12 +324,21 @@ export function OmadaVoucherStatusPanel({ ecosystemId }: { ecosystemId: string |
 
             {view.state === "unused" ? (
               <p className="text-xs text-muted-foreground">
-                This voucher has not been used yet, so there is no device information.
+                This voucher has not been used yet, so no device is connected to it.
               </p>
-            ) : view.devices.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                The controller did not report device details for this voucher.
-              </p>
+            ) : view.devicesUnavailable ? (
+              <div className="space-y-3">
+                <Notice tone="muted">
+                  No device is currently authorized with this voucher, so the hotspot controller has
+                  no device details to show. The voucher's own usage is below.
+                </Notice>
+                <dl className="grid gap-3 rounded-lg border p-3 sm:grid-cols-2">
+                  <Detail label="Remaining time" value={view.remainingTime} />
+                  <Detail label="Remaining data" value={view.remainingData} />
+                  <Detail label="Initially entered" value={view.startedAt} />
+                  <Detail label="Expires" value={view.expiresAt} />
+                </dl>
+              </div>
             ) : (
               <div className="space-y-3">
                 {view.devices.map((device, i) => (
@@ -285,10 +353,6 @@ export function OmadaVoucherStatusPanel({ ecosystemId }: { ecosystemId: string |
               </div>
             )}
           </div>
-        ) : state.outcome === "not_found" ? (
-          <p className="text-xs text-muted-foreground">
-            No voucher with that code was found on this shop's controller.
-          </p>
         ) : null}
       </CardContent>
     </Card>
