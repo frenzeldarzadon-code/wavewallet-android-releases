@@ -16,11 +16,11 @@ async function handle({ request }: { request: Request }) {
   const clients = await listAuthorizedClients(session);
   const probePaths = url.searchParams.get("paths");
   if (probePaths) {
-    const { omadaGet } = await import("@/lib/omada-api.server");
+    const { omadaSiteCall } = await import("@/lib/omada-api.server");
     const out: Record<string, unknown> = {};
     for (const path of probePaths.split(",")) {
       try {
-        out[path] = await omadaGet(session, path);
+        out[path] = await omadaSiteCall(session, path);
       } catch (e) {
         out[path] = String(e);
       }
