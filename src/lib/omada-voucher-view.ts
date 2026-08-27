@@ -185,10 +185,21 @@ function nameOf(row: Row): string | null {
   return text.toUpperCase() === macOf(row) ? null : text;
 }
 
-/** Every authorized client whose voucher authorization matches this code. */
+/**
+ * Every record whose voucher authorization matches this code.
+ *
+ * Handles both shapes: a hotspot authorization record (`voucherCode`, the
+ * authoritative source) and a live client row (`authInfo[{authType,info}]`).
+ */
 export function clientsForVoucher(clients: Row[], code: string): Row[] {
   const wanted = code.trim().toUpperCase();
   return clients.filter((client) => {
+    const direct = pick(client, ["voucherCode"]);
+    if (direct !== undefined) {
+      const type = num(pick(client, ["authType"]));
+      if (type !== null && type !== VOUCHER_AUTH_TYPE) return false;
+      return String(direct).trim().toUpperCase() === wanted;
+    }
     const info = client["authInfo"];
     if (!Array.isArray(info)) return false;
     return info.some((entry) => {
@@ -201,9 +212,16 @@ export function clientsForVoucher(clients: Row[], code: string): Row[] {
   });
 }
 
+function deviceTrafficOf(row: Row): string | null {
+  const download = num(pick(row, ["download", "trafficDown"])) ?? 0;
+  const upload = num(pick(row, ["upload", "trafficUp"])) ?? 0;
+  const total = download + upload;
+  return total > 0 ? formatData(total) : null;
+}
+
 /**
  * Builds the view for one Omada voucher. A voucher may be used by several
- * devices; each authorized client is returned separately with its own details.
+ * devices; each authorized device is returned separately with its own details.
  * Returns null when the controller's status value cannot be mapped, so the
  * caller reports a controller problem rather than a made-up state.
  */
@@ -224,17 +242,27 @@ export function toVoucherView(
   const startedAt = formatMoment(pick(voucher, ["startTime", "beginTime", "inUseTime"]));
   const expiresAt = formatMoment(pick(voucher, ["endTime", "expirationTime", "expireTime"]));
 
+  // An unused voucher has no authorization records; anything else lists every
+  // device the controller authorized, whether or not it is online right now.
   const matched = state === "unused" ? [] : clientsForVoucher(clients, code);
-  const devices = matched.map<VoucherDeviceView>((client) => ({
-    mac: macOf(client),
-    deviceName: nameOf(client),
-    state,
-    remainingTime,
-    remainingData,
-    startedAt,
-    expiresAt,
-    price,
-  }));
+  const devices = matched.map<VoucherDeviceView>((client) => {
+    const valid = client["valid"];
+    return {
+      mac: macOf(client),
+      deviceName: nameOf(client),
+      state,
+      remainingTime,
+      remainingData,
+      startedAt,
+      expiresAt,
+      price,
+      ipAddress: (pick(client, ["ip", "ipAddress"]) as string | undefined) ?? null,
+      networkName: (pick(client, ["ssid", "networkName"]) as string | undefined) ?? null,
+      authorizedAt: formatMoment(pick(client, ["start", "startTime", "connectTime"])),
+      deviceData: deviceTrafficOf(client),
+      stillValid: typeof valid === "boolean" ? valid : null,
+    };
+  });
 
   return {
     code: code.trim().toUpperCase(),
@@ -251,3 +279,4 @@ export function toVoucherView(
     devicesUnavailable: state !== "unused" && devices.length === 0,
   };
 }
+
