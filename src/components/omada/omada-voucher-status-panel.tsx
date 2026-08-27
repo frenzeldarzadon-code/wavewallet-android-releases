@@ -140,6 +140,103 @@ function DeviceCard({
   );
 }
 
+/**
+ * A device this shop observed on the voucher earlier. Only fields the
+ * controller actually reported at the time are shown.
+ */
+function PastSessionCard({
+  session,
+  index,
+  records,
+  onSave,
+}: {
+  session: UsageSessionView;
+  index: number;
+  records: TracerRecord[];
+  onSave: (mac: string, tracer: string) => Promise<void>;
+}) {
+  const current = primaryTracer(records, session.deviceMac);
+  const history = tracerHistory(records, session.deviceMac);
+  const [tracer, setTracer] = useState(current?.tracer ?? "");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setTracer(current?.tracer ?? "");
+  }, [current?.tracer]);
+
+  const save = async () => {
+    if (!tracer.trim()) return;
+    setBusy(true);
+    try {
+      await onSave(session.deviceMac, tracer.trim());
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3 rounded-lg border p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="min-w-0 break-words text-sm font-semibold">
+          {session.deviceName ?? `Device ${index + 1}`}
+        </p>
+        <Badge variant="outline">Past use</Badge>
+      </div>
+      <p className="break-all text-[11px] text-muted-foreground">
+        Device address {session.deviceMac}
+      </p>
+      <dl className="grid gap-3 sm:grid-cols-2">
+        <Detail label="IP address" value={session.ipAddress} />
+        <Detail label="Access point" value={session.apIdentifier} />
+        <Detail label="Network" value={session.networkName} />
+        <Detail
+          label="Session started"
+          value={session.connectedAt ? new Date(session.connectedAt).toLocaleString() : null}
+        />
+        <Detail label="First seen" value={new Date(session.firstSeenAt).toLocaleString()} />
+        <Detail label="Last seen" value={new Date(session.lastSeenAt).toLocaleString()} />
+        <Detail label="Data used by this device" value={formatData(session.trafficBytes)} />
+      </dl>
+      <div className="space-y-1.5">
+        <Label htmlFor={`past-tracer-${session.id}`}>Tracer</Label>
+        <div className="flex flex-wrap gap-2">
+          <Input
+            id={`past-tracer-${session.id}`}
+            className="min-w-0 flex-1"
+            placeholder="Name or note for tracking"
+            value={tracer}
+            maxLength={80}
+            onChange={(e) => setTracer(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void save();
+            }}
+          />
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={busy || !tracer.trim() || tracer.trim() === current?.tracer}
+            onClick={() => void save()}
+          >
+            {busy ? "Saving…" : "Save"}
+          </Button>
+        </div>
+        {history.length > 0 ? (
+          <details className="text-[11px] text-muted-foreground">
+            <summary className="cursor-pointer">Previous tracers ({history.length})</summary>
+            <ul className="mt-1 space-y-0.5">
+              {history.map((h) => (
+                <li key={h.id} className="break-words">
+                  {h.tracer} — {new Date(h.recorded_at).toLocaleString()}
+                </li>
+              ))}
+            </ul>
+          </details>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function Notice({ tone, children }: { tone: "muted" | "warn"; children: React.ReactNode }) {
   return (
     <p
