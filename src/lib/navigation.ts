@@ -131,7 +131,7 @@ export function customerNav(): Nav {
           ? ([{ to: "/app/store", label: "Retail store", icon: Store }] as NavItem[])
           : []),
         { to: "/app/rewards", label: "Rewards", icon: Gift },
-        { to: "/app/omada", label: "Voucher status checker", icon: Wifi },
+        { to: "/app/omada", label: "Status Check", icon: Wifi },
       ],
     },
     {
@@ -200,7 +200,7 @@ export function resellerNav(role: Role = "reseller"): Nav {
           ? ([{ to: "/reseller/store", label: "Retail store", icon: Store }] as NavItem[])
           : []),
         { to: "/reseller/rewards", label: "Rewards", icon: Gift },
-        { to: "/reseller/omada", label: "Voucher status checker", icon: Wifi },
+        { to: "/reseller/omada", label: "Status Check", icon: Wifi },
       ],
     },
     {

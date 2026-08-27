@@ -13,6 +13,7 @@ import { OmadaHealthCard } from "@/components/shop/omada-health-card";
 import { OmadaGeneratePanel } from "@/components/omada/omada-generate-panel";
 import { OmadaVoucherStatusPanel } from "@/components/omada/omada-voucher-status-panel";
 import { TracerConflictsPanel } from "@/components/omada/tracer-conflicts-panel";
+import { AntennaStatusPanel } from "@/components/omada/antenna-status-panel";
 import { useSession } from "@/lib/session";
 
 export const Route = createFileRoute("/admin/omada")({
@@ -46,9 +47,12 @@ function AdminOmada() {
       description="Your shop's own Omada controller. These details and any vouchers generated here belong to this shop only."
     >
       <Tabs defaultValue="connection" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="connection" className="text-xs sm:text-sm">
             Connection
+          </TabsTrigger>
+          <TabsTrigger value="devices" className="text-xs sm:text-sm">
+            Antennas
           </TabsTrigger>
           <TabsTrigger value="generate" className="text-xs sm:text-sm">
             Generate
@@ -61,6 +65,10 @@ function AdminOmada() {
         <TabsContent value="connection" className="mt-4 space-y-4">
           <OmadaConnectionCard ecosystemId={ecosystemDbId} />
           <OmadaHealthCard ecosystemId={ecosystemDbId} />
+        </TabsContent>
+
+        <TabsContent value="devices" className="mt-4">
+          <AntennaStatusPanel ecosystemId={ecosystemDbId} manage />
         </TabsContent>
 
         <TabsContent value="generate" className="mt-4">

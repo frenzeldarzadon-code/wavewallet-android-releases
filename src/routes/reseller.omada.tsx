@@ -6,7 +6,9 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { PageSection } from "@/components/ui-kit";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OmadaVoucherStatusPanel } from "@/components/omada/omada-voucher-status-panel";
+import { AntennaStatusPanel } from "@/components/omada/antenna-status-panel";
 import { useSession } from "@/lib/session";
 
 export const Route = createFileRoute("/reseller/omada")({
@@ -37,7 +39,24 @@ function ResellerStatusChecker() {
       title="Voucher status checker"
       description="Search a voucher code to see whether it is unused, in-use or expired."
     >
-      <OmadaVoucherStatusPanel ecosystemId={ecosystemDbId} />
+      <Tabs defaultValue="antenna" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="antenna" className="text-xs sm:text-sm">
+            Antenna Status
+          </TabsTrigger>
+          <TabsTrigger value="voucher" className="text-xs sm:text-sm">
+            Voucher Status
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="antenna" className="mt-4">
+          <AntennaStatusPanel ecosystemId={ecosystemDbId} />
+        </TabsContent>
+
+        <TabsContent value="voucher" className="mt-4">
+          <OmadaVoucherStatusPanel ecosystemId={ecosystemDbId} />
+        </TabsContent>
+      </Tabs>
     </PageSection>
   );
 }
