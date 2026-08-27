@@ -9,7 +9,7 @@
  */
 
 const TIMEOUT_MS = 15_000;
-const TOKEN_SKEW_MS = 60_000;
+const TOKEN_SKEW_MS = 5 * 60_000;
 
 export interface OmadaSession {
   ecosystemId: string;
@@ -169,27 +169,46 @@ export async function openOmadaSession(
       .eq("ecosystem_id", ecosystemId);
   }
 
-  const resolveSite = async (accessToken: string): Promise<string | null> => {
+  const resolveSite = async (
+    accessToken: string,
+  ): Promise<{ siteId: string | null; tokenError: boolean }> => {
     const res = await rawFetch(
       `${base}/openapi/v1/${omadacId}/sites?page=1&pageSize=100`,
       { method: "GET", headers: { Authorization: `AccessToken=${accessToken}` } },
       [clientSecret, accessToken],
     );
     if (res.error) throw new OmadaError(`Controller not reachable: ${res.error}`, "unreachable");
-    if (!res.ok) return null;
-    const rows = (omadaEnvelope(res.body).result as Record<string, unknown> | null)?.["data"] as
+    const parsed = omadaEnvelope(res.body);
+    // The controller answers an expired/revoked token with HTTP 200 and a
+    // negative error code, so the status alone must not be trusted.
+    const tokenError =
+      res.status === 401 ||
+      res.status === 403 ||
+      parsed.code === -44112 ||
+      parsed.code === -44113 ||
+      parsed.code === -44106 ||
+      parsed.code === -1200;
+    if (tokenError) return { siteId: null, tokenError: true };
+    if (!res.ok || (parsed.code !== null && parsed.code !== 0)) {
+      return { siteId: null, tokenError: false };
+    }
+    const rows = (parsed.result as Record<string, unknown> | null)?.["data"] as
       | Array<Record<string, unknown>>
       | undefined;
     const wanted = String(row.site_name ?? "").trim();
     const match = wanted
       ? rows?.find((r) => String(r["name"] ?? "").toLowerCase() === wanted.toLowerCase())
       : rows?.[0];
-    return match ? String(match["siteId"] ?? match["id"] ?? "") || null : null;
+    return {
+      siteId: match ? String(match["siteId"] ?? match["id"] ?? "") || null : null,
+      tokenError: false,
+    };
   };
 
-  let siteId = await resolveSite(token);
-  if (!siteId && !fresh) {
-    // The cached session may have been revoked — re-establish it once, silently.
+  let resolved = await resolveSite(token);
+  if (resolved.tokenError && !fresh) {
+    // The cached session was rejected before its recorded expiry — re-establish
+    // it once, silently, instead of reporting the controller as unusable.
     const issued = await authenticate(base, omadacId, row.client_id as string, clientSecret);
     token = issued.token;
     await supabaseAdmin
@@ -199,8 +218,13 @@ export async function openOmadaSession(
         token_expires_at: issued.expiresAt.toISOString(),
       })
       .eq("ecosystem_id", ecosystemId);
-    siteId = await resolveSite(token);
+    resolved = await resolveSite(token);
   }
+  if (resolved.tokenError) {
+    throw new OmadaError("The Omada API session was rejected by the controller.", "auth");
+  }
+  const siteId = resolved.siteId;
+
   if (!siteId) {
     throw new OmadaError(
       "Connected, but no site is visible to this Omada API application.",

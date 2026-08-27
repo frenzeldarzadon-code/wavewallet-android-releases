@@ -55,7 +55,7 @@ export const OFFLINE_WARNING_MS = 30 * 60_000;
 
 const TIMEOUT_MS = 12_000;
 /** Refresh a cached token this long before it actually expires. */
-const TOKEN_SKEW_MS = 60_000;
+const TOKEN_SKEW_MS = 5 * 60_000;
 
 /** Exponential backoff with a ceiling; `failures` is the count *after* this check. */
 export function backoffDelayMs(failures: number): number {
@@ -114,13 +114,26 @@ async function jsonFetch(url: string, init: RequestInit, secrets: string[]) {
   }
 }
 
-function omadaResult(body: unknown): { msg: string; result: unknown } {
+function omadaResult(body: unknown): { code: number | null; msg: string; result: unknown } {
   if (body && typeof body === "object") {
     const b = body as Record<string, unknown>;
-    return { msg: typeof b["msg"] === "string" ? b["msg"] : "", result: b["result"] ?? null };
+    return {
+      code: typeof b["errorCode"] === "number" ? b["errorCode"] : null,
+      msg: typeof b["msg"] === "string" ? b["msg"] : "",
+      result: b["result"] ?? null,
+    };
   }
-  return { msg: "", result: null };
+  return { code: null, msg: "", result: null };
 }
+
+/**
+ * Omada answers an expired/revoked access token with HTTP 200 and a negative
+ * envelope error code, so the HTTP status alone must never be trusted.
+ */
+export function isOmadaTokenError(code: number | null): boolean {
+  return code === -44112 || code === -44113 || code === -44106 || code === -1200;
+}
+
 
 export interface OmadaHealthInput {
   baseUrl: string;
@@ -225,8 +238,12 @@ export async function probeOmadaHealth(input: OmadaHealthInput): Promise<OmadaHe
     );
 
   let sites = await readSites(token);
-  // A cached token can be revoked early; re-establish the session once, silently.
-  if (!sites.ok && reusedToken) {
+  // A cached token can be rejected before its recorded expiry: the controller
+  // answers HTTP 200 with a token error code. Re-establish the session once,
+  // silently, whenever the read failed at transport level OR at envelope level.
+  const staleSession = () =>
+    !sites.ok || isOmadaTokenError(omadaResult(sites.body).code);
+  if (staleSession() && reusedToken) {
     let fresh: string | null = null;
     try {
       fresh = await authenticate();
@@ -266,6 +283,26 @@ export async function probeOmadaHealth(input: OmadaHealthInput): Promise<OmadaHe
   }
 
   const parsed = omadaResult(sites.body);
+  if (isOmadaTokenError(parsed.code)) {
+    // A freshly issued token was rejected: this is a real session problem, not
+    // a missing site. Never cache the rejected token.
+    return {
+      state: "auth_failed",
+      reason: "The Omada API session was rejected by the controller.",
+      siteId: null,
+      token: null,
+      reusedToken: false,
+    };
+  }
+  if (parsed.code !== null && parsed.code !== 0) {
+    return {
+      state: "degraded",
+      reason: `Controller API error: ${scrub(parsed.msg || `code ${parsed.code}`, secrets)}`,
+      siteId: null,
+      token: token && tokenExpiry ? { value: token, expiresAt: tokenExpiry } : null,
+      reusedToken,
+    };
+  }
   const rows = (parsed.result as Record<string, unknown> | null)?.["data"] as
     | Array<Record<string, unknown>>
     | undefined;
@@ -287,6 +324,7 @@ export async function probeOmadaHealth(input: OmadaHealthInput): Promise<OmadaHe
       reusedToken,
     };
   }
+
 
   return { state: "healthy", reason: null, siteId, token: tokenOut, reusedToken };
 }
