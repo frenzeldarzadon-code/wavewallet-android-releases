@@ -31,6 +31,7 @@ import {
 import {
   antennaTypeLabel,
   healthTone,
+  uplinkLabel,
   type AntennaView,
 } from "@/lib/omada-devices";
 import {
