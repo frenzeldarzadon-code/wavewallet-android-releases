@@ -27,12 +27,17 @@ import { StatusBadge } from "@/components/ui-kit";
 import {
   controllerMismatch,
   displayVoucherFields,
+  durationToMinutes,
+  formatDurationUnits,
   isValidVoucherCode,
   defaultGroupName,
   reviewExtractedCodes,
+  splitDurationMinutes,
   toControllerUnits,
   toDisplayUnits,
   validateGenerationPayload,
+  DURATION_UNIT_LABELS,
+  type DurationUnit,
   type GenValue,
   type VoucherFieldSpec,
 } from "@/lib/omada-generation";
@@ -179,6 +184,10 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
   const [productId, setProductId] = useState<string>("");
   const [values, setValues] = useState<Values>({});
   const [calibratedKeys, setCalibratedKeys] = useState<Set<string>>(new Set());
+  // Duration is entered as value + unit; `values.duration` always stays in the
+  // controller's own unit (whole minutes).
+  const [durationUnit, setDurationUnit] = useState<DurationUnit>("minutes");
+  const [durationValue, setDurationValue] = useState<number | "">("");
   const [stage, setStage] = useState<Stage>("form");
   const [busy, setBusy] = useState(false);
   const [saveAsCalibration, setSaveAsCalibration] = useState(false);
@@ -221,7 +230,18 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
     // two definitions cannot drift apart by mistake.
     if (chosen) next["unitPrice"] = String(chosen.promo_price ?? chosen.credit_price ?? "");
     setValues(next);
+    // Prefill both the number and its unit from the saved calibration, without
+    // changing the stored minutes.
+    const split = splitDurationMinutes(Number(next["duration"] ?? 0));
+    setDurationUnit(split.unit);
+    setDurationValue(split.value || "");
     setCalibratedKeys(new Set(saved ? Object.keys(saved) : []));
+  };
+
+  const applyDuration = (value: number | "", unit: DurationUnit) => {
+    setDurationValue(value);
+    setDurationUnit(unit);
+    setValues((v) => ({ ...v, duration: value === "" ? "" : durationToMinutes(Number(value), unit) }));
   };
 
   // The form holds Mbps / MB; everything sent, validated or reviewed uses the
@@ -467,21 +487,67 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
               {stage === "form" ? (
                 <>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {displayVoucherFields(setup.fields).map((field) => (
-                      <FieldInput
-                        key={field.name}
-                        field={field}
-                        value={values[field.name]}
-                        origin={
-                          field.name === "unitPrice"
-                            ? "from product"
-                            : calibratedKeys.has(field.name)
-                              ? `calibration v${calibration?.version ?? ""}`
-                              : null
-                        }
-                        onChange={(next) => setValues((v) => ({ ...v, [field.name]: next }))}
-                      />
-                    ))}
+                    {displayVoucherFields(setup.fields).map((field) =>
+                      field.name === "duration" ? (
+                        <div key="duration" className="space-y-1.5">
+                          <Label className="flex flex-wrap items-center gap-1.5 text-xs">
+                            <span>Duration</span>
+                            <span className="text-destructive">*</span>
+                            {calibratedKeys.has("duration") ? (
+                              <span className="rounded bg-muted px-1 text-[10px] text-muted-foreground">
+                                calibration v{calibration?.version ?? ""}
+                              </span>
+                            ) : null}
+                          </Label>
+                          <div className="flex gap-2">
+                            <Input
+                              type="number"
+                              min={1}
+                              value={durationValue === "" ? "" : String(durationValue)}
+                              onChange={(e) =>
+                                applyDuration(
+                                  e.target.value === "" ? "" : Number(e.target.value),
+                                  durationUnit,
+                                )
+                              }
+                            />
+                            <Select
+                              value={durationUnit}
+                              onValueChange={(u) => applyDuration(durationValue, u as DurationUnit)}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {(Object.keys(DURATION_UNIT_LABELS) as DurationUnit[]).map((u) => (
+                                  <SelectItem key={u} value={u}>
+                                    {DURATION_UNIT_LABELS[u]}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <p className="break-words text-[11px] text-muted-foreground">
+                            Omada stores validity in minutes. This entry is sent as{" "}
+                            {String(values["duration"] ?? "—")} minutes.
+                          </p>
+                        </div>
+                      ) : (
+                        <FieldInput
+                          key={field.name}
+                          field={field}
+                          value={values[field.name]}
+                          origin={
+                            field.name === "unitPrice"
+                              ? "from product"
+                              : calibratedKeys.has(field.name)
+                                ? `calibration v${calibration?.version ?? ""}`
+                                : null
+                          }
+                          onChange={(next) => setValues((v) => ({ ...v, [field.name]: next }))}
+                        />
+                      ),
+                    )}
                   </div>
 
                   {problems.length > 0 ? (
@@ -515,6 +581,13 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
                     <div>
                       <dt className="text-muted-foreground">Quantity</dt>
                       <dd className="font-medium">{String(values["amount"] ?? "")}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-muted-foreground">Duration</dt>
+                      <dd className="font-medium">
+                        {formatDurationUnits(Number(values["duration"] ?? 0))} (
+                        {String(values["duration"] ?? "—")} minutes sent to Omada)
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-muted-foreground">Controller</dt>

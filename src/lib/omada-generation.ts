@@ -522,3 +522,48 @@ export function displayVoucherFields(fields: VoucherFieldSpec[]): VoucherFieldSp
     return field;
   });
 }
+
+/* -------------------------------------------------------------------------
+ * Duration units for Voucher Creation
+ *
+ * The verified Omada 6.2.14.11 schema takes `duration` as a WHOLE NUMBER OF
+ * MINUTES (1..14400000). The admin picks Minutes / Hours / Days purely for
+ * convenience; the value is converted to minutes (x1, x60, x1440) before
+ * validation and before anything is sent, so a saved calibration keeps exactly
+ * the same controller meaning it already had.
+ * ------------------------------------------------------------------------- */
+
+export type DurationUnit = "minutes" | "hours" | "days";
+
+export const DURATION_UNIT_MINUTES: Record<DurationUnit, number> = {
+  minutes: 1,
+  hours: 60,
+  days: 1440,
+};
+
+export const DURATION_UNIT_LABELS: Record<DurationUnit, string> = {
+  minutes: "Minutes",
+  hours: "Hours",
+  days: "Days",
+};
+
+/** Admin entry (value + unit) -> the controller's minutes. */
+export function durationToMinutes(value: number, unit: DurationUnit): number {
+  return Math.round(value * DURATION_UNIT_MINUTES[unit]);
+}
+
+/** Controller minutes -> the largest unit that still divides evenly. */
+export function splitDurationMinutes(minutes: number): { value: number; unit: DurationUnit } {
+  const n = Number(minutes);
+  if (!Number.isFinite(n) || n <= 0) return { value: n || 0, unit: "minutes" };
+  if (n % DURATION_UNIT_MINUTES.days === 0) return { value: n / DURATION_UNIT_MINUTES.days, unit: "days" };
+  if (n % DURATION_UNIT_MINUTES.hours === 0) return { value: n / DURATION_UNIT_MINUTES.hours, unit: "hours" };
+  return { value: n, unit: "minutes" };
+}
+
+/** Human-readable duration for the review screen, e.g. "12 Hours". */
+export function formatDurationUnits(minutes: number): string {
+  const { value, unit } = splitDurationMinutes(minutes);
+  const singular = value === 1 ? DURATION_UNIT_LABELS[unit].replace(/s$/, "") : DURATION_UNIT_LABELS[unit];
+  return `${value} ${singular}`;
+}
