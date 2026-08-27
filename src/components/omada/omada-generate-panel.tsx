@@ -557,7 +557,9 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
                   <div className="grid gap-1 text-xs sm:grid-cols-2">
                     <span>Extracted: {outcome.extracted.length}</span>
                     <span>In this list: {summary.extracted}</span>
-                    <span className="text-success">New: {summary.importable.length}</span>
+                    <span className="text-success">
+                      Final import count: {summary.importable.length}
+                    </span>
                     <span className="text-destructive">
                       Already in this shop: {summary.duplicateInInventory}
                     </span>
@@ -565,11 +567,19 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
                     <span>Invalid format: {summary.invalid}</span>
                   </div>
                   <p className="text-[11px] text-muted-foreground">
+                    {checking ? "Re-checking this shop's Code Inventory… " : ""}
                     {summary.extracted} extracted · {summary.duplicateInInventory} already exist ·{" "}
                     {summary.importable.length} new. Codes that already exist in this shop's Code
                     Inventory are excluded and can never be re-imported or overwritten. Another
                     shop having the same code does not block it here.
                   </p>
+                  {checkError ? (
+                    <p className="break-words rounded-md border border-destructive/40 p-2 text-[11px] text-destructive">
+                      Could not check this shop's Code Inventory ({checkError}). Nothing can be
+                      imported until the check succeeds.
+                    </p>
+                  ) : null}
+
                   {duplicateCodes.length > 0 ? (
                     <div className="space-y-1 rounded-md border border-destructive/40 p-2">
                       <p className="text-[11px] font-medium text-destructive">
