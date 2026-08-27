@@ -598,7 +598,7 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
                   <div className="flex flex-wrap gap-2">
                     <Button
                       size="sm"
-                      disabled={busy || summary.importable.length === 0}
+                      disabled={busy || checking || summary.importable.length === 0}
                       onClick={() => void importCodes()}
                     >
                       {busy
