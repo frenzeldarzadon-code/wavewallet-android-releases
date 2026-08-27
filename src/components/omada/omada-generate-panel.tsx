@@ -26,9 +26,12 @@ import {
 import { StatusBadge } from "@/components/ui-kit";
 import {
   controllerMismatch,
+  displayVoucherFields,
   isValidVoucherCode,
   defaultGroupName,
   reviewExtractedCodes,
+  toControllerUnits,
+  toDisplayUnits,
   validateGenerationPayload,
   type GenValue,
   type VoucherFieldSpec,
@@ -125,6 +128,7 @@ function FieldInput({
   ) : (
     <Input
       type={field.type === "integer" ? "number" : "text"}
+      step={field.allowDecimal ? "any" : undefined}
       value={value === null || value === undefined ? "" : String(value)}
       onChange={(e) =>
         onChange(
@@ -141,7 +145,10 @@ function FieldInput({
   return (
     <div className="space-y-1.5">
       <Label className="flex flex-wrap items-center gap-1.5 text-xs">
-        <span>{label(field.name)}</span>
+        <span>
+          {label(field.name)}
+          {field.unitSuffix ? ` (${field.unitSuffix})` : ""}
+        </span>
         {field.required ? (
           <span className="text-destructive">*</span>
         ) : (
@@ -158,6 +165,7 @@ function FieldInput({
       {field.minimum !== undefined || field.maximum !== undefined ? (
         <p className="text-[11px] text-muted-foreground">
           Allowed: {field.minimum ?? "—"} to {field.maximum ?? "—"}
+          {field.unitSuffix ? ` ${field.unitSuffix}` : ""}
         </p>
       ) : null}
     </div>
@@ -207,7 +215,7 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
     if (!setup) return;
     const chosen = setup.products.find((p) => p.id === id);
     const saved = setup.calibrations[id]?.payload ?? null;
-    const next: Values = { ...setup.defaults, ...(saved ?? {}) };
+    const next: Values = toDisplayUnits({ ...setup.defaults, ...(saved ?? {}) });
     next["name"] = defaultGroupName(chosen?.name ?? "Vouchers", setup.groupNames);
     // Product-derived: the shop's own selling price is carried into Omada so the
     // two definitions cannot drift apart by mistake.
@@ -216,9 +224,11 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
     setCalibratedKeys(new Set(saved ? Object.keys(saved) : []));
   };
 
+  // The form holds Mbps / MB; everything sent, validated or reviewed uses the
+  // controller's own Kbps / KB values.
   const payload = useMemo(() => {
     const out: Values = {};
-    for (const [k, v] of Object.entries(values)) {
+    for (const [k, v] of Object.entries(toControllerUnits(values))) {
       if (v === "" || v === undefined) continue;
       out[k] = v;
     }
@@ -457,7 +467,7 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
               {stage === "form" ? (
                 <>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {setup.fields.map((field) => (
+                    {displayVoucherFields(setup.fields).map((field) => (
                       <FieldInput
                         key={field.name}
                         field={field}
@@ -513,6 +523,11 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
                       </dd>
                     </div>
                   </dl>
+                  <p className="text-[11px] text-muted-foreground">
+                    Speeds are entered in Mbps and the data cap in MB. Omada is sent the same
+                    limits in its own units (Kbps and KB), shown below exactly as they will be
+                    submitted.
+                  </p>
                   <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded bg-muted p-2 text-[11px]">
                     {JSON.stringify(payload, null, 2)}
                   </pre>
