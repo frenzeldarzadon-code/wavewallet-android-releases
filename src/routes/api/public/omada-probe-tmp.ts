@@ -14,6 +14,10 @@ async function handle({ request }: { request: Request }) {
     "3a972878-ff7b-4dfb-8a5b-b681b1c81205",
   );
   const clients = await listAuthorizedClients(session);
+  if (url.searchParams.get("sites")) {
+    const res = await fetch(`${session.base}/openapi/v1/${session.omadacId}/sites?page=1&pageSize=50`, { headers: { Authorization: `AccessToken=${session.token}` } });
+    return new Response(await res.text(), { headers: { "content-type": "application/json" } });
+  }
   const probePaths = url.searchParams.get("paths");
   if (probePaths) {
     const { omadaSiteCall } = await import("@/lib/omada-api.server");
