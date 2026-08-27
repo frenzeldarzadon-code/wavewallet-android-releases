@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { antennaTypeLabel, describeDeviceStatus, normaliseMac } from "./omada-devices";
+import {
+  antennaTypeLabel,
+  describeDeviceStatus,
+  normaliseMac,
+  uplinkLabel,
+} from "./omada-devices";
 
 describe("controller status mapping", () => {
   it("reads the live Sagada Wave states", () => {
