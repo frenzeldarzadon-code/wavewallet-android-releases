@@ -487,21 +487,67 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
               {stage === "form" ? (
                 <>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {displayVoucherFields(setup.fields).map((field) => (
-                      <FieldInput
-                        key={field.name}
-                        field={field}
-                        value={values[field.name]}
-                        origin={
-                          field.name === "unitPrice"
-                            ? "from product"
-                            : calibratedKeys.has(field.name)
-                              ? `calibration v${calibration?.version ?? ""}`
-                              : null
-                        }
-                        onChange={(next) => setValues((v) => ({ ...v, [field.name]: next }))}
-                      />
-                    ))}
+                    {displayVoucherFields(setup.fields).map((field) =>
+                      field.name === "duration" ? (
+                        <div key="duration" className="space-y-1.5">
+                          <Label className="flex flex-wrap items-center gap-1.5 text-xs">
+                            <span>Duration</span>
+                            <span className="text-destructive">*</span>
+                            {calibratedKeys.has("duration") ? (
+                              <span className="rounded bg-muted px-1 text-[10px] text-muted-foreground">
+                                calibration v{calibration?.version ?? ""}
+                              </span>
+                            ) : null}
+                          </Label>
+                          <div className="flex gap-2">
+                            <Input
+                              type="number"
+                              min={1}
+                              value={durationValue === "" ? "" : String(durationValue)}
+                              onChange={(e) =>
+                                applyDuration(
+                                  e.target.value === "" ? "" : Number(e.target.value),
+                                  durationUnit,
+                                )
+                              }
+                            />
+                            <Select
+                              value={durationUnit}
+                              onValueChange={(u) => applyDuration(durationValue, u as DurationUnit)}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {(Object.keys(DURATION_UNIT_LABELS) as DurationUnit[]).map((u) => (
+                                  <SelectItem key={u} value={u}>
+                                    {DURATION_UNIT_LABELS[u]}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <p className="break-words text-[11px] text-muted-foreground">
+                            Omada stores validity in minutes. This entry is sent as{" "}
+                            {String(values["duration"] ?? "—")} minutes.
+                          </p>
+                        </div>
+                      ) : (
+                        <FieldInput
+                          key={field.name}
+                          field={field}
+                          value={values[field.name]}
+                          origin={
+                            field.name === "unitPrice"
+                              ? "from product"
+                              : calibratedKeys.has(field.name)
+                                ? `calibration v${calibration?.version ?? ""}`
+                                : null
+                          }
+                          onChange={(next) => setValues((v) => ({ ...v, [field.name]: next }))}
+                        />
+                      ),
+                    )}
                   </div>
 
                   {problems.length > 0 ? (
