@@ -256,12 +256,19 @@ export function OmadaVoucherStatusPanel({
   const currentMacs = new Set(
     (view?.devices ?? []).map((d) => d.mac).filter((m): m is string => Boolean(m)),
   );
-  // Devices this shop recorded against the voucher earlier. Omada 6.2.14.11's
-  // Open API does not link past clients back to a voucher, so this is
-  // WaveWallet's own record — never invented controller history.
-  const previousMacs = Array.from(
-    new Set(records.map((r) => r.device_mac).filter((m) => m && !currentMacs.has(m))),
+  // Past use. Omada 6.2.14.11's Open API does not link past clients back to a
+  // voucher, so this is WaveWallet's own recorded observations plus any device
+  // this shop labelled earlier — never invented controller history.
+  const past = pastSessions(state.sessions);
+  const pastMacs = new Set(past.map((s) => s.deviceMac));
+  const labelledOnlyMacs = Array.from(
+    new Set(
+      records
+        .map((r) => r.device_mac)
+        .filter((m) => m && !currentMacs.has(m) && !pastMacs.has(m.toUpperCase())),
+    ),
   );
+  const hasPast = past.length > 0 || labelledOnlyMacs.length > 0;
 
   return (
     <Card className="shadow-[var(--shadow-card)]">
