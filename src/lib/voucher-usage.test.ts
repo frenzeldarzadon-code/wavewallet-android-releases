@@ -1,6 +1,14 @@
 /** Uses real Controller 6.2.14.11 Authorized Client rows. */
 import { describe, expect, it } from "vitest";
-import { pastSessions, usageObservations, voucherClientIndex } from "./voucher-usage";
+import {
+  authedRecordIndex,
+  authedRecordObservation,
+  authedRecordObservations,
+  authedRecordsForVoucher,
+  pastSessions,
+  usageObservations,
+  voucherClientIndex,
+} from "./voucher-usage";
 
 const clients = [
   {
