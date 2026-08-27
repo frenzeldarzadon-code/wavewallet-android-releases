@@ -8,6 +8,9 @@ import {
   toControllerUnits,
   toDisplayUnits,
   displayVoucherFields,
+  durationToMinutes,
+  splitDurationMinutes,
+  formatDurationUnits,
   VERIFIED_VOUCHER_FIELDS,
   validateGenerationPayload,
 } from "../omada-generation";
@@ -106,5 +109,30 @@ describe("display units in the creation form", () => {
     const rate = fields.find((f) => f.name === "rateLimit");
     const down = rate?.fields?.find((f) => f.name === "customRateLimit")?.fields?.find((f) => f.name === "downLimit");
     expect(down?.unitSuffix).toBe("Mbps");
+  });
+});
+
+describe("duration units", () => {
+  it("converts the admin's unit into the controller's minutes", () => {
+    expect(durationToMinutes(30, "minutes")).toBe(30);
+    expect(durationToMinutes(12, "hours")).toBe(720);
+    expect(durationToMinutes(3, "days")).toBe(4320);
+  });
+
+  it("shows a saved calibration in its natural unit without changing meaning", () => {
+    expect(splitDurationMinutes(4320)).toEqual({ value: 3, unit: "days" });
+    expect(splitDurationMinutes(720)).toEqual({ value: 12, unit: "hours" });
+    expect(splitDurationMinutes(90)).toEqual({ value: 90, unit: "minutes" });
+    expect(durationToMinutes(splitDurationMinutes(480).value, splitDurationMinutes(480).unit)).toBe(480);
+  });
+
+  it("formats a human-readable duration for review", () => {
+    expect(formatDurationUnits(720)).toBe("12 Hours");
+    expect(formatDurationUnits(1440)).toBe("1 Day");
+  });
+
+  it("stays valid against the verified controller rules after conversion", () => {
+    const payload = { ...defaultGenerationValues(), name: "Test", duration: durationToMinutes(3, "days") };
+    expect(validateGenerationPayload(payload)).toEqual([]);
   });
 });
