@@ -28,6 +28,10 @@ export interface VoucherFieldSpec {
   minimum?: number;
   maximum?: number;
   fields?: VoucherFieldSpec[];
+  /** Unit shown to the admin (display only; the controller unit is unchanged). */
+  unitSuffix?: string;
+  /** Display values may be fractional (e.g. 0.5 Mbps) even if the API wants an integer. */
+  allowDecimal?: boolean;
 }
 
 /** Verified generation template for Omada Controller 6.2.x hotspot vouchers. */
