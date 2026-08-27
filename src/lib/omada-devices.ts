@@ -93,6 +93,20 @@ export function describeDeviceStatus(
   };
 }
 
+/**
+ * Detail codes whose wording means the device reaches the controller over a
+ * wireless uplink (mesh). Everything else the controller manages is wired.
+ * Unknown or missing codes report nothing rather than guessing.
+ */
+const WIRELESS_DETAIL = new Set([15, 17, 21, 23, 25, 27, 31, 33]);
+
+export function uplinkLabel(detailStatus: number | null): string | null {
+  if (detailStatus === null) return null;
+  if (WIRELESS_DETAIL.has(detailStatus)) return "Wireless (mesh)";
+  if (DETAIL_STATUS[detailStatus]) return "Wired";
+  return null;
+}
+
 /** Field-friendly label; the controller word is kept alongside it. */
 export function antennaTypeLabel(deviceType: string): string {
   const t = deviceType.toLowerCase();
