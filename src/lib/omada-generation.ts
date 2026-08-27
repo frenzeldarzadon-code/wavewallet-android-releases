@@ -415,3 +415,110 @@ export function reviewExtractedCodes(
     importable,
   };
 }
+
+/* -------------------------------------------------------------------------
+ * Display units for Voucher Creation
+ *
+ * The controller's verified schema keeps speed in Kbps and the data cap in KB.
+ * Admins think in Mbps and MB, so the form shows those units and converts back
+ * to the controller's units before anything is sent or validated. Conversion is
+ * a pure 1024 factor both ways, so a saved calibration round-trips to exactly
+ * the same controller value it already had.
+ * ------------------------------------------------------------------------- */
+
+export const KBPS_PER_MBPS = 1024;
+export const KB_PER_MB = 1024;
+
+/** Fields the admin edits in Mbps, nested under rateLimit.customRateLimit. */
+const RATE_FIELDS = ["downLimit", "upLimit"] as const;
+
+function scaleDown(raw: GenValue | undefined, factor: number): GenValue | undefined {
+  if (raw === undefined || raw === null || raw === "") return raw;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return raw;
+  return Number((n / factor).toFixed(6));
+}
+
+function scaleUp(raw: GenValue | undefined, factor: number): GenValue | undefined {
+  if (raw === undefined || raw === null || raw === "") return raw;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return raw;
+  return Math.round(n * factor);
+}
+
+/** Controller payload (Kbps / KB) -> what the admin sees (Mbps / MB). */
+export function toDisplayUnits(values: Record<string, GenValue>): Record<string, GenValue> {
+  const out: Record<string, GenValue> = { ...values };
+  const traffic = scaleDown(out["trafficLimit"], KB_PER_MB);
+  if (traffic !== undefined) out["trafficLimit"] = traffic;
+
+  const rateLimit = out["rateLimit"];
+  if (rateLimit && typeof rateLimit === "object" && !Array.isArray(rateLimit)) {
+    const rl = { ...(rateLimit as Record<string, GenValue>) };
+    const custom = rl["customRateLimit"];
+    if (custom && typeof custom === "object" && !Array.isArray(custom)) {
+      const c = { ...(custom as Record<string, GenValue>) };
+      for (const key of RATE_FIELDS) {
+        const next = scaleDown(c[key], KBPS_PER_MBPS);
+        if (next !== undefined) c[key] = next;
+      }
+      rl["customRateLimit"] = c;
+    }
+    out["rateLimit"] = rl;
+  }
+  return out;
+}
+
+/** What the admin sees (Mbps / MB) -> the controller payload (Kbps / KB). */
+export function toControllerUnits(values: Record<string, GenValue>): Record<string, GenValue> {
+  const out: Record<string, GenValue> = { ...values };
+  const traffic = scaleUp(out["trafficLimit"], KB_PER_MB);
+  if (traffic !== undefined) out["trafficLimit"] = traffic;
+
+  const rateLimit = out["rateLimit"];
+  if (rateLimit && typeof rateLimit === "object" && !Array.isArray(rateLimit)) {
+    const rl = { ...(rateLimit as Record<string, GenValue>) };
+    const custom = rl["customRateLimit"];
+    if (custom && typeof custom === "object" && !Array.isArray(custom)) {
+      const c = { ...(custom as Record<string, GenValue>) };
+      for (const key of RATE_FIELDS) {
+        const next = scaleUp(c[key], KBPS_PER_MBPS);
+        if (next !== undefined) c[key] = next;
+      }
+      rl["customRateLimit"] = c;
+    }
+    out["rateLimit"] = rl;
+  }
+  return out;
+}
+
+/**
+ * Same verified field list, relabelled for the form: speeds in Mbps and the
+ * data cap in MB, with the allowed range converted to match.
+ */
+export function displayVoucherFields(fields: VoucherFieldSpec[]): VoucherFieldSpec[] {
+  return fields.map((field) => {
+    if (field.name === "trafficLimit") {
+      return {
+        ...field,
+        unitSuffix: "MB",
+        allowDecimal: true,
+        description: "Data cap amount in MB, used when the data cap is on.",
+        ...(field.minimum !== undefined ? { minimum: field.minimum / KB_PER_MB } : {}),
+        ...(field.maximum !== undefined ? { maximum: field.maximum / KB_PER_MB } : {}),
+      };
+    }
+    if ((RATE_FIELDS as readonly string[]).includes(field.name)) {
+      return {
+        ...field,
+        unitSuffix: "Mbps",
+        allowDecimal: true,
+        description: field.description.replace(/in Kbps/i, "in Mbps"),
+        ...(field.minimum !== undefined ? { minimum: field.minimum / KBPS_PER_MBPS } : {}),
+        ...(field.maximum !== undefined ? { maximum: field.maximum / KBPS_PER_MBPS } : {}),
+      };
+    }
+    if (field.fields) return { ...field, fields: displayVoucherFields(field.fields) };
+    return field;
+  });
+}
