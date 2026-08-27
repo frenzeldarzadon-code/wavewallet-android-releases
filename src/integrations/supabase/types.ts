@@ -6805,9 +6805,12 @@ export type Database = {
       voucher_usage_sessions: {
         Row: {
           ap_identifier: string | null
+          authorization_id: string | null
+          authorized_until: string | null
           connected_at: string | null
           device_mac: string
           device_name: string | null
+          duration_seconds: number | null
           ecosystem_id: string
           first_seen_at: string
           id: string
@@ -6816,15 +6819,19 @@ export type Database = {
           network_name: string | null
           session_key: string
           site_id: string | null
+          still_valid: boolean | null
           traffic_bytes: number | null
           voucher_code: string
           voucher_state: string | null
         }
         Insert: {
           ap_identifier?: string | null
+          authorization_id?: string | null
+          authorized_until?: string | null
           connected_at?: string | null
           device_mac: string
           device_name?: string | null
+          duration_seconds?: number | null
           ecosystem_id: string
           first_seen_at?: string
           id?: string
@@ -6833,15 +6840,19 @@ export type Database = {
           network_name?: string | null
           session_key?: string
           site_id?: string | null
+          still_valid?: boolean | null
           traffic_bytes?: number | null
           voucher_code: string
           voucher_state?: string | null
         }
         Update: {
           ap_identifier?: string | null
+          authorization_id?: string | null
+          authorized_until?: string | null
           connected_at?: string | null
           device_mac?: string
           device_name?: string | null
+          duration_seconds?: number | null
           ecosystem_id?: string
           first_seen_at?: string
           id?: string
@@ -6850,6 +6861,7 @@ export type Database = {
           network_name?: string | null
           session_key?: string
           site_id?: string | null
+          still_valid?: boolean | null
           traffic_bytes?: number | null
           voucher_code?: string
           voucher_state?: string | null

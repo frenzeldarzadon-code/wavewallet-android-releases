@@ -1,35 +1,47 @@
 /**
  * Persistent voucher use history ("Usage Tracer").
  *
- * Omada 6.2.14.11's Open API only reports clients that are authorized RIGHT
- * NOW — once a voucher expires or a device disconnects, the association is
- * gone from the controller. So every time WaveWallet reads an authoritative
- * status it also records what it observed, and later searches can still show
- * the past use. Nothing here is invented: only fields the controller actually
- * returned are stored.
+ * The authoritative device source is Omada's Hotspot Authorized Client
+ * operation (`/hotspot/authed-records`), which keeps returning a voucher's
+ * authorization records after the device goes offline and after the voucher
+ * expires. Every lookup records what the controller returned, so the history
+ * survives even if the controller later drops the record. Nothing here is
+ * invented: only fields the controller actually returned are stored.
  */
 
 export type Row = Record<string, unknown>;
 
 export interface UsageObservation {
   deviceMac: string;
+  /** Stable identity of one authorization: the controller's record id. */
   sessionKey: string;
+  /** The controller's own authorization record id, when it provided one. */
+  authorizationId: string | null;
   deviceName: string | null;
   ipAddress: string | null;
   apIdentifier: string | null;
   networkName: string | null;
   connectedAt: string | null;
+  /** Authorization end as reported by the controller. */
+  authorizedUntil: string | null;
+  /** The controller's own validity flag for the authorization. */
+  stillValid: boolean | null;
+  durationSeconds: number | null;
   trafficBytes: number | null;
 }
 
 export interface UsageSessionView {
   id: string;
   deviceMac: string;
+  authorizationId: string | null;
   deviceName: string | null;
   ipAddress: string | null;
   apIdentifier: string | null;
   networkName: string | null;
   connectedAt: string | null;
+  authorizedUntil: string | null;
+  stillValid: boolean | null;
+  durationSeconds: number | null;
   firstSeenAt: string;
   lastSeenAt: string;
   trafficBytes: number | null;
@@ -44,6 +56,7 @@ export interface AuthorizedUser {
   soldAt: string | null;
   productName: string | null;
 }
+
 
 function pick(row: Row, keys: string[]): unknown {
   for (const key of Object.keys(row)) {
@@ -94,11 +107,15 @@ export function usageObservation(client: Row, voucherStart?: unknown): UsageObse
   return {
     deviceMac: upperMac,
     sessionKey: connectedAt ?? "unknown",
+    authorizationId: null,
     deviceName: name && name.toUpperCase() === upperMac ? null : name,
     ipAddress: text(pick(client, ["ip", "ipAddress", "ipv4"])),
     apIdentifier: text(pick(client, ["apName", "apMac", "gatewayName", "switchName"])),
     networkName: text(pick(client, ["ssid", "networkName", "network"])),
     connectedAt,
+    authorizedUntil: null,
+    stillValid: null,
+    durationSeconds: null,
     trafficBytes: traffic,
   };
 }
@@ -116,6 +133,81 @@ export function usageObservations(clients: Row[], voucherStart?: unknown): Usage
   }
   return out;
 }
+
+/**
+ * One hotspot authorization record, mapped exactly from the fields Omada's
+ * Hotspot Authorized Client operation returned. The record id is the stable
+ * session identity, so a device that is authorized again later is preserved as
+ * its own history entry instead of overwriting the earlier one.
+ */
+export function authedRecordObservation(record: Row): UsageObservation | null {
+  const mac = text(pick(record, ["mac", "clientMac", "deviceMac"]));
+  if (!mac) return null;
+  const upperMac = mac.toUpperCase();
+  const name = text(pick(record, ["name", "hostName", "deviceName"]));
+  const id = text(pick(record, ["id", "recordId", "authRecordId"]));
+  const connectedAt = moment(pick(record, ["start", "startTime"]));
+  const download = num(pick(record, ["download"])) ?? 0;
+  const upload = num(pick(record, ["upload"])) ?? 0;
+  const traffic = download + upload > 0 ? download + upload : null;
+  const valid = record["valid"];
+
+  return {
+    deviceMac: upperMac,
+    sessionKey: id ?? connectedAt ?? "unknown",
+    authorizationId: id,
+    deviceName: name && name.toUpperCase() === upperMac ? null : name,
+    ipAddress: text(pick(record, ["ip", "ipAddress"])),
+    apIdentifier: text(pick(record, ["apName", "apMac"])),
+    networkName: text(pick(record, ["ssid", "networkName"])),
+    connectedAt,
+    authorizedUntil: moment(pick(record, ["end", "endTime"])),
+    stillValid: typeof valid === "boolean" ? valid : null,
+    durationSeconds: num(pick(record, ["duration"])),
+    trafficBytes: traffic,
+  };
+}
+
+export function authedRecordObservations(records: Row[]): UsageObservation[] {
+  const out: UsageObservation[] = [];
+  const seen = new Set<string>();
+  for (const record of records) {
+    const obs = authedRecordObservation(record);
+    if (!obs) continue;
+    const key = `${obs.deviceMac}|${obs.sessionKey}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(obs);
+  }
+  return out;
+}
+
+/** The voucher code a hotspot authorization record belongs to (auth type 3). */
+export function authedRecordVoucherCode(record: Row): string | null {
+  const type = num(pick(record, ["authType"]));
+  if (type !== null && type !== 3) return null;
+  return text(pick(record, ["voucherCode"]))?.toUpperCase() ?? null;
+}
+
+/** Groups hotspot authorization records by the voucher that authorized them. */
+export function authedRecordIndex(records: Row[]): Map<string, Row[]> {
+  const index = new Map<string, Row[]>();
+  for (const record of records) {
+    const code = authedRecordVoucherCode(record);
+    if (!code) continue;
+    const list = index.get(code) ?? [];
+    list.push(record);
+    index.set(code, list);
+  }
+  return index;
+}
+
+/** Every authorization record of one voucher code, normalized exact match. */
+export function authedRecordsForVoucher(records: Row[], code: string): Row[] {
+  const wanted = code.trim().toUpperCase();
+  return records.filter((record) => authedRecordVoucherCode(record) === wanted);
+}
+
 
 /** Sessions not currently authorized, newest use first. */
 export function pastSessions(sessions: UsageSessionView[]): UsageSessionView[] {

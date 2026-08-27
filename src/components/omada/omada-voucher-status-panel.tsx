@@ -474,7 +474,7 @@ export function OmadaVoucherStatusPanel({
                 </p>
 
                 {view.devices.length > 0 ? (
-                  <p className="text-xs font-medium">Current use</p>
+                  <p className="text-xs font-medium">Authorized devices</p>
                 ) : null}
 
                 {view.devices.map((device, i) => (
@@ -487,20 +487,34 @@ export function OmadaVoucherStatusPanel({
                   />
                 ))}
 
-                {view.devices.length === 0 ? (
+                {/* A failed device lookup is never reported as "no devices". */}
+                {state.devicesStatus === "unavailable" ? (
+                  <Notice tone="warn">
+                    The hotspot controller could not be asked which devices this voucher
+                    authorized, so the device list is unavailable right now. Please try again
+                    shortly.
+                  </Notice>
+                ) : view.devices.length === 0 ? (
                   <Notice tone="muted">
-                    No device is using this voucher right now.
+                    The hotspot controller reports no device authorized by this voucher.
                     {hasPast ? " Past use is listed below." : ""}
                   </Notice>
                 ) : null}
+
+                {state.devicesStatus === "partial" ? (
+                  <Notice tone="warn">
+                    The controller returned more authorization records than could be read in one
+                    go, so some devices may be missing from this list.
+                  </Notice>
+                ) : null}
+
 
                 {hasPast ? (
                   <div className="space-y-3">
                     <p className="text-xs font-medium">Past use</p>
                     <p className="text-[11px] text-muted-foreground">
-                      Devices this shop observed on this voucher earlier. The hotspot controller
-                      only reports devices authorized right now, so this is WaveWallet's own
-                      recorded observation — nothing is estimated.
+                      Devices the hotspot controller authorized on this voucher earlier, kept by
+                      WaveWallet so they stay visible after the voucher expires.
                     </p>
                     {past.map((session, i) => (
                       <PastSessionCard
@@ -523,7 +537,13 @@ export function OmadaVoucherStatusPanel({
                           startedAt: null,
                           expiresAt: null,
                           price: null,
+                          ipAddress: null,
+                          networkName: null,
+                          authorizedAt: null,
+                          deviceData: null,
+                          stillValid: null,
                         }}
+
                         index={view.devices.length + past.length + i}
                         records={records}
                         onSave={onSaveTracer}
