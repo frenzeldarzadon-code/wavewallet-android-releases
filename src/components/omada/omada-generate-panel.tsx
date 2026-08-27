@@ -583,6 +583,13 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
                       <dd className="font-medium">{String(values["amount"] ?? "")}</dd>
                     </div>
                     <div>
+                      <dt className="text-muted-foreground">Duration</dt>
+                      <dd className="font-medium">
+                        {formatDurationUnits(Number(values["duration"] ?? 0))} (
+                        {String(values["duration"] ?? "—")} minutes sent to Omada)
+                      </dd>
+                    </div>
+                    <div>
                       <dt className="text-muted-foreground">Controller</dt>
                       <dd className="break-words font-medium">
                         {setup.controller?.baseUrl} · {setup.controller?.controllerVersion ?? "—"}
