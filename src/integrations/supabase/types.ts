@@ -6802,6 +6802,75 @@ export type Database = {
           },
         ]
       }
+      voucher_usage_sessions: {
+        Row: {
+          ap_identifier: string | null
+          connected_at: string | null
+          device_mac: string
+          device_name: string | null
+          ecosystem_id: string
+          first_seen_at: string
+          id: string
+          ip_address: string | null
+          last_seen_at: string
+          network_name: string | null
+          session_key: string
+          site_id: string | null
+          traffic_bytes: number | null
+          voucher_code: string
+          voucher_state: string | null
+        }
+        Insert: {
+          ap_identifier?: string | null
+          connected_at?: string | null
+          device_mac: string
+          device_name?: string | null
+          ecosystem_id: string
+          first_seen_at?: string
+          id?: string
+          ip_address?: string | null
+          last_seen_at?: string
+          network_name?: string | null
+          session_key?: string
+          site_id?: string | null
+          traffic_bytes?: number | null
+          voucher_code: string
+          voucher_state?: string | null
+        }
+        Update: {
+          ap_identifier?: string | null
+          connected_at?: string | null
+          device_mac?: string
+          device_name?: string | null
+          ecosystem_id?: string
+          first_seen_at?: string
+          id?: string
+          ip_address?: string | null
+          last_seen_at?: string
+          network_name?: string | null
+          session_key?: string
+          site_id?: string | null
+          traffic_bytes?: number | null
+          voucher_code?: string
+          voucher_state?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_usage_sessions_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_usage_sessions_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       withdrawal_requests: {
         Row: {
           account_id: string | null
