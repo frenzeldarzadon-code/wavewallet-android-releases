@@ -9,11 +9,13 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { OmadaFieldSpec } from "./omada-vouchers.server";
 import { toVoucherView, type VoucherView } from "./omada-voucher-view";
 import {
-  usageObservations,
-  voucherClientIndex,
+  authedRecordIndex,
+  authedRecordObservations,
+  authedRecordsForVoucher,
   type AuthorizedUser,
   type UsageSessionView,
 } from "./voucher-usage";
+
 
 /** Controller rows are flattened to plain display values before crossing to the browser. */
 export type OmadaRow = Record<string, string | number | boolean | null>;
