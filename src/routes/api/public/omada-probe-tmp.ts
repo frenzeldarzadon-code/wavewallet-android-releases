@@ -14,6 +14,19 @@ async function handle({ request }: { request: Request }) {
     "3a972878-ff7b-4dfb-8a5b-b681b1c81205",
   );
   const clients = await listAuthorizedClients(session);
+  const probePaths = url.searchParams.get("paths");
+  if (probePaths) {
+    const { omadaGet } = await import("@/lib/omada-api.server");
+    const out: Record<string, unknown> = {};
+    for (const path of probePaths.split(",")) {
+      try {
+        out[path] = await omadaGet(session, path);
+      } catch (e) {
+        out[path] = String(e);
+      }
+    }
+    return new Response(JSON.stringify(out, null, 2), { headers: { "content-type": "application/json" } });
+  }
   const caps = voucherCapabilities(await loadOmadaSpec(session));
   const groups = await listAllVoucherGroups(session, caps);
   let voucher: unknown = null;
