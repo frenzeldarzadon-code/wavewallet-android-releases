@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { antennaTypeLabel, describeDeviceStatus, normaliseMac } from "./omada-devices";
+import {
+  antennaTypeLabel,
+  describeDeviceStatus,
+  normaliseMac,
+  uplinkLabel,
+} from "./omada-devices";
 
 describe("controller status mapping", () => {
   it("reads the live Sagada Wave states", () => {
@@ -43,5 +48,19 @@ describe("device address matching", () => {
   it("compares addresses in one shape", () => {
     expect(normaliseMac("e0:d3:62:2d:aa:a9")).toBe("E0-D3-62-2D-AA-A9");
     expect(normaliseMac(" 58-04-4f-77-80-ea ")).toBe("58-04-4F-77-80-EA");
+  });
+});
+
+describe("wired or wireless uplink", () => {
+  it("reads the uplink from the controller's own detail code", () => {
+    expect(uplinkLabel(14)).toBe("Wired");
+    expect(uplinkLabel(15)).toBe("Wireless (mesh)");
+    expect(uplinkLabel(31)).toBe("Wireless (mesh)");
+    expect(uplinkLabel(0)).toBe("Wired");
+  });
+
+  it("says nothing when the controller gave no usable code", () => {
+    expect(uplinkLabel(null)).toBeNull();
+    expect(uplinkLabel(998)).toBeNull();
   });
 });

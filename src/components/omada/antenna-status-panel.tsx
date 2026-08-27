@@ -31,6 +31,7 @@ import {
 import {
   antennaTypeLabel,
   healthTone,
+  uplinkLabel,
   type AntennaView,
 } from "@/lib/omada-devices";
 import {
@@ -99,14 +100,23 @@ function AntennaCard({
             {antennaTypeLabel(device.deviceType)} · {device.mac}
           </p>
         </div>
-        <Badge variant="outline" className={healthTone[device.health]}>
-          {device.statusLabel}
-        </Badge>
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
+          <Badge variant="outline" className={healthTone[device.health]}>
+            {device.statusLabel}
+          </Badge>
+          {manage ? (
+            <Badge variant={device.assignedUserId ? "secondary" : "outline"}>
+              {device.assignedUserId ? `Assigned · ${device.assignedUserName}` : "Not assigned"}
+            </Badge>
+          ) : null}
+        </div>
       </div>
 
       <dl className="grid gap-3 sm:grid-cols-2">
         <Detail label="Model" value={device.model} />
+        <Detail label="Connection" value={uplinkLabel(device.detailStatusCode)} />
         <Detail label="Local address" value={device.ip} />
+        <Detail label="Public address" value={device.publicIp} />
         <Detail label="Uptime" value={device.uptime} />
         <Detail label="Firmware" value={device.firmware} />
         <Detail label="Serial" value={device.serial} />
@@ -251,12 +261,19 @@ export function AntennaStatusPanel({
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
         <div>
-          <CardTitle className="text-base">Antenna status</CardTitle>
+          <CardTitle className="text-base">{manage ? "Device status" : "Antenna status"}</CardTitle>
           <CardDescription>
             {manage
-              ? "Every antenna this shop's controller manages. Assign an antenna to a member so they can watch and restart it themselves."
+              ? "Every device this shop's controller manages — access points, routers and switches — whether or not it is assigned. Assign a device to a member so they can watch and restart it themselves."
               : "The antennas assigned to you in this shop."}
           </CardDescription>
+          {manage && state && state.devices.length > 0 ? (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {state.devices.length} device{state.devices.length === 1 ? "" : "s"} ·{" "}
+              {state.devices.filter((d) => d.assignedUserId).length} assigned ·{" "}
+              {state.devices.filter((d) => !d.assignedUserId).length} unassigned
+            </p>
+          ) : null}
         </div>
         <Button size="sm" variant="outline" disabled={loading} onClick={() => void load()}>
           {loading ? "Refreshing…" : "Refresh"}
