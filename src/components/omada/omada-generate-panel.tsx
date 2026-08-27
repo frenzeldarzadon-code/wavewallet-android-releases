@@ -184,6 +184,10 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
   const [productId, setProductId] = useState<string>("");
   const [values, setValues] = useState<Values>({});
   const [calibratedKeys, setCalibratedKeys] = useState<Set<string>>(new Set());
+  // Duration is entered as value + unit; `values.duration` always stays in the
+  // controller's own unit (whole minutes).
+  const [durationUnit, setDurationUnit] = useState<DurationUnit>("minutes");
+  const [durationValue, setDurationValue] = useState<number | "">("");
   const [stage, setStage] = useState<Stage>("form");
   const [busy, setBusy] = useState(false);
   const [saveAsCalibration, setSaveAsCalibration] = useState(false);
