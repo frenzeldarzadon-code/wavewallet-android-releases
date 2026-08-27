@@ -355,15 +355,31 @@ export function OmadaVoucherStatusPanel({
                   />
                 ))}
 
-                {previousMacs.length > 0 ? (
+                {view.devices.length === 0 ? (
+                  <Notice tone="muted">
+                    No device is using this voucher right now.
+                    {hasPast ? " Past use is listed below." : ""}
+                  </Notice>
+                ) : null}
+
+                {hasPast ? (
                   <div className="space-y-3">
-                    <p className="text-xs font-medium">Devices recorded earlier</p>
+                    <p className="text-xs font-medium">Past use</p>
                     <p className="text-[11px] text-muted-foreground">
-                      These devices were seen on this voucher before and are no longer connected.
-                      The hotspot controller does not keep a device-by-device history for a
-                      voucher, so no per-device usage is available for them.
+                      Devices this shop observed on this voucher earlier. The hotspot controller
+                      only reports devices authorized right now, so this is WaveWallet's own
+                      recorded observation — nothing is estimated.
                     </p>
-                    {previousMacs.map((mac, i) => (
+                    {past.map((session, i) => (
+                      <PastSessionCard
+                        key={session.id}
+                        session={session}
+                        index={i}
+                        records={records}
+                        onSave={onSaveTracer}
+                      />
+                    ))}
+                    {labelledOnlyMacs.map((mac, i) => (
                       <DeviceCard
                         key={mac}
                         device={{
@@ -376,19 +392,12 @@ export function OmadaVoucherStatusPanel({
                           expiresAt: null,
                           price: null,
                         }}
-                        index={view.devices.length + i}
+                        index={view.devices.length + past.length + i}
                         records={records}
                         onSave={onSaveTracer}
                       />
                     ))}
                   </div>
-                ) : null}
-
-                {view.devices.length === 0 && previousMacs.length === 0 ? (
-                  <Notice tone="muted">
-                    No device is connected to this voucher right now, and this shop has no earlier
-                    device record for it. The voucher's own usage is shown above.
-                  </Notice>
                 ) : null}
               </div>
             )}
