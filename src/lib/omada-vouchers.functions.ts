@@ -195,6 +195,10 @@ export interface OmadaVoucherStatus {
     | "authentication_failed"
     | "status_unreadable";
   error: string | null;
+  /** Who this shop assigned the voucher to; survives expiry. */
+  authorizedUser: AuthorizedUser | null;
+  /** Persistent use history: current and past device sessions. */
+  sessions: UsageSessionView[];
 }
 
 const EMPTY_STATUS: OmadaVoucherStatus = {
@@ -203,6 +207,8 @@ const EMPTY_STATUS: OmadaVoucherStatus = {
   searched: false,
   outcome: "ready",
   error: null,
+  authorizedUser: null,
+  sessions: [],
 };
 
 function normaliseCode(raw: string | undefined) {
