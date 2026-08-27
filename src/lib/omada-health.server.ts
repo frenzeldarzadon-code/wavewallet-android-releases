@@ -114,13 +114,26 @@ async function jsonFetch(url: string, init: RequestInit, secrets: string[]) {
   }
 }
 
-function omadaResult(body: unknown): { msg: string; result: unknown } {
+function omadaResult(body: unknown): { code: number | null; msg: string; result: unknown } {
   if (body && typeof body === "object") {
     const b = body as Record<string, unknown>;
-    return { msg: typeof b["msg"] === "string" ? b["msg"] : "", result: b["result"] ?? null };
+    return {
+      code: typeof b["errorCode"] === "number" ? b["errorCode"] : null,
+      msg: typeof b["msg"] === "string" ? b["msg"] : "",
+      result: b["result"] ?? null,
+    };
   }
-  return { msg: "", result: null };
+  return { code: null, msg: "", result: null };
 }
+
+/**
+ * Omada answers an expired/revoked access token with HTTP 200 and a negative
+ * envelope error code, so the HTTP status alone must never be trusted.
+ */
+export function isOmadaTokenError(code: number | null): boolean {
+  return code === -44112 || code === -44113 || code === -44106 || code === -1200;
+}
+
 
 export interface OmadaHealthInput {
   baseUrl: string;
