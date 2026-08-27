@@ -52,7 +52,7 @@ function AdminOmada() {
             Connection
           </TabsTrigger>
           <TabsTrigger value="devices" className="text-xs sm:text-sm">
-            Antennas
+            Device Status
           </TabsTrigger>
           <TabsTrigger value="generate" className="text-xs sm:text-sm">
             Generate
