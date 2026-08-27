@@ -27,7 +27,7 @@ async function handle({ request }: { request: Request }) {
     }
   }
   return new Response(
-    JSON.stringify({ clientCount: clients.length, sample: clients.slice(0, 8), voucher }, null, 2),
+    JSON.stringify({ clientCount: clients.length, sample: clients, voucher }, null, 2),
     { headers: { "content-type": "application/json" } },
   );
 }
