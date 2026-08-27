@@ -123,3 +123,28 @@ export function pastSessions(sessions: UsageSessionView[]): UsageSessionView[] {
     .filter((s) => !s.current)
     .sort((a, b) => Date.parse(b.lastSeenAt) - Date.parse(a.lastSeenAt));
 }
+
+/**
+ * Groups the site's Authorized Clients by the voucher code that authorized
+ * them (Omada auth type 3). This is the same authoritative client data the
+ * controller's Authorized Clients view shows.
+ */
+export function voucherClientIndex(clients: Row[]): Map<string, Row[]> {
+  const index = new Map<string, Row[]>();
+  for (const client of clients) {
+    const info = client["authInfo"];
+    if (!Array.isArray(info)) continue;
+    for (const entry of info) {
+      if (!entry || typeof entry !== "object") continue;
+      const e = entry as Row;
+      const type = num(e["authType"]);
+      if (type !== null && type !== 3) continue;
+      const code = text(e["info"])?.toUpperCase();
+      if (!code) continue;
+      const list = index.get(code) ?? [];
+      list.push(client);
+      index.set(code, list);
+    }
+  }
+  return index;
+}

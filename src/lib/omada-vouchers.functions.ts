@@ -8,7 +8,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { OmadaFieldSpec } from "./omada-vouchers.server";
 import { toVoucherView, type VoucherView } from "./omada-voucher-view";
-import { usageObservations, type AuthorizedUser, type UsageSessionView } from "./voucher-usage";
+import {
+  usageObservations,
+  voucherClientIndex,
+  type AuthorizedUser,
+  type UsageSessionView,
+} from "./voucher-usage";
 
 /** Controller rows are flattened to plain display values before crossing to the browser. */
 export type OmadaRow = Record<string, string | number | boolean | null>;
@@ -274,7 +279,7 @@ async function statusFor(ecosystemId: string, rawCode: string | undefined) {
         ecosystemId,
         seenCode,
         usageObservations(seenClients),
-        seenCode === code ? null : null,
+        null,
       ).catch(() => undefined);
     }
 
