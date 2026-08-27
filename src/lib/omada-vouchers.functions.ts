@@ -8,7 +8,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { OmadaFieldSpec } from "./omada-vouchers.server";
 import { toVoucherView, type VoucherView } from "./omada-voucher-view";
-import { usageObservations, type AuthorizedUser, type UsageSessionView } from "./voucher-usage";
+import {
+  usageObservations,
+  voucherClientIndex,
+  type AuthorizedUser,
+  type UsageSessionView,
+} from "./voucher-usage";
 
 /** Controller rows are flattened to plain display values before crossing to the browser. */
 export type OmadaRow = Record<string, string | number | boolean | null>;
@@ -262,13 +267,28 @@ async function statusFor(ecosystemId: string, rawCode: string | undefined) {
       () => null,
     );
 
+    // The Authorized Clients data of this site — the exact source Omada's own
+    // Authorized Clients view uses. Read once, then recorded for EVERY voucher
+    // it authorizes, so a device stays in the history after it disconnects.
+    const clients = await listAuthorizedClients(session).catch(
+      () => [] as Array<Record<string, unknown>>,
+    );
+    for (const [seenCode, seenClients] of voucherClientIndex(clients)) {
+      await recordUsageSessions(
+        supabaseAdmin as never,
+        ecosystemId,
+        seenCode,
+        usageObservations(seenClients),
+        null,
+      ).catch(() => undefined);
+    }
+
     for (const group of groups) {
       const groupId = String(group["id"] ?? group["groupId"] ?? "");
       if (!groupId) continue;
       const hit = await findVoucherByCode(session, caps, groupId, code);
       if (!hit) continue;
 
-      const clients = await listAuthorizedClients(session).catch(() => []);
       const view = toVoucherView(code, hit, group, clients);
       if (!view) {
         return {
@@ -297,6 +317,7 @@ async function statusFor(ecosystemId: string, rawCode: string | undefined) {
         code,
         observed.map((o) => o.deviceMac),
       ).catch(() => []);
+
 
       return {
         ...EMPTY_STATUS,

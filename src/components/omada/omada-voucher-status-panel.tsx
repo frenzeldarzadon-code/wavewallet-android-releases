@@ -140,6 +140,103 @@ function DeviceCard({
   );
 }
 
+/**
+ * A device this shop observed on the voucher earlier. Only fields the
+ * controller actually reported at the time are shown.
+ */
+function PastSessionCard({
+  session,
+  index,
+  records,
+  onSave,
+}: {
+  session: UsageSessionView;
+  index: number;
+  records: TracerRecord[];
+  onSave: (mac: string, tracer: string) => Promise<void>;
+}) {
+  const current = primaryTracer(records, session.deviceMac);
+  const history = tracerHistory(records, session.deviceMac);
+  const [tracer, setTracer] = useState(current?.tracer ?? "");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setTracer(current?.tracer ?? "");
+  }, [current?.tracer]);
+
+  const save = async () => {
+    if (!tracer.trim()) return;
+    setBusy(true);
+    try {
+      await onSave(session.deviceMac, tracer.trim());
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3 rounded-lg border p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="min-w-0 break-words text-sm font-semibold">
+          {session.deviceName ?? `Device ${index + 1}`}
+        </p>
+        <Badge variant="outline">Past use</Badge>
+      </div>
+      <p className="break-all text-[11px] text-muted-foreground">
+        Device address {session.deviceMac}
+      </p>
+      <dl className="grid gap-3 sm:grid-cols-2">
+        <Detail label="IP address" value={session.ipAddress} />
+        <Detail label="Access point" value={session.apIdentifier} />
+        <Detail label="Network" value={session.networkName} />
+        <Detail
+          label="Session started"
+          value={session.connectedAt ? new Date(session.connectedAt).toLocaleString() : null}
+        />
+        <Detail label="First seen" value={new Date(session.firstSeenAt).toLocaleString()} />
+        <Detail label="Last seen" value={new Date(session.lastSeenAt).toLocaleString()} />
+        <Detail label="Data used by this device" value={formatData(session.trafficBytes)} />
+      </dl>
+      <div className="space-y-1.5">
+        <Label htmlFor={`past-tracer-${session.id}`}>Tracer</Label>
+        <div className="flex flex-wrap gap-2">
+          <Input
+            id={`past-tracer-${session.id}`}
+            className="min-w-0 flex-1"
+            placeholder="Name or note for tracking"
+            value={tracer}
+            maxLength={80}
+            onChange={(e) => setTracer(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void save();
+            }}
+          />
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={busy || !tracer.trim() || tracer.trim() === current?.tracer}
+            onClick={() => void save()}
+          >
+            {busy ? "Saving…" : "Save"}
+          </Button>
+        </div>
+        {history.length > 0 ? (
+          <details className="text-[11px] text-muted-foreground">
+            <summary className="cursor-pointer">Previous tracers ({history.length})</summary>
+            <ul className="mt-1 space-y-0.5">
+              {history.map((h) => (
+                <li key={h.id} className="break-words">
+                  {h.tracer} — {new Date(h.recorded_at).toLocaleString()}
+                </li>
+              ))}
+            </ul>
+          </details>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function Notice({ tone, children }: { tone: "muted" | "warn"; children: React.ReactNode }) {
   return (
     <p
@@ -314,6 +411,37 @@ export function OmadaVoucherStatusPanel({
           </Notice>
         ) : null}
 
+        {state.authorizedUser ? (
+          <dl className="grid gap-3 rounded-lg border p-3 sm:grid-cols-2">
+            <Detail label="Authorized user" value={state.authorizedUser.name ?? "Not recorded"} />
+            <Detail label="Phone" value={state.authorizedUser.phone ?? "Not recorded"} />
+            <Detail label="Product" value={state.authorizedUser.productName} />
+            <Detail
+              label="Sold"
+              value={
+                state.authorizedUser.soldAt
+                  ? new Date(state.authorizedUser.soldAt).toLocaleString()
+                  : null
+              }
+            />
+          </dl>
+        ) : null}
+
+        {!view && state.sessions.length > 0 ? (
+          <div className="space-y-3">
+            <p className="text-xs font-medium">Past use</p>
+            {past.map((session, i) => (
+              <PastSessionCard
+                key={session.id}
+                session={session}
+                index={i}
+                records={records}
+                onSave={onSaveTracer}
+              />
+            ))}
+          </div>
+        ) : null}
+
         {view ? (
           <div className="space-y-3">
             <div
@@ -345,6 +473,10 @@ export function OmadaVoucherStatusPanel({
                   not one device's usage.
                 </p>
 
+                {view.devices.length > 0 ? (
+                  <p className="text-xs font-medium">Current use</p>
+                ) : null}
+
                 {view.devices.map((device, i) => (
                   <DeviceCard
                     key={device.mac ?? i}
@@ -355,15 +487,31 @@ export function OmadaVoucherStatusPanel({
                   />
                 ))}
 
-                {previousMacs.length > 0 ? (
+                {view.devices.length === 0 ? (
+                  <Notice tone="muted">
+                    No device is using this voucher right now.
+                    {hasPast ? " Past use is listed below." : ""}
+                  </Notice>
+                ) : null}
+
+                {hasPast ? (
                   <div className="space-y-3">
-                    <p className="text-xs font-medium">Devices recorded earlier</p>
+                    <p className="text-xs font-medium">Past use</p>
                     <p className="text-[11px] text-muted-foreground">
-                      These devices were seen on this voucher before and are no longer connected.
-                      The hotspot controller does not keep a device-by-device history for a
-                      voucher, so no per-device usage is available for them.
+                      Devices this shop observed on this voucher earlier. The hotspot controller
+                      only reports devices authorized right now, so this is WaveWallet's own
+                      recorded observation — nothing is estimated.
                     </p>
-                    {previousMacs.map((mac, i) => (
+                    {past.map((session, i) => (
+                      <PastSessionCard
+                        key={session.id}
+                        session={session}
+                        index={i}
+                        records={records}
+                        onSave={onSaveTracer}
+                      />
+                    ))}
+                    {labelledOnlyMacs.map((mac, i) => (
                       <DeviceCard
                         key={mac}
                         device={{
@@ -376,19 +524,12 @@ export function OmadaVoucherStatusPanel({
                           expiresAt: null,
                           price: null,
                         }}
-                        index={view.devices.length + i}
+                        index={view.devices.length + past.length + i}
                         records={records}
                         onSave={onSaveTracer}
                       />
                     ))}
                   </div>
-                ) : null}
-
-                {view.devices.length === 0 && previousMacs.length === 0 ? (
-                  <Notice tone="muted">
-                    No device is connected to this voucher right now, and this shop has no earlier
-                    device record for it. The voucher's own usage is shown above.
-                  </Notice>
                 ) : null}
               </div>
             )}
