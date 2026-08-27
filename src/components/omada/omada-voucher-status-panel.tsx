@@ -411,6 +411,37 @@ export function OmadaVoucherStatusPanel({
           </Notice>
         ) : null}
 
+        {state.authorizedUser ? (
+          <dl className="grid gap-3 rounded-lg border p-3 sm:grid-cols-2">
+            <Detail label="Authorized user" value={state.authorizedUser.name ?? "Not recorded"} />
+            <Detail label="Phone" value={state.authorizedUser.phone ?? "Not recorded"} />
+            <Detail label="Product" value={state.authorizedUser.productName} />
+            <Detail
+              label="Sold"
+              value={
+                state.authorizedUser.soldAt
+                  ? new Date(state.authorizedUser.soldAt).toLocaleString()
+                  : null
+              }
+            />
+          </dl>
+        ) : null}
+
+        {!view && state.sessions.length > 0 ? (
+          <div className="space-y-3">
+            <p className="text-xs font-medium">Past use</p>
+            {past.map((session, i) => (
+              <PastSessionCard
+                key={session.id}
+                session={session}
+                index={i}
+                records={records}
+                onSave={onSaveTracer}
+              />
+            ))}
+          </div>
+        ) : null}
+
         {view ? (
           <div className="space-y-3">
             <div
