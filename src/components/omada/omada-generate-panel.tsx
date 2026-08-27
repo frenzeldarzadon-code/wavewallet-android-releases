@@ -243,27 +243,42 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
   // imported again; the server re-checks and the per-shop unique index is the
   // final race-safe guard.
   const [existingInInventory, setExistingInInventory] = useState<string[]>([]);
+  const [checking, setChecking] = useState(false);
+  const [checkError, setCheckError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ecosystemId || stage !== "preview" || previewCodes.length === 0) {
       setExistingInInventory([]);
+      setCheckError(null);
+      setChecking(false);
       return;
     }
     let cancelled = false;
+    setChecking(true);
     const t = setTimeout(() => {
       void checkExistingVoucherCodes({ data: { ecosystemId, codes: previewCodes } })
         .then((res) => {
-          if (!cancelled) setExistingInInventory(res.existing);
+          if (cancelled) return;
+          setExistingInInventory(res.existing);
+          setCheckError(null);
         })
-        .catch(() => {
-          if (!cancelled) setExistingInInventory(outcome?.duplicateInInventory ?? []);
+        .catch((e) => {
+          if (cancelled) return;
+          // Never fall back to stale generation-time data: without a fresh
+          // answer we cannot claim any code is new.
+          setExistingInInventory(previewCodes);
+          setCheckError((e as Error).message);
+        })
+        .finally(() => {
+          if (!cancelled) setChecking(false);
         });
     }, 300);
     return () => {
       cancelled = true;
       clearTimeout(t);
     };
-  }, [ecosystemId, stage, previewCodes, outcome]);
+  }, [ecosystemId, stage, previewCodes]);
+
 
   const summary = useMemo(
     () => reviewExtractedCodes(previewCodes, existingInInventory, codeLength),
@@ -324,14 +339,29 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
     if (summary.importable.length === 0) return;
     setBusy(true);
     try {
+      // Final fresh duplicate check immediately before confirmation: the
+      // shop's inventory may have changed since the last debounced check.
+      const fresh = await checkExistingVoucherCodes({
+        data: { ecosystemId, codes: previewCodes },
+      });
+      setExistingInInventory(fresh.existing);
+      setCheckError(null);
+      const finalSummary = reviewExtractedCodes(previewCodes, fresh.existing, codeLength);
+      if (finalSummary.importable.length === 0) {
+        toast.error("Nothing left to import", {
+          description: "Every remaining code already exists in this shop's Code Inventory.",
+        });
+        return;
+      }
       const res = await importGeneratedVoucherCodes({
         data: {
           ecosystemId,
           productId,
           ...(outcome?.batchId ? { batchId: outcome.batchId } : {}),
-          codes: summary.importable,
+          codes: finalSummary.importable,
         },
       });
+
       toast.success(`${res.importedCount} codes added to Code Inventory.`, {
         description:
           res.duplicateCount > 0 || res.invalidCount > 0
@@ -527,7 +557,9 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
                   <div className="grid gap-1 text-xs sm:grid-cols-2">
                     <span>Extracted: {outcome.extracted.length}</span>
                     <span>In this list: {summary.extracted}</span>
-                    <span className="text-success">New: {summary.importable.length}</span>
+                    <span className="text-success">
+                      Final import count: {summary.importable.length}
+                    </span>
                     <span className="text-destructive">
                       Already in this shop: {summary.duplicateInInventory}
                     </span>
@@ -535,11 +567,19 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
                     <span>Invalid format: {summary.invalid}</span>
                   </div>
                   <p className="text-[11px] text-muted-foreground">
+                    {checking ? "Re-checking this shop's Code Inventory… " : ""}
                     {summary.extracted} extracted · {summary.duplicateInInventory} already exist ·{" "}
                     {summary.importable.length} new. Codes that already exist in this shop's Code
                     Inventory are excluded and can never be re-imported or overwritten. Another
                     shop having the same code does not block it here.
                   </p>
+                  {checkError ? (
+                    <p className="break-words rounded-md border border-destructive/40 p-2 text-[11px] text-destructive">
+                      Could not check this shop's Code Inventory ({checkError}). Nothing can be
+                      imported until the check succeeds.
+                    </p>
+                  ) : null}
+
                   {duplicateCodes.length > 0 ? (
                     <div className="space-y-1 rounded-md border border-destructive/40 p-2">
                       <p className="text-[11px] font-medium text-destructive">
@@ -558,7 +598,7 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
                   <div className="flex flex-wrap gap-2">
                     <Button
                       size="sm"
-                      disabled={busy || summary.importable.length === 0}
+                      disabled={busy || checking || summary.importable.length === 0}
                       onClick={() => void importCodes()}
                     >
                       {busy
