@@ -339,14 +339,29 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
     if (summary.importable.length === 0) return;
     setBusy(true);
     try {
+      // Final fresh duplicate check immediately before confirmation: the
+      // shop's inventory may have changed since the last debounced check.
+      const fresh = await checkExistingVoucherCodes({
+        data: { ecosystemId, codes: previewCodes },
+      });
+      setExistingInInventory(fresh.existing);
+      setCheckError(null);
+      const finalSummary = reviewExtractedCodes(previewCodes, fresh.existing, codeLength);
+      if (finalSummary.importable.length === 0) {
+        toast.error("Nothing left to import", {
+          description: "Every remaining code already exists in this shop's Code Inventory.",
+        });
+        return;
+      }
       const res = await importGeneratedVoucherCodes({
         data: {
           ecosystemId,
           productId,
           ...(outcome?.batchId ? { batchId: outcome.batchId } : {}),
-          codes: summary.importable,
+          codes: finalSummary.importable,
         },
       });
+
       toast.success(`${res.importedCount} codes added to Code Inventory.`, {
         description:
           res.duplicateCount > 0 || res.invalidCount > 0
