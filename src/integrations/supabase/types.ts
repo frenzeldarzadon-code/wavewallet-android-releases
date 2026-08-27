@@ -2916,6 +2916,66 @@ export type Database = {
           },
         ]
       }
+      omada_device_assignments: {
+        Row: {
+          active: boolean
+          assigned_by: string | null
+          assigned_user_id: string
+          created_at: string
+          device_id: string | null
+          device_mac: string
+          device_name: string | null
+          device_type: string | null
+          ecosystem_id: string
+          id: string
+          last_seen_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          assigned_by?: string | null
+          assigned_user_id: string
+          created_at?: string
+          device_id?: string | null
+          device_mac: string
+          device_name?: string | null
+          device_type?: string | null
+          ecosystem_id: string
+          id?: string
+          last_seen_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          assigned_by?: string | null
+          assigned_user_id?: string
+          created_at?: string
+          device_id?: string | null
+          device_mac?: string
+          device_name?: string | null
+          device_type?: string | null
+          ecosystem_id?: string
+          id?: string
+          last_seen_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "omada_device_assignments_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "omada_device_assignments_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       omada_voucher_batches: {
         Row: {
           amount: number
