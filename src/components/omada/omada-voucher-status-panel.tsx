@@ -473,6 +473,10 @@ export function OmadaVoucherStatusPanel({
                   not one device's usage.
                 </p>
 
+                {view.devices.length > 0 ? (
+                  <p className="text-xs font-medium">Current use</p>
+                ) : null}
+
                 {view.devices.map((device, i) => (
                   <DeviceCard
                     key={device.mac ?? i}
