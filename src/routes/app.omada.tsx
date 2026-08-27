@@ -14,15 +14,15 @@ import { useSession } from "@/lib/session";
 export const Route = createFileRoute("/app/omada")({
   head: () => ({
     meta: [
-      { title: "Wi-Fi voucher status — WaveWallet" },
+      { title: "Status Check — WaveWallet" },
       {
         name: "description",
-        content: "Check the status of a Wi-Fi voucher issued by your shop's hotspot controller.",
+        content: "Check your assigned antennas and any Wi-Fi voucher issued by your shop's hotspot controller.",
       },
-      { property: "og:title", content: "Wi-Fi voucher status — WaveWallet" },
+      { property: "og:title", content: "Status Check — WaveWallet" },
       {
         property: "og:description",
-        content: "Check the status of a Wi-Fi voucher issued by your shop's hotspot controller.",
+        content: "Check your assigned antennas and any Wi-Fi voucher issued by your shop's hotspot controller.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -35,8 +35,8 @@ function MemberOmada() {
   const { ecosystemDbId } = useSession("customer");
   return (
     <PageSection
-      title="Wi-Fi voucher status"
-      description="Check a voucher code against your shop's hotspot controller."
+      title="Status Check"
+      description="Your assigned antennas and voucher lookup for this shop."
     >
       <Tabs defaultValue="antenna" className="w-full">
         <TabsList className="grid w-full grid-cols-2">

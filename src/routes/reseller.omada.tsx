@@ -14,13 +14,13 @@ import { useSession } from "@/lib/session";
 export const Route = createFileRoute("/reseller/omada")({
   head: () => ({
     meta: [
-      { title: "Voucher status checker — WaveWallet Reseller" },
+      { title: "Status Check — WaveWallet Reseller" },
       {
         name: "description",
         content:
           "Check a Wi-Fi voucher code, see whether it is unused, in-use or expired, and label the devices using it.",
       },
-      { property: "og:title", content: "Voucher status checker — WaveWallet Reseller" },
+      { property: "og:title", content: "Status Check — WaveWallet Reseller" },
       {
         property: "og:description",
         content: "Check a Wi-Fi voucher code and label the devices using it.",
@@ -36,8 +36,8 @@ function ResellerStatusChecker() {
   const { ecosystemDbId } = useSession("reseller");
   return (
     <PageSection
-      title="Voucher status checker"
-      description="Search a voucher code to see whether it is unused, in-use or expired."
+      title="Status Check"
+      description="Your assigned antennas and voucher lookup for this shop."
     >
       <Tabs defaultValue="antenna" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
