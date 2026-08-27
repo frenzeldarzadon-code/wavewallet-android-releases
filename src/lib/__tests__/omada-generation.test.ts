@@ -5,6 +5,10 @@ import {
   defaultGroupName,
   isValidVoucherCode,
   reviewExtractedCodes,
+  toControllerUnits,
+  toDisplayUnits,
+  displayVoucherFields,
+  VERIFIED_VOUCHER_FIELDS,
   validateGenerationPayload,
 } from "../omada-generation";
 
@@ -77,5 +81,30 @@ describe("code review before import", () => {
   it("validates code format and length", () => {
     expect(isValidVoucherCode("15918788", 8)).toBe(true);
     expect(isValidVoucherCode("159-187", 8)).toBe(false);
+  });
+});
+
+describe("display units in the creation form", () => {
+  it("shows Kbps/KB values as Mbps/MB without changing their meaning", () => {
+    const controller = {
+      trafficLimit: 2048,
+      rateLimit: { mode: 0, customRateLimit: { downLimit: 5120, upLimit: 512 } },
+    };
+    const shown = toDisplayUnits(controller as never) as Record<string, never>;
+    expect(shown["trafficLimit"]).toBe(2);
+    expect((shown["rateLimit"] as never as Record<string, Record<string, number>>)["customRateLimit"]).toEqual({
+      downLimit: 5,
+      upLimit: 0.5,
+    });
+    expect(toControllerUnits(shown as never)).toEqual(controller);
+  });
+
+  it("labels the limit fields in Mbps and MB and scales their allowed range", () => {
+    const fields = displayVoucherFields(VERIFIED_VOUCHER_FIELDS);
+    const traffic = fields.find((f) => f.name === "trafficLimit");
+    expect(traffic?.unitSuffix).toBe("MB");
+    const rate = fields.find((f) => f.name === "rateLimit");
+    const down = rate?.fields?.find((f) => f.name === "customRateLimit")?.fields?.find((f) => f.name === "downLimit");
+    expect(down?.unitSuffix).toBe("Mbps");
   });
 });
