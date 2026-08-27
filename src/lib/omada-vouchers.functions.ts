@@ -262,13 +262,28 @@ async function statusFor(ecosystemId: string, rawCode: string | undefined) {
       () => null,
     );
 
+    // The Authorized Clients data of this site — the exact source Omada's own
+    // Authorized Clients view uses. Read once, then recorded for EVERY voucher
+    // it authorizes, so a device stays in the history after it disconnects.
+    const clients = await listAuthorizedClients(session).catch(
+      () => [] as Array<Record<string, unknown>>,
+    );
+    for (const [seenCode, seenClients] of voucherClientIndex(clients)) {
+      await recordUsageSessions(
+        supabaseAdmin as never,
+        ecosystemId,
+        seenCode,
+        usageObservations(seenClients),
+        seenCode === code ? null : null,
+      ).catch(() => undefined);
+    }
+
     for (const group of groups) {
       const groupId = String(group["id"] ?? group["groupId"] ?? "");
       if (!groupId) continue;
       const hit = await findVoucherByCode(session, caps, groupId, code);
       if (!hit) continue;
 
-      const clients = await listAuthorizedClients(session).catch(() => []);
       const view = toVoucherView(code, hit, group, clients);
       if (!view) {
         return {
@@ -297,6 +312,7 @@ async function statusFor(ecosystemId: string, rawCode: string | undefined) {
         code,
         observed.map((o) => o.deviceMac),
       ).catch(() => []);
+
 
       return {
         ...EMPTY_STATUS,
