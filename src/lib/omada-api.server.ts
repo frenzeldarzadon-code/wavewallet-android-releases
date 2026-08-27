@@ -9,7 +9,7 @@
  */
 
 const TIMEOUT_MS = 15_000;
-const TOKEN_SKEW_MS = 60_000;
+const TOKEN_SKEW_MS = 5 * 60_000;
 
 export interface OmadaSession {
   ecosystemId: string;

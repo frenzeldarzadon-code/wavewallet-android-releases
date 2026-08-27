@@ -55,7 +55,7 @@ export const OFFLINE_WARNING_MS = 30 * 60_000;
 
 const TIMEOUT_MS = 12_000;
 /** Refresh a cached token this long before it actually expires. */
-const TOKEN_SKEW_MS = 60_000;
+const TOKEN_SKEW_MS = 5 * 60_000;
 
 /** Exponential backoff with a ceiling; `failures` is the count *after* this check. */
 export function backoffDelayMs(failures: number): number {
