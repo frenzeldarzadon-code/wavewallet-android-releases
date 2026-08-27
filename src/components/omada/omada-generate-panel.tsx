@@ -243,27 +243,42 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
   // imported again; the server re-checks and the per-shop unique index is the
   // final race-safe guard.
   const [existingInInventory, setExistingInInventory] = useState<string[]>([]);
+  const [checking, setChecking] = useState(false);
+  const [checkError, setCheckError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ecosystemId || stage !== "preview" || previewCodes.length === 0) {
       setExistingInInventory([]);
+      setCheckError(null);
+      setChecking(false);
       return;
     }
     let cancelled = false;
+    setChecking(true);
     const t = setTimeout(() => {
       void checkExistingVoucherCodes({ data: { ecosystemId, codes: previewCodes } })
         .then((res) => {
-          if (!cancelled) setExistingInInventory(res.existing);
+          if (cancelled) return;
+          setExistingInInventory(res.existing);
+          setCheckError(null);
         })
-        .catch(() => {
-          if (!cancelled) setExistingInInventory(outcome?.duplicateInInventory ?? []);
+        .catch((e) => {
+          if (cancelled) return;
+          // Never fall back to stale generation-time data: without a fresh
+          // answer we cannot claim any code is new.
+          setExistingInInventory(previewCodes);
+          setCheckError((e as Error).message);
+        })
+        .finally(() => {
+          if (!cancelled) setChecking(false);
         });
     }, 300);
     return () => {
       cancelled = true;
       clearTimeout(t);
     };
-  }, [ecosystemId, stage, previewCodes, outcome]);
+  }, [ecosystemId, stage, previewCodes]);
+
 
   const summary = useMemo(
     () => reviewExtractedCodes(previewCodes, existingInInventory, codeLength),
