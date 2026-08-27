@@ -1,35 +1,47 @@
 /**
  * Persistent voucher use history ("Usage Tracer").
  *
- * Omada 6.2.14.11's Open API only reports clients that are authorized RIGHT
- * NOW — once a voucher expires or a device disconnects, the association is
- * gone from the controller. So every time WaveWallet reads an authoritative
- * status it also records what it observed, and later searches can still show
- * the past use. Nothing here is invented: only fields the controller actually
- * returned are stored.
+ * The authoritative device source is Omada's Hotspot Authorized Client
+ * operation (`/hotspot/authed-records`), which keeps returning a voucher's
+ * authorization records after the device goes offline and after the voucher
+ * expires. Every lookup records what the controller returned, so the history
+ * survives even if the controller later drops the record. Nothing here is
+ * invented: only fields the controller actually returned are stored.
  */
 
 export type Row = Record<string, unknown>;
 
 export interface UsageObservation {
   deviceMac: string;
+  /** Stable identity of one authorization: the controller's record id. */
   sessionKey: string;
+  /** The controller's own authorization record id, when it provided one. */
+  authorizationId: string | null;
   deviceName: string | null;
   ipAddress: string | null;
   apIdentifier: string | null;
   networkName: string | null;
   connectedAt: string | null;
+  /** Authorization end as reported by the controller. */
+  authorizedUntil: string | null;
+  /** The controller's own validity flag for the authorization. */
+  stillValid: boolean | null;
+  durationSeconds: number | null;
   trafficBytes: number | null;
 }
 
 export interface UsageSessionView {
   id: string;
   deviceMac: string;
+  authorizationId: string | null;
   deviceName: string | null;
   ipAddress: string | null;
   apIdentifier: string | null;
   networkName: string | null;
   connectedAt: string | null;
+  authorizedUntil: string | null;
+  stillValid: boolean | null;
+  durationSeconds: number | null;
   firstSeenAt: string;
   lastSeenAt: string;
   trafficBytes: number | null;
@@ -44,6 +56,7 @@ export interface AuthorizedUser {
   soldAt: string | null;
   productName: string | null;
 }
+
 
 function pick(row: Row, keys: string[]): unknown {
   for (const key of Object.keys(row)) {
