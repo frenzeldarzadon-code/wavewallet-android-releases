@@ -85,3 +85,82 @@ describe("pastSessions", () => {
     expect(list.map((s) => s.id)).toEqual(["c", "b"]);
   });
 });
+
+// Shapes captured live from Sagada Wave's Omada 6.2.14.11 controller via
+// GET /openapi/v1/{omadacId}/sites/{siteId}/hotspot/authed-records
+const IN_USE_RECORD = {
+  id: "6712e0f0c9a24b1f8f0aa001",
+  name: "OPPO-Reno3",
+  mac: "aa:bb:cc:dd:ee:01",
+  ip: "192.168.20.31",
+  authType: 3,
+  voucherCode: "9139618",
+  ssid: "SagadaWave",
+  start: 1767000000000,
+  end: 1767086400000,
+  valid: true,
+  download: 120000,
+  upload: 30000,
+  duration: 3600,
+};
+const EXPIRED_RECORD = {
+  id: "6712e0f0c9a24b1f8f0aa002",
+  name: "TECNO-SPARK-Go-3",
+  mac: "aa:bb:cc:dd:ee:02",
+  ip: "192.168.20.44",
+  authType: 3,
+  voucherCode: "5639838",
+  ssid: "SagadaWave",
+  start: 1766000000000,
+  end: 1766086400000,
+  valid: false,
+  download: 5000,
+  upload: 1000,
+  duration: 86400,
+};
+
+describe("hotspot authorized records", () => {
+  it("maps the in-use record for 9139618 with its controller identity", () => {
+    const obs = authedRecordObservation(IN_USE_RECORD)!;
+    expect(obs.deviceMac).toBe("AA:BB:CC:DD:EE:01");
+    expect(obs.deviceName).toBe("OPPO-Reno3");
+    expect(obs.authorizationId).toBe("6712e0f0c9a24b1f8f0aa001");
+    expect(obs.sessionKey).toBe("6712e0f0c9a24b1f8f0aa001");
+    expect(obs.ipAddress).toBe("192.168.20.31");
+    expect(obs.networkName).toBe("SagadaWave");
+    expect(obs.stillValid).toBe(true);
+    expect(obs.durationSeconds).toBe(3600);
+    expect(obs.trafficBytes).toBe(150000);
+    expect(obs.authorizedUntil).not.toBeNull();
+  });
+
+  it("still maps the expired voucher's historical authorization", () => {
+    const obs = authedRecordObservation(EXPIRED_RECORD)!;
+    expect(obs.deviceName).toBe("TECNO-SPARK-Go-3");
+    expect(obs.stillValid).toBe(false);
+    expect(obs.connectedAt).not.toBeNull();
+  });
+
+  it("matches only the searched voucher and keeps every device separate", () => {
+    const second = { ...IN_USE_RECORD, id: "x2", mac: "aa:bb:cc:dd:ee:03" };
+    const all = [IN_USE_RECORD, EXPIRED_RECORD, second];
+    expect(authedRecordsForVoucher(all, "9139618")).toHaveLength(2);
+    expect(authedRecordsForVoucher(all, " 5639838 ")).toEqual([EXPIRED_RECORD]);
+    expect(authedRecordsForVoucher(all, "0000000")).toEqual([]);
+    expect(authedRecordObservations(all.slice(0, 3)).map((o) => o.deviceMac)).toEqual([
+      "AA:BB:CC:DD:EE:01",
+      "AA:BB:CC:DD:EE:02",
+      "AA:BB:CC:DD:EE:03",
+    ]);
+  });
+
+  it("indexes records by voucher and ignores non-voucher authorizations", () => {
+    const index = authedRecordIndex([
+      IN_USE_RECORD,
+      EXPIRED_RECORD,
+      { id: "z", mac: "aa:bb:cc:dd:ee:09", authType: 1, voucherCode: "9139618" },
+    ]);
+    expect([...index.keys()].sort()).toEqual(["5639838", "9139618"]);
+    expect(index.get("9139618")).toHaveLength(1);
+  });
+});
