@@ -30,17 +30,19 @@ async function handle({ request }: { request: Request }) {
   const caps = voucherCapabilities(await loadOmadaSpec(session));
   const groups = await listAllVoucherGroups(session, caps);
   let voucher: unknown = null;
+  let foundGroup = "";
   for (const g of groups) {
     const id = String((g as Record<string, unknown>)["id"] ?? "");
     if (!id) continue;
     const hit = await findVoucherByCode(session, caps, id, code);
     if (hit) {
       voucher = hit;
+      foundGroup = id;
       break;
     }
   }
   return new Response(
-    JSON.stringify({ clientCount: clients.length, sample: clients, voucher }, null, 2),
+    JSON.stringify({ clientCount: clients.length, voucher, foundGroup }, null, 2),
     { headers: { "content-type": "application/json" } },
   );
 }
