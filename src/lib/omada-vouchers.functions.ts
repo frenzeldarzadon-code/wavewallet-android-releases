@@ -233,10 +233,14 @@ function normaliseCode(raw: string | undefined) {
 /**
  * Shared, tenant-scoped voucher lookup.
  *
- * Omada stays authoritative: the voucher row gives status/usage/timestamps, its
- * group gives the price, and the site's authorized clients give every device
- * (MAC) currently authorized by that code. A code that no group contains is a
- * genuine "not found"; a controller problem is reported as such instead.
+ * Omada stays authoritative on two distinct answers:
+ *   - voucher status/usage/timestamps come from its voucher group + row;
+ *   - authorized devices come from the Hotspot Authorized Client operation
+ *     (`/hotspot/authed-records`), which keeps reporting a voucher's device
+ *     after it goes offline and after the voucher expires.
+ * The generic live-client snapshot never decides whether a voucher has a
+ * device, and a failed device lookup is reported as unavailable, never as
+ * "no devices".
  */
 async function statusFor(ecosystemId: string, rawCode: string | undefined) {
   const { code, invalid } = normaliseCode(rawCode);
@@ -247,7 +251,7 @@ async function statusFor(ecosystemId: string, rawCode: string | undefined) {
     voucherCapabilities,
     listAllVoucherGroups,
     findVoucherByCode,
-    listAuthorizedClients,
+    listHotspotAuthedClients,
   } = await import("./omada-vouchers.server");
 
   if (invalid) {
@@ -266,7 +270,6 @@ async function statusFor(ecosystemId: string, rawCode: string | undefined) {
     const groups = await listAllVoucherGroups(session, caps);
     if (!code) return { ...EMPTY_STATUS, configured: true };
 
-    const { clientsForVoucher } = await import("./omada-voucher-view");
     const { recordUsageSessions, loadUsageSessions, authorizedUserFor } = await import(
       "./voucher-usage.server"
     );
@@ -274,21 +277,39 @@ async function statusFor(ecosystemId: string, rawCode: string | undefined) {
       () => null,
     );
 
-    // The Authorized Clients data of this site — the exact source Omada's own
-    // Authorized Clients view uses. Read once, then recorded for EVERY voucher
-    // it authorizes, so a device stays in the history after it disconnects.
-    const clients = await listAuthorizedClients(session).catch(
-      () => [] as Array<Record<string, unknown>>,
-    );
-    for (const [seenCode, seenClients] of voucherClientIndex(clients)) {
-      await recordUsageSessions(
-        supabaseAdmin as never,
-        ecosystemId,
-        seenCode,
-        usageObservations(seenClients),
-        null,
-      ).catch(() => undefined);
+    // Authoritative authorized-device data for this site, narrowed to the code
+    // being searched. A failure is kept as a failure.
+    let authed: Array<Record<string, unknown>> = [];
+    let devicesStatus: OmadaVoucherStatus["devicesStatus"] = "complete";
+    try {
+      const page = await listHotspotAuthedClients(session, code);
+      authed = page.rows;
+      if (!page.complete) devicesStatus = "partial";
+    } catch {
+      devicesStatus = "unavailable";
     }
+
+    // Record every authorization the controller returned, for each voucher it
+    // covers, so history outlives the controller's own retention.
+    if (devicesStatus !== "unavailable") {
+      for (const [seenCode, seenRecords] of authedRecordIndex(authed)) {
+        await recordUsageSessions(
+          supabaseAdmin as never,
+          ecosystemId,
+          seenCode,
+          authedRecordObservations(seenRecords),
+          seenCode === code.trim().toUpperCase() ? null : null,
+          session.siteId,
+        ).catch(() => undefined);
+      }
+    }
+
+    const matchedRecords = authedRecordsForVoucher(authed, code);
+    const observed = authedRecordObservations(matchedRecords);
+    const currentKeys = [
+      ...observed.map((o) => o.deviceMac),
+      ...observed.map((o) => o.authorizationId).filter((id): id is string => Boolean(id)),
+    ];
 
     for (const group of groups) {
       const groupId = String(group["id"] ?? group["groupId"] ?? "");
@@ -296,7 +317,7 @@ async function statusFor(ecosystemId: string, rawCode: string | undefined) {
       const hit = await findVoucherByCode(session, caps, groupId, code);
       if (!hit) continue;
 
-      const view = toVoucherView(code, hit, group, clients);
+      const view = toVoucherView(code, hit, group, matchedRecords);
       if (!view) {
         return {
           ...EMPTY_STATUS,
@@ -308,23 +329,23 @@ async function statusFor(ecosystemId: string, rawCode: string | undefined) {
         };
       }
 
-      // Persist what the controller reports now, so the history outlives it.
-      const matched = view.state === "unused" ? [] : clientsForVoucher(clients, code);
-      const observed = usageObservations(matched, hit["startTime"]);
-      await recordUsageSessions(
-        supabaseAdmin as never,
-        ecosystemId,
-        code,
-        observed,
-        view.state,
-      ).catch(() => undefined);
+      // Persist what the controller reports now, with the voucher's own state.
+      if (observed.length > 0) {
+        await recordUsageSessions(
+          supabaseAdmin as never,
+          ecosystemId,
+          code,
+          observed,
+          view.state,
+          session.siteId,
+        ).catch(() => undefined);
+      }
       const sessions = await loadUsageSessions(
         supabaseAdmin as never,
         ecosystemId,
         code,
-        observed.map((o) => o.deviceMac),
+        devicesStatus === "unavailable" ? [] : currentKeys,
       ).catch(() => []);
-
 
       return {
         ...EMPTY_STATUS,
@@ -334,11 +355,15 @@ async function statusFor(ecosystemId: string, rawCode: string | undefined) {
         view,
         authorizedUser,
         sessions,
+        devicesStatus,
       };
     }
-    const sessions = await loadUsageSessions(supabaseAdmin as never, ecosystemId, code, []).catch(
-      () => [],
-    );
+    const sessions = await loadUsageSessions(
+      supabaseAdmin as never,
+      ecosystemId,
+      code,
+      devicesStatus === "unavailable" ? [] : currentKeys,
+    ).catch(() => []);
     return {
       ...EMPTY_STATUS,
       configured: true,
@@ -346,7 +371,9 @@ async function statusFor(ecosystemId: string, rawCode: string | undefined) {
       outcome: "not_found" as const,
       authorizedUser,
       sessions,
+      devicesStatus,
     };
+
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     if (message.includes("no Omada controller connected")) return EMPTY_STATUS;
