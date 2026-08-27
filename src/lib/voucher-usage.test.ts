@@ -69,7 +69,12 @@ describe("pastSessions", () => {
     firstSeenAt: "2026-08-20T00:00:00.000Z",
     trafficBytes: null,
     voucherState: "in_use",
+    authorizationId: null,
+    authorizedUntil: null,
+    stillValid: null,
+    durationSeconds: null,
   };
+
 
   it("separates past devices from the currently authorized one, newest first", () => {
     const list = pastSessions([
