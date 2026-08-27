@@ -27,12 +27,17 @@ import { StatusBadge } from "@/components/ui-kit";
 import {
   controllerMismatch,
   displayVoucherFields,
+  durationToMinutes,
+  formatDurationUnits,
   isValidVoucherCode,
   defaultGroupName,
   reviewExtractedCodes,
+  splitDurationMinutes,
   toControllerUnits,
   toDisplayUnits,
   validateGenerationPayload,
+  DURATION_UNIT_LABELS,
+  type DurationUnit,
   type GenValue,
   type VoucherFieldSpec,
 } from "@/lib/omada-generation";
