@@ -139,6 +139,11 @@ export async function loadUsageSessions(
 /**
  * Who this shop sold/assigned the voucher to. Read from WaveWallet's own sale
  * records, so it stays available long after the voucher expires on Omada.
+ *
+ * `sold_to` is the primary association; when a code was sold without it being
+ * set, the sale row's buyer is used instead. Both stay scoped to this shop, and
+ * a controller-only code with no WaveWallet sale returns null rather than a
+ * made-up customer.
  */
 export async function authorizedUserFor(
   admin: Admin,
@@ -148,7 +153,7 @@ export async function authorizedUserFor(
   const code = voucherCode.trim().toUpperCase();
   const { data } = await admin
     .from("voucher_codes")
-    .select("sold_to, sold_at, voucher_products(name)")
+    .select("sold_to, sold_at, sale_id, voucher_products(name)")
     .eq("ecosystem_id", ecosystemId)
     .ilike("code", code)
     .limit(1)
@@ -160,19 +165,34 @@ export async function authorizedUserFor(
       ? (data.voucher_products[0]?.name as string | undefined)
       : ((data.voucher_products as { name?: string } | null)?.name ?? undefined)) ?? null;
 
+  let holder = (data.sold_to as string | null) ?? null;
+  let soldAt = (data.sold_at as string | null) ?? null;
+
+  if (!holder && data.sale_id) {
+    const { data: sale } = await admin
+      .from("voucher_sales")
+      .select("buyer_id, created_at")
+      .eq("id", data.sale_id)
+      .eq("ecosystem_id", ecosystemId)
+      .maybeSingle();
+    holder = (sale?.buyer_id as string | null) ?? null;
+    soldAt = soldAt ?? ((sale?.created_at as string | null) ?? null);
+  }
+
   let name: string | null = null;
   let phone: string | null = null;
-  if (data.sold_to) {
+  if (holder) {
     const { data: profile } = await admin
       .from("profiles")
       .select("full_name, phone")
-      .eq("id", data.sold_to)
+      .eq("id", holder)
       .eq("ecosystem_id", ecosystemId)
       .maybeSingle();
     name = (profile?.full_name as string | null) ?? null;
     phone = (profile?.phone as string | null) ?? null;
   }
 
-  if (!name && !phone && !data.sold_at && !productName) return null;
-  return { name, phone, soldAt: (data.sold_at as string | null) ?? null, productName };
+  if (!name && !phone && !soldAt && !productName) return null;
+  return { name, phone, soldAt, productName };
 }
+
