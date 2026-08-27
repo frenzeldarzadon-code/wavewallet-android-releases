@@ -230,7 +230,18 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
     // two definitions cannot drift apart by mistake.
     if (chosen) next["unitPrice"] = String(chosen.promo_price ?? chosen.credit_price ?? "");
     setValues(next);
+    // Prefill both the number and its unit from the saved calibration, without
+    // changing the stored minutes.
+    const split = splitDurationMinutes(Number(next["duration"] ?? 0));
+    setDurationUnit(split.unit);
+    setDurationValue(split.value || "");
     setCalibratedKeys(new Set(saved ? Object.keys(saved) : []));
+  };
+
+  const applyDuration = (value: number | "", unit: DurationUnit) => {
+    setDurationValue(value);
+    setDurationUnit(unit);
+    setValues((v) => ({ ...v, duration: value === "" ? "" : durationToMinutes(Number(value), unit) }));
   };
 
   // The form holds Mbps / MB; everything sent, validated or reviewed uses the
