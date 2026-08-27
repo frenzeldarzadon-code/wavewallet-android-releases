@@ -25,7 +25,15 @@ export interface VoucherDeviceView {
   startedAt: string | null;
   expiresAt: string | null;
   price: string | null;
+  /** Fields the hotspot authorization record itself reported, when present. */
+  ipAddress: string | null;
+  networkName: string | null;
+  authorizedAt: string | null;
+  deviceData: string | null;
+  /** The controller's own validity flag for this authorization. */
+  stillValid: boolean | null;
 }
+
 
 export interface VoucherView {
   code: string;
