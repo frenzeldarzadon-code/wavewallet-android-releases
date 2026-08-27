@@ -205,6 +205,11 @@ export interface OmadaVoucherStatus {
   authorizedUser: AuthorizedUser | null;
   /** Persistent use history: current and past device sessions. */
   sessions: UsageSessionView[];
+  /**
+   * Whether the authorized-device answer is trustworthy. A failed lookup is
+   * NEVER reported as "no devices".
+   */
+  devicesStatus: "complete" | "partial" | "unavailable";
 }
 
 const EMPTY_STATUS: OmadaVoucherStatus = {
@@ -215,7 +220,9 @@ const EMPTY_STATUS: OmadaVoucherStatus = {
   error: null,
   authorizedUser: null,
   sessions: [],
+  devicesStatus: "complete",
 };
+
 
 function normaliseCode(raw: string | undefined) {
   const code = (raw ?? "").trim();
