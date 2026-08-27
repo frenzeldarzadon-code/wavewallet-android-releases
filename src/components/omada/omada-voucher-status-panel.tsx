@@ -18,6 +18,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { lookupOmadaVoucher, type OmadaVoucherStatus } from "@/lib/omada-vouchers.functions";
 import type { VoucherDeviceView } from "@/lib/omada-voucher-view";
+import { formatData } from "@/lib/omada-voucher-view";
+import { pastSessions, type UsageSessionView } from "@/lib/voucher-usage";
 import {
   fetchVoucherTracers,
   primaryTracer,
@@ -216,7 +218,7 @@ export function OmadaVoucherStatusPanel({
       const next = await check(code);
       if (!next) return;
       setState(next);
-      if (next.outcome === "found") {
+      if (next.outcome === "found" || next.sessions.length > 0) {
         await loadTracers(code.trim(), ecosystemId);
       } else {
         setRecords([]);
@@ -256,12 +258,19 @@ export function OmadaVoucherStatusPanel({
   const currentMacs = new Set(
     (view?.devices ?? []).map((d) => d.mac).filter((m): m is string => Boolean(m)),
   );
-  // Devices this shop recorded against the voucher earlier. Omada 6.2.14.11's
-  // Open API does not link past clients back to a voucher, so this is
-  // WaveWallet's own record — never invented controller history.
-  const previousMacs = Array.from(
-    new Set(records.map((r) => r.device_mac).filter((m) => m && !currentMacs.has(m))),
+  // Past use. Omada 6.2.14.11's Open API does not link past clients back to a
+  // voucher, so this is WaveWallet's own recorded observations plus any device
+  // this shop labelled earlier — never invented controller history.
+  const past = pastSessions(state.sessions);
+  const pastMacs = new Set(past.map((s) => s.deviceMac));
+  const labelledOnlyMacs = Array.from(
+    new Set(
+      records
+        .map((r) => r.device_mac)
+        .filter((m) => m && !currentMacs.has(m) && !pastMacs.has(m.toUpperCase())),
+    ),
   );
+  const hasPast = past.length > 0 || labelledOnlyMacs.length > 0;
 
   return (
     <Card className="shadow-[var(--shadow-card)]">

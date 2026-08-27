@@ -8,6 +8,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { OmadaFieldSpec } from "./omada-vouchers.server";
 import { toVoucherView, type VoucherView } from "./omada-voucher-view";
+import { usageObservations, type AuthorizedUser, type UsageSessionView } from "./voucher-usage";
 
 /** Controller rows are flattened to plain display values before crossing to the browser. */
 export type OmadaRow = Record<string, string | number | boolean | null>;
@@ -195,6 +196,10 @@ export interface OmadaVoucherStatus {
     | "authentication_failed"
     | "status_unreadable";
   error: string | null;
+  /** Who this shop assigned the voucher to; survives expiry. */
+  authorizedUser: AuthorizedUser | null;
+  /** Persistent use history: current and past device sessions. */
+  sessions: UsageSessionView[];
 }
 
 const EMPTY_STATUS: OmadaVoucherStatus = {
@@ -203,6 +208,8 @@ const EMPTY_STATUS: OmadaVoucherStatus = {
   searched: false,
   outcome: "ready",
   error: null,
+  authorizedUser: null,
+  sessions: [],
 };
 
 function normaliseCode(raw: string | undefined) {
@@ -247,6 +254,14 @@ async function statusFor(ecosystemId: string, rawCode: string | undefined) {
     const groups = await listAllVoucherGroups(session, caps);
     if (!code) return { ...EMPTY_STATUS, configured: true };
 
+    const { clientsForVoucher } = await import("./omada-voucher-view");
+    const { recordUsageSessions, loadUsageSessions, authorizedUserFor } = await import(
+      "./voucher-usage.server"
+    );
+    const authorizedUser = await authorizedUserFor(supabaseAdmin as never, ecosystemId, code).catch(
+      () => null,
+    );
+
     for (const group of groups) {
       const groupId = String(group["id"] ?? group["groupId"] ?? "");
       if (!groupId) continue;
@@ -265,15 +280,45 @@ async function statusFor(ecosystemId: string, rawCode: string | undefined) {
             "The controller returned this voucher without a status it could read. Try again shortly.",
         };
       }
+
+      // Persist what the controller reports now, so the history outlives it.
+      const matched = view.state === "unused" ? [] : clientsForVoucher(clients, code);
+      const observed = usageObservations(matched, hit["startTime"]);
+      await recordUsageSessions(
+        supabaseAdmin as never,
+        ecosystemId,
+        code,
+        observed,
+        view.state,
+      ).catch(() => undefined);
+      const sessions = await loadUsageSessions(
+        supabaseAdmin as never,
+        ecosystemId,
+        code,
+        observed.map((o) => o.deviceMac),
+      ).catch(() => []);
+
       return {
         ...EMPTY_STATUS,
         configured: true,
         searched: true,
         outcome: "found" as const,
         view,
+        authorizedUser,
+        sessions,
       };
     }
-    return { ...EMPTY_STATUS, configured: true, searched: true, outcome: "not_found" as const };
+    const sessions = await loadUsageSessions(supabaseAdmin as never, ecosystemId, code, []).catch(
+      () => [],
+    );
+    return {
+      ...EMPTY_STATUS,
+      configured: true,
+      searched: true,
+      outcome: "not_found" as const,
+      authorizedUser,
+      sessions,
+    };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     if (message.includes("no Omada controller connected")) return EMPTY_STATUS;
