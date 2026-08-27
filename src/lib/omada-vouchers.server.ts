@@ -410,12 +410,11 @@ export function validateAgainstSpec(
 }
 
 /**
- * Authorized clients of this site, as shown on Omada's "Authorized Clients"
- * page. Verified on Controller 6.2.14.11:
- *   GET /openapi/v1/{omadacId}/sites/{siteId}/clients
- * Each row carries `mac`, `name`/`hostName` and `authInfo[{authType, info}]`,
- * where authType 3 is a hotspot voucher and `info` is the voucher code. This is
- * the authoritative voucher -> device association; a voucher may match several.
+ * Live client snapshot of this site (generic clients endpoint).
+ *
+ * Supplementary network information only. It reports devices that are online
+ * RIGHT NOW and is NOT authoritative for "is a device authorized by this
+ * voucher" — `listHotspotAuthedClients` below is.
  */
 export async function listAuthorizedClients(
   session: OmadaSession,
@@ -435,6 +434,51 @@ export async function listAuthorizedClients(
   }
   return rows;
 }
+
+/** Hotspot authorization records, paginated. `complete` is false when truncated. */
+export interface AuthedClientPage {
+  rows: Array<Record<string, unknown>>;
+  complete: boolean;
+}
+
+/**
+ * Omada's documented Hotspot Authorized Client operation (GetHotspotAuthedClients).
+ *
+ * Verified live on Controller 6.2.14.11:
+ *   GET /openapi/v1/{omadacId}/sites/{siteId}/hotspot/authed-records
+ *       ?page=&pageSize=[&searchKey=]
+ * Each record carries `id` (authorization record id), `name`, `mac`, `ip`,
+ * `ssid`/`networkName`, `authType` (3 = voucher), `voucherCode`, `start`,
+ * `end`, `valid`, `download`, `upload` and `duration`. This is the authoritative
+ * voucher -> device association and it keeps returning records after the
+ * voucher expires, unlike the live client snapshot.
+ *
+ * Throws OmadaError on failure — a failure is never an empty device list.
+ */
+export async function listHotspotAuthedClients(
+  session: OmadaSession,
+  searchKey?: string,
+): Promise<AuthedClientPage> {
+  const pageSize = 100;
+  const maxPages = 50;
+  const rows: Array<Record<string, unknown>> = [];
+  const search = searchKey ? `&searchKey=${encodeURIComponent(searchKey)}` : "";
+  for (let page = 1; page <= maxPages; page += 1) {
+    const result = (await call(
+      session,
+      `/openapi/v1/${session.omadacId}/sites/${session.siteId}/hotspot/authed-records?page=${page}&pageSize=${pageSize}${search}`,
+    )) as Record<string, unknown> | null;
+    const pageRows = (result?.["data"] ?? result) as unknown;
+    const batch = Array.isArray(pageRows) ? (pageRows as Array<Record<string, unknown>>) : [];
+    rows.push(...batch);
+    const total = Number(result?.["totalRows"] ?? rows.length);
+    if (batch.length === 0 || batch.length < pageSize || rows.length >= total) {
+      return { rows, complete: true };
+    }
+  }
+  return { rows, complete: false };
+}
+
 
 /**
  * Verified generation surface for Omada Controller 6.2.x.
