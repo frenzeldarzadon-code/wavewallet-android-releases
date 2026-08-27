@@ -216,7 +216,7 @@ export function OmadaVoucherStatusPanel({
       const next = await check(code);
       if (!next) return;
       setState(next);
-      if (next.outcome === "found") {
+      if (next.outcome === "found" || next.sessions.length > 0) {
         await loadTracers(code.trim(), ecosystemId);
       } else {
         setRecords([]);
