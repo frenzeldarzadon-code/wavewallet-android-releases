@@ -489,7 +489,7 @@ export function OmadaVoucherStatusPanel({
 
                 {/* A failed device lookup is never reported as "no devices". */}
                 {state.devicesStatus === "unavailable" ? (
-                  <Notice tone="warning">
+                  <Notice tone="warn">
                     The hotspot controller could not be asked which devices this voucher
                     authorized, so the device list is unavailable right now. Please try again
                     shortly.
@@ -502,7 +502,7 @@ export function OmadaVoucherStatusPanel({
                 ) : null}
 
                 {state.devicesStatus === "partial" ? (
-                  <Notice tone="warning">
+                  <Notice tone="warn">
                     The controller returned more authorization records than could be read in one
                     go, so some devices may be missing from this list.
                   </Notice>
