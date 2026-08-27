@@ -50,3 +50,17 @@ describe("device address matching", () => {
     expect(normaliseMac(" 58-04-4f-77-80-ea ")).toBe("58-04-4F-77-80-EA");
   });
 });
+
+describe("wired or wireless uplink", () => {
+  it("reads the uplink from the controller's own detail code", () => {
+    expect(uplinkLabel(14)).toBe("Wired");
+    expect(uplinkLabel(15)).toBe("Wireless (mesh)");
+    expect(uplinkLabel(31)).toBe("Wireless (mesh)");
+    expect(uplinkLabel(0)).toBe("Wired");
+  });
+
+  it("says nothing when the controller gave no usable code", () => {
+    expect(uplinkLabel(null)).toBeNull();
+    expect(uplinkLabel(998)).toBeNull();
+  });
+});
