@@ -100,14 +100,23 @@ function AntennaCard({
             {antennaTypeLabel(device.deviceType)} · {device.mac}
           </p>
         </div>
-        <Badge variant="outline" className={healthTone[device.health]}>
-          {device.statusLabel}
-        </Badge>
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
+          <Badge variant="outline" className={healthTone[device.health]}>
+            {device.statusLabel}
+          </Badge>
+          {manage ? (
+            <Badge variant={device.assignedUserId ? "secondary" : "outline"}>
+              {device.assignedUserId ? `Assigned · ${device.assignedUserName}` : "Not assigned"}
+            </Badge>
+          ) : null}
+        </div>
       </div>
 
       <dl className="grid gap-3 sm:grid-cols-2">
         <Detail label="Model" value={device.model} />
+        <Detail label="Connection" value={uplinkLabel(device.detailStatusCode)} />
         <Detail label="Local address" value={device.ip} />
+        <Detail label="Public address" value={device.publicIp} />
         <Detail label="Uptime" value={device.uptime} />
         <Detail label="Firmware" value={device.firmware} />
         <Detail label="Serial" value={device.serial} />
