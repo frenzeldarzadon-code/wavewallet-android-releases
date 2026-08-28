@@ -119,7 +119,14 @@ private fun HomeScreen() {
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("WaveWallet GCash Listener", style = MaterialTheme.typography.headlineSmall)
+        Text("WaveWallet Payment Listener", style = MaterialTheme.typography.headlineSmall)
+        Text(
+            "Android's Notification Access is broad — it covers every app on this phone. " +
+                "WaveWallet only processes notifications from the sources its own source rules " +
+                "allow, and only those that look like a payment. Everything else is discarded " +
+                "on the device.",
+            style = MaterialTheme.typography.bodySmall,
+        )
         Text(
             if (ready) "Status: LISTENING — listener CONNECTED"
             else "Status: NOT READY — " + listOfNotNull(
@@ -150,7 +157,7 @@ private fun HomeScreen() {
                     Text("Server: ${store.baseUrl}")
                     Text(
                         "Ask a WaveWallet Super Admin — or your shop's admin — to open Settings > " +
-                            "GCash notification listener and tap \"Re-pair this device\". They will " +
+                            "Payment notification listener and tap \"Re-pair this device\". They will " +
                             "read you a new one-time code. The old code no longer works.",
                     )
                     OutlinedTextField(
@@ -183,9 +190,8 @@ private fun HomeScreen() {
                     }) { Text("Pair a different device instead") }
                 } else {
                     Text(
-                        "Moving from the separate \"WaveWallet Listener\" app? Pairing cannot be " +
-                            "copied between apps. Ask WaveWallet for a new device pairing code, pair " +
-                            "here, then uninstall the old listener app.",
+                        "Ask a WaveWallet Super Admin — or your shop's admin — to register this " +
+                            "phone and read you the one-time pairing code.",
                     )
                     OutlinedTextField(baseUrl, { baseUrl = it }, label = { Text("WaveWallet URL") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     Text(
@@ -241,7 +247,14 @@ private fun HomeScreen() {
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("2. Notification Access", fontWeight = FontWeight.SemiBold)
-                Text(if (access) "Granted — only ${BuildConfig.GCASH_PACKAGE} notifications are read." else "Not granted. The listener cannot work yet.")
+                Text(
+                    if (access) {
+                        "Granted. Android hands over notifications from every app; WaveWallet " +
+                            "keeps only the payment sources its source rules allow."
+                    } else {
+                        "Not granted. The listener cannot work yet."
+                    },
+                )
                 OutlinedButton(onClick = {
                     context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
                 }) { Text("Open Notification Access settings") }
@@ -251,7 +264,7 @@ private fun HomeScreen() {
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("3. Oppo / ColorOS checklist", fontWeight = FontWeight.SemiBold)
-                Text("• Notification Access: granted for WaveWallet Listener")
+                Text("• Notification Access: granted for WaveWallet")
                 Text("• Allow notifications for this app (Android 13+)")
                 Text("• Battery: set this app to \"Allow background activity\" / \"Don't optimise\"")
                 Text("• Settings > Battery > Power saving: disable \"Sleep standby optimisation\"")
