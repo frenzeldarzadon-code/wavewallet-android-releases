@@ -3,7 +3,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- GCash listener: keeps the notification listener alive in the background. -->
+    <!-- Payment listener: keeps the notification listener alive in the background. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -42,7 +42,7 @@
             android:exported="false"
             android:label="@string/about_title" />
 
-        <!-- Integrated GCash listener setup, pairing and diagnostics screen. -->
+        <!-- WaveWallet Payment Listener setup, pairing and diagnostics screen. -->
         <activity
             android:name="com.wavewallet.app.listener.ui.ListenerActivity"
             android:exported="false"
@@ -50,8 +50,12 @@
             android:theme="@style/Theme.WaveWallet.Listener" />
 
         <!--
-          Reads notifications only after the user grants Notification Access, and
-          only from the GCash package. Everything else is discarded in memory.
+          Reads notifications only after the user grants Notification Access.
+          Android grants that access broadly, for every app on the phone: WaveWallet
+          itself narrows it down. Sources disabled by the WaveWallet source rules and
+          notifications with no payment shape are discarded in memory and never leave
+          the device. The class name is kept for backwards compatibility — renaming it
+          would revoke the Notification Access grant on every paired phone.
         -->
         <service
             android:name="com.wavewallet.app.listener.service.GcashNotificationListener"
