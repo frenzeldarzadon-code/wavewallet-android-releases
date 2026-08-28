@@ -1,5 +1,5 @@
 /**
- * Signed ingest endpoint for the GCash notification listener companion app.
+ * Signed ingest endpoint for the integrated WaveWallet Payment Listener.
  *
  * Contract (all headers required):
  *   x-listener-device : device id issued when the device was registered
@@ -33,7 +33,7 @@ const heartbeatSchema = z.object({
   listener_connected: z.boolean().optional(),
   /** Notification Access is still granted in system settings. */
   notification_access: z.boolean().optional(),
-  /** How many GCash notifications the phone has seen since install. */
+  /** How many payment notifications the phone has seen since install. */
   received_count: z.number().int().min(0).max(10_000_000).optional(),
   last_received_at: z.string().datetime().optional(),
   app_version: z.string().max(40).optional(),
