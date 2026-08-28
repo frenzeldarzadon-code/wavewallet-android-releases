@@ -69,19 +69,24 @@ application ID and signing identity stay identical, so accounts, sessions and
 data are untouched.
 
 
-## Integrated GCash listener (v1.2.0, versionCode 4)
+## Integrated WaveWallet Payment Listener
 
-The GCash notification listener now ships inside this app — operators no longer
-need the separate `com.wavewallet.gcashlistener` install. The code lives under
+The payment notification listener ships inside this app — it is the only
+listener architecture WaveWallet uses. The code lives under
 `app/src/main/java/com/wavewallet/app/listener/` (parser, event queue, pairing
-store, signer, workers, services) and is a direct move of the standalone
-project, which is kept intact for rollback and testing.
+store, signer, workers, services).
 
-- Screen: About WaveWallet > "GCash Listener" (also a launcher shortcut).
-- Same server pairing protocol and the same `/api/public/payments/listener`
-  endpoint. Nothing changed server-side.
-- Pairing cannot be copied between Android apps: operators moving from the
-  standalone listener must request a new device pairing code, pair inside
-  WaveWallet, then uninstall the old listener app.
-- Only `com.globe.gcash.android` notifications are read; everything else is
-  discarded in memory.
+- Screen: opened from the authorised WaveWallet settings pages in the web app
+  (Super Admin platform settings, or a shop admin's settings) through the
+  `WaveWalletNative.openGcashListener()` bridge.
+- Pairing, source-rule sync, heartbeat, recovery sweeps and the signed
+  `/api/public/payments/listener` ingest endpoint are unchanged.
+- Android's Notification Access is broad by design: it exposes every app's
+  notifications. WaveWallet narrows that down itself — sources denied by the
+  server-synced source rules and notifications with no payment shape are
+  discarded on the device and never sent.
+- `GcashNotificationListener` keeps its class name on purpose: renaming a
+  `NotificationListenerService` revokes the Notification Access grant on every
+  phone that already has it. The behaviour is provider-agnostic; the GCash
+  parser is simply the first provider implementation.
+

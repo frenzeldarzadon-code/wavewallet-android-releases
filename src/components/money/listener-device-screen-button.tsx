@@ -1,5 +1,5 @@
 /**
- * Launcher for the integrated native GCash listener screen.
+ * Launcher for the integrated native WaveWallet Payment Listener screen.
  *
  * Operating the listener is a payment-operations task: it is rendered on
  * `/super/settings` (platform owner) and on `/admin/settings`, which is behind
@@ -43,7 +43,7 @@ export function ListenerDeviceScreenButton() {
       <CardHeader>
         <CardTitle className="text-sm">Listener device screen</CardTitle>
         <p className="text-sm text-muted-foreground">
-          The GCash notification listener now ships inside the WaveWallet Android app. This screen
+          The payment notification listener ships inside the WaveWallet Android app. This screen
           shows Notification Access, connection and pairing status, the last notification read, the
           parser result, the recovery sweep and the heartbeat for this phone only.
         </p>

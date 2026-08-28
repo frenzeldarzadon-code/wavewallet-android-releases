@@ -1,5 +1,5 @@
 /**
- * Signing scheme for the GCash notification listener companion app.
+ * Signing scheme for the integrated WaveWallet Payment Listener.
  *
  * The phone is paired once with a pairing secret that is shown a single time.
  * The HMAC key is SHA-256(pairing secret) — the device derives it locally and

@@ -38,8 +38,8 @@ class AboutActivity : AppCompatActivity() {
             13f,
             "#64748B",
         )
-        // The GCash listener screen is deliberately NOT reachable from here.
-        // It is opened only from the Super Admin platform settings page in the
+        // The WaveWallet Payment Listener screen is deliberately NOT reachable
+        // from here. It is opened only from the authorised settings pages in the
         // web app, which is where the role check lives.
 
         val scroll = ScrollView(this)

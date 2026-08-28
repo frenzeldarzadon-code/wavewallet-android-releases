@@ -144,7 +144,7 @@ class ImageSaver(private val activity: Activity) {
         }.getOrDefault(false)
 
     /**
-     * Opens the integrated GCash notification listener screen.
+     * Opens the integrated WaveWallet Payment Listener screen.
      *
      * The only caller is the Super Admin platform settings page: the web layer
      * decides, server-side role in hand, whether the button is rendered at all.

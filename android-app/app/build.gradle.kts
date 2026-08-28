@@ -13,8 +13,8 @@ android {
         minSdk = 24
         targetSdk = 34
         // Native release containing the voucher ImageSaver bridge, the update
-        // centre and the integrated GCash notification listener (previously a
-        // separate app). Must match ANDROID_VERSION_* in src/lib/update-manifest.ts.
+        // centre and the integrated WaveWallet Payment Listener.
+        // Must match ANDROID_VERSION_* in src/lib/update-manifest.ts.
         versionCode = 7
         versionName = "1.5.0"
 
@@ -25,8 +25,8 @@ android {
         // The single, compiled-in update destination. The web page can never
         // supply a different URL to the installer.
         buildConfigField("String", "UPDATE_URL", "\"https://wallet.sagadawave.com/download\"")
-        // Integrated GCash listener: same endpoints and same pairing protocol
-        // as the standalone listener app. No new backend is introduced.
+        // Integrated payment listener: the published WaveWallet web app is the
+        // only backend it talks to. No new backend is introduced.
         buildConfigField("String", "DEFAULT_BASE_URL", "\"https://wallet.sagadawave.com\"")
         buildConfigField("String", "GCASH_PACKAGE", "\"com.globe.gcash.android\"")
     }
@@ -118,7 +118,7 @@ dependencies {
     implementation("androidx.webkit:webkit:1.11.0")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 
-    // --- Integrated GCash listener ---
+    // --- Integrated payment listener ---
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
     implementation("androidx.lifecycle:lifecycle-service:2.8.4")
     implementation("androidx.activity:activity-compose:1.9.1")

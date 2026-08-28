@@ -5,9 +5,9 @@
     <string name="offline_title">No internet connection</string>
     <string name="offline_body">WaveWallet needs internet for every Coin, voucher, cash in and cash out action. Reconnect and try again.</string>
     <string name="retry">Retry</string>
-    <string name="listener_title">GCash Listener</string>
-    <string name="listener_service_label">WaveWallet GCash notification listener</string>
+    <string name="listener_title">WaveWallet Payment Listener</string>
+    <string name="listener_service_label">WaveWallet Payment Listener</string>
     <string name="fg_channel_name">Listener running</string>
     <string name="fg_notification_title">WaveWallet listener active</string>
-    <string name="fg_notification_text">Watching GCash payment notifications only.</string>
+    <string name="fg_notification_text">Watching payment notifications from the sources WaveWallet allows.</string>
 </resources>
