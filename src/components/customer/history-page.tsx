@@ -4,7 +4,7 @@
  * is modified here.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Download, Printer, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -66,6 +66,7 @@ export interface HistoryPageProps {
 
 export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }: HistoryPageProps = {}) {
   const { account, ecosystemDbId } = useSession();
+  const navigate = useNavigate();
   const [filter, setFilter] = useState("all");
   const [direction, setDirection] = useState<"all" | "credit" | "debit">("all");
   const [entries, setEntries] = useState<CreditEntry[]>([]);
@@ -355,9 +356,14 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
                           const label = codeStatusLabel(code, statuses);
                           return (
                             <div key={code} className="flex items-center justify-between gap-2">
-                              <p className="font-mono text-sm font-semibold tracking-widest text-success">
+                              <button
+                                type="button"
+                                title="Copy and check this voucher in Status Check"
+                                className="font-mono text-sm font-semibold tracking-widest text-success underline decoration-dotted underline-offset-4 hover:text-success/80"
+                                onClick={() => void inspectVoucher(code)}
+                              >
                                 {code}
-                              </p>
+                              </button>
                               {label ? (
                                 <StatusBadge tone={label === "Unused" ? "success" : "muted"}>
                                   {label}
