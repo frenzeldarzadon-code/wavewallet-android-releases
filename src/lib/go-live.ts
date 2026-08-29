@@ -157,12 +157,18 @@ export function goLiveControlsVisible(
   return r?.status !== "pending";
 }
 
-/** Platform owner override: any plan, any discount, or free (100% off). */
+/**
+ * Platform owner override: any plan, any discount, or free (100% off).
+ *
+ * `months` is the SERVICE period the shop receives. `paidMonths` is what is
+ * charged — fewer than `months` on a promotion (pay 10, get 12 months).
+ */
 export async function superadminSetShopPlan(input: {
   ecosystemId: string;
   planId: string;
   months: number;
   discountPercent: number;
+  paidMonths?: number;
   reason?: string | null;
 }) {
   requireOnline();
@@ -171,8 +177,9 @@ export async function superadminSetShopPlan(input: {
     _plan_id: input.planId,
     _months: input.months,
     _discount_percent: input.discountPercent,
+    ...(input.paidMonths ? { _paid_months: input.paidMonths } : {}),
     ...(input.reason?.trim() ? { _reason: input.reason.trim() } : {}),
-  });
+  } as never);
   if (error) throw new Error(error.message);
 }
 

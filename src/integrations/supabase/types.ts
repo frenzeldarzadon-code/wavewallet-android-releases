@@ -11370,6 +11370,7 @@ export type Database = {
           _discount_percent?: number
           _ecosystem_id: string
           _months?: number
+          _paid_months?: number
           _plan_id: string
           _reason?: string
         }
