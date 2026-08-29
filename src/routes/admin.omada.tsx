@@ -59,7 +59,7 @@ function AdminOmada() {
       title="Omada"
       description="Your shop's own Omada controller. These details and any vouchers generated here belong to this shop only."
     >
-      <Tabs defaultValue="connection" className="w-full">
+      <Tabs defaultValue={tab ?? (code ? "status" : "connection")} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="connection" className="text-xs sm:text-sm">
             Connection
