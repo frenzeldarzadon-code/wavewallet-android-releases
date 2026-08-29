@@ -176,25 +176,51 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
   };
 
   /**
-   * Omada status for the codes of ONE transaction, fetched on demand when the
-   * row is expanded and cached per transaction (batched, never per voucher).
+   * Omada status for every code on this page, in ONE batched controller pass.
+   * Runs as soon as the purchases are known so quantity-1 rows show a status
+   * too — nothing is hidden behind an expander.
    */
-  const loadStatuses = async (p: Purchase) => {
-    if (!scopeId || p.codes.length === 0 || statuses[p.id]) return;
-    setStatusBusy(p.id);
-    try {
-      const res = await lookupOmadaVoucherStatuses({
-        data: { ecosystemId: scopeId, codes: p.codes },
-      });
-      const map: CodeStatusMap = {};
-      for (const code of p.codes) map[code.toUpperCase()] = res.statuses[code.toUpperCase()] ?? null;
-      setStatuses((s) => ({ ...s, [p.id]: map }));
-    } catch {
-      setStatuses((s) => ({ ...s, [p.id]: {} }));
-    } finally {
-      setStatusBusy(null);
+  useEffect(() => {
+    const codes = Array.from(
+      new Set(purchases.flatMap((p) => p.codes.map((c) => c.toUpperCase()))),
+    ).slice(0, 200);
+    if (!scopeId || codes.length === 0) {
+      setStatuses({});
+      setStatusNote(null);
+      setOmadaConfigured(false);
+      return;
     }
-  };
+    let cancelled = false;
+    setStatusBusy(true);
+    setStatusNote(null);
+    void (async () => {
+      try {
+        const res = await lookupOmadaVoucherStatuses({ data: { ecosystemId: scopeId, codes } });
+        if (cancelled) return;
+        const map: CodeStatusMap = {};
+        for (const code of codes) map[code] = res.statuses[code] ?? null;
+        setStatuses(map);
+        setOmadaConfigured(res.configured);
+        setStatusNote(
+          res.error ??
+            (res.configured
+              ? null
+              : "This shop has no hotspot controller connected, so voucher status is unavailable."),
+        );
+      } catch (e) {
+        if (cancelled) return;
+        setStatuses({});
+        setOmadaConfigured(false);
+        setStatusNote((e as Error).message || "Voucher status could not be loaded.");
+      } finally {
+        if (!cancelled) setStatusBusy(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [purchases, scopeId]);
+
 
 
   if (!account) return null;
