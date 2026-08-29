@@ -28,21 +28,24 @@ export const Route = createFileRoute("/app/omada")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { code?: string | undefined; tab?: "antenna" | "voucher" | undefined } => ({
     code: typeof search["code"] === "string" && search["code"] ? search["code"] : undefined,
+    tab: search["tab"] === "voucher" || search["tab"] === "antenna" ? search["tab"] : undefined,
   }),
   component: MemberOmada,
 });
 
 function MemberOmada() {
   const { ecosystemDbId } = useSession("customer");
-  const { code } = Route.useSearch();
+  const { code, tab } = Route.useSearch();
   return (
     <PageSection
       title="Status Check"
       description="Your assigned antennas and voucher lookup for this shop."
     >
-      <Tabs defaultValue="antenna" className="w-full">
+      <Tabs defaultValue={tab ?? (code ? "voucher" : "antenna")} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="antenna" className="text-xs sm:text-sm">
             Antenna Status

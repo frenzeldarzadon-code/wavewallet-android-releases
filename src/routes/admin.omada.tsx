@@ -35,18 +35,31 @@ export const Route = createFileRoute("/admin/omada")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { code?: string | undefined; tab?: "connection" | "devices" | "generate" | "status" | undefined } => ({
+    code: typeof search["code"] === "string" && search["code"] ? search["code"] : undefined,
+    tab:
+      search["tab"] === "connection" ||
+      search["tab"] === "devices" ||
+      search["tab"] === "generate" ||
+      search["tab"] === "status"
+        ? search["tab"]
+        : undefined,
+  }),
   component: AdminOmada,
 });
 
 function AdminOmada() {
   const { ecosystemDbId } = useSession("admin");
+  const { code, tab } = Route.useSearch();
 
   return (
     <PageSection
       title="Omada"
       description="Your shop's own Omada controller. These details and any vouchers generated here belong to this shop only."
     >
-      <Tabs defaultValue="connection" className="w-full">
+      <Tabs defaultValue={tab ?? (code ? "status" : "connection")} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="connection" className="text-xs sm:text-sm">
             Connection
@@ -76,7 +89,7 @@ function AdminOmada() {
         </TabsContent>
 
         <TabsContent value="status" className="mt-4 space-y-4">
-          <OmadaVoucherStatusPanel ecosystemId={ecosystemDbId} />
+          <OmadaVoucherStatusPanel ecosystemId={ecosystemDbId} initialCode={code} />
           <TracerConflictsPanel ecosystemId={ecosystemDbId} />
         </TabsContent>
       </Tabs>
