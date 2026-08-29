@@ -75,9 +75,13 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
   const [expanded, setExpanded] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [sources, setSources] = useState<CashbackSourceMap>({});
-  /** Per-transaction Omada statuses, loaded on demand. */
-  const [statuses, setStatuses] = useState<Record<string, CodeStatusMap>>({});
-  const [statusBusy, setStatusBusy] = useState<string | null>(null);
+  /** Omada statuses for every code on this page, fetched in one batched pass. */
+  const [statuses, setStatuses] = useState<CodeStatusMap>({});
+  const [statusBusy, setStatusBusy] = useState(false);
+  /** Why no status is shown (controller unreachable / not connected). */
+  const [statusNote, setStatusNote] = useState<string | null>(null);
+  const [omadaConfigured, setOmadaConfigured] = useState(false);
+
   const [openSale, setOpenSale] = useState<string | null>(null);
   const userId = account?.id ?? null;
   const scopeId = ecosystemId === undefined ? ecosystemDbId : ecosystemId;
