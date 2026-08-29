@@ -11365,33 +11365,62 @@ export type Database = {
         }
         Returns: string
       }
-      superadmin_set_shop_plan: {
-        Args: {
-          _discount_percent?: number
-          _ecosystem_id: string
-          _months?: number
-          _plan_id: string
-          _reason?: string
-        }
-        Returns: {
-          allocation_total: number
-          created_at: string
-          demo_seed_credits: number
-          ecosystem_id: string
-          period_end: string | null
-          period_start: string | null
-          plan_id: string | null
-          review_ends_at: string | null
-          state: string
-          updated_at: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "shop_subscriptions"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+      superadmin_set_shop_plan:
+        | {
+            Args: {
+              _discount_percent?: number
+              _ecosystem_id: string
+              _months?: number
+              _plan_id: string
+              _reason?: string
+            }
+            Returns: {
+              allocation_total: number
+              created_at: string
+              demo_seed_credits: number
+              ecosystem_id: string
+              period_end: string | null
+              period_start: string | null
+              plan_id: string | null
+              review_ends_at: string | null
+              state: string
+              updated_at: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "shop_subscriptions"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: {
+              _discount_percent?: number
+              _ecosystem_id: string
+              _months?: number
+              _paid_months?: number
+              _plan_id: string
+              _reason?: string
+            }
+            Returns: {
+              allocation_total: number
+              created_at: string
+              demo_seed_credits: number
+              ecosystem_id: string
+              period_end: string | null
+              period_start: string | null
+              plan_id: string | null
+              review_ends_at: string | null
+              state: string
+              updated_at: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "shop_subscriptions"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       switch_ecosystem: { Args: { _ecosystem_id: string }; Returns: string }
       top_role: {
         Args: { _user_id: string }
