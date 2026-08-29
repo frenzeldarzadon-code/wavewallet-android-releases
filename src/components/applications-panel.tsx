@@ -70,12 +70,19 @@ export function ApplicationsPanel({
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [remove, setRemove] = useState<MembershipApplication | null>(null);
+  /** Set when the dialog is removing a member who was already kept. */
+  const [removeKept, setRemoveKept] = useState(false);
   const [reason, setReason] = useState("");
+  /** Shop balance per kept member — the removal gate the database also enforces. */
+  const [balances, setBalances] = useState<Map<string, number>>(new Map());
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      setRows(await fetchApplications({ ecosystemId: ecosystemId ?? null, status }));
+      const next = await fetchApplications({ ecosystemId: ecosystemId ?? null, status });
+      setRows(next);
+      const keptIds = next.filter((r) => r.status === "approved").map((r) => r.id);
+      setBalances(await fetchReviewBalances(keptIds));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not load new members.");
     } finally {
@@ -105,6 +112,24 @@ export function ApplicationsPanel({
       setBusy(null);
     }
   };
+
+  /** Removes a member who was previously kept — this shop only, zero balance only. */
+  const removeFromShop = async (row: MembershipApplication, why?: string) => {
+    setBusy(row.id);
+    try {
+      await removeKeptMember(row.id, why);
+      toast.success(`${row.full_name || row.email} was removed from this shop only.`);
+      setRemove(null);
+      setRemoveKept(false);
+      setReason("");
+      await load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not remove this member.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
 
   const openCount = rows.filter((r) => r.status === "pending").length;
 
