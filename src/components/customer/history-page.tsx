@@ -287,42 +287,100 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
         ) : (
           <Card className="shadow-[var(--shadow-card)]">
             <CardContent className="divide-y divide-border px-0 py-0">
-              {purchases.map((p) => (
+              {purchases.map((p) => {
+                const many = p.codes.length > 1;
+                const open = openSale === p.id;
+                const codeStatuses = statuses[p.id];
+                const summary = codeStatuses ? statusSummary(p.codes, codeStatuses) : null;
+                return (
                 <div key={p.id} className="space-y-1 px-4 py-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{p.product_name}</p>
+                      <p className="truncate text-sm font-medium">
+                        {p.product_name}
+                        {many ? ` ×${p.codes.length}` : ""}
+                      </p>
                       <p className="text-[11px] text-muted-foreground">
                         {shortDateTime(p.created_at)} · {p.tx_id} · {p.payment_method}
                       </p>
                     </div>
                     <p className="text-sm font-semibold text-destructive">−{peso(p.sale_price)}</p>
                   </div>
-                  {p.code ? (
-                    <p className="font-mono text-sm font-semibold tracking-widest text-success">{p.code}</p>
-                  ) : (
+                  {p.codes.length === 0 ? (
                     <StatusBadge tone="muted">Code unavailable</StatusBadge>
+                  ) : many ? (
+                    <>
+                      {summary ? (
+                        <p className="text-[11px] font-medium text-muted-foreground">{summary}</p>
+                      ) : null}
+                      <button
+                        type="button"
+                        aria-expanded={open}
+                        className="text-[11px] font-medium text-primary underline-offset-2 hover:underline"
+                        onClick={() => {
+                          const next = open ? null : p.id;
+                          setOpenSale(next);
+                          if (next) void loadStatuses(p);
+                        }}
+                      >
+                        {open
+                          ? "Hide voucher codes"
+                          : `View ${p.codes.length} voucher codes`}
+                      </button>
+                      {open ? (
+                        <div className="mt-1 space-y-1 rounded-md bg-muted/50 p-2">
+                          {statusBusy === p.id ? (
+                            <p className="text-[11px] text-muted-foreground">
+                              Checking voucher status…
+                            </p>
+                          ) : null}
+                          {p.codes.map((code) => {
+                            const label = codeStatuses
+                              ? codeStatusLabel(code, codeStatuses)
+                              : null;
+                            return (
+                              <div key={code} className="flex items-center justify-between gap-2">
+                                <p className="font-mono text-sm font-semibold tracking-widest text-success">
+                                  {code}
+                                </p>
+                                {label ? (
+                                  <StatusBadge tone={label === "Unused" ? "success" : "muted"}>
+                                    {label}
+                                  </StatusBadge>
+                                ) : null}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+                    </>
+                  ) : (
+                    <p className="font-mono text-sm font-semibold tracking-widest text-success">
+                      {p.codes[0]}
+                    </p>
                   )}
-                  {/* Presentation only: Download | Share | Print act on the
-                      exact voucher already issued by this transaction. */}
+                  {/* Presentation only: Download | Share | Print act on every
+                      voucher already issued by this exact transaction. */}
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      disabled={!p.code || busyId === p.id}
+                      disabled={p.codes.length === 0 || busyId === p.id}
                       onClick={() => void saveVoucher(p)}
                     >
-                      <Download className="size-4" /> Download
+                      <Download className="size-4" />
+                      {many ? `Download ${p.codes.length}` : "Download"}
                     </Button>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      disabled={!p.code || busyId === p.id}
+                      disabled={p.codes.length === 0 || busyId === p.id}
                       onClick={() => void shareVoucher(p)}
                     >
-                      <Share2 className="size-4" /> Share
+                      <Share2 className="size-4" />
+                      {many ? `Share ${p.codes.length}` : "Share"}
                     </Button>
                     <Button asChild variant="outline" size="sm">
                       <Link to="/print/vouchers/$saleId" params={{ saleId: p.id }}>
@@ -331,7 +389,9 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
                     </Button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
+
             </CardContent>
           </Card>
         )
