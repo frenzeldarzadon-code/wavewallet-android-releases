@@ -25,6 +25,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { superadminSetShopPlan } from "@/lib/go-live";
+import {
+  DEFAULT_PLAN_DURATION,
+  PLAN_DURATION_OPTIONS,
+  durationQuote,
+  freeMonths,
+  isPromotion,
+  planDurationOption,
+  serviceEndsAt,
+} from "@/lib/subscription-promotions";
 import { SubscriptionPlansCard } from "@/components/super/subscription-plans-card";
 import { GoLiveRequestsCard } from "@/components/super/go-live-requests-card";
 import { planLabel } from "@/lib/subscription-plan-label";
