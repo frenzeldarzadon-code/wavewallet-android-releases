@@ -319,9 +319,9 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
             <CardContent className="divide-y divide-border px-0 py-0">
               {purchases.map((p) => {
                 const many = p.codes.length > 1;
-                const open = openSale === p.id;
-                const codeStatuses = statuses[p.id];
-                const summary = codeStatuses ? statusSummary(p.codes, codeStatuses) : null;
+                const open = openSale === p.id || p.codes.length <= 5;
+                const summary = many ? statusSummary(p.codes, statuses) : null;
+                const shown = open ? p.codes : p.codes.slice(0, 5);
                 return (
                 <div key={p.id} className="space-y-1 px-4 py-3">
                   <div className="flex items-start justify-between gap-3">
@@ -338,57 +338,48 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
                   </div>
                   {p.codes.length === 0 ? (
                     <StatusBadge tone="muted">Code unavailable</StatusBadge>
-                  ) : many ? (
+                  ) : (
                     <>
                       {summary ? (
                         <p className="text-[11px] font-medium text-muted-foreground">{summary}</p>
                       ) : null}
-                      <button
-                        type="button"
-                        aria-expanded={open}
-                        className="text-[11px] font-medium text-primary underline-offset-2 hover:underline"
-                        onClick={() => {
-                          const next = open ? null : p.id;
-                          setOpenSale(next);
-                          if (next) void loadStatuses(p);
-                        }}
-                      >
-                        {open
-                          ? "Hide voucher codes"
-                          : `View ${p.codes.length} voucher codes`}
-                      </button>
-                      {open ? (
-                        <div className="mt-1 space-y-1 rounded-md bg-muted/50 p-2">
-                          {statusBusy === p.id ? (
-                            <p className="text-[11px] text-muted-foreground">
-                              Checking voucher status…
-                            </p>
-                          ) : null}
-                          {p.codes.map((code) => {
-                            const label = codeStatuses
-                              ? codeStatusLabel(code, codeStatuses)
-                              : null;
-                            return (
-                              <div key={code} className="flex items-center justify-between gap-2">
-                                <p className="font-mono text-sm font-semibold tracking-widest text-success">
-                                  {code}
-                                </p>
-                                {label ? (
-                                  <StatusBadge tone={label === "Unused" ? "success" : "muted"}>
-                                    {label}
-                                  </StatusBadge>
-                                ) : null}
-                              </div>
-                            );
-                          })}
-                        </div>
+                      <div className="mt-1 space-y-1 rounded-md bg-muted/50 p-2">
+                        {statusBusy ? (
+                          <p className="text-[11px] text-muted-foreground">Checking voucher status…</p>
+                        ) : null}
+                        {shown.map((code) => {
+                          const label = codeStatusLabel(code, statuses);
+                          return (
+                            <div key={code} className="flex items-center justify-between gap-2">
+                              <p className="font-mono text-sm font-semibold tracking-widest text-success">
+                                {code}
+                              </p>
+                              {label ? (
+                                <StatusBadge tone={label === "Unused" ? "success" : "muted"}>
+                                  {label}
+                                </StatusBadge>
+                              ) : statusBusy ? null : (
+                                <StatusBadge tone="muted">
+                                  {omadaConfigured ? "Status unavailable" : "No status"}
+                                </StatusBadge>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {p.codes.length > 5 ? (
+                        <button
+                          type="button"
+                          aria-expanded={open}
+                          className="text-[11px] font-medium text-primary underline-offset-2 hover:underline"
+                          onClick={() => setOpenSale(open ? null : p.id)}
+                        >
+                          {open ? "Show fewer codes" : `View all ${p.codes.length} voucher codes`}
+                        </button>
                       ) : null}
                     </>
-                  ) : (
-                    <p className="font-mono text-sm font-semibold tracking-widest text-success">
-                      {p.codes[0]}
-                    </p>
                   )}
+
                   {/* Presentation only: Download | Share | Print act on every
                       voucher already issued by this exact transaction. */}
                   <div className="mt-1 flex flex-wrap items-center gap-2">
