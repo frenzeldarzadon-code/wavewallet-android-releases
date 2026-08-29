@@ -76,6 +76,12 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
     setEntries(l);
     setPurchases(p);
     setLots(k);
+    // Cashback origin comes from the sale's own recorded buyer role — one
+    // batched read, never a per-row query.
+    const saleIds = l
+      .filter((e) => isCashbackEntry(e) && e.sale_id)
+      .map((e) => e.sale_id as string);
+    setSources(await fetchCashbackSources(saleIds));
     setLoading(false);
   }, [userId, scopeId]);
 
@@ -85,32 +91,38 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
 
   // Presentation-only grouping: one voucher purchase renders as one row, with
   // the viewer's own cashback summarised inside it. No amounts are recomputed.
-  const rows = useMemo(() => buildCoinHistory(entries), [entries]);
+  const rows = useMemo(() => buildCoinHistory(entries, sources), [entries, sources]);
   const visibleRows = useMemo(() => filterCoinHistory(rows, direction), [rows, direction]);
 
   // Presentation only: re-renders the image for a voucher already issued.
-  const voucherImageData = (p: Purchase): VoucherImageData => ({
-    code: p.code ?? "",
+  const voucherImageData = (p: Purchase, code: string, index: number): VoucherImageData => ({
+    code,
     productName: p.product_name,
     description: null,
     priceLabel: peso(Number(p.list_price ?? p.sale_price)),
     shopName: shopName ?? "WaveWallet",
     customerName: null,
     paymentStatus: null,
-    index: 1,
-    total: 1,
+    index: index + 1,
+    total: p.codes.length,
     txId: p.tx_id,
     issuedAt: new Date(p.created_at),
   });
 
+  /** Every code of this exact transaction — never another transaction's. */
   const saveVoucher = async (p: Purchase) => {
-    if (!p.code) return;
+    if (p.codes.length === 0) return;
     setBusyId(p.id);
+    let saved = 0;
     try {
-      const data = voucherImageData(p);
-      const blob = await renderVoucherImage(data);
-      await downloadBlob(blob, voucherFileName(data));
-      toast.success("Voucher image saved");
+      for (const [i, code] of p.codes.entries()) {
+        const data = voucherImageData(p, code, i);
+        const blob = await renderVoucherImage(data);
+        await downloadBlob(blob, voucherFileName(data));
+        saved += 1;
+        if (p.codes.length > 1) await new Promise((r) => setTimeout(r, 400));
+      }
+      toast.success(`Saved ${saved} voucher image${saved > 1 ? "s" : ""}`);
     } catch (e) {
       toast.error("Could not save the image", { description: (e as Error).message });
     } finally {
@@ -119,20 +131,50 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
   };
 
   const shareVoucher = async (p: Purchase) => {
-    if (!p.code) return;
+    if (p.codes.length === 0) return;
     setBusyId(p.id);
+    let shared = 0;
+    let downloaded = 0;
     try {
-      const data = voucherImageData(p);
-      const blob = await renderVoucherImage(data);
-      const outcome = await shareVoucherImage(blob, voucherFileName(data), p.product_name);
-      if (outcome === "shared") toast.success("Shared");
-      else if (outcome === "downloaded") toast.success("Sharing isn't available here — image saved");
+      for (const [i, code] of p.codes.entries()) {
+        const data = voucherImageData(p, code, i);
+        const blob = await renderVoucherImage(data);
+        const outcome = await shareVoucherImage(blob, voucherFileName(data), p.product_name);
+        if (outcome === "shared") shared += 1;
+        else if (outcome === "downloaded") downloaded += 1;
+        else break; // Share sheet dismissed.
+      }
+      if (shared > 0) toast.success(`Shared ${shared} voucher${shared > 1 ? "s" : ""}`);
+      else if (downloaded > 0)
+        toast.success("Sharing isn't available here — image saved instead");
     } catch (e) {
       toast.error("Could not share the image", { description: (e as Error).message });
     } finally {
       setBusyId(null);
     }
   };
+
+  /**
+   * Omada status for the codes of ONE transaction, fetched on demand when the
+   * row is expanded and cached per transaction (batched, never per voucher).
+   */
+  const loadStatuses = async (p: Purchase) => {
+    if (!scopeId || p.codes.length === 0 || statuses[p.id]) return;
+    setStatusBusy(p.id);
+    try {
+      const res = await lookupOmadaVoucherStatuses({
+        data: { ecosystemId: scopeId, codes: p.codes },
+      });
+      const map: CodeStatusMap = {};
+      for (const code of p.codes) map[code.toUpperCase()] = res.statuses[code.toUpperCase()] ?? null;
+      setStatuses((s) => ({ ...s, [p.id]: map }));
+    } catch {
+      setStatuses((s) => ({ ...s, [p.id]: {} }));
+    } finally {
+      setStatusBusy(null);
+    }
+  };
+
 
   if (!account) return null;
 
