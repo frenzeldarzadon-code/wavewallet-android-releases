@@ -44,7 +44,7 @@ function ResellerStatusChecker() {
       title="Status Check"
       description="Your assigned antennas and voucher lookup for this shop."
     >
-      <Tabs defaultValue="antenna" className="w-full">
+      <Tabs defaultValue={tab ?? (code ? "voucher" : "antenna")} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="antenna" className="text-xs sm:text-sm">
             Antenna Status
