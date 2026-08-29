@@ -32,7 +32,7 @@ describe("voucher transaction grouping", () => {
       D: "unused",
       E: "expired",
     });
-    expect(summary).toBe("2 Used · 2 Unused · 1 Expired");
+    expect(summary).toBe("2 In-use · 2 Unused · 1 Expired");
   });
 
   it("reports codes Omada could not answer for separately", () => {

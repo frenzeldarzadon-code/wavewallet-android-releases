@@ -13,7 +13,7 @@ import type { VoucherState } from "@/lib/omada-voucher-view";
 /** Omada's own labels — never renamed, never extended. */
 export const OMADA_STATUS_LABEL: Record<VoucherState, string> = {
   unused: "Unused",
-  in_use: "Used",
+  in_use: "In-use",
   expired: "Expired",
 };
 
@@ -44,7 +44,7 @@ export type CodeStatusMap = Record<string, VoucherState | null>;
 
 /**
  * Compact summary of the individual Omada statuses of one transaction,
- * e.g. "2 Used · 2 Unused · 1 Expired". Codes without an Omada answer are
+ * e.g. "2 In-use · 2 Unused · 1 Expired". Codes without an Omada answer are
  * reported separately instead of being folded into a state.
  */
 export function statusSummary(codes: string[], statuses: CodeStatusMap): string | null {
