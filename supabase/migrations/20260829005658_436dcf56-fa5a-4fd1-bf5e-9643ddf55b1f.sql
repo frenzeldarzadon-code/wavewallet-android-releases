@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.super_admin_bootstrap_available() TO anon;
