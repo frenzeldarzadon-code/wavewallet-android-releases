@@ -497,24 +497,28 @@ function OverrideDialog({
   onDone: () => void;
 }) {
   const [planId, setPlanId] = useState("");
-  const [months, setMonths] = useState("1");
+  const [duration, setDuration] = useState(DEFAULT_PLAN_DURATION.value);
   const [discount, setDiscount] = useState("0");
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     setPlanId("");
-    setMonths("1");
+    setDuration(DEFAULT_PLAN_DURATION.value);
     setDiscount("0");
     setReason("");
   }, [shop?.id]);
 
   const plan = plans.find((p) => p.id === planId) ?? null;
   const pct = Math.max(0, Math.min(100, Number(discount) || 0));
-  const monthCount = Math.max(1, Math.min(24, Number(months) || 1));
-  const charged = plan
-    ? Math.round(Number(plan.monthly_price) * monthCount * (100 - pct)) / 100
-    : 0;
+  const option = planDurationOption(duration);
+  const quote = durationQuote({
+    monthlyPrice: plan?.monthly_price ?? 0,
+    option,
+    discountPercent: pct,
+  });
+  const charged = quote.total;
+  const endsAt = serviceEndsAt(shop?.current_period_end ?? null, option);
 
   const confirm = async () => {
     if (!shop || !plan) return;
@@ -523,7 +527,8 @@ function OverrideDialog({
       await superadminSetShopPlan({
         ecosystemId: shop.id,
         planId: plan.id,
-        months: monthCount,
+        months: option.serviceMonths,
+        paidMonths: option.paidMonths,
         discountPercent: pct,
         reason,
       });
