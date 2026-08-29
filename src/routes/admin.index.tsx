@@ -115,7 +115,10 @@ function AdminDashboard() {
       ) : null}
       </DevSlot>
 
-      {!shop.isDemo ? (
+      {/* Legacy shops are not subscription shops: they keep their own
+          arrangement, so no plan countdown, expiry or Go Live prompt is ever
+          shown to their admin. `shop_kind` is the only source of truth. */}
+      {shop.isNewGeneration && !shop.isDemo ? (
         <DevSlot name="dashboard.subscription">
           <SubscriptionCountdownCard
             planName={ecosystem.subscription?.planName}
