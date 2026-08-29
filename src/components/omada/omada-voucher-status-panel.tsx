@@ -9,7 +9,7 @@
  * tracking by any member of that shop. A code that does not exist reads "Voucher not found"; a controller
  * problem reads as a controller problem — never as a missing voucher.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -278,6 +278,32 @@ export function OmadaVoucherStatusPanel({
       .then((next) => setState(next))
       .catch(() => setState(null));
   }, [check]);
+
+  // A code handed over from History is prefilled (useState above) and checked
+  // automatically, exactly once per code — the same lookup the Check button runs.
+  const autoChecked = useRef<string | null>(null);
+  useEffect(() => {
+    if (!initialCode || !ecosystemId || !state?.configured) return;
+    if (autoChecked.current === initialCode) return;
+    autoChecked.current = initialCode;
+    setBusy(true);
+    void lookupOmadaVoucher({ data: { ecosystemId, code: initialCode } })
+      .then(async (next) => {
+        if (!next) return;
+        setState(next);
+        if (next.outcome === "found" || next.sessions.length > 0) {
+          try {
+            setRecords(await fetchVoucherTracers(ecosystemId, initialCode));
+          } catch {
+            setRecords([]);
+          }
+        } else {
+          setRecords([]);
+        }
+      })
+      .catch((e) => toast.error("Could not check that voucher", { description: (e as Error).message }))
+      .finally(() => setBusy(false));
+  }, [initialCode, ecosystemId, state?.configured]);
 
   const loadTracers = useCallback(
     async (voucherCode: string, shopId: string | null) => {
