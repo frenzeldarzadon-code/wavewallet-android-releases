@@ -983,6 +983,11 @@ export const importGeneratedVoucherCodes = createServerFn({ method: "POST" })
         .eq("ecosystem_id", data.ecosystemId);
     }
 
+    // Newly imported codes must be read live, never from the status memo.
+    (await import("./omada-status-cache.server")).forgetStatuses(data.ecosystemId);
+
+
+
     return {
       importedCount: result?.imported_count ?? 0,
       duplicateCount: (result?.duplicate_count ?? 0) + review.duplicateInInventory,
