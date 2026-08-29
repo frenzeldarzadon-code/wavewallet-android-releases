@@ -571,18 +571,22 @@ function OverrideDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="ov-months">Months</Label>
-              <Input
-                id="ov-months"
-                type="number"
-                min={1}
-                max={24}
-                value={months}
-                onChange={(e) => setMonths(e.target.value)}
-              />
+              <Label>Duration / promotion</Label>
+              <Select value={duration} onValueChange={setDuration}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PLAN_DURATION_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ov-discount">Discount %</Label>
+              <Label htmlFor="ov-discount">Extra discount %</Label>
               <Input
                 id="ov-discount"
                 type="number"
@@ -603,10 +607,32 @@ function OverrideDialog({
               placeholder="Partner shop — first 3 months free"
             />
           </div>
-          <p className="text-xs text-muted-foreground">
-            Charged: <strong>{peso(charged)}</strong>
-            {pct === 100 ? " — free subscription on a full plan" : ""}
-          </p>
+          {plan ? (
+            <Card className="bg-muted/40">
+              <CardContent className="space-y-1 px-4 py-3 text-xs">
+                <Row
+                  label="Service period"
+                  value={`${quote.serviceMonths} month${quote.serviceMonths === 1 ? "" : "s"} (${quote.serviceDays} days)`}
+                />
+                <Row
+                  label="Months charged"
+                  value={`${quote.paidMonths} × ${peso(Number(plan.monthly_price))}`}
+                />
+                {isPromotion(option) ? (
+                  <Row
+                    label="Promotion"
+                    value={`${freeMonths(option)} months free — normally ${peso(quote.listAmount)}`}
+                  />
+                ) : null}
+                {pct > 0 ? <Row label="Extra discount" value={`${pct}%`} /> : null}
+                <Row label="Total charged" value={peso(charged)} strong />
+                <Row label="Expires" value={endsAt.toLocaleDateString()} strong />
+                {pct === 100 ? (
+                  <p className="text-muted-foreground">Free subscription on a full plan.</p>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
         </div>
 
         <DialogFooter>
