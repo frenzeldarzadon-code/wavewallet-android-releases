@@ -30,13 +30,14 @@ export const Route = createFileRoute("/app/omada")({
   }),
   validateSearch: (search: Record<string, unknown>) => ({
     code: typeof search["code"] === "string" && search["code"] ? search["code"] : undefined,
+    tab: search["tab"] === "voucher" || search["tab"] === "antenna" ? search["tab"] : undefined,
   }),
   component: MemberOmada,
 });
 
 function MemberOmada() {
   const { ecosystemDbId } = useSession("customer");
-  const { code } = Route.useSearch();
+  const { code, tab } = Route.useSearch();
   return (
     <PageSection
       title="Status Check"
