@@ -29,7 +29,7 @@ export const Route = createFileRoute("/app/omada")({
     ],
   }),
   validateSearch: (search: Record<string, unknown>) => ({
-    code: typeof search.code === "string" && search.code ? search.code : undefined,
+    code: typeof search["code"] === "string" && search["code"] ? search["code"] : undefined,
   }),
   component: MemberOmada,
 });

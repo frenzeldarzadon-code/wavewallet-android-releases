@@ -30,7 +30,7 @@ export const Route = createFileRoute("/reseller/omada")({
     ],
   }),
   validateSearch: (search: Record<string, unknown>) => ({
-    code: typeof search.code === "string" && search.code ? search.code : undefined,
+    code: typeof search["code"] === "string" && search["code"] ? search["code"] : undefined,
   }),
   component: ResellerStatusChecker,
 });
