@@ -7686,6 +7686,14 @@ export type Database = {
           recipient_id: string
         }[]
       }
+      cashback_sale_sources: {
+        Args: { _sale_ids: string[] }
+        Returns: {
+          buyer_role: Database["public"]["Enums"]["app_role"]
+          quantity: number
+          sale_id: string
+        }[]
+      }
       cashback_split_preview: {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: Json

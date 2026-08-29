@@ -8,6 +8,8 @@
 import { requireOnline } from "@/lib/offline-guard";
 import { supabase } from "@/integrations/supabase/client";
 import { peso } from "@/lib/wavewallet";
+import { groupSaleCodes } from "@/lib/voucher-transactions";
+
 
 export interface CreditEntry {
   id: string;
@@ -445,7 +447,13 @@ export async function fetchSales(ecosystemId: string, limit = 50): Promise<SaleR
   }));
 }
 
-/** Buyer-visible purchases (RLS returns only the caller's own rows). */
+/**
+ * Buyer-visible purchases (RLS returns only the caller's own rows).
+ *
+ * One sale is one transaction: every code that sale issued is attached to it
+ * through `voucher_codes.sale_id`, so a quantity-5 purchase keeps its five
+ * codes together and can never pick up a code from another transaction.
+ */
 export async function fetchMyPurchases(userId: string, ecosystemId: string | null) {
   const sold = supabase
     .from("voucher_sales")
@@ -458,14 +466,21 @@ export async function fetchMyPurchases(userId: string, ecosystemId: string | nul
       .limit(100),
     ecosystemId ? owned.eq("ecosystem_id", ecosystemId) : owned,
   ]);
-  const codeBySale = new Map((codes ?? []).map((c) => [c.sale_id, c.code]));
-  return ((sales ?? []) as unknown as SaleRow[]).map((s) => ({
-    ...s,
-    sale_price: Number(s.sale_price),
-    list_price: Number(s.list_price),
-    code: codeBySale.get(s.id) ?? null,
-  }));
+  const codesBySale = groupSaleCodes((codes ?? []) as { code: string; sale_id: string | null }[]);
+  return ((sales ?? []) as unknown as SaleRow[]).map((s) => {
+    const list = codesBySale.get(s.id) ?? [];
+    return {
+      ...s,
+      sale_price: Number(s.sale_price),
+      list_price: Number(s.list_price),
+      /** All codes of this exact transaction. */
+      codes: list,
+      /** First code, kept for callers that show a single voucher. */
+      code: list[0] ?? null,
+    };
+  });
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Mutations (all authorized inside the database)                      */
