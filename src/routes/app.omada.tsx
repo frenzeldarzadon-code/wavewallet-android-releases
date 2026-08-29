@@ -30,7 +30,7 @@ export const Route = createFileRoute("/app/omada")({
   }),
   validateSearch: (
     search: Record<string, unknown>,
-  ): { code?: string; tab?: "antenna" | "voucher" } => ({
+  ): { code?: string | undefined; tab?: "antenna" | "voucher" | undefined } => ({
     code: typeof search["code"] === "string" && search["code"] ? search["code"] : undefined,
     tab: search["tab"] === "voucher" || search["tab"] === "antenna" ? search["tab"] : undefined,
   }),

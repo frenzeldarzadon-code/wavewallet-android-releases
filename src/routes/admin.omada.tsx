@@ -37,7 +37,7 @@ export const Route = createFileRoute("/admin/omada")({
   }),
   validateSearch: (
     search: Record<string, unknown>,
-  ): { code?: string; tab?: "connection" | "devices" | "generate" | "status" } => ({
+  ): { code?: string | undefined; tab?: "connection" | "devices" | "generate" | "status" | undefined } => ({
     code: typeof search["code"] === "string" && search["code"] ? search["code"] : undefined,
     tab:
       search["tab"] === "connection" ||
