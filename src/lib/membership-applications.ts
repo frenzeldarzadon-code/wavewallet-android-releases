@@ -172,3 +172,45 @@ export function validateSignupDraft(d: SignupDraft, allowedSlugs: string[]): str
   if (d.password !== d.confirm) return "Passwords do not match.";
   return null;
 }
+
+/* ------------------------------------------------------------------ */
+/* Removing a member who was already kept                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Coin balance in THIS shop for each kept member, keyed by review record id.
+ * The database only returns rows for shops the caller may review.
+ */
+export async function fetchReviewBalances(
+  applicationIds: string[],
+): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  if (applicationIds.length === 0) return out;
+  const { data, error } = await supabase.rpc("membership_review_balances", {
+    _application_ids: applicationIds,
+  });
+  if (error) return out;
+  for (const row of (data ?? []) as { application_id: string; balance: number | string }[]) {
+    out.set(row.application_id, Number(row.balance ?? 0));
+  }
+  return out;
+}
+
+/**
+ * Removes a KEPT member from this shop only. The database re-checks the shop
+ * and refuses unless the member's balance in that shop is exactly zero; the
+ * account, history and other shop memberships are untouched.
+ */
+export async function removeKeptMember(applicationId: string, reason?: string): Promise<void> {
+  const trimmed = reason?.trim();
+  const { error } = await supabase.rpc("remove_kept_shop_member", {
+    _application_id: applicationId,
+    ...(trimmed ? { _reason: trimmed } : {}),
+  });
+  if (error) throw new Error(error.message);
+}
+
+/** UI mirror of the database rule: removal needs an exactly-zero shop balance. */
+export function canRemoveKeptMember(balance: number | undefined): boolean {
+  return balance !== undefined && Number(balance) === 0;
+}

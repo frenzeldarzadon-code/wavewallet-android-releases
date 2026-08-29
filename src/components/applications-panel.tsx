@@ -36,7 +36,10 @@ import {
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import {
   REVIEW_LABEL,
+  canRemoveKeptMember,
   fetchApplications,
+  fetchReviewBalances,
+  removeKeptMember,
   reviewApplication,
   reviewState,
   reviewTone,
@@ -44,6 +47,11 @@ import {
   type MembershipApplication,
 } from "@/lib/membership-applications";
 import { shortDateTime } from "@/lib/wavewallet";
+
+/** Two-decimal coin amount, e.g. 0.00 */
+const coinAmount = (n: number) => n.toFixed(2);
+
+
 
 export function ApplicationsPanel({
   ecosystemId,
@@ -62,12 +70,19 @@ export function ApplicationsPanel({
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [remove, setRemove] = useState<MembershipApplication | null>(null);
+  /** Set when the dialog is removing a member who was already kept. */
+  const [removeKept, setRemoveKept] = useState(false);
   const [reason, setReason] = useState("");
+  /** Shop balance per kept member — the removal gate the database also enforces. */
+  const [balances, setBalances] = useState<Map<string, number>>(new Map());
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      setRows(await fetchApplications({ ecosystemId: ecosystemId ?? null, status }));
+      const next = await fetchApplications({ ecosystemId: ecosystemId ?? null, status });
+      setRows(next);
+      const keptIds = next.filter((r) => r.status === "approved").map((r) => r.id);
+      setBalances(await fetchReviewBalances(keptIds));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not load new members.");
     } finally {
@@ -97,6 +112,24 @@ export function ApplicationsPanel({
       setBusy(null);
     }
   };
+
+  /** Removes a member who was previously kept — this shop only, zero balance only. */
+  const removeFromShop = async (row: MembershipApplication, why?: string) => {
+    setBusy(row.id);
+    try {
+      await removeKeptMember(row.id, why);
+      toast.success(`${row.full_name || row.email} was removed from this shop only.`);
+      setRemove(null);
+      setRemoveKept(false);
+      setReason("");
+      await load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not remove this member.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
 
   const openCount = rows.filter((r) => r.status === "pending").length;
 
@@ -195,13 +228,38 @@ export function ApplicationsPanel({
                         disabled={busy === row.id}
                         onClick={() => {
                           setReason("");
+                          setRemoveKept(false);
                           setRemove(row);
                         }}
                       >
                         <UserMinus className="size-4" /> Remove member
                       </Button>
                     </div>
+                  ) : state === "kept" ? (
+                    <div className="flex shrink-0 flex-col items-start gap-1 sm:items-end">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-destructive"
+                        disabled={busy === row.id || !canRemoveKeptMember(balances.get(row.id))}
+                        onClick={() => {
+                          setReason("");
+                          setRemoveKept(true);
+                          setRemove(row);
+                        }}
+                      >
+                        <UserMinus className="size-4" /> Remove from Shop
+                      </Button>
+                      {canRemoveKeptMember(balances.get(row.id)) ? null : (
+                        <p className="max-w-[16rem] text-[11px] text-warning-foreground">
+                          Balance in this shop is{" "}
+                          {coinAmount(Number(balances.get(row.id) ?? 0))} coins. It must be exactly
+                          0.00 before this member can be removed from this shop.
+                        </p>
+                      )}
+                    </div>
                   ) : null}
+
                 </CardContent>
               </Card>
             );
@@ -214,10 +272,13 @@ export function ApplicationsPanel({
           <DialogHeader>
             <DialogTitle>Remove member from this shop?</DialogTitle>
             <DialogDescription>
-              {remove?.full_name || remove?.email} loses access to this shop only. Their coins,
-              points, history and their memberships in other shops are never touched, and a member
-              who still holds coins here cannot be removed until those coins are used or
-              transferred. The reason is optional and is kept in the audit trail.
+              {remove?.full_name || remove?.email} is removed from THIS SHOP ONLY. This does not
+              delete their WaveWallet account and does not affect their membership in any other
+              shop. All past transactions and records are kept — only the shop membership ends.
+              {removeKept
+                ? " Their balance in this shop must be exactly 0.00, and the database re-checks that before removing them."
+                : " A member who still holds coins here cannot be removed until those coins are used or transferred."}{" "}
+              The reason is optional and is kept in the audit trail.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">
@@ -236,10 +297,16 @@ export function ApplicationsPanel({
             <Button
               variant="destructive"
               disabled={busy !== null}
-              onClick={() => remove && void decide(remove, false, reason)}
+              onClick={() =>
+                remove &&
+                void (removeKept
+                  ? removeFromShop(remove, reason)
+                  : decide(remove, false, reason))
+              }
             >
               Remove from this shop
             </Button>
+
           </DialogFooter>
         </DialogContent>
       </Dialog>
