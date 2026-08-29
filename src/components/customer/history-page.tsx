@@ -74,6 +74,11 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [sources, setSources] = useState<CashbackSourceMap>({});
+  /** Per-transaction Omada statuses, loaded on demand. */
+  const [statuses, setStatuses] = useState<Record<string, CodeStatusMap>>({});
+  const [statusBusy, setStatusBusy] = useState<string | null>(null);
+  const [openSale, setOpenSale] = useState<string | null>(null);
   const userId = account?.id ?? null;
   const scopeId = ecosystemId === undefined ? ecosystemDbId : ecosystemId;
 
