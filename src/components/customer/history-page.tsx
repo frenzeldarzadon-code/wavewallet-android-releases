@@ -67,6 +67,25 @@ export interface HistoryPageProps {
 export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }: HistoryPageProps = {}) {
   const { account, ecosystemDbId } = useSession();
   const navigate = useNavigate();
+
+  // One tap on a voucher code: copy it (best-effort) and open the existing
+  // Status Check tab with that exact code prefilled. No extra lookup runs here.
+  const inspectVoucher = useCallback(
+    async (code: string) => {
+      try {
+        await navigator.clipboard?.writeText(code);
+        toast.success("Code copied");
+      } catch {
+        // Clipboard permission unavailable — navigation/prefill still works.
+      }
+      const reseller = account?.role === "reseller" || account?.role === "subreseller";
+      await navigate({
+        to: reseller ? "/reseller/omada" : "/app/omada",
+        search: { code },
+      });
+    },
+    [account?.role, navigate],
+  );
   const [filter, setFilter] = useState("all");
   const [direction, setDirection] = useState<"all" | "credit" | "debit">("all");
   const [entries, setEntries] = useState<CreditEntry[]>([]);
