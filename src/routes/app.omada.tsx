@@ -57,7 +57,7 @@ function MemberOmada() {
         </TabsContent>
 
         <TabsContent value="voucher" className="mt-4">
-          <OmadaVoucherStatusPanel ecosystemId={ecosystemDbId} />
+          <OmadaVoucherStatusPanel ecosystemId={ecosystemDbId} initialCode={code} />
         </TabsContent>
       </Tabs>
     </PageSection>
