@@ -437,6 +437,9 @@ export const lookupOmadaVoucherStatuses = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }): Promise<OmadaBatchStatuses> => {
     await assertShopMember(context as unknown as AuthContext, data.ecosystemId);
+    const { cachedStatuses, rememberStatuses } = await import("./omada-status-cache.server");
+    const hit = cachedStatuses(data.ecosystemId, data.codes);
+    if (hit) return { configured: true, statuses: hit, error: null };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { openOmadaSession } = await import("./omada-api.server");
     const { loadOmadaSpec, voucherCapabilities, listAllVoucherGroups, listVouchersInGroup } =
@@ -448,6 +451,7 @@ export const lookupOmadaVoucherStatuses = createServerFn({ method: "POST" })
     try {
       const session = await openOmadaSession(supabaseAdmin as never, data.ecosystemId);
       const caps = voucherCapabilities(await loadOmadaSpec(session));
+
       const groups = await listAllVoucherGroups(session, caps);
       const pageSize = 100;
       for (const group of groups) {
