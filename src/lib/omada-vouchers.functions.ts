@@ -7,7 +7,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { OmadaFieldSpec } from "./omada-vouchers.server";
-import { toVoucherView, type VoucherView } from "./omada-voucher-view";
+import { toVoucherView, type VoucherState, type VoucherView } from "./omada-voucher-view";
 import {
   authedRecordIndex,
   authedRecordObservations,
