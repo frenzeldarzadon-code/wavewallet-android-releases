@@ -31,13 +31,14 @@ export const Route = createFileRoute("/reseller/omada")({
   }),
   validateSearch: (search: Record<string, unknown>) => ({
     code: typeof search["code"] === "string" && search["code"] ? search["code"] : undefined,
+    tab: search["tab"] === "voucher" || search["tab"] === "antenna" ? search["tab"] : undefined,
   }),
   component: ResellerStatusChecker,
 });
 
 function ResellerStatusChecker() {
   const { ecosystemDbId } = useSession("reseller");
-  const { code } = Route.useSearch();
+  const { code, tab } = Route.useSearch();
   return (
     <PageSection
       title="Status Check"
