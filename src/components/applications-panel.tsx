@@ -272,10 +272,13 @@ export function ApplicationsPanel({
           <DialogHeader>
             <DialogTitle>Remove member from this shop?</DialogTitle>
             <DialogDescription>
-              {remove?.full_name || remove?.email} loses access to this shop only. Their coins,
-              points, history and their memberships in other shops are never touched, and a member
-              who still holds coins here cannot be removed until those coins are used or
-              transferred. The reason is optional and is kept in the audit trail.
+              {remove?.full_name || remove?.email} is removed from THIS SHOP ONLY. This does not
+              delete their WaveWallet account and does not affect their membership in any other
+              shop. All past transactions and records are kept — only the shop membership ends.
+              {removeKept
+                ? " Their balance in this shop must be exactly 0.00, and the database re-checks that before removing them."
+                : " A member who still holds coins here cannot be removed until those coins are used or transferred."}{" "}
+              The reason is optional and is kept in the audit trail.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">
@@ -294,10 +297,16 @@ export function ApplicationsPanel({
             <Button
               variant="destructive"
               disabled={busy !== null}
-              onClick={() => remove && void decide(remove, false, reason)}
+              onClick={() =>
+                remove &&
+                void (removeKept
+                  ? removeFromShop(remove, reason)
+                  : decide(remove, false, reason))
+              }
             >
               Remove from this shop
             </Button>
+
           </DialogFooter>
         </DialogContent>
       </Dialog>
