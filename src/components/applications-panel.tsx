@@ -228,13 +228,38 @@ export function ApplicationsPanel({
                         disabled={busy === row.id}
                         onClick={() => {
                           setReason("");
+                          setRemoveKept(false);
                           setRemove(row);
                         }}
                       >
                         <UserMinus className="size-4" /> Remove member
                       </Button>
                     </div>
+                  ) : state === "kept" ? (
+                    <div className="flex shrink-0 flex-col items-start gap-1 sm:items-end">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-destructive"
+                        disabled={busy === row.id || !canRemoveKeptMember(balances.get(row.id))}
+                        onClick={() => {
+                          setReason("");
+                          setRemoveKept(true);
+                          setRemove(row);
+                        }}
+                      >
+                        <UserMinus className="size-4" /> Remove from Shop
+                      </Button>
+                      {canRemoveKeptMember(balances.get(row.id)) ? null : (
+                        <p className="max-w-[16rem] text-[11px] text-warning-foreground">
+                          Balance in this shop is{" "}
+                          {coinAmount(Number(balances.get(row.id) ?? 0))} coins. It must be exactly
+                          0.00 before this member can be removed from this shop.
+                        </p>
+                      )}
+                    </div>
                   ) : null}
+
                 </CardContent>
               </Card>
             );
