@@ -253,13 +253,16 @@ function Notice({ tone, children }: { tone: "muted" | "warn"; children: React.Re
 
 export function OmadaVoucherStatusPanel({
   ecosystemId,
+  initialCode,
 }: {
   /** The shop whose controller is searched. Members of this shop only. */
   ecosystemId?: string | null;
+  /** Voucher code handed over from History — prefilled and checked once. */
+  initialCode?: string;
 }) {
   const [state, setState] = useState<OmadaVoucherStatus | null>(null);
   const [records, setRecords] = useState<TracerRecord[]>([]);
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(initialCode ?? "");
   const [busy, setBusy] = useState(false);
 
   const check = useCallback(
