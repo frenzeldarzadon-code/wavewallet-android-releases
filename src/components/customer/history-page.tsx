@@ -82,7 +82,6 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
   const [statusNote, setStatusNote] = useState<string | null>(null);
   const [omadaConfigured, setOmadaConfigured] = useState(false);
 
-  const [openSale, setOpenSale] = useState<string | null>(null);
   const userId = account?.id ?? null;
   const scopeId = ecosystemId === undefined ? ecosystemDbId : ecosystemId;
 
@@ -323,9 +322,10 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
 
               {purchases.map((p) => {
                 const many = p.codes.length > 1;
-                const open = openSale === p.id || p.codes.length <= 5;
                 const summary = many ? statusSummary(p.codes, statuses) : null;
-                const shown = open ? p.codes : p.codes.slice(0, 5);
+                // Read-only history: every code of this transaction is shown
+                // immediately — no expand/collapse, no details hyperlink.
+                const shown = p.codes;
                 return (
                 <div key={p.id} className="space-y-1 px-4 py-3">
                   <div className="flex items-start justify-between gap-3">
@@ -371,16 +371,6 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
                           );
                         })}
                       </div>
-                      {p.codes.length > 5 ? (
-                        <button
-                          type="button"
-                          aria-expanded={open}
-                          className="text-[11px] font-medium text-primary underline-offset-2 hover:underline"
-                          onClick={() => setOpenSale(open ? null : p.id)}
-                        >
-                          {open ? "Show fewer codes" : `View all ${p.codes.length} voucher codes`}
-                        </button>
-                      ) : null}
                     </>
                   )}
 
