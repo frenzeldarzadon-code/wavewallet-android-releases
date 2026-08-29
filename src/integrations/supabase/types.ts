@@ -8578,6 +8578,13 @@ export type Database = {
           role: Database["public"]["Enums"]["app_role"]
         }[]
       }
+      membership_review_balances: {
+        Args: { _application_ids: string[] }
+        Returns: {
+          application_id: string
+          balance: number
+        }[]
+      }
       membership_role: {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -9237,6 +9244,10 @@ export type Database = {
         Returns: string
       }
       remove_friend: { Args: { _user: string }; Returns: undefined }
+      remove_kept_shop_member: {
+        Args: { _application_id: string; _reason?: string }
+        Returns: undefined
+      }
       remove_push_device: { Args: { _id: string }; Returns: undefined }
       repair_listener_device: { Args: { _device: string }; Returns: Json }
       request_cash_in: {
