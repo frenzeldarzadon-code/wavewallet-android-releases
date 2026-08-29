@@ -410,6 +410,89 @@ export const lookupOmadaVoucher = createServerFn({ method: "POST" })
     return statusFor(data.ecosystemId, data.code);
   });
 
+export interface OmadaBatchStatuses {
+  configured: boolean;
+  /** Code (upper-case) → Omada state. Codes the controller does not know are absent. */
+  statuses: Record<string, VoucherState>;
+  error: string | null;
+}
+
+/**
+ * Batch status for the codes of ONE transaction, in one controller pass.
+ *
+ * The controller's voucher pages are read once per group and matched against
+ * the requested set, so a five-voucher purchase costs the same as a one-voucher
+ * purchase instead of five per-code lookups. Omada stays the source of truth:
+ * only its own status value is translated, never invented.
+ */
+export const lookupOmadaVoucherStatuses = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { ecosystemId: string; codes: string[] }) => {
+    if (!data?.ecosystemId) throw new Error("A shop is required.");
+    const codes = (data.codes ?? [])
+      .map((c) => String(c ?? "").trim().toUpperCase())
+      .filter((c) => /^[A-Za-z0-9-]{4,64}$/.test(c));
+    if (codes.length === 0) throw new Error("No voucher codes to check.");
+    return { ecosystemId: data.ecosystemId, codes: codes.slice(0, 200) };
+  })
+  .handler(async ({ data, context }): Promise<OmadaBatchStatuses> => {
+    await assertShopMember(context as unknown as AuthContext, data.ecosystemId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { openOmadaSession } = await import("./omada-api.server");
+    const { loadOmadaSpec, voucherCapabilities, listAllVoucherGroups, listVouchersInGroup } =
+      await import("./omada-vouchers.server");
+    const { voucherState } = await import("./omada-voucher-view");
+
+    const wanted = new Set(data.codes);
+    const statuses: Record<string, VoucherState> = {};
+    try {
+      const session = await openOmadaSession(supabaseAdmin as never, data.ecosystemId);
+      const caps = voucherCapabilities(await loadOmadaSpec(session));
+      const groups = await listAllVoucherGroups(session, caps);
+      const pageSize = 100;
+      for (const group of groups) {
+        if (wanted.size === 0) break;
+        const groupId = String(group["id"] ?? group["groupId"] ?? "");
+        if (!groupId) continue;
+        for (let page = 1; ; page += 1) {
+          const { rows, total } = await listVouchersInGroup(
+            session,
+            caps,
+            groupId,
+            page,
+            pageSize,
+          );
+          for (const row of rows) {
+            const code = String(row["code"] ?? "").toUpperCase();
+            if (!wanted.has(code)) continue;
+            const state = voucherState(row["status"] ?? row["state"]);
+            if (state) statuses[code] = state;
+            wanted.delete(code);
+          }
+          if (
+            wanted.size === 0 ||
+            rows.length === 0 ||
+            rows.length < pageSize ||
+            page * pageSize >= total
+          )
+            break;
+        }
+      }
+      return { configured: true, statuses, error: null };
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      if (message.includes("no Omada controller connected"))
+        return { configured: false, statuses: {}, error: null };
+      return {
+        configured: true,
+        statuses,
+        error: "The hotspot controller could not be reached, so voucher status is unavailable.",
+      };
+    }
+  });
+
+
+
 
 /* ------------------------------------------------------------------ *
  * Shop-specific voucher generation workflow.
