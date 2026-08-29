@@ -75,9 +75,13 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
   const [expanded, setExpanded] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [sources, setSources] = useState<CashbackSourceMap>({});
-  /** Per-transaction Omada statuses, loaded on demand. */
-  const [statuses, setStatuses] = useState<Record<string, CodeStatusMap>>({});
-  const [statusBusy, setStatusBusy] = useState<string | null>(null);
+  /** Omada statuses for every code on this page, fetched in one batched pass. */
+  const [statuses, setStatuses] = useState<CodeStatusMap>({});
+  const [statusBusy, setStatusBusy] = useState(false);
+  /** Why no status is shown (controller unreachable / not connected). */
+  const [statusNote, setStatusNote] = useState<string | null>(null);
+  const [omadaConfigured, setOmadaConfigured] = useState(false);
+
   const [openSale, setOpenSale] = useState<string | null>(null);
   const userId = account?.id ?? null;
   const scopeId = ecosystemId === undefined ? ecosystemDbId : ecosystemId;
@@ -172,25 +176,51 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
   };
 
   /**
-   * Omada status for the codes of ONE transaction, fetched on demand when the
-   * row is expanded and cached per transaction (batched, never per voucher).
+   * Omada status for every code on this page, in ONE batched controller pass.
+   * Runs as soon as the purchases are known so quantity-1 rows show a status
+   * too — nothing is hidden behind an expander.
    */
-  const loadStatuses = async (p: Purchase) => {
-    if (!scopeId || p.codes.length === 0 || statuses[p.id]) return;
-    setStatusBusy(p.id);
-    try {
-      const res = await lookupOmadaVoucherStatuses({
-        data: { ecosystemId: scopeId, codes: p.codes },
-      });
-      const map: CodeStatusMap = {};
-      for (const code of p.codes) map[code.toUpperCase()] = res.statuses[code.toUpperCase()] ?? null;
-      setStatuses((s) => ({ ...s, [p.id]: map }));
-    } catch {
-      setStatuses((s) => ({ ...s, [p.id]: {} }));
-    } finally {
-      setStatusBusy(null);
+  useEffect(() => {
+    const codes = Array.from(
+      new Set(purchases.flatMap((p) => p.codes.map((c) => c.toUpperCase()))),
+    ).slice(0, 200);
+    if (!scopeId || codes.length === 0) {
+      setStatuses({});
+      setStatusNote(null);
+      setOmadaConfigured(false);
+      return;
     }
-  };
+    let cancelled = false;
+    setStatusBusy(true);
+    setStatusNote(null);
+    void (async () => {
+      try {
+        const res = await lookupOmadaVoucherStatuses({ data: { ecosystemId: scopeId, codes } });
+        if (cancelled) return;
+        const map: CodeStatusMap = {};
+        for (const code of codes) map[code] = res.statuses[code] ?? null;
+        setStatuses(map);
+        setOmadaConfigured(res.configured);
+        setStatusNote(
+          res.error ??
+            (res.configured
+              ? null
+              : "This shop has no hotspot controller connected, so voucher status is unavailable."),
+        );
+      } catch (e) {
+        if (cancelled) return;
+        setStatuses({});
+        setOmadaConfigured(false);
+        setStatusNote((e as Error).message || "Voucher status could not be loaded.");
+      } finally {
+        if (!cancelled) setStatusBusy(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [purchases, scopeId]);
+
 
 
   if (!account) return null;
@@ -286,12 +316,16 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
           <EmptyState title="No voucher purchases yet" description="Buy a voucher from the shop to see it here." />
         ) : (
           <Card className="shadow-[var(--shadow-card)]">
+            {statusNote ? (
+              <p className="px-4 pt-3 text-[11px] text-muted-foreground">{statusNote}</p>
+            ) : null}
             <CardContent className="divide-y divide-border px-0 py-0">
+
               {purchases.map((p) => {
                 const many = p.codes.length > 1;
-                const open = openSale === p.id;
-                const codeStatuses = statuses[p.id];
-                const summary = codeStatuses ? statusSummary(p.codes, codeStatuses) : null;
+                const open = openSale === p.id || p.codes.length <= 5;
+                const summary = many ? statusSummary(p.codes, statuses) : null;
+                const shown = open ? p.codes : p.codes.slice(0, 5);
                 return (
                 <div key={p.id} className="space-y-1 px-4 py-3">
                   <div className="flex items-start justify-between gap-3">
@@ -308,57 +342,48 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
                   </div>
                   {p.codes.length === 0 ? (
                     <StatusBadge tone="muted">Code unavailable</StatusBadge>
-                  ) : many ? (
+                  ) : (
                     <>
                       {summary ? (
                         <p className="text-[11px] font-medium text-muted-foreground">{summary}</p>
                       ) : null}
-                      <button
-                        type="button"
-                        aria-expanded={open}
-                        className="text-[11px] font-medium text-primary underline-offset-2 hover:underline"
-                        onClick={() => {
-                          const next = open ? null : p.id;
-                          setOpenSale(next);
-                          if (next) void loadStatuses(p);
-                        }}
-                      >
-                        {open
-                          ? "Hide voucher codes"
-                          : `View ${p.codes.length} voucher codes`}
-                      </button>
-                      {open ? (
-                        <div className="mt-1 space-y-1 rounded-md bg-muted/50 p-2">
-                          {statusBusy === p.id ? (
-                            <p className="text-[11px] text-muted-foreground">
-                              Checking voucher status…
-                            </p>
-                          ) : null}
-                          {p.codes.map((code) => {
-                            const label = codeStatuses
-                              ? codeStatusLabel(code, codeStatuses)
-                              : null;
-                            return (
-                              <div key={code} className="flex items-center justify-between gap-2">
-                                <p className="font-mono text-sm font-semibold tracking-widest text-success">
-                                  {code}
-                                </p>
-                                {label ? (
-                                  <StatusBadge tone={label === "Unused" ? "success" : "muted"}>
-                                    {label}
-                                  </StatusBadge>
-                                ) : null}
-                              </div>
-                            );
-                          })}
-                        </div>
+                      <div className="mt-1 space-y-1 rounded-md bg-muted/50 p-2">
+                        {statusBusy ? (
+                          <p className="text-[11px] text-muted-foreground">Checking voucher status…</p>
+                        ) : null}
+                        {shown.map((code) => {
+                          const label = codeStatusLabel(code, statuses);
+                          return (
+                            <div key={code} className="flex items-center justify-between gap-2">
+                              <p className="font-mono text-sm font-semibold tracking-widest text-success">
+                                {code}
+                              </p>
+                              {label ? (
+                                <StatusBadge tone={label === "Unused" ? "success" : "muted"}>
+                                  {label}
+                                </StatusBadge>
+                              ) : statusBusy ? null : (
+                                <StatusBadge tone="muted">
+                                  {omadaConfigured ? "Status unavailable" : "No status"}
+                                </StatusBadge>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {p.codes.length > 5 ? (
+                        <button
+                          type="button"
+                          aria-expanded={open}
+                          className="text-[11px] font-medium text-primary underline-offset-2 hover:underline"
+                          onClick={() => setOpenSale(open ? null : p.id)}
+                        >
+                          {open ? "Show fewer codes" : `View all ${p.codes.length} voucher codes`}
+                        </button>
                       ) : null}
                     </>
-                  ) : (
-                    <p className="font-mono text-sm font-semibold tracking-widest text-success">
-                      {p.codes[0]}
-                    </p>
                   )}
+
                   {/* Presentation only: Download | Share | Print act on every
                       voucher already issued by this exact transaction. */}
                   <div className="mt-1 flex flex-wrap items-center gap-2">
