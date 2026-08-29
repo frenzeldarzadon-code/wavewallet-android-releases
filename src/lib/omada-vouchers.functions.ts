@@ -482,7 +482,9 @@ export const lookupOmadaVoucherStatuses = createServerFn({ method: "POST" })
             break;
         }
       }
+      rememberStatuses(data.ecosystemId, statuses);
       return { configured: true, statuses, error: null };
+
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       if (message.includes("no Omada controller connected"))
