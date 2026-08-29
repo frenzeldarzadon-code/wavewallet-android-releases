@@ -29,11 +29,15 @@ export const Route = createFileRoute("/reseller/omada")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    code: typeof search["code"] === "string" && search["code"] ? search["code"] : undefined,
+  }),
   component: ResellerStatusChecker,
 });
 
 function ResellerStatusChecker() {
   const { ecosystemDbId } = useSession("reseller");
+  const { code } = Route.useSearch();
   return (
     <PageSection
       title="Status Check"
@@ -54,7 +58,7 @@ function ResellerStatusChecker() {
         </TabsContent>
 
         <TabsContent value="voucher" className="mt-4">
-          <OmadaVoucherStatusPanel ecosystemId={ecosystemDbId} />
+          <OmadaVoucherStatusPanel ecosystemId={ecosystemDbId} initialCode={code} />
         </TabsContent>
       </Tabs>
     </PageSection>

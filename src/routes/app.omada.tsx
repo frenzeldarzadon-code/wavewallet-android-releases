@@ -28,11 +28,15 @@ export const Route = createFileRoute("/app/omada")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    code: typeof search["code"] === "string" && search["code"] ? search["code"] : undefined,
+  }),
   component: MemberOmada,
 });
 
 function MemberOmada() {
   const { ecosystemDbId } = useSession("customer");
+  const { code } = Route.useSearch();
   return (
     <PageSection
       title="Status Check"
@@ -53,7 +57,7 @@ function MemberOmada() {
         </TabsContent>
 
         <TabsContent value="voucher" className="mt-4">
-          <OmadaVoucherStatusPanel ecosystemId={ecosystemDbId} />
+          <OmadaVoucherStatusPanel ecosystemId={ecosystemDbId} initialCode={code} />
         </TabsContent>
       </Tabs>
     </PageSection>
