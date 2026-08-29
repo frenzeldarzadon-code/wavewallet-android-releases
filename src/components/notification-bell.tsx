@@ -5,7 +5,7 @@
  * balance and never decides anything about a transaction — the wording comes
  * from the server, after the money movement was committed.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useVisiblePoll } from "@/hooks/use-visible-poll";
 import { fetchNotifications, markRead, notificationLink, type Notification } from "@/lib/notifications";
 
 function when(iso: string) {
@@ -36,11 +37,7 @@ export function NotificationBell({ className }: { className?: string }) {
       .catch(() => undefined);
   }, []);
 
-  useEffect(() => {
-    load();
-    const timer = window.setInterval(load, 60_000);
-    return () => window.clearInterval(timer);
-  }, [load]);
+  useVisiblePoll(load, 60_000);
 
   const unread = rows.filter((r) => !r.read_at).length;
 

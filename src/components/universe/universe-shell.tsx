@@ -9,12 +9,13 @@
  */
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Bell, Home, LogOut, Mail, Store, User, Users, Wallet } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { MemberAvatar } from "@/components/member-avatar";
 import { cn } from "@/lib/utils";
 import { homeFor, useSession } from "@/lib/session";
 import { fetchNotifications, unreadCount } from "@/lib/notifications";
+import { useVisiblePoll } from "@/hooks/use-visible-poll";
 
 const items = [
   { to: "/universe", label: "Home", icon: Home },
@@ -28,19 +29,11 @@ const items = [
 /** Small unread badge; polls quietly so the count is never stale for long. */
 function useUnread() {
   const [count, setCount] = useState(0);
-  useEffect(() => {
-    let active = true;
-    const load = () =>
-      fetchNotifications(50)
-        .then((rows) => active && setCount(unreadCount(rows)))
-        .catch(() => undefined);
-    void load();
-    const timer = setInterval(load, 60_000);
-    return () => {
-      active = false;
-      clearInterval(timer);
-    };
-  }, []);
+  useVisiblePoll(() => {
+    void fetchNotifications(20)
+      .then((rows) => setCount(unreadCount(rows)))
+      .catch(() => undefined);
+  }, 60_000);
   return count;
 }
 
