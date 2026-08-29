@@ -316,7 +316,11 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
           <EmptyState title="No voucher purchases yet" description="Buy a voucher from the shop to see it here." />
         ) : (
           <Card className="shadow-[var(--shadow-card)]">
+            {statusNote ? (
+              <p className="px-4 pt-3 text-[11px] text-muted-foreground">{statusNote}</p>
+            ) : null}
             <CardContent className="divide-y divide-border px-0 py-0">
+
               {purchases.map((p) => {
                 const many = p.codes.length > 1;
                 const open = openSale === p.id || p.codes.length <= 5;
