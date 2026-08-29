@@ -78,10 +78,16 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
       } catch {
         // Clipboard permission unavailable — navigation/prefill still works.
       }
-      const reseller = account?.role === "reseller" || account?.role === "subreseller";
+      const role = account?.role;
+      // Each console has its own Omada screen; land straight on Voucher Status.
+      if (role === "admin" || role === "super_admin") {
+        await navigate({ to: "/admin/omada", search: { code, tab: "status" } });
+        return;
+      }
+      const reseller = role === "reseller" || role === "subreseller";
       await navigate({
         to: reseller ? "/reseller/omada" : "/app/omada",
-        search: { code },
+        search: { code, tab: "voucher" },
       });
     },
     [account?.role, navigate],
