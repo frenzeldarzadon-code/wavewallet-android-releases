@@ -35,7 +35,9 @@ export const Route = createFileRoute("/admin/omada")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { code?: string; tab?: "connection" | "devices" | "generate" | "status" } => ({
     code: typeof search["code"] === "string" && search["code"] ? search["code"] : undefined,
     tab:
       search["tab"] === "connection" ||
