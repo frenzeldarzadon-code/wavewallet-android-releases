@@ -36,14 +36,18 @@ import {
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import {
   REVIEW_LABEL,
+  canRemoveKeptMember,
   fetchApplications,
+  fetchReviewBalances,
+  removeKeptMember,
   reviewApplication,
   reviewState,
   reviewTone,
   type ApplicationStatus,
   type MembershipApplication,
 } from "@/lib/membership-applications";
-import { shortDateTime } from "@/lib/wavewallet";
+import { formatCoins, shortDateTime } from "@/lib/wavewallet";
+
 
 export function ApplicationsPanel({
   ecosystemId,
