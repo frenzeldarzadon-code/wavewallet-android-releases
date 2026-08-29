@@ -94,7 +94,10 @@ function cashbackLine(e: CreditEntry, sources: CashbackSourceMap = {}): CoinCash
  * (with its cashback summarised inside), every other movement untouched.
  * Input order is preserved by created_at (newest first).
  */
-export function buildCoinHistory(entries: CreditEntry[]): CoinHistoryRow[] {
+export function buildCoinHistory(
+  entries: CreditEntry[],
+  sources: CashbackSourceMap = {},
+): CoinHistoryRow[] {
   const groups = new Map<string, CreditEntry[]>();
   const rows: CoinHistoryRow[] = [];
   const order: (CoinHistoryRow | string)[] = [];
