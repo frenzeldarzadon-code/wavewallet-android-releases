@@ -35,11 +35,22 @@ export const Route = createFileRoute("/admin/omada")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    code: typeof search["code"] === "string" && search["code"] ? search["code"] : undefined,
+    tab:
+      search["tab"] === "connection" ||
+      search["tab"] === "devices" ||
+      search["tab"] === "generate" ||
+      search["tab"] === "status"
+        ? search["tab"]
+        : undefined,
+  }),
   component: AdminOmada,
 });
 
 function AdminOmada() {
   const { ecosystemDbId } = useSession("admin");
+  const { code, tab } = Route.useSearch();
 
   return (
     <PageSection
