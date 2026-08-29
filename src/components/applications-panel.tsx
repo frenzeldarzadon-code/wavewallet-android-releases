@@ -46,7 +46,11 @@ import {
   type ApplicationStatus,
   type MembershipApplication,
 } from "@/lib/membership-applications";
-import { formatCoins, shortDateTime } from "@/lib/wavewallet";
+import { shortDateTime } from "@/lib/wavewallet";
+
+/** Two-decimal coin amount, e.g. 0.00 */
+const coinAmount = (n: number) => n.toFixed(2);
+
 
 
 export function ApplicationsPanel({
