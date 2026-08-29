@@ -258,7 +258,7 @@ export function OmadaVoucherStatusPanel({
   /** The shop whose controller is searched. Members of this shop only. */
   ecosystemId?: string | null;
   /** Voucher code handed over from History — prefilled and checked once. */
-  initialCode?: string;
+  initialCode?: string | undefined;
 }) {
   const [state, setState] = useState<OmadaVoucherStatus | null>(null);
   const [records, setRecords] = useState<TracerRecord[]>([]);
