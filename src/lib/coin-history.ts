@@ -140,7 +140,7 @@ export function buildCoinHistory(entries: CreditEntry[]): CoinHistoryRow[] {
     const rest = list.filter((e) => e !== purchase && !isCashbackEntry(e));
     const primary = purchase ?? cashbackEntries[0] ?? list[0]!;
     const latest = list.reduce((a, b) => (a.created_at >= b.created_at ? a : b));
-    const cashback = cashbackEntries.map(cashbackLine);
+    const cashback = cashbackEntries.map((e) => cashbackLine(e, sources));
     // No purchase debit in the viewer's own wallet (they earned cashback on
     // someone else's purchase): the cashback itself is the visible amount.
     const showsPurchase = Boolean(purchase);
