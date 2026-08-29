@@ -6,11 +6,12 @@
  * session by itself when the controller comes back — the admin never has to
  * reconnect manually for a transient outage.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui-kit";
+import { useVisiblePoll } from "@/hooks/use-visible-poll";
 import { getOmadaHealth, setOmadaMonitoring, type OmadaHealthView } from "@/lib/omada.functions";
 
 const LABEL: Record<OmadaHealthView["state"], string> = {
@@ -48,11 +49,7 @@ export function OmadaHealthCard({ ecosystemId }: { ecosystemId: string | null })
     [ecosystemId],
   );
 
-  useEffect(() => {
-    void load();
-    const timer = setInterval(() => void load(), 60_000);
-    return () => clearInterval(timer);
-  }, [load]);
+  useVisiblePoll(() => void load(), 60_000);
 
   if (!ecosystemId || !health?.configured) return null;
 
