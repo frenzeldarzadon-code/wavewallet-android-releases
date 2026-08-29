@@ -29,6 +29,25 @@ begin
   end if;
 end $$;
 
+-- 1b. The guard judges the PROFILE OWNER, not the caller. A shop admin removing
+-- a kept member legitimately repoints that member's profile and must never be
+-- treated as switching shops themselves.
+do $$
+declare _def text;
+begin
+  select pg_get_functiondef(p.oid) into _def
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public' and p.proname = 'guard_profile_update';
+  if _def like '%auth.uid() = new.id%and%ecosystem_id = new.ecosystem_id%' then
+    raise exception 'the shop guard still requires the caller to be the profile owner';
+  end if;
+  if _def not like '%m.user_id = new.id%' then
+    raise exception 'the shop guard must validate the profile owner''s own membership';
+  end if;
+end $$;
+
+
+
 -- 2. switch_ecosystem authorizes on membership, not on platform ownership.
 do $$
 declare _def text;
