@@ -15,7 +15,9 @@
  * and it never fetches other members' rows to fill a breakdown.
  */
 import { peso } from "@/lib/wavewallet";
+import { cashbackSourceLabel, type CashbackSourceMap } from "@/lib/cashback-source";
 import type { CreditEntry } from "@/lib/wallet";
+
 
 /** Ledger kinds that belong to the voucher-purchase family. */
 const CASHBACK_KINDS = new Set(["sale_commission", "upline_commission"]);
