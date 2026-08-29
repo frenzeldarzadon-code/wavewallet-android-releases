@@ -65,15 +65,19 @@ export interface CoinHistoryRow {
   entries: CreditEntry[];
 }
 
-function cashbackLabel(e: CreditEntry): string {
+function cashbackLabel(e: CreditEntry, sources: CashbackSourceMap = {}): string {
+  // Prefer the recorded origin of the sale (customer / reseller / subreseller
+  // purchase). Falls back to the existing wording when it cannot be read.
+  const source = cashbackSourceLabel(e.sale_id ?? null, sources);
+  if (source) return `Cashback from ${source}`;
   if (e.entry_kind === "upline_commission") return "Cashback from your downline's sale";
   return "Sales cashback on coins you supplied";
 }
 
-function cashbackLine(e: CreditEntry): CoinCashbackLine {
+function cashbackLine(e: CreditEntry, sources: CashbackSourceMap = {}): CoinCashbackLine {
   return {
     id: e.id,
-    label: cashbackLabel(e),
+    label: cashbackLabel(e, sources),
     amount: Number(e.amount),
     percent:
       e.commission_percent === null || e.commission_percent === undefined
@@ -81,6 +85,7 @@ function cashbackLine(e: CreditEntry): CoinCashbackLine {
         : Number(e.commission_percent),
   };
 }
+
 
 /**
  * Folds a viewer's ledger rows into display rows: one row per voucher purchase
