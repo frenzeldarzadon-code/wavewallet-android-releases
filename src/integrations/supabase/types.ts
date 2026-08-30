@@ -3060,6 +3060,85 @@ export type Database = {
           },
         ]
       }
+      omada_portal_templates: {
+        Row: {
+          analysis: Json
+          created_at: string
+          created_by: string | null
+          ecosystem_id: string
+          features: Json
+          file_name: string | null
+          generated_at: string | null
+          generated_html: string | null
+          id: string
+          import_detail: string | null
+          import_status: string
+          import_verified_at: string | null
+          mapping_id: string
+          template_bytes: number | null
+          template_html: string | null
+          updated_at: string
+        }
+        Insert: {
+          analysis?: Json
+          created_at?: string
+          created_by?: string | null
+          ecosystem_id: string
+          features?: Json
+          file_name?: string | null
+          generated_at?: string | null
+          generated_html?: string | null
+          id?: string
+          import_detail?: string | null
+          import_status?: string
+          import_verified_at?: string | null
+          mapping_id: string
+          template_bytes?: number | null
+          template_html?: string | null
+          updated_at?: string
+        }
+        Update: {
+          analysis?: Json
+          created_at?: string
+          created_by?: string | null
+          ecosystem_id?: string
+          features?: Json
+          file_name?: string | null
+          generated_at?: string | null
+          generated_html?: string | null
+          id?: string
+          import_detail?: string | null
+          import_status?: string
+          import_verified_at?: string | null
+          mapping_id?: string
+          template_bytes?: number | null
+          template_html?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "omada_portal_templates_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "omada_portal_templates_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "omada_portal_templates_mapping_id_fkey"
+            columns: ["mapping_id"]
+            isOneToOne: true
+            referencedRelation: "omada_portal_mappings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       omada_voucher_batches: {
         Row: {
           amount: number
