@@ -9,6 +9,8 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { buildPortalPackage } from "./portal-package";
+import { baseTemplateInfo } from "./portal-base-template";
 import {
   analyzeOmadaTemplate,
   generateWaveWalletPortal,
