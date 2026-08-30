@@ -6,6 +6,7 @@
  * and the downloaded file can never differ.
  */
 import { byteSize, checksumOf, deriveFromMaster } from "./portal-master";
+import { defaultPortalTheme, type PortalTheme } from "./portal-themes";
 import {
   analyzeOmadaTemplate,
   generateWaveWalletPortal,
@@ -45,6 +46,8 @@ export interface GeneratedPortal {
   masterVersion: number;
   masterChecksum: string;
   features: PortalTemplateFeatures;
+  themeSlug: string;
+  themeName: string;
   summary: string[];
   warnings: string[];
 }
@@ -53,6 +56,7 @@ export function generatePortalFromMaster(
   master: MasterInput,
   featuresInput: Partial<PortalTemplateFeatures> | PortalTemplateFeatures,
   binding: PortalBinding,
+  theme: PortalTheme = defaultPortalTheme(),
 ): GeneratedPortal {
   const features = normalizeTemplateFeatures(featuresInput);
   const derived = deriveFromMaster(master.html, master.files);
@@ -69,6 +73,7 @@ export function generatePortalFromMaster(
     siteId: binding.siteId,
     masterVersion: master.version,
     masterChecksum: master.checksum,
+    theme,
   });
 
   const warnings = [...analysis.warnings];
@@ -81,6 +86,7 @@ export function generatePortalFromMaster(
     `Bound to site "${binding.siteName ?? binding.siteId ?? "unknown"}" and portal "${
       binding.portalName ?? binding.portalId ?? "unknown"
     }" for ${binding.shopName}.`,
+    `Design theme "${theme.name}" applied to the presentation layer only.`,
     `Manual voucher entry kept exactly as the master defines it.`,
     ...analysis.preserved,
     derived.inlined.length
@@ -97,6 +103,8 @@ export function generatePortalFromMaster(
     masterVersion: master.version,
     masterChecksum: master.checksum,
     features,
+    themeSlug: theme.slug,
+    themeName: theme.name,
     summary,
     warnings,
   };
