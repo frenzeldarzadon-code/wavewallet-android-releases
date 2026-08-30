@@ -14,6 +14,7 @@ import { OmadaGeneratePanel } from "@/components/omada/omada-generate-panel";
 import { OmadaVoucherStatusPanel } from "@/components/omada/omada-voucher-status-panel";
 import { TracerConflictsPanel } from "@/components/omada/tracer-conflicts-panel";
 import { AntennaStatusPanel } from "@/components/omada/antenna-status-panel";
+import { PortalMappingPanel } from "@/components/omada/portal-mapping-panel";
 import { useSession } from "@/lib/session";
 
 export const Route = createFileRoute("/admin/omada")({
@@ -37,13 +38,14 @@ export const Route = createFileRoute("/admin/omada")({
   }),
   validateSearch: (
     search: Record<string, unknown>,
-  ): { code?: string | undefined; tab?: "connection" | "devices" | "generate" | "status" | undefined } => ({
+  ): { code?: string | undefined; tab?: "connection" | "devices" | "generate" | "status" | "portal" | undefined } => ({
     code: typeof search["code"] === "string" && search["code"] ? search["code"] : undefined,
     tab:
       search["tab"] === "connection" ||
       search["tab"] === "devices" ||
       search["tab"] === "generate" ||
-      search["tab"] === "status"
+      search["tab"] === "status" ||
+      search["tab"] === "portal"
         ? search["tab"]
         : undefined,
   }),
@@ -60,7 +62,7 @@ function AdminOmada() {
       description="Your shop's own Omada controller. These details and any vouchers generated here belong to this shop only."
     >
       <Tabs defaultValue={tab ?? (code ? "status" : "connection")} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="connection" className="text-xs sm:text-sm">
             Connection
           </TabsTrigger>
@@ -72,6 +74,9 @@ function AdminOmada() {
           </TabsTrigger>
           <TabsTrigger value="status" className="text-xs sm:text-sm">
             Status
+          </TabsTrigger>
+          <TabsTrigger value="portal" className="text-xs sm:text-sm">
+            Portal
           </TabsTrigger>
         </TabsList>
 
@@ -91,6 +96,10 @@ function AdminOmada() {
         <TabsContent value="status" className="mt-4 space-y-4">
           <OmadaVoucherStatusPanel ecosystemId={ecosystemDbId} initialCode={code} />
           <TracerConflictsPanel ecosystemId={ecosystemDbId} />
+        </TabsContent>
+
+        <TabsContent value="portal" className="mt-4">
+          <PortalMappingPanel ecosystemId={ecosystemDbId} />
         </TabsContent>
       </Tabs>
     </PageSection>
