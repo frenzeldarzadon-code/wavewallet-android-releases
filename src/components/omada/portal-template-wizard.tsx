@@ -113,7 +113,8 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
         setTemplate(await getPortalTemplate({ data: { ecosystemId, mappingId } }));
         // Never drop a freshly generated artifact just because we refreshed
         // the saved status: that is what disabled the Download button.
-        if (!opts?.keepGenerated) setGenerated(null);
+        setGenerated((g) => resolveGeneratedAfterRefresh(g, opts));
+
       } catch (e) {
         toast.error("Could not load this portal's setup", { description: (e as Error).message });
       }
