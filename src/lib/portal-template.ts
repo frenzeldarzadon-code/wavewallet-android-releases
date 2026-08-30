@@ -13,6 +13,13 @@
  * never drift apart.
  */
 
+import {
+  buildPortalThemeCss,
+  defaultPortalTheme,
+  THEME_DECOR_MARKUP,
+  type PortalTheme,
+} from "./portal-themes";
+
 /* ------------------------------------------------------------------ *
  * Features                                                            *
  * ------------------------------------------------------------------ */
