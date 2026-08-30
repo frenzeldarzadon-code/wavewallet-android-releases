@@ -1,51 +1,51 @@
-# Investigation Report: Omada Device Status / Antenna System — Current State
+# WaveWallet Captive Portal for Omada
 
-Read-only investigation. No code changed, nothing published, no live device actions taken.
+A public, mobile-first captive portal that an Omada External Portal redirects to. It keeps manual voucher entry exactly as it is today, and adds an optional WaveWallet path: sign in, see real coins/points, buy a voucher from that shop's existing Voucher Shop, and get the current device authorized on the controller for the real product duration.
 
-## Item-by-item status
+## What already exists and will be reused (no parallel systems)
 
-### 1. Admin > Omada "Device Status" tab — IMPLEMENTED (as "Antennas")
-- File: `src/routes/admin.omada.tsx`
-- Tabs: **Connection | Antennas | Generate | Status** (grid-cols-4). The device tab uses the agreed "Antenna" UI terminology and mounts `<AntennaStatusPanel ecosystemId manage />`.
+- Omada controller connection per shop: `omada_connections` + `openOmadaSession()` / `omadaSiteCall()` (encrypted secrets, token cache, silent re-auth). Site discovery already happens there.
+- Voucher Shop: `voucher_products` (+ `voucher_codes`, `voucher_sales`) and the `purchase_voucher` RPC, wrapped by `purchaseVoucher()` in `src/lib/wallet.ts`. Also `purchase_voucher_with_points`. These stay the single purchase path — commissions, cashback, points, ledger and sale records all come free.
+- Product duration: taken from the shop's existing current voucher calibration (`omada_voucher_calibrations.payload.duration` + `durationType`, in minutes). No new duration field, no hard-coded hours.
+- Auth: existing username/password login (`username-login.*`) and existing signup/join-shop path. No second auth system.
+- Voucher status, cash in, rewards: existing functions only, surfaced behind portal feature flags.
 
-### 2. Backend/API for retrieving Omada site devices — IMPLEMENTED
-- `src/lib/omada-devices.server.ts` — `listSiteDevices(session)`: paginated `GET /openapi/v1/{omadacId}/sites/{siteId}/devices?page=&pageSize=100`, parses mac, name, type, model/modelName, ip, publicIp, sn, status, detailStatus, uptime, lastSeen, cpuUtil, memUtil, firmwareVersion.
-- `src/lib/omada-devices.functions.ts` — server functions `listShopAntennas` (admin) and `listMyAntennas` (member), merging live controller data with DB assignments and preserving assignments for devices the controller no longer lists.
-- `src/lib/omada-devices.ts` — shared types, `normaliseMac`, `describeDeviceStatus` (status/detailStatus → Connected/Disconnected/Pending/Warning/unknown mapping).
-- `src/lib/omada-devices.test.ts` — status mapping tests.
+## New database (one migration)
 
-### 3. Reboot endpoint/action — IMPLEMENTED and wired to UI
-- `src/lib/omada-devices.server.ts` — `rebootSiteDevice(session, mac)`: `POST /openapi/v1/{omadacId}/sites/{siteId}/devices/{mac}/reboot` (verified live with a fake-MAC probe: endpoint exists, returns errorCode -39006 for unknown devices; no real device rebooted).
-- `src/lib/omada-devices.functions.ts` — `rebootAntenna` server fn: admin may reboot any shop device; a member may reboot only devices assigned to them; writes to `audit_logs`.
-- UI: `src/components/omada/antenna-status-panel.tsx` — reboot button with confirmation dialog, progress state, refresh.
+`omada_portal_mappings`
+- `ecosystem_id` (shop), `omada_connection_ecosystem_id` (reuse of the existing connection — no duplicated credentials)
+- `site_id`, `site_name`, `portal_id`, `portal_name`, `ssid_info`
+- `enabled`, `settings` (jsonb: allow_purchase, show_coins, show_points, allow_cash_in, allow_rewards, show_voucher_status, show_history, remember_customer)
+- `last_test_status`, `last_test_at`, `last_test_detail`, `created_at`, `updated_at`
+- unique on `(ecosystem_id, site_id, portal_id)`; multiple portals per shop allowed, each independently enabled/edited/removed
+- GRANTs + RLS: shop admins read/write only their own shop's rows; super admin all; no anon access. The public portal reads mappings through a server function with the service client only, never from the browser.
 
-### 4. Antenna assignment table/schema — IMPLEMENTED and deployed
-- Migration: `supabase/migrations/20260827023314_002c615c-e36d-4aa4-b4c2-74769250f734.sql`
-- Table `public.omada_device_assignments`: id, ecosystem_id (FK→ecosystems, cascade), device_mac, device_id, device_name, device_type, assigned_user_id, assigned_by, active, last_seen_at, created_at, updated_at.
-- RLS enabled; grants to authenticated + service_role; policies: members read own assignment, shop admins/super admin read + manage their shop's assignments; partial unique index on (ecosystem_id, upper(device_mac)) WHERE active; updated_at trigger via `public.set_updated_at()`.
-- Verified present in the live database (information_schema query) and in generated `src/integrations/supabase/types.ts`.
-- Server functions: `listAntennaAssignees`, `assignAntenna` (reassign-safe, audits), `unassignAntenna` (keeps history, drops active flag). UI wired via `AntennaStatusPanel` (assign/reassign/unassign controls in admin mode).
+`portal_sessions` (short-lived, server-issued)
+- `id`, `mapping_id`, `ecosystem_id`, `client_mac`, `client_ip`, `ap_mac`, `ssid`, `radio_id`, `redirect_url`, `expires_at`, `member_id` (nullable, set after login), `created_at`
+- no anon grants; only reachable through server functions. This is the anti-tampering mechanism: the browser holds an opaque session id, and the shop is always resolved server-side from `mapping_id`.
 
-### 5. Status Check page with tabs — IMPLEMENTED
-- `src/routes/app.omada.tsx` (customer/member) and `src/routes/reseller.omada.tsx`: exactly **Antenna Status | Voucher Status** tabs. Antenna tab shows only the member's assigned devices; Voucher Status/tracer behavior retained.
-- Navigation (`src/lib/navigation.ts`): customer + reseller see "Status Check" (/app/omada, /reseller/omada); admin sees "Omada management" (/admin/omada).
+`portal_authorizations` (audit + retry safety)
+- `session_id`, `sale_id`, `voucher_code`, `duration_minutes`, `status` (`authorized` / `failed` / `retried`), `error`, `authorized_at`
+- lets an authorization failure be retried without re-charging, and separates "purchase succeeded" from "authorization succeeded".
 
-### 6. Role/permission logic for assignment vs reboot — IMPLEMENTED
-- `omada-devices.functions.ts`: `isShopAdmin` (super admin OR `is_ecosystem_admin`), `assertShopAdmin`, `assertShopMember` (`has_membership`), server-side re-checks on every call. Members can reboot only their own assigned devices; assignment/unassignment is admin-only. Controller address/credentials never reach the browser.
+## Server layer
 
-### 7. Did the previous mission produce committed code? — YES, committed
-- `git log`: latest commit `648b452 "Added Omada device status panel"`; working tree is clean (no uncommitted changes).
+- `src/lib/omada-portals.server.ts` — capability-aware adapter: version detection from the existing `/api/info` probe, portal discovery for a site (`.../setting/portals` family, with graceful "capability not supported" reporting), and client authorization via the External Portal authorize endpoint using the real `clientMac`/`apMac`/`ssid`/`radioId` and a real expiry in seconds. No fake success — an unsupported controller yields an explicit admin error.
+- `src/lib/omada-portals.functions.ts` — admin server fns (all `requireSupabaseAuth` + existing `assertShopAdmin`): `listOmadaSites`, `listOmadaPortals(siteId)`, `savePortalMapping`, `listPortalMappings`, `setPortalMappingEnabled`, `deletePortalMapping`, `testPortalMapping` (controller reachable → auth → version/capability → site exists → portal exists in that site → mapping belongs to caller's shop → public portal URL reachable).
+- `src/lib/portal-session.functions.ts` — public (unauthenticated) server fns for the captive portal: `startPortalSession` (validates the Omada query parameters against a saved, enabled mapping and mints a session), `getPortalState` (shop branding, feature flags, and — when signed in — real name/coins/points/products), `portalLogin` (delegates to the existing username login), `portalPurchase` (idempotency key; verifies membership + product ownership + active + stock, then calls the existing `purchase_voucher` RPC as the member, then authorizes the client), `retryPortalAuthorization`.
+- Rate limiting on login and purchase per session/IP; security-relevant portal events logged to the existing audit table.
 
-### 8. Published vs preview — Published (with a caveat to verify visually)
-- Previous mission ended with a successful publish; `https://wallet.sagadawave.com/admin/omada` returns HTTP 200. SPA content can't be fully verified by curl; a quick browser check of the Antennas tab on the live domain is the only remaining visual confirmation.
+## Routes / UI
 
-## Verified live-controller facts (from the mission's read-only probes)
-- Inventory: `GET .../sites/{siteId}/devices?page=&pageSize=` — 49 managed devices on Sagada Wave Controller 6.2.14.11.
-- Reboot: `POST .../sites/{siteId}/devices/{mac}/reboot` — exists; unknown device returns errorCode -39006. No real device rebooted.
-- detailStatus observed: 0 = Disconnected, 14 = Connected, 15 = Connected (wireless).
-- Unpaged `/devices`, `/aps`, `/devices/{mac}` returned 400/404 — not used.
+- Public: `src/routes/portal.tsx` — mobile-first captive portal. Manual voucher entry card first and always present (posts straight to the Omada portal's own submit URL, unchanged behavior, no account needed), then the WaveWallet section: remembered session greeting with real name/coins/points, or Log in / Sign up (signup pre-bound to the resolved shop), then real Voucher Shop product cards, confirmation sheet (product, price, balance, balance after, voucher shop name), and the success state with real code/times/remaining balance plus Continue to Internet. Failure-after-purchase state shows the purchased code and a Retry authorization action.
+- Admin: new "Customer Portal" tab inside the existing `admin.omada` tabs — connection status + detected version/capability, site picker (real sites), portal picker (real portals for that site, explicit selection required), feature toggles, save, Test, mappings table with Site / Portal / Portal ID / SSID / status / Voucher Shop / Edit / Enable-Disable / Disconnect / + Connect another portal, plus a live mobile preview driven by the same real data and flags.
+- Pre-auth guidance panel showing the actual deployed origin to whitelist.
 
-## What remains before a new implementation instruction
-Nothing for the core feature — it is committed, tested (966 tests passed at the time), and published. Possible optional follow-ups only:
-- Visually confirm the live published Antennas tab renders (publish was reported successful; HTTP 200 confirmed).
-- If any refinement is desired (e.g. additional status mappings, column layout, member-facing fields), specify it as a follow-up instruction rather than re-requesting the base feature.
+## Tests
+
+Vitest for the pure logic (mapping resolution, tamper-proof shop resolution, feature-flag gating, duration derivation, idempotency, authorization-failure handling, manual-flow preservation) and pgTAP-style SQL tests under `supabase/tests/` for portal-mapping tenant isolation, cross-shop admin access, and cross-ecosystem purchase blocking — matching the 25 listed acceptance checks.
+
+## Notes / assumptions
+
+- Portal discovery and client authorization endpoints will be probed against the live connected controller before the adapter is finalized; if the connected controller does not expose them, the admin UI reports the exact capability gap rather than silently degrading.
+- Product duration comes from the existing per-product Omada calibration. Products without a calibration cannot authorize a device; they will be shown as unavailable in the portal with a clear admin warning.
