@@ -101,7 +101,7 @@ function AdminOmada() {
         </TabsContent>
 
         <TabsContent value="portal" className="mt-4">
-          <PortalMappingPanel ecosystemId={ecosystemDbId} />
+          <PortalMappingPanel ecosystemId={ecosystemDbId} shopName={ecosystem?.name ?? null} />
         </TabsContent>
       </Tabs>
     </PageSection>
