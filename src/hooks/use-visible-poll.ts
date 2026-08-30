@@ -12,7 +12,7 @@ import { useEffect, useRef } from "react";
  * `task` is kept in a ref so callers may pass an inline closure without
  * restarting the timer on every render.
  */
-export function useVisiblePoll(task: () => void, intervalMs: number): void {
+export function useVisiblePoll(task: () => void, intervalMs: number, resetKey?: unknown): void {
   const latest = useRef(task);
   latest.current = task;
 
@@ -30,5 +30,7 @@ export function useVisiblePoll(task: () => void, intervalMs: number): void {
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [intervalMs]);
+    // `resetKey` lets a caller re-run immediately when what it polls FOR changes
+    // (e.g. the active shop finished loading, or the user switched shop).
+  }, [intervalMs, resetKey]);
 }
