@@ -24,7 +24,6 @@ import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StartShopRouteImport } from './routes/start-shop'
 import { Route as SuperRouteImport } from './routes/super'
-import { Route as TmpOmadaPreviewRouteImport } from './routes/tmp-omada-preview'
 import { Route as UniverseRouteImport } from './routes/universe'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
@@ -184,11 +183,6 @@ const StartShopRoute = StartShopRouteImport.update({
 const SuperRoute = SuperRouteImport.update({
   id: '/super',
   path: '/super',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TmpOmadaPreviewRoute = TmpOmadaPreviewRouteImport.update({
-  id: '/tmp-omada-preview',
-  path: '/tmp-omada-preview',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UniverseRoute = UniverseRouteImport.update({
@@ -635,7 +629,6 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/start-shop': typeof StartShopRoute
   '/super': typeof SuperRouteWithChildren
-  '/tmp-omada-preview': typeof TmpOmadaPreviewRoute
   '/universe': typeof UniverseRouteWithChildren
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
@@ -734,7 +727,6 @@ export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/start-shop': typeof StartShopRoute
-  '/tmp-omada-preview': typeof TmpOmadaPreviewRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -837,7 +829,6 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/start-shop': typeof StartShopRoute
   '/super': typeof SuperRouteWithChildren
-  '/tmp-omada-preview': typeof TmpOmadaPreviewRoute
   '/universe': typeof UniverseRouteWithChildren
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
@@ -942,7 +933,6 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/start-shop'
     | '/super'
-    | '/tmp-omada-preview'
     | '/universe'
     | '/admin/applications'
     | '/admin/credits'
@@ -1041,7 +1031,6 @@ export interface FileRouteTypes {
     | '/setup'
     | '/sitemap.xml'
     | '/start-shop'
-    | '/tmp-omada-preview'
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
@@ -1143,7 +1132,6 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/start-shop'
     | '/super'
-    | '/tmp-omada-preview'
     | '/universe'
     | '/admin/applications'
     | '/admin/credits'
@@ -1247,7 +1235,6 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StartShopRoute: typeof StartShopRoute
   SuperRoute: typeof SuperRouteWithChildren
-  TmpOmadaPreviewRoute: typeof TmpOmadaPreviewRoute
   UniverseRoute: typeof UniverseRouteWithChildren
   JoinSlugRoute: typeof JoinSlugRoute
   ShopSlugRoute: typeof ShopSlugRoute
@@ -1362,13 +1349,6 @@ declare module '@tanstack/react-router' {
       path: '/super'
       fullPath: '/super'
       preLoaderRoute: typeof SuperRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tmp-omada-preview': {
-      id: '/tmp-omada-preview'
-      path: '/tmp-omada-preview'
-      fullPath: '/tmp-omada-preview'
-      preLoaderRoute: typeof TmpOmadaPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/universe': {
@@ -2185,7 +2165,6 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StartShopRoute: StartShopRoute,
   SuperRoute: SuperRouteWithChildren,
-  TmpOmadaPreviewRoute: TmpOmadaPreviewRoute,
   UniverseRoute: UniverseRouteWithChildren,
   JoinSlugRoute: JoinSlugRoute,
   ShopSlugRoute: ShopSlugRoute,
