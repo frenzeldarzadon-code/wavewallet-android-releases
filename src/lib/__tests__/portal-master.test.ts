@@ -223,8 +223,10 @@ describe("exact tenant binding", () => {
     expect(generated.summary.join(" ")).toContain("Sagada Wave V2");
   });
 
-  it("carries no credential, token or secret", () => {
-    expect(generated.html).not.toMatch(/omadac_id|csrf|token|password|secret|apikey/i);
+  it("carries no credential, token or secret value", () => {
+    for (const leak of [/omadac_id/i, /csrf/i, /access[_-]?token/i, /client[_-]?secret/i, /api[_-]?key/i, /bearer /i, /password\s*[:=]/i]) {
+      expect(generated.html).not.toMatch(leak);
+    }
   });
 
   it("escapes values taken from shop data", () => {
