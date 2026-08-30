@@ -40,15 +40,13 @@ async function assertShopAdmin(context: AuthContext, ecosystemId: string) {
 
 export interface PortalTemplateView {
   mappingId: string;
+  /** Name and measured size of the LAST generated artifact for this portal. */
   fileName: string | null;
   bytes: number | null;
-  analysis: TemplateAnalysis | null;
   features: PortalTemplateFeatures;
   generatedAt: string | null;
   hasGenerated: boolean;
   importStatus: string;
-  importDetail: string | null;
-  importVerifiedAt: string | null;
   updatedAt: string | null;
   /** Active canonical master this portal generates from. Admins never upload. */
   masterVersion: number | null;
