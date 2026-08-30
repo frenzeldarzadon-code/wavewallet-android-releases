@@ -166,47 +166,11 @@ export const getPortalTemplate = createServerFn({ method: "POST" })
       .eq("mapping_id", data.mappingId)
       .eq("ecosystem_id", data.ecosystemId)
       .maybeSingle();
-    return view(data.mappingId, (row as Record<string, unknown> | null) ?? null);
-  });
-
-/** Stores the ORIGINAL template exported from this shop's own controller. */
-export const uploadPortalTemplate = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: { ecosystemId: string; mappingId: string; fileName: string; html: string }) => {
-    if (!data?.ecosystemId || !data?.mappingId) throw new Error("A shop and portal are required.");
-    if (typeof data.html !== "string" || !data.html.trim()) throw new Error("Choose a template file.");
-    if (data.html.length > 4_000_000) throw new Error("That file is too large.");
-    return data;
-  })
-  .handler(async ({ data, context }): Promise<PortalTemplateView> => {
-    const ctx = context as unknown as AuthContext;
-    const { supabaseAdmin } = await requireMapping(ctx, data.ecosystemId, data.mappingId);
-    const analysis = analyzeOmadaTemplate(data.html);
-    if (!analysis.valid) throw new Error(analysis.errors.join(" "));
-
-    const { data: row, error } = await supabaseAdmin
-      .from("omada_portal_templates")
-      .upsert(
-        {
-          mapping_id: data.mappingId,
-          ecosystem_id: data.ecosystemId,
-          file_name: data.fileName.slice(0, 200) || "portal.html",
-          template_html: data.html,
-          template_bytes: analysis.bytes,
-          analysis: analysis as never,
-          generated_html: null,
-          generated_at: null,
-          import_status: "manual_required",
-          import_detail: null,
-          import_verified_at: null,
-          created_by: ctx.userId,
-        },
-        { onConflict: "mapping_id" },
-      )
-      .select("*")
-      .single();
-    if (error) throw new Error(error.message);
-    return view(data.mappingId, row as Record<string, unknown>);
+    return view(
+      data.mappingId,
+      (row as Record<string, unknown> | null) ?? null,
+      await activeMaster(supabaseAdmin as never),
+    );
   });
 
 export const savePortalTemplateFeatures = createServerFn({ method: "POST" })
@@ -239,7 +203,11 @@ export const savePortalTemplateFeatures = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (error) throw new Error(error.message);
-    return view(data.mappingId, row as Record<string, unknown>);
+    return view(
+      data.mappingId,
+      row as Record<string, unknown>,
+      await activeMaster(supabaseAdmin as never),
+    );
   });
 
 export interface GeneratedPortalFile {
