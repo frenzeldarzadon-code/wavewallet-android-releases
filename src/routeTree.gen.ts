@@ -49,6 +49,7 @@ import { Route as AdminTransactionsRouteImport } from './routes/admin.transactio
 import { Route as AdminVouchersRouteImport } from './routes/admin.vouchers'
 import { Route as AdminWalletRouteImport } from './routes/admin.wallet'
 import { Route as AdminWalletsRouteImport } from './routes/admin.wallets'
+import { Route as ApiPortalTemplateDownloadRouteImport } from './routes/api/portal-template-download'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppApplicationsRouteImport } from './routes/app.applications'
 import { Route as AppHistoryRouteImport } from './routes/app.history'
@@ -312,6 +313,12 @@ const AdminWalletsRoute = AdminWalletsRouteImport.update({
   path: '/wallets',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiPortalTemplateDownloadRoute =
+  ApiPortalTemplateDownloadRouteImport.update({
+    id: '/api/portal-template-download',
+    path: '/api/portal-template-download',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -665,6 +672,7 @@ export interface FileRoutesByFullPath {
   '/admin/vouchers': typeof AdminVouchersRoute
   '/admin/wallet': typeof AdminWalletRoute
   '/admin/wallets': typeof AdminWalletsRoute
+  '/api/portal-template-download': typeof ApiPortalTemplateDownloadRoute
   '/app/applications': typeof AppApplicationsRoute
   '/app/history': typeof AppHistoryRoute
   '/app/messages': typeof AppMessagesRoute
@@ -764,6 +772,7 @@ export interface FileRoutesByTo {
   '/admin/vouchers': typeof AdminVouchersRoute
   '/admin/wallet': typeof AdminWalletRoute
   '/admin/wallets': typeof AdminWalletsRoute
+  '/api/portal-template-download': typeof ApiPortalTemplateDownloadRoute
   '/app/applications': typeof AppApplicationsRoute
   '/app/history': typeof AppHistoryRoute
   '/app/messages': typeof AppMessagesRoute
@@ -869,6 +878,7 @@ export interface FileRoutesById {
   '/admin/vouchers': typeof AdminVouchersRoute
   '/admin/wallet': typeof AdminWalletRoute
   '/admin/wallets': typeof AdminWalletsRoute
+  '/api/portal-template-download': typeof ApiPortalTemplateDownloadRoute
   '/app/applications': typeof AppApplicationsRoute
   '/app/history': typeof AppHistoryRoute
   '/app/messages': typeof AppMessagesRoute
@@ -975,6 +985,7 @@ export interface FileRouteTypes {
     | '/admin/vouchers'
     | '/admin/wallet'
     | '/admin/wallets'
+    | '/api/portal-template-download'
     | '/app/applications'
     | '/app/history'
     | '/app/messages'
@@ -1074,6 +1085,7 @@ export interface FileRouteTypes {
     | '/admin/vouchers'
     | '/admin/wallet'
     | '/admin/wallets'
+    | '/api/portal-template-download'
     | '/app/applications'
     | '/app/history'
     | '/app/messages'
@@ -1178,6 +1190,7 @@ export interface FileRouteTypes {
     | '/admin/vouchers'
     | '/admin/wallet'
     | '/admin/wallets'
+    | '/api/portal-template-download'
     | '/app/applications'
     | '/app/history'
     | '/app/messages'
@@ -1260,6 +1273,7 @@ export interface RootRouteChildren {
   StartShopRoute: typeof StartShopRoute
   SuperRoute: typeof SuperRouteWithChildren
   UniverseRoute: typeof UniverseRouteWithChildren
+  ApiPortalTemplateDownloadRoute: typeof ApiPortalTemplateDownloadRoute
   JoinSlugRoute: typeof JoinSlugRoute
   ShopSlugRoute: typeof ShopSlugRoute
   ApiPublicAppVersionRoute: typeof ApiPublicAppVersionRoute
@@ -1550,6 +1564,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/wallets'
       preLoaderRoute: typeof AdminWalletsRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/api/portal-template-download': {
+      id: '/api/portal-template-download'
+      path: '/api/portal-template-download'
+      fullPath: '/api/portal-template-download'
+      preLoaderRoute: typeof ApiPortalTemplateDownloadRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/app/': {
       id: '/app/'
@@ -2207,6 +2228,7 @@ const rootRouteChildren: RootRouteChildren = {
   StartShopRoute: StartShopRoute,
   SuperRoute: SuperRouteWithChildren,
   UniverseRoute: UniverseRouteWithChildren,
+  ApiPortalTemplateDownloadRoute: ApiPortalTemplateDownloadRoute,
   JoinSlugRoute: JoinSlugRoute,
   ShopSlugRoute: ShopSlugRoute,
   ApiPublicAppVersionRoute: ApiPublicAppVersionRoute,
