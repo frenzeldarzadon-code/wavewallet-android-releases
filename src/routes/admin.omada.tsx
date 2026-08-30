@@ -62,23 +62,24 @@ function AdminOmada() {
       description="Your shop's own Omada controller. These details and any vouchers generated here belong to this shop only."
     >
       <Tabs defaultValue={tab ?? (code ? "status" : "connection")} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="connection" className="text-xs sm:text-sm">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 p-1 sm:grid-cols-3 lg:grid-cols-5">
+          <TabsTrigger value="connection" className="h-9 w-full text-xs sm:text-sm">
             Connection
           </TabsTrigger>
-          <TabsTrigger value="devices" className="text-xs sm:text-sm">
-            Device Status
+          <TabsTrigger value="devices" className="h-9 w-full text-xs sm:text-sm">
+            Devices
           </TabsTrigger>
-          <TabsTrigger value="generate" className="text-xs sm:text-sm">
+          <TabsTrigger value="generate" className="h-9 w-full text-xs sm:text-sm">
             Generate
           </TabsTrigger>
-          <TabsTrigger value="status" className="text-xs sm:text-sm">
+          <TabsTrigger value="status" className="h-9 w-full text-xs sm:text-sm">
             Status
           </TabsTrigger>
-          <TabsTrigger value="portal" className="text-xs sm:text-sm">
+          <TabsTrigger value="portal" className="h-9 w-full text-xs sm:text-sm">
             Portal
           </TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="connection" className="mt-4 space-y-4">
           <OmadaConnectionCard ecosystemId={ecosystemDbId} />
