@@ -114,7 +114,7 @@ describe("feature flags", () => {
   });
 
   it("buys through the shop's own Voucher Shop, never a new Omada voucher", () => {
-    expect(pkg.html).toContain("/portal?");
+    expect(pkg.html).toContain('"/portal"');
     expect(pkg.html).toContain("wwIntent=");
     expect(pkg.html).not.toContain("voucher-groups");
     expect(pkg.html).not.toContain("/openapi/");
