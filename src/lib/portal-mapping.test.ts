@@ -114,3 +114,24 @@ describe("portal url", () => {
     );
   });
 });
+
+describe("controller portal rows", () => {
+  it("normalises the real Open API v1 /portals payload, keeping every portal id", () => {
+    const payload = [
+      {
+        id: "6a52e98cecb1071044476283",
+        name: "Sagada Wave",
+        enable: true,
+        ssidList: ["6a66b442487fc42f7d054f72"],
+        authType: 11,
+      },
+      { id: "6a7be723c1474d22576c29b0", name: "Sagada Wave Local", enable: true, ssidList: [] },
+    ];
+    const portals = rowsOf(payload).map(toPortal);
+    expect(portals.map((p) => p?.id)).toEqual([
+      "6a52e98cecb1071044476283",
+      "6a7be723c1474d22576c29b0",
+    ]);
+    expect(portals[0]?.name).toBe("Sagada Wave");
+  });
+});
