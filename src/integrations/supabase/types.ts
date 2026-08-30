@@ -2976,6 +2976,54 @@ export type Database = {
           },
         ]
       }
+      omada_portal_base_templates: {
+        Row: {
+          analysis: Json
+          checksum: string
+          created_at: string
+          file_name: string
+          id: string
+          is_active: boolean
+          is_valid: boolean
+          notes: string | null
+          template_bytes: number
+          template_html: string
+          updated_at: string
+          uploaded_by: string | null
+          version: number
+        }
+        Insert: {
+          analysis?: Json
+          checksum: string
+          created_at?: string
+          file_name: string
+          id?: string
+          is_active?: boolean
+          is_valid?: boolean
+          notes?: string | null
+          template_bytes: number
+          template_html: string
+          updated_at?: string
+          uploaded_by?: string | null
+          version: number
+        }
+        Update: {
+          analysis?: Json
+          checksum?: string
+          created_at?: string
+          file_name?: string
+          id?: string
+          is_active?: boolean
+          is_valid?: boolean
+          notes?: string | null
+          template_bytes?: number
+          template_html?: string
+          updated_at?: string
+          uploaded_by?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
       omada_portal_mappings: {
         Row: {
           auto_config_at: string | null
@@ -3063,12 +3111,16 @@ export type Database = {
       omada_portal_templates: {
         Row: {
           analysis: Json
+          base_template_id: string | null
+          base_version: number | null
           created_at: string
           created_by: string | null
+          downloaded_at: string | null
           ecosystem_id: string
           features: Json
           file_name: string | null
           generated_at: string | null
+          generated_checksum: string | null
           generated_html: string | null
           id: string
           import_detail: string | null
@@ -3081,12 +3133,16 @@ export type Database = {
         }
         Insert: {
           analysis?: Json
+          base_template_id?: string | null
+          base_version?: number | null
           created_at?: string
           created_by?: string | null
+          downloaded_at?: string | null
           ecosystem_id: string
           features?: Json
           file_name?: string | null
           generated_at?: string | null
+          generated_checksum?: string | null
           generated_html?: string | null
           id?: string
           import_detail?: string | null
@@ -3099,12 +3155,16 @@ export type Database = {
         }
         Update: {
           analysis?: Json
+          base_template_id?: string | null
+          base_version?: number | null
           created_at?: string
           created_by?: string | null
+          downloaded_at?: string | null
           ecosystem_id?: string
           features?: Json
           file_name?: string | null
           generated_at?: string | null
+          generated_checksum?: string | null
           generated_html?: string | null
           id?: string
           import_detail?: string | null
@@ -3116,6 +3176,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "omada_portal_templates_base_template_id_fkey"
+            columns: ["base_template_id"]
+            isOneToOne: false
+            referencedRelation: "omada_portal_base_templates"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "omada_portal_templates_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
