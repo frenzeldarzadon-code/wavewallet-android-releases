@@ -295,7 +295,10 @@ export interface GenerateContext {
   /** Canonical master this page was derived from. */
   masterVersion?: number;
   masterChecksum?: string;
+  /** Presentation only. Omitted means the default gallery theme. */
+  theme?: PortalTheme;
 }
+
 
 export function escapeHtml(value: string): string {
   return value
