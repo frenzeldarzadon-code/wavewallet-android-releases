@@ -433,7 +433,8 @@ export function PortalMappingPanel({ ecosystemId }: { ecosystemId: string | null
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Input readOnly value={url} className="text-xs" />
+                    <Input readOnly value={url} className="min-w-0 flex-1 text-xs" />
+
                     <Button
                       size="sm"
                       variant="outline"
