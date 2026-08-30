@@ -62,6 +62,11 @@ export interface PortalMappingView extends MappingCandidate {
   lastTestStatus: string | null;
   lastTestAt: string | null;
   lastTestDetail: string | null;
+  /** Result of the last EXTERNAL-PORTAL read-back against the controller. */
+  externalStatus: string | null;
+  externalCheckedAt: string | null;
+  externalDetail: string | null;
+  externalUrl: string | null;
   updatedAt: string;
 }
 
@@ -79,6 +84,10 @@ function mappingView(row: Record<string, unknown>): PortalMappingView {
     lastTestStatus: (row["last_test_status"] as string | null) ?? null,
     lastTestAt: (row["last_test_at"] as string | null) ?? null,
     lastTestDetail: (row["last_test_detail"] as string | null) ?? null,
+    externalStatus: (row["auto_config_status"] as string | null) ?? null,
+    externalCheckedAt: (row["auto_config_at"] as string | null) ?? null,
+    externalDetail: (row["auto_config_detail"] as string | null) ?? null,
+    externalUrl: (row["auto_config_url"] as string | null) ?? null,
     updatedAt: String(row["updated_at"] ?? ""),
   };
 }
