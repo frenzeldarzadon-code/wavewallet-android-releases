@@ -103,22 +103,28 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
       .finally(() => setLoading(false));
   }, [ecosystemId]);
 
-  const loadTemplate = useCallback(async () => {
-    if (!ecosystemId || !mappingId) {
-      setTemplate(null);
-      return;
-    }
-    try {
-      setTemplate(await getPortalTemplate({ data: { ecosystemId, mappingId } }));
-      setGenerated(null);
-    } catch (e) {
-      toast.error("Could not load this portal's setup", { description: (e as Error).message });
-    }
-  }, [ecosystemId, mappingId]);
+  const loadTemplate = useCallback(
+    async (opts?: { keepGenerated?: boolean }) => {
+      if (!ecosystemId || !mappingId) {
+        setTemplate(null);
+        return;
+      }
+      try {
+        setTemplate(await getPortalTemplate({ data: { ecosystemId, mappingId } }));
+        // Never drop a freshly generated artifact just because we refreshed
+        // the saved status: that is what disabled the Download button.
+        if (!opts?.keepGenerated) setGenerated(null);
+      } catch (e) {
+        toast.error("Could not load this portal's setup", { description: (e as Error).message });
+      }
+    },
+    [ecosystemId, mappingId],
+  );
 
   useEffect(() => {
     void loadTemplate();
   }, [loadTemplate]);
+
 
   const mapping = mappings.find((m) => m.id === mappingId) ?? null;
   const features = template?.features ?? null;
