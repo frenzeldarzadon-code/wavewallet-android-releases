@@ -13,6 +13,13 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { base64ToBytes, masterFromArchive, readZipEntries } from "./portal-master";
 import { generatePortalFromMaster } from "./portal-generate";
 import {
+  DEFAULT_PORTAL_THEME_SLUG,
+  normalizePortalTheme,
+  PORTAL_THEMES,
+  resolvePortalTheme,
+  type PortalTheme,
+} from "./portal-themes";
+import {
   normalizeTemplateFeatures,
   type PortalTemplateFeatures,
   type TemplateAnalysis,
@@ -48,6 +55,8 @@ export interface PortalTemplateView {
   generatedAt: string | null;
   hasGenerated: boolean;
   importStatus: string;
+  /** Design gallery theme chosen for this portal. Presentation only. */
+  themeSlug: string;
   updatedAt: string | null;
   /** Active canonical master this portal generates from. Admins never upload. */
   masterVersion: number | null;
@@ -86,6 +95,7 @@ function view(
     generatedAt: (row?.["generated_at"] as string | null) ?? null,
     hasGenerated: Boolean(row?.["generated_html"]),
     importStatus: (row?.["import_status"] as string | null) ?? "manual_required",
+    themeSlug: (row?.["theme_slug"] as string | null) ?? DEFAULT_PORTAL_THEME_SLUG,
     updatedAt: (row?.["updated_at"] as string | null) ?? null,
     masterVersion: master?.version ?? null,
     masterChecksum: master?.checksum ?? null,
@@ -123,6 +133,34 @@ async function activeMaster(
     .eq("is_active", true)
     .maybeSingle();
   return data ?? null;
+}
+
+/**
+ * Reads the database-backed design gallery. The built-in seed list is only a
+ * fallback so preview and generation never break when the catalog is empty.
+ */
+async function themeCatalog(supabaseAdmin: unknown): Promise<PortalTheme[]> {
+  const client = supabaseAdmin as {
+    from: (t: string) => {
+      select: (c: string) => {
+        eq: (
+          c: string,
+          v: unknown,
+        ) => { order: (c: string, o: { ascending: boolean }) => Promise<{ data: unknown[] | null }> };
+      };
+    };
+  };
+  try {
+    const { data } = await client
+      .from("omada_portal_themes")
+      .select("slug, name, description, category, layout, decor, font_stack, motion, tokens, sort_order")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+    const rows = (data ?? []).map((r) => normalizePortalTheme(r));
+    return rows.length ? rows : PORTAL_THEMES;
+  } catch {
+    return PORTAL_THEMES;
+  }
 }
 
 /** Loads the mapping and proves it belongs to the caller's shop. */
