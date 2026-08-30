@@ -66,7 +66,7 @@ function SuperPortalTemplate() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      setVersions(await listPortalMasters({ data: {} }));
+      setVersions(await listPortalMasters());
     } catch (e) {
       toast.error("Could not load the template library", { description: (e as Error).message });
     } finally {
