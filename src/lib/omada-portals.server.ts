@@ -340,9 +340,17 @@ export async function authorizePortalClient(
 
   if (caps.authorizeScope === "site") {
     const suffix = caps.authorizePath.replace(/^.*\{siteId\}/, "");
-    await omadaSiteCall(session, suffix, { method: "POST", body: JSON.stringify(body) });
+    if (caps.authorizeMethod === "GET") {
+      // 6.x takes the authorization as query parameters on a GET route.
+      const query = new URLSearchParams();
+      for (const [k, v] of Object.entries(body)) query.set(k, String(v));
+      await omadaSiteCall(session, `${suffix}?${query.toString()}`);
+    } else {
+      await omadaSiteCall(session, suffix, { method: "POST", body: JSON.stringify(body) });
+    }
     return { ok: true, detail: "The controller accepted the authorization." };
   }
+
 
   const url = `${session.base}${caps.authorizePath
     .replace("{omadacId}", session.omadacId)
