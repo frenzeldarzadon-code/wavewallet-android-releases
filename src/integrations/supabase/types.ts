@@ -2976,6 +2976,75 @@ export type Database = {
           },
         ]
       }
+      omada_portal_mappings: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ecosystem_id: string
+          enabled: boolean
+          id: string
+          last_test_at: string | null
+          last_test_detail: string | null
+          last_test_status: string | null
+          portal_id: string
+          portal_name: string | null
+          settings: Json
+          site_id: string
+          site_name: string | null
+          ssid_info: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ecosystem_id: string
+          enabled?: boolean
+          id?: string
+          last_test_at?: string | null
+          last_test_detail?: string | null
+          last_test_status?: string | null
+          portal_id: string
+          portal_name?: string | null
+          settings?: Json
+          site_id: string
+          site_name?: string | null
+          ssid_info?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ecosystem_id?: string
+          enabled?: boolean
+          id?: string
+          last_test_at?: string | null
+          last_test_detail?: string | null
+          last_test_status?: string | null
+          portal_id?: string
+          portal_name?: string | null
+          settings?: Json
+          site_id?: string
+          site_name?: string | null
+          ssid_info?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "omada_portal_mappings_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "omada_portal_mappings_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       omada_voucher_batches: {
         Row: {
           amount: number
@@ -3795,6 +3864,146 @@ export type Database = {
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_authorizations: {
+        Row: {
+          authorized_at: string | null
+          created_at: string
+          duration_minutes: number | null
+          ecosystem_id: string
+          error: string | null
+          id: string
+          member_id: string | null
+          sale_id: string | null
+          session_id: string
+          status: string
+          updated_at: string
+          voucher_code: string | null
+        }
+        Insert: {
+          authorized_at?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          ecosystem_id: string
+          error?: string | null
+          id?: string
+          member_id?: string | null
+          sale_id?: string | null
+          session_id: string
+          status?: string
+          updated_at?: string
+          voucher_code?: string | null
+        }
+        Update: {
+          authorized_at?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          ecosystem_id?: string
+          error?: string | null
+          id?: string
+          member_id?: string | null
+          sale_id?: string | null
+          session_id?: string
+          status?: string
+          updated_at?: string
+          voucher_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_authorizations_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_authorizations_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_authorizations_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "portal_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_sessions: {
+        Row: {
+          ap_mac: string | null
+          client_ip: string | null
+          client_mac: string | null
+          created_at: string
+          ecosystem_id: string
+          expires_at: string
+          id: string
+          mapping_id: string
+          member_id: string | null
+          radio_id: string | null
+          redirect_url: string | null
+          site_ref: string | null
+          ssid: string | null
+          updated_at: string
+        }
+        Insert: {
+          ap_mac?: string | null
+          client_ip?: string | null
+          client_mac?: string | null
+          created_at?: string
+          ecosystem_id: string
+          expires_at?: string
+          id?: string
+          mapping_id: string
+          member_id?: string | null
+          radio_id?: string | null
+          redirect_url?: string | null
+          site_ref?: string | null
+          ssid?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ap_mac?: string | null
+          client_ip?: string | null
+          client_mac?: string | null
+          created_at?: string
+          ecosystem_id?: string
+          expires_at?: string
+          id?: string
+          mapping_id?: string
+          member_id?: string | null
+          radio_id?: string | null
+          redirect_url?: string | null
+          site_ref?: string | null
+          ssid?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_sessions_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_sessions_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_sessions_mapping_id_fkey"
+            columns: ["mapping_id"]
+            isOneToOne: false
+            referencedRelation: "omada_portal_mappings"
             referencedColumns: ["id"]
           },
         ]
