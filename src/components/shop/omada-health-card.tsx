@@ -49,7 +49,9 @@ export function OmadaHealthCard({ ecosystemId }: { ecosystemId: string | null })
     [ecosystemId],
   );
 
-  useVisiblePoll(() => void load(), 60_000);
+  // Re-runs as soon as the active shop is known (it is null on the first
+  // renders while the session loads) and again after an in-place shop change.
+  useVisiblePoll(() => void load(), 60_000, ecosystemId);
 
   if (!ecosystemId || !health?.configured) return null;
 
