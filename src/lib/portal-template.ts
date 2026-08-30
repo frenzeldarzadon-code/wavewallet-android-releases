@@ -111,6 +111,8 @@ export interface TemplateAnalysis {
   placeholders: string[];
   scriptSources: string[];
   inlineScripts: number;
+  /** Omada authentication endpoints the master itself calls. */
+  endpoints: string[];
   /** Everything preserved, phrased for the admin. */
   preserved: string[];
   warnings: string[];
