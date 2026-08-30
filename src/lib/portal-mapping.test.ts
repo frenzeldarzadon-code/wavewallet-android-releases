@@ -10,6 +10,7 @@ import {
   resolveMapping,
   type MappingCandidate,
 } from "./portal-mapping";
+import { rowsOf, toPortal } from "./omada-portals.server";
 
 const base: MappingCandidate = {
   id: "m1",
