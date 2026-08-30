@@ -29,6 +29,8 @@ import {
   savePortalMapping,
   setPortalMappingEnabled,
   testPortalMapping,
+  autoConfigurePortal,
+  type AutoConfigResult,
   type PortalMappingView,
   type PortalOption,
   type PortalSetup,
@@ -67,6 +69,7 @@ export function PortalMappingPanel({ ecosystemId }: { ecosystemId: string | null
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState("");
   const [steps, setSteps] = useState<Record<string, PortalTestStep[]>>({});
+  const [autoConfig, setAutoConfig] = useState<Record<string, AutoConfigResult>>({});
 
   const [siteId, setSiteId] = useState("");
   const [portals, setPortals] = useState<PortalOption[]>([]);
@@ -199,6 +202,21 @@ export function PortalMappingPanel({ ecosystemId }: { ecosystemId: string | null
       await reload();
     } catch (e) {
       toast.error("Could not update", { description: (e as Error).message });
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const setUpInOmada = async (m: PortalMappingView, url: string) => {
+    setBusy(`auto-${m.id}`);
+    try {
+      const r = await autoConfigurePortal({ data: { ecosystemId, id: m.id, portalUrl: url } });
+      setAutoConfig((s) => ({ ...s, [m.id]: r }));
+      if (r.status === "configured" || r.status === "already_configured") toast.success(r.summary);
+      else toast.warning(r.summary);
+      await reload();
+    } catch (e) {
+      toast.error("Automatic setup failed", { description: (e as Error).message });
     } finally {
       setBusy("");
     }
@@ -450,6 +468,13 @@ export function PortalMappingPanel({ ecosystemId }: { ecosystemId: string | null
                   <div className="flex flex-wrap gap-2">
                     <Button
                       size="sm"
+                      disabled={busy !== ""}
+                      onClick={() => void setUpInOmada(m, url)}
+                    >
+                      {busy === `auto-${m.id}` ? "Setting up…" : "Set up in Omada"}
+                    </Button>
+                    <Button
+                      size="sm"
                       variant="outline"
                       disabled={busy !== ""}
                       onClick={() => void runTest(m.id)}
@@ -476,6 +501,31 @@ export function PortalMappingPanel({ ecosystemId }: { ecosystemId: string | null
                       <Trash2 className="mr-1 h-4 w-4" /> Disconnect
                     </Button>
                   </div>
+
+                  {autoConfig[m.id] ? (
+                    <div className="space-y-1 rounded-md border p-3">
+                      <p className="text-xs font-medium">{autoConfig[m.id]!.summary}</p>
+                      <ul className="space-y-1">
+                        {autoConfig[m.id]!.steps.map((s) => (
+                          <li key={s.step} className="text-xs">
+                            <span className={s.ok ? "text-success" : "text-destructive"}>
+                              {s.ok ? "✓" : "✕"}
+                            </span>{" "}
+                            <span className="font-medium">{s.step}</span> — {s.detail}
+                          </li>
+                        ))}
+                      </ul>
+                      {autoConfig[m.id]!.manualSteps.length > 0 ? (
+                        <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs text-muted-foreground">
+                          {autoConfig[m.id]!.manualSteps.map((s) => (
+                            <li key={s} className="break-words">
+                              {s}
+                            </li>
+                          ))}
+                        </ol>
+                      ) : null}
+                    </div>
+                  ) : null}
 
                   {steps[m.id] ? (
                     <ul className="space-y-1">
