@@ -208,13 +208,24 @@ export function PortalMappingPanel({
     }
   };
 
-  const runTest = async (id: string) => {
+  const copy = (value: string, message: string) => {
+    void navigator.clipboard.writeText(value);
+    toast.success(message);
+  };
+
+  /** Read-only check: controller reachability AND external-portal read-back. */
+  const runTest = async (id: string, portalUrl: string) => {
     setBusy(`test-${id}`);
     try {
-      const r = await testPortalMapping({ data: { ecosystemId, id } });
+      const r = await testPortalMapping({ data: { ecosystemId, id, portalUrl } });
       setSteps((s) => ({ ...s, [id]: r.steps }));
-      if (r.ok) toast.success("This portal is ready.");
-      else toast.error("This portal needs attention.");
+      if (r.externalStatus === "verified") {
+        toast.success("Controller reachable and external portal verified.");
+      } else if (r.ok) {
+        toast.warning("Controller reachable — the external portal is not verified yet.");
+      } else {
+        toast.error("WaveWallet could not verify this portal on your controller.");
+      }
       await reload();
     } catch (e) {
       toast.error("Test failed", { description: (e as Error).message });
@@ -235,20 +246,6 @@ export function PortalMappingPanel({
     }
   };
 
-  const setUpInOmada = async (m: PortalMappingView, url: string) => {
-    setBusy(`auto-${m.id}`);
-    try {
-      const r = await autoConfigurePortal({ data: { ecosystemId, id: m.id, portalUrl: url } });
-      setAutoConfig((s) => ({ ...s, [m.id]: r }));
-      if (r.status === "configured" || r.status === "already_configured") toast.success(r.summary);
-      else toast.warning(r.summary);
-      await reload();
-    } catch (e) {
-      toast.error("Automatic setup failed", { description: (e as Error).message });
-    } finally {
-      setBusy("");
-    }
-  };
 
   const remove = async (m: PortalMappingView) => {
     setBusy(`del-${m.id}`);
