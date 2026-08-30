@@ -81,16 +81,10 @@ function view(
     mappingId,
     fileName: (row?.["file_name"] as string | null) ?? null,
     bytes: row?.["template_bytes"] === undefined ? null : Number(row?.["template_bytes"] ?? 0) || null,
-    analysis:
-      row && row["analysis"] && typeof row["analysis"] === "object" && Object.keys(row["analysis"]).length
-        ? (row["analysis"] as TemplateAnalysis)
-        : null,
     features: normalizeTemplateFeatures(row?.["features"]),
     generatedAt: (row?.["generated_at"] as string | null) ?? null,
     hasGenerated: Boolean(row?.["generated_html"]),
     importStatus: (row?.["import_status"] as string | null) ?? "manual_required",
-    importDetail: (row?.["import_detail"] as string | null) ?? null,
-    importVerifiedAt: (row?.["import_verified_at"] as string | null) ?? null,
     updatedAt: (row?.["updated_at"] as string | null) ?? null,
     masterVersion: master?.version ?? null,
     masterChecksum: master?.checksum ?? null,
