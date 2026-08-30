@@ -9,10 +9,9 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { buildPortalPackage } from "./portal-package";
-import { baseTemplateInfo } from "./portal-base-template";
+import { base64ToBytes, masterFromArchive, readZipEntries } from "./portal-master";
+import { generatePortalFromMaster } from "./portal-generate";
 import {
-  analyzeOmadaTemplate,
   normalizeTemplateFeatures,
   type PortalTemplateFeatures,
   type TemplateAnalysis,
@@ -51,15 +50,35 @@ export interface PortalTemplateView {
   importDetail: string | null;
   importVerifiedAt: string | null;
   updatedAt: string | null;
-  /** Derived base template the generator will use. Nobody uploads it. */
-  baseVersion: number;
-  baseChecksum: string;
-  baseBytes: number;
-  runtimeAudit: { name: string; classification: string; preserved: boolean; note: string }[];
+  /** Active canonical master this portal generates from. Admins never upload. */
+  masterVersion: number | null;
+  masterChecksum: string | null;
+  masterBytes: number | null;
+  masterFileName: string | null;
+  masterUploadedAt: string | null;
+  masterAnalysis: TemplateAnalysis | null;
+  masterWarnings: string[];
 }
 
-function view(mappingId: string, row: Record<string, unknown> | null): PortalTemplateView {
-  const base = baseTemplateInfo();
+interface MasterRow {
+  id: string;
+  version: number;
+  checksum: string;
+  template_html: string;
+  template_bytes: number;
+  original_file_name: string | null;
+  source_kind: string | null;
+  original_content: string | null;
+  analysis: unknown;
+  warnings: unknown;
+  created_at: string;
+}
+
+function view(
+  mappingId: string,
+  row: Record<string, unknown> | null,
+  master: MasterRow | null,
+): PortalTemplateView {
   return {
     mappingId,
     fileName: (row?.["file_name"] as string | null) ?? null,
@@ -75,16 +94,42 @@ function view(mappingId: string, row: Record<string, unknown> | null): PortalTem
     importDetail: (row?.["import_detail"] as string | null) ?? null,
     importVerifiedAt: (row?.["import_verified_at"] as string | null) ?? null,
     updatedAt: (row?.["updated_at"] as string | null) ?? null,
-    baseVersion: base.version,
-    baseChecksum: base.checksum,
-    baseBytes: base.bytes,
-    runtimeAudit: base.audit.map((a) => ({
-      name: a.name,
-      classification: a.classification,
-      preserved: a.preserved,
-      note: a.note,
-    })),
+    masterVersion: master?.version ?? null,
+    masterChecksum: master?.checksum ?? null,
+    masterBytes: master?.template_bytes ?? null,
+    masterFileName: master?.original_file_name ?? null,
+    masterUploadedAt: master?.created_at ?? null,
+    masterAnalysis:
+      master?.analysis && typeof master.analysis === "object" && Object.keys(master.analysis).length
+        ? (master.analysis as TemplateAnalysis)
+        : null,
+    masterWarnings: Array.isArray(master?.warnings) ? (master.warnings as string[]) : [],
   };
+}
+
+const MASTER_SELECT =
+  "id, version, checksum, template_html, template_bytes, original_file_name, source_kind, original_content, analysis, warnings, created_at";
+
+/** Reads the active canonical master. Read-only: admins can never change it. */
+async function activeMaster(
+  supabaseAdmin: { from: (t: string) => never },
+): Promise<MasterRow | null> {
+  const client = supabaseAdmin as unknown as {
+    from: (t: string) => {
+      select: (c: string) => {
+        eq: (
+          c: string,
+          v: unknown,
+        ) => { maybeSingle: () => Promise<{ data: MasterRow | null }> };
+      };
+    };
+  };
+  const { data } = await client
+    .from("omada_portal_base_templates")
+    .select(MASTER_SELECT)
+    .eq("is_active", true)
+    .maybeSingle();
+  return data ?? null;
 }
 
 /** Loads the mapping and proves it belongs to the caller's shop. */
@@ -119,47 +164,11 @@ export const getPortalTemplate = createServerFn({ method: "POST" })
       .eq("mapping_id", data.mappingId)
       .eq("ecosystem_id", data.ecosystemId)
       .maybeSingle();
-    return view(data.mappingId, (row as Record<string, unknown> | null) ?? null);
-  });
-
-/** Stores the ORIGINAL template exported from this shop's own controller. */
-export const uploadPortalTemplate = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: { ecosystemId: string; mappingId: string; fileName: string; html: string }) => {
-    if (!data?.ecosystemId || !data?.mappingId) throw new Error("A shop and portal are required.");
-    if (typeof data.html !== "string" || !data.html.trim()) throw new Error("Choose a template file.");
-    if (data.html.length > 4_000_000) throw new Error("That file is too large.");
-    return data;
-  })
-  .handler(async ({ data, context }): Promise<PortalTemplateView> => {
-    const ctx = context as unknown as AuthContext;
-    const { supabaseAdmin } = await requireMapping(ctx, data.ecosystemId, data.mappingId);
-    const analysis = analyzeOmadaTemplate(data.html);
-    if (!analysis.valid) throw new Error(analysis.errors.join(" "));
-
-    const { data: row, error } = await supabaseAdmin
-      .from("omada_portal_templates")
-      .upsert(
-        {
-          mapping_id: data.mappingId,
-          ecosystem_id: data.ecosystemId,
-          file_name: data.fileName.slice(0, 200) || "portal.html",
-          template_html: data.html,
-          template_bytes: analysis.bytes,
-          analysis: analysis as never,
-          generated_html: null,
-          generated_at: null,
-          import_status: "manual_required",
-          import_detail: null,
-          import_verified_at: null,
-          created_by: ctx.userId,
-        },
-        { onConflict: "mapping_id" },
-      )
-      .select("*")
-      .single();
-    if (error) throw new Error(error.message);
-    return view(data.mappingId, row as Record<string, unknown>);
+    return view(
+      data.mappingId,
+      (row as Record<string, unknown> | null) ?? null,
+      await activeMaster(supabaseAdmin as never),
+    );
   });
 
 export const savePortalTemplateFeatures = createServerFn({ method: "POST" })
@@ -192,7 +201,11 @@ export const savePortalTemplateFeatures = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (error) throw new Error(error.message);
-    return view(data.mappingId, row as Record<string, unknown>);
+    return view(
+      data.mappingId,
+      row as Record<string, unknown>,
+      await activeMaster(supabaseAdmin as never),
+    );
   });
 
 export interface GeneratedPortalFile {
@@ -201,8 +214,9 @@ export interface GeneratedPortalFile {
   /** Real measured size of the generated file. */
   bytes: number;
   checksum: string;
-  baseVersion: number;
-  baseChecksum: string;
+  /** Canonical master this artifact was derived from. */
+  masterVersion: number;
+  masterChecksum: string;
   summary: string[];
   warnings: string[];
   /** Exactly what the admin must do in Omada, for THIS portal. */
@@ -212,9 +226,9 @@ export interface GeneratedPortalFile {
 }
 
 /**
- * Builds the downloadable page for ONE portal from the WaveWallet base
- * template. Nobody uploads anything: the base template is derived in code from
- * the canonical Omada master's audited runtime contract.
+ * Builds the downloadable page for ONE portal by deriving it from the ACTIVE
+ * canonical master the platform owner uploaded. No master, no generation: the
+ * builder never falls back to a hand-written copy of Omada's runtime.
  */
 export const generatePortalTemplate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -226,6 +240,14 @@ export const generatePortalTemplate = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<GeneratedPortalFile> => {
     const ctx = context as unknown as AuthContext;
     const { supabaseAdmin, mapping } = await requireMapping(ctx, data.ecosystemId, data.mappingId);
+
+    const master = await activeMaster(supabaseAdmin as never);
+    if (!master) {
+      throw new Error(
+        "No Omada portal template has been published yet. Ask the platform owner to upload the original Omada template first.",
+      );
+    }
+
     const { data: row } = await supabaseAdmin
       .from("omada_portal_templates")
       .select("*")
@@ -243,45 +265,69 @@ export const generatePortalTemplate = createServerFn({ method: "POST" })
     const shopName = (shop?.name as string | null) ?? "This shop";
     const portalName = (mapping["portal_name"] as string | null) ?? null;
 
-    const pkg = buildPortalPackage(features, {
-      origin: data.origin,
-      mappingId: data.mappingId,
-      shopName,
-      shopSlug: (shop?.slug as string | null) ?? null,
-      portalId: (mapping["portal_id"] as string | null) ?? null,
-      portalName,
-      siteId: (mapping["site_id"] as string | null) ?? null,
-      siteName: (mapping["site_name"] as string | null) ?? null,
-    });
+    // The stored original is only ever READ. Re-reading the archive here keeps
+    // the master byte-for-byte in the database.
+    let files: Record<string, string> = { "index.html": master.template_html };
+    if (master.source_kind === "zip" && master.original_content) {
+      try {
+        const entries = await readZipEntries(base64ToBytes(master.original_content));
+        files = masterFromArchive(entries.text, entries.names).files;
+      } catch {
+        /* unreadable archive: generate from the cached index.html alone */
+      }
+    }
 
-    await supabaseAdmin
-      .from("omada_portal_templates")
-      .upsert(
-        {
-          mapping_id: data.mappingId,
-          ecosystem_id: data.ecosystemId,
-          features: features as never,
-          file_name: pkg.fileName,
-          template_bytes: pkg.bytes,
-          generated_html: pkg.html,
-          generated_checksum: pkg.checksum,
-          base_version: pkg.baseVersion,
-          generated_at: new Date().toISOString(),
-          import_status: "manual_required",
-          created_by: ctx.userId,
-        },
-        { onConflict: "mapping_id" },
-      );
+    const generated = generatePortalFromMaster(
+      {
+        version: master.version,
+        checksum: master.checksum,
+        html: master.template_html,
+        files,
+        analysis:
+          master.analysis && typeof master.analysis === "object"
+            ? (master.analysis as TemplateAnalysis)
+            : null,
+      },
+      features,
+      {
+        origin: data.origin,
+        mappingId: data.mappingId,
+        shopName,
+        shopSlug: (shop?.slug as string | null) ?? null,
+        portalId: (mapping["portal_id"] as string | null) ?? null,
+        portalName,
+        siteId: (mapping["site_id"] as string | null) ?? null,
+        siteName: (mapping["site_name"] as string | null) ?? null,
+      },
+    );
+
+    await supabaseAdmin.from("omada_portal_templates").upsert(
+      {
+        mapping_id: data.mappingId,
+        ecosystem_id: data.ecosystemId,
+        features: features as never,
+        file_name: generated.fileName,
+        template_bytes: generated.bytes,
+        generated_html: generated.html,
+        generated_checksum: generated.checksum,
+        base_template_id: master.id,
+        base_version: master.version,
+        generated_at: new Date().toISOString(),
+        import_status: "manual_required",
+        created_by: ctx.userId,
+      },
+      { onConflict: "mapping_id" },
+    );
 
     return {
-      fileName: pkg.fileName,
-      html: pkg.html,
-      bytes: pkg.bytes,
-      checksum: pkg.checksum,
-      baseVersion: pkg.baseVersion,
-      baseChecksum: pkg.baseChecksum,
-      summary: pkg.summary,
-      warnings: pkg.warnings,
+      fileName: generated.fileName,
+      html: generated.html,
+      bytes: generated.bytes,
+      checksum: generated.checksum,
+      masterVersion: generated.masterVersion,
+      masterChecksum: generated.masterChecksum,
+      summary: generated.summary,
+      warnings: generated.warnings,
       importSupported: false,
       manualSteps: manualImportSteps(
         portalName,

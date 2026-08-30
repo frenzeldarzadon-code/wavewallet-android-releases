@@ -1,10 +1,10 @@
 /**
  * "Import Customized Page" builder for ONE shop.
  *
- * Nobody uploads a template. WaveWallet derives one lightweight base template
- * from the canonical Omada master's audited runtime contract, so the admin only
- * has to pick the exact portal, choose which WaveWallet features to expose,
- * preview the page and download it.
+ * Admins never upload a template. WaveWallet derives the page from the
+ * canonical Omada master the platform owner published, so the admin only has to
+ * pick the exact portal, choose which WaveWallet features to expose, preview
+ * the page and download it.
  *
  * The controller is never written to: Omada 6.2.14.11 publishes no supported
  * route for importing a customized page, so the builder says so plainly instead
@@ -50,7 +50,8 @@ interface GeneratedState {
   html: string;
   bytes: number;
   checksum: string;
-  baseVersion: number;
+  masterVersion: number;
+  masterChecksum: string;
   summary: string[];
   warnings: string[];
   steps: string[];
@@ -137,7 +138,8 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
         html: file.html,
         bytes: file.bytes,
         checksum: file.checksum,
-        baseVersion: file.baseVersion,
+        masterVersion: file.masterVersion,
+        masterChecksum: file.masterChecksum,
         summary: file.summary,
         warnings: file.warnings,
         steps: file.manualSteps,
@@ -168,8 +170,8 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
         <CardTitle className="text-sm">Customized portal page</CardTitle>
         <CardDescription>
           For controllers that use Omada&apos;s <strong>Import Customized Page</strong>. WaveWallet
-          builds the page for you from its own Omada-compatible base template — there is nothing to
-          upload here. Nothing on your controller is changed by this page.
+          builds the page from the original Omada template published by the platform owner — there
+          is nothing for you to upload here. Nothing on your controller is changed by this page.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -221,24 +223,39 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
               </p>
             </div>
 
-            {/* What the base template keeps from Omada. */}
-            {template ? (
+            {/* The canonical master this page is derived from. */}
+            {template && template.masterVersion === null ? (
+              <div className="rounded-xl border border-warning/40 bg-warning/5 p-3">
+                <p className="flex items-center gap-2 text-sm font-medium">
+                  <AlertTriangle className="h-4 w-4 text-warning" /> No Omada template published yet
+                </p>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  The platform owner has not published the original Omada portal template yet, so no
+                  page can be generated. Everything else here is already saved.
+                </p>
+              </div>
+            ) : template ? (
               <div className="space-y-2 rounded-xl border p-3">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-medium">Omada mechanics kept</p>
-                  <StatusBadge tone="success">Base v{template.baseVersion}</StatusBadge>
+                  <StatusBadge tone="success">Master v{template.masterVersion}</StatusBadge>
                 </div>
+                <p className="text-[11px] text-muted-foreground break-words">
+                  Derived from the original Omada template{" "}
+                  {template.masterFileName ? <strong>{template.masterFileName}</strong> : null} ·{" "}
+                  {template.masterChecksum}
+                </p>
                 <ul className="space-y-1 text-xs text-muted-foreground">
-                  {template.runtimeAudit.map((a) => (
-                    <li key={a.name} className="flex gap-2">
-                      {a.preserved ? (
-                        <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
-                      ) : (
-                        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
-                      )}
-                      <span className="break-words">
-                        <strong className="font-medium text-foreground">{a.name}</strong> — {a.note}
-                      </span>
+                  {(template.masterAnalysis?.preserved ?? []).map((line) => (
+                    <li key={line} className="flex gap-2">
+                      <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
+                      <span className="break-words">{line}</span>
+                    </li>
+                  ))}
+                  {template.masterWarnings.map((w) => (
+                    <li key={w} className="flex gap-2 text-warning">
+                      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      <span className="break-words">{w}</span>
                     </li>
                   ))}
                 </ul>
@@ -287,7 +304,8 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
                   <div className="rounded-xl border p-3">
                     <p className="flex items-center gap-2 text-sm font-medium">
                       <ShieldCheck className="h-4 w-4 text-success" /> {generated.fileName} ·{" "}
-                      {readableSize(generated.bytes)} · checksum {generated.checksum}
+                      {readableSize(generated.bytes)} · checksum {generated.checksum} · master v
+                      {generated.masterVersion}
                     </p>
                     <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
                       {generated.summary.map((s) => (

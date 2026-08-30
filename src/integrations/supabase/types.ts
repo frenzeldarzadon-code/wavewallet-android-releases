@@ -2979,6 +2979,7 @@ export type Database = {
       omada_portal_base_templates: {
         Row: {
           analysis: Json
+          archive_files: Json
           checksum: string
           created_at: string
           file_name: string
@@ -2986,14 +2987,21 @@ export type Database = {
           is_active: boolean
           is_valid: boolean
           notes: string | null
+          original_bytes: number | null
+          original_checksum: string | null
+          original_content: string | null
+          original_file_name: string | null
+          source_kind: string
           template_bytes: number
           template_html: string
           updated_at: string
           uploaded_by: string | null
           version: number
+          warnings: Json
         }
         Insert: {
           analysis?: Json
+          archive_files?: Json
           checksum: string
           created_at?: string
           file_name: string
@@ -3001,14 +3009,21 @@ export type Database = {
           is_active?: boolean
           is_valid?: boolean
           notes?: string | null
+          original_bytes?: number | null
+          original_checksum?: string | null
+          original_content?: string | null
+          original_file_name?: string | null
+          source_kind?: string
           template_bytes: number
           template_html: string
           updated_at?: string
           uploaded_by?: string | null
           version: number
+          warnings?: Json
         }
         Update: {
           analysis?: Json
+          archive_files?: Json
           checksum?: string
           created_at?: string
           file_name?: string
@@ -3016,11 +3031,17 @@ export type Database = {
           is_active?: boolean
           is_valid?: boolean
           notes?: string | null
+          original_bytes?: number | null
+          original_checksum?: string | null
+          original_content?: string | null
+          original_file_name?: string | null
+          source_kind?: string
           template_bytes?: number
           template_html?: string
           updated_at?: string
           uploaded_by?: string | null
           version?: number
+          warnings?: Json
         }
         Relationships: []
       }

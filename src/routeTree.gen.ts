@@ -92,6 +92,7 @@ import { Route as SuperExportRouteImport } from './routes/super.export'
 import { Route as SuperGuideRouteImport } from './routes/super.guide'
 import { Route as SuperMembersRouteImport } from './routes/super.members'
 import { Route as SuperOperatorLogRouteImport } from './routes/super.operator-log'
+import { Route as SuperPortalTemplateRouteImport } from './routes/super.portal-template'
 import { Route as SuperProfileRouteImport } from './routes/super.profile'
 import { Route as SuperReportsRouteImport } from './routes/super.reports'
 import { Route as SuperSettingsRouteImport } from './routes/super.settings'
@@ -526,6 +527,11 @@ const SuperOperatorLogRoute = SuperOperatorLogRouteImport.update({
   path: '/operator-log',
   getParentRoute: () => SuperRoute,
 } as any)
+const SuperPortalTemplateRoute = SuperPortalTemplateRouteImport.update({
+  id: '/portal-template',
+  path: '/portal-template',
+  getParentRoute: () => SuperRoute,
+} as any)
 const SuperProfileRoute = SuperProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -699,6 +705,7 @@ export interface FileRoutesByFullPath {
   '/super/guide': typeof SuperGuideRoute
   '/super/members': typeof SuperMembersRoute
   '/super/operator-log': typeof SuperOperatorLogRoute
+  '/super/portal-template': typeof SuperPortalTemplateRoute
   '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
@@ -797,6 +804,7 @@ export interface FileRoutesByTo {
   '/super/guide': typeof SuperGuideRoute
   '/super/members': typeof SuperMembersRoute
   '/super/operator-log': typeof SuperOperatorLogRoute
+  '/super/portal-template': typeof SuperPortalTemplateRoute
   '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
@@ -901,6 +909,7 @@ export interface FileRoutesById {
   '/super/guide': typeof SuperGuideRoute
   '/super/members': typeof SuperMembersRoute
   '/super/operator-log': typeof SuperOperatorLogRoute
+  '/super/portal-template': typeof SuperPortalTemplateRoute
   '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
   '/super/settings': typeof SuperSettingsRoute
@@ -1006,6 +1015,7 @@ export interface FileRouteTypes {
     | '/super/guide'
     | '/super/members'
     | '/super/operator-log'
+    | '/super/portal-template'
     | '/super/profile'
     | '/super/reports'
     | '/super/settings'
@@ -1104,6 +1114,7 @@ export interface FileRouteTypes {
     | '/super/guide'
     | '/super/members'
     | '/super/operator-log'
+    | '/super/portal-template'
     | '/super/profile'
     | '/super/reports'
     | '/super/settings'
@@ -1207,6 +1218,7 @@ export interface FileRouteTypes {
     | '/super/guide'
     | '/super/members'
     | '/super/operator-log'
+    | '/super/portal-template'
     | '/super/profile'
     | '/super/reports'
     | '/super/settings'
@@ -1840,6 +1852,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperOperatorLogRouteImport
       parentRoute: typeof SuperRoute
     }
+    '/super/portal-template': {
+      id: '/super/portal-template'
+      path: '/portal-template'
+      fullPath: '/super/portal-template'
+      preLoaderRoute: typeof SuperPortalTemplateRouteImport
+      parentRoute: typeof SuperRoute
+    }
     '/super/profile': {
       id: '/super/profile'
       path: '/profile'
@@ -2113,6 +2132,7 @@ interface SuperRouteChildren {
   SuperGuideRoute: typeof SuperGuideRoute
   SuperMembersRoute: typeof SuperMembersRoute
   SuperOperatorLogRoute: typeof SuperOperatorLogRoute
+  SuperPortalTemplateRoute: typeof SuperPortalTemplateRoute
   SuperProfileRoute: typeof SuperProfileRoute
   SuperReportsRoute: typeof SuperReportsRoute
   SuperSettingsRoute: typeof SuperSettingsRoute
@@ -2134,6 +2154,7 @@ const SuperRouteChildren: SuperRouteChildren = {
   SuperGuideRoute: SuperGuideRoute,
   SuperMembersRoute: SuperMembersRoute,
   SuperOperatorLogRoute: SuperOperatorLogRoute,
+  SuperPortalTemplateRoute: SuperPortalTemplateRoute,
   SuperProfileRoute: SuperProfileRoute,
   SuperReportsRoute: SuperReportsRoute,
   SuperSettingsRoute: SuperSettingsRoute,
