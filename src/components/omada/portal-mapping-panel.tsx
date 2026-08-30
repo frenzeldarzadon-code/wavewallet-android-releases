@@ -409,13 +409,14 @@ export function PortalMappingPanel({ ecosystemId }: { ecosystemId: string | null
               return (
                 <div key={m.id} className="space-y-2 rounded-md border p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-medium">{m.portalName ?? m.portalId}</p>
-                      <p className="text-xs text-muted-foreground">
+                    <div className="min-w-0 flex-1">
+                      <p className="break-words text-sm font-medium">{m.portalName ?? m.portalId}</p>
+                      <p className="break-words text-xs text-muted-foreground">
                         {m.siteName ?? m.siteId}
                         {m.ssidInfo ? ` · ${m.ssidInfo}` : ""}
                       </p>
                     </div>
+
                     <StatusBadge
                       tone={
                         !m.enabled ? "muted" : m.lastTestStatus === "passed" ? "success" : m.lastTestStatus === "failed" ? "danger" : "muted"
