@@ -330,18 +330,25 @@ export function PortalMappingPanel({ ecosystemId }: { ecosystemId: string | null
               </div>
               <div className="space-y-1.5">
                 <Label>Omada portal</Label>
-                <Select value={portalId} onValueChange={setPortalId} disabled={portals.length === 0}>
+                <Select
+                  value={portalId}
+                  onValueChange={setPortalId}
+                  disabled={portalsLoading || portals.length === 0}
+                >
                   <SelectTrigger>
                     <SelectValue
                       placeholder={
                         !siteId
                           ? "Choose a site first"
-                          : portals.length === 0
-                            ? "No portal available"
-                            : "Choose the portal"
+                          : portalsLoading
+                            ? "Reading portals from your controller…"
+                            : portals.length === 0
+                              ? "No portal available"
+                              : "Choose the portal"
                       }
                     />
                   </SelectTrigger>
+
                   <SelectContent>
                     {portals.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
