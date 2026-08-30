@@ -1,11 +1,12 @@
 /**
  * Admin-side "Import Customized Page" workflow, scoped to ONE shop's portal.
  *
- * The uploaded template belongs to a single saved portal mapping, and every
- * call re-authorises the caller against that shop. No controller write is ever
- * attempted here: Omada 6.2.14.11 publishes no supported route for importing a
- * customized portal page, so the generated file is downloaded and uploaded once
- * by the admin.
+ * Admins never upload a template: the page is derived from the ACTIVE canonical
+ * master the platform owner published. Every call re-authorises the caller
+ * against the shop that owns the selected portal mapping. No controller write
+ * is ever attempted here: Omada 6.2.14.11 publishes no supported route for
+ * importing a customized portal page, so the generated file is downloaded and
+ * imported once by the admin.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -40,15 +41,13 @@ async function assertShopAdmin(context: AuthContext, ecosystemId: string) {
 
 export interface PortalTemplateView {
   mappingId: string;
+  /** Name and measured size of the LAST generated artifact for this portal. */
   fileName: string | null;
   bytes: number | null;
-  analysis: TemplateAnalysis | null;
   features: PortalTemplateFeatures;
   generatedAt: string | null;
   hasGenerated: boolean;
   importStatus: string;
-  importDetail: string | null;
-  importVerifiedAt: string | null;
   updatedAt: string | null;
   /** Active canonical master this portal generates from. Admins never upload. */
   masterVersion: number | null;
@@ -83,16 +82,10 @@ function view(
     mappingId,
     fileName: (row?.["file_name"] as string | null) ?? null,
     bytes: row?.["template_bytes"] === undefined ? null : Number(row?.["template_bytes"] ?? 0) || null,
-    analysis:
-      row && row["analysis"] && typeof row["analysis"] === "object" && Object.keys(row["analysis"]).length
-        ? (row["analysis"] as TemplateAnalysis)
-        : null,
     features: normalizeTemplateFeatures(row?.["features"]),
     generatedAt: (row?.["generated_at"] as string | null) ?? null,
     hasGenerated: Boolean(row?.["generated_html"]),
     importStatus: (row?.["import_status"] as string | null) ?? "manual_required",
-    importDetail: (row?.["import_detail"] as string | null) ?? null,
-    importVerifiedAt: (row?.["import_verified_at"] as string | null) ?? null,
     updatedAt: (row?.["updated_at"] as string | null) ?? null,
     masterVersion: master?.version ?? null,
     masterChecksum: master?.checksum ?? null,

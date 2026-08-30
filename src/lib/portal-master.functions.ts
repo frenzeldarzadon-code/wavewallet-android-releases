@@ -94,18 +94,6 @@ export const listPortalMasters = createServerFn({ method: "POST" })
     return ((data ?? []) as Record<string, unknown>[]).map(toView);
   });
 
-/** What shop admins are allowed to see: which master their page derives from. */
-export const getActivePortalMaster = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async (): Promise<PortalMasterView | null> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data } = await supabaseAdmin
-      .from("omada_portal_base_templates")
-      .select(MASTER_COLUMNS)
-      .eq("is_active", true)
-      .maybeSingle();
-    return data ? toView(data as Record<string, unknown>) : null;
-  });
 
 /**
  * Stores a new canonical version. The original file is written once and never
