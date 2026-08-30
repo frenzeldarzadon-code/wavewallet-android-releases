@@ -40,7 +40,7 @@ import {
   type PortalTheme,
 } from "@/lib/portal-themes";
 import { PortalThemeGallery } from "./portal-theme-gallery";
-import { downloadTextFile } from "@/lib/download-file";
+import { runPortalDownload, resolveGeneratedAfterRefresh } from "@/lib/portal-download";
 import {
   TEMPLATE_FEATURE_LABELS,
   templateStage,
