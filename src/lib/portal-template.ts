@@ -219,9 +219,11 @@ export function analyzeOmadaTemplate(html: string): TemplateAnalysis {
       "No closing </body> tag was found; the WaveWallet section will be appended at the end of the file instead.",
     );
   }
+  // Manual voucher entry must survive, so a template without the controller's
+  // own form is refused rather than silently replaced by a WaveWallet form.
   if (analysis.forms.length === 0) {
-    analysis.warnings.push(
-      "No form was found in this template, so manual voucher entry cannot be re-used from it. Export the template again from the portal that uses voucher authentication.",
+    analysis.errors.push(
+      "No form was found in this template, so manual voucher entry cannot be kept. Export the template again from the portal that uses voucher authentication.",
     );
   }
   if (analysis.omadaParameters.length === 0) {
