@@ -84,13 +84,20 @@ const FLAG_LABELS: Array<{ key: keyof PortalFeatureFlags; label: string; hint: s
   },
 ];
 
-export function PortalMappingPanel({ ecosystemId }: { ecosystemId: string | null }) {
+export function PortalMappingPanel({
+  ecosystemId,
+  shopName = null,
+}: {
+  ecosystemId: string | null;
+  /** Real name of the active shop, shown on each setup card. */
+  shopName?: string | null;
+}) {
   const [setup, setSetup] = useState<PortalSetup | null>(null);
   const [mappings, setMappings] = useState<PortalMappingView[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState("");
   const [steps, setSteps] = useState<Record<string, PortalTestStep[]>>({});
-  const [autoConfig, setAutoConfig] = useState<Record<string, AutoConfigResult>>({});
+  const [instructionsFor, setInstructionsFor] = useState<string | null>(null);
 
   const [siteId, setSiteId] = useState("");
   const [portals, setPortals] = useState<PortalOption[]>([]);
