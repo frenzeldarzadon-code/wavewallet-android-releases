@@ -160,34 +160,47 @@ export const savePortalTemplateFeatures = createServerFn({ method: "POST" })
     },
   )
   .handler(async ({ data, context }): Promise<PortalTemplateView> => {
-    const { supabaseAdmin } = await requireMapping(
-      context as unknown as AuthContext,
-      data.ecosystemId,
-      data.mappingId,
-    );
+    const ctx = context as unknown as AuthContext;
+    const { supabaseAdmin } = await requireMapping(ctx, data.ecosystemId, data.mappingId);
     const features = normalizeTemplateFeatures(data.features);
     const { data: row, error } = await supabaseAdmin
       .from("omada_portal_templates")
-      .update({ features: features as never })
-      .eq("mapping_id", data.mappingId)
-      .eq("ecosystem_id", data.ecosystemId)
+      .upsert(
+        {
+          mapping_id: data.mappingId,
+          ecosystem_id: data.ecosystemId,
+          features: features as never,
+          created_by: ctx.userId,
+        },
+        { onConflict: "mapping_id" },
+      )
       .select("*")
-      .maybeSingle();
+      .single();
     if (error) throw new Error(error.message);
-    if (!row) throw new Error("Upload the Omada template for this portal first.");
     return view(data.mappingId, row as Record<string, unknown>);
   });
 
 export interface GeneratedPortalFile {
   fileName: string;
   html: string;
+  /** Real measured size of the generated file. */
+  bytes: number;
+  checksum: string;
+  baseVersion: number;
+  baseChecksum: string;
+  summary: string[];
+  warnings: string[];
   /** Exactly what the admin must do in Omada, for THIS portal. */
   manualSteps: string[];
   /** Never automatic on this controller; kept explicit so the UI cannot lie. */
   importSupported: false;
 }
 
-/** Builds the downloadable page for ONE portal, from that portal's template. */
+/**
+ * Builds the downloadable page for ONE portal from the WaveWallet base
+ * template. Nobody uploads anything: the base template is derived in code from
+ * the canonical Omada master's audited runtime contract.
+ */
 export const generatePortalTemplate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { ecosystemId: string; mappingId: string; origin: string }) => {
@@ -196,18 +209,14 @@ export const generatePortalTemplate = createServerFn({ method: "POST" })
     return data;
   })
   .handler(async ({ data, context }): Promise<GeneratedPortalFile> => {
-    const { supabaseAdmin, mapping } = await requireMapping(
-      context as unknown as AuthContext,
-      data.ecosystemId,
-      data.mappingId,
-    );
+    const ctx = context as unknown as AuthContext;
+    const { supabaseAdmin, mapping } = await requireMapping(ctx, data.ecosystemId, data.mappingId);
     const { data: row } = await supabaseAdmin
       .from("omada_portal_templates")
       .select("*")
       .eq("mapping_id", data.mappingId)
       .eq("ecosystem_id", data.ecosystemId)
       .maybeSingle();
-    if (!row?.template_html) throw new Error("Upload the Omada template for this portal first.");
 
     const { data: shop } = await supabaseAdmin
       .from("ecosystems")
@@ -215,35 +224,49 @@ export const generatePortalTemplate = createServerFn({ method: "POST" })
       .eq("id", data.ecosystemId)
       .maybeSingle();
 
-    const analysis = analyzeOmadaTemplate(row.template_html as string);
-    if (!analysis.valid) throw new Error(analysis.errors.join(" "));
-    const features = normalizeTemplateFeatures(row.features);
+    const features = normalizeTemplateFeatures(row?.features);
     const shopName = (shop?.name as string | null) ?? "This shop";
     const portalName = (mapping["portal_name"] as string | null) ?? null;
 
-    const html = generateWaveWalletPortal(row.template_html as string, analysis, features, {
+    const pkg = buildPortalPackage(features, {
       origin: data.origin,
       mappingId: data.mappingId,
       shopName,
       shopSlug: (shop?.slug as string | null) ?? null,
+      portalId: (mapping["portal_id"] as string | null) ?? null,
       portalName,
+      siteId: (mapping["site_id"] as string | null) ?? null,
       siteName: (mapping["site_name"] as string | null) ?? null,
     });
 
     await supabaseAdmin
       .from("omada_portal_templates")
-      .update({
-        analysis: analysis as never,
-        generated_html: html,
-        generated_at: new Date().toISOString(),
-        import_status: "manual_required",
-      })
-      .eq("mapping_id", data.mappingId)
-      .eq("ecosystem_id", data.ecosystemId);
+      .upsert(
+        {
+          mapping_id: data.mappingId,
+          ecosystem_id: data.ecosystemId,
+          features: features as never,
+          file_name: pkg.fileName,
+          template_bytes: pkg.bytes,
+          generated_html: pkg.html,
+          generated_checksum: pkg.checksum,
+          base_version: pkg.baseVersion,
+          generated_at: new Date().toISOString(),
+          import_status: "manual_required",
+          created_by: ctx.userId,
+        },
+        { onConflict: "mapping_id" },
+      );
 
     return {
-      fileName: generatedFileName(shopName, portalName),
-      html,
+      fileName: pkg.fileName,
+      html: pkg.html,
+      bytes: pkg.bytes,
+      checksum: pkg.checksum,
+      baseVersion: pkg.baseVersion,
+      baseChecksum: pkg.baseChecksum,
+      summary: pkg.summary,
+      warnings: pkg.warnings,
       importSupported: false,
       manualSteps: manualImportSteps(
         portalName,
@@ -263,3 +286,4 @@ export function manualImportSteps(portalName: string | null, siteLabel: string):
     "Save the portal, then reconnect a phone to that hotspot to see the new page.",
   ];
 }
+
