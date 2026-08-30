@@ -139,6 +139,20 @@ export const startPortalSession = createServerFn({ method: "POST" })
     const params = parsePortalParams(data.search);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    // A customized Omada page already handed its client context to
+    // /api/public/portal-context and got a session back. Re-use that exact
+    // session instead of opening a second one for the same device.
+    const handed = (data.search["wwSession"] ?? "").trim();
+    if (handed) {
+      try {
+        const existing = await requireSession(handed);
+        return loadState(supabaseAdmin as never, existing.row, existing.mapping);
+      } catch {
+        // Expired or unknown: fall through and start a fresh session below.
+      }
+    }
+
+
     let query = supabaseAdmin.from("omada_portal_mappings").select("*");
     query = params.mappingId
       ? query.eq("id", params.mappingId)

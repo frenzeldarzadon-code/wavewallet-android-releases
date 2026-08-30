@@ -15,6 +15,7 @@ import { OmadaVoucherStatusPanel } from "@/components/omada/omada-voucher-status
 import { TracerConflictsPanel } from "@/components/omada/tracer-conflicts-panel";
 import { AntennaStatusPanel } from "@/components/omada/antenna-status-panel";
 import { PortalMappingPanel } from "@/components/omada/portal-mapping-panel";
+import { PortalTemplateWizard } from "@/components/omada/portal-template-wizard";
 import { useSession } from "@/lib/session";
 
 export const Route = createFileRoute("/admin/omada")({
@@ -100,8 +101,9 @@ function AdminOmada() {
           <TracerConflictsPanel ecosystemId={ecosystemDbId} />
         </TabsContent>
 
-        <TabsContent value="portal" className="mt-4">
+        <TabsContent value="portal" className="mt-4 space-y-4">
           <PortalMappingPanel ecosystemId={ecosystemDbId} shopName={ecosystem?.name ?? null} />
+          <PortalTemplateWizard ecosystemId={ecosystemDbId} />
         </TabsContent>
       </Tabs>
     </PageSection>
