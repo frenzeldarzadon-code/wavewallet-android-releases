@@ -29,9 +29,18 @@ import { listPortalMappings, type PortalMappingView } from "@/lib/omada-portals.
 import {
   generatePortalTemplate,
   getPortalTemplate,
+  listPortalThemes,
   savePortalTemplateFeatures,
+  savePortalTemplateTheme,
   type PortalTemplateView,
 } from "@/lib/portal-template.functions";
+import {
+  DEFAULT_PORTAL_THEME_SLUG,
+  PORTAL_THEMES,
+  resolvePortalTheme,
+  type PortalTheme,
+} from "@/lib/portal-themes";
+import { PortalThemeGallery } from "./portal-theme-gallery";
 import {
   TEMPLATE_FEATURE_LABELS,
   templateStage,
@@ -40,6 +49,7 @@ import {
 
 const STEPS: Array<{ key: string; label: string }> = [
   { key: "portal", label: "Portal selected" },
+  { key: "design", label: "Design chosen" },
   { key: "features", label: "Features chosen" },
   { key: "generate", label: "Portal page ready" },
   { key: "import", label: "Imported into Omada" },
@@ -52,6 +62,7 @@ interface GeneratedState {
   checksum: string;
   masterVersion: number;
   masterChecksum: string;
+  themeName: string;
   summary: string[];
   warnings: string[];
   steps: string[];
@@ -69,6 +80,17 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState("");
   const [generated, setGenerated] = useState<GeneratedState | null>(null);
+  const [themes, setThemes] = useState<PortalTheme[]>(PORTAL_THEMES);
+  const [themeBusy, setThemeBusy] = useState(false);
+
+  useEffect(() => {
+    // The gallery is database-backed; the built-in list is only a fallback.
+    void listPortalThemes()
+      .then((rows) => {
+        if (rows.length) setThemes(rows);
+      })
+      .catch(() => setThemes(PORTAL_THEMES));
+  }, []);
 
   useEffect(() => {
     if (!ecosystemId) return;
@@ -126,6 +148,22 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
     }
   };
 
+  const chooseTheme = async (themeSlug: string) => {
+    if (!ecosystemId || !mappingId || themeSlug === template?.themeSlug) return;
+    setThemeBusy(true);
+    setTemplate((t) => (t ? { ...t, themeSlug } : t));
+    setGenerated(null);
+    try {
+      setTemplate(await savePortalTemplateTheme({ data: { ecosystemId, mappingId, themeSlug } }));
+      toast.success("Design saved. Generate the page to apply it.");
+    } catch (e) {
+      toast.error("Could not save that design", { description: (e as Error).message });
+      void loadTemplate();
+    } finally {
+      setThemeBusy(false);
+    }
+  };
+
   const generate = async () => {
     if (!ecosystemId || !mappingId) return;
     setBusy("generate");
@@ -140,6 +178,7 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
         checksum: file.checksum,
         masterVersion: file.masterVersion,
         masterChecksum: file.masterChecksum,
+        themeName: file.themeName,
         summary: file.summary,
         warnings: file.warnings,
         steps: file.manualSteps,
@@ -181,6 +220,7 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
             const done =
               (s.key === "portal" && progress.portalSelected) ||
               (s.key === "features" && progress.featuresChosen) ||
+                      (s.key === "design" && Boolean(template)) ||
               (s.key === "generate" && progress.generated) ||
               (s.key === "import" && progress.importedVerified);
             return (
@@ -262,6 +302,17 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
               </div>
             ) : null}
 
+            {/* Design gallery — presentation only. */}
+            {template ? (
+              <PortalThemeGallery
+                themes={themes}
+                value={template.themeSlug ?? DEFAULT_PORTAL_THEME_SLUG}
+                shopName={mapping?.portalName ?? "Your shop"}
+                busy={themeBusy}
+                onSelect={(slug) => void chooseTheme(slug)}
+              />
+            ) : null}
+
             {/* Features */}
             {features ? (
               <div className="space-y-2 rounded-xl border p-3">
@@ -305,7 +356,7 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
                     <p className="flex items-center gap-2 text-sm font-medium">
                       <ShieldCheck className="h-4 w-4 text-success" /> {generated.fileName} ·{" "}
                       {readableSize(generated.bytes)} · checksum {generated.checksum} · master v
-                      {generated.masterVersion}
+                      {generated.masterVersion} · {generated.themeName}
                     </p>
                     <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
                       {generated.summary.map((s) => (
