@@ -62,6 +62,11 @@ export interface PortalMappingView extends MappingCandidate {
   lastTestStatus: string | null;
   lastTestAt: string | null;
   lastTestDetail: string | null;
+  /** Result of the last EXTERNAL-PORTAL read-back against the controller. */
+  externalStatus: string | null;
+  externalCheckedAt: string | null;
+  externalDetail: string | null;
+  externalUrl: string | null;
   updatedAt: string;
 }
 
@@ -79,6 +84,10 @@ function mappingView(row: Record<string, unknown>): PortalMappingView {
     lastTestStatus: (row["last_test_status"] as string | null) ?? null,
     lastTestAt: (row["last_test_at"] as string | null) ?? null,
     lastTestDetail: (row["last_test_detail"] as string | null) ?? null,
+    externalStatus: (row["auto_config_status"] as string | null) ?? null,
+    externalCheckedAt: (row["auto_config_at"] as string | null) ?? null,
+    externalDetail: (row["auto_config_detail"] as string | null) ?? null,
+    externalUrl: (row["auto_config_url"] as string | null) ?? null,
     updatedAt: String(row["updated_at"] ?? ""),
   };
 }
@@ -276,78 +285,134 @@ export interface PortalTestStep {
   detail: string;
 }
 
-/** End-to-end check of ONE saved mapping against the live controller. */
+/**
+ * End-to-end check of ONE saved mapping against the live controller.
+ *
+ * Two independent outcomes are reported and stored separately:
+ *  - can WaveWallet reach and read this shop's controller;
+ *  - does the portal's External Portal Server really point at WaveWallet.
+ * The second one is only ever "verified" when the controller reads that address
+ * back. Nothing is written to the controller here.
+ */
 export const testPortalMapping = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { ecosystemId: string; id: string }) => {
+  .inputValidator((data: { ecosystemId: string; id: string; portalUrl?: string | null }) => {
     if (!data?.ecosystemId || !data?.id) throw new Error("A shop and portal are required.");
     return data;
   })
-  .handler(async ({ data, context }): Promise<{ ok: boolean; steps: PortalTestStep[] }> => {
-    await assertShopAdmin(context as unknown as AuthContext, data.ecosystemId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { openOmadaSession } = await import("./omada-api.server");
-    const { discoverPortalCapabilities, listSitePortals } = await import("./omada-portals.server");
+  .handler(
+    async ({
+      data,
+      context,
+    }): Promise<{ ok: boolean; steps: PortalTestStep[]; externalStatus: string }> => {
+      await assertShopAdmin(context as unknown as AuthContext, data.ecosystemId);
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { openOmadaSession } = await import("./omada-api.server");
+      const { discoverPortalCapabilities, listSitePortals } = await import("./omada-portals.server");
 
-    const steps: PortalTestStep[] = [];
-    const { data: row } = await supabaseAdmin
-      .from("omada_portal_mappings")
-      .select("*")
-      .eq("id", data.id)
-      .eq("ecosystem_id", data.ecosystemId)
-      .maybeSingle();
-    if (!row) throw new Error("That portal mapping does not belong to this shop.");
+      const steps: PortalTestStep[] = [];
+      const { data: row } = await supabaseAdmin
+        .from("omada_portal_mappings")
+        .select("*")
+        .eq("id", data.id)
+        .eq("ecosystem_id", data.ecosystemId)
+        .maybeSingle();
+      if (!row) throw new Error("That portal mapping does not belong to this shop.");
 
-    let ok = false;
-    try {
-      const session = await openOmadaSession(supabaseAdmin as never, data.ecosystemId);
-      steps.push({
-        step: "Controller session",
-        ok: true,
-        detail: "Authenticated with this shop's own stored credentials.",
-      });
-      const caps = await discoverPortalCapabilities(session);
-      steps.push({
-        step: "Controller capability",
-        ok: caps.listSupported,
-        detail: caps.notes.join(" "),
-      });
-      steps.push({
-        step: "Automatic sign-on",
-        ok: caps.authorizeSupported,
-        detail: caps.authorizeSupported
-          ? `Verified endpoint ${caps.authorizePath}.`
-          : (caps.limitation ?? "Not published by this controller."),
-      });
-      const portals = await listSitePortals({ ...session, siteId: row.site_id as string }, caps);
-      const match = portals.find((p) => p.id === row.portal_id);
-      steps.push({
-        step: "Portal still exists",
-        ok: Boolean(match),
-        detail: match
-          ? `"${match.name}" found on site ${row.site_name ?? row.site_id}.`
-          : `The selected portal is no longer present on this site (${portals.length} portal(s) found).`,
-      });
-      ok = Boolean(match) && caps.listSupported;
-    } catch (e) {
-      steps.push({
-        step: "Controller session",
-        ok: false,
-        detail: e instanceof Error ? e.message : String(e),
-      });
-    }
+      let ok = false;
+      let externalStatus = "unknown";
+      let externalDetail = "The External Portal Server setting was not checked.";
+      try {
+        const session = await openOmadaSession(supabaseAdmin as never, data.ecosystemId);
+        steps.push({
+          step: "Controller session",
+          ok: true,
+          detail: "Authenticated with this shop's own stored credentials.",
+        });
+        const caps = await discoverPortalCapabilities(session);
+        steps.push({
+          step: "Controller capability",
+          ok: caps.listSupported,
+          detail: caps.notes.join(" "),
+        });
+        steps.push({
+          step: "Automatic sign-on",
+          ok: caps.authorizeSupported,
+          detail: caps.authorizeSupported
+            ? `Verified endpoint ${caps.authorizePath}.`
+            : (caps.limitation ?? "Not published by this controller."),
+        });
+        const portals = await listSitePortals({ ...session, siteId: row.site_id as string }, caps);
+        const match = portals.find((p) => p.id === row.portal_id);
+        steps.push({
+          step: "Portal still exists",
+          ok: Boolean(match),
+          detail: match
+            ? `"${match.name}" found on site ${row.site_name ?? row.site_id}.`
+            : `The selected portal is no longer present on this site (${portals.length} portal(s) found).`,
+        });
+        ok = Boolean(match) && caps.listSupported;
 
-    await supabaseAdmin
-      .from("omada_portal_mappings")
-      .update({
-        last_test_status: ok ? "passed" : "failed",
-        last_test_at: new Date().toISOString(),
-        last_test_detail: steps.map((s) => `${s.step}: ${s.detail}`).join(" | ").slice(0, 900),
-      })
-      .eq("id", data.id);
+        // Read-only verification of the one-time Omada configuration.
+        if (data.portalUrl) {
+          const { readPortalConfig } = await import("./omada-auto-config.server");
+          const { readbackMatchesExternalPortal } = await import("./omada-auto-config");
+          const config = await readPortalConfig(
+            session,
+            row.site_id as string,
+            row.portal_id as string,
+          );
+          if (!config) {
+            externalStatus = "not_exposed";
+            externalDetail =
+              "This controller does not return the portal's authentication settings through its supported API, so WaveWallet cannot confirm the External Portal Server. Configure it once in Omada.";
+          } else if (readbackMatchesExternalPortal(config, data.portalUrl)) {
+            externalStatus = "verified";
+            externalDetail = "The controller reports this portal's External Portal Server as the WaveWallet address.";
+          } else if (config["authType"] === undefined && config["externalPortal"] === undefined) {
+            externalStatus = "not_exposed";
+            externalDetail =
+              "This controller returns the portal without its authentication type, so the External Portal Server cannot be verified through the supported API. Configure it once in Omada.";
+          } else {
+            externalStatus = "not_configured";
+            externalDetail =
+              "The controller answered, but this portal does not point at the WaveWallet address yet.";
+          }
+          steps.push({
+            step: "External portal configuration",
+            ok: externalStatus === "verified",
+            detail: externalDetail,
+          });
+        }
+      } catch (e) {
+        steps.push({
+          step: "Controller session",
+          ok: false,
+          detail: e instanceof Error ? e.message : String(e),
+        });
+      }
 
-    return { ok, steps };
-  });
+      await supabaseAdmin
+        .from("omada_portal_mappings")
+        .update({
+          last_test_status: ok ? "passed" : "failed",
+          last_test_at: new Date().toISOString(),
+          last_test_detail: steps.map((s) => `${s.step}: ${s.detail}`).join(" | ").slice(0, 900),
+          ...(data.portalUrl
+            ? {
+                auto_config_status: externalStatus,
+                auto_config_detail: externalDetail.slice(0, 900),
+                auto_config_at: new Date().toISOString(),
+                auto_config_url: data.portalUrl,
+              }
+            : {}),
+        })
+        .eq("id", data.id);
+
+      return { ok, steps, externalStatus };
+    },
+  );
+
 
 export interface AutoConfigResult {
   status: import("./omada-auto-config").AutoConfigStatus;
