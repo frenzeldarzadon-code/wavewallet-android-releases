@@ -1,11 +1,12 @@
 /**
  * Admin-side "Import Customized Page" workflow, scoped to ONE shop's portal.
  *
- * The uploaded template belongs to a single saved portal mapping, and every
- * call re-authorises the caller against that shop. No controller write is ever
- * attempted here: Omada 6.2.14.11 publishes no supported route for importing a
- * customized portal page, so the generated file is downloaded and uploaded once
- * by the admin.
+ * Admins never upload a template: the page is derived from the ACTIVE canonical
+ * master the platform owner published. Every call re-authorises the caller
+ * against the shop that owns the selected portal mapping. No controller write
+ * is ever attempted here: Omada 6.2.14.11 publishes no supported route for
+ * importing a customized portal page, so the generated file is downloaded and
+ * imported once by the admin.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
