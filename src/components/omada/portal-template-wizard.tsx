@@ -40,6 +40,7 @@ import {
   type PortalTheme,
 } from "@/lib/portal-themes";
 import { PortalThemeGallery } from "./portal-theme-gallery";
+import { downloadTextFile } from "@/lib/download-file";
 import {
   TEMPLATE_FEATURE_LABELS,
   templateStage,
@@ -79,6 +80,8 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState("");
   const [generated, setGenerated] = useState<GeneratedState | null>(null);
+  /** Direct link shown only when the browser blocked the programmatic download. */
+  const [fallback, setFallback] = useState<{ url: string; fileName: string } | null>(null);
   const [themes, setThemes] = useState<PortalTheme[]>(PORTAL_THEMES);
   const [themeBusy, setThemeBusy] = useState(false);
 
