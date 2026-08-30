@@ -53,7 +53,7 @@ export const Route = createFileRoute("/admin/omada")({
 });
 
 function AdminOmada() {
-  const { ecosystemDbId } = useSession("admin");
+  const { ecosystemDbId, ecosystem } = useSession("admin");
   const { code, tab } = Route.useSearch();
 
   return (
@@ -62,20 +62,21 @@ function AdminOmada() {
       description="Your shop's own Omada controller. These details and any vouchers generated here belong to this shop only."
     >
       <Tabs defaultValue={tab ?? (code ? "status" : "connection")} className="w-full">
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 p-1 sm:grid-cols-3 lg:grid-cols-5">
-          <TabsTrigger value="connection" className="h-9 w-full text-xs sm:text-sm">
+        {/* Wraps into rows on narrow phones instead of squeezing five columns. */}
+        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1.5 p-1.5">
+          <TabsTrigger value="connection" className="h-9 flex-auto px-3 text-xs sm:text-sm">
             Connection
           </TabsTrigger>
-          <TabsTrigger value="devices" className="h-9 w-full text-xs sm:text-sm">
+          <TabsTrigger value="devices" className="h-9 flex-auto px-3 text-xs sm:text-sm">
             Devices
           </TabsTrigger>
-          <TabsTrigger value="generate" className="h-9 w-full text-xs sm:text-sm">
+          <TabsTrigger value="generate" className="h-9 flex-auto px-3 text-xs sm:text-sm">
             Generate
           </TabsTrigger>
-          <TabsTrigger value="status" className="h-9 w-full text-xs sm:text-sm">
+          <TabsTrigger value="status" className="h-9 flex-auto px-3 text-xs sm:text-sm">
             Status
           </TabsTrigger>
-          <TabsTrigger value="portal" className="h-9 w-full text-xs sm:text-sm">
+          <TabsTrigger value="portal" className="h-9 flex-auto px-3 text-xs sm:text-sm">
             Portal
           </TabsTrigger>
         </TabsList>
