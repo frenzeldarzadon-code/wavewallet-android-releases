@@ -304,35 +304,10 @@ function jsonForScript(value: unknown): string {
   return JSON.stringify(value).replace(/</g, "\\u003c").replace(/-->/g, "--\\u003e");
 }
 
-const STYLE = `
-:root{--ww-ink:#0b1729;--ww-muted:#5b6b84;--ww-brand:#1d6ef5;--ww-accent:#12b26a;}
-#ww-portal *{box-sizing:border-box}
-#ww-portal{position:relative;margin:0;padding:20px 16px 40px;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ww-ink);background:linear-gradient(160deg,#eaf1ff 0%,#f7fbff 45%,#eafaf3 100%);overflow:hidden}
-#ww-portal:before,#ww-portal:after{content:"";position:absolute;border-radius:50%;filter:blur(46px);opacity:.5;pointer-events:none}
-#ww-portal:before{width:280px;height:280px;top:-120px;right:-90px;background:radial-gradient(circle,#4f8cff,#8ad6ff)}
-#ww-portal:after{width:260px;height:260px;bottom:-130px;left:-100px;background:radial-gradient(circle,#4ce0a5,#bff5dd)}
-.ww-wrap{position:relative;max-width:520px;margin:0 auto;display:grid;gap:14px}
-.ww-card{background:rgba(255,255,255,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.85);border-radius:20px;padding:18px;box-shadow:0 18px 40px -24px rgba(12,32,64,.45)}
-.ww-eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ww-muted);margin:0 0 6px}
-.ww-title{font-size:22px;line-height:1.2;font-weight:700;margin:0 0 6px}
-.ww-sub{font-size:14px;color:var(--ww-muted);margin:0}
-.ww-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
-.ww-stat{border-radius:14px;padding:10px 12px;background:linear-gradient(135deg,rgba(29,110,245,.10),rgba(18,178,106,.10))}
-.ww-stat b{display:block;font-size:18px}
-.ww-stat span{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ww-muted)}
-.ww-actions{display:grid;gap:10px;margin-top:14px}
-.ww-btn{display:block;width:100%;text-align:center;text-decoration:none;font-weight:600;font-size:15px;padding:13px 16px;border-radius:14px;border:1px solid transparent;cursor:pointer}
-.ww-btn-primary{background:linear-gradient(135deg,var(--ww-brand),#0d47b5);color:#fff;box-shadow:0 12px 22px -14px rgba(13,71,181,.9)}
-.ww-btn-ghost{background:rgba(255,255,255,.7);border-color:rgba(11,23,41,.10);color:var(--ww-ink)}
-.ww-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.ww-slot{margin-top:6px}
-.ww-slot form{margin:0}
-.ww-slot input[type=text],.ww-slot input[type=password],.ww-slot input:not([type]){width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(11,23,41,.14);font-size:16px;background:#fff}
-.ww-slot button,.ww-slot input[type=submit],.ww-slot input[type=button]{width:100%;margin-top:10px;padding:13px 16px;border-radius:14px;border:0;background:linear-gradient(135deg,var(--ww-accent),#0b8f53);color:#fff;font-size:15px;font-weight:600}
-.ww-foot{text-align:center;font-size:12px;color:var(--ww-muted)}
-.ww-foot a{color:var(--ww-brand);font-weight:600}
-@media (min-width:560px){.ww-title{font-size:26px}}
-`.trim();
+/* The presentation layer lives in portal-themes.ts. It only ever changes how
+   the page looks: the markup slots, the moved-in Omada form and every runtime
+   behaviour below are identical for every theme. */
+
 
 /**
  * Builds the page the admin uploads into Omada's "Import Customized Page".
