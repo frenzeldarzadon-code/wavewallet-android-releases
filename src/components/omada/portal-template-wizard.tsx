@@ -143,7 +143,7 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
 
   const toggleFeature = async (key: keyof PortalTemplateFeatures, value: boolean) => {
     if (!features || !ecosystemId || !mappingId) return;
-    const next = { ...features, [key]: value };
+    const next = { ...features, [key]: value } as PortalTemplateFeatures;
     setTemplate((t) => (t ? { ...t, features: next } : t));
     try {
       const saved = await savePortalTemplateFeatures({
