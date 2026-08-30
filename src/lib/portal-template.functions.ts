@@ -13,6 +13,13 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { base64ToBytes, masterFromArchive, readZipEntries } from "./portal-master";
 import { generatePortalFromMaster } from "./portal-generate";
 import {
+  DEFAULT_PORTAL_THEME_SLUG,
+  normalizePortalTheme,
+  PORTAL_THEMES,
+  resolvePortalTheme,
+  type PortalTheme,
+} from "./portal-themes";
+import {
   normalizeTemplateFeatures,
   type PortalTemplateFeatures,
   type TemplateAnalysis,
@@ -48,6 +55,8 @@ export interface PortalTemplateView {
   generatedAt: string | null;
   hasGenerated: boolean;
   importStatus: string;
+  /** Design gallery theme chosen for this portal. Presentation only. */
+  themeSlug: string;
   updatedAt: string | null;
   /** Active canonical master this portal generates from. Admins never upload. */
   masterVersion: number | null;
@@ -86,6 +95,7 @@ function view(
     generatedAt: (row?.["generated_at"] as string | null) ?? null,
     hasGenerated: Boolean(row?.["generated_html"]),
     importStatus: (row?.["import_status"] as string | null) ?? "manual_required",
+    themeSlug: (row?.["theme_slug"] as string | null) ?? DEFAULT_PORTAL_THEME_SLUG,
     updatedAt: (row?.["updated_at"] as string | null) ?? null,
     masterVersion: master?.version ?? null,
     masterChecksum: master?.checksum ?? null,
@@ -123,6 +133,34 @@ async function activeMaster(
     .eq("is_active", true)
     .maybeSingle();
   return data ?? null;
+}
+
+/**
+ * Reads the database-backed design gallery. The built-in seed list is only a
+ * fallback so preview and generation never break when the catalog is empty.
+ */
+async function themeCatalog(supabaseAdmin: unknown): Promise<PortalTheme[]> {
+  const client = supabaseAdmin as {
+    from: (t: string) => {
+      select: (c: string) => {
+        eq: (
+          c: string,
+          v: unknown,
+        ) => { order: (c: string, o: { ascending: boolean }) => Promise<{ data: unknown[] | null }> };
+      };
+    };
+  };
+  try {
+    const { data } = await client
+      .from("omada_portal_themes")
+      .select("slug, name, description, category, layout, decor, font_stack, motion, tokens, sort_order")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+    const rows = (data ?? []).map((r) => normalizePortalTheme(r));
+    return rows.length ? rows : PORTAL_THEMES;
+  } catch {
+    return PORTAL_THEMES;
+  }
 }
 
 /** Loads the mapping and proves it belongs to the caller's shop. */
@@ -201,6 +239,59 @@ export const savePortalTemplateFeatures = createServerFn({ method: "POST" })
     );
   });
 
+/** The design gallery, straight from the database. Read-only for admins. */
+export const listPortalThemes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async (): Promise<PortalTheme[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    return themeCatalog(supabaseAdmin);
+  });
+
+/** Saves the chosen theme for ONE portal. Presentation only: nothing about the
+ * canonical Omada master, its mechanics or the enabled features changes. */
+export const savePortalTemplateTheme = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { ecosystemId: string; mappingId: string; themeSlug: string }) => {
+    if (!data?.ecosystemId || !data?.mappingId) throw new Error("A shop and portal are required.");
+    if (!data?.themeSlug) throw new Error("Choose a design theme.");
+    return data;
+  })
+  .handler(async ({ data, context }): Promise<PortalTemplateView> => {
+    const ctx = context as unknown as AuthContext;
+    const { supabaseAdmin } = await requireMapping(ctx, data.ecosystemId, data.mappingId);
+    const catalog = await themeCatalog(supabaseAdmin);
+    const theme = catalog.find((th) => th.slug === data.themeSlug);
+    if (!theme) throw new Error("That design theme is not available.");
+
+    const { data: existing } = await supabaseAdmin
+      .from("omada_portal_templates")
+      .select("features")
+      .eq("mapping_id", data.mappingId)
+      .eq("ecosystem_id", data.ecosystemId)
+      .maybeSingle();
+
+    const { data: row, error } = await supabaseAdmin
+      .from("omada_portal_templates")
+      .upsert(
+        {
+          mapping_id: data.mappingId,
+          ecosystem_id: data.ecosystemId,
+          features: normalizeTemplateFeatures(existing?.features) as never,
+          theme_slug: theme.slug,
+          created_by: ctx.userId,
+        },
+        { onConflict: "mapping_id" },
+      )
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    return view(
+      data.mappingId,
+      row as Record<string, unknown>,
+      await activeMaster(supabaseAdmin as never),
+    );
+  });
+
 export interface GeneratedPortalFile {
   fileName: string;
   html: string;
@@ -210,6 +301,8 @@ export interface GeneratedPortalFile {
   /** Canonical master this artifact was derived from. */
   masterVersion: number;
   masterChecksum: string;
+  themeSlug: string;
+  themeName: string;
   summary: string[];
   warnings: string[];
   /** Exactly what the admin must do in Omada, for THIS portal. */
@@ -255,6 +348,10 @@ export const generatePortalTemplate = createServerFn({ method: "POST" })
       .maybeSingle();
 
     const features = normalizeTemplateFeatures(row?.features);
+    const theme = resolvePortalTheme(
+      (row?.theme_slug as string | null) ?? DEFAULT_PORTAL_THEME_SLUG,
+      await themeCatalog(supabaseAdmin),
+    );
     const shopName = (shop?.name as string | null) ?? "This shop";
     const portalName = (mapping["portal_name"] as string | null) ?? null;
 
@@ -292,6 +389,7 @@ export const generatePortalTemplate = createServerFn({ method: "POST" })
         siteId: (mapping["site_id"] as string | null) ?? null,
         siteName: (mapping["site_name"] as string | null) ?? null,
       },
+      theme,
     );
 
     await supabaseAdmin.from("omada_portal_templates").upsert(
@@ -299,6 +397,7 @@ export const generatePortalTemplate = createServerFn({ method: "POST" })
         mapping_id: data.mappingId,
         ecosystem_id: data.ecosystemId,
         features: features as never,
+        theme_slug: theme.slug,
         file_name: generated.fileName,
         template_bytes: generated.bytes,
         generated_html: generated.html,
@@ -319,6 +418,8 @@ export const generatePortalTemplate = createServerFn({ method: "POST" })
       checksum: generated.checksum,
       masterVersion: generated.masterVersion,
       masterChecksum: generated.masterChecksum,
+      themeSlug: generated.themeSlug,
+      themeName: generated.themeName,
       summary: generated.summary,
       warnings: generated.warnings,
       importSupported: false,

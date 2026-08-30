@@ -3150,6 +3150,7 @@ export type Database = {
           mapping_id: string
           template_bytes: number | null
           template_html: string | null
+          theme_slug: string
           updated_at: string
         }
         Insert: {
@@ -3172,6 +3173,7 @@ export type Database = {
           mapping_id: string
           template_bytes?: number | null
           template_html?: string | null
+          theme_slug?: string
           updated_at?: string
         }
         Update: {
@@ -3194,6 +3196,7 @@ export type Database = {
           mapping_id?: string
           template_bytes?: number | null
           template_html?: string | null
+          theme_slug?: string
           updated_at?: string
         }
         Relationships: [
@@ -3226,6 +3229,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      omada_portal_themes: {
+        Row: {
+          category: string
+          created_at: string
+          decor: string
+          description: string
+          font_stack: string
+          id: string
+          is_active: boolean
+          layout: string
+          motion: string
+          name: string
+          slug: string
+          sort_order: number
+          tokens: Json
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          decor?: string
+          description?: string
+          font_stack?: string
+          id?: string
+          is_active?: boolean
+          layout?: string
+          motion?: string
+          name: string
+          slug: string
+          sort_order?: number
+          tokens?: Json
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          decor?: string
+          description?: string
+          font_stack?: string
+          id?: string
+          is_active?: boolean
+          layout?: string
+          motion?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          tokens?: Json
+          updated_at?: string
+        }
+        Relationships: []
       }
       omada_voucher_batches: {
         Row: {
