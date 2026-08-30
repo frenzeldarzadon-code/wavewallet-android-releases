@@ -100,8 +100,9 @@ function AdminOmada() {
           <TracerConflictsPanel ecosystemId={ecosystemDbId} />
         </TabsContent>
 
-        <TabsContent value="portal" className="mt-4">
+        <TabsContent value="portal" className="mt-4 space-y-4">
           <PortalMappingPanel ecosystemId={ecosystemDbId} shopName={ecosystem?.name ?? null} />
+          <PortalTemplateWizard ecosystemId={ecosystemDbId} />
         </TabsContent>
       </Tabs>
     </PageSection>
