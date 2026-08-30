@@ -9,11 +9,9 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { deriveFromMaster, masterFromArchive, readZipEntries, base64ToBytes, byteSize, checksumOf } from "./portal-master";
+import { base64ToBytes, masterFromArchive, readZipEntries } from "./portal-master";
+import { generatePortalFromMaster } from "./portal-generate";
 import {
-  analyzeOmadaTemplate,
-  generateWaveWalletPortal,
-  generatedFileName,
   normalizeTemplateFeatures,
   type PortalTemplateFeatures,
   type TemplateAnalysis,
@@ -216,8 +214,9 @@ export interface GeneratedPortalFile {
   /** Real measured size of the generated file. */
   bytes: number;
   checksum: string;
-  baseVersion: number;
-  baseChecksum: string;
+  /** Canonical master this artifact was derived from. */
+  masterVersion: number;
+  masterChecksum: string;
   summary: string[];
   warnings: string[];
   /** Exactly what the admin must do in Omada, for THIS portal. */
@@ -227,9 +226,9 @@ export interface GeneratedPortalFile {
 }
 
 /**
- * Builds the downloadable page for ONE portal from the WaveWallet base
- * template. Nobody uploads anything: the base template is derived in code from
- * the canonical Omada master's audited runtime contract.
+ * Builds the downloadable page for ONE portal by deriving it from the ACTIVE
+ * canonical master the platform owner uploaded. No master, no generation: the
+ * builder never falls back to a hand-written copy of Omada's runtime.
  */
 export const generatePortalTemplate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -241,6 +240,14 @@ export const generatePortalTemplate = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<GeneratedPortalFile> => {
     const ctx = context as unknown as AuthContext;
     const { supabaseAdmin, mapping } = await requireMapping(ctx, data.ecosystemId, data.mappingId);
+
+    const master = await activeMaster(supabaseAdmin as never);
+    if (!master) {
+      throw new Error(
+        "No Omada portal template has been published yet. Ask the platform owner to upload the original Omada template first.",
+      );
+    }
+
     const { data: row } = await supabaseAdmin
       .from("omada_portal_templates")
       .select("*")
@@ -258,45 +265,69 @@ export const generatePortalTemplate = createServerFn({ method: "POST" })
     const shopName = (shop?.name as string | null) ?? "This shop";
     const portalName = (mapping["portal_name"] as string | null) ?? null;
 
-    const pkg = buildPortalPackage(features, {
-      origin: data.origin,
-      mappingId: data.mappingId,
-      shopName,
-      shopSlug: (shop?.slug as string | null) ?? null,
-      portalId: (mapping["portal_id"] as string | null) ?? null,
-      portalName,
-      siteId: (mapping["site_id"] as string | null) ?? null,
-      siteName: (mapping["site_name"] as string | null) ?? null,
-    });
+    // The stored original is only ever READ. Re-reading the archive here keeps
+    // the master byte-for-byte in the database.
+    let files: Record<string, string> = { "index.html": master.template_html };
+    if (master.source_kind === "zip" && master.original_content) {
+      try {
+        const entries = await readZipEntries(base64ToBytes(master.original_content));
+        files = masterFromArchive(entries.text, entries.names).files;
+      } catch {
+        /* unreadable archive: generate from the cached index.html alone */
+      }
+    }
 
-    await supabaseAdmin
-      .from("omada_portal_templates")
-      .upsert(
-        {
-          mapping_id: data.mappingId,
-          ecosystem_id: data.ecosystemId,
-          features: features as never,
-          file_name: pkg.fileName,
-          template_bytes: pkg.bytes,
-          generated_html: pkg.html,
-          generated_checksum: pkg.checksum,
-          base_version: pkg.baseVersion,
-          generated_at: new Date().toISOString(),
-          import_status: "manual_required",
-          created_by: ctx.userId,
-        },
-        { onConflict: "mapping_id" },
-      );
+    const generated = generatePortalFromMaster(
+      {
+        version: master.version,
+        checksum: master.checksum,
+        html: master.template_html,
+        files,
+        analysis:
+          master.analysis && typeof master.analysis === "object"
+            ? (master.analysis as TemplateAnalysis)
+            : null,
+      },
+      features,
+      {
+        origin: data.origin,
+        mappingId: data.mappingId,
+        shopName,
+        shopSlug: (shop?.slug as string | null) ?? null,
+        portalId: (mapping["portal_id"] as string | null) ?? null,
+        portalName,
+        siteId: (mapping["site_id"] as string | null) ?? null,
+        siteName: (mapping["site_name"] as string | null) ?? null,
+      },
+    );
+
+    await supabaseAdmin.from("omada_portal_templates").upsert(
+      {
+        mapping_id: data.mappingId,
+        ecosystem_id: data.ecosystemId,
+        features: features as never,
+        file_name: generated.fileName,
+        template_bytes: generated.bytes,
+        generated_html: generated.html,
+        generated_checksum: generated.checksum,
+        base_template_id: master.id,
+        base_version: master.version,
+        generated_at: new Date().toISOString(),
+        import_status: "manual_required",
+        created_by: ctx.userId,
+      },
+      { onConflict: "mapping_id" },
+    );
 
     return {
-      fileName: pkg.fileName,
-      html: pkg.html,
-      bytes: pkg.bytes,
-      checksum: pkg.checksum,
-      baseVersion: pkg.baseVersion,
-      baseChecksum: pkg.baseChecksum,
-      summary: pkg.summary,
-      warnings: pkg.warnings,
+      fileName: generated.fileName,
+      html: generated.html,
+      bytes: generated.bytes,
+      checksum: generated.checksum,
+      masterVersion: generated.masterVersion,
+      masterChecksum: generated.masterChecksum,
+      summary: generated.summary,
+      warnings: generated.warnings,
       importSupported: false,
       manualSteps: manualImportSteps(
         portalName,
