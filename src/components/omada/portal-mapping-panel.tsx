@@ -70,7 +70,9 @@ export function PortalMappingPanel({ ecosystemId }: { ecosystemId: string | null
 
   const [siteId, setSiteId] = useState("");
   const [portals, setPortals] = useState<PortalOption[]>([]);
+  const [portalsLoading, setPortalsLoading] = useState(false);
   const [portalError, setPortalError] = useState<string | null>(null);
+
   const [portalId, setPortalId] = useState("");
   const [flags, setFlags] = useState<PortalFeatureFlags>(DEFAULT_PORTAL_FLAGS);
   const [editingId, setEditingId] = useState<string | null>(null);
