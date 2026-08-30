@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { resolveGeneratedAfterRefresh, runPortalDownload } from "../portal-download";
+import { portalArtifactResponse } from "../portal-artifact-download.server";
 
 const artifact = { fileName: "shop-portal.html", html: "<html>portal</html>" };
 
@@ -35,5 +36,15 @@ describe("portal download state", () => {
 
   it("does nothing when no artifact exists yet", () => {
     expect(runPortalDownload(null).ok).toBe(false);
+  });
+
+  it("streams exact persisted bytes as a browser attachment", async () => {
+    const html = "<!doctype html><html><body>Exact café bytes</body></html>";
+    const response = portalArtifactResponse(html, "../shop portal.html");
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("text/html; charset=utf-8");
+    expect(response.headers.get("content-disposition")).toContain('attachment; filename="shop portal.html"');
+    expect(Number(response.headers.get("content-length"))).toBe(new TextEncoder().encode(html).byteLength);
+    expect(await response.text()).toBe(html);
   });
 });
