@@ -70,7 +70,9 @@ export function PortalMappingPanel({ ecosystemId }: { ecosystemId: string | null
 
   const [siteId, setSiteId] = useState("");
   const [portals, setPortals] = useState<PortalOption[]>([]);
+  const [portalsLoading, setPortalsLoading] = useState(false);
   const [portalError, setPortalError] = useState<string | null>(null);
+
   const [portalId, setPortalId] = useState("");
   const [flags, setFlags] = useState<PortalFeatureFlags>(DEFAULT_PORTAL_FLAGS);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -102,22 +104,28 @@ export function PortalMappingPanel({ ecosystemId }: { ecosystemId: string | null
   useEffect(() => {
     if (!ecosystemId || !siteId) {
       setPortals([]);
+      setPortalsLoading(false);
       return;
     }
     let active = true;
     setPortalError(null);
     setPortals([]);
+    setPortalsLoading(true);
     void listSitePortalOptions({ data: { ecosystemId, siteId } })
       .then((r) => {
         if (!active) return;
         setPortals(r.portals);
         setPortalError(r.error);
       })
-      .catch((e: Error) => active && setPortalError(e.message));
+      .catch((e: Error) => active && setPortalError(e.message))
+      .finally(() => {
+        if (active) setPortalsLoading(false);
+      });
     return () => {
       active = false;
     };
   }, [ecosystemId, siteId]);
+
 
   if (!ecosystemId) return null;
 
@@ -322,18 +330,25 @@ export function PortalMappingPanel({ ecosystemId }: { ecosystemId: string | null
               </div>
               <div className="space-y-1.5">
                 <Label>Omada portal</Label>
-                <Select value={portalId} onValueChange={setPortalId} disabled={portals.length === 0}>
+                <Select
+                  value={portalId}
+                  onValueChange={setPortalId}
+                  disabled={portalsLoading || portals.length === 0}
+                >
                   <SelectTrigger>
                     <SelectValue
                       placeholder={
                         !siteId
                           ? "Choose a site first"
-                          : portals.length === 0
-                            ? "No portal available"
-                            : "Choose the portal"
+                          : portalsLoading
+                            ? "Reading portals from your controller…"
+                            : portals.length === 0
+                              ? "No portal available"
+                              : "Choose the portal"
                       }
                     />
                   </SelectTrigger>
+
                   <SelectContent>
                     {portals.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
