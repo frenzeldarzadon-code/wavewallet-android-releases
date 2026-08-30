@@ -7,12 +7,28 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Plus, RefreshCw, Copy, Trash2 } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  RefreshCw,
+  Copy,
+  Trash2,
+  CheckCircle2,
+  AlertTriangle,
+  ListChecks,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -29,8 +45,6 @@ import {
   savePortalMapping,
   setPortalMappingEnabled,
   testPortalMapping,
-  autoConfigurePortal,
-  type AutoConfigResult,
   type PortalMappingView,
   type PortalOption,
   type PortalSetup,
@@ -41,6 +55,13 @@ import {
   portalUrlFor,
   type PortalFeatureFlags,
 } from "@/lib/portal-mapping";
+import {
+  externalPortalExplanation,
+  externalPortalLabel,
+  portalSetupInstructions,
+  portalSetupState,
+  preAuthValueFor,
+} from "@/lib/portal-setup-status";
 
 const FLAG_LABELS: Array<{ key: keyof PortalFeatureFlags; label: string; hint: string }> = [
   {
