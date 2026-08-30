@@ -17,13 +17,11 @@ describe("downloadTextFile", () => {
   const created: string[] = [];
   beforeEach(() => {
     created.length = 0;
-    // @ts-expect-error test shim
     URL.createObjectURL = vi.fn(() => {
       const u = `blob:test-${created.length}`;
       created.push(u);
       return u;
     });
-    // @ts-expect-error test shim
     URL.revokeObjectURL = vi.fn();
   });
   afterEach(() => vi.restoreAllMocks());
