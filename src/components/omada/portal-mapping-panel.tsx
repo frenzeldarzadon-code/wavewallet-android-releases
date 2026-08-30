@@ -477,7 +477,7 @@ export function PortalMappingPanel({
                         {m.ssidInfo ? ` · ${m.ssidInfo}` : ""}
                       </p>
                     </div>
-                    <StatusBadge tone={m.enabled ? "info" : "muted"}>
+                    <StatusBadge tone={m.enabled ? "success" : "muted"}>
                       {m.enabled ? "Mapping active" : "Switched off"}
                     </StatusBadge>
                   </div>
