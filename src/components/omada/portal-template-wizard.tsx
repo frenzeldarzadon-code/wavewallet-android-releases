@@ -169,6 +169,7 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
   const generate = async () => {
     if (!ecosystemId || !mappingId) return;
     setBusy("generate");
+    setFallback(null);
     try {
       const file = await generatePortalTemplate({
         data: { ecosystemId, mappingId, origin: window.location.origin },
@@ -351,11 +352,34 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
                   )}
                   Generate portal page
                 </Button>
-                <Button size="sm" variant="outline" disabled={!generated} onClick={download}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!generated || busy === "generate"}
+                  onClick={download}
+                >
                   <Download className="mr-2 h-4 w-4" />
-                  Download{generated ? ` (${readableSize(generated.bytes)})` : ""}
+                  {generated
+                    ? `Download (${readableSize(generated.bytes)})`
+                    : "Download (generate first)"}
                 </Button>
               </div>
+
+              {fallback ? (
+                <p className="rounded-xl border border-warning/40 bg-warning/5 p-3 text-xs">
+                  Your browser blocked the automatic download.{" "}
+                  <a
+                    className="font-medium underline"
+                    href={fallback.url}
+                    download={fallback.fileName}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Tap here to save {fallback.fileName}
+                  </a>
+                  .
+                </p>
+              ) : null}
 
               {generated ? (
                 <div className="space-y-3">
