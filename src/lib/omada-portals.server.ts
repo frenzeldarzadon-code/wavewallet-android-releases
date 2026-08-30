@@ -26,6 +26,9 @@ export interface PortalCapabilities {
   authorizePath: string | null;
   /** How the authorize path is scoped: site-relative or controller-relative. */
   authorizeScope: "site" | "controller" | null;
+  /** HTTP method the controller accepts on the authorize path. */
+  authorizeMethod: "GET" | "POST" | null;
+
   /** Human-readable reason when something is not available. */
   limitation: string | null;
   /** Every discovery step, shown verbatim to the admin. */
@@ -128,12 +131,32 @@ export function toPortal(row: Record<string, unknown>): OmadaPortal | null {
  * Discovery                                                           *
  * ------------------------------------------------------------------ */
 
-const PORTAL_LIST = /\/(setting|hotspot)\/portals$/;
+const PORTAL_LIST = /\/(setting\/portals|hotspot\/portals|portals)$/;
 const AUTHORIZE =
-  /(extportal\/auth|hotspot\/auth|clients\/\{[^}]+\}\/authorize|authorize\/client|portal\/auth)$/i;
+  /(clients\/authorize|extportal\/auth|hotspot\/auth|clients\/\{[^}]+\}\/authorize|authorize\/client|portal\/auth)$/i;
 
-/** Candidate read-only portal listings that Omada publishes for v5/v6 controllers. */
-const PROBE_LIST_PATHS = ["/setting/portals", "/hotspot/portals"];
+/**
+ * Read-only portal listings Omada actually serves. `/portals` is the site-scoped
+ * listing of the Open API v1 (controller 5.x/6.x); the two `setting`/`hotspot`
+ * spellings are kept for older builds. Order matters: the first that answers a
+ * clean envelope wins.
+ */
+const PROBE_LIST_PATHS = ["/portals", "/setting/portals", "/hotspot/portals"];
+
+/**
+ * Client-authorization endpoints. On 6.x the site-scoped
+ * `GET /clients/authorize?clientMac=...` puts a client online; probing it with
+ * no parameters answers "this client does not exist", which proves the route and
+ * the permission without touching any real client.
+ */
+const PROBE_AUTHORIZE: Array<{ path: string; method: "GET" | "POST" }> = [
+  { path: "/clients/authorize", method: "GET" },
+  { path: "/hotspot/extportal/auth", method: "POST" },
+  { path: "/extportal/auth", method: "POST" },
+];
+
+/** Error codes that mean "route reachable, arguments missing" — not "unsupported". */
+const REACHABLE_CODES = new Set([-41011, -41012, -1001, -1005]);
 
 export async function readInfo(session: OmadaSession) {
   const res = await rawGet(`${session.base}/api/info`, session.token);
@@ -160,6 +183,7 @@ export async function discoverPortalCapabilities(
     authorizeSupported: false,
     authorizePath: null,
     authorizeScope: null,
+    authorizeMethod: null,
     limitation: null,
     notes: [],
   };
@@ -175,10 +199,11 @@ export async function discoverPortalCapabilities(
         caps.listPath = path;
         caps.listSupported = true;
       }
-      if (!caps.authorizePath && AUTHORIZE.test(path) && (ops["post"] || ops["put"])) {
+      if (!caps.authorizePath && AUTHORIZE.test(path) && (ops["post"] || ops["put"] || ops["get"])) {
         caps.authorizePath = path;
         caps.authorizeSupported = true;
-        caps.authorizeScope = path.includes("/sites/{siteId}") ? "site" : "controller";
+        caps.authorizeMethod = ops["post"] || ops["put"] ? "POST" : "GET";
+        caps.authorizeScope = path.includes("/sites/") ? "site" : "controller";
       }
     }
     caps.notes.push(
@@ -186,33 +211,63 @@ export async function discoverPortalCapabilities(
     );
   } else {
     caps.notes.push(
-      "The controller did not publish its API document to this API application; falling back to read-only probing.",
+      "This controller does not publish an API document, so the endpoints below were verified live against it.",
     );
   }
 
+  const sitePrefix = `${session.base}/openapi/v1/${session.omadacId}/sites/${session.siteId}`;
+
   if (!caps.listSupported) {
     for (const path of PROBE_LIST_PATHS) {
-      const res = await rawGet(
-        `${session.base}/openapi/v1/${session.omadacId}/sites/${session.siteId}${path}`,
-        session.token,
-      );
+      const res = await rawGet(`${sitePrefix}${path}`, session.token);
       const env = omadaEnvelope(res.body);
       if (res.ok && (env.code === null || env.code === 0)) {
         caps.listSupported = true;
         caps.listPath = `/openapi/v1/{omadacId}/sites/{siteId}${path}`;
-        caps.notes.push(`Portal listing verified live at ${path}.`);
+        caps.notes.push(
+          `Portal listing verified live at ${path} (${rowsOf(env.result).length} portal(s) on the probed site).`,
+        );
         break;
       }
-      caps.notes.push(`No portal listing at ${path} (${env.msg || `HTTP ${res.status}`}).`);
+      caps.notes.push(
+        `No portal listing at ${path} (${env.msg || `HTTP ${res.status}`}${
+          env.code !== null && env.code !== 0 ? ` / code ${env.code}` : ""
+        }).`,
+      );
+    }
+  }
+
+  if (!caps.authorizeSupported) {
+    for (const probe of PROBE_AUTHORIZE) {
+      // Probed without parameters: the controller can only accept or reject the
+      // route itself, never authorize a real device.
+      const res = await rawGet(`${sitePrefix}${probe.path}`, session.token);
+      const env = omadaEnvelope(res.body);
+      const reachable =
+        res.status !== 404 &&
+        (env.code === 0 || (env.code !== null && REACHABLE_CODES.has(env.code)) || res.status === 405);
+      if (reachable) {
+        caps.authorizeSupported = true;
+        caps.authorizeScope = "site";
+        caps.authorizeMethod = res.status === 405 ? "POST" : probe.method;
+        caps.authorizePath = `/openapi/v1/{omadacId}/sites/{siteId}${probe.path}`;
+        caps.notes.push(`Client authorization verified live at ${probe.path}.`);
+        break;
+      }
+      caps.notes.push(
+        `No client-authorization endpoint at ${probe.path} (${env.msg || `HTTP ${res.status}`}).`,
+      );
     }
   }
 
   if (!caps.listSupported) {
     caps.limitation =
-      "This controller does not expose its captive portals to the Open API application, so a portal cannot be selected. Grant the API client site-setting permission on the controller, then test again.";
+      "This controller answered every known portal-listing endpoint with an error, so no portal can be listed. " +
+      "Check that the Omada Open API application used by this shop has View (read) permission on this site, then test again. " +
+      "The exact controller replies are listed above.";
   } else if (!caps.authorizeSupported) {
     caps.limitation =
-      "Portals can be read, but this controller did not publish a client-authorization endpoint to this API application. Customers can still buy a voucher in the portal and enter it in the hotspot login page; automatic sign-on stays disabled rather than reporting a false success.";
+      "Portals can be read, but this controller did not accept any known client-authorization endpoint. Customers can still buy a voucher in the portal and enter it in the hotspot login page; automatic sign-on stays disabled rather than reporting a false success.";
   }
   return caps;
 }
@@ -232,6 +287,7 @@ export async function listSitePortals(
     .filter((p): p is OmadaPortal => Boolean(p));
   return portals;
 }
+
 
 /* ------------------------------------------------------------------ *
  * Authorization                                                       *
@@ -284,9 +340,17 @@ export async function authorizePortalClient(
 
   if (caps.authorizeScope === "site") {
     const suffix = caps.authorizePath.replace(/^.*\{siteId\}/, "");
-    await omadaSiteCall(session, suffix, { method: "POST", body: JSON.stringify(body) });
+    if (caps.authorizeMethod === "GET") {
+      // 6.x takes the authorization as query parameters on a GET route.
+      const query = new URLSearchParams();
+      for (const [k, v] of Object.entries(body)) query.set(k, String(v));
+      await omadaSiteCall(session, `${suffix}?${query.toString()}`);
+    } else {
+      await omadaSiteCall(session, suffix, { method: "POST", body: JSON.stringify(body) });
+    }
     return { ok: true, detail: "The controller accepted the authorization." };
   }
+
 
   const url = `${session.base}${caps.authorizePath
     .replace("{omadacId}", session.omadacId)
