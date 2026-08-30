@@ -282,6 +282,12 @@ export interface GenerateContext {
   shopSlug: string | null;
   portalName: string | null;
   siteName: string | null;
+  /** Exact Omada portal/site the generated page is bound to. */
+  portalId?: string | null;
+  siteId?: string | null;
+  /** Canonical master this page was derived from. */
+  masterVersion?: number;
+  masterChecksum?: string;
 }
 
 export function escapeHtml(value: string): string {
@@ -350,8 +356,13 @@ export function generateWaveWalletPortal(
     shopName: ctx.shopName,
     signupUrl: ctx.shopSlug ? `${origin}/join/${ctx.shopSlug}` : null,
     features,
-    /** Only parameter names the uploaded template actually referenced. */
+    portalId: ctx.portalId ?? null,
+    siteId: ctx.siteId ?? null,
+    masterVersion: ctx.masterVersion ?? null,
+    /** Only parameter names the canonical master actually referenced. */
     params: analysis.omadaParameters,
+    /** Only endpoints the canonical master actually calls. */
+    endpoints: analysis.endpoints,
   };
 
 
@@ -367,6 +378,9 @@ export function generateWaveWalletPortal(
 
   const section = `
 ${MARKER}
+<!-- canonical master v${ctx.masterVersion ?? 0} ${escapeHtml(ctx.masterChecksum ?? "unknown")} · site ${escapeHtml(
+    ctx.siteId ?? ctx.siteName ?? "",
+  )} · portal ${escapeHtml(ctx.portalId ?? ctx.portalName ?? "")} -->
 <style id="ww-portal-style">${STYLE}</style>
 <div id="ww-portal">
   <div class="ww-wrap">
@@ -485,6 +499,12 @@ ${MARKER}
       if (root.contains(forms[f])) continue;
       chosen = forms[f];
       break;
+    }
+    if (!chosen){
+      /* Masters that submit with their own script: move the field the master
+         uses for the voucher code, together with its container. */
+      var field = document.querySelector("input[name*=voucher i],input[id*=voucher i],input[name*=code i],input[id*=code i]");
+      if (field && !root.contains(field)) chosen = field.closest("div,section,fieldset") || field;
     }
     if (chosen && slot){
       var fallback = slot.querySelector("[data-ww-slot-fallback]");
