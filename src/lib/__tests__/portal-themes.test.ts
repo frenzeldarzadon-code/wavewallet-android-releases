@@ -126,7 +126,8 @@ describe("generation with every theme", () => {
       expect(out.html).toContain(`data-ww-theme="${theme.slug}"`);
       expect(out.themeSlug).toBe(theme.slug);
       // Voucher Shop only — never Inventory, never an Omada voucher creation.
-      expect(out.html).toContain("wwIntent=buy");
+      expect(out.html).toContain("wwIntent");
+      expect(out.html).toContain('data-ww-link="buy"');
       expect(out.html).not.toMatch(/inventory/i);
       expect(out.html).not.toMatch(/voucher-groups|createVoucher/i);
       // Captive-portal safe: nothing external, and small.
