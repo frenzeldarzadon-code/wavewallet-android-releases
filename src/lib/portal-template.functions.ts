@@ -168,7 +168,7 @@ export const savePortalTemplateFeatures = createServerFn({ method: "POST" })
     const features = normalizeTemplateFeatures(data.features);
     const { data: row, error } = await supabaseAdmin
       .from("omada_portal_templates")
-      .update({ features: features as unknown as Record<string, unknown> })
+      .update({ features: features as never })
       .eq("mapping_id", data.mappingId)
       .eq("ecosystem_id", data.ecosystemId)
       .select("*")
