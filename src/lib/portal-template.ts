@@ -324,6 +324,7 @@ export function generateWaveWalletPortal(
   ctx: GenerateContext,
 ): string {
   const origin = ctx.origin.replace(/\/+$/, "");
+  const theme = ctx.theme ?? defaultPortalTheme();
   const config = {
     origin,
     portalUrl: `${origin}/portal`,
@@ -331,6 +332,7 @@ export function generateWaveWalletPortal(
     shopName: ctx.shopName,
     signupUrl: ctx.shopSlug ? `${origin}/join/${ctx.shopSlug}` : null,
     features,
+    theme: theme.slug,
     portalId: ctx.portalId ?? null,
     siteId: ctx.siteId ?? null,
     masterVersion: ctx.masterVersion ?? null,
@@ -355,10 +357,12 @@ export function generateWaveWalletPortal(
 ${MARKER}
 <!-- canonical master v${ctx.masterVersion ?? 0} ${escapeHtml(ctx.masterChecksum ?? "unknown")} · site ${escapeHtml(
     ctx.siteId ?? ctx.siteName ?? "",
-  )} · portal ${escapeHtml(ctx.portalId ?? ctx.portalName ?? "")} -->
-<style id="ww-portal-style">${STYLE}</style>
-<div id="ww-portal">
+  )} · portal ${escapeHtml(ctx.portalId ?? ctx.portalName ?? "")} · theme ${escapeHtml(theme.slug)} -->
+<style id="ww-portal-style">${buildPortalThemeCss(theme)}</style>
+<div id="ww-portal" data-ww-theme="${escapeHtml(theme.slug)}">
+  ${THEME_DECOR_MARKUP}
   <div class="ww-wrap">
+
     <section class="ww-card">
       <p class="ww-eyebrow">${escapeHtml(ctx.shopName)} Wi-Fi</p>
       <h1 class="ww-title" data-ww-greeting>Buy a voucher to resume internet</h1>
