@@ -1,16 +1,16 @@
 /**
- * Omada "Import Customized Page" workflow for ONE shop's own portal.
+ * Pure analysis + generation for Omada's "Import Customized Page" workflow.
+ *
+ * The canonical source is ALWAYS the original Omada template the platform owner
+ * uploaded once (see portal-master.ts). This module only reads that master,
+ * reports what it preserves, and produces one shop's derived page.
  *
  * Controller 6.2.14.11 exposes NO supported Open API route for uploading a
- * customized portal page (every documented and probed path answers 404 or the
- * generic "invalid request parameters" catch-all), so WaveWallet never pretends
- * to import anything. Instead the admin uploads the template their OWN
- * controller produced, WaveWallet analyses it, keeps every Omada mechanic it
- * finds and appends its own UI, and the admin uploads the generated file back
- * into that exact portal.
+ * customized portal page, so WaveWallet never pretends to import anything: the
+ * admin downloads the generated file and imports it into that exact portal.
  *
- * Everything in this module is pure so the admin preview and the server
- * generator can never drift apart.
+ * Everything here is pure so the admin preview and the server generator can
+ * never drift apart.
  */
 
 /* ------------------------------------------------------------------ *
