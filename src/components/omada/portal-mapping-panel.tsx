@@ -102,22 +102,28 @@ export function PortalMappingPanel({ ecosystemId }: { ecosystemId: string | null
   useEffect(() => {
     if (!ecosystemId || !siteId) {
       setPortals([]);
+      setPortalsLoading(false);
       return;
     }
     let active = true;
     setPortalError(null);
     setPortals([]);
+    setPortalsLoading(true);
     void listSitePortalOptions({ data: { ecosystemId, siteId } })
       .then((r) => {
         if (!active) return;
         setPortals(r.portals);
         setPortalError(r.error);
       })
-      .catch((e: Error) => active && setPortalError(e.message));
+      .catch((e: Error) => active && setPortalError(e.message))
+      .finally(() => {
+        if (active) setPortalsLoading(false);
+      });
     return () => {
       active = false;
     };
   }, [ecosystemId, siteId]);
+
 
   if (!ecosystemId) return null;
 
