@@ -26,6 +26,9 @@ export interface PortalCapabilities {
   authorizePath: string | null;
   /** How the authorize path is scoped: site-relative or controller-relative. */
   authorizeScope: "site" | "controller" | null;
+  /** HTTP method the controller accepts on the authorize path. */
+  authorizeMethod: "GET" | "POST" | null;
+
   /** Human-readable reason when something is not available. */
   limitation: string | null;
   /** Every discovery step, shown verbatim to the admin. */
