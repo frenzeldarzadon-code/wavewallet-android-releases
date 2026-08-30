@@ -13,8 +13,6 @@ import { buildPortalPackage } from "./portal-package";
 import { baseTemplateInfo } from "./portal-base-template";
 import {
   analyzeOmadaTemplate,
-  generateWaveWalletPortal,
-  generatedFileName,
   normalizeTemplateFeatures,
   type PortalTemplateFeatures,
   type TemplateAnalysis,
@@ -53,9 +51,15 @@ export interface PortalTemplateView {
   importDetail: string | null;
   importVerifiedAt: string | null;
   updatedAt: string | null;
+  /** Derived base template the generator will use. Nobody uploads it. */
+  baseVersion: number;
+  baseChecksum: string;
+  baseBytes: number;
+  runtimeAudit: { name: string; classification: string; preserved: boolean; note: string }[];
 }
 
 function view(mappingId: string, row: Record<string, unknown> | null): PortalTemplateView {
+  const base = baseTemplateInfo();
   return {
     mappingId,
     fileName: (row?.["file_name"] as string | null) ?? null,
@@ -71,6 +75,15 @@ function view(mappingId: string, row: Record<string, unknown> | null): PortalTem
     importDetail: (row?.["import_detail"] as string | null) ?? null,
     importVerifiedAt: (row?.["import_verified_at"] as string | null) ?? null,
     updatedAt: (row?.["updated_at"] as string | null) ?? null,
+    baseVersion: base.version,
+    baseChecksum: base.checksum,
+    baseBytes: base.bytes,
+    runtimeAudit: base.audit.map((a) => ({
+      name: a.name,
+      classification: a.classification,
+      preserved: a.preserved,
+      note: a.note,
+    })),
   };
 }
 
