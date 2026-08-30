@@ -37,7 +37,6 @@ import {
 import {
   DEFAULT_PORTAL_THEME_SLUG,
   PORTAL_THEMES,
-  resolvePortalTheme,
   type PortalTheme,
 } from "@/lib/portal-themes";
 import { PortalThemeGallery } from "./portal-theme-gallery";
