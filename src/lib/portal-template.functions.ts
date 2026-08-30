@@ -9,10 +9,11 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { buildPortalPackage } from "./portal-package";
-import { baseTemplateInfo } from "./portal-base-template";
+import { deriveFromMaster, masterFromArchive, readZipEntries, base64ToBytes, byteSize, checksumOf } from "./portal-master";
 import {
   analyzeOmadaTemplate,
+  generateWaveWalletPortal,
+  generatedFileName,
   normalizeTemplateFeatures,
   type PortalTemplateFeatures,
   type TemplateAnalysis,
@@ -51,15 +52,35 @@ export interface PortalTemplateView {
   importDetail: string | null;
   importVerifiedAt: string | null;
   updatedAt: string | null;
-  /** Derived base template the generator will use. Nobody uploads it. */
-  baseVersion: number;
-  baseChecksum: string;
-  baseBytes: number;
-  runtimeAudit: { name: string; classification: string; preserved: boolean; note: string }[];
+  /** Active canonical master this portal generates from. Admins never upload. */
+  masterVersion: number | null;
+  masterChecksum: string | null;
+  masterBytes: number | null;
+  masterFileName: string | null;
+  masterUploadedAt: string | null;
+  masterAnalysis: TemplateAnalysis | null;
+  masterWarnings: string[];
 }
 
-function view(mappingId: string, row: Record<string, unknown> | null): PortalTemplateView {
-  const base = baseTemplateInfo();
+interface MasterRow {
+  id: string;
+  version: number;
+  checksum: string;
+  template_html: string;
+  template_bytes: number;
+  original_file_name: string | null;
+  source_kind: string | null;
+  original_content: string | null;
+  analysis: unknown;
+  warnings: unknown;
+  created_at: string;
+}
+
+function view(
+  mappingId: string,
+  row: Record<string, unknown> | null,
+  master: MasterRow | null,
+): PortalTemplateView {
   return {
     mappingId,
     fileName: (row?.["file_name"] as string | null) ?? null,
@@ -75,16 +96,42 @@ function view(mappingId: string, row: Record<string, unknown> | null): PortalTem
     importDetail: (row?.["import_detail"] as string | null) ?? null,
     importVerifiedAt: (row?.["import_verified_at"] as string | null) ?? null,
     updatedAt: (row?.["updated_at"] as string | null) ?? null,
-    baseVersion: base.version,
-    baseChecksum: base.checksum,
-    baseBytes: base.bytes,
-    runtimeAudit: base.audit.map((a) => ({
-      name: a.name,
-      classification: a.classification,
-      preserved: a.preserved,
-      note: a.note,
-    })),
+    masterVersion: master?.version ?? null,
+    masterChecksum: master?.checksum ?? null,
+    masterBytes: master?.template_bytes ?? null,
+    masterFileName: master?.original_file_name ?? null,
+    masterUploadedAt: master?.created_at ?? null,
+    masterAnalysis:
+      master?.analysis && typeof master.analysis === "object" && Object.keys(master.analysis).length
+        ? (master.analysis as TemplateAnalysis)
+        : null,
+    masterWarnings: Array.isArray(master?.warnings) ? (master.warnings as string[]) : [],
   };
+}
+
+const MASTER_SELECT =
+  "id, version, checksum, template_html, template_bytes, original_file_name, source_kind, original_content, analysis, warnings, created_at";
+
+/** Reads the active canonical master. Read-only: admins can never change it. */
+async function activeMaster(
+  supabaseAdmin: { from: (t: string) => never },
+): Promise<MasterRow | null> {
+  const client = supabaseAdmin as unknown as {
+    from: (t: string) => {
+      select: (c: string) => {
+        eq: (
+          c: string,
+          v: unknown,
+        ) => { maybeSingle: () => Promise<{ data: MasterRow | null }> };
+      };
+    };
+  };
+  const { data } = await client
+    .from("omada_portal_base_templates")
+    .select(MASTER_SELECT)
+    .eq("is_active", true)
+    .maybeSingle();
+  return data ?? null;
 }
 
 /** Loads the mapping and proves it belongs to the caller's shop. */
