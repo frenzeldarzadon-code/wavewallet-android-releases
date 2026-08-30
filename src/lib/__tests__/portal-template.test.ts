@@ -107,8 +107,7 @@ describe("Wizard helpers", () => {
     const base = {
       controllerConnected: true,
       portalSelected: true,
-      templateUploaded: true,
-      templateValidated: true,
+      featuresChosen: true,
       generated: true,
     };
     expect(templateStage({ ...base, importedVerified: false })).toBe("generate");

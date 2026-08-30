@@ -522,20 +522,12 @@ export function generatedFileName(shopName: string, portalName: string | null): 
  * Wizard state                                                        *
  * ------------------------------------------------------------------ */
 
-export type TemplateStage =
-  | "controller"
-  | "portal"
-  | "upload"
-  | "validate"
-  | "features"
-  | "generate"
-  | "import";
+export type TemplateStage = "controller" | "portal" | "features" | "generate" | "import";
 
 export interface TemplateProgress {
   controllerConnected: boolean;
   portalSelected: boolean;
-  templateUploaded: boolean;
-  templateValidated: boolean;
+  featuresChosen: boolean;
   generated: boolean;
   /** Only true when a read-back actually proved it. Never on an attempt. */
   importedVerified: boolean;
@@ -544,8 +536,7 @@ export interface TemplateProgress {
 export function templateStage(p: TemplateProgress): TemplateStage {
   if (!p.controllerConnected) return "controller";
   if (!p.portalSelected) return "portal";
-  if (!p.templateUploaded) return "upload";
-  if (!p.templateValidated) return "validate";
+  if (!p.featuresChosen) return "features";
   if (!p.generated) return "generate";
   return p.importedVerified ? "import" : "generate";
 }
