@@ -192,7 +192,7 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
         warnings: file.warnings,
         steps: file.manualSteps,
       });
-      await loadTemplate();
+      await loadTemplate({ keepGenerated: true });
       toast.success("Your portal page is ready to download.");
     } catch (e) {
       toast.error("Could not generate the portal page", { description: (e as Error).message });
