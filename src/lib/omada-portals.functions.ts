@@ -348,3 +348,82 @@ export const testPortalMapping = createServerFn({ method: "POST" })
 
     return { ok, steps };
   });
+
+export interface AutoConfigResult {
+  status: import("./omada-auto-config").AutoConfigStatus;
+  summary: string;
+  steps: PortalTestStep[];
+  manualSteps: string[];
+  portalUrl: string;
+}
+
+/**
+ * Tries to configure ONE saved portal directly in the shop's own Omada
+ * controller. The portal is only ever reported as configured when the
+ * controller reads back WaveWallet's own address; otherwise the exact manual
+ * steps are returned and the portal is left exactly as it was.
+ */
+export const autoConfigurePortal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { ecosystemId: string; id: string; portalUrl: string }) => {
+    if (!data?.ecosystemId || !data?.id) throw new Error("A shop and portal are required.");
+    if (!/^https?:\/\/.+/.test(data?.portalUrl ?? "")) throw new Error("A portal address is required.");
+    return data;
+  })
+  .handler(async ({ data, context }): Promise<AutoConfigResult> => {
+    await assertShopAdmin(context as unknown as AuthContext, data.ecosystemId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { openOmadaSession } = await import("./omada-api.server");
+    const { applyExternalPortal } = await import("./omada-auto-config.server");
+    const { manualPortalSteps, summarizeAutoConfig } = await import("./omada-auto-config");
+
+    const { data: row } = await supabaseAdmin
+      .from("omada_portal_mappings")
+      .select("*")
+      .eq("id", data.id)
+      .eq("ecosystem_id", data.ecosystemId)
+      .maybeSingle();
+    if (!row) throw new Error("That portal mapping does not belong to this shop.");
+
+    const manual = manualPortalSteps(data.portalUrl, (row.portal_name as string | null) ?? null);
+    try {
+      const session = await openOmadaSession(supabaseAdmin as never, data.ecosystemId);
+      const outcome = await applyExternalPortal(
+        session,
+        row.site_id as string,
+        row.portal_id as string,
+        data.portalUrl,
+      );
+      await supabaseAdmin
+        .from("omada_portal_mappings")
+        .update({
+          auto_config_status: outcome.status,
+          auto_config_url: data.portalUrl,
+          auto_config_at: new Date().toISOString(),
+          auto_config_detail: outcome.steps
+            .map((s) => `${s.step}: ${s.detail}`)
+            .join(" | ")
+            .slice(0, 900),
+          auto_config_snapshot: outcome.snapshot as never,
+        })
+        .eq("id", data.id)
+        .eq("ecosystem_id", data.ecosystemId);
+      return {
+        status: outcome.status,
+        summary: summarizeAutoConfig(outcome.status),
+        steps: outcome.steps,
+        manualSteps:
+          outcome.status === "configured" || outcome.status === "already_configured" ? [] : manual,
+        portalUrl: data.portalUrl,
+      };
+    } catch (e) {
+      const detail = e instanceof Error ? e.message : String(e);
+      return {
+        status: "failed",
+        summary: summarizeAutoConfig("failed"),
+        steps: [{ step: "Controller session", ok: false, detail }],
+        manualSteps: manual,
+        portalUrl: data.portalUrl,
+      };
+    }
+  });

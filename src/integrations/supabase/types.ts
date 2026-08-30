@@ -2978,6 +2978,11 @@ export type Database = {
       }
       omada_portal_mappings: {
         Row: {
+          auto_config_at: string | null
+          auto_config_detail: string | null
+          auto_config_snapshot: Json | null
+          auto_config_status: string | null
+          auto_config_url: string | null
           created_at: string
           created_by: string | null
           ecosystem_id: string
@@ -2995,6 +3000,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_config_at?: string | null
+          auto_config_detail?: string | null
+          auto_config_snapshot?: Json | null
+          auto_config_status?: string | null
+          auto_config_url?: string | null
           created_at?: string
           created_by?: string | null
           ecosystem_id: string
@@ -3012,6 +3022,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_config_at?: string | null
+          auto_config_detail?: string | null
+          auto_config_snapshot?: Json | null
+          auto_config_status?: string | null
+          auto_config_url?: string | null
           created_at?: string
           created_by?: string | null
           ecosystem_id?: string
