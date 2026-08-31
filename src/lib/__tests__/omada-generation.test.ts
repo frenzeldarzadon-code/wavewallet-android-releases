@@ -88,7 +88,7 @@ describe("code review before import", () => {
 });
 
 describe("display units in the creation form", () => {
-  it("shows Kbps/KB values as Mbps/MB without changing their meaning", () => {
+  it("shows Kbps/MB values as Mbps/GB without changing their meaning", () => {
     const controller = {
       trafficLimit: 2048,
       rateLimit: { mode: 0, customRateLimit: { downLimit: 5120, upLimit: 512 } },
@@ -102,13 +102,58 @@ describe("display units in the creation form", () => {
     expect(toControllerUnits(shown as never)).toEqual(controller);
   });
 
-  it("labels the limit fields in Mbps and MB and scales their allowed range", () => {
+  it("labels the limit fields in Mbps and GB and scales their allowed range", () => {
     const fields = displayVoucherFields(VERIFIED_VOUCHER_FIELDS);
     const traffic = fields.find((f) => f.name === "trafficLimit");
-    expect(traffic?.unitSuffix).toBe("MB");
+    expect(traffic?.unitSuffix).toBe("GB");
+    expect(traffic?.description).toMatch(/GB/);
     const rate = fields.find((f) => f.name === "rateLimit");
     const down = rate?.fields?.find((f) => f.name === "customRateLimit")?.fields?.find((f) => f.name === "downLimit");
     expect(down?.unitSuffix).toBe("Mbps");
+  });
+});
+
+describe("traffic limit in GB", () => {
+  it("converts GB to the exact integer MB Omada expects", () => {
+    expect(gbToOmadaTrafficLimit(1)).toBe(1024);
+    expect(gbToOmadaTrafficLimit(2)).toBe(2048);
+    expect(gbToOmadaTrafficLimit(5)).toBe(5120);
+    expect(gbToOmadaTrafficLimit(10)).toBe(10240);
+    expect(gbToOmadaTrafficLimit(0)).toBe(0);
+  });
+
+  it("round-trips an existing saved calibration without multiplying twice", () => {
+    const saved = { trafficLimitEnable: true, trafficLimit: 5120 };
+    const shown = toDisplayUnits(saved as never);
+    expect(shown["trafficLimit"]).toBe(5);
+    expect(toControllerUnits(shown)).toEqual(saved);
+    // Converting an already-converted payload again must not change it further.
+    expect(toControllerUnits(toDisplayUnits(toControllerUnits(shown)))).toEqual(saved);
+  });
+
+  it("keeps the data cap off when it is disabled", () => {
+    const payload = toControllerUnits({ trafficLimitEnable: false } as never);
+    expect(payload["trafficLimit"]).toBeUndefined();
+    expect(validateGenerationPayload({ ...defaultGenerationValues(), name: "Test", ...payload })).toEqual([]);
+  });
+
+  it("rejects a GB value that is not a whole number of MB", () => {
+    expect(validateTrafficLimitGb(1)).toBeNull();
+    expect(validateTrafficLimitGb(0.5)).toBeNull();
+    expect(validateTrafficLimitGb(1 / 1024)).toBeNull();
+    expect(validateTrafficLimitGb(1.00001)).toBeTruthy();
+    expect(validateTrafficLimitGb(-1)).toBeTruthy();
+    expect(validateTrafficLimitGb("abc")).toBeTruthy();
+  });
+
+  it("sends a valid converted payload for a 5 GB product", () => {
+    const payload = {
+      ...defaultGenerationValues(),
+      name: "Test",
+      ...toControllerUnits({ trafficLimitEnable: true, trafficLimit: 5 } as never),
+    };
+    expect(payload["trafficLimit"]).toBe(5120);
+    expect(validateGenerationPayload(payload)).toEqual([]);
   });
 });
 
