@@ -485,7 +485,10 @@ const BASE_CSS = `
 .ww-foot{text-align:center;font-size:12px;color:var(--ww-muted)}
 .ww-foot a{color:var(--ww-brand);font-weight:600}
 html,body{margin:0;padding:0;overflow-x:hidden}
-.hidden{display:none!important}
+.hidden{display:none}
+#ww-portal .ww-off{display:none!important}
+#ww-portal .ww-on{display:block!important}
+#ww-portal .ww-panel-label{display:block;font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--ww-muted);margin:0 0 4px}
 .ww-omada-off{position:fixed!important;left:-10000px!important;top:0!important;width:1px!important;height:1px!important;max-width:1px!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important;z-index:-1!important}
 .ww-seg{display:flex;gap:6px;padding:4px;margin:0 0 12px;border:1px solid var(--ww-line);border-radius:var(--ww-btn-radius);background:rgba(255,255,255,.06)}
 .ww-seg button{flex:1;min-height:44px;padding:0 12px;border:0;border-radius:var(--ww-btn-radius);background:transparent;color:var(--ww-ink);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}

@@ -567,6 +567,58 @@ ${MARKER}
     return "";
   }
 
+  /* Every field the controller ships for a given method. Local User is the
+     controller's own username AND password input — both are required, so both
+     are shown together. Nothing here creates a field: each one must already
+     exist in the master, otherwise that method simply has no panel. */
+  var PANEL_FIELDS = {
+    voucher: ["voucherCode"],
+    user: ["username", "password"],
+    simple: ["simplePassword"],
+    phone: ["country-code", "phone-number", "verify-code"]
+  };
+
+  function fieldEl(name){
+    return root.querySelector("[name='" + name + "']") || root.querySelector("#" + name);
+  }
+
+  function panelBox(el){
+    var node = el;
+    while (node && node !== root){
+      if (node.classList && node.classList.contains("input-container")) return node;
+      var parent = node.parentNode;
+      if (!parent || parent === root || (parent.tagName && parent.tagName === "FORM")) return node;
+      node = parent;
+    }
+    return el;
+  }
+
+  var activeKind = "";
+
+  /* Presentation only: the controller keeps its own classes and handlers, we
+     only decide which of ITS containers the customer can see. */
+  function applyPanels(){
+    if (!activeKind) return;
+    for (var kind in PANEL_FIELDS){
+      if (!Object.prototype.hasOwnProperty.call(PANEL_FIELDS, kind)) continue;
+      var on = kind === activeKind;
+      var names = PANEL_FIELDS[kind];
+      for (var i=0;i<names.length;i++){
+        var el = fieldEl(names[i]);
+        if (!el) continue;
+        var box = panelBox(el);
+        if (!box || !box.classList) continue;
+        var drop = on ? "ww-off" : "ww-on";
+        var want = on ? "ww-on" : "ww-off";
+        /* Only touch the attribute when it really changes: a needless write
+           would feed the observer below and spin the page. */
+        if (box.classList.contains(drop)) box.classList.remove(drop);
+        if (!box.classList.contains(want)) box.classList.add(want);
+        if (on && box.style && box.style.display === "none") box.style.display = "";
+      }
+    }
+  }
+
   var LABELS = {
     voucher: { eyebrow: "Already have a code?", title: "Enter your voucher", action: "Connect with Voucher" },
     user: { eyebrow: "Hotspot account", title: "Sign in with your username", action: "Sign in" },
@@ -575,7 +627,7 @@ ${MARKER}
   };
 
   function syncLabels(){
-    var m = currentMethod();
+    var m = activeKind || currentMethod();
     var copy = LABELS[m] || LABELS.voucher;
     if (eyebrowEl && eyebrowEl.textContent !== copy.eyebrow) eyebrowEl.textContent = copy.eyebrow;
     if (titleEl && titleEl.textContent !== copy.title) titleEl.textContent = copy.title;
@@ -642,6 +694,19 @@ ${MARKER}
     if (box && box.classList) box.classList.add("ww-omada-off");
   }
 
+  function chooseMethod(option){
+    activeKind = option.kind;
+    /* Same page, real runtime: this clicks the controller's own method item so
+       Omada switches its authentication type before anything is submitted. */
+    try { option.el.click(); } catch (e) {}
+    closeSelector();
+    hideOmadaChrome();
+    applyPanels();
+    syncLabels();
+    setTimeout(function(){ applyPanels(); syncLabels(); }, 0);
+    setTimeout(function(){ applyPanels(); syncLabels(); }, 150);
+  }
+
   function renderMethods(){
     if (!segEl) return;
     var options = selectorOptions();
@@ -658,15 +723,7 @@ ${MARKER}
             btn.setAttribute("role", "tab");
             btn.setAttribute("aria-selected", "false");
             btn.textContent = option.kind === "user" ? "Local User" : option.label;
-            btn.onclick = function(){
-              /* Same page, real runtime: this clicks the controller's own
-                 method item so Omada switches its authentication type. */
-              try { option.el.click(); } catch (e) {}
-              closeSelector();
-              hideOmadaChrome();
-              setTimeout(syncLabels, 0);
-              setTimeout(syncLabels, 150);
-            };
+            btn.onclick = function(){ chooseMethod(option); };
             segEl.appendChild(btn);
           })(options[i]);
         }
@@ -675,14 +732,31 @@ ${MARKER}
         segEl.setAttribute("hidden", "hidden");
       }
     }
-    if (!defaulted && options.length > 1 && currentMethod() && currentMethod() !== "voucher"){
-      for (var v=0;v<options.length;v++){
-        if (options[v].kind === "voucher"){
-          defaulted = true;
-          try { options[v].el.click(); } catch (e) {}
-          closeSelector();
-          break;
+    if (!defaulted){
+      if (options.length > 1){
+        /* Voucher first when the controller offers it, otherwise the single
+           method this portal actually enables. */
+        var pick = null;
+        for (var v=0;v<options.length;v++){
+          if (options[v].kind === "voucher"){ pick = options[v]; break; }
         }
+        if (!pick && currentMethod()){
+          for (var w=0;w<options.length;w++){
+            if (options[w].kind === currentMethod()){ pick = options[w]; break; }
+          }
+        }
+        if (!pick) pick = options[0];
+        defaulted = true;
+        chooseMethod(pick);
+      } else if (options.length === 1){
+        defaulted = true;
+        activeKind = options[0].kind;
+        applyPanels();
+      } else if (!activeKind){
+        /* No selector at all: this portal enables exactly one method and the
+           controller already put its own field on screen. */
+        activeKind = currentMethod();
+        if (activeKind) applyPanels();
       }
     }
   }
@@ -713,6 +787,7 @@ ${MARKER}
     try {
       hideOmadaChrome();
       renderMethods();
+      applyPanels();
       syncLabels();
       mirrorErrors();
     } catch (e) {}
