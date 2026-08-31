@@ -10,7 +10,7 @@
  * route for importing a customized page, so the builder says so plainly instead
  * of faking automation.
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle2, Download, Loader2, RefreshCw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -44,16 +44,14 @@ import { PortalThemeGallery } from "./portal-theme-gallery";
 import { resolveGeneratedAfterRefresh } from "@/lib/portal-download";
 import {
   TEMPLATE_FEATURE_LABELS,
-  templateStage,
   type PortalTemplateFeatures,
 } from "@/lib/portal-template";
 
 const STEPS: Array<{ key: string; label: string }> = [
-  { key: "portal", label: "Portal selected" },
-  { key: "design", label: "Design chosen" },
-  { key: "features", label: "Features chosen" },
-  { key: "generate", label: "Portal page ready" },
-  { key: "import", label: "Imported into Omada" },
+  { key: "portal", label: "1. Select portal" },
+  { key: "design", label: "2. Choose design" },
+  { key: "features", label: "3. Choose features" },
+  { key: "generate", label: "4. Generate & download" },
 ];
 
 interface GeneratedState {
@@ -130,18 +128,6 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
   const mapping = mappings.find((m) => m.id === mappingId) ?? null;
   const features = template?.features ?? null;
 
-  const progress = useMemo(
-    () => ({
-      controllerConnected: mappings.length > 0,
-      portalSelected: Boolean(mappingId),
-      featuresChosen: Boolean(features),
-      generated: Boolean(template?.hasGenerated),
-      importedVerified: template?.importStatus === "imported",
-    }),
-    [mappings.length, mappingId, template, features],
-  );
-  const stage = templateStage(progress);
-
   if (!ecosystemId) return null;
 
   const toggleFeature = async (key: keyof PortalTemplateFeatures, value: boolean) => {
@@ -209,20 +195,19 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
         <CardTitle className="text-sm">Customized portal page</CardTitle>
         <CardDescription>
           For controllers that use Omada&apos;s <strong>Import Customized Page</strong>. WaveWallet
-          builds the page from the original Omada template published by the platform owner — there
-          is nothing for you to upload here. Nothing on your controller is changed by this page.
+          builds the page from the canonical Omada template. Choose the portal, design and features,
+          then generate, download and import the file into that portal in Omada.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
-        {/* Progress: every step is real state, never an assumption. */}
+        {/* Only verifiable local steps are shown; importing remains a manual Omada action. */}
         <ol className="flex flex-wrap gap-1.5">
           {STEPS.map((s) => {
             const done =
-              (s.key === "portal" && progress.portalSelected) ||
-              (s.key === "features" && progress.featuresChosen) ||
-                      (s.key === "design" && Boolean(template)) ||
-              (s.key === "generate" && progress.generated) ||
-              (s.key === "import" && progress.importedVerified);
+              (s.key === "portal" && Boolean(mappingId)) ||
+              (s.key === "features" && Boolean(features)) ||
+              (s.key === "design" && Boolean(template)) ||
+              (s.key === "generate" && Boolean(template?.hasGenerated));
             return (
               <li key={s.key}>
                 <StatusBadge tone={done ? "success" : "muted"}>{s.label}</StatusBadge>
@@ -275,9 +260,11 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
                 </p>
               </div>
             ) : template ? (
-              <div className="space-y-2 rounded-xl border p-3">
+              <details className="rounded-md border p-3">
+                <summary className="cursor-pointer text-sm font-medium">Advanced template details</summary>
+                <div className="mt-3 space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-medium">Omada mechanics kept</p>
+                  <p className="text-xs font-medium">Canonical Omada mechanics preserved</p>
                   <StatusBadge tone="success">Master v{template.masterVersion}</StatusBadge>
                 </div>
                 <p className="text-[11px] text-muted-foreground break-words">
@@ -299,7 +286,8 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
                     </li>
                   ))}
                 </ul>
-              </div>
+                </div>
+              </details>
             ) : null}
 
             {/* Design gallery — presentation only. */}
@@ -315,8 +303,13 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
 
             {/* Features */}
             {features ? (
-              <div className="space-y-2 rounded-xl border p-3">
-                <p className="text-sm font-medium">Features on this portal</p>
+              <div className="space-y-2 rounded-md border p-3">
+                <div>
+                  <p className="text-sm font-medium">Features on this portal</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Manual voucher entry is always included and cannot be switched off.
+                  </p>
+                </div>
                 {TEMPLATE_FEATURE_LABELS.map((f) => (
                   <div key={f.key} className="flex items-start justify-between gap-3 py-1">
                     <div className="min-w-0">
@@ -371,13 +364,20 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
 
               {generated ? (
                 <div className="space-y-3">
-                  <div className="rounded-xl border p-3">
+                  <div className="rounded-md border p-3">
                     <p className="flex items-center gap-2 text-sm font-medium">
-                      <ShieldCheck className="h-4 w-4 text-success" /> {generated.fileName} ·{" "}
-                      {readableSize(generated.bytes)} · checksum {generated.checksum} · master v
-                      {generated.masterVersion} · {generated.themeName}
+                      <ShieldCheck className="h-4 w-4 text-success" /> Portal page ready
                     </p>
-                    <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                    <p className="mt-1 break-words text-xs text-muted-foreground">
+                      {generated.fileName} · {readableSize(generated.bytes)} · {generated.themeName}
+                    </p>
+                    <details className="mt-3 border-t pt-3">
+                      <summary className="cursor-pointer text-xs font-medium">Advanced details</summary>
+                      <p className="mt-2 break-words text-[11px] text-muted-foreground">
+                        Checksum {generated.checksum} · master v{generated.masterVersion} · master
+                        checksum {generated.masterChecksum}
+                      </p>
+                      <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
                       {generated.summary.map((s) => (
                         <li key={s} className="break-words">
                           {s}
@@ -389,7 +389,8 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
                           <span className="break-words">{w}</span>
                         </li>
                       ))}
-                    </ul>
+                      </ul>
+                    </details>
                   </div>
                   <div className="mx-auto w-full max-w-[390px] overflow-hidden rounded-2xl border bg-background">
                     <iframe
@@ -399,12 +400,11 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
                       className="h-[560px] w-full"
                     />
                   </div>
-                  <div className="rounded-xl border p-3">
-                    <p className="text-sm font-medium">Download &amp; upload to Omada</p>
+                   <div className="rounded-md border p-3">
+                     <p className="text-sm font-medium">Import the downloaded page into Omada</p>
                     <p className="mt-1 text-[11px] text-muted-foreground">
-                      This controller has no supported way to import a customized page automatically,
-                      so this one upload is done by you. WaveWallet will not claim it is imported
-                      until the page is actually serving.
+                       Import is a manual Omada step. WaveWallet does not mark it complete because it
+                       cannot verify the import from here.
                     </p>
                     <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs text-muted-foreground">
                       {generated.steps.map((s) => (
@@ -416,10 +416,6 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
               ) : null}
             </div>
 
-            <p className="text-[11px] text-muted-foreground">
-              Current step: <strong>{stage}</strong>. Manual voucher entry is always part of the
-              generated page and can never be turned off.
-            </p>
           </>
         )}
       </CardContent>

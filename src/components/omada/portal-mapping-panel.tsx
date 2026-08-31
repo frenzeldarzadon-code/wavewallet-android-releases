@@ -11,24 +11,12 @@ import {
   Loader2,
   Plus,
   RefreshCw,
-  Copy,
   Trash2,
-  CheckCircle2,
-  AlertTriangle,
-  ListChecks,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -44,24 +32,11 @@ import {
   listSitePortalOptions,
   savePortalMapping,
   setPortalMappingEnabled,
-  testPortalMapping,
   type PortalMappingView,
   type PortalOption,
   type PortalSetup,
-  type PortalTestStep,
 } from "@/lib/omada-portals.functions";
-import {
-  DEFAULT_PORTAL_FLAGS,
-  portalUrlFor,
-  type PortalFeatureFlags,
-} from "@/lib/portal-mapping";
-import {
-  externalPortalExplanation,
-  externalPortalLabel,
-  portalSetupInstructions,
-  portalSetupState,
-  preAuthValueFor,
-} from "@/lib/portal-setup-status";
+import { DEFAULT_PORTAL_FLAGS, type PortalFeatureFlags } from "@/lib/portal-mapping";
 
 const FLAG_LABELS: Array<{ key: keyof PortalFeatureFlags; label: string; hint: string }> = [
   {
@@ -96,8 +71,6 @@ export function PortalMappingPanel({
   const [mappings, setMappings] = useState<PortalMappingView[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState("");
-  const [steps, setSteps] = useState<Record<string, PortalTestStep[]>>({});
-  const [instructionsFor, setInstructionsFor] = useState<string | null>(null);
 
   const [siteId, setSiteId] = useState("");
   const [portals, setPortals] = useState<PortalOption[]>([]);
@@ -160,9 +133,7 @@ export function PortalMappingPanel({
 
   if (!ecosystemId) return null;
 
-  const origin = typeof window === "undefined" ? "" : window.location.origin;
   const selectedPortal = portals.find((p) => p.id === portalId) ?? null;
-  const caps = setup?.capabilities ?? null;
 
   const startNew = () => {
     setEditingId(null);
@@ -208,32 +179,6 @@ export function PortalMappingPanel({
     }
   };
 
-  const copy = (value: string, message: string) => {
-    void navigator.clipboard.writeText(value);
-    toast.success(message);
-  };
-
-  /** Read-only check: controller reachability AND external-portal read-back. */
-  const runTest = async (id: string, portalUrl: string) => {
-    setBusy(`test-${id}`);
-    try {
-      const r = await testPortalMapping({ data: { ecosystemId, id, portalUrl } });
-      setSteps((s) => ({ ...s, [id]: r.steps }));
-      if (r.externalStatus === "verified") {
-        toast.success("Controller reachable and external portal verified.");
-      } else if (r.ok) {
-        toast.warning("Controller reachable — the external portal is not verified yet.");
-      } else {
-        toast.error("WaveWallet could not verify this portal on your controller.");
-      }
-      await reload();
-    } catch (e) {
-      toast.error("Test failed", { description: (e as Error).message });
-    } finally {
-      setBusy("");
-    }
-  };
-
   const toggle = async (m: PortalMappingView) => {
     setBusy(`toggle-${m.id}`);
     try {
@@ -272,24 +217,19 @@ export function PortalMappingPanel({
                   ? "muted"
                   : setup.error
                     ? "danger"
-                    : caps?.listSupported
-                      ? "success"
-                      : "warning"
+                    : "success"
               }
             >
               {!setup?.configured
                 ? "No controller"
                 : setup.error
                   ? "Controller error"
-                  : caps?.listSupported
-                    ? "Ready"
-                    : "Limited"}
+                  : "Controller connected"}
             </StatusBadge>
           </CardTitle>
           <CardDescription>
-            Let customers of this shop sign in on your hotspot page, buy a voucher from your own
-            Voucher Shop with their coins and get online. Manual voucher entry always stays
-            available for everyone else.
+            Select the exact Omada site and portal that the customized page belongs to. The portal
+            generator below uses this mapping and never selects one automatically.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -304,26 +244,12 @@ export function PortalMappingPanel({
             />
           ) : (
             <>
-              <div className="rounded-md border p-3 text-xs text-muted-foreground">
-                {caps ? (
-                  <ul className="space-y-1">
-                    {caps.notes.map((n) => (
-                      <li key={n}>{n}</li>
-                    ))}
-                    <li>
-                      Automatic sign-on:{" "}
-                      {caps.authorizeSupported
-                        ? `available (${caps.authorizePath})`
-                        : "not published by this controller"}
-                    </li>
-                  </ul>
-                ) : (
-                  <p>{setup.error}</p>
-                )}
-                {caps?.limitation ? (
-                  <p className="mt-2 text-warning-foreground">{caps.limitation}</p>
-                ) : null}
-              </div>
+              {setup.error ? (
+                <p className="rounded-md border border-destructive/30 p-3 text-xs text-destructive">
+                  The controller could not be reached. Check the Connection tab before changing a
+                  portal mapping.
+                </p>
+              ) : null}
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" onClick={startNew} disabled={setup.sites.length === 0}>
                   <Plus className="mr-1 h-4 w-4" /> Connect a portal
@@ -442,27 +368,12 @@ export function PortalMappingPanel({
           <CardHeader>
             <CardTitle className="text-sm">Connected portals</CardTitle>
             <CardDescription>
-              Each portal works on its own. WaveWallet reads your controller live — it only reports
-              a portal as verified when Omada itself returns the WaveWallet address.
+              These mappings bind each generated customized page to one exact shop, site and portal.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {mappings.map((m) => {
-              const url = portalUrlFor(origin, m.id);
-              const preAuth = preAuthValueFor(origin);
-              const state = portalSetupState({
-                lastTestStatus: m.lastTestStatus,
-                externalStatus: m.externalStatus,
-              });
-              const instructions = portalSetupInstructions({
-                shopName,
-                siteName: m.siteName,
-                portalName: m.portalName,
-                portalUrl: url,
-                origin,
-              });
-              return (
-                <div key={m.id} className="space-y-3 rounded-lg border p-3 sm:p-4">
+            {mappings.map((m) => (
+                <div key={m.id} className="space-y-3 rounded-md border p-3 sm:p-4">
                   {/* Identity: shop, real site, real portal — all live values. */}
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0 flex-1 space-y-0.5">
@@ -482,102 +393,7 @@ export function PortalMappingPanel({
                     </StatusBadge>
                   </div>
 
-                  {/* Two clearly separate truths. */}
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <div className="rounded-md border p-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-medium">Controller communication</span>
-                        <StatusBadge
-                          tone={
-                            state.controllerVerified
-                              ? "success"
-                              : m.lastTestStatus === "failed"
-                                ? "danger"
-                                : "muted"
-                          }
-                        >
-                          {state.controllerVerified
-                            ? "Tested"
-                            : m.lastTestStatus === "failed"
-                              ? "Needs attention"
-                              : "Not tested"}
-                        </StatusBadge>
-                      </div>
-                      <p className="mt-1 text-[11px] text-muted-foreground">
-                        Whether WaveWallet can reach and read this shop's own controller.
-                      </p>
-                    </div>
-                    <div className="rounded-md border p-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-medium">External portal</span>
-                        <StatusBadge tone={state.external === "verified" ? "success" : "warning"}>
-                          {state.external === "verified" ? "Verified" : "Not verified"}
-                        </StatusBadge>
-                      </div>
-                      <p className="mt-1 text-[11px] text-muted-foreground">
-                        {externalPortalExplanation(state.external)}
-                      </p>
-                    </div>
-                  </div>
-
-                  {state.needsManualSetup ? (
-                    <div className="rounded-md border border-warning/40 bg-warning/5 p-3">
-                      <p className="flex items-center gap-2 text-xs font-semibold text-warning-foreground">
-                        <AlertTriangle className="h-4 w-4 shrink-0" />
-                        {externalPortalLabel(state.external)}
-                      </p>
-                      <p className="mt-1 text-[11px] text-muted-foreground">
-                        This is a one-time step in Omada, separate from the controller test above.
-                        Everything else — portal discovery, this mapping and putting customers
-                        online after a purchase — is already automatic.
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="flex items-center gap-2 text-xs text-success">
-                      <CheckCircle2 className="h-4 w-4 shrink-0" /> Omada returns this WaveWallet
-                      address for this portal. No further setup is needed.
-                    </p>
-                  )}
-
-                  <div className="space-y-1.5">
-                    <Label className="text-[11px]">External Portal URL</Label>
-                    <div className="flex items-center gap-2">
-                      <Input readOnly value={url} className="min-w-0 flex-1 text-xs" />
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        aria-label="Copy External Portal URL"
-                        onClick={() => copy(url, "External Portal URL copied.")}
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <Label className="text-[11px]">Pre-Authentication Access value</Label>
-                    <div className="flex items-center gap-2">
-                      <Input readOnly value={preAuth} className="min-w-0 flex-1 text-xs" />
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        aria-label="Copy pre-authentication value"
-                        onClick={() => copy(preAuth, "Pre-authentication value copied.")}
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-
                   <div className="flex flex-wrap gap-2">
-                    <Button size="sm" onClick={() => setInstructionsFor(m.id)}>
-                      <ListChecks className="mr-1 h-4 w-4" /> View setup instructions
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={busy !== ""}
-                      onClick={() => void runTest(m.id, url)}
-                    >
-                      {busy === `test-${m.id}` ? "Testing…" : "Test configuration"}
-                    </Button>
                     <Button size="sm" variant="outline" onClick={() => startEdit(m)}>
                       Edit
                     </Button>
@@ -598,72 +414,8 @@ export function PortalMappingPanel({
                       <Trash2 className="mr-1 h-4 w-4" /> Disconnect
                     </Button>
                   </div>
-
-                  {steps[m.id] ? (
-                    <ul className="space-y-1">
-                      {steps[m.id]!.map((s) => (
-                        <li key={s.step} className="break-words text-xs">
-                          <span className={s.ok ? "text-success" : "text-destructive"}>
-                            {s.ok ? "✓" : "✕"}
-                          </span>{" "}
-                          <span className="font-medium">{s.step}</span> — {s.detail}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : m.lastTestDetail ? (
-                    <p className="break-words text-[11px] text-muted-foreground">
-                      {m.lastTestDetail}
-                    </p>
-                  ) : null}
-
-                  <Dialog
-                    open={instructionsFor === m.id}
-                    onOpenChange={(open) => setInstructionsFor(open ? m.id : null)}
-                  >
-                    <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle className="text-sm">One-time Omada setup</DialogTitle>
-                        <DialogDescription className="text-xs">
-                          For “{m.portalName ?? m.portalId}” on “{m.siteName ?? m.siteId}”. Your
-                          controller does not expose this setting through its supported API, so it
-                          is done once in Omada.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <ol className="list-decimal space-y-2 pl-4 text-xs">
-                        {instructions.map((s) => (
-                          <li key={s} className="break-words">
-                            {s}
-                          </li>
-                        ))}
-                      </ol>
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => copy(url, "External Portal URL copied.")}
-                        >
-                          <Copy className="mr-1 h-4 w-4" /> Copy portal URL
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => copy(preAuth, "Pre-authentication value copied.")}
-                        >
-                          <Copy className="mr-1 h-4 w-4" /> Copy pre-auth value
-                        </Button>
-                        <Button
-                          size="sm"
-                          disabled={busy !== ""}
-                          onClick={() => void runTest(m.id, url)}
-                        >
-                          {busy === `test-${m.id}` ? "Testing…" : "Test configuration"}
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
                 </div>
-              );
-            })}
+              ))}
           </CardContent>
         </Card>
       )}
