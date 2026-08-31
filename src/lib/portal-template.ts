@@ -608,8 +608,12 @@ ${MARKER}
         if (!el) continue;
         var box = panelBox(el);
         if (!box || !box.classList) continue;
-        box.classList.remove(on ? "ww-off" : "ww-on");
-        if (!box.classList.contains(on ? "ww-on" : "ww-off")) box.classList.add(on ? "ww-on" : "ww-off");
+        var drop = on ? "ww-off" : "ww-on";
+        var want = on ? "ww-on" : "ww-off";
+        /* Only touch the attribute when it really changes: a needless write
+           would feed the observer below and spin the page. */
+        if (box.classList.contains(drop)) box.classList.remove(drop);
+        if (!box.classList.contains(want)) box.classList.add(want);
         if (on && box.style && box.style.display === "none") box.style.display = "";
       }
     }
