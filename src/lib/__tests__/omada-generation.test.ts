@@ -149,13 +149,13 @@ describe("traffic limit in GB", () => {
   });
 
   it("sends a valid converted payload for a 5 GB product", () => {
-    const payload = {
+    const payload: Record<string, unknown> = {
       ...defaultGenerationValues(),
       name: "Test",
       ...toControllerUnits({ trafficLimitEnable: true, trafficLimit: 5 } as never),
     };
     expect(payload["trafficLimit"]).toBe(5120);
-    expect(validateGenerationPayload(payload)).toEqual([]);
+    expect(validateGenerationPayload(payload as never)).toEqual([]);
   });
 });
 
