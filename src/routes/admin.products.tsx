@@ -376,6 +376,73 @@ function AdminProducts() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog
+        open={!!toDelete}
+        onOpenChange={(o) => {
+          if (!o && !deleting) {
+            setToDelete(null);
+            setTyped("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete this voucher product?</DialogTitle>
+            <DialogDescription>
+              {toDelete
+                ? productDeletionWarning(toDelete.name, counts[toDelete.id]?.total ?? 0)
+                : null}
+            </DialogDescription>
+          </DialogHeader>
+          {toDelete ? (
+            <div className="space-y-3">
+              <ul className="space-y-1 rounded-xl border border-border p-3 text-xs text-muted-foreground">
+                <li>• Removes the product and its WaveWallet voucher codes.</li>
+                <li>• Does NOT delete or change anything in Omada.</li>
+                <li>• Past sales, Coins, Points, reports and balances stay unchanged.</li>
+                <li>• Other products, their codes and their calibrations are untouched.</li>
+                <li>• This cannot be undone.</li>
+              </ul>
+              <div className="space-y-1.5">
+                <Label htmlFor="pdel">
+                  Type <span className="font-medium text-foreground">{toDelete.name}</span> to
+                  confirm
+                </Label>
+                <Input
+                  id="pdel"
+                  value={typed}
+                  onChange={(e) => setTyped(e.target.value)}
+                  placeholder={toDelete.name}
+                  autoComplete="off"
+                />
+              </div>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setToDelete(null);
+                setTyped("");
+              }}
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => void confirmDelete()}
+              disabled={
+                !toDelete ||
+                !canSubmitProductDeletion({ name: toDelete.name, typed, busy: deleting })
+              }
+            >
+              {deleting ? "Deleting…" : "Delete product"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageSection>
   );
 }
