@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Archive, Pencil, Plus } from "lucide-react";
+import { Archive, Pencil, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +19,11 @@ import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { peso } from "@/lib/wavewallet";
+import {
+  canSubmitProductDeletion,
+  deleteVoucherProduct,
+  productDeletionWarning,
+} from "@/lib/voucher-product-deletion";
 import {
   fetchInventoryCounts,
   fetchProducts,
