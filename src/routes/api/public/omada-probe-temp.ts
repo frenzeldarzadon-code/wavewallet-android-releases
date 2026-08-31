@@ -36,7 +36,7 @@ export const Route = createFileRoute("/api/public/omada-probe-temp")({
             /* not json */
           }
         }
-        if (!spec) return Response.json({ error: "no spec" });
+        if (!spec) { const dbg:any[]=[]; for (const p of ["/openapi/v3/api-docs","/openapi/v3/api-docs/swagger-config","/openapi/v2/api-docs","/v3/api-docs","/openapi/doc"]) { const r=await fetch(`${session.base}${p}`,{headers:{Authorization:`AccessToken=${session.token}`,accept:"application/json"}}); const t=await r.text(); dbg.push({p,status:r.status,len:t.length,head:t.slice(0,300)});} return Response.json({error:"no spec",dbg}); }
 
         const filter = url.searchParams.get("q") ?? "";
         const paths = Object.entries(spec.paths as Record<string, any>)
