@@ -394,11 +394,14 @@ ${MARKER}
     </section>
 
     <section class="ww-card">
-      <p class="ww-eyebrow">Already have a code?</p>
-      <h2 class="ww-title" style="font-size:18px">Enter your voucher</h2>
+      <p class="ww-eyebrow" data-ww-auth-eyebrow>Already have a code?</p>
+      <h2 class="ww-title" style="font-size:18px" data-ww-auth-title>Enter your voucher</h2>
+      <div class="ww-seg" data-ww-methods role="tablist" hidden></div>
       <div class="ww-slot" id="ww-voucher-slot">
         <p class="ww-sub" data-ww-slot-fallback>Use the hotspot login form on this page to enter your code.</p>
       </div>
+      <div class="ww-slot" id="ww-auth-action"></div>
+      <p class="ww-error" data-ww-error hidden></p>
     </section>
 
     ${
@@ -479,7 +482,17 @@ ${MARKER}
   }
   applyLinks();
 
-  /* Manual voucher entry: MOVE the controller's own form, never rebuild it. */
+  /* Manual voucher entry: MOVE the controller's own form, never rebuild it.
+     Everything below relocates and restyles Omada's REAL controls. No form,
+     field, handler or endpoint is recreated, so submitting always runs the
+     controller's own authentication. */
+  var authSlot = document.getElementById("ww-auth-action");
+  var errorEl = root.querySelector("[data-ww-error]");
+  var segEl = root.querySelector("[data-ww-methods]");
+  var titleEl = root.querySelector("[data-ww-auth-title]");
+  var eyebrowEl = root.querySelector("[data-ww-auth-eyebrow]");
+  var loginControl = null;
+
   try {
     var slot = document.getElementById("ww-voucher-slot");
     var forms = document.querySelectorAll("form");
@@ -501,6 +514,222 @@ ${MARKER}
       slot.appendChild(chosen);
     }
   } catch (e) { /* template keeps its own layout */ }
+
+  /* The master's own submit control, moved (never rebuilt) under the fields. */
+  try {
+    var control = document.querySelector("#button-login,#button-area button,#button-area a,button[type=submit],input[type=submit]");
+    if (control && !root.contains(control) && authSlot){
+      var holder = control.id === "button-login" ? (document.getElementById("button-area") || control) : control;
+      authSlot.appendChild(holder);
+      loginControl = control;
+    }
+  } catch (e) {}
+
+  /* Omada's own presentation is hidden, never deleted: every node stays in the
+     document so the controller's scripts and handlers keep working. */
+  function hideOmadaChrome(){
+    if (!document.body) return;
+    var kids = document.body.children;
+    for (var i=0;i<kids.length;i++){
+      var el = kids[i];
+      if (el === root || el.id === "ww-portal") continue;
+      if (el.tagName === "SCRIPT" || el.tagName === "STYLE" || el.tagName === "LINK") continue;
+      if (el.classList && !el.classList.contains("ww-omada-off")) el.classList.add("ww-omada-off");
+    }
+  }
+
+  function isVisible(el){
+    if (!el) return false;
+    if (el.classList && el.classList.contains("hidden")) return false;
+    var style = window.getComputedStyle ? window.getComputedStyle(el) : null;
+    if (style && (style.display === "none" || style.visibility === "hidden")) return false;
+    return true;
+  }
+
+  function fieldVisible(selector){
+    var el = document.querySelector(selector);
+    if (!el || !root.contains(el)) return false;
+    var node = el;
+    while (node && node !== root){
+      if (!isVisible(node)) return false;
+      node = node.parentNode && node.parentNode.nodeType === 1 ? node.parentNode : null;
+    }
+    return true;
+  }
+
+  /* Which method is on screen right now, read from the controller's own
+     fields — never assumed, never hard-coded. */
+  function currentMethod(){
+    if (fieldVisible("input[name=voucherCode],#voucherCode")) return "voucher";
+    if (fieldVisible("input[name=username],#username")) return "user";
+    if (fieldVisible("input[name=phone-number],#phone-number")) return "phone";
+    if (fieldVisible("input[name=simplePassword],#simplePassword")) return "simple";
+    return "";
+  }
+
+  var LABELS = {
+    voucher: { eyebrow: "Already have a code?", title: "Enter your voucher", action: "Connect with Voucher" },
+    user: { eyebrow: "Hotspot account", title: "Sign in with your username", action: "Sign in" },
+    phone: { eyebrow: "Hotspot account", title: "Verify your number", action: "Connect" },
+    simple: { eyebrow: "Hotspot access", title: "Enter the Wi-Fi key", action: "Connect" }
+  };
+
+  function syncLabels(){
+    var m = currentMethod();
+    var copy = LABELS[m] || LABELS.voucher;
+    if (eyebrowEl && eyebrowEl.textContent !== copy.eyebrow) eyebrowEl.textContent = copy.eyebrow;
+    if (titleEl && titleEl.textContent !== copy.title) titleEl.textContent = copy.title;
+    if (loginControl && loginControl.textContent !== copy.action) loginControl.textContent = copy.action;
+    if (segEl){
+      var segs = segEl.querySelectorAll("button[data-ww-method]");
+      for (var i=0;i<segs.length;i++){
+        var want = segs[i].getAttribute("data-ww-method") === m ? "true" : "false";
+        if (segs[i].getAttribute("aria-selected") !== want) segs[i].setAttribute("aria-selected", want);
+      }
+    }
+  }
+
+  /* Available methods come from the controller's own "Other Login Methods"
+     list, so only what THIS portal enables can ever appear. */
+  function methodKind(label){
+    var t = (label || "").toLowerCase();
+    if (t.indexOf("voucher") !== -1) return "voucher";
+    if (t.indexOf("local user") !== -1 || t.indexOf("user") !== -1) return "user";
+    if (t.indexOf("sms") !== -1 || t.indexOf("phone") !== -1) return "phone";
+    if (t.indexOf("password") !== -1) return "simple";
+    return "";
+  }
+
+  function selectorOptions(){
+    var box = document.getElementById("hotspot-selector");
+    if (!box) return [];
+    var nodes = box.querySelectorAll("li,a,button,[data-type],[data-authtype],div");
+    var found = [];
+    for (var i=0;i<nodes.length;i++){
+      var n = nodes[i];
+      if (n.id === "hotspot-selector-close") continue;
+      if (n.className && String(n.className).indexOf("title") !== -1) continue;
+      if (n.parentNode && n.parentNode.className && String(n.parentNode.className).indexOf("title") !== -1) continue;
+      var text = (n.textContent || "").replace(/\\s+/g, " ").trim();
+      if (!text || text.length > 40) continue;
+      var kind = methodKind(text);
+      if (!kind) continue;
+      var nested = false;
+      for (var j=0;j<found.length;j++){
+        if (found[j].el.contains(n)){ found[j] = { label: text, el: n, kind: kind }; nested = true; break; }
+        if (n.contains(found[j].el)){ nested = true; break; }
+      }
+      if (!nested) found.push({ label: text, el: n, kind: kind });
+    }
+    var seen = {};
+    var unique = [];
+    for (var k=0;k<found.length;k++){
+      if (seen[found[k].kind]) continue;
+      seen[found[k].kind] = true;
+      unique.push(found[k]);
+    }
+    unique.sort(function(a,b){ return (a.kind === "voucher" ? 0 : 1) - (b.kind === "voucher" ? 0 : 1); });
+    return unique;
+  }
+
+  var renderedMethods = "";
+  var defaulted = false;
+
+  function closeSelector(){
+    var close = document.getElementById("hotspot-selector-close");
+    if (close && close.click) { try { close.click(); } catch (e) {} }
+    var box = document.getElementById("hotspot-selector");
+    if (box && box.classList) box.classList.add("ww-omada-off");
+  }
+
+  function renderMethods(){
+    if (!segEl) return;
+    var options = selectorOptions();
+    var signature = options.map(function(o){ return o.kind + ":" + o.label; }).join("|");
+    if (signature !== renderedMethods){
+      renderedMethods = signature;
+      segEl.innerHTML = "";
+      if (options.length > 1){
+        for (var i=0;i<options.length;i++){
+          (function(option){
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.setAttribute("data-ww-method", option.kind);
+            btn.setAttribute("role", "tab");
+            btn.setAttribute("aria-selected", "false");
+            btn.textContent = option.kind === "user" ? "Local User" : option.label;
+            btn.onclick = function(){
+              /* Same page, real runtime: this clicks the controller's own
+                 method item so Omada switches its authentication type. */
+              try { option.el.click(); } catch (e) {}
+              closeSelector();
+              hideOmadaChrome();
+              setTimeout(syncLabels, 0);
+              setTimeout(syncLabels, 150);
+            };
+            segEl.appendChild(btn);
+          })(options[i]);
+        }
+        segEl.removeAttribute("hidden");
+      } else {
+        segEl.setAttribute("hidden", "hidden");
+      }
+    }
+    if (!defaulted && options.length > 1 && currentMethod() && currentMethod() !== "voucher"){
+      for (var v=0;v<options.length;v++){
+        if (options[v].kind === "voucher"){
+          defaulted = true;
+          try { options[v].el.click(); } catch (e) {}
+          closeSelector();
+          break;
+        }
+      }
+    }
+  }
+
+  /* Controller error text is shown inside the WaveWallet card instead of the
+     raw Omada hint, which stays in the document but out of sight. */
+  function mirrorErrors(){
+    if (!errorEl) return;
+    var sources = ["#oper-hint", "#form-auth-note", "#form-auth-title"];
+    var message = "";
+    for (var i=0;i<sources.length && !message;i++){
+      var el = document.querySelector(sources[i]);
+      if (el && !root.contains(el)) message = (el.textContent || "").replace(/\\s+/g, " ").trim();
+    }
+    if (message){
+      if (errorEl.textContent !== message) errorEl.textContent = message;
+      if (errorEl.hasAttribute("hidden")) errorEl.removeAttribute("hidden");
+    } else {
+      if (errorEl.textContent !== "") errorEl.textContent = "";
+      if (!errorEl.hasAttribute("hidden")) errorEl.setAttribute("hidden", "hidden");
+    }
+  }
+
+  var syncing = false;
+  function sync(){
+    if (syncing) return;
+    syncing = true;
+    try {
+      hideOmadaChrome();
+      renderMethods();
+      syncLabels();
+      mirrorErrors();
+    } catch (e) {}
+    syncing = false;
+  }
+  sync();
+
+  try {
+    var observer = new MutationObserver(function(){
+      if (syncing) return;
+      sync();
+    });
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style"], characterData: true });
+  } catch (e) {}
+  var ticks = 0;
+  var timer = setInterval(function(){ ticks += 1; sync(); if (ticks > 40) clearInterval(timer); }, 500);
+
 
   /* Hands the Omada client context to WaveWallet, which validates the portal
      binding server-side and answers with a short-lived hotspot session id. No

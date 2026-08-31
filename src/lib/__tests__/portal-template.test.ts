@@ -114,3 +114,19 @@ describe("Wizard helpers", () => {
     expect(templateStage({ ...base, importedVerified: true })).toBe("import");
   });
 });
+
+describe("Generated runtime script", () => {
+  const analysis = analyzeOmadaTemplate(OMADA_TEMPLATE);
+  const html = generateWaveWalletPortal(OMADA_TEMPLATE, analysis, DEFAULT_TEMPLATE_FEATURES, ctx);
+
+  it("keeps backslash escapes intact in the injected script", () => {
+    expect(html).toContain("/\\s+/g");
+    expect(html).not.toContain("/s+/g");
+  });
+
+  it("offers the authentication card and method selector hooks", () => {
+    for (const hook of ["data-ww-methods", "data-ww-error", "ww-voucher-slot", "ww-auth-action"]) {
+      expect(html).toContain(hook);
+    }
+  });
+});
