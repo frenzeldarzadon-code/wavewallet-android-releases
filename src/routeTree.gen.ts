@@ -109,6 +109,7 @@ import { Route as UniverseShopsRouteImport } from './routes/universe.shops'
 import { Route as ApiPublicAppVersionRouteImport } from './routes/api/public/app-version'
 import { Route as ApiPublicOmadaHealthSweepRouteImport } from './routes/api/public/omada-health-sweep'
 import { Route as ApiPublicPortalContextRouteImport } from './routes/api/public/portal-context'
+import { Route as ApiPublicVoucherReplenishmentSweepRouteImport } from './routes/api/public/voucher-replenishment-sweep'
 import { Route as PrintVouchersSaleIdRouteImport } from './routes/print.vouchers.$saleId'
 import { Route as UniverseUHandleRouteImport } from './routes/universe.u.$handle'
 import { Route as ApiPublicPaymentsListenerRouteImport } from './routes/api/public/payments/listener'
@@ -615,6 +616,12 @@ const ApiPublicPortalContextRoute = ApiPublicPortalContextRouteImport.update({
   path: '/api/public/portal-context',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicVoucherReplenishmentSweepRoute =
+  ApiPublicVoucherReplenishmentSweepRouteImport.update({
+    id: '/api/public/voucher-replenishment-sweep',
+    path: '/api/public/voucher-replenishment-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const PrintVouchersSaleIdRoute = PrintVouchersSaleIdRouteImport.update({
   id: '/print/vouchers/$saleId',
   path: '/print/vouchers/$saleId',
@@ -733,6 +740,7 @@ export interface FileRoutesByFullPath {
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/omada-health-sweep': typeof ApiPublicOmadaHealthSweepRoute
   '/api/public/portal-context': typeof ApiPublicPortalContextRoute
+  '/api/public/voucher-replenishment-sweep': typeof ApiPublicVoucherReplenishmentSweepRoute
   '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
   '/api/public/payments/listener': typeof ApiPublicPaymentsListenerRoute
@@ -833,6 +841,7 @@ export interface FileRoutesByTo {
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/omada-health-sweep': typeof ApiPublicOmadaHealthSweepRoute
   '/api/public/portal-context': typeof ApiPublicPortalContextRoute
+  '/api/public/voucher-replenishment-sweep': typeof ApiPublicVoucherReplenishmentSweepRoute
   '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
   '/api/public/payments/listener': typeof ApiPublicPaymentsListenerRoute
@@ -939,6 +948,7 @@ export interface FileRoutesById {
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/omada-health-sweep': typeof ApiPublicOmadaHealthSweepRoute
   '/api/public/portal-context': typeof ApiPublicPortalContextRoute
+  '/api/public/voucher-replenishment-sweep': typeof ApiPublicVoucherReplenishmentSweepRoute
   '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
   '/api/public/payments/listener': typeof ApiPublicPaymentsListenerRoute
@@ -1046,6 +1056,7 @@ export interface FileRouteTypes {
     | '/api/public/app-version'
     | '/api/public/omada-health-sweep'
     | '/api/public/portal-context'
+    | '/api/public/voucher-replenishment-sweep'
     | '/print/vouchers/$saleId'
     | '/universe/u/$handle'
     | '/api/public/payments/listener'
@@ -1146,6 +1157,7 @@ export interface FileRouteTypes {
     | '/api/public/app-version'
     | '/api/public/omada-health-sweep'
     | '/api/public/portal-context'
+    | '/api/public/voucher-replenishment-sweep'
     | '/print/vouchers/$saleId'
     | '/universe/u/$handle'
     | '/api/public/payments/listener'
@@ -1251,6 +1263,7 @@ export interface FileRouteTypes {
     | '/api/public/app-version'
     | '/api/public/omada-health-sweep'
     | '/api/public/portal-context'
+    | '/api/public/voucher-replenishment-sweep'
     | '/print/vouchers/$saleId'
     | '/universe/u/$handle'
     | '/api/public/payments/listener'
@@ -1279,6 +1292,7 @@ export interface RootRouteChildren {
   ApiPublicAppVersionRoute: typeof ApiPublicAppVersionRoute
   ApiPublicOmadaHealthSweepRoute: typeof ApiPublicOmadaHealthSweepRoute
   ApiPublicPortalContextRoute: typeof ApiPublicPortalContextRoute
+  ApiPublicVoucherReplenishmentSweepRoute: typeof ApiPublicVoucherReplenishmentSweepRoute
   PrintVouchersSaleIdRoute: typeof PrintVouchersSaleIdRoute
   ApiPublicPaymentsListenerRoute: typeof ApiPublicPaymentsListenerRoute
 }
@@ -1985,6 +1999,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPortalContextRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/voucher-replenishment-sweep': {
+      id: '/api/public/voucher-replenishment-sweep'
+      path: '/api/public/voucher-replenishment-sweep'
+      fullPath: '/api/public/voucher-replenishment-sweep'
+      preLoaderRoute: typeof ApiPublicVoucherReplenishmentSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/print/vouchers/$saleId': {
       id: '/print/vouchers/$saleId'
       path: '/print/vouchers/$saleId'
@@ -2234,6 +2255,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAppVersionRoute: ApiPublicAppVersionRoute,
   ApiPublicOmadaHealthSweepRoute: ApiPublicOmadaHealthSweepRoute,
   ApiPublicPortalContextRoute: ApiPublicPortalContextRoute,
+  ApiPublicVoucherReplenishmentSweepRoute:
+    ApiPublicVoucherReplenishmentSweepRoute,
   PrintVouchersSaleIdRoute: PrintVouchersSaleIdRoute,
   ApiPublicPaymentsListenerRoute: ApiPublicPaymentsListenerRoute,
 }

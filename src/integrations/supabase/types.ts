@@ -7183,6 +7183,99 @@ export type Database = {
           },
         ]
       }
+      voucher_replenishment_runs: {
+        Row: {
+          available_before: number
+          batch_id: string | null
+          calibration_id: string | null
+          calibration_version: number | null
+          created_at: string
+          ecosystem_id: string
+          error: string | null
+          finished_at: string | null
+          generated_count: number
+          id: string
+          imported_count: number
+          product_id: string
+          requested_count: number
+          status: string
+          trigger_source: string
+          updated_at: string
+        }
+        Insert: {
+          available_before?: number
+          batch_id?: string | null
+          calibration_id?: string | null
+          calibration_version?: number | null
+          created_at?: string
+          ecosystem_id: string
+          error?: string | null
+          finished_at?: string | null
+          generated_count?: number
+          id?: string
+          imported_count?: number
+          product_id: string
+          requested_count?: number
+          status?: string
+          trigger_source?: string
+          updated_at?: string
+        }
+        Update: {
+          available_before?: number
+          batch_id?: string | null
+          calibration_id?: string | null
+          calibration_version?: number | null
+          created_at?: string
+          ecosystem_id?: string
+          error?: string | null
+          finished_at?: string | null
+          generated_count?: number
+          id?: string
+          imported_count?: number
+          product_id?: string
+          requested_count?: number
+          status?: string
+          trigger_source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_replenishment_runs_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "omada_voucher_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_replenishment_runs_calibration_id_fkey"
+            columns: ["calibration_id"]
+            isOneToOne: false
+            referencedRelation: "omada_voucher_calibrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_replenishment_runs_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_replenishment_runs_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_replenishment_runs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voucher_sales: {
         Row: {
           buyer_id: string
@@ -11839,6 +11932,20 @@ export type Database = {
         }
       }
       switch_ecosystem: { Args: { _ecosystem_id: string }; Returns: string }
+      system_import_voucher_codes: {
+        Args: {
+          _codes: string[]
+          _ecosystem_id: string
+          _product_id: string
+          _source?: string
+        }
+        Returns: {
+          batch_id: string
+          duplicate_count: number
+          imported_count: number
+          invalid_count: number
+        }[]
+      }
       top_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
