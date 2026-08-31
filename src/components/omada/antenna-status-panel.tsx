@@ -44,6 +44,8 @@ import {
   type AntennaList,
   type ShopMemberOption,
 } from "@/lib/omada-devices.functions";
+import { DeviceManageDialog } from "./device-manage-dialog";
+
 
 function Detail({ label, value }: { label: string; value: string | null }) {
   if (!value) return null;
