@@ -64,6 +64,21 @@ export const Route = createFileRoute("/api/public/omada-probe-temp")({
         });
         await hit("channel-limit", `${site}/aps/${mac}/channel-limit`);
         await hit("clients", `${site}/clients?page=1&pageSize=3`);
+        await hit("channel-info-obj", `${site}/aps/channel-info`, {
+          method: "POST",
+          body: JSON.stringify({ macList: [decodeURIComponent(mac)] }),
+        });
+        const now = Date.now();
+        await hit(
+          "timeline2",
+          `${site}/devices/${mac}/timeline?page=1&pageSize=5&startTime=${now - 86400000}&endTime=${now}`,
+        );
+        await hit("stat-hourly", `${site2}/stat/${mac}/hourly`, {
+          method: "POST",
+          body: JSON.stringify({ startTime: now - 86400000, endTime: now, attrs: ["traffic"] }),
+        });
+        await hit("uplink-config", `${site}/aps/${mac}/uplink-config`);
+        await hit("power-saving", `${site}/aps/${mac}/power-saving`);
 
         return Response.json({
           apCount: aps.length,
