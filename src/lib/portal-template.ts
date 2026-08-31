@@ -838,9 +838,57 @@ ${MARKER}
      An unauthenticated visitor is never redirected away from this page, and the
      shop is decided server-side from the saved portal binding - nothing here
      names a shop, so no address bar edit can reach another one. */
+  /* The controller's real /portal/auth answer is checked FIRST: an Omada
+     errorCode or an HTTP error means failure, and only then does the exact
+     "OK" body (Omada's success answer for Hotspot Voucher AND Local User)
+     count as success. The master's own success-view words below still apply. */
+  var verdictOf = ${omadaAuthResponseVerdict.toString()};
+  var AUTH_OK = false;
+  function noteAuthResponse(status, bodyText){
+    if (verdictOf(status, bodyText) === "success") AUTH_OK = true;
+  }
+  try {
+    if (window.fetch){
+      var realFetch = window.fetch;
+      window.fetch = function(url){
+        var pending = realFetch.apply(this, arguments);
+        try {
+          var target = typeof url === "string" ? url : (url && url.url) || "";
+          if (target.indexOf("/portal/auth") !== -1){
+            pending.then(function(res){
+              try {
+                res.clone().text().then(function(t){ noteAuthResponse(res.status, t); });
+              } catch (e) {}
+            }).catch(function(){});
+          }
+        } catch (e) {}
+        return pending;
+      };
+    }
+  } catch (e) {}
+  try {
+    if (window.XMLHttpRequest){
+      var realOpen = XMLHttpRequest.prototype.open;
+      var realSend = XMLHttpRequest.prototype.send;
+      XMLHttpRequest.prototype.open = function(method, url){
+        this.__wwAuth = String(url || "").indexOf("/portal/auth") !== -1;
+        return realOpen.apply(this, arguments);
+      };
+      XMLHttpRequest.prototype.send = function(){
+        if (this.__wwAuth){
+          var xhr = this;
+          xhr.addEventListener("loadend", function(){
+            try { noteAuthResponse(xhr.status, xhr.responseText); } catch (e) {}
+          });
+        }
+        return realSend.apply(this, arguments);
+      };
+    }
+  } catch (e) {}
+
   var SUBMITTED = false;
   var HANDED_OFF = false;
-  function markSubmitted(){ SUBMITTED = true; }
+  function markSubmitted(){ SUBMITTED = true; AUTH_OK = false; }
   try {
     document.addEventListener("submit", markSubmitted, true);
     document.addEventListener("click", function(ev){
@@ -877,6 +925,9 @@ ${MARKER}
   }
 
   function authenticated(){
+    /* A verified "OK" (or errorCode 0) answer from /portal/auth is success on
+       its own; the master's success-view words remain as a fallback. */
+    if (AUTH_OK) return true;
     try {
       var nodes = document.querySelectorAll("body *");
       for (var i=0;i<nodes.length && i<600;i++){
@@ -937,6 +988,38 @@ ${MARKER}
     return template.replace(/<\/body\s*>/i, (m) => `${section}\n${m}`);
   }
   return `${template}\n${section}`;
+}
+
+/**
+ * Decide what a real `/portal/auth` answer means. The controller's response
+ * is checked FIRST: an Omada JSON envelope with `errorCode` is decisive, and
+ * an HTTP error status is a failure. Only when neither says otherwise does a
+ * body of exactly "OK" (Omada's success answer for both Hotspot Voucher and
+ * Local User logins) count as success. Anything else is unknown and the
+ * portal falls back to the master's own success view.
+ *
+ * This function is stringified into the generated portal's runtime script, so
+ * it must stay dependency-free plain JavaScript.
+ */
+export type OmadaAuthVerdict = "success" | "failure" | "unknown";
+export function omadaAuthResponseVerdict(status: number, bodyText: string): OmadaAuthVerdict {
+  const body = (bodyText || "").trim();
+  if (body.charAt(0) === "{") {
+    try {
+      const parsed: unknown = JSON.parse(body);
+      if (parsed && typeof parsed === "object" && "errorCode" in parsed) {
+        const code = (parsed as { errorCode: unknown }).errorCode;
+        if (typeof code === "number") {
+          return code === 0 && status >= 200 && status < 400 ? "success" : "failure";
+        }
+      }
+    } catch {
+      /* not JSON after all: fall through to the textual signal */
+    }
+  }
+  if (status >= 400) return "failure";
+  if (body.toUpperCase() === "OK") return "success";
+  return "unknown";
 }
 
 /** File name offered to the admin; never contains anything secret. */
