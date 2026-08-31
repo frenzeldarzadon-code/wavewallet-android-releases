@@ -25,6 +25,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StartShopRouteImport } from './routes/start-shop'
 import { Route as SuperRouteImport } from './routes/super'
 import { Route as UniverseRouteImport } from './routes/universe'
+import { Route as WifiRouteImport } from './routes/wifi'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
 import { Route as AdminCreditsRouteImport } from './routes/admin.credits'
@@ -110,6 +111,7 @@ import { Route as UniverseShopsRouteImport } from './routes/universe.shops'
 import { Route as ApiPublicAppVersionRouteImport } from './routes/api/public/app-version'
 import { Route as ApiPublicOmadaHealthSweepRouteImport } from './routes/api/public/omada-health-sweep'
 import { Route as ApiPublicPortalContextRouteImport } from './routes/api/public/portal-context'
+import { Route as ApiPublicPortalHandoffRouteImport } from './routes/api/public/portal-handoff'
 import { Route as ApiPublicVoucherReplenishmentSweepRouteImport } from './routes/api/public/voucher-replenishment-sweep'
 import { Route as PrintVouchersSaleIdRouteImport } from './routes/print.vouchers.$saleId'
 import { Route as UniverseUHandleRouteImport } from './routes/universe.u.$handle'
@@ -193,6 +195,11 @@ const SuperRoute = SuperRouteImport.update({
 const UniverseRoute = UniverseRouteImport.update({
   id: '/universe',
   path: '/universe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WifiRoute = WifiRouteImport.update({
+  id: '/wifi',
+  path: '/wifi',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -622,6 +629,11 @@ const ApiPublicPortalContextRoute = ApiPublicPortalContextRouteImport.update({
   path: '/api/public/portal-context',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPortalHandoffRoute = ApiPublicPortalHandoffRouteImport.update({
+  id: '/api/public/portal-handoff',
+  path: '/api/public/portal-handoff',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicVoucherReplenishmentSweepRoute =
   ApiPublicVoucherReplenishmentSweepRouteImport.update({
     id: '/api/public/voucher-replenishment-sweep',
@@ -662,6 +674,7 @@ export interface FileRoutesByFullPath {
   '/start-shop': typeof StartShopRoute
   '/super': typeof SuperRouteWithChildren
   '/universe': typeof UniverseRouteWithChildren
+  '/wifi': typeof WifiRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -747,6 +760,7 @@ export interface FileRoutesByFullPath {
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/omada-health-sweep': typeof ApiPublicOmadaHealthSweepRoute
   '/api/public/portal-context': typeof ApiPublicPortalContextRoute
+  '/api/public/portal-handoff': typeof ApiPublicPortalHandoffRoute
   '/api/public/voucher-replenishment-sweep': typeof ApiPublicVoucherReplenishmentSweepRoute
   '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
@@ -764,6 +778,7 @@ export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/start-shop': typeof StartShopRoute
+  '/wifi': typeof WifiRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -849,6 +864,7 @@ export interface FileRoutesByTo {
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/omada-health-sweep': typeof ApiPublicOmadaHealthSweepRoute
   '/api/public/portal-context': typeof ApiPublicPortalContextRoute
+  '/api/public/portal-handoff': typeof ApiPublicPortalHandoffRoute
   '/api/public/voucher-replenishment-sweep': typeof ApiPublicVoucherReplenishmentSweepRoute
   '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
@@ -872,6 +888,7 @@ export interface FileRoutesById {
   '/start-shop': typeof StartShopRoute
   '/super': typeof SuperRouteWithChildren
   '/universe': typeof UniverseRouteWithChildren
+  '/wifi': typeof WifiRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -957,6 +974,7 @@ export interface FileRoutesById {
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/omada-health-sweep': typeof ApiPublicOmadaHealthSweepRoute
   '/api/public/portal-context': typeof ApiPublicPortalContextRoute
+  '/api/public/portal-handoff': typeof ApiPublicPortalHandoffRoute
   '/api/public/voucher-replenishment-sweep': typeof ApiPublicVoucherReplenishmentSweepRoute
   '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
@@ -981,6 +999,7 @@ export interface FileRouteTypes {
     | '/start-shop'
     | '/super'
     | '/universe'
+    | '/wifi'
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
@@ -1066,6 +1085,7 @@ export interface FileRouteTypes {
     | '/api/public/app-version'
     | '/api/public/omada-health-sweep'
     | '/api/public/portal-context'
+    | '/api/public/portal-handoff'
     | '/api/public/voucher-replenishment-sweep'
     | '/print/vouchers/$saleId'
     | '/universe/u/$handle'
@@ -1083,6 +1103,7 @@ export interface FileRouteTypes {
     | '/setup'
     | '/sitemap.xml'
     | '/start-shop'
+    | '/wifi'
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
@@ -1168,6 +1189,7 @@ export interface FileRouteTypes {
     | '/api/public/app-version'
     | '/api/public/omada-health-sweep'
     | '/api/public/portal-context'
+    | '/api/public/portal-handoff'
     | '/api/public/voucher-replenishment-sweep'
     | '/print/vouchers/$saleId'
     | '/universe/u/$handle'
@@ -1190,6 +1212,7 @@ export interface FileRouteTypes {
     | '/start-shop'
     | '/super'
     | '/universe'
+    | '/wifi'
     | '/admin/applications'
     | '/admin/credits'
     | '/admin/customers'
@@ -1275,6 +1298,7 @@ export interface FileRouteTypes {
     | '/api/public/app-version'
     | '/api/public/omada-health-sweep'
     | '/api/public/portal-context'
+    | '/api/public/portal-handoff'
     | '/api/public/voucher-replenishment-sweep'
     | '/print/vouchers/$saleId'
     | '/universe/u/$handle'
@@ -1298,12 +1322,14 @@ export interface RootRouteChildren {
   StartShopRoute: typeof StartShopRoute
   SuperRoute: typeof SuperRouteWithChildren
   UniverseRoute: typeof UniverseRouteWithChildren
+  WifiRoute: typeof WifiRoute
   ApiPortalTemplateDownloadRoute: typeof ApiPortalTemplateDownloadRoute
   JoinSlugRoute: typeof JoinSlugRoute
   ShopSlugRoute: typeof ShopSlugRoute
   ApiPublicAppVersionRoute: typeof ApiPublicAppVersionRoute
   ApiPublicOmadaHealthSweepRoute: typeof ApiPublicOmadaHealthSweepRoute
   ApiPublicPortalContextRoute: typeof ApiPublicPortalContextRoute
+  ApiPublicPortalHandoffRoute: typeof ApiPublicPortalHandoffRoute
   ApiPublicVoucherReplenishmentSweepRoute: typeof ApiPublicVoucherReplenishmentSweepRoute
   PrintVouchersSaleIdRoute: typeof PrintVouchersSaleIdRoute
   ApiPublicPaymentsListenerRoute: typeof ApiPublicPaymentsListenerRoute
@@ -1421,6 +1447,13 @@ declare module '@tanstack/react-router' {
       path: '/universe'
       fullPath: '/universe'
       preLoaderRoute: typeof UniverseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/wifi': {
+      id: '/wifi'
+      path: '/wifi'
+      fullPath: '/wifi'
+      preLoaderRoute: typeof WifiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -2018,6 +2051,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPortalContextRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/portal-handoff': {
+      id: '/api/public/portal-handoff'
+      path: '/api/public/portal-handoff'
+      fullPath: '/api/public/portal-handoff'
+      preLoaderRoute: typeof ApiPublicPortalHandoffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/voucher-replenishment-sweep': {
       id: '/api/public/voucher-replenishment-sweep'
       path: '/api/public/voucher-replenishment-sweep'
@@ -2270,12 +2310,14 @@ const rootRouteChildren: RootRouteChildren = {
   StartShopRoute: StartShopRoute,
   SuperRoute: SuperRouteWithChildren,
   UniverseRoute: UniverseRouteWithChildren,
+  WifiRoute: WifiRoute,
   ApiPortalTemplateDownloadRoute: ApiPortalTemplateDownloadRoute,
   JoinSlugRoute: JoinSlugRoute,
   ShopSlugRoute: ShopSlugRoute,
   ApiPublicAppVersionRoute: ApiPublicAppVersionRoute,
   ApiPublicOmadaHealthSweepRoute: ApiPublicOmadaHealthSweepRoute,
   ApiPublicPortalContextRoute: ApiPublicPortalContextRoute,
+  ApiPublicPortalHandoffRoute: ApiPublicPortalHandoffRoute,
   ApiPublicVoucherReplenishmentSweepRoute:
     ApiPublicVoucherReplenishmentSweepRoute,
   PrintVouchersSaleIdRoute: PrintVouchersSaleIdRoute,
