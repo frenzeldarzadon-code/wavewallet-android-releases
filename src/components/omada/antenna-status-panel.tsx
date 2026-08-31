@@ -65,20 +65,26 @@ function AntennaCard({
   device,
   manage,
   members,
+  ecosystemId,
   onAssign,
   onUnassign,
   onReboot,
+  onChanged,
 }: {
   device: AntennaView;
   manage: boolean;
   members: ShopMemberOption[];
+  ecosystemId: string | null | undefined;
   onAssign: (mac: string, userId: string) => Promise<void>;
   onUnassign: (mac: string) => Promise<void>;
   onReboot: (mac: string) => Promise<void>;
+  onChanged: () => void;
 }) {
   const [choice, setChoice] = useState(device.assignedUserId ?? "");
   const [busy, setBusy] = useState<null | "assign" | "unassign" | "reboot">(null);
   const [confirm, setConfirm] = useState(false);
+  const [managing, setManaging] = useState(false);
+
 
   useEffect(() => setChoice(device.assignedUserId ?? ""), [device.assignedUserId]);
 
