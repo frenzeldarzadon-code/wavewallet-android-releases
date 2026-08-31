@@ -330,6 +330,9 @@ export function AntennaStatusPanel({
             device={device}
             manage={manage}
             members={members}
+            ecosystemId={ecosystemId}
+            onChanged={() => void load()}
+
             onAssign={(mac, userId) =>
               act("Antenna assigned.", () =>
                 assignAntenna({
