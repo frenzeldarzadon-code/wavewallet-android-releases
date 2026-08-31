@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<body class="portal">
+    <div class="logo-img"><div class="logo-container"></div></div>
+    <div id="oper-hint" style="color: red"></div>
+    <div class="oper-section-outer">
+        <div class="oper-section-inner">
+            <form id="login-form">
+                <div id="input-voucher" class="input-container">
+                    <input id="voucherCode" class="oper-section-item input" name="voucherCode" type="text" placeholder="Voucher Code"/>
+                </div>
+                <div id="input-user" class="input-container">
+                    <span class="icon left-icon user"></span>
+                    <input id="username" class="oper-section-item input" name="username" type="text" placeholder="Username"/>
+                </div>
+                <div id="input-password" class="input-container hidden">
+                    <span class="icon left-icon lock"></span>
+                    <input id="password" type="password" name="password" class="password oper-section-item input" placeholder="Password" />
+                </div>
+                <div id="input-simple" class="input-container hidden">
+                    <input id="simplePassword" class="password oper-section-item input" name="simplePassword" type="password" placeholder="Password"/>
+                </div>
+                <div id="input-phone-num">
+                    <input id="country-code" class="input oper-section-item" placeholder="Area Code" />
+                    <input id="phone-number" class="input oper-section-item" name="phone-number" type="text" placeholder="Phone Number"/>
+                </div>
+                <div id="input-verify-code">
+                    <input id="verify-code" class="input oper-section-item" name="verify-code" type="text" placeholder="Verification Code"/>
+                    <button id="get-code" class="button">Get Code</button>
+                </div>
+                <input name="clientMac" id="cMac" style="display:none"/>
+                <input name="radiusSvrIp" id="radiusServerIp" style="display:none"/>
+            </form>
+            <div id="button-area"><button id="button-login" class="button oper-section-item">Log In</button></div>
+            <a id="hotspot-other-login" href="#">Other Login Methods</a>
+        </div>
+    </div>
+    <div id="hotspot-selector">
+      <div class="title"><span class="text">Other Login Methods</span><span id="hotspot-selector-close" class="icon"></span></div>
+    </div>
+    <div id="form-auth-msg"><div id="form-auth-outer"><div id="form-auth-inner"><div id="form-auth-header"><div id="form-auth-title"></div><div id="form-auth-note"></div></div><div id="form-auth-content"></div><div id="form-auth-footer"><a id="form-auth-submit" href="javascript:void(0);">Submit</a></div></div></div></div>
+    <script data-ww-inlined="index.js">
+
+(function(){
+  var METHODS = ["Voucher","Local User"];
+  var PANEL = {
+    Voucher: ["input-voucher"],
+    "Local User": ["input-user","input-password"],
+    "Simple Password": ["input-simple"],
+    SMS: ["input-phone-num","input-verify-code"]
+  };
+  var current = METHODS[0];
+  function render(){
+    var all = ["input-voucher","input-user","input-password","input-simple","input-phone-num","input-verify-code"];
+    for (var i=0;i<all.length;i++){
+      var el = document.getElementById(all[i]);
+      if (!el) continue;
+      el.style.display = "none";
+    }
+    var on = PANEL[current] || [];
+    for (var j=0;j<on.length;j++){
+      var box = document.getElementById(on[j]);
+      if (box) box.style.display = "block"; /* jQuery .show() equivalent */
+    }
+  }
+  var sel = document.getElementById("hotspot-selector");
+  if (sel && METHODS.length > 1){
+    for (var m=0;m<METHODS.length;m++){
+      (function(name){
+        var item = document.createElement("div");
+        item.className = "hotspot-selector-item";
+        item.textContent = name;
+        item.onclick = function(){ current = name; render(); };
+        sel.appendChild(item);
+      })(METHODS[m]);
+    }
+  }
+  var login = document.getElementById("button-login");
+  if (login) login.onclick = function(){
+    var payload = { authType: current };
+    var on = PANEL[current] || [];
+    for (var k=0;k<on.length;k++){
+      var inputs = document.getElementById(on[k]).querySelectorAll("input");
+      for (var n=0;n<inputs.length;n++) payload[inputs[n].name || inputs[n].id] = inputs[n].value;
+    }
+    payload.clientMac = (document.getElementById("cMac")||{}).value;
+    window.__omadaSubmit = payload;
+    document.getElementById("oper-hint").textContent = "";
+  };
+  render();
+})();
+
+</script>
+
+<!-- wavewallet:portal -->
+<!-- canonical master v1 fnv1a-test · site s1 · portal p1 · theme modern-minimal -->
+<style id="ww-portal-style">#ww-portal{--ww-ink:#0b1729;--ww-muted:#5b6b84;--ww-brand:#1d6ef5;--ww-accent:#12b26a;--ww-surface:rgba(255,255,255,.80);--ww-line:rgba(11,23,41,.10);--ww-bg1:#eaf1ff;--ww-bg2:#f7fbff;--ww-bg3:#eafaf3;--ww-radius:20px;--ww-btn-radius:14px;--ww-font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#ww-portal *{box-sizing:border-box}
+#ww-portal{position:relative;margin:0;padding:22px 16px 44px;color:var(--ww-ink);font-family:var(--ww-font);background:linear-gradient(160deg,var(--ww-bg1) 0%,var(--ww-bg2) 48%,var(--ww-bg3) 100%);overflow:hidden}
+#ww-portal .ww-decor{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#ww-portal .ww-decor i{position:absolute;display:block}
+.ww-wrap{position:relative;max-width:520px;margin:0 auto;display:grid;gap:14px}
+.ww-card{position:relative;background:var(--ww-surface);border:1px solid var(--ww-line);border-radius:var(--ww-radius);padding:18px;box-shadow:0 18px 40px -26px rgba(4,10,22,.55)}
+.ww-eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ww-muted);margin:0 0 6px}
+.ww-title{font-size:22px;line-height:1.22;font-weight:700;margin:0 0 6px}
+.ww-sub{font-size:14px;line-height:1.45;color:var(--ww-muted);margin:0}
+.ww-actions{display:grid;gap:10px;margin-top:14px}
+.ww-btn{display:block;width:100%;text-align:center;text-decoration:none;font-weight:600;font-size:15px;padding:13px 16px;border-radius:var(--ww-btn-radius);border:1px solid transparent;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease,filter .15s ease}
+.ww-btn-primary{background:linear-gradient(135deg,var(--ww-brand),var(--ww-accent));color:#fff}
+.ww-btn-ghost{background:transparent;border-color:var(--ww-line);color:var(--ww-ink)}
+.ww-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ww-slot{margin-top:6px}
+.ww-slot form{margin:0}
+.ww-slot input[type=text],.ww-slot input[type=password],.ww-slot input:not([type]){width:100%;padding:12px 14px;border-radius:var(--ww-btn-radius);border:1px solid var(--ww-line);font-size:16px;background:rgba(255,255,255,.92);color:#0b1729}
+.ww-slot button,.ww-slot input[type=submit],.ww-slot input[type=button]{width:100%;margin-top:10px;padding:13px 16px;border-radius:var(--ww-btn-radius);border:0;background:linear-gradient(135deg,var(--ww-accent),var(--ww-brand));color:#fff;font-size:15px;font-weight:600}
+.ww-foot{text-align:center;font-size:12px;color:var(--ww-muted)}
+.ww-foot a{color:var(--ww-brand);font-weight:600}
+html,body{margin:0;padding:0;overflow-x:hidden}
+.hidden{display:none}
+#ww-portal .ww-off{display:none!important}
+#ww-portal .ww-on{display:block!important}
+#ww-portal .ww-panel-label{display:block;font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--ww-muted);margin:0 0 4px}
+.ww-omada-off{position:fixed!important;left:-10000px!important;top:0!important;width:1px!important;height:1px!important;max-width:1px!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important;z-index:-1!important}
+.ww-seg{display:flex;gap:6px;padding:4px;margin:0 0 12px;border:1px solid var(--ww-line);border-radius:var(--ww-btn-radius);background:rgba(255,255,255,.06)}
+.ww-seg button{flex:1;min-height:44px;padding:0 12px;border:0;border-radius:var(--ww-btn-radius);background:transparent;color:var(--ww-ink);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.ww-seg button[aria-selected=true]{background:linear-gradient(135deg,var(--ww-brand),var(--ww-accent));color:#fff}
+.ww-error{margin:10px 0 0;font-size:13px;font-weight:600;color:#ff5a5f;word-break:break-word}
+.ww-slot .input-container{margin-bottom:10px}
+.ww-slot .icon{display:none}
+#ww-auth-action{margin-top:2px}
+#ww-auth-action button,#ww-auth-action a,#ww-auth-action input[type=submit],#ww-auth-action input[type=button]{display:block;width:100%;min-height:48px;margin-top:10px;padding:14px 16px;border:0;border-radius:var(--ww-btn-radius);background:linear-gradient(135deg,var(--ww-brand),var(--ww-accent));color:#fff;font-family:inherit;font-size:16px;font-weight:600;text-align:center;text-decoration:none;cursor:pointer}
+@media (min-width:560px){.ww-title{font-size:26px}}
+.ww-wrap{gap:14px}
+.ww-card{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.ww-title{letter-spacing:-.02em}
+.ww-decor i{border-radius:50%;filter:blur(46px);opacity:.5}
+.ww-decor i:nth-child(1){width:280px;height:280px;top:-120px;right:-90px;background:radial-gradient(circle,var(--ww-brand),transparent 70%)}
+.ww-decor i:nth-child(2){width:260px;height:260px;bottom:-130px;left:-100px;background:radial-gradient(circle,var(--ww-accent),transparent 70%)}
+.ww-decor i:nth-child(3){width:180px;height:180px;top:38%;left:-70px;background:radial-gradient(circle,var(--ww-brand),transparent 70%);opacity:.25}
+.ww-btn:active{transform:translateY(1px)}
+.ww-btn-primary:hover{filter:brightness(1.05)}
+.ww-card{animation:ww-in .35s ease both}
+@keyframes ww-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#ww-portal *,#ww-portal *:before,#ww-portal *:after{animation:none!important;transition:none!important}}</style>
+<div id="ww-portal" data-ww-theme="modern-minimal">
+  <div class="ww-decor" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="ww-wrap">
+
+    <section class="ww-card">
+      <p class="ww-eyebrow">Sagada Wave Wi-Fi</p>
+      <h1 class="ww-title" data-ww-greeting>Buy a voucher to resume internet</h1>
+      <p class="ww-sub" data-ww-sub>Enter the voucher code you already have, or get one in seconds.</p>
+      <p class="ww-sub" data-ww-status hidden></p>
+      <p class="ww-sub">Your coins and points and your name appear once you open WaveWallet below.</p>
+      <div class="ww-actions">
+        <a class="ww-btn ww-btn-primary" data-ww-link="buy">Buy a voucher</a>
+        <div class="ww-grid"><a class="ww-btn ww-btn-ghost" data-ww-link="status">Voucher status</a><a class="ww-btn ww-btn-ghost" data-ww-link="signin">Sign in</a></div>
+      </div>
+    </section>
+
+    <section class="ww-card">
+      <p class="ww-eyebrow" data-ww-auth-eyebrow>Already have a code?</p>
+      <h2 class="ww-title" style="font-size:18px" data-ww-auth-title>Enter your voucher</h2>
+      <div class="ww-seg" data-ww-methods role="tablist" hidden></div>
+      <div class="ww-slot" id="ww-voucher-slot">
+        <p class="ww-sub" data-ww-slot-fallback>Use the hotspot login form on this page to enter your code.</p>
+      </div>
+      <div class="ww-slot" id="ww-auth-action"></div>
+      <p class="ww-error" data-ww-error hidden></p>
+    </section>
+
+    <p class="ww-foot" data-ww-signup hidden>No account yet? <a data-ww-link="signup">Sign up with Sagada Wave</a></p>
+    <p class="ww-foot">Powered by WaveWallet &middot; Sagada Wave</p>
+  </div>
+</div>
+<script id="ww-portal-script">
+(function(){
+  var CFG = {"origin":"https://wallet.sagadawave.com","portalUrl":"https://wallet.sagadawave.com/portal","mappingId":"map-1","shopName":"Sagada Wave","signupUrl":"https://wallet.sagadawave.com/join/sagada-wave","features":{"manualVoucher":true,"buyVoucher":true,"signIn":true,"showBalance":true,"showPoints":true,"cashIn":false,"voucherStatus":true,"signUpLink":true},"theme":"modern-minimal","portalId":"p1","siteId":"s1","masterVersion":1,"params":["clientMac"],"endpoints":[]};
+  var root = document.getElementById("ww-portal");
+  if (!root) return;
+
+  /* Omada context: only what the controller itself put in the address bar or
+     in the template's own hidden fields. Nothing is invented. */
+  function context(){
+    var out = {};
+    try {
+      var q = new URLSearchParams(window.location.search);
+      q.forEach(function(v,k){ if (v) out[k] = v; });
+    } catch (e) {}
+    try {
+      var hidden = document.querySelectorAll("input[type=hidden][name]");
+      for (var i=0;i<hidden.length;i++){
+        var n = hidden[i].getAttribute("name");
+        var v = hidden[i].value;
+        if (n && v && out[n] === undefined) out[n] = v;
+      }
+    } catch (e) {}
+    return out;
+  }
+
+  var SESSION = null;
+
+  function link(path){
+    var url = CFG.origin + path;
+    var join = url.indexOf("?") === -1 ? "?" : "&";
+    var parts = ["wwPortal=" + encodeURIComponent(CFG.mappingId)];
+    if (SESSION) parts.push("wwSession=" + encodeURIComponent(SESSION));
+    var ctx = context();
+    for (var k in ctx){
+      if (!Object.prototype.hasOwnProperty.call(ctx,k)) continue;
+      if (k === "wwPortal" || k === "wwSession") continue;
+      parts.push(encodeURIComponent(k) + "=" + encodeURIComponent(ctx[k]));
+    }
+    return url + join + parts.join("&");
+  }
+
+  var intents = { buy: "buy", cashin: "cashin", status: "status", signin: "signin" };
+
+  function applyLinks(){
+    var anchors = root.querySelectorAll("[data-ww-link]");
+    for (var a=0;a<anchors.length;a++){
+      var el = anchors[a];
+      var kind = el.getAttribute("data-ww-link");
+      if (kind === "signup"){
+        var wrap = el.parentNode;
+        if (!CFG.signupUrl){ if (wrap && wrap.parentNode) wrap.parentNode.removeChild(wrap); continue; }
+        el.setAttribute("href", CFG.signupUrl);
+        el.setAttribute("target", "_blank");
+        el.setAttribute("rel", "noopener");
+        if (wrap && wrap.removeAttribute) wrap.removeAttribute("hidden");
+        continue;
+      }
+      var href = link("/portal");
+      if (intents[kind]) href += "&wwIntent=" + intents[kind];
+      el.setAttribute("href", href);
+      el.setAttribute("target", "_blank");
+      el.setAttribute("rel", "noopener");
+    }
+  }
+  applyLinks();
+
+  /* Manual voucher entry: MOVE the controller's own form, never rebuild it.
+     Everything below relocates and restyles Omada's REAL controls. No form,
+     field, handler or endpoint is recreated, so submitting always runs the
+     controller's own authentication. */
+  var authSlot = document.getElementById("ww-auth-action");
+  var errorEl = root.querySelector("[data-ww-error]");
+  var segEl = root.querySelector("[data-ww-methods]");
+  var titleEl = root.querySelector("[data-ww-auth-title]");
+  var eyebrowEl = root.querySelector("[data-ww-auth-eyebrow]");
+  var loginControl = null;
+
+  try {
+    var slot = document.getElementById("ww-voucher-slot");
+    var forms = document.querySelectorAll("form");
+    var chosen = null;
+    for (var f=0;f<forms.length;f++){
+      if (root.contains(forms[f])) continue;
+      chosen = forms[f];
+      break;
+    }
+    if (!chosen){
+      /* Masters that submit with their own script: move the field the master
+         uses for the voucher code, together with its container. */
+      var field = document.querySelector("input[name*=voucher i],input[id*=voucher i],input[name*=code i],input[id*=code i]");
+      if (field && !root.contains(field)) chosen = field.closest("div,section,fieldset") || field;
+    }
+    if (chosen && slot){
+      var fallback = slot.querySelector("[data-ww-slot-fallback]");
+      if (fallback) fallback.parentNode.removeChild(fallback);
+      slot.appendChild(chosen);
+    }
+  } catch (e) { /* template keeps its own layout */ }
+
+  /* The master's own submit control, moved (never rebuilt) under the fields. */
+  try {
+    var control = document.querySelector("#button-login,#button-area button,#button-area a,button[type=submit],input[type=submit]");
+    if (control && !root.contains(control) && authSlot){
+      var holder = control.id === "button-login" ? (document.getElementById("button-area") || control) : control;
+      authSlot.appendChild(holder);
+      loginControl = control;
+    }
+  } catch (e) {}
+
+  /* Omada's own presentation is hidden, never deleted: every node stays in the
+     document so the controller's scripts and handlers keep working. */
+  function hideOmadaChrome(){
+    if (!document.body) return;
+    var kids = document.body.children;
+    for (var i=0;i<kids.length;i++){
+      var el = kids[i];
+      if (el === root || el.id === "ww-portal") continue;
+      if (el.tagName === "SCRIPT" || el.tagName === "STYLE" || el.tagName === "LINK") continue;
+      if (el.classList && !el.classList.contains("ww-omada-off")) el.classList.add("ww-omada-off");
+    }
+  }
+
+  function isVisible(el){
+    if (!el) return false;
+    if (el.classList && el.classList.contains("hidden")) return false;
+    var style = window.getComputedStyle ? window.getComputedStyle(el) : null;
+    if (style && (style.display === "none" || style.visibility === "hidden")) return false;
+    return true;
+  }
+
+  function fieldVisible(selector){
+    var el = document.querySelector(selector);
+    if (!el || !root.contains(el)) return false;
+    var node = el;
+    while (node && node !== root){
+      if (!isVisible(node)) return false;
+      node = node.parentNode && node.parentNode.nodeType === 1 ? node.parentNode : null;
+    }
+    return true;
+  }
+
+  /* Which method is on screen right now, read from the controller's own
+     fields — never assumed, never hard-coded. */
+  function currentMethod(){
+    if (fieldVisible("input[name=voucherCode],#voucherCode")) return "voucher";
+    if (fieldVisible("input[name=username],#username")) return "user";
+    if (fieldVisible("input[name=phone-number],#phone-number")) return "phone";
+    if (fieldVisible("input[name=simplePassword],#simplePassword")) return "simple";
+    return "";
+  }
+
+  /* Every field the controller ships for a given method. Local User is the
+     controller's own username AND password input — both are required, so both
+     are shown together. Nothing here creates a field: each one must already
+     exist in the master, otherwise that method simply has no panel. */
+  var PANEL_FIELDS = {
+    voucher: ["voucherCode"],
+    user: ["username", "password"],
+    simple: ["simplePassword"],
+    phone: ["country-code", "phone-number", "verify-code"]
+  };
+
+  function fieldEl(name){
+    return root.querySelector("[name='" + name + "']") || root.querySelector("#" + name);
+  }
+
+  function panelBox(el){
+    var node = el;
+    while (node && node !== root){
+      if (node.classList && node.classList.contains("input-container")) return node;
+      var parent = node.parentNode;
+      if (!parent || parent === root || (parent.tagName && parent.tagName === "FORM")) return node;
+      node = parent;
+    }
+    return el;
+  }
+
+  var activeKind = "";
+
+  /* Presentation only: the controller keeps its own classes and handlers, we
+     only decide which of ITS containers the customer can see. */
+  function applyPanels(){
+    if (!activeKind) return;
+    for (var kind in PANEL_FIELDS){
+      if (!Object.prototype.hasOwnProperty.call(PANEL_FIELDS, kind)) continue;
+      var on = kind === activeKind;
+      var names = PANEL_FIELDS[kind];
+      for (var i=0;i<names.length;i++){
+        var el = fieldEl(names[i]);
+        if (!el) continue;
+        var box = panelBox(el);
+        if (!box || !box.classList) continue;
+        box.classList.remove(on ? "ww-off" : "ww-on");
+        if (!box.classList.contains(on ? "ww-on" : "ww-off")) box.classList.add(on ? "ww-on" : "ww-off");
+        if (on && box.style && box.style.display === "none") box.style.display = "";
+      }
+    }
+  }
+
+  var LABELS = {
+    voucher: { eyebrow: "Already have a code?", title: "Enter your voucher", action: "Connect with Voucher" },
+    user: { eyebrow: "Hotspot account", title: "Sign in with your username", action: "Sign in" },
+    phone: { eyebrow: "Hotspot account", title: "Verify your number", action: "Connect" },
+    simple: { eyebrow: "Hotspot access", title: "Enter the Wi-Fi key", action: "Connect" }
+  };
+
+  function syncLabels(){
+    var m = activeKind || currentMethod();
+    var copy = LABELS[m] || LABELS.voucher;
+    if (eyebrowEl && eyebrowEl.textContent !== copy.eyebrow) eyebrowEl.textContent = copy.eyebrow;
+    if (titleEl && titleEl.textContent !== copy.title) titleEl.textContent = copy.title;
+    if (loginControl && loginControl.textContent !== copy.action) loginControl.textContent = copy.action;
+    if (segEl){
+      var segs = segEl.querySelectorAll("button[data-ww-method]");
+      for (var i=0;i<segs.length;i++){
+        var want = segs[i].getAttribute("data-ww-method") === m ? "true" : "false";
+        if (segs[i].getAttribute("aria-selected") !== want) segs[i].setAttribute("aria-selected", want);
+      }
+    }
+  }
+
+  /* Available methods come from the controller's own "Other Login Methods"
+     list, so only what THIS portal enables can ever appear. */
+  function methodKind(label){
+    var t = (label || "").toLowerCase();
+    if (t.indexOf("voucher") !== -1) return "voucher";
+    if (t.indexOf("local user") !== -1 || t.indexOf("user") !== -1) return "user";
+    if (t.indexOf("sms") !== -1 || t.indexOf("phone") !== -1) return "phone";
+    if (t.indexOf("password") !== -1) return "simple";
+    return "";
+  }
+
+  function selectorOptions(){
+    var box = document.getElementById("hotspot-selector");
+    if (!box) return [];
+    var nodes = box.querySelectorAll("li,a,button,[data-type],[data-authtype],div");
+    var found = [];
+    for (var i=0;i<nodes.length;i++){
+      var n = nodes[i];
+      if (n.id === "hotspot-selector-close") continue;
+      if (n.className && String(n.className).indexOf("title") !== -1) continue;
+      if (n.parentNode && n.parentNode.className && String(n.parentNode.className).indexOf("title") !== -1) continue;
+      var text = (n.textContent || "").replace(/\s+/g, " ").trim();
+      if (!text || text.length > 40) continue;
+      var kind = methodKind(text);
+      if (!kind) continue;
+      var nested = false;
+      for (var j=0;j<found.length;j++){
+        if (found[j].el.contains(n)){ found[j] = { label: text, el: n, kind: kind }; nested = true; break; }
+        if (n.contains(found[j].el)){ nested = true; break; }
+      }
+      if (!nested) found.push({ label: text, el: n, kind: kind });
+    }
+    var seen = {};
+    var unique = [];
+    for (var k=0;k<found.length;k++){
+      if (seen[found[k].kind]) continue;
+      seen[found[k].kind] = true;
+      unique.push(found[k]);
+    }
+    unique.sort(function(a,b){ return (a.kind === "voucher" ? 0 : 1) - (b.kind === "voucher" ? 0 : 1); });
+    return unique;
+  }
+
+  var renderedMethods = "";
+  var defaulted = false;
+
+  function closeSelector(){
+    var close = document.getElementById("hotspot-selector-close");
+    if (close && close.click) { try { close.click(); } catch (e) {} }
+    var box = document.getElementById("hotspot-selector");
+    if (box && box.classList) box.classList.add("ww-omada-off");
+  }
+
+  function chooseMethod(option){
+    activeKind = option.kind;
+    /* Same page, real runtime: this clicks the controller's own method item so
+       Omada switches its authentication type before anything is submitted. */
+    try { option.el.click(); } catch (e) {}
+    closeSelector();
+    hideOmadaChrome();
+    applyPanels();
+    syncLabels();
+    setTimeout(function(){ applyPanels(); syncLabels(); }, 0);
+    setTimeout(function(){ applyPanels(); syncLabels(); }, 150);
+  }
+
+  function renderMethods(){
+    if (!segEl) return;
+    var options = selectorOptions();
+    var signature = options.map(function(o){ return o.kind + ":" + o.label; }).join("|");
+    if (signature !== renderedMethods){
+      renderedMethods = signature;
+      segEl.innerHTML = "";
+      if (options.length > 1){
+        for (var i=0;i<options.length;i++){
+          (function(option){
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.setAttribute("data-ww-method", option.kind);
+            btn.setAttribute("role", "tab");
+            btn.setAttribute("aria-selected", "false");
+            btn.textContent = option.kind === "user" ? "Local User" : option.label;
+            btn.onclick = function(){ chooseMethod(option); };
+            segEl.appendChild(btn);
+          })(options[i]);
+        }
+        segEl.removeAttribute("hidden");
+      } else {
+        segEl.setAttribute("hidden", "hidden");
+      }
+    }
+    if (!defaulted){
+      if (options.length > 1){
+        /* Voucher first when the controller offers it, otherwise the single
+           method this portal actually enables. */
+        var pick = null;
+        for (var v=0;v<options.length;v++){
+          if (options[v].kind === "voucher"){ pick = options[v]; break; }
+        }
+        if (!pick && currentMethod()){
+          for (var w=0;w<options.length;w++){
+            if (options[w].kind === currentMethod()){ pick = options[w]; break; }
+          }
+        }
+        if (!pick) pick = options[0];
+        defaulted = true;
+        chooseMethod(pick);
+      } else if (options.length === 1){
+        defaulted = true;
+        activeKind = options[0].kind;
+        applyPanels();
+      } else if (!activeKind){
+        /* No selector at all: this portal enables exactly one method and the
+           controller already put its own field on screen. */
+        activeKind = currentMethod();
+        if (activeKind) applyPanels();
+      }
+    }
+  }
+
+  /* Controller error text is shown inside the WaveWallet card instead of the
+     raw Omada hint, which stays in the document but out of sight. */
+  function mirrorErrors(){
+    if (!errorEl) return;
+    var sources = ["#oper-hint", "#form-auth-note", "#form-auth-title"];
+    var message = "";
+    for (var i=0;i<sources.length && !message;i++){
+      var el = document.querySelector(sources[i]);
+      if (el && !root.contains(el)) message = (el.textContent || "").replace(/\s+/g, " ").trim();
+    }
+    if (message){
+      if (errorEl.textContent !== message) errorEl.textContent = message;
+      if (errorEl.hasAttribute("hidden")) errorEl.removeAttribute("hidden");
+    } else {
+      if (errorEl.textContent !== "") errorEl.textContent = "";
+      if (!errorEl.hasAttribute("hidden")) errorEl.setAttribute("hidden", "hidden");
+    }
+  }
+
+  var syncing = false;
+  function sync(){
+    if (syncing) return;
+    syncing = true;
+    try {
+      hideOmadaChrome();
+      renderMethods();
+      applyPanels();
+      syncLabels();
+      mirrorErrors();
+    } catch (e) {}
+    syncing = false;
+  }
+  sync();
+
+  try {
+    var observer = new MutationObserver(function(){
+      if (syncing) return;
+      sync();
+    });
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style"], characterData: true });
+  } catch (e) {}
+  var ticks = 0;
+  var timer = setInterval(function(){ ticks += 1; sync(); if (ticks > 40) clearInterval(timer); }, 500);
+
+
+  /* Hands the Omada client context to WaveWallet, which validates the portal
+     binding server-side and answers with a short-lived hotspot session id. No
+     balance and no customer detail is ever returned to this page: personal
+     information only appears in WaveWallet itself, after the customer signs in.
+     A captive portal that blocks outside calls simply keeps the static page. */
+  try {
+    fetch(CFG.origin + "/api/public/portal-context", {
+      method: "POST",
+      credentials: "omit",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ mappingId: CFG.mappingId, context: context() })
+    })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        if (!d || !d.ok) return;
+        SESSION = d.sessionId || null;
+        applyLinks();
+        var status = root.querySelector("[data-ww-status]");
+        if (status && d.shopName){
+          status.textContent = "Connected to " + d.shopName + ".";
+          status.removeAttribute("hidden");
+        }
+      })
+      .catch(function(){ /* offline captive portal: stay static */ });
+  } catch (e) {}
+})();
+</script>
+
+</body>
