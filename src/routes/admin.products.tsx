@@ -84,6 +84,7 @@ function AdminProducts() {
   const [toDelete, setToDelete] = useState<VoucherProductRow | null>(null);
   const [typed, setTyped] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
