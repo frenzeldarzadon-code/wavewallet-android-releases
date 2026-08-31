@@ -196,14 +196,48 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
   const [batches, setBatches] = useState<
     Array<{ id: string; group_name: string; amount: number; created_at: string; group_id: string | null }>
   >([]);
+  const [stock, setStock] = useState<Record<string, ProductStockState>>({});
+  const [checkingStock, setCheckingStock] = useState(false);
+
+  const loadStock = () => {
+    if (!ecosystemId) return;
+    void getVoucherStockState({ data: { ecosystemId } })
+      .then((res) => {
+        const map: Record<string, ProductStockState> = {};
+        for (const row of res.products) map[row.productId] = row;
+        setStock(map);
+      })
+      .catch(() => setStock({}));
+  };
 
   const load = () => {
     if (!ecosystemId) return;
     void getVoucherGenerationSetup({ data: { ecosystemId } }).then(setSetup);
     void listOmadaVoucherBatches({ data: { ecosystemId } }).then(setBatches).catch(() => setBatches([]));
+    loadStock();
   };
 
   useEffect(load, [ecosystemId]);
+
+  // Opening this page also asks the server to top up any calibrated product
+  // that has fallen below the threshold. The server keeps it idempotent, and
+  // the same check runs on a schedule when nobody is on this page.
+  useEffect(() => {
+    if (!ecosystemId) return;
+    let cancelled = false;
+    setCheckingStock(true);
+    void checkVoucherReplenishment({ data: { ecosystemId } })
+      .then(() => {
+        if (!cancelled) loadStock();
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setCheckingStock(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ecosystemId]);
 
   const product = useMemo(
     () => setup?.products.find((p) => p.id === productId) ?? null,
@@ -211,6 +245,8 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
   );
 
   const calibration = productId ? setup?.calibrations[productId] : undefined;
+  const productStock = productId ? stock[productId] : undefined;
+
 
   const mismatch = useMemo(() => {
     if (!calibration || !setup?.controller) return null;
