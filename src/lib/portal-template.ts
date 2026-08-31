@@ -783,6 +783,7 @@ ${MARKER}
     try {
       hideOmadaChrome();
       renderMethods();
+      applyPanels();
       syncLabels();
       mirrorErrors();
     } catch (e) {}
