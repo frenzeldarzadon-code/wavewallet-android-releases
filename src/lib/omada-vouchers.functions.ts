@@ -695,6 +695,25 @@ export const generateVoucherGroupForProduct = createServerFn({ method: "POST" })
     ).data as { id: string; name: string } | null;
     if (!product) throw new Error("That voucher product does not belong to this shop.");
 
+    // Calibration is per shop + per product and must exist before anything is
+    // generated. Another product's calibration is never a fallback.
+    const currentCalibration = (
+      await supabaseAdmin
+        .from("omada_voucher_calibrations")
+        .select("id")
+        .eq("ecosystem_id", data.ecosystemId)
+        .eq("product_id", data.productId)
+        .eq("is_current", true)
+        .maybeSingle()
+    ).data as { id: string } | null;
+    if (!currentCalibration) {
+      throw new Error(
+        "This voucher product has no saved calibration yet. Save the calibration for this exact product first — nothing is generated before that.",
+      );
+    }
+
+
+
     const payload = { ...data.payload };
     const groupName = String(payload["name"] ?? "").trim();
     if (!groupName) throw new Error("A group name is required.");
