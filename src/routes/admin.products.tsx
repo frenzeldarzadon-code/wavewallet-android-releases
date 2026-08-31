@@ -161,6 +161,33 @@ function AdminProducts() {
     await load();
   };
 
+  // WaveWallet-side deletion only: the product plus its own voucher codes.
+  // Omada is never contacted and no sale or wallet record is touched.
+  const confirmDelete = async () => {
+    if (!toDelete || deleting) return;
+    setDeleting(true);
+    try {
+      const result = await deleteVoucherProduct({
+        productId: toDelete.id,
+        confirmName: typed,
+      });
+      toast.success(
+        result.already_deleted
+          ? "That product was already deleted."
+          : `“${result.name ?? toDelete.name}” deleted · ${result.codes_removed.toLocaleString()} WaveWallet code(s) removed. Omada untouched.`,
+      );
+      setToDelete(null);
+      setTyped("");
+      await load();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+
+
   return (
     <PageSection devSlot="products.voucher-products"
       title="Voucher products"
