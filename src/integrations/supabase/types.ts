@@ -7123,6 +7123,64 @@ export type Database = {
           },
         ]
       }
+      voucher_monitors: {
+        Row: {
+          code: string
+          created_at: string
+          ecosystem_id: string
+          id: string
+          monitoring: boolean
+          product_id: string | null
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          ecosystem_id: string
+          id?: string
+          monitoring?: boolean
+          product_id?: string | null
+          source?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          ecosystem_id?: string
+          id?: string
+          monitoring?: boolean
+          product_id?: string | null
+          source?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_monitors_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_monitors_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_monitors_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voucher_products: {
         Row: {
           active: boolean
