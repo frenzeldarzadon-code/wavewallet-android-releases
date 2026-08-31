@@ -51,6 +51,13 @@ import {
   type GenerationOutcome,
   type VoucherGenerationSetup,
 } from "@/lib/omada-vouchers.functions";
+import {
+  checkVoucherReplenishment,
+  getVoucherStockState,
+  type ProductStockState,
+} from "@/lib/voucher-replenishment.functions";
+import { LOW_STOCK_THRESHOLD, REPLENISH_BATCH_SIZE } from "@/lib/voucher-replenishment";
+
 
 type Values = Record<string, GenValue>;
 
