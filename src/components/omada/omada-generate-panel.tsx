@@ -700,9 +700,9 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
                     </div>
                   </dl>
                   <p className="text-[11px] text-muted-foreground">
-                    Speeds are entered in Mbps and the data cap in MB. Omada is sent the same
-                    limits in its own units (Kbps and KB), shown below exactly as they will be
-                    submitted.
+                    Speeds are entered in Mbps and the data cap in GB. Omada is sent the same
+                    limits in its own units (Kbps and MB, 1 GB = 1024 MB), shown below exactly as
+                    they will be submitted.
                   </p>
                   <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded bg-muted p-2 text-[11px]">
                     {JSON.stringify(payload, null, 2)}
