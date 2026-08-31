@@ -1,3 +1,4 @@
+import { normalizeVoucherGroupName } from "./omada-generation";
 /**
  * Voucher calibration + operations against ONE tenant's Omada controller.
  *
@@ -509,16 +510,25 @@ export async function readControllerInfo(
   }
 }
 
-/** Creates the voucher group on THIS shop's controller. Returns the raw result. */
+/**
+ * Creates the voucher group on THIS shop's controller. Returns the raw result.
+ *
+ * This is the single outbound door for every generation path (manual, saved
+ * calibration, automatic replenishment, retries), so the Omada 1~32 character
+ * rule for `name` is enforced here — no caller can bypass it. Nothing else in
+ * the payload is touched.
+ */
 export async function createVoucherGroupVerified(
   session: OmadaSession,
   payload: Record<string, unknown>,
-): Promise<{ result: unknown; groupId: string | null }> {
+): Promise<{ result: unknown; groupId: string | null; name: string }> {
+  const name = normalizeVoucherGroupName(payload["name"]);
+  const safePayload = { ...payload, name };
   const result = await call(session, resolvePath(session, VERIFIED_CREATE_PATH), {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(safePayload),
   });
-  return { result: result ?? null, groupId: extractGroupId(result) };
+  return { result: result ?? null, groupId: extractGroupId(result), name };
 }
 
 /** The create response shape varies by build; read an id only when one is given. */
