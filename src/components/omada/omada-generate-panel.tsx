@@ -525,7 +525,7 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
                     </StatusBadge>
                   ) : null}
                   {calibration ? (
-                    <StatusBadge tone="info">Auto top-up on</StatusBadge>
+                    <StatusBadge tone="success">Auto top-up on</StatusBadge>
                   ) : null}
                   {checkingStock ? <span>Checking stock…</span> : null}
                 </div>
@@ -637,9 +637,18 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
                     </ul>
                   ) : null}
 
-                  <Button size="sm" disabled={problems.length > 0} onClick={() => setStage("review")}>
+                  <Button
+                    size="sm"
+                    disabled={problems.length > 0 || !calibration}
+                    onClick={() => setStage("review")}
+                  >
                     Review before generating
                   </Button>
+                  {!calibration ? (
+                    <p className="text-[11px] text-warning">
+                      Generation is blocked until this product's calibration is saved.
+                    </p>
+                  ) : null}
                 </>
               ) : null}
 
