@@ -571,18 +571,18 @@ export function toControllerUnits(values: Record<string, GenValue>): Record<stri
 
 /**
  * Same verified field list, relabelled for the form: speeds in Mbps and the
- * data cap in MB, with the allowed range converted to match.
+ * data cap in GB, with the allowed range converted to match.
  */
 export function displayVoucherFields(fields: VoucherFieldSpec[]): VoucherFieldSpec[] {
   return fields.map((field) => {
     if (field.name === "trafficLimit") {
       return {
         ...field,
-        unitSuffix: "MB",
+        unitSuffix: "GB",
         allowDecimal: true,
-        description: "Data cap amount in MB, used when the data cap is on.",
-        ...(field.minimum !== undefined ? { minimum: field.minimum / KB_PER_MB } : {}),
-        ...(field.maximum !== undefined ? { maximum: field.maximum / KB_PER_MB } : {}),
+        description: "Data cap amount in GB, used when the data cap is on.",
+        ...(field.minimum !== undefined ? { minimum: field.minimum / OMADA_MB_PER_GB } : {}),
+        ...(field.maximum !== undefined ? { maximum: field.maximum / OMADA_MB_PER_GB } : {}),
       };
     }
     if ((RATE_FIELDS as readonly string[]).includes(field.name)) {
