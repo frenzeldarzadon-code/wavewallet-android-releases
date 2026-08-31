@@ -56,7 +56,7 @@ export async function deleteVoucherProduct(input: {
   return {
     deleted: Boolean(raw.deleted),
     already_deleted: Boolean(raw.already_deleted),
-    name: raw.name,
+    name: raw.name ?? null,
     codes_removed: Number(raw.codes_removed ?? 0),
     runs_cancelled: Number(raw.runs_cancelled ?? 0),
   };
