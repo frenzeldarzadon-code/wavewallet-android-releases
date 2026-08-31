@@ -55,6 +55,7 @@ import { Route as AppApplicationsRouteImport } from './routes/app.applications'
 import { Route as AppHistoryRouteImport } from './routes/app.history'
 import { Route as AppMessagesRouteImport } from './routes/app.messages'
 import { Route as AppMoneyRouteImport } from './routes/app.money'
+import { Route as AppMonitorRouteImport } from './routes/app.monitor'
 import { Route as AppOmadaRouteImport } from './routes/app.omada'
 import { Route as AppProfileRouteImport } from './routes/app.profile'
 import { Route as AppRewardsRouteImport } from './routes/app.rewards'
@@ -343,6 +344,11 @@ const AppMessagesRoute = AppMessagesRouteImport.update({
 const AppMoneyRoute = AppMoneyRouteImport.update({
   id: '/money',
   path: '/money',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMonitorRoute = AppMonitorRouteImport.update({
+  id: '/monitor',
+  path: '/monitor',
   getParentRoute: () => AppRoute,
 } as any)
 const AppOmadaRoute = AppOmadaRouteImport.update({
@@ -684,6 +690,7 @@ export interface FileRoutesByFullPath {
   '/app/history': typeof AppHistoryRoute
   '/app/messages': typeof AppMessagesRoute
   '/app/money': typeof AppMoneyRoute
+  '/app/monitor': typeof AppMonitorRoute
   '/app/omada': typeof AppOmadaRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
@@ -785,6 +792,7 @@ export interface FileRoutesByTo {
   '/app/history': typeof AppHistoryRoute
   '/app/messages': typeof AppMessagesRoute
   '/app/money': typeof AppMoneyRoute
+  '/app/monitor': typeof AppMonitorRoute
   '/app/omada': typeof AppOmadaRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
@@ -892,6 +900,7 @@ export interface FileRoutesById {
   '/app/history': typeof AppHistoryRoute
   '/app/messages': typeof AppMessagesRoute
   '/app/money': typeof AppMoneyRoute
+  '/app/monitor': typeof AppMonitorRoute
   '/app/omada': typeof AppOmadaRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
@@ -1000,6 +1009,7 @@ export interface FileRouteTypes {
     | '/app/history'
     | '/app/messages'
     | '/app/money'
+    | '/app/monitor'
     | '/app/omada'
     | '/app/profile'
     | '/app/rewards'
@@ -1101,6 +1111,7 @@ export interface FileRouteTypes {
     | '/app/history'
     | '/app/messages'
     | '/app/money'
+    | '/app/monitor'
     | '/app/omada'
     | '/app/profile'
     | '/app/rewards'
@@ -1207,6 +1218,7 @@ export interface FileRouteTypes {
     | '/app/history'
     | '/app/messages'
     | '/app/money'
+    | '/app/monitor'
     | '/app/omada'
     | '/app/profile'
     | '/app/rewards'
@@ -1619,6 +1631,13 @@ declare module '@tanstack/react-router' {
       path: '/money'
       fullPath: '/app/money'
       preLoaderRoute: typeof AppMoneyRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/monitor': {
+      id: '/app/monitor'
+      path: '/monitor'
+      fullPath: '/app/monitor'
+      preLoaderRoute: typeof AppMonitorRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/omada': {
@@ -2091,6 +2110,7 @@ interface AppRouteChildren {
   AppHistoryRoute: typeof AppHistoryRoute
   AppMessagesRoute: typeof AppMessagesRoute
   AppMoneyRoute: typeof AppMoneyRoute
+  AppMonitorRoute: typeof AppMonitorRoute
   AppOmadaRoute: typeof AppOmadaRoute
   AppProfileRoute: typeof AppProfileRoute
   AppRewardsRoute: typeof AppRewardsRoute
@@ -2106,6 +2126,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppHistoryRoute: AppHistoryRoute,
   AppMessagesRoute: AppMessagesRoute,
   AppMoneyRoute: AppMoneyRoute,
+  AppMonitorRoute: AppMonitorRoute,
   AppOmadaRoute: AppOmadaRoute,
   AppProfileRoute: AppProfileRoute,
   AppRewardsRoute: AppRewardsRoute,

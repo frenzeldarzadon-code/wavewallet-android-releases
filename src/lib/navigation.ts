@@ -132,7 +132,7 @@ export function customerNav(): Nav {
           ? ([{ to: "/app/store", label: "Retail store", icon: Store }] as NavItem[])
           : []),
         { to: "/app/rewards", label: "Rewards", icon: Gift },
-        { to: "/app/omada", label: "Status Check", icon: Wifi },
+        { to: "/app/monitor", label: "Live Voucher Monitoring", icon: Wifi },
       ],
     },
     {

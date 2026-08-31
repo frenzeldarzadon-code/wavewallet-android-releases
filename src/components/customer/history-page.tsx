@@ -85,10 +85,12 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
         return;
       }
       const reseller = role === "reseller" || role === "subreseller";
-      await navigate({
-        to: reseller ? "/reseller/omada" : "/app/omada",
-        search: { code, tab: "voucher" },
-      });
+      if (reseller) {
+        await navigate({ to: "/reseller/omada", search: { code, tab: "voucher" } });
+        return;
+      }
+      // Customers monitor their vouchers live instead of the Status Check tab.
+      await navigate({ to: "/app/monitor", search: { code } });
     },
     [account?.role, navigate],
   );
