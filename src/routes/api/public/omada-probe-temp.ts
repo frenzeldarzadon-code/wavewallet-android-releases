@@ -20,7 +20,7 @@ export const Route = createFileRoute("/api/public/omada-probe-temp")({
         const session = await openOmadaSession(supabaseAdmin as never, eco.id);
 
         let spec: any = null;
-        for (const p of ["/openapi/v3/api-docs", "/openapi/v2/api-docs", "/openapi/api-docs"]) {
+        for (const p of ["/v3/api-docs"]) {
           const r = await fetch(`${session.base}${p}`, {
             headers: { Authorization: `AccessToken=${session.token}` },
           });
