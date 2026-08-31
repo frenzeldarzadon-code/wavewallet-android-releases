@@ -831,7 +831,105 @@ ${MARKER}
       })
       .catch(function(){ /* offline captive portal: stay static */ });
   } catch (e) {}
+
+  /* After a REAL Omada authentication, hand the customer over to WaveWallet.
+     Two things must both be true first: the customer actually submitted the
+     controller's own login control, and the master's own success view appeared.
+     An unauthenticated visitor is never redirected away from this page, and the
+     shop is decided server-side from the saved portal binding - nothing here
+     names a shop, so no address bar edit can reach another one. */
+  var SUBMITTED = false;
+  var HANDED_OFF = false;
+  function markSubmitted(){ SUBMITTED = true; }
+  try {
+    document.addEventListener("submit", markSubmitted, true);
+    document.addEventListener("click", function(ev){
+      var t = ev.target;
+      while (t && t !== document.body){
+        var tag = (t.tagName || "").toLowerCase();
+        var type = (t.getAttribute ? (t.getAttribute("type") || "") : "").toLowerCase();
+        if (tag === "button" || type === "submit" || (tag === "input" && type === "button")){
+          markSubmitted();
+          return;
+        }
+        t = t.parentNode;
+      }
+    }, true);
+  } catch (e) {}
+
+  var SUCCESS_WORDS = [
+    "authentication success",
+    "authentication successful",
+    "login success",
+    "login successful",
+    "you are connected",
+    "connected successfully",
+    "connection successful",
+    "already authorized",
+    "authorized successfully"
+  ];
+
+  function visible(el){
+    if (!el) return false;
+    if (el.hasAttribute && el.hasAttribute("hidden")) return false;
+    if (el.offsetParent === null && el !== document.body) return false;
+    return true;
+  }
+
+  function authenticated(){
+    try {
+      var nodes = document.querySelectorAll("body *");
+      for (var i=0;i<nodes.length && i<600;i++){
+        var el = nodes[i];
+        if (root.contains(el)) continue;
+        if (!visible(el)) continue;
+        var text = (el.textContent || "").toLowerCase();
+        if (text.length > 200) continue;
+        for (var w=0;w<SUCCESS_WORDS.length;w++){
+          if (text.indexOf(SUCCESS_WORDS[w]) !== -1) return true;
+        }
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  function handOff(){
+    if (HANDED_OFF) return;
+    HANDED_OFF = true;
+    var status = root.querySelector("[data-ww-status]");
+    if (status){
+      status.textContent = "You are online. Opening WaveWallet...";
+      status.removeAttribute("hidden");
+    }
+    try {
+      fetch(CFG.origin + "/api/public/portal-handoff", {
+        method: "POST",
+        credentials: "omit",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ mappingId: CFG.mappingId, sessionId: SESSION })
+      })
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(d){
+          if (d && d.ok && d.url) window.location.replace(d.url);
+        })
+        .catch(function(){ /* stay on the portal: the customer is online anyway */ });
+    } catch (e) {}
+  }
+
+  try {
+    var watch = 0;
+    var watcher = setInterval(function(){
+      watch += 1;
+      if (watch > 180) { clearInterval(watcher); return; }
+      if (!SUBMITTED) return;
+      if (authenticated()){
+        clearInterval(watcher);
+        setTimeout(handOff, 1200);
+      }
+    }, 1000);
+  } catch (e) {}
 })();
+
 </script>
 `;
 

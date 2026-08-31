@@ -4171,6 +4171,71 @@ export type Database = {
           },
         ]
       }
+      portal_handoffs: {
+        Row: {
+          created_at: string
+          ecosystem_id: string
+          expires_at: string
+          id: string
+          mapping_id: string
+          portal_id: string | null
+          session_id: string | null
+          site_id: string | null
+          uses: number
+        }
+        Insert: {
+          created_at?: string
+          ecosystem_id: string
+          expires_at?: string
+          id?: string
+          mapping_id: string
+          portal_id?: string | null
+          session_id?: string | null
+          site_id?: string | null
+          uses?: number
+        }
+        Update: {
+          created_at?: string
+          ecosystem_id?: string
+          expires_at?: string
+          id?: string
+          mapping_id?: string
+          portal_id?: string | null
+          session_id?: string | null
+          site_id?: string | null
+          uses?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_handoffs_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_handoffs_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_handoffs_mapping_id_fkey"
+            columns: ["mapping_id"]
+            isOneToOne: false
+            referencedRelation: "omada_portal_mappings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_handoffs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "portal_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_sessions: {
         Row: {
           ap_mac: string | null
