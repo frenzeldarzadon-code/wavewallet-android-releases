@@ -7296,7 +7296,7 @@ export type Database = {
           points_price: number | null
           points_rule_version: number | null
           points_spent: number
-          product_id: string
+          product_id: string | null
           product_name: string
           quantity: number
           refund_reason: string | null
@@ -7329,7 +7329,7 @@ export type Database = {
           points_price?: number | null
           points_rule_version?: number | null
           points_spent?: number
-          product_id: string
+          product_id?: string | null
           product_name: string
           quantity?: number
           refund_reason?: string | null
@@ -7362,7 +7362,7 @@ export type Database = {
           points_price?: number | null
           points_rule_version?: number | null
           points_spent?: number
-          product_id?: string
+          product_id?: string | null
           product_name?: string
           quantity?: number
           refund_reason?: string | null
@@ -8469,6 +8469,10 @@ export type Database = {
       }
       delete_voucher_batch: { Args: { _import_id: string }; Returns: number }
       delete_voucher_code: { Args: { _code_id: string }; Returns: undefined }
+      delete_voucher_product: {
+        Args: { _confirm_name: string; _product_id: string }
+        Returns: Json
+      }
       demo_guard: { Args: { _ecosystem_id: string }; Returns: undefined }
       demo_reset: { Args: { _ecosystem_id: string }; Returns: undefined }
       demo_sell_voucher: {
