@@ -518,7 +518,9 @@ import {
   validateGenerationPayload,
   type ControllerIdentity,
   type GenValue,
-  type VoucherFieldSpec,, normalizeVoucherGroupName } from "./omada-generation";
+  type VoucherFieldSpec,
+  normalizeVoucherGroupName,
+} from "./omada-generation";
 
 export interface GenerationProduct {
   id: string;
