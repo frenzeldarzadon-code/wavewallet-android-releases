@@ -14,9 +14,9 @@ import { supabase } from "@/integrations/supabase/client";
 export interface DeleteProductResult {
   deleted: boolean;
   already_deleted: boolean;
-  name?: string;
+  name: string | null;
   codes_removed: number;
-  runs_cancelled?: number;
+  runs_cancelled: number;
 }
 
 /** The typed confirmation must match the product name exactly (trimmed). */
