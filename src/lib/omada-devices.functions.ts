@@ -405,3 +405,241 @@ export const rebootAntenna = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+/* -------------------------------------------------------------------------
+ * Extended Omada device management — ADMIN ONLY.
+ *
+ * Every function below re-checks shop-admin rights on the server for the shop
+ * it is given, so resellers, subresellers and customers can never reach them
+ * even if they call the endpoint directly. Only capabilities verified live on
+ * the connected controller are exposed.
+ * ---------------------------------------------------------------------- */
+
+async function adminSession(context: AuthContext, ecosystemId: string) {
+  await assertShopAdmin(context, ecosystemId);
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { openOmadaSession } = await import("./omada-api.server");
+  const session = await openOmadaSession(supabaseAdmin as never, ecosystemId);
+  return { session, supabaseAdmin };
+}
+
+async function logDeviceAction(
+  admin: { from: (t: string) => any },
+  ecosystemId: string,
+  actorId: string,
+  action: string,
+  mac: string,
+  metadata: Record<string, unknown> = {},
+) {
+  await admin.from("audit_logs").insert({
+    ecosystem_id: ecosystemId,
+    actor_id: actorId,
+    action,
+    target: mac,
+    metadata: { mac, ...metadata },
+  });
+}
+
+export interface DeviceManagementView {
+  firmware: {
+    current: string | null;
+    latest: string | null;
+    releaseLog: string | null;
+    updateAvailable: boolean;
+  } | null;
+  firmwareError: string | null;
+  adopt: { errorCode: number | null; failedType: number | null } | null;
+  radios: Array<{
+    band: string;
+    radioEnable: boolean;
+    channel: string | null;
+    freq: number | null;
+    channelWidth: string | null;
+    txPower: number | null;
+    txPowerLevel: number | null;
+    wirelessMode: number | null;
+  }>;
+  radioError: string | null;
+  channelOptions: Array<{
+    band: string;
+    radioId: number | null;
+    channel: string;
+    freq: number | null;
+    label: string;
+    maxPower: number | null;
+  }>;
+  clients: Array<{
+    mac: string;
+    name: string;
+    wireless: boolean;
+    ssid: string | null;
+    channel: number | null;
+    guest: boolean;
+  }>;
+  clientsError: string | null;
+}
+
+/** Admin: everything the controller will actually tell us about one device. */
+export const getAntennaDetail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { ecosystemId: string; mac: string; deviceType?: string }) => {
+    if (!data?.ecosystemId) throw new Error("A shop is required.");
+    if (!data?.mac) throw new Error("A device is required.");
+    return data;
+  })
+  .handler(async ({ data, context }): Promise<DeviceManagementView> => {
+    const { session } = await adminSession(context as unknown as AuthContext, data.ecosystemId);
+    const mac = normaliseMac(data.mac);
+    const isAp = (data.deviceType ?? "").toLowerCase() === "ap";
+    const {
+      getDeviceFirmware,
+      getAdoptResult,
+      getApRadioConfig,
+      getApChannelOptions,
+      listDeviceClients,
+    } = await import("./omada-devices.server");
+
+    const view: DeviceManagementView = {
+      firmware: null,
+      firmwareError: null,
+      adopt: null,
+      radios: [],
+      radioError: null,
+      channelOptions: [],
+      clients: [],
+      clientsError: null,
+    };
+
+    try {
+      view.firmware = await getDeviceFirmware(session, mac);
+    } catch (e) {
+      view.firmwareError = e instanceof Error ? e.message : String(e);
+    }
+    try {
+      view.adopt = await getAdoptResult(session, mac);
+    } catch {
+      view.adopt = null;
+    }
+    if (isAp) {
+      try {
+        view.radios = await getApRadioConfig(session, mac);
+      } catch (e) {
+        view.radioError = e instanceof Error ? e.message : String(e);
+      }
+      try {
+        view.channelOptions = await getApChannelOptions(session, mac);
+      } catch {
+        view.channelOptions = [];
+      }
+    }
+    try {
+      view.clients = await listDeviceClients(session, mac);
+    } catch (e) {
+      view.clientsError = e instanceof Error ? e.message : String(e);
+    }
+    return view;
+  });
+
+/** Admin: change one AP's radio settings (channel, width, power, on/off). */
+export const updateAntennaRadio = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (data: {
+      ecosystemId: string;
+      mac: string;
+      updates: Array<{
+        band: "2g" | "5g" | "5g1" | "5g2" | "6g";
+        radioEnable?: boolean;
+        channel?: string;
+        freq?: number;
+        channelWidth?: string;
+        txPowerLevel?: number;
+        txPower?: number;
+      }>;
+    }) => {
+      if (!data?.ecosystemId) throw new Error("A shop is required.");
+      if (!data?.mac) throw new Error("A device is required.");
+      if (!data?.updates?.length) throw new Error("Nothing to change.");
+      return data;
+    },
+  )
+  .handler(async ({ data, context }) => {
+    const ctx = context as unknown as AuthContext;
+    const { session, supabaseAdmin } = await adminSession(ctx, data.ecosystemId);
+    const mac = normaliseMac(data.mac);
+    const { updateApRadioConfig, getApRadioConfig } = await import("./omada-devices.server");
+    await updateApRadioConfig(session, mac, data.updates);
+    await logDeviceAction(supabaseAdmin as never, data.ecosystemId, ctx.userId, "Changed antenna radio settings", mac, {
+      updates: data.updates,
+    });
+    // Read the controller back so the interface shows what was really stored.
+    return { ok: true as const, radios: await getApRadioConfig(session, mac) };
+  });
+
+type SimpleAction = "locate-on" | "locate-off" | "force-provision" | "forget" | "upgrade" | "adopt";
+
+/** Admin: one supported controller action against one device on this shop's site. */
+export const runAntennaAction = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { ecosystemId: string; mac: string; action: SimpleAction }) => {
+    if (!data?.ecosystemId) throw new Error("A shop is required.");
+    if (!data?.mac) throw new Error("A device is required.");
+    const allowed: SimpleAction[] = [
+      "locate-on",
+      "locate-off",
+      "force-provision",
+      "forget",
+      "upgrade",
+      "adopt",
+    ];
+    if (!allowed.includes(data.action)) throw new Error("That action is not supported.");
+    return data;
+  })
+  .handler(async ({ data, context }) => {
+    const ctx = context as unknown as AuthContext;
+    const { session, supabaseAdmin } = await adminSession(ctx, data.ecosystemId);
+    const mac = normaliseMac(data.mac);
+    const ops = await import("./omada-devices.server");
+
+    let label = "";
+    switch (data.action) {
+      case "locate-on":
+        await ops.locateDevice(session, mac, true);
+        label = "Started device locate (LED)";
+        break;
+      case "locate-off":
+        await ops.locateDevice(session, mac, false);
+        label = "Stopped device locate (LED)";
+        break;
+      case "force-provision":
+        await ops.forceProvisionDevice(session, mac);
+        label = "Forced device reprovision";
+        break;
+      case "forget":
+        await ops.forgetDevice(session, mac);
+        label = "Removed device from the site";
+        break;
+      case "upgrade":
+        await ops.startOnlineUpgrade(session, mac);
+        label = "Started device firmware upgrade";
+        break;
+      case "adopt":
+        await ops.startAdopt(session, mac);
+        label = "Started device adoption";
+        break;
+    }
+
+    if (data.action === "forget") {
+      // The device is gone from the controller; keep the assignment history but
+      // stop presenting it as an active assignment.
+      await supabaseAdmin
+        .from("omada_device_assignments")
+        .update({ active: false })
+        .eq("ecosystem_id", data.ecosystemId)
+        .eq("active", true)
+        .ilike("device_mac", mac);
+    }
+
+    await logDeviceAction(supabaseAdmin as never, data.ecosystemId, ctx.userId, label, mac);
+    return { ok: true as const, label };
+  });
