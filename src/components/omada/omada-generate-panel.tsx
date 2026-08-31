@@ -289,8 +289,8 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
     setValues((v) => ({ ...v, duration: value === "" ? "" : durationToMinutes(Number(value), unit) }));
   };
 
-  // The form holds Mbps / MB; everything sent, validated or reviewed uses the
-  // controller's own Kbps / KB values.
+  // The form holds Mbps / GB; everything sent, validated or reviewed uses the
+  // controller's own Kbps / MB values.
   const payload = useMemo(() => {
     const out: Values = {};
     for (const [k, v] of Object.entries(toControllerUnits(values))) {
@@ -300,7 +300,15 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
     return out;
   }, [values]);
 
-  const problems = useMemo(() => validateGenerationPayload(payload), [payload]);
+  const problems = useMemo(() => {
+    const list = validateGenerationPayload(payload);
+    const gb = values["trafficLimit"];
+    if (gb !== "" && gb !== undefined && gb !== null) {
+      const issue = validateTrafficLimitGb(gb);
+      if (issue) list.push(issue);
+    }
+    return list;
+  }, [payload, values]);
 
   const previewCodes = useMemo(
     () =>
