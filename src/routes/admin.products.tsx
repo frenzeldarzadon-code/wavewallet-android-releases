@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Archive, Pencil, Plus } from "lucide-react";
+import { Archive, Pencil, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +19,11 @@ import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { peso } from "@/lib/wavewallet";
+import {
+  canSubmitProductDeletion,
+  deleteVoucherProduct,
+  productDeletionWarning,
+} from "@/lib/voucher-product-deletion";
 import {
   fetchInventoryCounts,
   fetchProducts,
@@ -76,6 +81,9 @@ function AdminProducts() {
   const [counts, setCounts] = useState<Record<string, InventoryCount>>({});
   const [draft, setDraft] = useState<Draft | null>(null);
   const [busy, setBusy] = useState(false);
+  const [toDelete, setToDelete] = useState<VoucherProductRow | null>(null);
+  const [typed, setTyped] = useState("");
+  const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -153,6 +161,33 @@ function AdminProducts() {
     await load();
   };
 
+  // WaveWallet-side deletion only: the product plus its own voucher codes.
+  // Omada is never contacted and no sale or wallet record is touched.
+  const confirmDelete = async () => {
+    if (!toDelete || deleting) return;
+    setDeleting(true);
+    try {
+      const result = await deleteVoucherProduct({
+        productId: toDelete.id,
+        confirmName: typed,
+      });
+      toast.success(
+        result.already_deleted
+          ? "That product was already deleted."
+          : `“${result.name ?? toDelete.name}” deleted · ${result.codes_removed.toLocaleString()} WaveWallet code(s) removed. Omada untouched.`,
+      );
+      setToDelete(null);
+      setTyped("");
+      await load();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+
+
   return (
     <PageSection devSlot="products.voucher-products"
       title="Voucher products"
@@ -223,6 +258,17 @@ function AdminProducts() {
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => void toggleArchive(p)}>
                       <Archive className="size-4" /> {p.archived ? "Restore" : "Archive"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-destructive"
+                      onClick={() => {
+                        setTyped("");
+                        setToDelete(p);
+                      }}
+                    >
+                      <Trash2 className="size-4" /> Delete
                     </Button>
                     {!p.archived ? (
                       <label className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
@@ -326,6 +372,73 @@ function AdminProducts() {
             </Button>
             <Button onClick={() => void save()} disabled={busy}>
               {busy ? "Saving…" : "Save product"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!toDelete}
+        onOpenChange={(o) => {
+          if (!o && !deleting) {
+            setToDelete(null);
+            setTyped("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete this voucher product?</DialogTitle>
+            <DialogDescription>
+              {toDelete
+                ? productDeletionWarning(toDelete.name, counts[toDelete.id]?.total ?? 0)
+                : null}
+            </DialogDescription>
+          </DialogHeader>
+          {toDelete ? (
+            <div className="space-y-3">
+              <ul className="space-y-1 rounded-xl border border-border p-3 text-xs text-muted-foreground">
+                <li>• Removes the product and its WaveWallet voucher codes.</li>
+                <li>• Does NOT delete or change anything in Omada.</li>
+                <li>• Past sales, Coins, Points, reports and balances stay unchanged.</li>
+                <li>• Other products, their codes and their calibrations are untouched.</li>
+                <li>• This cannot be undone.</li>
+              </ul>
+              <div className="space-y-1.5">
+                <Label htmlFor="pdel">
+                  Type <span className="font-medium text-foreground">{toDelete.name}</span> to
+                  confirm
+                </Label>
+                <Input
+                  id="pdel"
+                  value={typed}
+                  onChange={(e) => setTyped(e.target.value)}
+                  placeholder={toDelete.name}
+                  autoComplete="off"
+                />
+              </div>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setToDelete(null);
+                setTyped("");
+              }}
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => void confirmDelete()}
+              disabled={
+                !toDelete ||
+                !canSubmitProductDeletion({ name: toDelete.name, typed, busy: deleting })
+              }
+            >
+              {deleting ? "Deleting…" : "Delete product"}
             </Button>
           </DialogFooter>
         </DialogContent>

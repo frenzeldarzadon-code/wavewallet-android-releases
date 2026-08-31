@@ -38,7 +38,8 @@ export function availableStock(codes: StockCodeLike[]): number {
 export type ReplenishSkipReason =
   | "no_calibration"
   | "stocked"
-  | "in_progress";
+  | "in_progress"
+  | "product_deleted";
 
 export interface ReplenishDecision {
   replenish: boolean;

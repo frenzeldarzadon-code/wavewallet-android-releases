@@ -351,14 +351,14 @@ describe("automatic replenishment", () => {
     expect(availableStock(stock as never)).toBe(510);
   });
 
-  it("K: a product from another shop is rejected outright", async () => {
+  it("K: a product from another shop (or a deleted one) never generates", async () => {
     const admin = makeAdmin(world({ availableA: 0 }));
-    await expect(
-      replenishProduct(
-        admin,
-        { ecosystemId: "shop-1", productId: "prod-c" },
-        { generate: fakeGenerate([]) },
-      ),
-    ).rejects.toThrow(/does not belong to this shop/i);
+    const result = await replenishProduct(
+      admin,
+      { ecosystemId: "shop-1", productId: "prod-c" },
+      { generate: fakeGenerate([]) },
+    );
+    expect(result.status).toBe("skipped");
+    expect(result.reason).toBe("product_deleted");
   });
 });
