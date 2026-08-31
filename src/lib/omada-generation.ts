@@ -468,15 +468,43 @@ export function reviewExtractedCodes(
 /* -------------------------------------------------------------------------
  * Display units for Voucher Creation
  *
- * The controller's verified schema keeps speed in Kbps and the data cap in KB.
- * Admins think in Mbps and MB, so the form shows those units and converts back
- * to the controller's units before anything is sent or validated. Conversion is
+ * Speed: the controller takes Kbps; admins enter Mbps (x1024).
+ * Data cap: the controller's voucher group takes `trafficLimit` as a WHOLE
+ * NUMBER OF MEGABYTES. WaveWallet admins configure the data cap exclusively in
+ * GB, so the GB value is multiplied by 1024 at the Omada boundary and nowhere
+ * else (1 GB -> 1024, 2 GB -> 2048, 5 GB -> 5120, 10 GB -> 10240). Conversion is
  * a pure 1024 factor both ways, so a saved calibration round-trips to exactly
  * the same controller value it already had.
  * ------------------------------------------------------------------------- */
 
 export const KBPS_PER_MBPS = 1024;
-export const KB_PER_MB = 1024;
+/** Omada expects the data cap in MB; the admin enters GB. */
+export const OMADA_MB_PER_GB = 1024;
+
+/** GB as the admin sees it -> the exact integer MB Omada requires. */
+export function gbToOmadaTrafficLimit(gb: number): number {
+  return Math.round(gb * OMADA_MB_PER_GB);
+}
+
+/** Omada's MB value -> the GB value the admin sees. */
+export function omadaTrafficLimitToGb(mb: number): number {
+  return Number((mb / OMADA_MB_PER_GB).toFixed(6));
+}
+
+/**
+ * A GB entry is valid when it is a finite, non-negative number that converts to
+ * a whole number of MB (i.e. a multiple of 1/1024 GB).
+ */
+export function validateTrafficLimitGb(gb: unknown): string | null {
+  const n = Number(gb);
+  if (!Number.isFinite(n)) return "Data cap must be a number in GB.";
+  if (n < 0) return "Data cap cannot be negative.";
+  const mb = n * OMADA_MB_PER_GB;
+  if (Math.abs(mb - Math.round(mb)) > 1e-6) {
+    return "Data cap is too precise: it must convert to a whole number of MB (multiples of 1/1024 GB).";
+  }
+  return null;
+}
 
 /** Fields the admin edits in Mbps, nested under rateLimit.customRateLimit. */
 const RATE_FIELDS = ["downLimit", "upLimit"] as const;
