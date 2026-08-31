@@ -939,6 +939,38 @@ ${MARKER}
   return `${template}\n${section}`;
 }
 
+/**
+ * Decide what a real `/portal/auth` answer means. The controller's response
+ * is checked FIRST: an Omada JSON envelope with `errorCode` is decisive, and
+ * an HTTP error status is a failure. Only when neither says otherwise does a
+ * body of exactly "OK" (Omada's success answer for both Hotspot Voucher and
+ * Local User logins) count as success. Anything else is unknown and the
+ * portal falls back to the master's own success view.
+ *
+ * This function is stringified into the generated portal's runtime script, so
+ * it must stay dependency-free plain JavaScript.
+ */
+export type OmadaAuthVerdict = "success" | "failure" | "unknown";
+export function omadaAuthResponseVerdict(status: number, bodyText: string): OmadaAuthVerdict {
+  const body = (bodyText || "").trim();
+  if (body.charAt(0) === "{") {
+    try {
+      const parsed: unknown = JSON.parse(body);
+      if (parsed && typeof parsed === "object" && "errorCode" in parsed) {
+        const code = (parsed as { errorCode: unknown }).errorCode;
+        if (typeof code === "number") {
+          return code === 0 && status >= 200 && status < 400 ? "success" : "failure";
+        }
+      }
+    } catch {
+      /* not JSON after all: fall through to the textual signal */
+    }
+  }
+  if (status >= 400) return "failure";
+  if (body.toUpperCase() === "OK") return "success";
+  return "unknown";
+}
+
 /** File name offered to the admin; never contains anything secret. */
 export function generatedFileName(shopName: string, portalName: string | null): string {
   const slug = (value: string) =>
