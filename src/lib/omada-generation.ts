@@ -523,10 +523,10 @@ function scaleUp(raw: GenValue | undefined, factor: number): GenValue | undefine
   return Math.round(n * factor);
 }
 
-/** Controller payload (Kbps / KB) -> what the admin sees (Mbps / MB). */
+/** Controller payload (Kbps / MB) -> what the admin sees (Mbps / GB). */
 export function toDisplayUnits(values: Record<string, GenValue>): Record<string, GenValue> {
   const out: Record<string, GenValue> = { ...values };
-  const traffic = scaleDown(out["trafficLimit"], KB_PER_MB);
+  const traffic = scaleDown(out["trafficLimit"], OMADA_MB_PER_GB);
   if (traffic !== undefined) out["trafficLimit"] = traffic;
 
   const rateLimit = out["rateLimit"];
