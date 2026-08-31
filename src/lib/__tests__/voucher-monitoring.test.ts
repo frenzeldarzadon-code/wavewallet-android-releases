@@ -103,7 +103,7 @@ describe("card translation from Omada rows", () => {
     const card = toMonitorCard("ABCD1234", unusedRow)!;
     expect(card.statusLabel).toBe("UNUSED");
     expect(card.time).toBe("7h");
-    expect(card.consumableData).toBe("3 GB");
+    expect(card.consumableData).toBe("3.0 GB");
     expect(card.pausable).toBe(false);
     expect(card.masked).toBe("••••1234");
   });
@@ -192,7 +192,7 @@ describe("local user monitoring", () => {
       trafficUnused: 1024 * MB,
     })!;
     expect(view.username).toBe("juan");
-    expect(view.dataRemaining).toBe("1 GB");
+    expect(view.dataRemaining).toBe("1.0 GB");
     expect(view.expiresAt).not.toBeNull();
   });
 
