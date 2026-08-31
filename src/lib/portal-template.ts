@@ -698,24 +698,33 @@ ${MARKER}
       if (el && !root.contains(el)) message = (el.textContent || "").replace(/\s+/g, " ").trim();
     }
     if (message){
-      errorEl.textContent = message;
-      errorEl.removeAttribute("hidden");
+      if (errorEl.textContent !== message) errorEl.textContent = message;
+      if (errorEl.hasAttribute("hidden")) errorEl.removeAttribute("hidden");
     } else {
-      errorEl.textContent = "";
-      errorEl.setAttribute("hidden", "hidden");
+      if (errorEl.textContent !== "") errorEl.textContent = "";
+      if (!errorEl.hasAttribute("hidden")) errorEl.setAttribute("hidden", "hidden");
     }
   }
 
+  var syncing = false;
   function sync(){
-    hideOmadaChrome();
-    renderMethods();
-    syncLabels();
-    mirrorErrors();
+    if (syncing) return;
+    syncing = true;
+    try {
+      hideOmadaChrome();
+      renderMethods();
+      syncLabels();
+      mirrorErrors();
+    } catch (e) {}
+    syncing = false;
   }
   sync();
 
   try {
-    var observer = new MutationObserver(function(){ sync(); });
+    var observer = new MutationObserver(function(){
+      if (syncing) return;
+      sync();
+    });
     observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style"], characterData: true });
   } catch (e) {}
   var ticks = 0;
