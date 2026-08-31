@@ -510,16 +510,50 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
 
           {product ? (
             <>
-              <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                {calibration ? (
-                  <StatusBadge tone="success">
-                    Calibration v{calibration.version} prefilled
-                  </StatusBadge>
-                ) : (
-                  <StatusBadge tone="warning">No saved calibration yet</StatusBadge>
-                )}
-                <span>Prefilled values stay editable for this generation only.</span>
+              <div className="space-y-2 rounded-md border p-3">
+                <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                  {calibration ? (
+                    <StatusBadge tone="success">
+                      Calibration: Saved (v{calibration.version})
+                    </StatusBadge>
+                  ) : (
+                    <StatusBadge tone="warning">Calibration required</StatusBadge>
+                  )}
+                  {productStock ? (
+                    <StatusBadge tone={productStock.available < LOW_STOCK_THRESHOLD ? "warning" : "success"}>
+                      Voucher Shop stock: {productStock.available}
+                    </StatusBadge>
+                  ) : null}
+                  {calibration ? (
+                    <StatusBadge tone="info">Auto top-up on</StatusBadge>
+                  ) : null}
+                  {checkingStock ? <span>Checking stock…</span> : null}
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  {calibration
+                    ? `Below ${LOW_STOCK_THRESHOLD} available codes → ${REPLENISH_BATCH_SIZE} are generated automatically for this exact product, using its own saved calibration.`
+                    : "Save this product's calibration first. Nothing is generated — automatically or by hand — until this exact product has its own saved calibration."}
+                </p>
+                {productStock?.lastRun ? (
+                  <p className="break-words text-[11px] text-muted-foreground">
+                    Last automatic top-up: {productStock.lastRun.status}
+                    {productStock.lastRun.imported ? ` · ${productStock.lastRun.imported} codes` : ""} ·{" "}
+                    {new Date(productStock.lastRun.at).toLocaleString()}
+                    {productStock.lastRun.error ? ` · ${productStock.lastRun.error}` : ""}
+                  </p>
+                ) : null}
+                {!calibration ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={busy || problems.length > 0}
+                    onClick={() => void saveCalibrationNow()}
+                  >
+                    Save calibration for this product
+                  </Button>
+                ) : null}
               </div>
+
 
               {mismatch ? (
                 <p className="break-words rounded-md border border-destructive/40 p-3 text-xs text-destructive">
