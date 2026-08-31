@@ -610,7 +610,7 @@ ${MARKER}
       if (n.id === "hotspot-selector-close") continue;
       if (n.className && String(n.className).indexOf("title") !== -1) continue;
       if (n.parentNode && n.parentNode.className && String(n.parentNode.className).indexOf("title") !== -1) continue;
-      var text = (n.textContent || "").replace(/\s+/g, " ").trim();
+      var text = (n.textContent || "").replace(/\\s+/g, " ").trim();
       if (!text || text.length > 40) continue;
       var kind = methodKind(text);
       if (!kind) continue;
@@ -695,7 +695,7 @@ ${MARKER}
     var message = "";
     for (var i=0;i<sources.length && !message;i++){
       var el = document.querySelector(sources[i]);
-      if (el && !root.contains(el)) message = (el.textContent || "").replace(/\s+/g, " ").trim();
+      if (el && !root.contains(el)) message = (el.textContent || "").replace(/\\s+/g, " ").trim();
     }
     if (message){
       if (errorEl.textContent !== message) errorEl.textContent = message;
