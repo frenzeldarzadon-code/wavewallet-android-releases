@@ -18,78 +18,49 @@ export const Route = createFileRoute("/api/public/omada-probe-temp")({
           .maybeSingle();
         if (!eco) return Response.json({ error: "no shop" }, { status: 404 });
         const session = await openOmadaSession(supabaseAdmin as never, eco.id);
-        const site = `${session.base}/openapi/v1/${session.omadacId}/sites/${session.siteId}`;
-        const ctl = `${session.base}/openapi/v1/${session.omadacId}`;
 
-        const devRes = await fetch(`${site}/devices?page=1&pageSize=100`, {
-          headers: { Authorization: `AccessToken=${session.token}` },
-        });
-        const devJson = (await devRes.json()) as any;
-        const devices = (devJson?.result?.data ?? []) as any[];
-        const ap = devices.find((d) => String(d.type).toLowerCase() === "ap");
-        const mac = ap?.mac ?? devices[0]?.mac ?? "";
-        const enc = encodeURIComponent(mac);
-
-        const paths = [
-          `${site}/devices/${enc}`,
-          `${site}/devices/${enc}/detail`,
-          `${site}/devices/${enc}/clients?page=1&pageSize=10`,
-          `${site}/devices/${enc}/statistics`,
-          `${site}/devices/${enc}/radio`,
-          `${site}/devices/${enc}/wireless`,
-          `${site}/devices/${enc}/config`,
-          `${site}/devices/${enc}/settings`,
-          `${site}/devices/${enc}/led`,
-          `${site}/devices/${enc}/upgrade`,
-          `${site}/devices/${enc}/firmware`,
-          `${site}/devices/${enc}/reprovision`,
-          `${site}/devices/${enc}/forget`,
-          `${site}/devices/${enc}/adopt`,
-          `${site}/devices/account`,
-          `${site}/pending-devices?page=1&pageSize=10`,
-          `${site}/devices/pending?page=1&pageSize=10`,
-          `${site}/clients?page=1&pageSize=5`,
-          `${site}/dashboard`,
-          `${site}/statistics`,
-          `${site}/insight/clients?page=1&pageSize=5`,
-          `${site}/firmware`,
-          `${site}/device-firmware`,
-          `${ctl}/devices?page=1&pageSize=10`,
-          `${ctl}/firmware/latest`,
-        ];
-
-        const out: any[] = [];
-        for (const p of paths) {
+        let spec: any = null;
+        for (const p of ["/openapi/v3/api-docs", "/openapi/v2/api-docs", "/openapi/api-docs"]) {
+          const r = await fetch(`${session.base}${p}`, {
+            headers: { Authorization: `AccessToken=${session.token}` },
+          });
+          if (!r.ok) continue;
+          const t = await r.text();
           try {
-            const r = await fetch(p, { headers: { Authorization: `AccessToken=${session.token}` } });
-            const t = await r.text();
-            let body: any = t.slice(0, 600);
-            try {
-              body = JSON.parse(t);
-            } catch {
-              /* text */
+            const j = JSON.parse(t);
+            if (j?.paths) {
+              spec = j;
+              break;
             }
-            out.push({
-              path: p.replace(site, "{site}").replace(ctl, "{ctl}"),
-              status: r.status,
-              code: body?.errorCode ?? null,
-              msg: body?.msg ?? null,
-              keys:
-                body?.result && typeof body.result === "object"
-                  ? Array.isArray(body.result)
-                    ? ["<array>", body.result.length]
-                    : Object.keys(body.result).slice(0, 40)
-                  : null,
-              sample:
-                body?.result && !Array.isArray(body.result)
-                  ? JSON.stringify(body.result).slice(0, 900)
-                  : JSON.stringify(body?.result ?? body).slice(0, 900),
-            });
-          } catch (e) {
-            out.push({ path: p, error: String(e) });
+          } catch {
+            /* not json */
           }
         }
-        return Response.json({ mac, deviceSample: devices[0] ?? null, probes: out });
+        if (!spec) return Response.json({ error: "no spec" });
+
+        const filter = url.searchParams.get("q") ?? "";
+        const paths = Object.entries(spec.paths as Record<string, any>)
+          .filter(([p]) => !filter || p.toLowerCase().includes(filter))
+          .map(([p, ops]) => ({
+            path: p,
+            methods: Object.keys(ops as Record<string, unknown>),
+            summaries: Object.entries(ops as Record<string, any>).map(
+              ([m, o]) => `${m}:${o?.summary ?? o?.operationId ?? ""}`,
+            ),
+          }));
+        const detail = url.searchParams.get("detail");
+        if (detail) {
+          return Response.json({
+            path: detail,
+            op: spec.paths[detail] ?? null,
+            components: undefined,
+          });
+        }
+        const ref = url.searchParams.get("ref");
+        if (ref) {
+          return Response.json({ ref, schema: spec.components?.schemas?.[ref] ?? null });
+        }
+        return Response.json({ total: Object.keys(spec.paths).length, paths });
       },
     },
   },
