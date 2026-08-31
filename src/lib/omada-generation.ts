@@ -546,10 +546,10 @@ export function toDisplayUnits(values: Record<string, GenValue>): Record<string,
   return out;
 }
 
-/** What the admin sees (Mbps / MB) -> the controller payload (Kbps / KB). */
+/** What the admin sees (Mbps / GB) -> the controller payload (Kbps / MB). */
 export function toControllerUnits(values: Record<string, GenValue>): Record<string, GenValue> {
   const out: Record<string, GenValue> = { ...values };
-  const traffic = scaleUp(out["trafficLimit"], KB_PER_MB);
+  const traffic = scaleUp(out["trafficLimit"], OMADA_MB_PER_GB);
   if (traffic !== undefined) out["trafficLimit"] = traffic;
 
   const rateLimit = out["rateLimit"];
