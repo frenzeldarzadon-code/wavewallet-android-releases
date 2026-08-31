@@ -577,13 +577,14 @@ ${MARKER}
   function syncLabels(){
     var m = currentMethod();
     var copy = LABELS[m] || LABELS.voucher;
-    if (eyebrowEl) eyebrowEl.textContent = copy.eyebrow;
-    if (titleEl) titleEl.textContent = copy.title;
+    if (eyebrowEl && eyebrowEl.textContent !== copy.eyebrow) eyebrowEl.textContent = copy.eyebrow;
+    if (titleEl && titleEl.textContent !== copy.title) titleEl.textContent = copy.title;
     if (loginControl && loginControl.textContent !== copy.action) loginControl.textContent = copy.action;
     if (segEl){
       var segs = segEl.querySelectorAll("button[data-ww-method]");
       for (var i=0;i<segs.length;i++){
-        segs[i].setAttribute("aria-selected", segs[i].getAttribute("data-ww-method") === m ? "true" : "false");
+        var want = segs[i].getAttribute("data-ww-method") === m ? "true" : "false";
+        if (segs[i].getAttribute("aria-selected") !== want) segs[i].setAttribute("aria-selected", want);
       }
     }
   }
