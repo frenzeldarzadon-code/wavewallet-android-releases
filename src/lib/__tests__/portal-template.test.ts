@@ -130,4 +130,45 @@ describe("Generated runtime script", () => {
       expect(html).toContain(hook);
     }
   });
+
+  it("watches the real /portal/auth response via fetch and XHR interception", () => {
+    expect(html).toContain("/portal/auth");
+    expect(html).toContain("noteAuthResponse");
+    expect(html).toContain("window.fetch");
+    expect(html).toContain("XMLHttpRequest.prototype.send");
+    expect(html).toContain("if (AUTH_OK) return true;");
+  });
+
+  it("keeps the existing success-view words alongside the OK signal", () => {
+    expect(html).toContain("authentication success");
+    expect(html).toContain("authorized successfully");
+  });
+});
+
+describe("Omada /portal/auth response verdict", () => {
+  it("treats an exact OK body as success (Hotspot Voucher and Local User)", () => {
+    expect(omadaAuthResponseVerdict(200, "OK")).toBe("success");
+    expect(omadaAuthResponseVerdict(200, "  OK \n")).toBe("success");
+    expect(omadaAuthResponseVerdict(200, "ok")).toBe("success");
+  });
+
+  it("treats an Omada envelope with errorCode 0 as success", () => {
+    expect(omadaAuthResponseVerdict(200, '{"errorCode":0,"msg":"Success."}')).toBe("success");
+  });
+
+  it("never treats OK as success when the response carries an errorCode", () => {
+    expect(omadaAuthResponseVerdict(200, '{"errorCode":-1,"msg":"OK"}')).toBe("failure");
+    expect(omadaAuthResponseVerdict(200, '{"errorCode":-30005}')).toBe("failure");
+  });
+
+  it("never treats OK as success on an HTTP error status", () => {
+    expect(omadaAuthResponseVerdict(400, "OK")).toBe("failure");
+    expect(omadaAuthResponseVerdict(500, "OK")).toBe("failure");
+  });
+
+  it("returns unknown for unrelated or failed-authentication responses", () => {
+    expect(omadaAuthResponseVerdict(200, "Incorrect voucher code")).toBe("unknown");
+    expect(omadaAuthResponseVerdict(200, "<html><body>Login failed</body></html>")).toBe("unknown");
+    expect(omadaAuthResponseVerdict(200, "")).toBe("unknown");
+  });
 });
