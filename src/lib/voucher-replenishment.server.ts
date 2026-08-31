@@ -147,15 +147,20 @@ export async function replenishProduct(
   const { ecosystemId, productId } = input;
   const now = deps.now ?? Date.now;
 
+  // A deleted (or archived) product can never generate again. This is checked
+  // here, on the server, so an in-flight or queued job that was started before
+  // the deletion simply stops instead of creating codes for a dead product.
   const product = (
     await admin
       .from("voucher_products")
-      .select("id, name")
+      .select("id, name, archived")
       .eq("id", productId)
       .eq("ecosystem_id", ecosystemId)
       .maybeSingle()
-  ).data as { id: string; name: string } | null;
-  if (!product) throw new Error("That voucher product does not belong to this shop.");
+  ).data as { id: string; name: string; archived: boolean } | null;
+  if (!product || product.archived) {
+    return skip(ecosystemId, productId, "product_deleted", 0);
+  }
 
   // Calibration is per shop + per product. There is never a fallback to
   // another product's or another shop's calibration.
