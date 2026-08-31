@@ -74,13 +74,14 @@ async function realGenerate(input: {
   const info = await readControllerInfo(session);
   const startedAt = Date.now();
   const created = await createVoucherGroupVerified(session, input.payload);
+  const groupName = created.name;
   let groupId = created.groupId;
   if (!groupId) {
     const caps = voucherCapabilities(null);
     groupId = await findGroupIdByName(
       session,
       { ...caps, listPath: caps.listPath ?? VERIFIED_CREATE_PATH },
-      input.groupName,
+      groupName,
       startedAt,
     );
   }
@@ -88,7 +89,7 @@ async function realGenerate(input: {
   return {
     codes,
     groupId,
-    groupName: input.groupName,
+    groupName,
     identity: {
       baseUrl: session.base,
       omadacId: session.omadacId,

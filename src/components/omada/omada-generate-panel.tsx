@@ -402,7 +402,13 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
       });
       load();
     } catch (e) {
-      toast.error("Nothing was generated", { description: (e as Error).message });
+      const message = (e as Error).message ?? "";
+      const isNameError = /parameter\s*\[?name\]?/i.test(message) || /1~32|1 to 32/.test(message);
+      toast.error(isNameError ? "Omada rejected the batch name" : "Nothing was generated", {
+        description: isNameError
+          ? `The batch name must be 1 to 32 characters. Shorten the product or batch name and try again. (${message})`
+          : message,
+      });
     } finally {
       setBusy(false);
     }

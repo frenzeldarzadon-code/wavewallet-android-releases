@@ -1,3 +1,4 @@
+import { normalizeVoucherGroupName } from "./omada-generation";
 /**
  * Automatic Voucher Shop stock replenishment rules (pure logic).
  *
@@ -93,7 +94,7 @@ export function replenishmentPayload(
   groupName: string,
   amount: number = REPLENISH_BATCH_SIZE,
 ): Record<string, GenValue> {
-  return { ...calibrationPayload, name: groupName, amount };
+  return { ...calibrationPayload, name: normalizeVoucherGroupName(groupName), amount };
 }
 
 /** A run is abandoned when it stayed "running" past the stale window. */
