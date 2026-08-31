@@ -240,6 +240,17 @@ describe("voucher shop availability", () => {
     expect(payload["amount"]).toBe(REPLENISH_BATCH_SIZE);
     expect(payload["name"]).toBe("1 Day 2026-01-01");
   });
+
+  it("sends the saved data cap to Omada exactly as stored, with no second conversion", () => {
+    // The calibration is stored in the controller's own units (MB). A 5 GB
+    // product was saved as 5120 and must leave as 5120.
+    const payload = replenishmentPayload(
+      { ...calibrationPayload, trafficLimitEnable: true, trafficLimit: 5120 },
+      "5 GB 2026-01-01",
+    );
+    expect(payload["trafficLimit"]).toBe(5120);
+    expect(payload["trafficLimitEnable"]).toBe(true);
+  });
 });
 
 describe("automatic replenishment", () => {

@@ -36,6 +36,7 @@ import {
   toControllerUnits,
   toDisplayUnits,
   validateGenerationPayload,
+  validateTrafficLimitGb,
   DURATION_UNIT_LABELS,
   type DurationUnit,
   type GenValue,
@@ -289,8 +290,8 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
     setValues((v) => ({ ...v, duration: value === "" ? "" : durationToMinutes(Number(value), unit) }));
   };
 
-  // The form holds Mbps / MB; everything sent, validated or reviewed uses the
-  // controller's own Kbps / KB values.
+  // The form holds Mbps / GB; everything sent, validated or reviewed uses the
+  // controller's own Kbps / MB values.
   const payload = useMemo(() => {
     const out: Values = {};
     for (const [k, v] of Object.entries(toControllerUnits(values))) {
@@ -300,7 +301,15 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
     return out;
   }, [values]);
 
-  const problems = useMemo(() => validateGenerationPayload(payload), [payload]);
+  const problems = useMemo(() => {
+    const list = validateGenerationPayload(payload);
+    const gb = values["trafficLimit"];
+    if (gb !== "" && gb !== undefined && gb !== null) {
+      const issue = validateTrafficLimitGb(gb);
+      if (issue) list.push(issue);
+    }
+    return list;
+  }, [payload, values]);
 
   const previewCodes = useMemo(
     () =>
@@ -691,9 +700,9 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
                     </div>
                   </dl>
                   <p className="text-[11px] text-muted-foreground">
-                    Speeds are entered in Mbps and the data cap in MB. Omada is sent the same
-                    limits in its own units (Kbps and KB), shown below exactly as they will be
-                    submitted.
+                    Speeds are entered in Mbps and the data cap in GB. Omada is sent the same
+                    limits in its own units (Kbps and MB, 1 GB = 1024 MB), shown below exactly as
+                    they will be submitted.
                   </p>
                   <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded bg-muted p-2 text-[11px]">
                     {JSON.stringify(payload, null, 2)}
