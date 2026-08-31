@@ -567,6 +567,54 @@ ${MARKER}
     return "";
   }
 
+  /* Every field the controller ships for a given method. Local User is the
+     controller's own username AND password input — both are required, so both
+     are shown together. Nothing here creates a field: each one must already
+     exist in the master, otherwise that method simply has no panel. */
+  var PANEL_FIELDS = {
+    voucher: ["voucherCode"],
+    user: ["username", "password"],
+    simple: ["simplePassword"],
+    phone: ["country-code", "phone-number", "verify-code"]
+  };
+
+  function fieldEl(name){
+    return root.querySelector("[name='" + name + "']") || root.querySelector("#" + name);
+  }
+
+  function panelBox(el){
+    var node = el;
+    while (node && node !== root){
+      if (node.classList && node.classList.contains("input-container")) return node;
+      var parent = node.parentNode;
+      if (!parent || parent === root || (parent.tagName && parent.tagName === "FORM")) return node;
+      node = parent;
+    }
+    return el;
+  }
+
+  var activeKind = "";
+
+  /* Presentation only: the controller keeps its own classes and handlers, we
+     only decide which of ITS containers the customer can see. */
+  function applyPanels(){
+    if (!activeKind) return;
+    for (var kind in PANEL_FIELDS){
+      if (!Object.prototype.hasOwnProperty.call(PANEL_FIELDS, kind)) continue;
+      var on = kind === activeKind;
+      var names = PANEL_FIELDS[kind];
+      for (var i=0;i<names.length;i++){
+        var el = fieldEl(names[i]);
+        if (!el) continue;
+        var box = panelBox(el);
+        if (!box || !box.classList) continue;
+        box.classList.remove(on ? "ww-off" : "ww-on");
+        if (!box.classList.contains(on ? "ww-on" : "ww-off")) box.classList.add(on ? "ww-on" : "ww-off");
+        if (on && box.style && box.style.display === "none") box.style.display = "";
+      }
+    }
+  }
+
   var LABELS = {
     voucher: { eyebrow: "Already have a code?", title: "Enter your voucher", action: "Connect with Voucher" },
     user: { eyebrow: "Hotspot account", title: "Sign in with your username", action: "Sign in" },
@@ -575,7 +623,7 @@ ${MARKER}
   };
 
   function syncLabels(){
-    var m = currentMethod();
+    var m = activeKind || currentMethod();
     var copy = LABELS[m] || LABELS.voucher;
     if (eyebrowEl && eyebrowEl.textContent !== copy.eyebrow) eyebrowEl.textContent = copy.eyebrow;
     if (titleEl && titleEl.textContent !== copy.title) titleEl.textContent = copy.title;
