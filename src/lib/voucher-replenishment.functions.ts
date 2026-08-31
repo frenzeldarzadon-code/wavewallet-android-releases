@@ -115,34 +115,37 @@ export const getVoucherStockState = createServerFn({ method: "POST" })
     };
   });
 
-/** Admin: check this shop's calibrated products now and top up what is low. */
+/**
+ * Admin: check ONE exact Voucher Shop product of this shop and top it up when
+ * it is below the threshold. A product id is mandatory: no caller may ever
+ * trigger a shop-wide loop that would generate for unrelated products.
+ */
 export const checkVoucherReplenishment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { ecosystemId: string; productId?: string }) => {
+  .inputValidator((data: { ecosystemId: string; productId: string }) => {
     if (!data?.ecosystemId) throw new Error("A shop is required.");
+    if (!data?.productId) throw new Error("A voucher product is required.");
     return data;
   })
   .handler(async ({ data, context }) => {
     await assertShopAdmin(context as unknown as AuthContext, data.ecosystemId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { replenishProduct, replenishShop } = await import("./voucher-replenishment.server");
-    const results = data.productId
-      ? [
-          await replenishProduct(supabaseAdmin as never, {
-            ecosystemId: data.ecosystemId,
-            productId: data.productId,
-            trigger: "admin",
-          }),
-        ]
-      : await replenishShop(supabaseAdmin as never, data.ecosystemId);
+    const { replenishProduct } = await import("./voucher-replenishment.server");
+    const r = await replenishProduct(supabaseAdmin as never, {
+      ecosystemId: data.ecosystemId,
+      productId: data.productId,
+      trigger: "admin",
+    });
     return {
-      results: results.map((r) => ({
-        productId: r.productId,
-        status: r.status,
-        reason: r.reason,
-        available: r.available,
-        imported: r.imported,
-        error: r.error,
-      })),
+      results: [
+        {
+          productId: r.productId,
+          status: r.status,
+          reason: r.reason,
+          available: r.available,
+          imported: r.imported,
+          error: r.error,
+        },
+      ],
     };
   });

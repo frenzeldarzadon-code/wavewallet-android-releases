@@ -226,14 +226,15 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
 
   useEffect(load, [ecosystemId]);
 
-  // Opening this page also asks the server to top up any calibrated product
-  // that has fallen below the threshold. The server keeps it idempotent, and
-  // the same check runs on a schedule when nobody is on this page.
+  // Selecting a product asks the server to check THAT EXACT product only.
+  // No shop-wide loop ever runs from this page: other products are never
+  // generated for as a side effect. The scheduled sweep still checks each
+  // product independently when nobody is here.
   useEffect(() => {
-    if (!ecosystemId) return;
+    if (!ecosystemId || !productId) return;
     let cancelled = false;
     setCheckingStock(true);
-    void checkVoucherReplenishment({ data: { ecosystemId } })
+    void checkVoucherReplenishment({ data: { ecosystemId, productId } })
       .then(() => {
         if (!cancelled) loadStock();
       })
@@ -244,7 +245,8 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
     return () => {
       cancelled = true;
     };
-  }, [ecosystemId]);
+  }, [ecosystemId, productId]);
+
 
   const product = useMemo(
     () => setup?.products.find((p) => p.id === productId) ?? null,
