@@ -243,11 +243,7 @@ export interface RadioBandUpdate {
 }
 
 /** PATCH /aps/{mac}/radio-config — only the bands passed in are touched. */
-export async function updateApRadioConfig(
-  session: OmadaSession,
-  mac: string,
-  updates: RadioBandUpdate[],
-): Promise<void> {
+export function buildRadioPatchBody(updates: RadioBandUpdate[]): Record<string, unknown> {
   const body: Record<string, unknown> = {};
   for (const u of updates) {
     const key = BANDS.find((b) => b.band === u.band)?.key;
@@ -262,6 +258,15 @@ export async function updateApRadioConfig(
     }
     body[key] = band;
   }
+  return body;
+}
+
+export async function updateApRadioConfig(
+  session: OmadaSession,
+  mac: string,
+  updates: RadioBandUpdate[],
+): Promise<void> {
+  const body = buildRadioPatchBody(updates);
   if (!Object.keys(body).length) return;
   await omadaSiteCall(session, `/aps/${encodeURIComponent(mac)}/radio-config`, {
     method: "PATCH",
