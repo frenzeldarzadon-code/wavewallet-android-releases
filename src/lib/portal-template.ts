@@ -838,9 +838,57 @@ ${MARKER}
      An unauthenticated visitor is never redirected away from this page, and the
      shop is decided server-side from the saved portal binding - nothing here
      names a shop, so no address bar edit can reach another one. */
+  /* The controller's real /portal/auth answer is checked FIRST: an Omada
+     errorCode or an HTTP error means failure, and only then does the exact
+     "OK" body (Omada's success answer for Hotspot Voucher AND Local User)
+     count as success. The master's own success-view words below still apply. */
+  var verdictOf = ${omadaAuthResponseVerdict.toString()};
+  var AUTH_OK = false;
+  function noteAuthResponse(status, bodyText){
+    if (verdictOf(status, bodyText) === "success") AUTH_OK = true;
+  }
+  try {
+    if (window.fetch){
+      var realFetch = window.fetch;
+      window.fetch = function(url){
+        var pending = realFetch.apply(this, arguments);
+        try {
+          var target = typeof url === "string" ? url : (url && url.url) || "";
+          if (target.indexOf("/portal/auth") !== -1){
+            pending.then(function(res){
+              try {
+                res.clone().text().then(function(t){ noteAuthResponse(res.status, t); });
+              } catch (e) {}
+            }).catch(function(){});
+          }
+        } catch (e) {}
+        return pending;
+      };
+    }
+  } catch (e) {}
+  try {
+    if (window.XMLHttpRequest){
+      var realOpen = XMLHttpRequest.prototype.open;
+      var realSend = XMLHttpRequest.prototype.send;
+      XMLHttpRequest.prototype.open = function(method, url){
+        this.__wwAuth = String(url || "").indexOf("/portal/auth") !== -1;
+        return realOpen.apply(this, arguments);
+      };
+      XMLHttpRequest.prototype.send = function(){
+        if (this.__wwAuth){
+          var xhr = this;
+          xhr.addEventListener("loadend", function(){
+            try { noteAuthResponse(xhr.status, xhr.responseText); } catch (e) {}
+          });
+        }
+        return realSend.apply(this, arguments);
+      };
+    }
+  } catch (e) {}
+
   var SUBMITTED = false;
   var HANDED_OFF = false;
-  function markSubmitted(){ SUBMITTED = true; }
+  function markSubmitted(){ SUBMITTED = true; AUTH_OK = false; }
   try {
     document.addEventListener("submit", markSubmitted, true);
     document.addEventListener("click", function(ev){
