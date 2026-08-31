@@ -44,6 +44,8 @@ import {
   type AntennaList,
   type ShopMemberOption,
 } from "@/lib/omada-devices.functions";
+import { DeviceManageDialog } from "./device-manage-dialog";
+
 
 function Detail({ label, value }: { label: string; value: string | null }) {
   if (!value) return null;
@@ -65,20 +67,26 @@ function AntennaCard({
   device,
   manage,
   members,
+  ecosystemId,
   onAssign,
   onUnassign,
   onReboot,
+  onChanged,
 }: {
   device: AntennaView;
   manage: boolean;
   members: ShopMemberOption[];
+  ecosystemId: string | null | undefined;
   onAssign: (mac: string, userId: string) => Promise<void>;
   onUnassign: (mac: string) => Promise<void>;
   onReboot: (mac: string) => Promise<void>;
+  onChanged: () => void;
 }) {
   const [choice, setChoice] = useState(device.assignedUserId ?? "");
   const [busy, setBusy] = useState<null | "assign" | "unassign" | "reboot">(null);
   const [confirm, setConfirm] = useState(false);
+  const [managing, setManaging] = useState(false);
+
 
   useEffect(() => setChoice(device.assignedUserId ?? ""), [device.assignedUserId]);
 
@@ -185,7 +193,25 @@ function AntennaCard({
             {busy === "reboot" ? "Restarting…" : "Restart"}
           </Button>
         )}
+
+        {manage && ecosystemId && !device.missingFromController ? (
+          <Button size="sm" variant="outline" onClick={() => setManaging(true)}>
+            Manage device
+          </Button>
+        ) : null}
       </div>
+
+      {manage && ecosystemId && !device.missingFromController ? (
+        <DeviceManageDialog
+          device={device}
+          ecosystemId={ecosystemId}
+          open={managing}
+          onOpenChange={setManaging}
+          onChanged={onChanged}
+        />
+      ) : null}
+
+
 
       <AlertDialog open={confirm} onOpenChange={setConfirm}>
         <AlertDialogContent>
@@ -304,6 +330,9 @@ export function AntennaStatusPanel({
             device={device}
             manage={manage}
             members={members}
+            ecosystemId={ecosystemId}
+            onChanged={() => void load()}
+
             onAssign={(mac, userId) =>
               act("Antenna assigned.", () =>
                 assignAntenna({
