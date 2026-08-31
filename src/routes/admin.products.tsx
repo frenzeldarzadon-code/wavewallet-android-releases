@@ -81,7 +81,9 @@ function AdminProducts() {
   const [counts, setCounts] = useState<Record<string, InventoryCount>>({});
   const [draft, setDraft] = useState<Draft | null>(null);
   const [busy, setBusy] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [toDelete, setToDelete] = useState<VoucherProductRow | null>(null);
+  const [typed, setTyped] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     if (!ecosystemDbId) return;
