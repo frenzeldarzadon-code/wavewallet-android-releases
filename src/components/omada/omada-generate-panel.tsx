@@ -36,6 +36,7 @@ import {
   toControllerUnits,
   toDisplayUnits,
   validateGenerationPayload,
+  validateTrafficLimitGb,
   DURATION_UNIT_LABELS,
   type DurationUnit,
   type GenValue,
