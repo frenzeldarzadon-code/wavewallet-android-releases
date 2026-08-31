@@ -26,7 +26,7 @@ describe("Admin custom portal workflow presentation", () => {
     expect(mappingSource).toMatch(/Disconnect/);
     expect(wizardSource).toMatch(/Choose design/);
     expect(wizardSource).toMatch(/Choose features/);
-    expect(wizardSource).toMatch(/Generate &amp; download/);
+    expect(wizardSource).toMatch(/Generate & download/);
     expect(wizardSource).toMatch(/Manual voucher entry is always included/);
   });
 
