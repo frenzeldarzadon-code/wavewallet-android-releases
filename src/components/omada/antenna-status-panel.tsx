@@ -191,7 +191,25 @@ function AntennaCard({
             {busy === "reboot" ? "Restarting…" : "Restart"}
           </Button>
         )}
+
+        {manage && ecosystemId && !device.missingFromController ? (
+          <Button size="sm" variant="outline" onClick={() => setManaging(true)}>
+            Manage device
+          </Button>
+        ) : null}
       </div>
+
+      {manage && ecosystemId && !device.missingFromController ? (
+        <DeviceManageDialog
+          device={device}
+          ecosystemId={ecosystemId}
+          open={managing}
+          onOpenChange={setManaging}
+          onChanged={onChanged}
+        />
+      ) : null}
+
+
 
       <AlertDialog open={confirm} onOpenChange={setConfirm}>
         <AlertDialogContent>
