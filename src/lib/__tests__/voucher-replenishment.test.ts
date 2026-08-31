@@ -14,7 +14,7 @@ import {
   REPLENISH_BATCH_SIZE,
 } from "../voucher-replenishment";
 import { replenishProduct, type AdminClient } from "../voucher-replenishment.server";
-import { defaultGenerationValues } from "../omada-generation";
+import { defaultGenerationValues, type GenValue } from "../omada-generation";
 
 type Row = Record<string, any>;
 
@@ -137,7 +137,11 @@ function makeAdmin(tables: Record<string, Row[]>) {
   return admin;
 }
 
-const calibrationPayload = { ...defaultGenerationValues(), name: "seed", amount: 10 };
+const calibrationPayload: Record<string, GenValue> = {
+  ...defaultGenerationValues(),
+  name: "seed",
+  amount: 10,
+};
 
 function codes(count: number, ecosystem: string, product: string, extra: Row = {}) {
   return Array.from({ length: count }, (_, i) => ({
