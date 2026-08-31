@@ -13,6 +13,8 @@ import {
   formatDurationUnits,
   VERIFIED_VOUCHER_FIELDS,
   validateGenerationPayload,
+  validateTrafficLimitGb,
+  gbToOmadaTrafficLimit,
 } from "../omada-generation";
 
 describe("omada generation template", () => {
