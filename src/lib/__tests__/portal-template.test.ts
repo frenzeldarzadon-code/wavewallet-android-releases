@@ -5,6 +5,7 @@ import {
   generateWaveWalletPortal,
   generatedFileName,
   normalizeTemplateFeatures,
+  omadaAuthResponseVerdict,
   templateStage,
 } from "../portal-template";
 
