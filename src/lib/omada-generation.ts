@@ -40,7 +40,7 @@ export const VERIFIED_VOUCHER_FIELDS: VoucherFieldSpec[] = [
     name: "name",
     type: "string",
     required: true,
-    description: "Voucher group name shown in Omada.",
+    description: "Voucher group name shown in Omada. 1 to 32 characters.",
   },
   {
     name: "amount",
@@ -284,6 +284,47 @@ export function controllerMismatch(
   return `This saved calibration was verified against a different ${diffs.join(", ")}. Review every setting before generating.`;
 }
 
+/**
+ * Omada rejects any voucher group name outside 1~32 UTF-8 characters. This is
+ * the single rule every generation path must satisfy, so it lives here and is
+ * applied again immediately before the outbound request.
+ */
+export const OMADA_NAME_MAX_CHARS = 32;
+
+/** Characters (code points), never bytes — multibyte names must stay intact. */
+export function nameCharLength(value: string): number {
+  return Array.from(value).length;
+}
+
+/**
+ * Makes any candidate name safe for Omada without changing any other rule:
+ * whitespace is collapsed, a trailing date/counter suffix is preserved, and the
+ * leading (product) part is shortened by code points when the whole is too long.
+ * Deterministic: the same input always yields the same name.
+ */
+export function normalizeVoucherGroupName(raw: unknown, fallback = "Voucher batch"): string {
+  const cleaned = String(raw ?? "")
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const safeFallback = Array.from(String(fallback).replace(/\s+/g, " ").trim())
+    .slice(0, OMADA_NAME_MAX_CHARS)
+    .join("");
+  const base = cleaned || safeFallback || "Voucher batch";
+  if (nameCharLength(base) <= OMADA_NAME_MAX_CHARS) return base;
+
+  // Keep the meaningful tail (" 2026-08-31", " (2)", or both) and trim the head.
+  const tailMatch = base.match(/(\s\d{4}-\d{2}-\d{2})?(\s\(\d+\))?$/);
+  const tail = tailMatch?.[0] ?? "";
+  const tailLen = nameCharLength(tail);
+  const head = base.slice(0, base.length - tail.length);
+  const room = OMADA_NAME_MAX_CHARS - tailLen;
+  if (room <= 0) return Array.from(base).slice(0, OMADA_NAME_MAX_CHARS).join("");
+  const trimmedHead = Array.from(head).slice(0, room).join("").trimEnd();
+  const result = `${trimmedHead}${tail}`.trim();
+  return Array.from(result).slice(0, OMADA_NAME_MAX_CHARS).join("") || safeFallback;
+}
+
 /** Group name default: product title + today's date, made unique for the day. */
 export function defaultGroupName(
   productName: string,
@@ -293,14 +334,14 @@ export function defaultGroupName(
   const stamp = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(
     today.getDate(),
   ).padStart(2, "0")}`;
-  const base = `${productName.trim()} ${stamp}`.trim();
+  const base = normalizeVoucherGroupName(`${productName.trim()} ${stamp}`, `Vouchers ${stamp}`);
   const taken = new Set(existingNames.map((n) => n.trim().toLowerCase()));
   if (!taken.has(base.toLowerCase())) return base;
   for (let n = 2; n < 200; n += 1) {
-    const candidate = `${base} (${n})`;
+    const candidate = normalizeVoucherGroupName(`${base} (${n})`, `Vouchers ${stamp}`);
     if (!taken.has(candidate.toLowerCase())) return candidate;
   }
-  return `${base} (${Date.now()})`;
+  return normalizeVoucherGroupName(`${base} (${Date.now()})`, `Vouchers ${stamp}`);
 }
 
 /** Validation against the verified controller rules, before anything is sent. */
@@ -337,6 +378,14 @@ export function validateGenerationPayload(payload: Record<string, GenValue>): st
     }
   };
   walk(VERIFIED_VOUCHER_FIELDS, payload, "");
+
+  const rawName = payload["name"];
+  if (typeof rawName === "string" && rawName.trim()) {
+    const length = nameCharLength(rawName.trim());
+    if (length > OMADA_NAME_MAX_CHARS) {
+      errors.push(`name must be 1 to ${OMADA_NAME_MAX_CHARS} characters (currently ${length}).`);
+    }
+  }
 
   const limitType = Number(payload["limitType"]);
   if ((limitType === 0 || limitType === 1) && !Number(payload["limitNum"])) {
