@@ -259,6 +259,17 @@ function AdminProducts() {
                     <Button size="sm" variant="outline" onClick={() => void toggleArchive(p)}>
                       <Archive className="size-4" /> {p.archived ? "Restore" : "Archive"}
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-destructive"
+                      onClick={() => {
+                        setTyped("");
+                        setToDelete(p);
+                      }}
+                    >
+                      <Trash2 className="size-4" /> Delete
+                    </Button>
                     {!p.archived ? (
                       <label className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
                         On sale
