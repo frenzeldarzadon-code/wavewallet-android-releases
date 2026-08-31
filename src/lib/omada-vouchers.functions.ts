@@ -518,8 +518,7 @@ import {
   validateGenerationPayload,
   type ControllerIdentity,
   type GenValue,
-  type VoucherFieldSpec,
-} from "./omada-generation";
+  type VoucherFieldSpec,, normalizeVoucherGroupName } from "./omada-generation";
 
 export interface GenerationProduct {
   id: string;
@@ -715,8 +714,10 @@ export const generateVoucherGroupForProduct = createServerFn({ method: "POST" })
 
 
     const payload = { ...data.payload };
-    const groupName = String(payload["name"] ?? "").trim();
-    if (!groupName) throw new Error("A group name is required.");
+    // Every path normalizes the name to Omada's 1~32 character rule; nothing
+    // else in the payload is altered.
+    const groupName = normalizeVoucherGroupName(payload["name"], product.name || "Voucher batch");
+    payload["name"] = groupName;
 
     const problems = validateGenerationPayload(payload);
     if (problems.length > 0) throw new Error(problems.join(" "));
