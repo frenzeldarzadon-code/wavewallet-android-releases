@@ -563,7 +563,7 @@ ${MARKER}
     if (fieldVisible("input[name=voucherCode],#voucherCode")) return "voucher";
     if (fieldVisible("input[name=username],#username")) return "user";
     if (fieldVisible("input[name=phone-number],#phone-number")) return "phone";
-    if (fieldVisible("input[name=simplePassword],#simplePassword")) return "password";
+    if (fieldVisible("input[name=simplePassword],#simplePassword")) return "simple";
     return "";
   }
 
@@ -571,7 +571,7 @@ ${MARKER}
     voucher: { eyebrow: "Already have a code?", title: "Enter your voucher", action: "Connect with Voucher" },
     user: { eyebrow: "Hotspot account", title: "Sign in with your username", action: "Sign in" },
     phone: { eyebrow: "Hotspot account", title: "Verify your number", action: "Connect" },
-    password: { eyebrow: "Hotspot access", title: "Enter the Wi-Fi password", action: "Connect" }
+    simple: { eyebrow: "Hotspot access", title: "Enter the Wi-Fi key", action: "Connect" }
   };
 
   function syncLabels(){
@@ -596,7 +596,7 @@ ${MARKER}
     if (t.indexOf("voucher") !== -1) return "voucher";
     if (t.indexOf("local user") !== -1 || t.indexOf("user") !== -1) return "user";
     if (t.indexOf("sms") !== -1 || t.indexOf("phone") !== -1) return "phone";
-    if (t.indexOf("password") !== -1) return "password";
+    if (t.indexOf("password") !== -1) return "simple";
     return "";
   }
 
