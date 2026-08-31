@@ -113,10 +113,18 @@ export async function fetchPrintableSale(saleId: string): Promise<PrintableVouch
     .maybeSingle();
   if (!sale) return null;
 
+  // The product link is null once the product has been deleted; the sale keeps
+  // its own product snapshot, so printing still works.
   const [{ data: codes }, { data: shop }, { data: product }] = await Promise.all([
     supabase.from("voucher_codes").select("code").eq("sale_id", saleId).order("code"),
     supabase.from("ecosystems").select("name").eq("id", sale.ecosystem_id).maybeSingle(),
-    supabase.from("voucher_products").select("description").eq("id", sale.product_id).maybeSingle(),
+    sale.product_id
+      ? supabase
+          .from("voucher_products")
+          .select("description")
+          .eq("id", sale.product_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null as { description: string } | null }),
   ]);
 
   return {
