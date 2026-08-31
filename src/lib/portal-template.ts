@@ -690,6 +690,19 @@ ${MARKER}
     if (box && box.classList) box.classList.add("ww-omada-off");
   }
 
+  function chooseMethod(option){
+    activeKind = option.kind;
+    /* Same page, real runtime: this clicks the controller's own method item so
+       Omada switches its authentication type before anything is submitted. */
+    try { option.el.click(); } catch (e) {}
+    closeSelector();
+    hideOmadaChrome();
+    applyPanels();
+    syncLabels();
+    setTimeout(function(){ applyPanels(); syncLabels(); }, 0);
+    setTimeout(function(){ applyPanels(); syncLabels(); }, 150);
+  }
+
   function renderMethods(){
     if (!segEl) return;
     var options = selectorOptions();
@@ -706,15 +719,7 @@ ${MARKER}
             btn.setAttribute("role", "tab");
             btn.setAttribute("aria-selected", "false");
             btn.textContent = option.kind === "user" ? "Local User" : option.label;
-            btn.onclick = function(){
-              /* Same page, real runtime: this clicks the controller's own
-                 method item so Omada switches its authentication type. */
-              try { option.el.click(); } catch (e) {}
-              closeSelector();
-              hideOmadaChrome();
-              setTimeout(syncLabels, 0);
-              setTimeout(syncLabels, 150);
-            };
+            btn.onclick = function(){ chooseMethod(option); };
             segEl.appendChild(btn);
           })(options[i]);
         }
@@ -723,14 +728,31 @@ ${MARKER}
         segEl.setAttribute("hidden", "hidden");
       }
     }
-    if (!defaulted && options.length > 1 && currentMethod() && currentMethod() !== "voucher"){
-      for (var v=0;v<options.length;v++){
-        if (options[v].kind === "voucher"){
-          defaulted = true;
-          try { options[v].el.click(); } catch (e) {}
-          closeSelector();
-          break;
+    if (!defaulted){
+      if (options.length > 1){
+        /* Voucher first when the controller offers it, otherwise the single
+           method this portal actually enables. */
+        var pick = null;
+        for (var v=0;v<options.length;v++){
+          if (options[v].kind === "voucher"){ pick = options[v]; break; }
         }
+        if (!pick && currentMethod()){
+          for (var w=0;w<options.length;w++){
+            if (options[w].kind === currentMethod()){ pick = options[w]; break; }
+          }
+        }
+        if (!pick) pick = options[0];
+        defaulted = true;
+        chooseMethod(pick);
+      } else if (options.length === 1){
+        defaulted = true;
+        activeKind = options[0].kind;
+        applyPanels();
+      } else if (!activeKind){
+        /* No selector at all: this portal enables exactly one method and the
+           controller already put its own field on screen. */
+        activeKind = currentMethod();
+        if (activeKind) applyPanels();
       }
     }
   }
