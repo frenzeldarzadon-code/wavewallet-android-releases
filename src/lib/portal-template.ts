@@ -925,6 +925,9 @@ ${MARKER}
   }
 
   function authenticated(){
+    /* A verified "OK" (or errorCode 0) answer from /portal/auth is success on
+       its own; the master's success-view words remain as a fallback. */
+    if (AUTH_OK) return true;
     try {
       var nodes = document.querySelectorAll("body *");
       for (var i=0;i<nodes.length && i<600;i++){
