@@ -10,6 +10,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { resolvePublicOrigin } from "@/lib/public-origin";
 import { base64ToBytes, masterFromArchive, readZipEntries } from "./portal-master";
 import { generatePortalFromMaster } from "./portal-generate";
 import {
@@ -325,6 +326,21 @@ export const generatePortalTemplate = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }): Promise<GeneratedPortalFile> => {
     const ctx = context as unknown as AuthContext;
+    // The page is imported into a controller and opened by customers who are
+    // NOT online yet, so it must carry the deployed public address — never the
+    // preview host the admin generated it from.
+    const { getRequest } = await import("@tanstack/react-start/server");
+    let requestOrigin: string | null = null;
+    try {
+      requestOrigin = new URL(getRequest().url).origin;
+    } catch {
+      /* no request context (tests): fall back below */
+    }
+    const publicOrigin = resolvePublicOrigin({
+      configured: process.env["PUBLIC_APP_ORIGIN"] ?? null,
+      request: requestOrigin,
+      suggested: data.origin,
+    });
     const { supabaseAdmin, mapping } = await requireMapping(ctx, data.ecosystemId, data.mappingId);
 
     const master = await activeMaster(supabaseAdmin as never);
@@ -380,7 +396,7 @@ export const generatePortalTemplate = createServerFn({ method: "POST" })
       },
       features,
       {
-        origin: data.origin,
+        origin: publicOrigin,
         mappingId: data.mappingId,
         shopName,
         shopSlug: (shop?.slug as string | null) ?? null,
