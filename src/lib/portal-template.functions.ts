@@ -10,6 +10,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { resolvePublicOrigin } from "@/lib/public-origin";
 import { base64ToBytes, masterFromArchive, readZipEntries } from "./portal-master";
 import { generatePortalFromMaster } from "./portal-generate";
 import {
@@ -395,7 +396,7 @@ export const generatePortalTemplate = createServerFn({ method: "POST" })
       },
       features,
       {
-        origin: data.origin,
+        origin: publicOrigin,
         mappingId: data.mappingId,
         shopName,
         shopSlug: (shop?.slug as string | null) ?? null,
