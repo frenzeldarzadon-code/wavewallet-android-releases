@@ -34,7 +34,24 @@ export const Route = createFileRoute("/api/public/omada-probe-temp")({
             headers: H,
           }),
         );
-        out.push(await call(`${site}/clients?page=1&pageSize=3`, { headers: H }));
+        out.push(
+          await call(`${site}/clients/authorize`, {
+            method: "POST",
+            headers: { ...H, "content-type": "application/json" },
+            body: JSON.stringify({ clientMac: mac, time: 60000, authType: 4 }),
+          }),
+        );
+        out.push(
+          await call(`${site}/clients/authorize`, {
+            method: "POST",
+            headers: { ...H, "content-type": "application/json" },
+            body: JSON.stringify({}),
+          }),
+        );
+        for (const doc of ["/openapi/v3/api-docs", "/openapi/doc", "/openapi/v1/openapi.json", "/doc/openapi.json"]) {
+          const r = await call(`${s.base}${doc}`, { headers: H });
+          out.push({ ...r, body: r.body.slice(0, 200) });
+        }
         // TP-Link external portal API (hotspot operator session required)
         out.push(
           await call(`${s.base}/${s.omadacId}/api/v2/hotspot/extPortal/auth`, {
