@@ -30,7 +30,7 @@ interface Props {
   disabled?: boolean;
   /** The features currently enabled for this portal, so the design preview
    *  shows the same cards and buttons the generated page will contain. */
-  features?: Partial<PortalSectionFeatures>;
+  features?: Partial<PortalSectionFeatures> | undefined;
   onSelect: (slug: string) => void;
 }
 

@@ -704,9 +704,9 @@ export const THEME_DECOR_MARKUP = `<div class="ww-decor" aria-hidden="true"><i><
 export function portalThemePreviewHtml(
   theme: PortalTheme,
   opts: {
-    shopName?: string;
-    compact?: boolean;
-    features?: Partial<PortalSectionFeatures>;
+    shopName?: string | undefined;
+    compact?: boolean | undefined;
+    features?: Partial<PortalSectionFeatures> | undefined;
   } = {},
 ): string {
   const shop = opts.shopName ?? "Your shop";

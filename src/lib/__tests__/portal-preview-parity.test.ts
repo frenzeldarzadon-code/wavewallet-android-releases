@@ -49,7 +49,7 @@ describe("admin preview parity with the generated portal", () => {
       generated(),
       portalThemePreviewHtml(defaultPortalTheme(), { shopName: "Sagada Wave One-stop-shop" }),
     ]) {
-      const [auth, buy] = order(html);
+      const [auth = -1, buy = -1] = order(html);
       expect(auth).toBeGreaterThan(-1);
       expect(buy).toBeGreaterThan(-1);
       expect(auth).toBeLessThan(buy);

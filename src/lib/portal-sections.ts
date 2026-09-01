@@ -47,9 +47,9 @@ export interface PortalSectionsOptions {
    */
   mode: "runtime" | "preview";
   /** Footer note shown on the generated page only. */
-  portalName?: string | null;
+  portalName?: string | null | undefined;
   /** Preview only: drop the sign-up footer line in tiny thumbnails. */
-  compact?: boolean;
+  compact?: boolean | undefined;
 }
 
 /**
