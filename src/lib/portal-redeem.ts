@@ -69,6 +69,18 @@ export interface PortalSessionContext {
   redirectUrl: string | null;
 }
 
+/**
+ * Omada's stock portal script decodes every query value with
+ * decodeURIComponent, which leaves "+" as a LITERAL plus sign. So spaces must
+ * travel as %20: URLSearchParams' default "+" form would corrupt values like
+ * ssidName ("Sagada Wave" -> "Sagada+Wave"), and the controller then rejects
+ * the page's own getPortalPageSetting/auth calls for an SSID that does not
+ * exist — which also leaves the master's login control unwired.
+ */
+function omadaSafeQuery(params: URLSearchParams): string {
+  return params.toString().replace(/\+/g, "%20");
+}
+
 export interface ReturnUrlInput {
   /** The controller portal page's own address, when the page reported one. */
   pageUrl: string | null;
@@ -116,7 +128,7 @@ export function buildPortalReturnUrl(input: ReturnUrlInput): string | null {
       const merged = new URLSearchParams(page.search);
       for (const key of WW_LINK_PARAMS) merged.delete(key);
       params.forEach((value, key) => merged.set(key, value));
-      page.search = merged.toString();
+      page.search = omadaSafeQuery(merged);
       page.hash = "";
       return page.toString();
     } catch {
@@ -128,7 +140,7 @@ export function buildPortalReturnUrl(input: ReturnUrlInput): string | null {
   try {
     const base = new URL(input.baseUrl);
     const path = base.pathname.replace(/\/+$/, "");
-    return `${base.origin}${path}/portal?${params.toString()}`;
+    return `${base.origin}${path}/portal?${omadaSafeQuery(params)}`;
   } catch {
     return null;
   }
