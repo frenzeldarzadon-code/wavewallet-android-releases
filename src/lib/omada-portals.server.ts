@@ -132,8 +132,7 @@ export function toPortal(row: Record<string, unknown>): OmadaPortal | null {
  * ------------------------------------------------------------------ */
 
 const PORTAL_LIST = /\/(setting\/portals|hotspot\/portals|portals)$/;
-const AUTHORIZE =
-  /(clients\/authorize|extportal\/auth|hotspot\/auth|clients\/\{[^}]+\}\/authorize|authorize\/client|portal\/auth)$/i;
+const AUTHORIZE = /(extportal\/auth)$/i;
 
 /**
  * Read-only portal listings Omada actually serves. `/portals` is the site-scoped
@@ -144,19 +143,20 @@ const AUTHORIZE =
 const PROBE_LIST_PATHS = ["/portals", "/setting/portals", "/hotspot/portals"];
 
 /**
- * Client-authorization endpoints. On 6.x the site-scoped
- * `GET /clients/authorize?clientMac=...` puts a client online; probing it with
- * no parameters answers "this client does not exist", which proves the route and
- * the permission without touching any real client.
+ * There is NO client-authorization endpoint in the Open API v1 surface.
+ *
+ * `/openapi/v1/{omadacId}/sites/{siteId}/clients/authorize` merely matches the
+ * client-detail route `/clients/{clientMac}` with the literal MAC "authorize",
+ * so the controller answers `-41011 This client does not exist.` — for ANY
+ * request, including one carrying a real, connected client's MAC. Treating that
+ * reply as proof of support made WaveWallet call a non-existent endpoint on
+ * every purchase. Client authorization is only available through the documented
+ * External Portal API, which needs a Hotspot Operator sign-in.
  */
-const PROBE_AUTHORIZE: Array<{ path: string; method: "GET" | "POST" }> = [
-  { path: "/clients/authorize", method: "GET" },
-  { path: "/hotspot/extportal/auth", method: "POST" },
-  { path: "/extportal/auth", method: "POST" },
-];
+const EXT_PORTAL_LOGIN = (base: string, omadacId: string) =>
+  `${base}/${omadacId}/api/v2/hotspot/login`;
+const EXT_PORTAL_AUTH_PATH = "/{omadacId}/api/v2/hotspot/extPortal/auth";
 
-/** Error codes that mean "route reachable, arguments missing" — not "unsupported". */
-const REACHABLE_CODES = new Set([-41011, -41012, -1001, -1005]);
 
 export async function readInfo(session: OmadaSession) {
   const res = await rawGet(`${session.base}/api/info`, session.token);
