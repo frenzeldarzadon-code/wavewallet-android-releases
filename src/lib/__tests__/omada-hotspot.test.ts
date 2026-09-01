@@ -124,9 +124,11 @@ describe("authorizeExternalPortalClient", () => {
       calls.push(call);
       const step = script[Math.min(i, script.length - 1)];
       i += 1;
+      if (!step) throw new Error("fetch mock script exhausted");
       return step(call);
     });
   };
+
 
   it("logs in as the hotspot operator, then authorizes with cookie + Csrf-Token", async () => {
     stubFetch([
