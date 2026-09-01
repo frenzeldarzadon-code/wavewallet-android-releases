@@ -4242,6 +4242,83 @@ export type Database = {
           },
         ]
       }
+      portal_redemptions: {
+        Row: {
+          authorization_id: string | null
+          claimed_at: string | null
+          created_at: string
+          ecosystem_id: string
+          error: string | null
+          expires_at: string
+          id: string
+          sale_id: string | null
+          session_id: string
+          status: string
+          token: string
+          updated_at: string
+          voucher_code: string
+        }
+        Insert: {
+          authorization_id?: string | null
+          claimed_at?: string | null
+          created_at?: string
+          ecosystem_id: string
+          error?: string | null
+          expires_at: string
+          id?: string
+          sale_id?: string | null
+          session_id: string
+          status?: string
+          token: string
+          updated_at?: string
+          voucher_code: string
+        }
+        Update: {
+          authorization_id?: string | null
+          claimed_at?: string | null
+          created_at?: string
+          ecosystem_id?: string
+          error?: string | null
+          expires_at?: string
+          id?: string
+          sale_id?: string | null
+          session_id?: string
+          status?: string
+          token?: string
+          updated_at?: string
+          voucher_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_redemptions_authorization_id_fkey"
+            columns: ["authorization_id"]
+            isOneToOne: false
+            referencedRelation: "portal_authorizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_redemptions_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_redemptions_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_redemptions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "portal_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_sessions: {
         Row: {
           ap_mac: string | null
@@ -4253,7 +4330,9 @@ export type Database = {
           id: string
           mapping_id: string
           member_id: string | null
+          page_url: string | null
           radio_id: string | null
+          raw_query: Json | null
           redirect_url: string | null
           site_ref: string | null
           ssid: string | null
@@ -4269,7 +4348,9 @@ export type Database = {
           id?: string
           mapping_id: string
           member_id?: string | null
+          page_url?: string | null
           radio_id?: string | null
+          raw_query?: Json | null
           redirect_url?: string | null
           site_ref?: string | null
           ssid?: string | null
@@ -4285,7 +4366,9 @@ export type Database = {
           id?: string
           mapping_id?: string
           member_id?: string | null
+          page_url?: string | null
           radio_id?: string | null
+          raw_query?: Json | null
           redirect_url?: string | null
           site_ref?: string | null
           ssid?: string | null
