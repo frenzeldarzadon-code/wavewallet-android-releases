@@ -2828,6 +2828,8 @@ export type Database = {
           created_by: string | null
           ecosystem_id: string
           health_state: string
+          hotspot_operator_secret_ciphertext: string | null
+          hotspot_operator_user: string | null
           id: string
           last_checked_at: string | null
           last_error: string | null
@@ -2855,6 +2857,8 @@ export type Database = {
           created_by?: string | null
           ecosystem_id: string
           health_state?: string
+          hotspot_operator_secret_ciphertext?: string | null
+          hotspot_operator_user?: string | null
           id?: string
           last_checked_at?: string | null
           last_error?: string | null
@@ -2882,6 +2886,8 @@ export type Database = {
           created_by?: string | null
           ecosystem_id?: string
           health_state?: string
+          hotspot_operator_secret_ciphertext?: string | null
+          hotspot_operator_user?: string | null
           id?: string
           last_checked_at?: string | null
           last_error?: string | null

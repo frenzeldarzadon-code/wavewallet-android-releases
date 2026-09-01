@@ -45,6 +45,8 @@ export function normalizePortalFlags(value: unknown): PortalFeatureFlags {
 export interface PortalParams {
   mappingId: string | null;
   clientMac: string | null;
+  /** Client IP, required by Omada's external-portal authorization API. */
+  clientIp: string | null;
   apMac: string | null;
   ssidName: string | null;
   radioId: string | null;
@@ -54,6 +56,7 @@ export interface PortalParams {
 
 const ALIASES: Record<keyof Omit<PortalParams, "mappingId">, string[]> = {
   clientMac: ["clientMac", "client_mac", "mac"],
+  clientIp: ["clientIp", "client_ip", "ip"],
   apMac: ["apMac", "ap_mac", "ap"],
   ssidName: ["ssidName", "ssid", "ssid_name"],
   radioId: ["radioId", "radio_id", "radio"],
@@ -77,6 +80,7 @@ export function parsePortalParams(search: Record<string, unknown>): PortalParams
     clientMac: normalizeMac(first(search, ALIASES.clientMac)),
     apMac: normalizeMac(first(search, ALIASES.apMac)),
     ssidName: first(search, ALIASES.ssidName),
+    clientIp: first(search, ALIASES.clientIp),
     radioId: first(search, ALIASES.radioId),
     siteRef: first(search, ALIASES.siteRef),
     redirectUrl: first(search, ALIASES.redirectUrl),

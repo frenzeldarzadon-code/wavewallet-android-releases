@@ -25,7 +25,7 @@ export interface PortalCapabilities {
   authorizeSupported: boolean;
   authorizePath: string | null;
   /** How the authorize path is scoped: site-relative or controller-relative. */
-  authorizeScope: "site" | "controller" | null;
+  authorizeScope: "site" | "controller" | "hotspot" | null;
   /** HTTP method the controller accepts on the authorize path. */
   authorizeMethod: "GET" | "POST" | null;
 
@@ -70,6 +70,31 @@ async function rawGet(url: string, token: string) {
       body: null as unknown,
       error: (e instanceof Error ? e.message : String(e)).slice(0, 200),
     };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function rawPostJson(url: string, body: unknown) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json", accept: "application/json" },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    const text = await res.text();
+    let parsed: unknown = text.slice(0, 2000);
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      /* HTML means the controller served its web app instead of the API */
+    }
+    return { ok: res.ok, status: res.status, body: parsed };
+  } catch {
+    return { ok: false, status: 0, body: null as unknown };
   } finally {
     clearTimeout(timer);
   }
@@ -132,8 +157,7 @@ export function toPortal(row: Record<string, unknown>): OmadaPortal | null {
  * ------------------------------------------------------------------ */
 
 const PORTAL_LIST = /\/(setting\/portals|hotspot\/portals|portals)$/;
-const AUTHORIZE =
-  /(clients\/authorize|extportal\/auth|hotspot\/auth|clients\/\{[^}]+\}\/authorize|authorize\/client|portal\/auth)$/i;
+const AUTHORIZE = /(extportal\/auth)$/i;
 
 /**
  * Read-only portal listings Omada actually serves. `/portals` is the site-scoped
@@ -144,19 +168,20 @@ const AUTHORIZE =
 const PROBE_LIST_PATHS = ["/portals", "/setting/portals", "/hotspot/portals"];
 
 /**
- * Client-authorization endpoints. On 6.x the site-scoped
- * `GET /clients/authorize?clientMac=...` puts a client online; probing it with
- * no parameters answers "this client does not exist", which proves the route and
- * the permission without touching any real client.
+ * There is NO client-authorization endpoint in the Open API v1 surface.
+ *
+ * `/openapi/v1/{omadacId}/sites/{siteId}/clients/authorize` merely matches the
+ * client-detail route `/clients/{clientMac}` with the literal MAC "authorize",
+ * so the controller answers `-41011 This client does not exist.` — for ANY
+ * request, including one carrying a real, connected client's MAC. Treating that
+ * reply as proof of support made WaveWallet call a non-existent endpoint on
+ * every purchase. Client authorization is only available through the documented
+ * External Portal API, which needs a Hotspot Operator sign-in.
  */
-const PROBE_AUTHORIZE: Array<{ path: string; method: "GET" | "POST" }> = [
-  { path: "/clients/authorize", method: "GET" },
-  { path: "/hotspot/extportal/auth", method: "POST" },
-  { path: "/extportal/auth", method: "POST" },
-];
+const EXT_PORTAL_LOGIN = (base: string, omadacId: string) =>
+  `${base}/${omadacId}/api/v2/hotspot/login`;
+const EXT_PORTAL_AUTH_PATH = "/{omadacId}/api/v2/hotspot/extPortal/auth";
 
-/** Error codes that mean "route reachable, arguments missing" — not "unsupported". */
-const REACHABLE_CODES = new Set([-41011, -41012, -1001, -1005]);
 
 export async function readInfo(session: OmadaSession) {
   const res = await rawGet(`${session.base}/api/info`, session.token);
@@ -171,8 +196,14 @@ export async function readInfo(session: OmadaSession) {
  * Works out what this controller can actually do for a WaveWallet captive
  * portal. Every branch records why, so the admin sees the real state.
  */
+export interface DiscoverOptions {
+  /** Whether this shop saved a Hotspot Operator sign-in for the portal API. */
+  hotspotOperatorConfigured?: boolean;
+}
+
 export async function discoverPortalCapabilities(
   session: OmadaSession,
+  opts?: DiscoverOptions,
 ): Promise<PortalCapabilities> {
   const info = await readInfo(session);
   const caps: PortalCapabilities = {
@@ -199,12 +230,11 @@ export async function discoverPortalCapabilities(
         caps.listPath = path;
         caps.listSupported = true;
       }
-      if (!caps.authorizePath && AUTHORIZE.test(path) && (ops["post"] || ops["put"] || ops["get"])) {
-        caps.authorizePath = path;
-        caps.authorizeSupported = true;
-        caps.authorizeMethod = ops["post"] || ops["put"] ? "POST" : "GET";
-        caps.authorizeScope = path.includes("/sites/") ? "site" : "controller";
-      }
+      // Client authorization is deliberately NOT taken from this document: the
+      // Open API surface has no such route, and the only endpoint that works is
+      // the External Portal API probed further below.
+      void AUTHORIZE;
+
     }
     caps.notes.push(
       `Read the controller's own API document (${Object.keys(paths).length} documented paths).`,
@@ -237,28 +267,32 @@ export async function discoverPortalCapabilities(
     }
   }
 
-  if (!caps.authorizeSupported) {
-    for (const probe of PROBE_AUTHORIZE) {
-      // Probed without parameters: the controller can only accept or reject the
-      // route itself, never authorize a real device.
-      const res = await rawGet(`${sitePrefix}${probe.path}`, session.token);
-      const env = omadaEnvelope(res.body);
-      const reachable =
-        res.status !== 404 &&
-        (env.code === 0 || (env.code !== null && REACHABLE_CODES.has(env.code)) || res.status === 405);
-      if (reachable) {
-        caps.authorizeSupported = true;
-        caps.authorizeScope = "site";
-        caps.authorizeMethod = res.status === 405 ? "POST" : probe.method;
-        caps.authorizePath = `/openapi/v1/{omadacId}/sites/{siteId}${probe.path}`;
-        caps.notes.push(`Client authorization verified live at ${probe.path}.`);
-        break;
-      }
+  // Client authorization: the documented External Portal API. The probe only
+  // checks that the hotspot login ROUTE exists and answers a JSON envelope; it
+  // never signs in with real credentials here and never touches a client.
+  {
+    const res = await rawPostJson(EXT_PORTAL_LOGIN(session.base, session.omadacId), {});
+    const env = omadaEnvelope(res.body);
+    const routeExists = env.code !== null;
+    if (!routeExists) {
       caps.notes.push(
-        `No client-authorization endpoint at ${probe.path} (${env.msg || `HTTP ${res.status}`}).`,
+        "This controller did not answer the external-portal hotspot API, so devices cannot be put online automatically.",
+      );
+    } else if (!opts?.hotspotOperatorConfigured) {
+      caps.notes.push(
+        "The external-portal hotspot API is available, but this shop has not saved a Hotspot Operator sign-in yet.",
+      );
+    } else {
+      caps.authorizeSupported = true;
+      caps.authorizeScope = "hotspot";
+      caps.authorizeMethod = "POST";
+      caps.authorizePath = EXT_PORTAL_AUTH_PATH;
+      caps.notes.push(
+        "Client authorization uses the external-portal hotspot API with this shop's own Hotspot Operator sign-in.",
       );
     }
   }
+
 
   if (!caps.listSupported) {
     caps.limitation =
@@ -267,7 +301,9 @@ export async function discoverPortalCapabilities(
       "The exact controller replies are listed above.";
   } else if (!caps.authorizeSupported) {
     caps.limitation =
-      "Portals can be read, but this controller did not accept any known client-authorization endpoint. Customers can still buy a voucher in the portal and enter it in the hotspot login page; automatic sign-on stays disabled rather than reporting a false success.";
+      "Portals can be read, but WaveWallet cannot put a device online automatically yet. " +
+      "Automatic sign-on uses the controller's external-portal hotspot API, which needs this shop's own Hotspot Operator username and password saved in the Omada connection settings. " +
+      "Until then, customers can still buy a voucher in the portal and enter the code on the hotspot login page — WaveWallet never reports a false success.";
   }
   return caps;
 }
@@ -295,9 +331,14 @@ export async function listSitePortals(
 
 export interface AuthorizeInput {
   clientMac: string;
+  /** The client's IP as Omada reported it; the external-portal API wants it. */
+  clientIp?: string | null;
   apMac: string | null;
   ssidName: string | null;
   radioId: string | null;
+  /** Wired clients arrive through a gateway instead of an EAP. */
+  gatewayMac?: string | null;
+  vid?: string | null;
   /** Access duration in milliseconds, derived from the purchased product. */
   durationMs: number;
   /** The real voucher code bought from the shop's own Voucher Shop. */
@@ -310,85 +351,63 @@ export interface AuthorizeOutcome {
 }
 
 /**
- * Puts the CURRENT client online for the purchased duration. Throws a typed
- * OmadaError when the capability was never verified — the caller must surface
- * that honestly instead of pretending the customer is connected.
+ * Puts the CURRENT client online for the purchased duration through the
+ * documented External Portal API. Throws a typed OmadaError when the capability
+ * was never verified — the caller must surface that honestly instead of
+ * pretending the customer is connected.
  */
 export async function authorizePortalClient(
   session: OmadaSession,
   caps: PortalCapabilities,
   input: AuthorizeInput,
+  credentials?: import("./omada-hotspot.server").HotspotCredentials | null,
 ): Promise<AuthorizeOutcome> {
-  if (!caps.authorizeSupported || !caps.authorizePath) {
+  if (!caps.authorizeSupported || caps.authorizeScope !== "hotspot") {
     throw new OmadaError(
       caps.limitation ??
-        "This controller did not publish a client-authorization endpoint, so WaveWallet cannot put the device online automatically.",
+        "This controller cannot put the device online automatically yet. Your voucher is safe — enter the code on the hotspot login page.",
       "api",
     );
   }
-  const body: Record<string, unknown> = {
-    clientMac: input.clientMac,
-    time: Math.max(60_000, Math.round(input.durationMs)),
-    authType: input.voucherCode ? 2 : 4,
-  };
-  if (input.apMac) body["apMac"] = input.apMac;
-  if (input.ssidName) body["ssidName"] = input.ssidName;
-  if (input.radioId !== null && input.radioId !== undefined && input.radioId !== "") {
-    body["radioId"] = Number(input.radioId);
-  }
-  if (input.voucherCode) body["voucherCode"] = input.voucherCode;
-
-  if (caps.authorizeScope === "site") {
-    const suffix = caps.authorizePath.replace(/^.*\{siteId\}/, "");
-    if (caps.authorizeMethod === "GET") {
-      // 6.x takes the authorization as query parameters on a GET route.
-      const query = new URLSearchParams();
-      for (const [k, v] of Object.entries(body)) query.set(k, String(v));
-      await omadaSiteCall(session, `${suffix}?${query.toString()}`);
-    } else {
-      await omadaSiteCall(session, suffix, { method: "POST", body: JSON.stringify(body) });
-    }
-    return { ok: true, detail: "The controller accepted the authorization." };
-  }
-
-
-  const url = `${session.base}${caps.authorizePath
-    .replace("{omadacId}", session.omadacId)
-    .replace("{siteId}", session.siteId)}`;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `AccessToken=${session.token}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
-    const text = await res.text();
-    let parsed: unknown = text.slice(0, 2000);
-    try {
-      parsed = JSON.parse(text);
-    } catch {
-      /* keep text */
-    }
-    const env = omadaEnvelope(parsed);
-    if (!res.ok || (env.code !== null && env.code !== 0)) {
-      throw new OmadaError(
-        `The controller refused the authorization: ${env.msg || `HTTP ${res.status}`}`,
-        "api",
-      );
-    }
-    return { ok: true, detail: "The controller accepted the authorization." };
-  } catch (e) {
-    if (e instanceof OmadaError) throw e;
+  if (!credentials) {
     throw new OmadaError(
-      `Controller not reachable: ${(e instanceof Error ? e.message : String(e)).slice(0, 200)}`,
-      "unreachable",
+      "This shop has not saved its Hotspot Operator sign-in, so WaveWallet cannot put the device online automatically. Your voucher is safe — enter the code on the hotspot login page.",
+      "auth",
     );
-  } finally {
-    clearTimeout(timer);
   }
+  const { authorizeExternalPortalClient } = await import("./omada-hotspot.server");
+  await authorizeExternalPortalClient(credentials, {
+    clientMac: input.clientMac,
+    clientIp: input.clientIp ?? null,
+    apMac: input.apMac,
+    ssidName: input.ssidName,
+    radioId: input.radioId,
+    gatewayMac: input.gatewayMac ?? null,
+    vid: input.vid ?? null,
+    timeMs: input.durationMs,
+  });
+  return { ok: true, detail: "The controller accepted the authorization." };
+}
+
+/**
+ * The controller's own view of ONE client (read-only). Used to fill in details
+ * an Omada redirect may not carry, such as the client IP.
+ */
+export async function fetchClientContext(
+  session: OmadaSession,
+  clientMac: string,
+): Promise<{ ip: string | null; apMac: string | null; ssid: string | null; radioId: string | null } | null> {
+  const res = await rawGet(
+    `${session.base}/openapi/v1/${session.omadacId}/sites/${session.siteId}/clients/${encodeURIComponent(clientMac)}`,
+    session.token,
+  );
+  const env = omadaEnvelope(res.body);
+  if (!res.ok || env.code !== 0 || !env.result || typeof env.result !== "object") return null;
+  const r = env.result as Record<string, unknown>;
+  return {
+    ip: typeof r["ip"] === "string" ? r["ip"] : null,
+    apMac: typeof r["apMac"] === "string" ? r["apMac"] : null,
+    ssid: typeof r["ssid"] === "string" ? r["ssid"] : null,
+    radioId: r["radioId"] === undefined || r["radioId"] === null ? null : String(r["radioId"]),
+  };
 }
