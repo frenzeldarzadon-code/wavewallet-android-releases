@@ -374,6 +374,17 @@ ${MARKER}
   <div class="ww-wrap">
 
     <section class="ww-card">
+      <p class="ww-eyebrow" data-ww-auth-eyebrow>Already have a code?</p>
+      <h2 class="ww-title" style="font-size:18px" data-ww-auth-title>Enter your voucher</h2>
+      <div class="ww-seg" data-ww-methods role="tablist" hidden></div>
+      <div class="ww-slot" id="ww-voucher-slot">
+        <p class="ww-sub" data-ww-slot-fallback>Use the hotspot login form on this page to enter your code.</p>
+      </div>
+      <div class="ww-slot" id="ww-auth-action"></div>
+      <p class="ww-error" data-ww-error hidden></p>
+    </section>
+
+    <section class="ww-card">
       <p class="ww-eyebrow">${escapeHtml(ctx.shopName)} Wi-Fi</p>
       <h1 class="ww-title" data-ww-greeting>Buy a voucher to resume internet</h1>
       <p class="ww-sub" data-ww-sub>Enter the voucher code you already have, or get one in seconds.</p>
@@ -393,16 +404,6 @@ ${MARKER}
       </div>
     </section>
 
-    <section class="ww-card">
-      <p class="ww-eyebrow" data-ww-auth-eyebrow>Already have a code?</p>
-      <h2 class="ww-title" style="font-size:18px" data-ww-auth-title>Enter your voucher</h2>
-      <div class="ww-seg" data-ww-methods role="tablist" hidden></div>
-      <div class="ww-slot" id="ww-voucher-slot">
-        <p class="ww-sub" data-ww-slot-fallback>Use the hotspot login form on this page to enter your code.</p>
-      </div>
-      <div class="ww-slot" id="ww-auth-action"></div>
-      <p class="ww-error" data-ww-error hidden></p>
-    </section>
 
     ${
       features.signUpLink
