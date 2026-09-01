@@ -19,7 +19,7 @@ import {
   THEME_DECOR_MARKUP,
   type PortalTheme,
 } from "./portal-themes";
-import { portalSectionsHtml } from "./portal-sections";
+import { escapeHtml, portalSectionsHtml } from "./portal-sections";
 
 /* ------------------------------------------------------------------ *
  * Features                                                            *
@@ -301,7 +301,7 @@ export interface GenerateContext {
 }
 
 
-export { escapeHtml } from "./portal-sections";
+export { escapeHtml };
 
 /** JSON that is safe to embed inside a <script> block. */
 function jsonForScript(value: unknown): string {
