@@ -123,7 +123,7 @@ export const getPortalSetup = createServerFn({ method: "POST" })
     try {
       const session = await openOmadaSession(supabaseAdmin as never, data.ecosystemId);
       const capabilities = await discoverPortalCapabilities(session, {
-        hotspotOperatorConfigured: Boolean(await loadHotspotCredentials(supabaseAdmin, ecosystemId)),
+        hotspotOperatorConfigured: Boolean(await loadHotspotCredentials(supabaseAdmin, data.ecosystemId)),
       });
       const res = await fetch(
         `${session.base}/openapi/v1/${session.omadacId}/sites?page=1&pageSize=100`,
@@ -176,7 +176,7 @@ export const listSitePortalOptions = createServerFn({ method: "POST" })
     try {
       const session = await openOmadaSession(supabaseAdmin as never, data.ecosystemId);
       const caps = await discoverPortalCapabilities(session, {
-        hotspotOperatorConfigured: Boolean(await loadHotspotCredentials(supabaseAdmin, ecosystemId)),
+        hotspotOperatorConfigured: Boolean(await loadHotspotCredentials(supabaseAdmin, data.ecosystemId)),
       });
       const portals = await listSitePortals({ ...session, siteId: data.siteId }, caps);
       return { portals: portals.map((p) => ({ id: p.id, name: p.name, ssids: p.ssids })), error: null };
@@ -338,7 +338,7 @@ export const testPortalMapping = createServerFn({ method: "POST" })
           detail: "Authenticated with this shop's own stored credentials.",
         });
         const caps = await discoverPortalCapabilities(session, {
-        hotspotOperatorConfigured: Boolean(await loadHotspotCredentials(supabaseAdmin, ecosystemId)),
+        hotspotOperatorConfigured: Boolean(await loadHotspotCredentials(supabaseAdmin, data.ecosystemId)),
       });
         steps.push({
           step: "Controller capability",
