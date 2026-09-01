@@ -333,44 +333,45 @@ function PortalPage() {
       </Card>
 
       {state.flags.allowPurchase ? (
-        signedIn ? (
-          <Card className="shadow-[var(--shadow-card)]">
-            <CardHeader>
-              <CardTitle className="text-sm">
-                {displayName ? `Hi, ${displayName}` : "Buy access"}
-              </CardTitle>
-              <CardDescription className="flex flex-wrap gap-3">
-                {state.flags.showCoins && wallets ? (
-                  <span className="inline-flex items-center gap-1">
-                    <Coins className="h-3.5 w-3.5" /> {wallets.credits.toFixed(2)} coins
-                  </span>
-                ) : null}
-                {state.flags.showPoints && wallets ? (
-                  <span className="inline-flex items-center gap-1">
-                    <Sparkles className="h-3.5 w-3.5" /> {wallets.points} points
-                  </span>
-                ) : null}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {!isMember ? (
-                <p className="text-sm text-muted-foreground">
-                  You are not a member of {state.shopName} yet, so you cannot buy here. You can
-                  still connect with a voucher code above.
-                </p>
-              ) : products.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  This shop has no Wi-Fi package on sale right now.
-                </p>
+        <Card className="shadow-[var(--shadow-card)]">
+          <CardHeader>
+            <CardTitle className="text-sm">
+              {signedIn && displayName ? `Hi, ${displayName}` : "Buy a voucher"}
+            </CardTitle>
+            <CardDescription className="flex flex-wrap gap-3">
+              {signedIn && wallets ? (
+                <>
+                  {state.flags.showCoins ? (
+                    <span className="inline-flex items-center gap-1">
+                      <Coins className="h-3.5 w-3.5" /> {wallets.credits.toFixed(2)} coins
+                    </span>
+                  ) : null}
+                  {state.flags.showPoints ? (
+                    <span className="inline-flex items-center gap-1">
+                      <Sparkles className="h-3.5 w-3.5" /> {wallets.points} points
+                    </span>
+                  ) : null}
+                </>
               ) : (
-                products.map((p) => {
-                  const out = p.available <= 0;
-                  const short = wallets !== null && wallets.credits < p.price;
-                  return (
-                    <div
-                      key={p.id}
-                      className="flex items-center justify-between gap-3 rounded-md border p-3"
-                    >
+                <span>Wi-Fi packages from {state.shopName}.</span>
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {products.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                This shop has no Wi-Fi package on sale right now.
+              </p>
+            ) : (
+              products.map((p) => {
+                const out = p.available <= 0;
+                const short = wallets !== null && wallets.credits < p.price;
+                const canBuy = signedIn && isMember;
+                const pointsPrice = p.pointsPrice ?? 0;
+                const pointsShort = wallets !== null && wallets.points < pointsPrice;
+                return (
+                  <div key={p.id} className="rounded-md border p-3">
+                    <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">{p.name}</p>
                         <p className="text-xs text-muted-foreground">
@@ -380,62 +381,102 @@ function PortalPage() {
                           {out ? " · out of stock" : ""}
                         </p>
                       </div>
-                      <Button
-                        size="sm"
-                        disabled={busy !== "" || out || short}
-                        onClick={() => void buyAndConnect(p.id)}
-                      >
-                        {busy === p.id
-                          ? "Buying…"
-                          : short
-                            ? "Not enough coins"
-                            : `${p.price.toFixed(2)} coins`}
-                      </Button>
+                      {canBuy ? (
+                        <Button
+                          size="sm"
+                          disabled={busy !== "" || out || short}
+                          onClick={() => void buyAndConnect(p.id)}
+                        >
+                          {busy === p.id
+                            ? "Buying…"
+                            : short
+                              ? "Not enough coins"
+                              : `${p.price.toFixed(2)} coins`}
+                        </Button>
+                      ) : (
+                        <span className="shrink-0 text-sm font-semibold">
+                          {p.price.toFixed(2)} coins
+                        </span>
+                      )}
                     </div>
-                  );
-                })
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="shadow-[var(--shadow-card)]">
-            <CardHeader>
-              <CardTitle className="text-sm">Use my WaveWallet</CardTitle>
-              <CardDescription>
-                Sign in to buy Wi-Fi access with your coins from {state.shopName}.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="portal-id">Email or mobile number</Label>
-                <Input
-                  id="portal-id"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  autoComplete="username"
-                />
+                    {pointsPrice > 0 ? (
+                      canBuy ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-2 w-full"
+                          disabled={busy !== "" || out || pointsShort}
+                          onClick={() => void buyAndConnect(p.id, true)}
+                        >
+                          {busy === `${p.id}:points`
+                            ? "Redeeming…"
+                            : pointsShort
+                              ? "Not enough points"
+                              : `Or redeem ${pointsPrice} points`}
+                        </Button>
+                      ) : (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Or redeem {pointsPrice} points
+                        </p>
+                      )
+                    ) : null}
+                  </div>
+                );
+              })
+            )}
+
+            {signedIn && !isMember ? (
+              <div className="space-y-2 rounded-md border border-dashed p-3">
+                <p className="text-sm text-muted-foreground">
+                  You are signed in but not a member of {state.shopName} yet.
+                </p>
+                {state.shopCode ? (
+                  <Button
+                    className="w-full"
+                    disabled={busy !== ""}
+                    onClick={() => void joinThisShop()}
+                  >
+                    {busy === "join" ? "Joining…" : `Join ${state.shopName}`}
+                  </Button>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Ask the shop for their signup link, or connect with a voucher code above.
+                  </p>
+                )}
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="portal-pw">Password</Label>
-                <Input
-                  id="portal-pw"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                />
+            ) : null}
+
+            {!signedIn ? (
+              <div className="space-y-2 pt-1">
+                <p className="text-sm text-muted-foreground">
+                  Sign in to {state.shopName} to buy with your coins or points.
+                </p>
+                {authLinks ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button asChild className="w-full">
+                      <a href={authLinks.signIn}>
+                        <LogIn className="mr-1.5 h-4 w-4" /> Sign In
+                      </a>
+                    </Button>
+                    <Button asChild variant="outline" className="w-full">
+                      <a href={authLinks.signUp}>
+                        <UserPlus className="mr-1.5 h-4 w-4" /> Sign Up
+                      </a>
+                    </Button>
+                  </div>
+                ) : state.shopSlug ? (
+                  <Button asChild className="w-full">
+                    <a href={`/join/${state.shopSlug}`}>
+                      <UserPlus className="mr-1.5 h-4 w-4" /> Create your account
+                    </a>
+                  </Button>
+                ) : null}
               </div>
-              <Button
-                className="w-full"
-                disabled={busy !== "" || !identifier || !password}
-                onClick={() => void doSignIn()}
-              >
-                {busy === "signin" ? "Signing in…" : "Sign in"}
-              </Button>
-            </CardContent>
-          </Card>
-        )
+            ) : null}
+          </CardContent>
+        </Card>
       ) : null}
+
     </Shell>
   );
 }
