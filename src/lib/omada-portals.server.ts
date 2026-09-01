@@ -331,9 +331,14 @@ export async function listSitePortals(
 
 export interface AuthorizeInput {
   clientMac: string;
+  /** The client's IP as Omada reported it; the external-portal API wants it. */
+  clientIp?: string | null;
   apMac: string | null;
   ssidName: string | null;
   radioId: string | null;
+  /** Wired clients arrive through a gateway instead of an EAP. */
+  gatewayMac?: string | null;
+  vid?: string | null;
   /** Access duration in milliseconds, derived from the purchased product. */
   durationMs: number;
   /** The real voucher code bought from the shop's own Voucher Shop. */
@@ -346,85 +351,63 @@ export interface AuthorizeOutcome {
 }
 
 /**
- * Puts the CURRENT client online for the purchased duration. Throws a typed
- * OmadaError when the capability was never verified — the caller must surface
- * that honestly instead of pretending the customer is connected.
+ * Puts the CURRENT client online for the purchased duration through the
+ * documented External Portal API. Throws a typed OmadaError when the capability
+ * was never verified — the caller must surface that honestly instead of
+ * pretending the customer is connected.
  */
 export async function authorizePortalClient(
   session: OmadaSession,
   caps: PortalCapabilities,
   input: AuthorizeInput,
+  credentials?: import("./omada-hotspot.server").HotspotCredentials | null,
 ): Promise<AuthorizeOutcome> {
-  if (!caps.authorizeSupported || !caps.authorizePath) {
+  if (!caps.authorizeSupported || caps.authorizeScope !== "hotspot") {
     throw new OmadaError(
       caps.limitation ??
-        "This controller did not publish a client-authorization endpoint, so WaveWallet cannot put the device online automatically.",
+        "This controller cannot put the device online automatically yet. Your voucher is safe — enter the code on the hotspot login page.",
       "api",
     );
   }
-  const body: Record<string, unknown> = {
-    clientMac: input.clientMac,
-    time: Math.max(60_000, Math.round(input.durationMs)),
-    authType: input.voucherCode ? 2 : 4,
-  };
-  if (input.apMac) body["apMac"] = input.apMac;
-  if (input.ssidName) body["ssidName"] = input.ssidName;
-  if (input.radioId !== null && input.radioId !== undefined && input.radioId !== "") {
-    body["radioId"] = Number(input.radioId);
-  }
-  if (input.voucherCode) body["voucherCode"] = input.voucherCode;
-
-  if (caps.authorizeScope === "site") {
-    const suffix = caps.authorizePath.replace(/^.*\{siteId\}/, "");
-    if (caps.authorizeMethod === "GET") {
-      // 6.x takes the authorization as query parameters on a GET route.
-      const query = new URLSearchParams();
-      for (const [k, v] of Object.entries(body)) query.set(k, String(v));
-      await omadaSiteCall(session, `${suffix}?${query.toString()}`);
-    } else {
-      await omadaSiteCall(session, suffix, { method: "POST", body: JSON.stringify(body) });
-    }
-    return { ok: true, detail: "The controller accepted the authorization." };
-  }
-
-
-  const url = `${session.base}${caps.authorizePath
-    .replace("{omadacId}", session.omadacId)
-    .replace("{siteId}", session.siteId)}`;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `AccessToken=${session.token}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
-    const text = await res.text();
-    let parsed: unknown = text.slice(0, 2000);
-    try {
-      parsed = JSON.parse(text);
-    } catch {
-      /* keep text */
-    }
-    const env = omadaEnvelope(parsed);
-    if (!res.ok || (env.code !== null && env.code !== 0)) {
-      throw new OmadaError(
-        `The controller refused the authorization: ${env.msg || `HTTP ${res.status}`}`,
-        "api",
-      );
-    }
-    return { ok: true, detail: "The controller accepted the authorization." };
-  } catch (e) {
-    if (e instanceof OmadaError) throw e;
+  if (!credentials) {
     throw new OmadaError(
-      `Controller not reachable: ${(e instanceof Error ? e.message : String(e)).slice(0, 200)}`,
-      "unreachable",
+      "This shop has not saved its Hotspot Operator sign-in, so WaveWallet cannot put the device online automatically. Your voucher is safe — enter the code on the hotspot login page.",
+      "auth",
     );
-  } finally {
-    clearTimeout(timer);
   }
+  const { authorizeExternalPortalClient } = await import("./omada-hotspot.server");
+  await authorizeExternalPortalClient(credentials, {
+    clientMac: input.clientMac,
+    clientIp: input.clientIp ?? null,
+    apMac: input.apMac,
+    ssidName: input.ssidName,
+    radioId: input.radioId,
+    gatewayMac: input.gatewayMac ?? null,
+    vid: input.vid ?? null,
+    timeMs: input.durationMs,
+  });
+  return { ok: true, detail: "The controller accepted the authorization." };
+}
+
+/**
+ * The controller's own view of ONE client (read-only). Used to fill in details
+ * an Omada redirect may not carry, such as the client IP.
+ */
+export async function fetchClientContext(
+  session: OmadaSession,
+  clientMac: string,
+): Promise<{ ip: string | null; apMac: string | null; ssid: string | null; radioId: string | null } | null> {
+  const res = await rawGet(
+    `${session.base}/openapi/v1/${session.omadacId}/sites/${session.siteId}/clients/${encodeURIComponent(clientMac)}`,
+    session.token,
+  );
+  const env = omadaEnvelope(res.body);
+  if (!res.ok || env.code !== 0 || !env.result || typeof env.result !== "object") return null;
+  const r = env.result as Record<string, unknown>;
+  return {
+    ip: typeof r["ip"] === "string" ? r["ip"] : null,
+    apMac: typeof r["apMac"] === "string" ? r["apMac"] : null,
+    ssid: typeof r["ssid"] === "string" ? r["ssid"] : null,
+    radioId: r["radioId"] === undefined || r["radioId"] === null ? null : String(r["radioId"]),
+  };
 }
