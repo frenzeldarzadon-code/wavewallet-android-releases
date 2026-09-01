@@ -75,10 +75,42 @@ export function isDiscoverable(loc: {
   return Boolean(loc.province && loc.cityMunicipality);
 }
 
-/** The direct, shop-specific sign-up link an admin can copy and share. */
-export function shopSignupLink(origin: string, shopCode: string): string {
-  return `${origin.replace(/\/$/, "")}/?shop=${normalizeShopCode(shopCode)}`;
+/**
+ * A path inside this app that a shop link may return to after authenticating.
+ * Anything absolute, protocol-relative or otherwise foreign is rejected, so a
+ * shop link can never bounce a customer to another site.
+ */
+export function safeReturnPath(raw: string | null | undefined): string | null {
+  const value = (raw ?? "").trim();
+  if (!value.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) return null;
+  if (value.length > 512) return null;
+  return value;
 }
+
+/** The direct, shop-specific sign-up link an admin can copy and share. */
+export function shopSignupLink(origin: string, shopCode: string, returnTo?: string): string {
+  return shopAuthLink(origin, shopCode, "signup", returnTo);
+}
+
+/** The direct, shop-specific sign-in link, keeping the shop context afterwards. */
+export function shopSignInLink(origin: string, shopCode: string, returnTo?: string): string {
+  return shopAuthLink(origin, shopCode, "signin", returnTo);
+}
+
+function shopAuthLink(
+  origin: string,
+  shopCode: string,
+  mode: "signin" | "signup",
+  returnTo?: string,
+): string {
+  const params = new URLSearchParams({ shop: normalizeShopCode(shopCode) });
+  // Sign-up is the historical default of a shop link, so it stays parameterless.
+  if (mode === "signin") params.set("mode", "signin");
+  const next = safeReturnPath(returnTo);
+  if (next) params.set("next", next);
+  return `${origin.replace(/\/$/, "")}/?${params.toString()}`;
+}
+
 
 /* ------------------------------------------------------------------ */
 /* Data access                                                         */
