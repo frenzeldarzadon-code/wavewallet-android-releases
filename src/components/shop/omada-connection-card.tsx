@@ -29,6 +29,8 @@ export function OmadaConnectionCard({ ecosystemId }: { ecosystemId: string | nul
     clientId: "",
     clientSecret: "",
     siteName: "",
+    hotspotOperatorUser: "",
+    hotspotOperatorPassword: "",
   });
   const [busy, setBusy] = useState<"" | "save" | "test" | "disconnect">("");
   const [report, setReport] = useState<ProbeReport | null>(null);
