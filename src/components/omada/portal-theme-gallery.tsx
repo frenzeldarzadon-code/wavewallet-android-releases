@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { portalThemePreviewHtml, type PortalTheme } from "@/lib/portal-themes";
+import type { PortalSectionFeatures } from "@/lib/portal-sections";
 
 interface Props {
   themes: PortalTheme[];
@@ -27,6 +28,9 @@ interface Props {
   shopName: string;
   busy?: boolean;
   disabled?: boolean;
+  /** The features currently enabled for this portal, so the design preview
+   *  shows the same cards and buttons the generated page will contain. */
+  features?: Partial<PortalSectionFeatures> | undefined;
   onSelect: (slug: string) => void;
 }
 
@@ -36,6 +40,7 @@ export function PortalThemeGallery({
   shopName,
   busy = false,
   disabled = false,
+  features,
   onSelect,
 }: Props) {
   const [preview, setPreview] = useState<PortalTheme | null>(null);
@@ -79,7 +84,7 @@ export function PortalThemeGallery({
                 <span className="pointer-events-none block h-[132px] w-full overflow-hidden bg-muted">
                   <iframe
                     title={`${theme.name} preview`}
-                    srcDoc={portalThemePreviewHtml(theme, { shopName, compact: true })}
+                    srcDoc={portalThemePreviewHtml(theme, { shopName, compact: true, features })}
                     sandbox=""
                     loading="lazy"
                     aria-hidden="true"
@@ -123,11 +128,16 @@ export function PortalThemeGallery({
               <div className="mx-auto w-full max-w-[340px] overflow-hidden rounded-2xl border">
                 <iframe
                   title={`${preview.name} full preview`}
-                  srcDoc={portalThemePreviewHtml(preview, { shopName })}
+                  srcDoc={portalThemePreviewHtml(preview, { shopName, features })}
                   sandbox=""
                   className="h-[520px] w-full border-0"
                 />
               </div>
+              <p className="text-[11px] text-muted-foreground">
+                Static design preview with representative data. It uses the same layout, copy and
+                CSS as the generated page; real shop products, coins and points only appear on the
+                live portal.
+              </p>
               <Button
                 type="button"
                 disabled={disabled || busy || preview.slug === value}

@@ -16,6 +16,12 @@
  *  - tiny: the whole theme layer is a few kB of CSS.
  */
 
+import {
+  PORTAL_SECTION_FEATURE_DEFAULTS,
+  portalSectionsHtml,
+  type PortalSectionFeatures,
+} from "./portal-sections";
+
 export type PortalThemeLayout = "stack" | "hero" | "split" | "ticket" | "panel" | "card-deck";
 export type PortalThemeDecor =
   | "aurora"
@@ -697,16 +703,23 @@ export const THEME_DECOR_MARKUP = `<div class="ww-decor" aria-hidden="true"><i><
  */
 export function portalThemePreviewHtml(
   theme: PortalTheme,
-  opts: { shopName?: string; compact?: boolean } = {},
+  opts: {
+    shopName?: string | undefined;
+    compact?: boolean | undefined;
+    features?: Partial<PortalSectionFeatures> | undefined;
+  } = {},
 ): string {
-  const shop = (opts.shopName ?? "Your shop").replace(/[<>&"]/g, "");
+  const shop = opts.shopName ?? "Your shop";
   const css = buildPortalThemeCss(theme);
+  const body = portalSectionsHtml({
+    shopName: shop,
+    features: { ...PORTAL_SECTION_FEATURE_DEFAULTS, ...(opts.features ?? {}) },
+    mode: "preview",
+    compact: opts.compact,
+  });
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;background:${theme.tokens.bg2}}${css}</style></head><body>
 <div id="ww-portal">${THEME_DECOR_MARKUP}
 <div class="ww-wrap">
-<section class="ww-card"><p class="ww-eyebrow">${shop} Wi-Fi</p><h1 class="ww-title">Buy a voucher to resume internet</h1><p class="ww-sub">Enter the voucher code you already have, or get one in seconds.</p><div class="ww-actions"><a class="ww-btn ww-btn-primary">Buy a voucher</a><div class="ww-grid"><a class="ww-btn ww-btn-ghost">Cash In</a><a class="ww-btn ww-btn-ghost">Voucher status</a></div></div></section>
-<section class="ww-card"><p class="ww-eyebrow">Already have a code?</p><h2 class="ww-title" style="font-size:18px">Enter your voucher</h2><div class="ww-slot"><input type="text" placeholder="Voucher code"><button type="button">Connect</button></div></section>
-${opts.compact ? "" : `<p class="ww-foot">No account yet? <a>Sign up with ${shop}</a></p>`}
-<p class="ww-foot">Powered by WaveWallet</p>
+    ${body}
 </div></div></body></html>`;
 }

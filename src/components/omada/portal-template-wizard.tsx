@@ -296,6 +296,7 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
                 themes={themes}
                 value={template.themeSlug ?? DEFAULT_PORTAL_THEME_SLUG}
                 shopName={mapping?.portalName ?? "Your shop"}
+                features={features ?? undefined}
                 busy={themeBusy}
                 onSelect={(slug) => void chooseTheme(slug)}
               />
@@ -328,6 +329,14 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
 
             {/* Generate + preview */}
             <div className="space-y-3">
+              {template?.hasGenerated && !generated ? (
+                <p className="rounded-md border border-warning/40 bg-warning/5 p-3 text-[11px] text-muted-foreground">
+                  A page was last generated{" "}
+                  {template.generatedAt ? new Date(template.generatedAt).toLocaleString() : "earlier"}.
+                  The design, features or the canonical Omada template may have changed since then —
+                  generate again to preview and download the current page.
+                </p>
+              ) : null}
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" disabled={busy !== "" || !mappingId} onClick={() => void generate()}>
                   {busy === "generate" ? (
@@ -400,6 +409,11 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
                       className="h-[560px] w-full"
                     />
                   </div>
+                  <p className="mx-auto max-w-[390px] text-[11px] text-muted-foreground">
+                    This is the exact page you are about to download and import — the same file,
+                    rendered offline. Shop products, coins and points are fetched by the live portal
+                    only, so they are not shown here.
+                  </p>
                    <div className="rounded-md border p-3">
                      <p className="text-sm font-medium">Import the downloaded page into Omada</p>
                     <p className="mt-1 text-[11px] text-muted-foreground">

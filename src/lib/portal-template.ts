@@ -19,6 +19,7 @@ import {
   THEME_DECOR_MARKUP,
   type PortalTheme,
 } from "./portal-themes";
+import { escapeHtml, portalSectionsHtml } from "./portal-sections";
 
 /* ------------------------------------------------------------------ *
  * Features                                                            *
@@ -300,14 +301,7 @@ export interface GenerateContext {
 }
 
 
-export function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
+export { escapeHtml };
 
 /** JSON that is safe to embed inside a <script> block. */
 function jsonForScript(value: unknown): string {
@@ -353,16 +347,6 @@ export function generateWaveWalletPortal(
   };
 
 
-  const buttons: string[] = [];
-  if (features.buyVoucher)
-    buttons.push(`<a class="ww-btn ww-btn-primary" data-ww-link="buy">Buy a voucher</a>`);
-  const secondary: string[] = [];
-  if (features.cashIn) secondary.push(`<a class="ww-btn ww-btn-ghost" data-ww-link="cashin">Cash In</a>`);
-  if (features.voucherStatus)
-    secondary.push(`<a class="ww-btn ww-btn-ghost" data-ww-link="status">Voucher status</a>`);
-  if (features.signIn)
-    secondary.push(`<a class="ww-btn ww-btn-ghost" data-ww-link="signin">Sign in</a>`);
-
   const section = `
 ${MARKER}
 <!-- canonical master v${ctx.masterVersion ?? 0} ${escapeHtml(ctx.masterChecksum ?? "unknown")} · site ${escapeHtml(
@@ -372,51 +356,15 @@ ${MARKER}
 <div id="ww-portal" data-ww-theme="${escapeHtml(theme.slug)}">
   ${THEME_DECOR_MARKUP}
   <div class="ww-wrap">
-
-    <section class="ww-card">
-      <p class="ww-eyebrow" data-ww-auth-eyebrow>Already have a code?</p>
-      <h2 class="ww-title" style="font-size:18px" data-ww-auth-title>Enter your voucher</h2>
-      <div class="ww-seg" data-ww-methods role="tablist" hidden></div>
-      <div class="ww-slot" id="ww-voucher-slot">
-        <p class="ww-sub" data-ww-slot-fallback>Use the hotspot login form on this page to enter your code.</p>
-      </div>
-      <div class="ww-slot" id="ww-auth-action"></div>
-      <p class="ww-error" data-ww-error hidden></p>
-    </section>
-
-    <section class="ww-card">
-      <p class="ww-eyebrow">${escapeHtml(ctx.shopName)} Wi-Fi</p>
-      <h1 class="ww-title" data-ww-greeting>Buy a voucher to resume internet</h1>
-      <p class="ww-sub" data-ww-sub>Enter the voucher code you already have, or get one in seconds.</p>
-      <p class="ww-sub" data-ww-status hidden></p>${
-        features.showBalance || features.showPoints
-          ? `\n      <p class="ww-sub">Your ${[
-              features.showBalance ? "coins" : "",
-              features.showPoints ? "points" : "",
-            ]
-              .filter(Boolean)
-              .join(" and ")} and your name appear once you open WaveWallet below.</p>`
-          : ""
-      }
-      <div class="ww-actions">
-        ${buttons.join("\n        ")}
-        ${secondary.length ? `<div class="ww-grid">${secondary.join("")}</div>` : ""}
-      </div>
-    </section>
-
-
-    ${
-      features.signUpLink
-        ? `<p class="ww-foot" data-ww-signup hidden>No account yet? <a data-ww-link="signup">Sign up with ${escapeHtml(
-            ctx.shopName,
-          )}</a></p>`
-        : ""
-    }
-    <p class="ww-foot">Powered by WaveWallet${
-      ctx.portalName ? ` &middot; ${escapeHtml(ctx.portalName)}` : ""
-    }</p>
+    ${portalSectionsHtml({
+      shopName: ctx.shopName,
+      features,
+      mode: "runtime",
+      portalName: ctx.portalName ?? null,
+    })}
   </div>
 </div>
+
 <script id="ww-portal-script">
 (function(){
   var CFG = ${jsonForScript(config)};
