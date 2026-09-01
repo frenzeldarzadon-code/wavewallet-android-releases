@@ -297,18 +297,54 @@ async function performAuthorization(opts: {
   }
 
   const { openOmadaSession } = await import("./omada-api.server");
-  const { discoverPortalCapabilities, authorizePortalClient } = await import("./omada-portals.server");
+  const { discoverPortalCapabilities, authorizePortalClient, fetchClientContext } = await import(
+    "./omada-portals.server"
+  );
+  const { loadHotspotCredentials } = await import("./omada-hotspot.server");
   try {
     const omada = await openOmadaSession(supabaseAdmin, ecosystemId);
-    const caps = await discoverPortalCapabilities(omada);
-    await authorizePortalClient(omada, caps, {
-      clientMac,
-      apMac: (session["ap_mac"] as string | null) ?? null,
-      ssidName: (session["ssid"] as string | null) ?? null,
-      radioId: (session["radio_id"] as string | null) ?? null,
-      durationMs: durationMinutes * 60_000,
-      voucherCode: code,
+    const credentials = await loadHotspotCredentials(supabaseAdmin, ecosystemId);
+    const caps = await discoverPortalCapabilities(omada, {
+      hotspotOperatorConfigured: Boolean(credentials),
     });
+
+    // The external-portal API wants the client's IP. Omada sends it on the
+    // redirect, but a customized portal page may not forward it, so fall back to
+    // the controller's own read-only view of this exact client.
+    let clientIp = (session["client_ip"] as string | null) ?? null;
+    let apMac = (session["ap_mac"] as string | null) ?? null;
+    let ssidName = (session["ssid"] as string | null) ?? null;
+    let radioId = (session["radio_id"] as string | null) ?? null;
+    if (!clientIp || !apMac || !ssidName || radioId === null) {
+      const live = await fetchClientContext(omada, clientMac);
+      if (live) {
+        clientIp = clientIp ?? live.ip;
+        apMac = apMac ?? live.apMac;
+        ssidName = ssidName ?? live.ssid;
+        radioId = radioId ?? live.radioId;
+        if (live.ip && !session["client_ip"]) {
+          await supabaseAdmin
+            .from("portal_sessions")
+            .update({ client_ip: live.ip })
+            .eq("id", session["id"]);
+        }
+      }
+    }
+
+    await authorizePortalClient(
+      omada,
+      caps,
+      {
+        clientMac,
+        clientIp,
+        apMac,
+        ssidName,
+        radioId,
+        durationMs: durationMinutes * 60_000,
+        voucherCode: code,
+      },
+      credentials,
+    );
     const id = await record("authorized", null);
     return {
       ok: true,
@@ -321,12 +357,17 @@ async function performAuthorization(opts: {
   } catch (e) {
     const detail = e instanceof Error ? e.message : String(e);
     const id = await record("failed", detail.slice(0, 500));
+    // The purchase (when there was one) is already complete and its voucher code
+    // belongs to the customer. Never imply it was lost, and never re-charge.
+    const preserved = opts.saleId
+      ? ` Your purchase is complete and your voucher code ${code} is saved in your account — enter it on the hotspot login page, or try again without paying twice.`
+      : "";
     return {
       ok: false,
       authorizationId: id,
       code,
       durationMinutes,
-      message: detail,
+      message: `${detail}${preserved}`,
       redirectUrl: (session["redirect_url"] as string | null) ?? null,
     };
   }
