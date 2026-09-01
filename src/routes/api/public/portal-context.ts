@@ -10,6 +10,7 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { parsePortalParams } from "@/lib/portal-mapping";
+import { sanitizePortalContext } from "@/lib/portal-redeem";
 
 const CORS = {
   "access-control-allow-origin": "*",
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/api/public/portal-context")({
     handlers: {
       OPTIONS: () => new Response(null, { status: 204, headers: CORS }),
       POST: async ({ request }) => {
-        let payload: { mappingId?: unknown; context?: unknown };
+        let payload: { mappingId?: unknown; context?: unknown; pageUrl?: unknown };
         try {
           payload = (await request.json()) as typeof payload;
         } catch {
@@ -45,13 +46,23 @@ export const Route = createFileRoute("/api/public/portal-context")({
           payload.context && typeof payload.context === "object"
             ? (payload.context as Record<string, unknown>)
             : {};
-        const search: Record<string, string> = {};
-        for (const [k, v] of Object.entries(rawContext)) {
-          if (typeof v === "string" && v.length <= 512 && Object.keys(search).length < 40) {
-            search[k] = v;
+        const search = sanitizePortalContext(rawContext);
+        const params = parsePortalParams(search);
+
+        // The page's own address (origin + path only). Stored as reported;
+        // it is only ever USED after being checked against the shop's saved
+        // controller host, so a made-up address goes nowhere.
+        let pageUrl: string | null = null;
+        if (typeof payload.pageUrl === "string" && payload.pageUrl.length <= 512) {
+          try {
+            const u = new URL(payload.pageUrl);
+            if (u.protocol === "http:" || u.protocol === "https:") {
+              pageUrl = `${u.origin}${u.pathname}`;
+            }
+          } catch {
+            /* not a URL: ignored */
           }
         }
-        const params = parsePortalParams(search);
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: mapping } = await supabaseAdmin
@@ -81,6 +92,10 @@ export const Route = createFileRoute("/api/public/portal-context")({
             radio_id: params.radioId,
             site_ref: params.siteRef ?? (mapping.site_id as string),
             redirect_url: params.redirectUrl,
+            // Kept verbatim so a purchased code can be carried back to the
+            // exact controller portal page with its original Omada context.
+            raw_query: search,
+            page_url: pageUrl,
           })
           .select("id")
           .single();

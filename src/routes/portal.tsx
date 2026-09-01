@@ -76,6 +76,7 @@ function PortalPage() {
   const [isMember, setIsMember] = useState(false);
   const [busy, setBusy] = useState("");
   const [online, setOnline] = useState<AuthorizeResult | null>(null);
+  const [redeeming, setRedeeming] = useState<AuthorizeResult | null>(null);
 
   const [code, setCode] = useState("");
 
@@ -141,6 +142,14 @@ function PortalPage() {
 
   /* ---------------- actions ---------------- */
   const finish = (r: AuthorizeResult) => {
+    if (r.redeemUrl) {
+      // The code is redeemed by Omada's OWN voucher form: go back to the
+      // controller portal page, which signs this device on automatically.
+      setRedeeming(r);
+      toast.success(r.message);
+      window.location.assign(r.redeemUrl);
+      return;
+    }
     setOnline(r);
     if (r.ok) toast.success(r.message);
     else toast.error(r.message);
@@ -186,7 +195,7 @@ function PortalPage() {
         data: { sessionId: state.sessionId, saleId: sale.sale_id },
       });
       finish(r);
-      await refresh();
+      if (!r.redeemUrl) await refresh();
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -241,6 +250,35 @@ function PortalPage() {
             <p className="text-xs text-muted-foreground">
               Reconnect to the Wi-Fi to try again, or ask the shop for help.
             </p>
+          </CardContent>
+        </Card>
+      </Shell>
+    );
+  }
+
+  if (redeeming) {
+    return (
+      <Shell title={state.shopName} ssid={state.ssid}>
+        <Card className="shadow-[var(--shadow-card)]">
+          <CardHeader className="items-center text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <CardTitle className="text-base">Connecting your device…</CardTitle>
+            <CardDescription>
+              Taking you back to the hotspot page, where your voucher signs you on automatically.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 text-center">
+            {redeeming.code ? (
+              <p className="text-sm text-muted-foreground">
+                Your voucher <span className="font-mono font-semibold">{redeeming.code}</span> is
+                saved in your account.
+              </p>
+            ) : null}
+            {redeeming.redeemUrl ? (
+              <Button className="w-full" asChild>
+                <a href={redeeming.redeemUrl}>Continue to the hotspot page</a>
+              </Button>
+            ) : null}
           </CardContent>
         </Card>
       </Shell>
