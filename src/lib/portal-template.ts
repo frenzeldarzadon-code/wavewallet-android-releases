@@ -802,6 +802,7 @@ ${MARKER}
   var verdictOf = ${omadaAuthResponseVerdict.toString()};
   var AUTH_OK = false;
   var AUTH_SENT = false;
+  var AUTH_LAST = 0;
   function noteAuthResponse(status, bodyText){
     var verdict = verdictOf(status, bodyText);
     if (verdict === "success") AUTH_OK = true;
@@ -816,6 +817,7 @@ ${MARKER}
           var target = typeof url === "string" ? url : (url && url.url) || "";
           if (target.indexOf("/portal/auth") !== -1){
             AUTH_SENT = true;
+            AUTH_LAST = Date.now();
             pending.then(function(res){
               try {
                 res.clone().text().then(function(t){ noteAuthResponse(res.status, t); });
@@ -838,6 +840,7 @@ ${MARKER}
       XMLHttpRequest.prototype.send = function(){
         if (this.__wwAuth){
           AUTH_SENT = true;
+          AUTH_LAST = Date.now();
           var xhr = this;
           xhr.addEventListener("loadend", function(){
             try { noteAuthResponse(xhr.status, xhr.responseText); } catch (e) {}
