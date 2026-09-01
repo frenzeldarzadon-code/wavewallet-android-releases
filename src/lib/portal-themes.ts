@@ -16,6 +16,12 @@
  *  - tiny: the whole theme layer is a few kB of CSS.
  */
 
+import {
+  PORTAL_SECTION_FEATURE_DEFAULTS,
+  portalSectionsHtml,
+  type PortalSectionFeatures,
+} from "./portal-sections";
+
 export type PortalThemeLayout = "stack" | "hero" | "split" | "ticket" | "panel" | "card-deck";
 export type PortalThemeDecor =
   | "aurora"
