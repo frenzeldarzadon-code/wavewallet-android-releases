@@ -25,7 +25,7 @@ export interface PortalCapabilities {
   authorizeSupported: boolean;
   authorizePath: string | null;
   /** How the authorize path is scoped: site-relative or controller-relative. */
-  authorizeScope: "site" | "controller" | null;
+  authorizeScope: "site" | "controller" | "hotspot" | null;
   /** HTTP method the controller accepts on the authorize path. */
   authorizeMethod: "GET" | "POST" | null;
 
@@ -70,6 +70,31 @@ async function rawGet(url: string, token: string) {
       body: null as unknown,
       error: (e instanceof Error ? e.message : String(e)).slice(0, 200),
     };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function rawPostJson(url: string, body: unknown) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json", accept: "application/json" },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    const text = await res.text();
+    let parsed: unknown = text.slice(0, 2000);
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      /* HTML means the controller served its web app instead of the API */
+    }
+    return { ok: res.ok, status: res.status, body: parsed };
+  } catch {
+    return { ok: false, status: 0, body: null as unknown };
   } finally {
     clearTimeout(timer);
   }
@@ -171,8 +196,14 @@ export async function readInfo(session: OmadaSession) {
  * Works out what this controller can actually do for a WaveWallet captive
  * portal. Every branch records why, so the admin sees the real state.
  */
+export interface DiscoverOptions {
+  /** Whether this shop saved a Hotspot Operator sign-in for the portal API. */
+  hotspotOperatorConfigured?: boolean;
+}
+
 export async function discoverPortalCapabilities(
   session: OmadaSession,
+  opts?: DiscoverOptions,
 ): Promise<PortalCapabilities> {
   const info = await readInfo(session);
   const caps: PortalCapabilities = {
@@ -270,7 +301,9 @@ export async function discoverPortalCapabilities(
       "The exact controller replies are listed above.";
   } else if (!caps.authorizeSupported) {
     caps.limitation =
-      "Portals can be read, but this controller did not accept any known client-authorization endpoint. Customers can still buy a voucher in the portal and enter it in the hotspot login page; automatic sign-on stays disabled rather than reporting a false success.";
+      "Portals can be read, but WaveWallet cannot put a device online automatically yet. " +
+      "Automatic sign-on uses the controller's external-portal hotspot API, which needs this shop's own Hotspot Operator username and password saved in the Omada connection settings. " +
+      "Until then, customers can still buy a voucher in the portal and enter the code on the hotspot login page — WaveWallet never reports a false success.";
   }
   return caps;
 }
