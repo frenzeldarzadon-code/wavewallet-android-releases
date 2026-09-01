@@ -264,7 +264,11 @@ describe("authorizePortalClient gating", () => {
     // `GET .../clients/authorize` matches the client-detail route with the
     // literal MAC "authorize", so it answers -41011 for every request. Treating
     // that as support is the exact bug behind "This client does not exist."
-    const source = readFileSync(join(__dirname, "..", "omada-portals.server.ts"), "utf8");
+    // Comments may still explain the trap; executable code must not build it.
+    const stripComments = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    const source = stripComments(
+      readFileSync(join(__dirname, "..", "omada-portals.server.ts"), "utf8"),
+    );
     expect(source.includes("clients/authorize")).toBe(false);
     const hotspot = readFileSync(join(__dirname, "..", "omada-hotspot.server.ts"), "utf8");
     expect(hotspot.includes("extPortal/auth")).toBe(true);
