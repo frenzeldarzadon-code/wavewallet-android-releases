@@ -21,6 +21,9 @@ export interface OmadaConnectionView {
   lastError: string | null;
   /** Masked hint only — the secret itself never leaves the server. */
   hasClientSecret: boolean;
+  /** Hotspot Operator sign-in used by the external-portal authorization API. */
+  hotspotOperatorUser: string;
+  hasHotspotOperatorSecret: boolean;
 }
 
 const EMPTY: OmadaConnectionView = {
@@ -34,6 +37,8 @@ const EMPTY: OmadaConnectionView = {
   lastCheckedAt: null,
   lastError: null,
   hasClientSecret: false,
+  hotspotOperatorUser: "",
+  hasHotspotOperatorSecret: false,
 };
 
 type AuthContext = { supabase: { rpc: (fn: string, args: unknown) => Promise<{ data: unknown; error: { message: string } | null }> }; userId: string };
@@ -65,6 +70,8 @@ function view(row: Record<string, unknown> | null): OmadaConnectionView {
     lastCheckedAt: (row["last_checked_at"] as string | null) ?? null,
     lastError: (row["last_error"] as string | null) ?? null,
     hasClientSecret: Boolean(row["client_secret_ciphertext"]),
+    hotspotOperatorUser: String(row["hotspot_operator_user"] ?? ""),
+    hasHotspotOperatorSecret: Boolean(row["hotspot_operator_secret_ciphertext"]),
   };
 }
 
@@ -119,6 +126,8 @@ export const saveOmadaConnection = createServerFn({ method: "POST" })
       clientId: string;
       clientSecret: string;
       siteName: string;
+      hotspotOperatorUser?: string;
+      hotspotOperatorPassword?: string;
     }) => {
       if (!data?.ecosystemId) throw new Error("A shop is required.");
       const baseUrl = data.baseUrl?.trim() ?? "";
@@ -134,6 +143,8 @@ export const saveOmadaConnection = createServerFn({ method: "POST" })
         clientId: data.clientId.trim(),
         clientSecret: data.clientSecret ?? "",
         siteName: data.siteName?.trim() ?? "",
+        hotspotOperatorUser: data.hotspotOperatorUser?.trim() ?? "",
+        hotspotOperatorPassword: data.hotspotOperatorPassword ?? "",
       };
     },
   )
@@ -144,7 +155,7 @@ export const saveOmadaConnection = createServerFn({ method: "POST" })
 
     const { data: existing } = await supabaseAdmin
       .from("omada_connections")
-      .select("client_secret_ciphertext")
+      .select("client_secret_ciphertext, hotspot_operator_secret_ciphertext")
       .eq("ecosystem_id", data.ecosystemId)
       .maybeSingle();
 
@@ -153,6 +164,14 @@ export const saveOmadaConnection = createServerFn({ method: "POST" })
       ? encryptSecret(data.clientSecret)
       : ((existing?.client_secret_ciphertext as string | undefined) ?? "");
     if (!ciphertext) throw new Error("Client Secret is required the first time you connect.");
+
+    // Same rule for the Hotspot Operator password: blank keeps the stored one.
+    const operatorCipher = data.hotspotOperatorPassword
+      ? encryptSecret(data.hotspotOperatorPassword)
+      : ((existing?.hotspot_operator_secret_ciphertext as string | undefined) ?? null);
+    if (data.hotspotOperatorUser && !operatorCipher) {
+      throw new Error("A Hotspot Operator password is required the first time you save that username.");
+    }
 
     const { data: row, error } = await supabaseAdmin
       .from("omada_connections")
@@ -164,6 +183,8 @@ export const saveOmadaConnection = createServerFn({ method: "POST" })
           client_id: data.clientId,
           client_secret_ciphertext: ciphertext,
           site_name: data.siteName || null,
+          hotspot_operator_user: data.hotspotOperatorUser || null,
+          hotspot_operator_secret_ciphertext: data.hotspotOperatorUser ? operatorCipher : null,
           last_status: "untested",
           last_error: null,
           // New credentials invalidate any cached API session and reset health.
