@@ -182,6 +182,7 @@ export const startPortalSession = createServerFn({ method: "POST" })
         mapping_id: resolved.mapping.id,
         ecosystem_id: resolved.mapping.ecosystemId,
         client_mac: params.clientMac,
+        client_ip: params.clientIp,
         ap_mac: params.apMac,
         ssid: params.ssidName,
         radio_id: params.radioId,

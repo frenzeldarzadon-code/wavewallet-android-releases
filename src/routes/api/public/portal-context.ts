@@ -75,6 +75,7 @@ export const Route = createFileRoute("/api/public/portal-context")({
             mapping_id: mapping.id,
             ecosystem_id: mapping.ecosystem_id,
             client_mac: params.clientMac,
+            client_ip: params.clientIp,
             ap_mac: params.apMac,
             ssid: params.ssidName ?? (mapping.ssid_info as string | null),
             radio_id: params.radioId,
