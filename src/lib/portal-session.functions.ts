@@ -20,6 +20,7 @@ import {
   type MappingCandidate,
   type PortalFeatureFlags,
 } from "./portal-mapping";
+import { sanitizePortalContext } from "./portal-redeem";
 
 type AuthContext = {
   supabase: {
@@ -188,6 +189,9 @@ export const startPortalSession = createServerFn({ method: "POST" })
         radio_id: params.radioId,
         site_ref: params.siteRef ?? resolved.mapping.siteId,
         redirect_url: params.redirectUrl,
+        // Kept verbatim so a purchased code can be carried back to the
+        // controller portal page with the exact original Omada context.
+        raw_query: sanitizePortalContext(data.search),
       })
       .select("*")
       .single();
@@ -236,8 +240,26 @@ export interface AuthorizeResult {
   durationMinutes: number | null;
   message: string;
   redirectUrl: string | null;
+  /**
+   * When set, the browser must open this address: it returns the customer to
+   * the controller's OWN portal page, where Omada's native voucher form
+   * redeems the dispensed code. Sign-on finishes there, not on this page.
+   */
+  redeemUrl: string | null;
 }
 
+/**
+ * Hands a voucher code to the controller's OWN portal page for redemption.
+ *
+ * The controller only accepts /portal/auth from the connecting device itself
+ * (verified against the live controller, which answers HTTP 500 to any other
+ * caller), so WaveWallet never submits the code server-side. A single-use,
+ * short-lived connect ticket is minted instead and the browser is sent back
+ * to the exact Omada portal page it came from; the generated page exchanges
+ * the ticket for the code, fills Omada's own voucher field and clicks Omada's
+ * own login control. What redeems the code is the controller's NATIVE voucher
+ * authentication — the same request manual typing on that page produces.
+ */
 async function performAuthorization(opts: {
   supabaseAdmin: any;
   session: Record<string, unknown>;
@@ -250,16 +272,13 @@ async function performAuthorization(opts: {
 }): Promise<AuthorizeResult> {
   const { supabaseAdmin, session, ecosystemId, code, durationMinutes } = opts;
   const clientMac = session["client_mac"] as string | null;
+  const redirectUrl = (session["redirect_url"] as string | null) ?? null;
 
   const record = async (status: string, error: string | null) => {
     if (opts.existingId) {
       await supabaseAdmin
         .from("portal_authorizations")
-        .update({
-          status,
-          error,
-          authorized_at: status === "authorized" ? new Date().toISOString() : null,
-        })
+        .update({ status, error, authorized_at: null })
         .eq("id", opts.existingId);
       return opts.existingId;
     }
@@ -274,12 +293,19 @@ async function performAuthorization(opts: {
         duration_minutes: durationMinutes,
         status,
         error,
-        authorized_at: status === "authorized" ? new Date().toISOString() : null,
+        authorized_at: null,
       })
       .select("id")
       .single();
     return inserted ? String(inserted.id) : null;
   };
+
+  // The purchase (when there was one) is already complete and its voucher code
+  // belongs to the customer whatever happens next. Never imply it was lost,
+  // and never re-charge.
+  const preserved = opts.saleId
+    ? ` Your purchase is complete and your voucher code ${code} is saved in your account — you will not be charged twice.`
+    : "";
 
   if (!clientMac) {
     const id = await record(
@@ -291,93 +317,54 @@ async function performAuthorization(opts: {
       authorizationId: id,
       code,
       durationMinutes,
-      message:
-        "Your voucher is ready, but this hotspot page did not tell us which device is connecting. Enter the code on the hotspot login page to go online.",
-      redirectUrl: (session["redirect_url"] as string | null) ?? null,
+      message: `This hotspot page did not tell us which device is connecting, so the code could not be handed over automatically. Enter it on the hotspot login page to go online.${preserved}`,
+      redirectUrl,
+      redeemUrl: null,
     };
   }
 
-  const { openOmadaSession } = await import("./omada-api.server");
-  const { discoverPortalCapabilities, authorizePortalClient, fetchClientContext } = await import(
-    "./omada-portals.server"
-  );
-  const { loadHotspotCredentials } = await import("./omada-hotspot.server");
-  try {
-    const omada = await openOmadaSession(supabaseAdmin, ecosystemId);
-    const credentials = await loadHotspotCredentials(supabaseAdmin, ecosystemId);
-    const caps = await discoverPortalCapabilities(omada, {
-      hotspotOperatorConfigured: Boolean(credentials),
-    });
-
-    // The external-portal API wants the client's IP. Omada sends it on the
-    // redirect, but a customized portal page may not forward it, so fall back to
-    // the controller's own read-only view of this exact client.
-    let clientIp = (session["client_ip"] as string | null) ?? null;
-    let apMac = (session["ap_mac"] as string | null) ?? null;
-    let ssidName = (session["ssid"] as string | null) ?? null;
-    let radioId = (session["radio_id"] as string | null) ?? null;
-    if (!clientIp || !apMac || !ssidName || radioId === null) {
-      const live = await fetchClientContext(omada, clientMac);
-      if (live) {
-        clientIp = clientIp ?? live.ip;
-        apMac = apMac ?? live.apMac;
-        ssidName = ssidName ?? live.ssid;
-        radioId = radioId ?? live.radioId;
-        if (live.ip && !session["client_ip"]) {
-          await supabaseAdmin
-            .from("portal_sessions")
-            .update({ client_ip: live.ip })
-            .eq("id", session["id"]);
-        }
-      }
+  const id = await record("pending", null);
+  const { mintPortalRedemption } = await import("./portal-redeem.server");
+  const minted = await mintPortalRedemption(supabaseAdmin, {
+    session,
+    ecosystemId,
+    code,
+    saleId: opts.saleId,
+    authorizationId: id,
+  });
+  if (!minted.ok) {
+    if (id) {
+      await supabaseAdmin
+        .from("portal_authorizations")
+        .update({ status: "failed", error: (minted.reason ?? "").slice(0, 500) })
+        .eq("id", id);
     }
-
-    await authorizePortalClient(
-      omada,
-      caps,
-      {
-        clientMac,
-        clientIp,
-        apMac,
-        ssidName,
-        radioId,
-        durationMs: durationMinutes * 60_000,
-        voucherCode: code,
-      },
-      credentials,
-    );
-    const id = await record("authorized", null);
-    return {
-      ok: true,
-      authorizationId: id,
-      code,
-      durationMinutes,
-      message: "You are online.",
-      redirectUrl: (session["redirect_url"] as string | null) ?? null,
-    };
-  } catch (e) {
-    const detail = e instanceof Error ? e.message : String(e);
-    const id = await record("failed", detail.slice(0, 500));
-    // The purchase (when there was one) is already complete and its voucher code
-    // belongs to the customer. Never imply it was lost, and never re-charge.
-    const preserved = opts.saleId
-      ? ` Your purchase is complete and your voucher code ${code} is saved in your account — enter it on the hotspot login page, or try again without paying twice.`
-      : "";
     return {
       ok: false,
       authorizationId: id,
       code,
       durationMinutes,
-      message: `${detail}${preserved}`,
-      redirectUrl: (session["redirect_url"] as string | null) ?? null,
+      message: `${minted.reason}${preserved}`,
+      redirectUrl,
+      redeemUrl: null,
     };
   }
+  return {
+    ok: true,
+    authorizationId: id,
+    code,
+    durationMinutes,
+    message: "Your voucher is ready — taking you back to the hotspot page to sign on…",
+    redirectUrl,
+    redeemUrl: minted.redeemUrl,
+  };
 }
 
 /**
- * Manual voucher entry — unchanged for customers with no WaveWallet account.
- * The code is handed to the controller exactly as typed; WaveWallet never
- * validates or consumes it itself.
+ * Manual voucher entry from the WaveWallet-hosted portal page. The code is
+ * carried back to the controller's own portal page exactly as typed, where
+ * Omada's native voucher form redeems it — WaveWallet never validates or
+ * consumes the code itself; the controller owns validity and remaining time.
  */
 export const authorizeManualVoucher = createServerFn({ method: "POST" })
   .inputValidator((data: { sessionId: string; code: string }) => {
@@ -469,6 +456,7 @@ export const authorizePortalSale = createServerFn({ method: "POST" })
         durationMinutes: null,
         message: "This voucher is already active on your device.",
         redirectUrl: (row["redirect_url"] as string | null) ?? null,
+        redeemUrl: null,
       };
     }
 
