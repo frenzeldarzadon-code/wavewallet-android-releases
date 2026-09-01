@@ -28,6 +28,18 @@ export const Route = createFileRoute("/api/public/omada-probe-temp")({
         const mac = u.searchParams.get("mac") ?? "C2-12-E6-71-C1-A6";
         const out: unknown[] = [];
         out.push(await call(`${s.base}/api/info`, { headers: H }));
+        {
+          const all: Array<Record<string, unknown>> = [];
+          for (let page = 1; page <= 3; page++) {
+            const r = await fetch(`${site}/clients?page=${page}&pageSize=100`, { headers: H });
+            const j = (await r.json()) as any;
+            const rows = j?.result?.data ?? [];
+            all.push(...rows);
+            if (rows.length < 100) break;
+          }
+          const hit = all.find((c) => String(c["mac"]).toUpperCase() === mac.toUpperCase());
+          out.push({ url: "client-lookup", status: all.length, body: JSON.stringify(hit ?? { notFound: mac, sample: all.slice(0, 2).map((c) => c["mac"]) }).slice(0, 800) });
+        }
         out.push(await call(`${site}/clients/authorize`, { headers: H }));
         out.push(
           await call(`${site}/clients/authorize?clientMac=${encodeURIComponent(mac)}&time=60000&authType=4`, {
