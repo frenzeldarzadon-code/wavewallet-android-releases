@@ -17,7 +17,7 @@ export function isPublicOrigin(origin: string | null | undefined): boolean {
   try {
     const url = new URL(origin);
     if (url.protocol !== "https:" && url.protocol !== "http:") return false;
-    return !NON_PUBLIC_HOST.test(url.host);
+    return !NON_PUBLIC_HOST.test(url.hostname);
   } catch {
     return false;
   }
