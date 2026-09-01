@@ -8680,6 +8680,10 @@ export type Database = {
         Returns: undefined
       }
       delete_voucher_batch: { Args: { _import_id: string }; Returns: number }
+      delete_voucher_batch_unused: {
+        Args: { _import_id: string }
+        Returns: number
+      }
       delete_voucher_code: { Args: { _code_id: string }; Returns: undefined }
       delete_voucher_product: {
         Args: { _confirm_name: string; _product_id: string }
