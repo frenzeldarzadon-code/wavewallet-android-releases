@@ -172,3 +172,38 @@ describe("Omada /portal/auth response verdict", () => {
     expect(omadaAuthResponseVerdict(200, "")).toBe("unknown");
   });
 });
+
+describe("Purchased-code redemption runtime", () => {
+  const analysis = analyzeOmadaTemplate(OMADA_TEMPLATE);
+  const html = generateWaveWalletPortal(OMADA_TEMPLATE, analysis, DEFAULT_TEMPLATE_FEATURES, ctx);
+  const script = html.slice(html.indexOf('<script id="ww-portal-script">'));
+
+  it("exchanges the wwRedeem ticket with WaveWallet instead of reading a code from the URL", () => {
+    expect(script).toContain("wwRedeem");
+    expect(script).toContain("/api/public/portal-redeem");
+  });
+
+  it("fills the controller's own voucher field and clicks the controller's own control", () => {
+    expect(script).toContain("input[name=voucherCode]");
+    expect(script).toContain("field.value = REDEEM_CODE");
+    expect(script).toContain("control.click()");
+    expect(script).toContain("#button-login,button[type=submit],input[type=submit]");
+  });
+
+  it("never builds its own /portal/auth request", () => {
+    // The master owns the submission: the injected script sets no authType and
+    // sends no voucherCode in any request body of its own.
+    expect(script).not.toContain("authType:");
+    expect(script).not.toContain('voucherCode:');
+  });
+
+  it("strips the ticket from the address bar and from forwarded WaveWallet links", () => {
+    expect(script).toContain('wwq.delete("wwRedeem")');
+    expect(script).toContain('k === "wwRedeem"');
+  });
+
+  it("reports the controller's real verdict back once the master's own request was seen", () => {
+    expect(script).toContain("AUTH_SENT");
+    expect(script).toContain("reportRedeem(verdict, bodyText)");
+  });
+});
