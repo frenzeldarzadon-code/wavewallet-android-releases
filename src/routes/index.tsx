@@ -38,13 +38,23 @@ import { platformSettings } from "@/lib/wavewallet";
 import { superAdminSetupAvailable } from "@/lib/bootstrap.functions";
 
 export const Route = createFileRoute("/")({
-  // A direct shop link carries only the public 7-digit Shop ID.
-  validateSearch: (search: Record<string, unknown>): { shop?: string } => {
+  // A direct shop link carries only the public 7-digit Shop ID, an optional
+  // mode, and an optional in-app path to return to after authenticating.
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { shop?: string; mode?: "signin" | "signup"; next?: string } => {
     const raw = search["shop"];
     const code =
       typeof raw === "string" || typeof raw === "number" ? normalizeShopCode(String(raw)) : "";
-    return code ? { shop: code } : {};
+    const rawMode = search["mode"];
+    const next = safeReturnPath(typeof search["next"] === "string" ? search["next"] : null);
+    return {
+      ...(code ? { shop: code } : {}),
+      ...(rawMode === "signin" || rawMode === "signup" ? { mode: rawMode } : {}),
+      ...(next ? { next } : {}),
+    };
   },
+
   head: () => ({
     meta: [
       { title: "WaveWallet — Voucher & Wallet Platform for Hotspot Operators" },
