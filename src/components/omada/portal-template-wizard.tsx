@@ -401,6 +401,11 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
                       className="h-[560px] w-full"
                     />
                   </div>
+                  <p className="mx-auto max-w-[390px] text-[11px] text-muted-foreground">
+                    This is the exact page you are about to download and import — the same file,
+                    rendered offline. Shop products, coins and points are fetched by the live portal
+                    only, so they are not shown here.
+                  </p>
                    <div className="rounded-md border p-3">
                      <p className="text-sm font-medium">Import the downloaded page into Omada</p>
                     <p className="mt-1 text-[11px] text-muted-foreground">
