@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { parsePortalParams } from "@/lib/portal-mapping";
 import { portalAuthLinks, portalReturnPath } from "@/lib/portal-links";
 import { safeReturnPath, shopSignInLink, shopSignupLink } from "@/lib/shop-directory";
 
@@ -43,5 +44,26 @@ describe("return path safety", () => {
 
   it("accepts in-app paths", () => {
     expect(safeReturnPath("/portal?wwSession=s1")).toBe("/portal?wwSession=s1");
+  });
+});
+
+describe("omada redirect parameters", () => {
+  it("never treats Omada's timestamp `t` as a redirect target", () => {
+    const params = parsePortalParams({
+      wwPortal: "map-1",
+      clientMac: "AA-BB-CC-DD-EE-FF",
+      t: "1756692000000",
+    });
+    expect(params.redirectUrl).toBeNull();
+    expect(params.mappingId).toBe("map-1");
+  });
+
+  it("still honours the real redirect parameters", () => {
+    expect(parsePortalParams({ redirectUrl: "http://a.example/x" }).redirectUrl).toBe(
+      "http://a.example/x",
+    );
+    expect(parsePortalParams({ originUrl: "http://b.example/" }).redirectUrl).toBe(
+      "http://b.example/",
+    );
   });
 });
