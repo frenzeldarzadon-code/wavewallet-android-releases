@@ -236,28 +236,32 @@ export async function discoverPortalCapabilities(
     }
   }
 
-  if (!caps.authorizeSupported) {
-    for (const probe of PROBE_AUTHORIZE) {
-      // Probed without parameters: the controller can only accept or reject the
-      // route itself, never authorize a real device.
-      const res = await rawGet(`${sitePrefix}${probe.path}`, session.token);
-      const env = omadaEnvelope(res.body);
-      const reachable =
-        res.status !== 404 &&
-        (env.code === 0 || (env.code !== null && REACHABLE_CODES.has(env.code)) || res.status === 405);
-      if (reachable) {
-        caps.authorizeSupported = true;
-        caps.authorizeScope = "site";
-        caps.authorizeMethod = res.status === 405 ? "POST" : probe.method;
-        caps.authorizePath = `/openapi/v1/{omadacId}/sites/{siteId}${probe.path}`;
-        caps.notes.push(`Client authorization verified live at ${probe.path}.`);
-        break;
-      }
+  // Client authorization: the documented External Portal API. The probe only
+  // checks that the hotspot login ROUTE exists and answers a JSON envelope; it
+  // never signs in with real credentials here and never touches a client.
+  {
+    const res = await rawPostJson(EXT_PORTAL_LOGIN(session.base, session.omadacId), {});
+    const env = omadaEnvelope(res.body);
+    const routeExists = env.code !== null;
+    if (!routeExists) {
       caps.notes.push(
-        `No client-authorization endpoint at ${probe.path} (${env.msg || `HTTP ${res.status}`}).`,
+        "This controller did not answer the external-portal hotspot API, so devices cannot be put online automatically.",
+      );
+    } else if (!opts?.hotspotOperatorConfigured) {
+      caps.notes.push(
+        "The external-portal hotspot API is available, but this shop has not saved a Hotspot Operator sign-in yet.",
+      );
+    } else {
+      caps.authorizeSupported = true;
+      caps.authorizeScope = "hotspot";
+      caps.authorizeMethod = "POST";
+      caps.authorizePath = EXT_PORTAL_AUTH_PATH;
+      caps.notes.push(
+        "Client authorization uses the external-portal hotspot API with this shop's own Hotspot Operator sign-in.",
       );
     }
   }
+
 
   if (!caps.listSupported) {
     caps.limitation =
