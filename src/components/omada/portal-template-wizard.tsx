@@ -296,6 +296,7 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
                 themes={themes}
                 value={template.themeSlug ?? DEFAULT_PORTAL_THEME_SLUG}
                 shopName={mapping?.portalName ?? "Your shop"}
+                features={features ?? undefined}
                 busy={themeBusy}
                 onSelect={(slug) => void chooseTheme(slug)}
               />
