@@ -47,3 +47,12 @@ export function batchDeleteBlockReason(batch: VoucherBatch): string | null {
 export function isBatchDeletable(batch: VoucherBatch): boolean {
   return batchDeleteBlockReason(batch) === null;
 }
+
+/**
+ * A batch with one or more used/sold codes can never be deleted whole, but its
+ * unused codes can still be cleaned out. This is a WaveWallet-only inventory
+ * operation — no Omada record or API is ever touched.
+ */
+export function canDeleteUnusedCodes(batch: VoucherBatch): boolean {
+  return batch.sold_count > 0 && batch.unused_count > 0;
+}

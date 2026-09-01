@@ -630,6 +630,16 @@ export async function deleteVoucherBatch(batchId: string): Promise<number> {
   return Number(data ?? 0);
 }
 
+/**
+ * Deletes ONLY the unused codes of a partially-sold batch. Sold/used codes and
+ * their history stay untouched. WaveWallet-only: nothing on Omada is affected.
+ */
+export async function deleteUnusedVoucherBatch(batchId: string): Promise<number> {
+  const { data, error } = await supabase.rpc("delete_voucher_batch_unused", { _import_id: batchId });
+  if (error) throw new Error(friendlyWalletError(error.message));
+  return Number(data ?? 0);
+}
+
 export interface PurchaseResult {
   tx_id: string;
   /** One code per purchased voucher. */
