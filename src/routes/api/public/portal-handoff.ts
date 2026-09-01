@@ -8,6 +8,7 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { issuePortalHandoff } from "@/lib/portal-handoff.server";
+import { resolvePublicOrigin } from "@/lib/public-origin";
 
 const CORS = {
   "access-control-allow-origin": "*",
