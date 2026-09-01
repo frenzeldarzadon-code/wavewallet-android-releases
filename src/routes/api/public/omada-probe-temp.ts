@@ -40,6 +40,11 @@ export const Route = createFileRoute("/api/public/omada-probe-temp")({
           const hit = all.find((c) => String(c["mac"]).toUpperCase() === mac.toUpperCase());
           out.push({ url: "client-lookup", status: all.length, body: JSON.stringify(hit ?? { notFound: mac, sample: all.slice(0, 2).map((c) => c["mac"]) }).slice(0, 800) });
         }
+        out.push(await call(`${site}/clients/${mac}`, { headers: H }));
+        out.push(await call(`${site}/clients/${mac}/authorize?time=60000&authType=4`, { headers: H }));
+        out.push(await call(`${site}/clients/${mac}/authorize`, { method: "POST", headers: { ...H, "content-type": "application/json" }, body: JSON.stringify({ time: 60000, authType: 4 }) }));
+        out.push(await call(`${site}/hotspot/extPortal/auth`, { method: "POST", headers: { ...H, "content-type": "application/json" }, body: JSON.stringify({ clientMac: mac, time: 60000, authType: 4 }) }));
+        out.push(await call(`${s.base}/openapi/v1/${s.omadacId}/hotspot/extPortal/auth`, { method: "POST", headers: { ...H, "content-type": "application/json" }, body: JSON.stringify({ clientMac: mac, time: 60000, authType: 4 }) }));
         out.push(await call(`${site}/clients/authorize`, { headers: H }));
         out.push(
           await call(`${site}/clients/authorize?clientMac=${encodeURIComponent(mac)}&time=60000&authType=4`, {
