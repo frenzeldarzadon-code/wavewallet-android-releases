@@ -58,7 +58,9 @@ const ALIASES: Record<keyof Omit<PortalParams, "mappingId">, string[]> = {
   ssidName: ["ssidName", "ssid", "ssid_name"],
   radioId: ["radioId", "radio_id", "radio"],
   siteRef: ["site", "siteId", "site_id"],
-  redirectUrl: ["redirectUrl", "redirect_url", "originUrl", "t"],
+  // NOTE: Omada's `t` is the redirect TIMESTAMP, never a URL. Treating it as a
+  // redirect target sent customers to a bogus address after signing on.
+  redirectUrl: ["redirectUrl", "redirect_url", "originUrl"],
 };
 
 function first(search: Record<string, unknown>, keys: string[]): string | null {
