@@ -19,6 +19,7 @@ import {
   THEME_DECOR_MARKUP,
   type PortalTheme,
 } from "./portal-themes";
+import { portalSectionsHtml } from "./portal-sections";
 
 /* ------------------------------------------------------------------ *
  * Features                                                            *
@@ -300,14 +301,7 @@ export interface GenerateContext {
 }
 
 
-export function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
+export { escapeHtml } from "./portal-sections";
 
 /** JSON that is safe to embed inside a <script> block. */
 function jsonForScript(value: unknown): string {
