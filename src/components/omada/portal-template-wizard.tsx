@@ -329,6 +329,14 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
 
             {/* Generate + preview */}
             <div className="space-y-3">
+              {template?.hasGenerated && !generated ? (
+                <p className="rounded-md border border-warning/40 bg-warning/5 p-3 text-[11px] text-muted-foreground">
+                  A page was last generated{" "}
+                  {template.generatedAt ? new Date(template.generatedAt).toLocaleString() : "earlier"}.
+                  The design, features or the canonical Omada template may have changed since then —
+                  generate again to preview and download the current page.
+                </p>
+              ) : null}
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" disabled={busy !== "" || !mappingId} onClick={() => void generate()}>
                   {busy === "generate" ? (
