@@ -46,6 +46,8 @@ export function OmadaConnectionCard({ ecosystemId }: { ecosystemId: string | nul
           clientId: c.clientId,
           clientSecret: "",
           siteName: c.siteName,
+          hotspotOperatorUser: c.hotspotOperatorUser,
+          hotspotOperatorPassword: "",
         });
       })
       .catch(() => setConn(null));
