@@ -124,4 +124,27 @@ describe("buildPortalReturnUrl", () => {
     expect(url).not.toContain("code=");
     expect(url).not.toContain("voucher");
   });
+
+  it("encodes spaces as %20, never '+': Omada's own parser leaves '+' literal", () => {
+    const rebuilt = buildPortalReturnUrl({
+      pageUrl: null,
+      baseUrl: "https://portal.sagadawave.com",
+      rawQuery: { ssidName: "Sagada Wave", clientMac: "AA-BB" },
+      session,
+      token: "TICKET",
+    });
+    expect(rebuilt).toContain("ssidName=Sagada%20Wave");
+    expect(rebuilt).not.toContain("+");
+
+    const merged = buildPortalReturnUrl({
+      pageUrl: "http://portal.sagadawave.com:8088/portal/entry/abc/def/ghi?ssidName=Sagada%20Wave",
+      baseUrl: "https://portal.sagadawave.com",
+      rawQuery: { ssidName: "Sagada Wave", clientMac: "AA-BB" },
+      session,
+      token: "TICKET",
+    });
+    expect(merged).toContain("/portal/entry/abc/def/ghi");
+    expect(merged).toContain("ssidName=Sagada%20Wave");
+    expect(merged).not.toContain("+");
+  });
 });

@@ -802,6 +802,7 @@ ${MARKER}
   var verdictOf = ${omadaAuthResponseVerdict.toString()};
   var AUTH_OK = false;
   var AUTH_SENT = false;
+  var AUTH_LAST = 0;
   function noteAuthResponse(status, bodyText){
     var verdict = verdictOf(status, bodyText);
     if (verdict === "success") AUTH_OK = true;
@@ -816,6 +817,7 @@ ${MARKER}
           var target = typeof url === "string" ? url : (url && url.url) || "";
           if (target.indexOf("/portal/auth") !== -1){
             AUTH_SENT = true;
+            AUTH_LAST = Date.now();
             pending.then(function(res){
               try {
                 res.clone().text().then(function(t){ noteAuthResponse(res.status, t); });
@@ -838,6 +840,7 @@ ${MARKER}
       XMLHttpRequest.prototype.send = function(){
         if (this.__wwAuth){
           AUTH_SENT = true;
+          AUTH_LAST = Date.now();
           var xhr = this;
           xhr.addEventListener("loadend", function(){
             try { noteAuthResponse(xhr.status, xhr.responseText); } catch (e) {}
@@ -993,7 +996,9 @@ ${MARKER}
     if (wwTicket){
       REDEEM_TICKET = wwTicket;
       wwq.delete("wwRedeem");
-      var wwRest = wwq.toString();
+      /* Omada's own query parser (decodeURIComponent) leaves "+" literal, so
+         spaces must stay %20 or the master resubmits a corrupted context. */
+      var wwRest = wwq.toString().replace(/\\+/g, "%20");
       try {
         window.history.replaceState(null, "", window.location.pathname + (wwRest ? "?" + wwRest : ""));
       } catch (e) {}
@@ -1005,6 +1010,73 @@ ${MARKER}
       || document.querySelector("input[name=voucherCode]")
       || document.getElementById("voucherCode");
   }
+
+  /* Last-resort NATIVE submission. The master wires its Log In control only
+     inside the /portal/getPortalPageSetting response callback; when that call
+     answers an error the master's script stops before the button is wired and
+     every click is silently dead. This sends the EXACT request the master's
+     own handler would send - the same-origin POST /portal/auth voucher
+     submission (authType 3) with the client context from this page's own
+     address - so redemption is still Omada's native voucher authentication
+     from the customer's own browser. It never runs while the master's own
+     wiring is answering clicks. */
+  var WW_NATIVE_BUSY = false;
+  function wwNativeAuth(code){
+    if (!code || WW_NATIVE_BUSY) return;
+    if (Date.now() - AUTH_LAST < 3000) return;
+    WW_NATIVE_BUSY = true;
+    setTimeout(function(){ WW_NATIVE_BUSY = false; }, 4000);
+    try {
+      var q = new URLSearchParams(window.location.search);
+      var payload = { authType: 3, voucherCode: String(code) };
+      if (q.get("clientMac")) payload.clientMac = q.get("clientMac");
+      if (q.get("apMac")) payload.apMac = q.get("apMac");
+      if (q.get("gatewayMac")) payload.gatewayMac = q.get("gatewayMac");
+      if (q.get("ssidName")) payload.ssidName = q.get("ssidName");
+      if (q.get("radioId")) payload.radioId = Number(q.get("radioId"));
+      if (q.get("vid")) payload.vid = Number(q.get("vid"));
+      if (q.get("originUrl")) payload.originUrl = q.get("originUrl");
+      markSubmitted();
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", "/portal/auth", true);
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.addEventListener("loadend", function(){
+        try {
+          var d = JSON.parse(xhr.responseText || "");
+          if (d && d.errorCode === 0 && typeof d.result === "string" && d.result){
+            /* The master would open the landing page now; WaveWallet's own
+               hand-off is preferred, so the landing page only opens when the
+               hand-off has not taken over. */
+            setTimeout(function(){
+              if (!HANDED_OFF){ try { window.location.href = d.result; } catch (e) {} }
+            }, 4000);
+          }
+        } catch (e) {}
+      });
+      xhr.send(JSON.stringify(payload));
+    } catch (e) { WW_NATIVE_BUSY = false; }
+  }
+
+  /* Manual entry heals the same way: when pressing the connect control makes
+     no /portal/auth request at all, the master's wiring is dead - submit the
+     typed code natively instead of swallowing the tap. */
+  try {
+    document.addEventListener("click", function(ev){
+      var c = loginControl || document.getElementById("button-login");
+      if (!c) return;
+      var t = ev.target;
+      var hit = false;
+      while (t){ if (t === c){ hit = true; break; } t = t.parentNode; }
+      if (!hit) return;
+      var before = AUTH_LAST;
+      setTimeout(function(){
+        if (AUTH_LAST !== before) return; /* the master handled the click */
+        var field = wwVoucherField();
+        var code = field && field.value ? String(field.value).trim() : "";
+        if (code && (!activeKind || activeKind === "voucher")) wwNativeAuth(code);
+      }, 1600);
+    }, true);
+  } catch (e) {}
 
   function redeemTick(){
     if (!REDEEM_CODE || AUTH_SENT) return;
@@ -1027,10 +1099,11 @@ ${MARKER}
       try { field.dispatchEvent(new Event("input", { bubbles: true })); } catch (e) {}
       try { field.dispatchEvent(new Event("change", { bubbles: true })); } catch (e) {}
     }
-    /* The controller's OWN control: its click runs Omada's own handler. */
+    /* The controller's OWN control first: its click runs Omada's own handler. */
     var control = loginControl || document.querySelector("#button-login,button[type=submit],input[type=submit]");
-    if (!control) return;
-    try { control.click(); } catch (e) {}
+    if (control){ try { control.click(); } catch (e) {} }
+    /* Two silent clicks mean the master's wiring is dead: go native. */
+    if (REDEEM_TRIES >= 3 && !AUTH_SENT) wwNativeAuth(REDEEM_CODE);
   }
 
   if (REDEEM_TICKET){
@@ -1056,8 +1129,10 @@ ${MARKER}
     } catch (e) {}
     try {
       var redeemTimer = setInterval(function(){
-        if (AUTH_SENT || REDEEM_TRIES >= 15){ clearInterval(redeemTimer); return; }
+        if (AUTH_SENT){ clearInterval(redeemTimer); return; }
         if (REDEEM_CODE) redeemTick();
+        /* Checked AFTER the tick so the guidance message actually shows. */
+        if (REDEEM_TRIES >= 15) clearInterval(redeemTimer);
       }, 1000);
     } catch (e) {}
   }

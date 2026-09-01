@@ -190,11 +190,23 @@ describe("Purchased-code redemption runtime", () => {
     expect(script).toContain("#button-login,button[type=submit],input[type=submit]");
   });
 
-  it("never builds its own /portal/auth request", () => {
-    // The master owns the submission: the injected script sets no authType and
-    // sends no voucherCode in any request body of its own.
-    expect(script).not.toContain("authType:");
-    expect(script).not.toContain('voucherCode:');
+  it("prefers the master's own control and only goes native when clicks are silently dead", () => {
+    // The master owns the submission. The native path exists solely for the
+    // dead-wiring case (getPortalPageSetting failed, so the master never bound
+    // its button) and sends the master's exact same-origin voucher request.
+    expect(script).toContain("wwNativeAuth");
+    expect(script).toContain("REDEEM_TRIES >= 3 && !AUTH_SENT");
+    expect(script).toContain('xhr.open("POST", "/portal/auth", true)');
+    expect(script).toContain("authType: 3");
+  });
+
+  it("heals a dead manual connect tap the same way", () => {
+    expect(script).toContain("AUTH_LAST !== before");
+    expect(script).toContain("wwNativeAuth(code)");
+  });
+
+  it("keeps spaces as %20 when stripping the ticket: Omada leaves '+' literal", () => {
+    expect(script).toContain('replace(/\\+/g, "%20")');
   });
 
   it("strips the ticket from the address bar and from forwarded WaveWallet links", () => {
