@@ -316,7 +316,6 @@ export const testPortalMapping = createServerFn({ method: "POST" })
       const { openOmadaSession } = await import("./omada-api.server");
       const { discoverPortalCapabilities, listSitePortals } = await import("./omada-portals.server");
       const { loadHotspotCredentials } = await import("./omada-hotspot.server");
-    const { loadHotspotCredentials } = await import("./omada-hotspot.server");
 
       const steps: PortalTestStep[] = [];
       const { data: row } = await supabaseAdmin

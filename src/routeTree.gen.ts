@@ -110,7 +110,6 @@ import { Route as UniverseProfileRouteImport } from './routes/universe.profile'
 import { Route as UniverseShopsRouteImport } from './routes/universe.shops'
 import { Route as ApiPublicAppVersionRouteImport } from './routes/api/public/app-version'
 import { Route as ApiPublicOmadaHealthSweepRouteImport } from './routes/api/public/omada-health-sweep'
-import { Route as ApiPublicOmadaProbeTempRouteImport } from './routes/api/public/omada-probe-temp'
 import { Route as ApiPublicPortalContextRouteImport } from './routes/api/public/portal-context'
 import { Route as ApiPublicPortalHandoffRouteImport } from './routes/api/public/portal-handoff'
 import { Route as ApiPublicVoucherReplenishmentSweepRouteImport } from './routes/api/public/voucher-replenishment-sweep'
@@ -625,11 +624,6 @@ const ApiPublicOmadaHealthSweepRoute =
     path: '/api/public/omada-health-sweep',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicOmadaProbeTempRoute = ApiPublicOmadaProbeTempRouteImport.update({
-  id: '/api/public/omada-probe-temp',
-  path: '/api/public/omada-probe-temp',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicPortalContextRoute = ApiPublicPortalContextRouteImport.update({
   id: '/api/public/portal-context',
   path: '/api/public/portal-context',
@@ -765,7 +759,6 @@ export interface FileRoutesByFullPath {
   '/universe/': typeof UniverseIndexRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/omada-health-sweep': typeof ApiPublicOmadaHealthSweepRoute
-  '/api/public/omada-probe-temp': typeof ApiPublicOmadaProbeTempRoute
   '/api/public/portal-context': typeof ApiPublicPortalContextRoute
   '/api/public/portal-handoff': typeof ApiPublicPortalHandoffRoute
   '/api/public/voucher-replenishment-sweep': typeof ApiPublicVoucherReplenishmentSweepRoute
@@ -870,7 +863,6 @@ export interface FileRoutesByTo {
   '/universe': typeof UniverseIndexRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/omada-health-sweep': typeof ApiPublicOmadaHealthSweepRoute
-  '/api/public/omada-probe-temp': typeof ApiPublicOmadaProbeTempRoute
   '/api/public/portal-context': typeof ApiPublicPortalContextRoute
   '/api/public/portal-handoff': typeof ApiPublicPortalHandoffRoute
   '/api/public/voucher-replenishment-sweep': typeof ApiPublicVoucherReplenishmentSweepRoute
@@ -981,7 +973,6 @@ export interface FileRoutesById {
   '/universe/': typeof UniverseIndexRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/omada-health-sweep': typeof ApiPublicOmadaHealthSweepRoute
-  '/api/public/omada-probe-temp': typeof ApiPublicOmadaProbeTempRoute
   '/api/public/portal-context': typeof ApiPublicPortalContextRoute
   '/api/public/portal-handoff': typeof ApiPublicPortalHandoffRoute
   '/api/public/voucher-replenishment-sweep': typeof ApiPublicVoucherReplenishmentSweepRoute
@@ -1093,7 +1084,6 @@ export interface FileRouteTypes {
     | '/universe/'
     | '/api/public/app-version'
     | '/api/public/omada-health-sweep'
-    | '/api/public/omada-probe-temp'
     | '/api/public/portal-context'
     | '/api/public/portal-handoff'
     | '/api/public/voucher-replenishment-sweep'
@@ -1198,7 +1188,6 @@ export interface FileRouteTypes {
     | '/universe'
     | '/api/public/app-version'
     | '/api/public/omada-health-sweep'
-    | '/api/public/omada-probe-temp'
     | '/api/public/portal-context'
     | '/api/public/portal-handoff'
     | '/api/public/voucher-replenishment-sweep'
@@ -1308,7 +1297,6 @@ export interface FileRouteTypes {
     | '/universe/'
     | '/api/public/app-version'
     | '/api/public/omada-health-sweep'
-    | '/api/public/omada-probe-temp'
     | '/api/public/portal-context'
     | '/api/public/portal-handoff'
     | '/api/public/voucher-replenishment-sweep'
@@ -1340,7 +1328,6 @@ export interface RootRouteChildren {
   ShopSlugRoute: typeof ShopSlugRoute
   ApiPublicAppVersionRoute: typeof ApiPublicAppVersionRoute
   ApiPublicOmadaHealthSweepRoute: typeof ApiPublicOmadaHealthSweepRoute
-  ApiPublicOmadaProbeTempRoute: typeof ApiPublicOmadaProbeTempRoute
   ApiPublicPortalContextRoute: typeof ApiPublicPortalContextRoute
   ApiPublicPortalHandoffRoute: typeof ApiPublicPortalHandoffRoute
   ApiPublicVoucherReplenishmentSweepRoute: typeof ApiPublicVoucherReplenishmentSweepRoute
@@ -2057,13 +2044,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicOmadaHealthSweepRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/omada-probe-temp': {
-      id: '/api/public/omada-probe-temp'
-      path: '/api/public/omada-probe-temp'
-      fullPath: '/api/public/omada-probe-temp'
-      preLoaderRoute: typeof ApiPublicOmadaProbeTempRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/portal-context': {
       id: '/api/public/portal-context'
       path: '/api/public/portal-context'
@@ -2336,7 +2316,6 @@ const rootRouteChildren: RootRouteChildren = {
   ShopSlugRoute: ShopSlugRoute,
   ApiPublicAppVersionRoute: ApiPublicAppVersionRoute,
   ApiPublicOmadaHealthSweepRoute: ApiPublicOmadaHealthSweepRoute,
-  ApiPublicOmadaProbeTempRoute: ApiPublicOmadaProbeTempRoute,
   ApiPublicPortalContextRoute: ApiPublicPortalContextRoute,
   ApiPublicPortalHandoffRoute: ApiPublicPortalHandoffRoute,
   ApiPublicVoucherReplenishmentSweepRoute:

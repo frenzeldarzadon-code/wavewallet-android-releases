@@ -29,6 +29,8 @@ export function OmadaConnectionCard({ ecosystemId }: { ecosystemId: string | nul
     clientId: "",
     clientSecret: "",
     siteName: "",
+    hotspotOperatorUser: "",
+    hotspotOperatorPassword: "",
   });
   const [busy, setBusy] = useState<"" | "save" | "test" | "disconnect">("");
   const [report, setReport] = useState<ProbeReport | null>(null);
@@ -44,6 +46,8 @@ export function OmadaConnectionCard({ ecosystemId }: { ecosystemId: string | nul
           clientId: c.clientId,
           clientSecret: "",
           siteName: c.siteName,
+          hotspotOperatorUser: c.hotspotOperatorUser,
+          hotspotOperatorPassword: "",
         });
       })
       .catch(() => setConn(null));
@@ -58,7 +62,7 @@ export function OmadaConnectionCard({ ecosystemId }: { ecosystemId: string | nul
     try {
       const saved = await saveOmadaConnection({ data: { ecosystemId, ...form } });
       setConn(saved);
-      setForm((f) => ({ ...f, clientSecret: "" }));
+      setForm((f) => ({ ...f, clientSecret: "", hotspotOperatorPassword: "" }));
       setReport(null);
       toast.success("Omada details saved for your shop.");
     } catch (e) {
@@ -90,7 +94,15 @@ export function OmadaConnectionCard({ ecosystemId }: { ecosystemId: string | nul
       await disconnectOmada({ data: { ecosystemId } });
       setConn(null);
       setReport(null);
-      setForm({ baseUrl: "", omadacId: "", clientId: "", clientSecret: "", siteName: "" });
+      setForm({
+        baseUrl: "",
+        omadacId: "",
+        clientId: "",
+        clientSecret: "",
+        siteName: "",
+        hotspotOperatorUser: "",
+        hotspotOperatorPassword: "",
+      });
       toast.success("Omada controller disconnected.");
     } catch (e) {
       toast.error("Could not disconnect", { description: (e as Error).message });
@@ -98,6 +110,7 @@ export function OmadaConnectionCard({ ecosystemId }: { ecosystemId: string | nul
       setBusy("");
     }
   };
+
 
   const status = conn?.lastStatus ?? "untested";
 
@@ -166,6 +179,40 @@ export function OmadaConnectionCard({ ecosystemId }: { ecosystemId: string | nul
             />
           </div>
         </div>
+
+        <div className="rounded-md border p-3">
+          <p className="text-sm font-medium">Hotspot Operator (portal sign-on)</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Required for the captive portal to put customers online automatically after a
+            voucher purchase or manual voucher entry. Create it in your Omada controller under
+            Hotspot Manager → Operator, then enter that operator&apos;s username and password
+            here. Without it, customers must type their voucher code on the Omada login page
+            themselves. The password is stored encrypted and never shown again.
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="omadaOperatorUser">Operator username</Label>
+              <Input
+                id="omadaOperatorUser"
+                autoComplete="off"
+                value={form.hotspotOperatorUser}
+                onChange={(e) => set({ hotspotOperatorUser: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="omadaOperatorPassword">Operator password</Label>
+              <Input
+                id="omadaOperatorPassword"
+                type="password"
+                autoComplete="off"
+                placeholder={conn?.hasHotspotOperatorSecret ? "Stored — leave blank to keep" : ""}
+                value={form.hotspotOperatorPassword}
+                onChange={(e) => set({ hotspotOperatorPassword: e.target.value })}
+              />
+            </div>
+          </div>
+        </div>
+
 
         <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" disabled={busy !== ""} onClick={() => void save()}>
