@@ -10,14 +10,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Loader2, Wifi, WifiOff, CheckCircle2, Coins, Sparkles } from "lucide-react";
+import { Loader2, Wifi, WifiOff, CheckCircle2, Coins, Sparkles, LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { signInWithPassword } from "@/lib/auth";
 import { purchaseVoucher } from "@/lib/wallet";
+import { purchaseVoucherWithPoints } from "@/lib/rewards";
+import { joinShopByCode } from "@/lib/shop-directory";
+import { portalAuthLinks, portalReturnPath } from "@/lib/portal-links";
 import { fetchMyMemberships, switchEcosystem } from "@/lib/memberships";
 import { fetchCreditBalance } from "@/lib/wallet";
 import { fetchPointsAccount } from "@/lib/rewards";
@@ -77,8 +78,6 @@ function PortalPage() {
   const [online, setOnline] = useState<AuthorizeResult | null>(null);
 
   const [code, setCode] = useState("");
-  const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
 
   /* ---------------- session ---------------- */
   useEffect(() => {
@@ -159,14 +158,15 @@ function PortalPage() {
     }
   };
 
-  const doSignIn = async () => {
-    if (!state) return;
-    setBusy("signin");
+  const joinThisShop = async () => {
+    if (!state?.shopCode) return;
+    setBusy("join");
     try {
-      await signInWithPassword(identifier, password);
-      setPassword("");
+      // Joining runs the existing database join rules for THIS shop only.
+      await joinShopByCode(state.shopCode);
+      await switchEcosystem(state.shopId).catch(() => undefined);
       await refresh();
-      toast.success("Signed in.");
+      toast.success(`You joined ${state.shopName}.`);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -174,11 +174,14 @@ function PortalPage() {
     }
   };
 
-  const buyAndConnect = async (productId: string) => {
+  const buyAndConnect = async (productId: string, withPoints = false) => {
     if (!state) return;
-    setBusy(productId);
+    setBusy(withPoints ? `${productId}:points` : productId);
     try {
-      const sale = await purchaseVoucher(productId, 1);
+      // Both paths are the shop's EXISTING Voucher Shop purchase RPCs.
+      const sale = withPoints
+        ? await purchaseVoucherWithPoints(productId)
+        : await purchaseVoucher(productId, 1);
       const r = await authorizePortalSale({
         data: { sessionId: state.sessionId, saleId: sale.sale_id },
       });
@@ -208,6 +211,10 @@ function PortalPage() {
   };
 
   const products = useMemo(() => state?.products ?? [], [state]);
+  const authLinks = useMemo(
+    () => (state ? portalAuthLinks(state.shopCode, portalReturnPath(state.sessionId)) : null),
+    [state],
+  );
 
   /* ---------------- render ---------------- */
   if (loading) {
