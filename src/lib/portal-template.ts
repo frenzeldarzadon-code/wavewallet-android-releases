@@ -400,7 +400,7 @@ ${MARKER}
     var ctx = context();
     for (var k in ctx){
       if (!Object.prototype.hasOwnProperty.call(ctx,k)) continue;
-      if (k === "wwPortal" || k === "wwSession") continue;
+      if (k === "wwPortal" || k === "wwSession" || k === "wwRedeem" || k === "wwIntent") continue;
       parts.push(encodeURIComponent(k) + "=" + encodeURIComponent(ctx[k]));
     }
     return url + join + parts.join("&");
@@ -765,7 +765,15 @@ ${MARKER}
       method: "POST",
       credentials: "omit",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ mappingId: CFG.mappingId, context: context() })
+      body: JSON.stringify({
+        mappingId: CFG.mappingId,
+        context: context(),
+        /* This page's own address (origin + path only, never the query), so a
+           purchased code can be brought back to this EXACT page later. */
+        pageUrl: (function(){
+          try { return window.location.origin + window.location.pathname; } catch (e) { return null; }
+        })()
+      })
     })
       .then(function(r){ return r.ok ? r.json() : null; })
       .then(function(d){
@@ -773,7 +781,7 @@ ${MARKER}
         SESSION = d.sessionId || null;
         applyLinks();
         var status = root.querySelector("[data-ww-status]");
-        if (status && d.shopName){
+        if (status && d.shopName && !REDEEM_TICKET){
           status.textContent = "Connected to " + d.shopName + ".";
           status.removeAttribute("hidden");
         }
@@ -793,8 +801,11 @@ ${MARKER}
      count as success. The master's own success-view words below still apply. */
   var verdictOf = ${omadaAuthResponseVerdict.toString()};
   var AUTH_OK = false;
+  var AUTH_SENT = false;
   function noteAuthResponse(status, bodyText){
-    if (verdictOf(status, bodyText) === "success") AUTH_OK = true;
+    var verdict = verdictOf(status, bodyText);
+    if (verdict === "success") AUTH_OK = true;
+    reportRedeem(verdict, bodyText);
   }
   try {
     if (window.fetch){
@@ -804,6 +815,7 @@ ${MARKER}
         try {
           var target = typeof url === "string" ? url : (url && url.url) || "";
           if (target.indexOf("/portal/auth") !== -1){
+            AUTH_SENT = true;
             pending.then(function(res){
               try {
                 res.clone().text().then(function(t){ noteAuthResponse(res.status, t); });
@@ -825,6 +837,7 @@ ${MARKER}
       };
       XMLHttpRequest.prototype.send = function(){
         if (this.__wwAuth){
+          AUTH_SENT = true;
           var xhr = this;
           xhr.addEventListener("loadend", function(){
             try { noteAuthResponse(xhr.status, xhr.responseText); } catch (e) {}
@@ -928,6 +941,126 @@ ${MARKER}
       }
     }, 1000);
   } catch (e) {}
+
+  /* Purchased-code redemption. WaveWallet's purchase page sends the customer
+     back HERE with a one-time connect ticket (wwRedeem). The ticket is
+     exchanged ONCE for the exact code the shop's existing Voucher Shop
+     dispensed, that code is placed into the controller's OWN voucher field,
+     and the controller's OWN login control is clicked - so the request that
+     redeems it is Omada's native /portal/auth voucher submission, unchanged.
+     The code itself never appears in the address bar and is never kept on
+     this device. Manual typing keeps working exactly as before. */
+  var REDEEM_TICKET = null;
+  var REDEEM_CODE = null;
+  var REDEEM_REPORTED = false;
+  var REDEEM_TRIES = 0;
+
+  function wwSay(text){
+    var status = root.querySelector("[data-ww-status]");
+    if (!status) return;
+    status.textContent = text;
+    status.removeAttribute("hidden");
+  }
+
+  function reportRedeem(verdict, bodyText){
+    if (!REDEEM_TICKET || !REDEEM_CODE || REDEEM_REPORTED || verdict === "unknown") return;
+    REDEEM_REPORTED = true;
+    var errorCode = null;
+    try {
+      var parsed = JSON.parse((bodyText || "").trim());
+      if (parsed && typeof parsed.errorCode === "number") errorCode = parsed.errorCode;
+    } catch (e) {}
+    try {
+      fetch(CFG.origin + "/api/public/portal-redeem", {
+        method: "POST",
+        credentials: "omit",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          mappingId: CFG.mappingId,
+          token: REDEEM_TICKET,
+          result: { ok: verdict === "success", errorCode: errorCode }
+        })
+      }).catch(function(){});
+    } catch (e) {}
+    if (verdict !== "success"){
+      wwSay("The hotspot did not accept the code - it stays saved in your account. Press the connect button to try again.");
+    }
+  }
+
+  try {
+    var wwq = new URLSearchParams(window.location.search);
+    var wwTicket = wwq.get("wwRedeem");
+    if (wwTicket){
+      REDEEM_TICKET = wwTicket;
+      wwq.delete("wwRedeem");
+      var wwRest = wwq.toString();
+      try {
+        window.history.replaceState(null, "", window.location.pathname + (wwRest ? "?" + wwRest : ""));
+      } catch (e) {}
+    }
+  } catch (e) {}
+
+  function wwVoucherField(){
+    return root.querySelector("input[name=voucherCode]")
+      || document.querySelector("input[name=voucherCode]")
+      || document.getElementById("voucherCode");
+  }
+
+  function redeemTick(){
+    if (!REDEEM_CODE || AUTH_SENT) return;
+    if (REDEEM_TRIES >= 15){
+      wwSay("Automatic sign-on did not start. Enter the voucher code from your WaveWallet account below.");
+      REDEEM_CODE = null;
+      return;
+    }
+    REDEEM_TRIES += 1;
+    if (activeKind && activeKind !== "voucher"){
+      var options = selectorOptions();
+      for (var oi = 0; oi < options.length; oi++){
+        if (options[oi].kind === "voucher"){ chooseMethod(options[oi]); break; }
+      }
+    }
+    var field = wwVoucherField();
+    if (!field) return;
+    if (field.value !== REDEEM_CODE){
+      field.value = REDEEM_CODE;
+      try { field.dispatchEvent(new Event("input", { bubbles: true })); } catch (e) {}
+      try { field.dispatchEvent(new Event("change", { bubbles: true })); } catch (e) {}
+    }
+    /* The controller's OWN control: its click runs Omada's own handler. */
+    var control = loginControl || document.querySelector("#button-login,button[type=submit],input[type=submit]");
+    if (!control) return;
+    try { control.click(); } catch (e) {}
+  }
+
+  if (REDEEM_TICKET){
+    wwSay("Fetching your voucher...");
+    try {
+      fetch(CFG.origin + "/api/public/portal-redeem", {
+        method: "POST",
+        credentials: "omit",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ mappingId: CFG.mappingId, token: REDEEM_TICKET })
+      })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d && d.ok && d.code){
+            REDEEM_CODE = String(d.code);
+            wwSay("Signing you on with your voucher...");
+            redeemTick();
+          } else {
+            wwSay((d && d.reason) || "This connect link has expired. Enter your voucher code below.");
+          }
+        })
+        .catch(function(){ wwSay("WaveWallet could not be reached. Enter your voucher code below."); });
+    } catch (e) {}
+    try {
+      var redeemTimer = setInterval(function(){
+        if (AUTH_SENT || REDEEM_TRIES >= 15){ clearInterval(redeemTimer); return; }
+        if (REDEEM_CODE) redeemTick();
+      }, 1000);
+    } catch (e) {}
+  }
 })();
 
 </script>
