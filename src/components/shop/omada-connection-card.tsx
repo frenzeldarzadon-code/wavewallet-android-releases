@@ -62,7 +62,7 @@ export function OmadaConnectionCard({ ecosystemId }: { ecosystemId: string | nul
     try {
       const saved = await saveOmadaConnection({ data: { ecosystemId, ...form } });
       setConn(saved);
-      setForm((f) => ({ ...f, clientSecret: "" }));
+      setForm((f) => ({ ...f, clientSecret: "", hotspotOperatorPassword: "" }));
       setReport(null);
       toast.success("Omada details saved for your shop.");
     } catch (e) {
@@ -94,7 +94,15 @@ export function OmadaConnectionCard({ ecosystemId }: { ecosystemId: string | nul
       await disconnectOmada({ data: { ecosystemId } });
       setConn(null);
       setReport(null);
-      setForm({ baseUrl: "", omadacId: "", clientId: "", clientSecret: "", siteName: "" });
+      setForm({
+        baseUrl: "",
+        omadacId: "",
+        clientId: "",
+        clientSecret: "",
+        siteName: "",
+        hotspotOperatorUser: "",
+        hotspotOperatorPassword: "",
+      });
       toast.success("Omada controller disconnected.");
     } catch (e) {
       toast.error("Could not disconnect", { description: (e as Error).message });
@@ -102,6 +110,7 @@ export function OmadaConnectionCard({ ecosystemId }: { ecosystemId: string | nul
       setBusy("");
     }
   };
+
 
   const status = conn?.lastStatus ?? "untested";
 
