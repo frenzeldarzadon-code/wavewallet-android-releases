@@ -44,6 +44,8 @@ export interface PortalState {
   shopId: string;
   shopName: string;
   shopSlug: string | null;
+  /** Public 7-digit Shop ID, used only to build this shop's own auth links. */
+  shopCode: string | null;
   portalName: string | null;
   ssid: string | null;
   flags: PortalFeatureFlags;
@@ -70,7 +72,7 @@ async function loadState(
 ): Promise<PortalState> {
   const ecosystemId = String(sessionRow["ecosystem_id"]);
   const [{ data: shop }, { data: products }, { data: calibrations }] = await Promise.all([
-    supabaseAdmin.from("ecosystems").select("id, name, slug").eq("id", ecosystemId).maybeSingle(),
+    supabaseAdmin.from("ecosystems").select("id, name, slug, shop_code").eq("id", ecosystemId).maybeSingle(),
     supabaseAdmin
       .from("voucher_products")
       .select("id, name, description, credit_price, points_price, promo_price")
@@ -110,6 +112,7 @@ async function loadState(
     shopId: ecosystemId,
     shopName: String((shop as Record<string, unknown> | null)?.["name"] ?? "This shop"),
     shopSlug: ((shop as Record<string, unknown> | null)?.["slug"] as string | null) ?? null,
+    shopCode: ((shop as Record<string, unknown> | null)?.["shop_code"] as string | null) ?? null,
     portalName: (mapping["portal_name"] as string | null) ?? null,
     ssid: (sessionRow["ssid"] as string | null) ?? (mapping["ssid_info"] as string | null) ?? null,
     flags: normalizePortalFlags(mapping["settings"]),
