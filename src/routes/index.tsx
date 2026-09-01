@@ -25,7 +25,7 @@ import {
 import { isRealEmail, validateGlobalSignup } from "@/lib/account-identifiers";
 import { ShopFinder } from "@/components/shop/shop-finder";
 import type { ShopSummary } from "@/lib/shop-directory";
-import { joinShopByCode, normalizeShopCode } from "@/lib/shop-directory";
+import { joinShopByCode, normalizeShopCode, safeReturnPath } from "@/lib/shop-directory";
 import { destinationAfterAuth, rememberPendingShopCode } from "@/lib/shop-routing";
 import { signInWithUsername } from "@/lib/username-login.functions";
 import { LOGIN_PASSWORD_HINT, LOGIN_USERNAME_HINT } from "@/lib/username-login";
@@ -78,11 +78,17 @@ export const Route = createFileRoute("/")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const shopParam = Route.useSearch().shop ?? "";
-  const [mode, setMode] = useState<"signin" | "signup">(shopParam ? "signup" : "signin");
+  const searchParams = Route.useSearch();
+  const shopParam = searchParams.shop ?? "";
+  // A shop link may ask explicitly for sign-in; otherwise a shop link means join.
+  const [mode, setMode] = useState<"signin" | "signup">(
+    searchParams.mode ?? (shopParam ? "signup" : "signin"),
+  );
+  // Where a shop-specific link wants the customer back (e.g. the hotspot portal).
+  const nextPath = safeReturnPath(searchParams.next ?? null);
   // Two ways in: join an existing WiFi voucher operation, or become an operator.
   const [signupPath, setSignupPath] = useState<"choose" | "join" | "operator">(
-    shopParam ? "join" : "choose",
+    shopParam && searchParams.mode !== "signin" ? "join" : "choose",
   );
   const [shop, setShop] = useState<ShopSummary | null>(null);
   const [method, setMethod] = useState<"email" | "username">("email");
@@ -141,7 +147,7 @@ function LoginPage() {
     let active = true;
     loadAuthContext().then(async (ctx) => {
       if (!active || !ctx) return;
-      const to = await destinationAfterAuth(ctx.role);
+      const to = nextPath ?? (await destinationAfterAuth(ctx.role));
       if (active) navigate({ to, replace: true });
     });
     superAdminSetupAvailable()
@@ -150,7 +156,7 @@ function LoginPage() {
     return () => {
       active = false;
     };
-  }, [navigate]);
+  }, [navigate, nextPath]);
 
   const online = useOnline();
 
@@ -190,7 +196,7 @@ function LoginPage() {
       }
       // Members who belong to a shop open that shop; the Universe stays in
       // navigation. Role is resolved after authentication, never chosen here.
-      navigate({ to: await destinationAfterAuth(ctx.role), replace: true });
+      navigate({ to: nextPath ?? (await destinationAfterAuth(ctx.role)), replace: true });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not sign you in.");
     } finally {
@@ -243,7 +249,7 @@ function LoginPage() {
       if (joinCode) {
         await joinShopByCode(joinCode);
         toast.success("You joined the shop — your wallet there is ready.");
-        navigate({ to: "/app/shop", replace: true });
+        navigate({ to: nextPath ?? "/app/shop", replace: true });
         return;
       }
       if (signupPath === "operator") {
