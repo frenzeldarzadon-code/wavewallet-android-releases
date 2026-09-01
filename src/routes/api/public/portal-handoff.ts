@@ -42,7 +42,10 @@ export const Route = createFileRoute("/api/public/portal-handoff")({
 
         const result = await issuePortalHandoff(
           { mappingId, sessionId },
-          new URL(request.url).origin,
+          resolvePublicOrigin({
+            configured: process.env["PUBLIC_APP_ORIGIN"] ?? null,
+            request: new URL(request.url).origin,
+          }),
           secret,
         );
         return result.ok ? json(result) : json(result, 404);
