@@ -199,12 +199,11 @@ export async function discoverPortalCapabilities(
         caps.listPath = path;
         caps.listSupported = true;
       }
-      if (!caps.authorizePath && AUTHORIZE.test(path) && (ops["post"] || ops["put"] || ops["get"])) {
-        caps.authorizePath = path;
-        caps.authorizeSupported = true;
-        caps.authorizeMethod = ops["post"] || ops["put"] ? "POST" : "GET";
-        caps.authorizeScope = path.includes("/sites/") ? "site" : "controller";
-      }
+      // Client authorization is deliberately NOT taken from this document: the
+      // Open API surface has no such route, and the only endpoint that works is
+      // the External Portal API probed further below.
+      void AUTHORIZE;
+
     }
     caps.notes.push(
       `Read the controller's own API document (${Object.keys(paths).length} documented paths).`,
