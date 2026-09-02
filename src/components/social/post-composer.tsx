@@ -9,7 +9,6 @@
 import {
   ArrowLeft,
   Check,
-  Coins,
   Globe2,
   ImagePlus,
   Loader2,
@@ -52,7 +51,6 @@ import {
   audienceHelp,
   audienceLabel,
   audienceSummary,
-  canAfford,
   createPost,
   fetchTargetShops,
   postCharge,
@@ -63,7 +61,6 @@ import {
   validateSocialImage,
   type PostAudience,
   type PromotionTier,
-  type SocialCurrency,
   type SocialState,
   type TargetShop,
 } from "@/lib/social";
@@ -83,7 +80,6 @@ export function PostComposer({
   state,
   tiers,
   userId,
-  pointsBalance,
   ownShopName,
   onPosted,
 }: {
@@ -92,7 +88,8 @@ export function PostComposer({
   state: SocialState;
   tiers: PromotionTier[];
   userId: string;
-  pointsBalance: number;
+  /** Kept for callers; Universe posting never charges points. */
+  pointsBalance?: number;
   ownShopName: string;
   onPosted: () => Promise<void> | void;
 }) {
@@ -107,7 +104,6 @@ export function PostComposer({
   const [shopIds, setShopIds] = useState<string[]>([]);
   const [promote, setPromote] = useState(false);
   const [tierId, setTierId] = useState<string>("");
-  const [payWith, setPayWith] = useState<SocialCurrency>("social");
   const [posting, setPosting] = useState(false);
   const [ackRegular, setAckRegular] = useState(false);
 
@@ -120,11 +116,9 @@ export function PostComposer({
 
   const promotionAvailable = state.promotion_enabled && tiers.length > 0;
   const tier = useMemo(() => tiers.find((t) => t.id === tierId) ?? null, [tiers, tierId]);
-  const charge = useMemo(
-    () => postCharge(state, promote, tier, payWith),
-    [state, promote, tier, payWith],
-  );
-  const affordable = canAfford(state, charge, pointsBalance);
+  // Always free: posting and promoting never deduct anything.
+  const charge = postCharge(state, promote, tier);
+  const affordable = true;
   // Detection is free and local: it never touches the network and never
   // deducts anything. It only decides which notice the review step shows.
   const detection = useMemo(() => detectPromotion(body, { hasImage: file !== null }), [body, file]);
@@ -161,7 +155,6 @@ export function PostComposer({
     setShopIds([]);
     setPromote(false);
     setTierId("");
-    setPayWith("social");
     setAckRegular(false);
   };
 
@@ -209,19 +202,14 @@ export function PostComposer({
         imagePath,
         promote,
         tierId: promote ? (tier?.id ?? null) : null,
-        ...(promote ? { currency: charge.currency } : {}),
         audience,
         ...(audience === "shops" ? { shopIds } : {}),
       });
-      const deducted =
-        res.charged > 0
-          ? `${res.charged} ${res.currency === "points" ? "points" : "social credits"} deducted.`
-          : "Nothing was deducted.";
       toast.success(promote ? "Promoted post published" : "Posted", {
         description:
           audience === "general"
-            ? `${deducted} Sent to ${res.pending_shops} other shop${res.pending_shops === 1 ? "" : "s"} for admin approval.`
-            : deducted,
+            ? `Free — published across the Universe (${res.live_shops} shop${res.live_shops === 1 ? "" : "s"}).`
+            : "Free — nothing was deducted.",
       });
       close(false);
       await onPosted();
@@ -255,11 +243,6 @@ export function PostComposer({
     else if (step === "promote") setStep("audience");
     else if (step === "audience") setStep("write");
   };
-
-  const remaining =
-    charge.currency === "points"
-      ? Math.max(0, pointsBalance - charge.amount)
-      : Math.max(0, state.balance - charge.amount);
 
   return (
     <Dialog open={open} onOpenChange={close}>
@@ -442,8 +425,8 @@ export function PostComposer({
                   <Megaphone className="size-4 text-primary" aria-hidden /> Promote this post
                 </Label>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Off by default. Turning this on spends social credits — you confirm the exact
-                  amount on the next step.
+                  Off by default. Promoted posts are pinned higher in the feed for the package
+                  duration — free of charge.
                 </p>
               </div>
               <Switch id="promoteToggle" checked={promote} onCheckedChange={setPromote} />
@@ -468,37 +451,11 @@ export function PostComposer({
                       {tierId === t.id ? <Check className="ml-auto size-4 text-primary" /> : null}
                     </span>
                     <span className="mt-1 block text-xs text-muted-foreground">
-                      {t.currency !== "points" ? `${t.price_social} social credits` : ""}
-                      {t.currency === "both" ? " or " : ""}
-                      {t.currency !== "social" ? `${t.price_points} points` : ""} ·{" "}
-                      {tierDuration(t.duration_hours)}
+                      Free · {tierDuration(t.duration_hours)}
                       {t.description ? ` · ${t.description}` : ""}
                     </span>
                   </button>
                 ))}
-                {tier?.currency === "both" ? (
-                  <div className="space-y-1.5">
-                    <Label>Pay with</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        type="button"
-                        variant={payWith === "social" ? "default" : "outline"}
-                        className="h-11"
-                        onClick={() => setPayWith("social")}
-                      >
-                        {tier.price_social} social credits
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={payWith === "points" ? "default" : "outline"}
-                        className="h-11"
-                        onClick={() => setPayWith("points")}
-                      >
-                        {tier.price_points} points
-                      </Button>
-                    </div>
-                  </div>
-                ) : null}
               </div>
             ) : null}
           </div>
@@ -517,8 +474,8 @@ export function PostComposer({
                   <div className="space-y-1">
                     <p className="text-sm font-semibold">{PROMOTION_NOTICE}</p>
                     <p className="text-xs text-muted-foreground">
-                      {detectionExplanation(detection)} Checking costs nothing — nothing is deducted
-                      until you publish.
+                      {detectionExplanation(detection)} Promotion packages are free — they only
+                      decide how long the post stays featured.
                     </p>
                   </div>
                 </div>
@@ -571,21 +528,7 @@ export function PostComposer({
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-muted-foreground">Cost</dt>
-                <dd className="text-right font-medium">
-                  {charge.free
-                    ? "Free (uses 1 of today's free posts)"
-                    : `${charge.amount} ${charge.currency === "points" ? "points" : "paid social credits"}`}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-muted-foreground">
-                  {charge.free ? "Free posts left after this" : "Paid balance after this"}
-                </dt>
-                <dd className="text-right font-medium">
-                  {charge.free
-                    ? Math.max(0, state.free_posts_left - 1)
-                    : `${remaining} ${charge.currency === "points" ? "points" : "social credits"}`}
-                </dd>
+                <dd className="text-right font-medium text-success">Free</dd>
               </div>
             </dl>
             <p className="text-xs text-muted-foreground">
@@ -594,30 +537,14 @@ export function PostComposer({
                 : audienceHelp(audience)}
             </p>
             <p className="text-xs text-muted-foreground">
-              {promote
-                ? `Only you pay this promotion, and promotions always cost paid social credits. Likes, replies and messages stay free.`
-                : `Likes, replies and messages are always free. Only posts beyond your daily free allowance use paid social credits.`}
+              Posting, promoting, likes, replies and messages are always free in the Universe.
+              Nothing is deducted from your wallet or points.
             </p>
-            {!affordable ? (
-              <p className="text-sm font-medium text-destructive">
-                You do not have enough {charge.currency === "points" ? "points" : "social credits"}.
-                Nothing has been deducted.
-              </p>
-            ) : null}
           </div>
         ) : null}
 
         <div className="flex items-center gap-2 border-t border-border pt-3">
-          <span className="flex flex-col gap-0.5 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <Coins className="size-4 text-success" aria-hidden />
-              {state.purchased_balance} paid social credits
-            </span>
-            <span>
-              {Math.max(0, state.free_posts_left)} free post
-              {state.free_posts_left === 1 ? "" : "s"} left today
-            </span>
-          </span>
+          <span className="text-xs text-muted-foreground">Free to post · no coins or points used</span>
           {step === "review" ? (
             <Button
               className="ml-auto h-11"
