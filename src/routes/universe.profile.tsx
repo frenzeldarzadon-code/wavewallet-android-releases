@@ -3,6 +3,7 @@ import { ProfilePage } from "@/components/profile-page";
 import { AddressCard } from "@/components/universe/address-card";
 import { RelationshipsCard } from "@/components/universe/relationships-card";
 import { ConnectedLoginsCard } from "@/components/universe/connected-logins-card";
+import { UniverseVouchersCard } from "@/components/universe/universe-vouchers-card";
 import { UniverseShell } from "@/components/universe/universe-shell";
 
 export const Route = createFileRoute("/universe/profile")({
@@ -31,6 +32,7 @@ function UniverseProfile() {
     <UniverseShell title="Profile" subtitle="Your global identity">
       <div className="space-y-6 px-4 sm:px-0">
         <ProfilePage />
+        <UniverseVouchersCard />
         <AddressCard />
         <RelationshipsCard />
         <ConnectedLoginsCard />
