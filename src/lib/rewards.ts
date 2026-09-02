@@ -229,11 +229,19 @@ export interface PointsPurchaseResult {
   sale_id: string;
 }
 
-export async function purchaseVoucherWithPoints(productId: string): Promise<PointsPurchaseResult> {
+/**
+ * Buys ONE voucher with points. For Universe vouchers the database debits the
+ * buyer's points in the SELLING shop and records the storefront seller.
+ */
+export async function purchaseVoucherWithPoints(
+  productId: string,
+  sellerId: string | null = null,
+): Promise<PointsPurchaseResult> {
   requireOnline();
   const { data, error } = await supabase.rpc("purchase_voucher_with_points", {
     _product_id: productId,
-  });
+    ...(sellerId ? { _seller_id: sellerId } : {}),
+  } as never);
   if (error) throw new Error(friendlyWalletError(error.message));
   const row = (data as unknown as PointsPurchaseResult[])[0];
   if (!row) throw new Error("Purchase could not be completed.");
