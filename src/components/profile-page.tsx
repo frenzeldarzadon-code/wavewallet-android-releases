@@ -29,9 +29,16 @@ import {
 } from "@/lib/profile";
 import { validateImageFile } from "@/lib/image-optimize";
 import { updateOwnContact } from "@/lib/profile-contact.functions";
+import { defaultStoreName } from "@/lib/seller-storefront";
 import { useSession } from "@/lib/session";
 
 type HandleState = "idle" | "checking" | "available" | "taken" | "invalid" | "unknown";
+
+/** Seller's customised storefront name, stored in profile preferences. */
+function storefrontNameOf(preferences: unknown): string {
+  const v = (preferences as { storefront_name?: unknown } | null)?.storefront_name;
+  return typeof v === "string" ? v.trim() : "";
+}
 
 export function ProfilePage() {
   // No required role here: the parent layout route (/app, /admin, /reseller, /super)
@@ -43,6 +50,7 @@ export function ProfilePage() {
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState("");
   const [handle, setHandle] = useState("");
+  const [storeName, setStoreName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [handleState, setHandleState] = useState<HandleState>("idle");
@@ -81,6 +89,7 @@ export function ProfilePage() {
       setHandle(p?.handle ?? "");
       setPhone(p?.phone ?? "");
       setEmail(p?.email ?? "");
+      setStoreName(storefrontNameOf(p?.preferences));
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -160,11 +169,15 @@ export function ProfilePage() {
           previousPath: profile.avatar_path,
         });
       }
+      const storedStoreName = storefrontNameOf(profile.preferences);
       await updateOwnProfile({
         fullName: name,
         handle: normalizeHandle(handle),
         ...(avatarPath ? { avatarPath } : {}),
         ...(removePhoto && !avatarPath ? { clearAvatar: true } : {}),
+        ...(storeName.trim() !== storedStoreName
+          ? { preferences: { storefront_name: storeName.trim() } }
+          : {}),
       });
       if (removePhoto && !avatarPath) await deleteAvatar(profile.avatar_path);
 
@@ -346,6 +359,22 @@ export function ProfilePage() {
                   sending coins.
                 </p>
               )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="storefront-name">Storefront name</Label>
+              <Input
+                id="storefront-name"
+                value={storeName}
+                onChange={(e) => setStoreName(e.target.value)}
+                className="h-11"
+                placeholder={defaultStoreName(name || "My")}
+                maxLength={60}
+              />
+              <p className="text-xs text-muted-foreground">
+                Shown to Universe customers on your seller card and storefront. Leave blank to use
+                &ldquo;{defaultStoreName(name || "My")}&rdquo;.
+              </p>
             </div>
 
             <div className="space-y-1.5">

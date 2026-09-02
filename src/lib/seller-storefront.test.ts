@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupShopSearchRows, groupStorefrontRows } from "./seller-storefront";
+import { defaultStoreName, groupShopSearchRows, groupStorefrontRows } from "./seller-storefront";
 
 const row = (over: Partial<Parameters<typeof groupStorefrontRows>[0][number]> = {}) => ({
   seller_id: "s1",
@@ -32,7 +32,21 @@ describe("groupStorefrontRows", () => {
     expect(out!.sellerHandle).toBe("ana");
     expect(out!.shops.map((s) => s.id)).toEqual(["shop-a", "shop-b"]);
     expect(out!.shops[0]!.products.map((p) => p.price)).toEqual([20, 100]);
-    expect(Object.keys(out!)).toEqual(["sellerId", "sellerName", "sellerHandle", "avatarPath", "shops"]);
+    expect(Object.keys(out!)).toEqual([
+      "sellerId",
+      "sellerName",
+      "sellerHandle",
+      "avatarPath",
+      "storeName",
+      "shops",
+    ]);
+  });
+
+  it("falls back to a default storefront name and honours a customised one", () => {
+    expect(groupStorefrontRows([row()])!.storeName).toBe("Ana's Store");
+    expect(groupStorefrontRows([row({ store_name: "  " })])!.storeName).toBe("Ana's Store");
+    expect(groupStorefrontRows([row({ store_name: "Ana WiFi Hub" })])!.storeName).toBe("Ana WiFi Hub");
+    expect(defaultStoreName(" Ana ")).toBe("Ana's Store");
   });
 });
 

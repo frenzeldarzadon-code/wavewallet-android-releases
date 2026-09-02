@@ -31,7 +31,14 @@ export interface SellerStorefront {
   sellerName: string;
   sellerHandle: string;
   avatarPath: string | null;
+  /** Customer-facing storefront name; defaults to "<Name>'s Store" until customised. */
+  storeName: string;
   shops: StorefrontShop[];
+}
+
+/** Default storefront name used when a seller has not customised theirs. */
+export function defaultStoreName(fullName: string): string {
+  return `${fullName.trim()}'s Store`;
 }
 
 type Row = {
@@ -39,6 +46,7 @@ type Row = {
   seller_name: string;
   seller_handle: string;
   avatar_path: string | null;
+  store_name?: string | null;
   shop_id: string;
   shop_name: string;
   shop_slug: string;
@@ -73,6 +81,7 @@ export function groupStorefrontRows(rows: Row[]): SellerStorefront | null {
     sellerName: first.seller_name,
     sellerHandle: first.seller_handle,
     avatarPath: first.avatar_path,
+    storeName: first.store_name?.trim() || defaultStoreName(first.seller_name),
     shops: [...shops.values()],
   };
 }
@@ -89,9 +98,10 @@ export interface ShopSeller {
   sellerName: string;
   sellerHandle: string;
   avatarPath: string | null;
+  storeName: string;
 }
 
-/** Authorized sellers of a Universe shop — identity only. */
+/** Authorized sellers of a Universe shop — identity + storefront name only. */
 export async function fetchUniverseSellers(slug: string): Promise<ShopSeller[]> {
   const { data, error } = await supabase.rpc("universe_sellers_for_shop", { _slug: slug });
   if (error) throw new Error(error.message);
@@ -100,11 +110,13 @@ export async function fetchUniverseSellers(slug: string): Promise<ShopSeller[]> 
     seller_name: string;
     seller_handle: string;
     avatar_path: string | null;
+    store_name?: string | null;
   }[]).map((r) => ({
     sellerId: r.seller_id,
     sellerName: r.seller_name,
     sellerHandle: r.seller_handle,
     avatarPath: r.avatar_path,
+    storeName: r.store_name?.trim() || defaultStoreName(r.seller_name),
   }));
 }
 

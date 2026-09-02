@@ -54,7 +54,10 @@ export function SellerStorefrontSection({
   return (
     <section className="space-y-3">
       <div className="flex items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold text-muted-foreground">Vouchers</h2>
+        <div className="min-w-0">
+          <h2 className="truncate text-base font-bold text-success">{store.storeName}</h2>
+          <p className="text-xs text-muted-foreground">Vouchers sold by {store.sellerName}</p>
+        </div>
         {viewerId && balance !== null ? (
           <p className="text-xs text-muted-foreground">
             Universe wallet: <span className="font-semibold text-foreground">{peso(balance)}</span>

@@ -1,41 +1,34 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, ChevronUp, Loader2, Search, Store, Users } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { ArrowRight, Loader2, Search, Store, Ticket } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { MemberAvatar } from "@/components/member-avatar";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui-kit";
 import { peso } from "@/lib/wavewallet";
-import { fetchCreditBalance } from "@/lib/wallet";
 import {
   fetchUniverseSellers,
   searchUniverseShops,
   type DiscoveredShop,
   type ShopSeller,
 } from "@/lib/seller-storefront";
-import { VoucherPurchaseDialogs, type PurchaseTarget } from "./voucher-purchase-dialogs";
 
 /**
- * Customer-facing Universe discovery: search Universe shops by shop or voucher
- * name, browse the sellers authorized for a shop (identity only — never the
- * hierarchy) or buy directly from the shop through the Phase 1 purchase engine.
+ * Customer-facing Universe discovery. A Universe shop is the discovery
+ * context: it shows its available vouchers and, critically, the authorized
+ * seller storefronts that sell them. There is deliberately NO direct
+ * "buy from shop" path here — every purchase terminates at a seller's
+ * storefront (/universe/u/$handle), where the Phase 1 seller-attributed
+ * purchase engine and the global Universe wallet do the work.
+ *
+ * Seller cards show public identity only: photo, name and storefront name.
+ * Roles, hierarchy, rates and wallets never reach this surface.
  */
-export function UniverseShopDiscovery({ viewerId }: { viewerId: string }) {
+export function UniverseShopDiscovery() {
   const [q, setQ] = useState("");
   const [shops, setShops] = useState<DiscoveredShop[]>([]);
   const [loading, setLoading] = useState(true);
-  const [balance, setBalance] = useState<number | null>(null);
-  const [buying, setBuying] = useState<PurchaseTarget | null>(null);
-
-  const loadBalance = useCallback(async () => {
-    setBalance(await fetchCreditBalance(viewerId, null).catch(() => null));
-  }, [viewerId]);
-
-  useEffect(() => {
-    void loadBalance();
-  }, [loadBalance]);
 
   useEffect(() => {
     const handle = setTimeout(async () => {
@@ -52,12 +45,12 @@ export function UniverseShopDiscovery({ viewerId }: { viewerId: string }) {
   }, [q]);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          className="pl-9"
-          placeholder="Shop or voucher name, e.g. Sagada Wave or 1 Day"
+          className="h-11 rounded-xl pl-9 shadow-[var(--shadow-card)]"
+          placeholder="Search a shop or voucher, e.g. Sagada Wave or 1 Day"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           aria-label="Search Universe shops and vouchers"
@@ -73,148 +66,151 @@ export function UniverseShopDiscovery({ viewerId }: { viewerId: string }) {
           description="Try a different shop or voucher name."
         />
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-5">
           {shops.map((shop) => (
-            <ShopResult
-              key={shop.id}
-              shop={shop}
-              searching={q.trim().length > 0}
-              onBuy={(product) =>
-                setBuying({ shopName: shop.name, product, sellerId: null, sellerName: null })
-              }
-            />
+            <ShopResult key={shop.id} shop={shop} searching={q.trim().length > 0} />
           ))}
         </div>
       )}
-
-      <VoucherPurchaseDialogs
-        target={buying}
-        balance={balance}
-        onClose={() => setBuying(null)}
-        onPurchased={async () => {
-          await loadBalance();
-          setShops(await searchUniverseShops(q.trim()).catch(() => shops));
-        }}
-      />
     </div>
   );
 }
 
-function ShopResult({
-  shop,
-  searching,
-  onBuy,
-}: {
-  shop: DiscoveredShop;
-  searching: boolean;
-  onBuy: (product: DiscoveredShop["products"][number]) => void;
-}) {
-  const [showSellers, setShowSellers] = useState(false);
+function ShopResult({ shop, searching }: { shop: DiscoveredShop; searching: boolean }) {
   const [showAll, setShowAll] = useState(false);
   const [sellers, setSellers] = useState<ShopSeller[] | null>(null);
-  const [sellersBusy, setSellersBusy] = useState(false);
 
   const matching = shop.products.filter((p) => p.matches);
   const visible = showAll || matching.length === 0 ? shop.products : matching;
   const hiddenCount = shop.products.length - visible.length;
 
-  const toggleSellers = async () => {
-    const next = !showSellers;
-    setShowSellers(next);
-    if (next && sellers === null) {
-      setSellersBusy(true);
-      try {
-        setSellers(await fetchUniverseSellers(shop.slug));
-      } catch (e) {
-        toast.error("Could not load sellers", { description: (e as Error).message });
+  useEffect(() => {
+    let active = true;
+    fetchUniverseSellers(shop.slug)
+      .then((s) => {
+        if (active) setSellers(s);
+      })
+      .catch((e: Error) => {
+        if (!active) return;
+        toast.error("Could not load sellers", { description: e.message });
         setSellers([]);
-      } finally {
-        setSellersBusy(false);
-      }
-    }
-  };
+      });
+    return () => {
+      active = false;
+    };
+  }, [shop.slug]);
 
   return (
-    <Card className="shadow-[var(--shadow-card)]">
-      <CardContent className="space-y-3 py-4">
-        <div className="flex items-start gap-3">
-          <Store className="mt-0.5 size-5 shrink-0 text-primary" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">{shop.name}</p>
-            {shop.description ? (
-              <p className="line-clamp-2 text-xs text-muted-foreground">{shop.description}</p>
-            ) : null}
-          </div>
+    <Card className="overflow-hidden border-border/70 shadow-[var(--shadow-card)]">
+      {/* Shop = discovery context */}
+      <div className="flex items-start gap-3 bg-gradient-to-r from-primary/10 via-primary/5 to-success/10 px-4 py-4">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+          <Store className="size-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Universe shop
+          </p>
+          <h3 className="truncate text-base font-bold leading-tight">{shop.name}</h3>
+          {shop.description ? (
+            <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{shop.description}</p>
+          ) : null}
+        </div>
+      </div>
+
+      <CardContent className="space-y-4 py-4">
+        {/* Products (context only — no checkout here) */}
+        <div>
+          <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <Ticket className="size-3.5" /> Available vouchers
+          </p>
+          {shop.products.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No vouchers on sale right now.</p>
+          ) : (
+            <ul className="flex flex-wrap gap-2">
+              {visible.map((p) => (
+                <li
+                  key={p.id}
+                  className="rounded-lg border border-border bg-muted/40 px-3 py-1.5 text-xs"
+                >
+                  <span className="font-semibold">{p.name}</span>
+                  <span className="text-muted-foreground">
+                    {" "}
+                    · {peso(p.price)} ·{" "}
+                    {p.available > 0 ? (
+                      <span className="text-success">{p.available} available</span>
+                    ) : (
+                      <span className="text-destructive">Out of stock</span>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {searching && hiddenCount > 0 ? (
+            <button
+              type="button"
+              className="mt-2 text-xs font-medium text-primary underline-offset-2 hover:underline"
+              onClick={() => setShowAll(true)}
+            >
+              Show {hiddenCount} more voucher{hiddenCount === 1 ? "" : "s"} from this shop
+            </button>
+          ) : null}
         </div>
 
-        {shop.products.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No vouchers on sale right now.</p>
-        ) : (
-          <ul className="divide-y">
-            {visible.map((p) => (
-              <li key={p.id} className="flex items-center justify-between gap-3 py-2">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{p.name}</p>
-                  {p.description ? (
-                    <p className="truncate text-xs text-muted-foreground">{p.description}</p>
-                  ) : null}
-                  <p className="text-xs text-muted-foreground">
-                    {peso(p.price)} · {p.available > 0 ? `${p.available} available` : "Out of stock"}
-                  </p>
-                </div>
-                <Button size="sm" disabled={p.available <= 0} onClick={() => onBuy(p)}>
-                  Buy from shop
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
-        {searching && hiddenCount > 0 ? (
-          <button
-            type="button"
-            className="text-xs font-medium text-primary underline-offset-2 hover:underline"
-            onClick={() => setShowAll(true)}
-          >
-            Show {hiddenCount} more voucher{hiddenCount === 1 ? "" : "s"} from this shop
-          </button>
-        ) : null}
-
-        <div className="border-t pt-3">
-          <Button variant="outline" size="sm" className="w-full" onClick={() => void toggleSellers()}>
-            <Users className="size-4" />
-            Browse sellers
-            {showSellers ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-          </Button>
-          {showSellers ? (
-            sellersBusy ? (
-              <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                <Loader2 className="size-3 animate-spin" /> Loading sellers…
+        {/* Sellers — the only way to buy */}
+        <div>
+          <div className="mb-2 flex items-baseline justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Buy from a seller
+            </p>
+            {sellers && sellers.length > 0 ? (
+              <p className="text-[11px] text-muted-foreground">
+                {sellers.length} seller{sellers.length === 1 ? "" : "s"}
               </p>
-            ) : (sellers?.length ?? 0) === 0 ? (
-              <p className="mt-2 text-xs text-muted-foreground">No sellers listed yet.</p>
-            ) : (
-              <ul className="mt-2 divide-y">
-                {sellers!.map((s) => (
-                  <li key={s.sellerId}>
-                    <Link
-                      to="/universe/u/$handle"
-                      params={{ handle: s.sellerHandle }}
-                      className="flex items-center gap-3 py-2 hover:bg-muted/50"
-                    >
-                      <MemberAvatar path={s.avatarPath} name={s.sellerName} className="size-9" />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{s.sellerName}</p>
-                        <p className="truncate text-xs text-muted-foreground">@{s.sellerHandle}</p>
-                      </div>
-                      <span className="text-xs text-primary">View vouchers</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )
-          ) : null}
+            ) : null}
+          </div>
+          {sellers === null ? (
+            <p className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="size-3 animate-spin" /> Loading sellers…
+            </p>
+          ) : sellers.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No sellers listed yet.</p>
+          ) : (
+            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {sellers.map((s) => (
+                <li key={s.sellerId}>
+                  <SellerCard seller={s} />
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+/** Premium seller card: image → full name → seller shop name → View My Shop →. */
+function SellerCard({ seller }: { seller: ShopSeller }) {
+  return (
+    <Link
+      to="/universe/u/$handle"
+      params={{ handle: seller.sellerHandle }}
+      className="group flex h-full flex-col items-center rounded-2xl border border-border bg-card p-3 text-center shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <span className="rounded-full bg-gradient-to-br from-primary to-success p-[2px]">
+        <MemberAvatar
+          path={seller.avatarPath}
+          name={seller.sellerName}
+          className="size-16 border-2 border-card text-base"
+        />
+      </span>
+      <p className="mt-2 w-full truncate text-sm font-semibold leading-tight">{seller.sellerName}</p>
+      <p className="w-full truncate text-xs font-medium text-success">{seller.storeName}</p>
+      <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground transition-colors group-hover:bg-primary/90">
+        View My Shop <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+      </span>
+    </Link>
   );
 }
