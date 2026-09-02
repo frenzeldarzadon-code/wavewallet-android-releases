@@ -543,7 +543,9 @@ export function PostComposer({
         ) : null}
 
         <div className="flex items-center gap-2 border-t border-border pt-3">
-          <span className="text-xs text-muted-foreground">Free to post · no coins or points used</span>
+          <span className="text-xs text-muted-foreground">
+            Free to post · no coins or points used
+          </span>
           {step === "review" ? (
             <Button
               className="ml-auto h-11"

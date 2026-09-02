@@ -90,7 +90,8 @@ export function SocialSettingsCard() {
   };
 
   return (
-    <PageSection devSlot="social-settings-card.community-social-credits"
+    <PageSection
+      devSlot="social-settings-card.community-social-credits"
       title="Community & social credits"
       description="Community switches and rewarded-ad limits for every shop. Social activity itself is free."
     >

@@ -76,7 +76,8 @@ export function EcosystemSocialCard({ ecosystemId }: { ecosystemId: string }) {
   const platform = (key: Field) => (effective ? String(effective[key as keyof SocialState]) : "—");
 
   return (
-    <PageSection devSlot="ecosystem-social-card.community-settings"
+    <PageSection
+      devSlot="ecosystem-social-card.community-settings"
       title="Community settings"
       description="These apply to your shop only. Leave a field empty to follow the platform default."
     >

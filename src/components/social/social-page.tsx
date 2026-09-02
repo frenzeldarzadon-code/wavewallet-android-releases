@@ -142,7 +142,6 @@ export function SocialPage() {
   // composer
   const [composerOpen, setComposerOpen] = useState(false);
 
-
   // reporting
   const [report, setReport] = useState<{ type: "post" | "comment"; id: string } | null>(null);
   const [reportReason, setReportReason] = useState("");
@@ -246,7 +245,9 @@ export function SocialPage() {
         >
           <MemberAvatar name={account.name} className="size-10" />
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-base text-muted-foreground">What's happening in your area?</span>
+            <span className="block truncate text-base text-muted-foreground">
+              What's happening in your area?
+            </span>
             <span className="block text-xs text-muted-foreground/80">
               Free to post · photos, @mentions and promotions included
             </span>
@@ -454,8 +455,6 @@ function PostCard({
       setGifting(false);
     }
   };
-
-
 
   return (
     <Card className="shadow-[var(--shadow-card)]">
@@ -673,9 +672,7 @@ function PostCard({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Post this reply?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {chargeSummary(cost, "social")}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{chargeSummary(cost, "social")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>

@@ -300,7 +300,9 @@ describe("social credit gifting", () => {
   it("refuses zero, fractional and oversized gifts", () => {
     expect(giftIssue({ purchased_balance: 50, amount: 0, isSelf: false })).toBeTruthy();
     expect(giftIssue({ purchased_balance: 50, amount: 1.5, isSelf: false })).toMatch(/whole/);
-    expect(giftIssue({ purchased_balance: 50_000, amount: 1001, isSelf: false })).toMatch(/at most/);
+    expect(giftIssue({ purchased_balance: 50_000, amount: 1001, isSelf: false })).toMatch(
+      /at most/,
+    );
   });
 
   it("allows a gift funded entirely by purchased credits", () => {
