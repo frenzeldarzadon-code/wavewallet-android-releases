@@ -79,9 +79,9 @@ function UniverseShops() {
         {session.account ? (
           <PageSection
             title="Find a Universe shop or seller"
-            description="Search by shop or voucher name. Buy straight from the shop, or browse its sellers and buy from a seller's profile — either way it is paid from your Universe wallet, no membership needed."
+            description="Search by shop or voucher name, then pick a seller and buy from their storefront — paid from your Universe wallet, no membership needed."
           >
-            <UniverseShopDiscovery viewerId={session.account.id} />
+            <UniverseShopDiscovery />
           </PageSection>
         ) : null}
 
