@@ -12444,6 +12444,21 @@ export type Database = {
           seller_name: string
         }[]
       }
+      universe_shop_search: {
+        Args: { _limit?: number; _q?: string }
+        Returns: {
+          available: number
+          price: number
+          product_description: string
+          product_id: string
+          product_matches: boolean
+          product_name: string
+          shop_description: string
+          shop_id: string
+          shop_name: string
+          shop_slug: string
+        }[]
+      }
       update_app_release: {
         Args: {
           _android_download_url: string
