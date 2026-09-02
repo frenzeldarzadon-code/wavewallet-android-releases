@@ -5,6 +5,8 @@ import { RelationshipsCard } from "@/components/universe/relationships-card";
 import { ConnectedLoginsCard } from "@/components/universe/connected-logins-card";
 import { UniverseVouchersCard } from "@/components/universe/universe-vouchers-card";
 import { UniverseShell } from "@/components/universe/universe-shell";
+import { PublicIdentityCard } from "@/components/universe/public-identity-card";
+import { useSession } from "@/lib/session";
 
 export const Route = createFileRoute("/universe/profile")({
   head: () => ({
@@ -28,9 +30,11 @@ export const Route = createFileRoute("/universe/profile")({
 });
 
 function UniverseProfile() {
+  const { account } = useSession();
   return (
     <UniverseShell title="Profile" subtitle="Your global identity">
       <div className="space-y-6 px-4 sm:px-0">
+        {account ? <PublicIdentityCard userId={account.id} /> : null}
         <ProfilePage />
         <UniverseVouchersCard />
         <AddressCard />

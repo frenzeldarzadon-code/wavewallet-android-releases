@@ -87,7 +87,6 @@ function UniverseShops() {
 
         <ShopInvitationsCard onChanged={() => void load()} />
 
-
         <PageSection
           title="Your shops"
           description="Each membership keeps its own role, wallet and history. Switching only changes which one is active."
@@ -121,9 +120,7 @@ function UniverseShops() {
                     disabled={busy === m.ecosystemId}
                     onClick={() => void enter(m.ecosystemId, m.isActive)}
                   >
-                    {busy === m.ecosystemId ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : null}
+                    {busy === m.ecosystemId ? <Loader2 className="size-4 animate-spin" /> : null}
                     {m.isActive ? "Open" : "Switch & open"}
                   </Button>
                 </div>
@@ -173,7 +170,6 @@ function UniverseShops() {
             </Link>
           </Button>
         </PageSection>
-
 
         <p className="text-xs text-muted-foreground">
           Looking for balances, vouchers or reports?{" "}

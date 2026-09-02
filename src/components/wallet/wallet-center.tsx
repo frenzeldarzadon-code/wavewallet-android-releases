@@ -16,15 +16,7 @@
  * Nothing here is an authorization layer: the database re-checks every rule.
  */
 import { useOnline } from "@/lib/pwa";
-import {
-  Gift,
-  Info,
-  Search,
-  Send,
-  ShoppingBag,
-  Sparkles,
-  Wallet,
-} from "lucide-react";
+import { Gift, Info, Search, Send, ShoppingBag, Sparkles, Wallet } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -56,7 +48,6 @@ import {
   fetchShopRecipients,
   filterRecipientsByTab,
   lineageResetNotice,
-
   recipientTabs,
   tabEmptyHint,
   fetchWalletShops,
@@ -86,7 +77,11 @@ export interface WalletCenterProps {
   scope?: "shop" | "universe";
 }
 
-export function WalletCenter({ base, showSellerTotals = false, scope = "shop" }: WalletCenterProps) {
+export function WalletCenter({
+  base,
+  showSellerTotals = false,
+  scope = "shop",
+}: WalletCenterProps) {
   const { account, ecosystem, ecosystemDbId } = useSession();
   const userId = account?.id ?? null;
   const universe = scope === "universe";
@@ -124,14 +119,14 @@ export function WalletCenter({ base, showSellerTotals = false, scope = "shop" }:
       ]);
       const balance = global?.balance ?? 0;
       setGlobalBalance(balance);
-      list = all
-        .filter((_, i) => views[i]?.isGlobal === true)
-        .map((s) => ({ ...s, balance }));
+      list = all.filter((_, i) => views[i]?.isGlobal === true).map((s) => ({ ...s, balance }));
     }
     setShops(list);
     setSelectedId((cur) =>
       universe
-        ? (cur && list.some((s) => s.ecosystemId === cur) ? cur : (list[0]?.ecosystemId ?? null))
+        ? cur && list.some((s) => s.ecosystemId === cur)
+          ? cur
+          : (list[0]?.ecosystemId ?? null)
         : (cur ?? ecosystemDbId ?? list[0]?.ecosystemId ?? null),
     );
     setLoading(false);
@@ -190,9 +185,7 @@ export function WalletCenter({ base, showSellerTotals = false, scope = "shop" }:
   const isActiveShop = selected?.ecosystemId === ecosystemDbId;
   const multiShop = shops.length > 1;
   const tabs = recipientTabs(selected?.role ?? null, multiShop);
-  const activeTab: RecipientTab = tabs.some((t) => t.key === tab)
-    ? tab
-    : (tabs[0]?.key ?? "peer");
+  const activeTab: RecipientTab = tabs.some((t) => t.key === tab) ? tab : (tabs[0]?.key ?? "peer");
   const visibleRecipients = filterRecipientsByTab(recipients, activeTab);
   const lineageNotice = lineageResetNotice(selected?.role ?? null, pick?.relation ?? null);
 
@@ -220,7 +213,9 @@ export function WalletCenter({ base, showSellerTotals = false, scope = "shop" }:
         amount: value,
         note,
       });
-      toast.success("Transfer sent", { description: `${peso(value)} to ${pick.full_name} · ${tx}` });
+      toast.success("Transfer sent", {
+        description: `${peso(value)} to ${pick.full_name} · ${tx}`,
+      });
       setConfirming(false);
       resetSend();
       setHistoryKey((k) => k + 1);
@@ -259,7 +254,8 @@ export function WalletCenter({ base, showSellerTotals = false, scope = "shop" }:
         </PageSection>
       ) : null}
 
-      <PageSection devSlot="wallet-center.my-wallets"
+      <PageSection
+        devSlot="wallet-center.my-wallets"
         title={universe ? "Send coins inside a Universe shop" : "My wallets"}
         description={
           universe
@@ -317,13 +313,16 @@ export function WalletCenter({ base, showSellerTotals = false, scope = "shop" }:
       </PageSection>
 
       {selected && !universe ? (
-        <PageSection devSlot="wallet-center.wallet-center"
+        <PageSection
+          devSlot="wallet-center.wallet-center"
           title={`Selected wallet — ${selected.ecosystemName}`}
           description={`Balances and transfer actions for this shop wallet${selected.role ? ` · you are ${roleLabel(selected.role)} here` : ""}.`}
         >
           <div
             className={
-              showSellerTotals ? "grid gap-3 sm:grid-cols-2 xl:grid-cols-4" : "grid gap-3 sm:grid-cols-2"
+              showSellerTotals
+                ? "grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+                : "grid gap-3 sm:grid-cols-2"
             }
           >
             <StatCard
@@ -369,7 +368,8 @@ export function WalletCenter({ base, showSellerTotals = false, scope = "shop" }:
 
       {/* 1. Send credits — one area, recipient type tabs. Always visible. */}
       {selected ? (
-        <PageSection devSlot="wallet-center.send-coins"
+        <PageSection
+          devSlot="wallet-center.send-coins"
           title="Send coins"
           description={`${transferSectionTitle(selected.role)} · from your ${selected.ecosystemName} wallet, available ${peso(selected.balance)}. Only people you are allowed to send to are listed.`}
         >
@@ -409,113 +409,117 @@ export function WalletCenter({ base, showSellerTotals = false, scope = "shop" }:
                 />
               ) : (
                 <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="wc-search">Recipient</Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="wc-search"
-                    className="h-11 pl-9"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search this shop by name or @handle"
-                    autoComplete="off"
-                  />
-                </div>
-              </div>
-
-              {recipientsLoading ? (
-                <p className="text-xs text-muted-foreground">Loading eligible recipients…</p>
-              ) : visibleRecipients.length === 0 ? (
-                <p className="flex items-start gap-2 rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                  <Info className="mt-0.5 size-3.5 shrink-0" />
-                  {search.trim()
-                    ? "No eligible recipient in this shop matches that search."
-                    : tabEmptyHint(activeTab, selected.role)}
-                </p>
-              ) : (
-                <ul className="max-h-80 space-y-1 overflow-y-auto rounded-xl border border-border bg-card p-1">
-                  {visibleRecipients.map((r) => (
-                    <li key={r.id}>
-                      <button
-                        type="button"
-                        onClick={() => setPick(r)}
-                        className={cn(
-                          "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
-                          pick?.id === r.id ? "bg-brand-soft" : "hover:bg-muted",
-                        )}
-                      >
-                        <MemberAvatar path={r.avatar_path} name={r.full_name} />
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-medium">{r.full_name}</span>
-                          <span className="block truncate text-xs text-muted-foreground">
-                            {recipientRelationLabel(r.relation, selected.role)}
-                            {r.handle ? ` · @${r.handle}` : ""} · {selected.ecosystemName}
-                          </span>
-                        </span>
-                        <StatusBadge tone="muted">{recipientRelationLabel(r.relation, selected.role)}</StatusBadge>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {pick ? (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3 rounded-xl border border-primary bg-brand-soft px-3 py-2.5">
-                    <MemberAvatar path={pick.avatar_path} name={pick.full_name} />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold">{pick.full_name}</p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {recipientRelationLabel(pick.relation, selected.role)} · {selected.ecosystemName}
-                      </p>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="wc-search">Recipient</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        id="wc-search"
+                        className="h-11 pl-9"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Search this shop by name or @handle"
+                        autoComplete="off"
+                      />
                     </div>
-                    <Button variant="ghost" size="sm" onClick={resetSend}>
-                      Change
-                    </Button>
                   </div>
-                  {lineageNotice ? (
-                    <p className="flex items-start gap-2 text-xs text-muted-foreground">
-                      <Info className="mt-0.5 size-3.5 shrink-0" /> {lineageNotice}
+
+                  {recipientsLoading ? (
+                    <p className="text-xs text-muted-foreground">Loading eligible recipients…</p>
+                  ) : visibleRecipients.length === 0 ? (
+                    <p className="flex items-start gap-2 rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                      <Info className="mt-0.5 size-3.5 shrink-0" />
+                      {search.trim()
+                        ? "No eligible recipient in this shop matches that search."
+                        : tabEmptyHint(activeTab, selected.role)}
                     </p>
+                  ) : (
+                    <ul className="max-h-80 space-y-1 overflow-y-auto rounded-xl border border-border bg-card p-1">
+                      {visibleRecipients.map((r) => (
+                        <li key={r.id}>
+                          <button
+                            type="button"
+                            onClick={() => setPick(r)}
+                            className={cn(
+                              "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
+                              pick?.id === r.id ? "bg-brand-soft" : "hover:bg-muted",
+                            )}
+                          >
+                            <MemberAvatar path={r.avatar_path} name={r.full_name} />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-medium">
+                                {r.full_name}
+                              </span>
+                              <span className="block truncate text-xs text-muted-foreground">
+                                {recipientRelationLabel(r.relation, selected.role)}
+                                {r.handle ? ` · @${r.handle}` : ""} · {selected.ecosystemName}
+                              </span>
+                            </span>
+                            <StatusBadge tone="muted">
+                              {recipientRelationLabel(r.relation, selected.role)}
+                            </StatusBadge>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {pick ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3 rounded-xl border border-primary bg-brand-soft px-3 py-2.5">
+                        <MemberAvatar path={pick.avatar_path} name={pick.full_name} />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold">{pick.full_name}</p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {recipientRelationLabel(pick.relation, selected.role)} ·{" "}
+                            {selected.ecosystemName}
+                          </p>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={resetSend}>
+                          Change
+                        </Button>
+                      </div>
+                      {lineageNotice ? (
+                        <p className="flex items-start gap-2 text-xs text-muted-foreground">
+                          <Info className="mt-0.5 size-3.5 shrink-0" /> {lineageNotice}
+                        </p>
+                      ) : null}
+                    </div>
                   ) : null}
-                </div>
-              ) : null}
 
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="wc-amount">Amount</Label>
+                      <Input
+                        id="wc-amount"
+                        type="number"
+                        inputMode="decimal"
+                        className="h-11"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="0"
+                      />
+                      {value > 0 ? (
+                        <p className="text-xs text-muted-foreground">
+                          Balance after: {peso(projectedBalance(selected.balance, value))}
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="wc-note">Note (optional)</Label>
+                      <Input
+                        id="wc-note"
+                        className="h-11"
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        placeholder="Reference"
+                      />
+                    </div>
+                  </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="wc-amount">Amount</Label>
-                  <Input
-                    id="wc-amount"
-                    type="number"
-                    inputMode="decimal"
-                    className="h-11"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0"
-                  />
-                  {value > 0 ? (
-                    <p className="text-xs text-muted-foreground">
-                      Balance after: {peso(projectedBalance(selected.balance, value))}
-                    </p>
+                  {problem && (pick || value > 0) ? (
+                    <p className="text-xs text-muted-foreground">{problem}</p>
                   ) : null}
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="wc-note">Note (optional)</Label>
-                  <Input
-                    id="wc-note"
-                    className="h-11"
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    placeholder="Reference"
-                  />
-                </div>
-              </div>
-
-              {problem && (pick || value > 0) ? (
-                <p className="text-xs text-muted-foreground">{problem}</p>
-              ) : null}
 
                   <Button
                     className="h-11 w-full"
@@ -542,7 +546,10 @@ export function WalletCenter({ base, showSellerTotals = false, scope = "shop" }:
           key={`${selected?.ecosystemId ?? "none"}-${historyKey}`}
           ecosystemId={selected?.ecosystemId ?? null}
           {...(selected ? { shopName: selected.ecosystemName } : {})}
-          shopOptions={shops.map((s) => ({ ecosystemId: s.ecosystemId, ecosystemName: s.ecosystemName }))}
+          shopOptions={shops.map((s) => ({
+            ecosystemId: s.ecosystemId,
+            ecosystemName: s.ecosystemName,
+          }))}
           onShopChange={(id) => {
             setSelectedId(id);
             resetSend();
@@ -572,17 +579,41 @@ export function WalletCenter({ base, showSellerTotals = false, scope = "shop" }:
         ) : (
           <div className="grid gap-2 sm:grid-cols-3">
             <Button asChild variant="outline" className="h-11">
-              <Link to={base === "/app" ? "/app/shop" : base === "/reseller" ? "/reseller/shop" : "/admin/shop"}>
+              <Link
+                to={
+                  base === "/app"
+                    ? "/app/shop"
+                    : base === "/reseller"
+                      ? "/reseller/shop"
+                      : "/admin/shop"
+                }
+              >
                 <ShoppingBag className="size-4" /> Voucher shop
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-11">
-              <Link to={base === "/app" ? "/app/rewards" : base === "/reseller" ? "/reseller/rewards" : "/admin/rewards"}>
+              <Link
+                to={
+                  base === "/app"
+                    ? "/app/rewards"
+                    : base === "/reseller"
+                      ? "/reseller/rewards"
+                      : "/admin/rewards"
+                }
+              >
                 <Gift className="size-4" /> Rewards
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-11">
-              <Link to={base === "/app" ? "/app/money" : base === "/reseller" ? "/reseller/money" : "/admin/money"}>
+              <Link
+                to={
+                  base === "/app"
+                    ? "/app/money"
+                    : base === "/reseller"
+                      ? "/reseller/money"
+                      : "/admin/money"
+                }
+              >
                 <Wallet className="size-4" /> Cash in & cash out
               </Link>
             </Button>
@@ -608,8 +639,9 @@ export function WalletCenter({ base, showSellerTotals = false, scope = "shop" }:
           <DialogHeader>
             <DialogTitle>Confirm transfer</DialogTitle>
             <DialogDescription>
-              {peso(value)} to {pick?.full_name} ({pick ? recipientRelationLabel(pick.relation, selected?.role ?? null) : ""})
-              from {selected?.ecosystemName}. Balance after:{" "}
+              {peso(value)} to {pick?.full_name} (
+              {pick ? recipientRelationLabel(pick.relation, selected?.role ?? null) : ""}) from{" "}
+              {selected?.ecosystemName}. Balance after:{" "}
               {peso(projectedBalance(selected?.balance ?? 0, value))}. This cannot be undone by you.
               {lineageNotice ? " " + lineageNotice : ""}
             </DialogDescription>
@@ -619,7 +651,13 @@ export function WalletCenter({ base, showSellerTotals = false, scope = "shop" }:
               Cancel
             </Button>
             <Button onClick={() => void send()} disabled={busy}>
-              {busy ? "Sending…" : <><Send className="size-4" /> Send coins</>}
+              {busy ? (
+                "Sending…"
+              ) : (
+                <>
+                  <Send className="size-4" /> Send coins
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

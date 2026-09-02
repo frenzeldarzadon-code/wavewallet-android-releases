@@ -158,9 +158,7 @@ export function UniverseShell({
           </Link>
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-bold leading-tight tracking-tight">{title}</p>
-            {subtitle ? (
-              <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
-            ) : null}
+            {subtitle ? <p className="truncate text-xs text-muted-foreground">{subtitle}</p> : null}
           </div>
           <Link
             to="/universe/notifications"
@@ -225,7 +223,12 @@ export function UniverseShell({
           </Button>
 
           <div className="mt-auto space-y-2">
-            <Button asChild variant="outline" size="sm" className="w-full justify-start gap-2 rounded-full">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="w-full justify-start gap-2 rounded-full"
+            >
               <Link to={homeFor(account.role)}>
                 <Store className="size-4" /> My shop console
               </Link>
@@ -277,7 +280,9 @@ export function UniverseShell({
           >
             <div className="border-b border-border px-4 py-3">
               <p className="text-sm font-bold tracking-tight">Start here</p>
-              <p className="text-xs text-muted-foreground">Everything a member needs, one tap away.</p>
+              <p className="text-xs text-muted-foreground">
+                Everything a member needs, one tap away.
+              </p>
             </div>
             <ul className="divide-y divide-border">
               {primary.map((p) => (
@@ -302,7 +307,9 @@ export function UniverseShell({
                     </span>
                     <span className="min-w-0 flex-1 leading-tight">
                       <span className="block text-sm font-semibold">{p.label}</span>
-                      <span className="block truncate text-xs text-muted-foreground">{p.blurb}</span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {p.blurb}
+                      </span>
                     </span>
                     <ChevronRight className="size-4 text-muted-foreground" />
                   </Link>
@@ -319,8 +326,8 @@ export function UniverseShell({
               {identity.balance === null ? "…" : peso(identity.balance)}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              One global balance for vouchers from any Universe seller. Posting, replies, likes
-              and messages are always free.
+              One global balance for vouchers from any Universe seller. Posting, replies, likes and
+              messages are always free.
             </p>
             <Button asChild size="sm" variant="outline" className="mt-3 w-full rounded-full">
               <Link to="/universe/wallet">

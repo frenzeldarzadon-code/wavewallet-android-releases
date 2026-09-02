@@ -36,7 +36,9 @@ function UniverseSearch() {
               <Search className="size-5" />
             </span>
             <div className="min-w-0">
-              <h2 className="text-base font-bold tracking-tight">How buying works in the Universe</h2>
+              <h2 className="text-base font-bold tracking-tight">
+                How buying works in the Universe
+              </h2>
               <ol className="mt-1 list-decimal space-y-0.5 pl-4 text-sm text-muted-foreground">
                 <li>Search a shop or a voucher name.</li>
                 <li>Choose one of that shop's authorized sellers.</li>
