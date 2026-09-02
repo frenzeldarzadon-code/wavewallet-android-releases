@@ -9300,7 +9300,7 @@ export type Database = {
         }[]
       }
       list_rewards: {
-        Args: never
+        Args: { _ecosystem_id?: string }
         Returns: {
           available: number
           description: string
@@ -9938,7 +9938,7 @@ export type Database = {
         }[]
       }
       purchase_voucher_with_points: {
-        Args: { _product_id: string }
+        Args: { _product_id: string; _seller_id?: string }
         Returns: {
           code: string
           points_spent: number
@@ -10996,6 +10996,7 @@ export type Database = {
           available: number
           avatar_path: string
           description: string
+          points_price: number
           price: number
           product_id: string
           product_name: string
