@@ -693,11 +693,21 @@ export interface PurchaseResult {
   commission_percent: number;
 }
 
-export async function purchaseVoucher(productId: string, quantity = 1): Promise<PurchaseResult> {
+/**
+ * Buys vouchers. `sellerId` is only meaningful for Universe shops: it names the
+ * authorized seller whose public storefront the buyer used. The database
+ * re-validates the authorization — an unauthorized id is rejected server-side.
+ */
+export async function purchaseVoucher(
+  productId: string,
+  quantity = 1,
+  sellerId?: string | null,
+): Promise<PurchaseResult> {
   requireOnline();
   const { data, error } = await supabase.rpc("purchase_voucher", {
     _product_id: productId,
     _quantity: quantity,
+    ...(sellerId ? { _seller_id: sellerId } : {}),
   });
   if (error) throw new Error(friendlyWalletError(error.message));
   const row = (data as unknown as PurchaseResult[])[0];
