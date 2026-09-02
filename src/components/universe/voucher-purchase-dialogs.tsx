@@ -257,34 +257,68 @@ export function VoucherPurchaseDialogs({
               <p className="text-right text-[11px] text-muted-foreground">
                 Type any quantity from 1 to {maxQty}.
               </p>
+              </>
+              ) : null}
 
-              <p className="flex justify-between">
-                <span className="text-muted-foreground">Unit price</span>
-                <span className="font-medium">{peso(unit)}</span>
-              </p>
-              <p className="flex justify-between">
-                <span className="text-muted-foreground">Total</span>
-                <span className="font-semibold text-destructive">−{peso(total)}</span>
-              </p>
-              {balance !== null ? (
+              {usingPoints ? (
                 <>
                   <p className="flex justify-between">
-                    <span className="text-muted-foreground">Universe wallet</span>
-                    <span className="font-medium">{peso(balance)}</span>
+                    <span className="text-muted-foreground">Points</span>
+                    <span className="font-semibold text-destructive">−{pointsPrice} pts</span>
                   </p>
                   <p className="flex justify-between">
-                    <span className="text-muted-foreground">Balance after</span>
-                    <span className={notEnough ? "font-medium text-destructive" : "font-medium"}>
-                      {peso(balance - total)}
+                    <span className="text-muted-foreground">{target.shopName} points</span>
+                    <span className="font-medium">
+                      {points === null ? "…" : pts(pointsAvailable)}
                     </span>
                   </p>
+                  <p className="flex justify-between">
+                    <span className="text-muted-foreground">Points after</span>
+                    <span className={pointsOk ? "font-medium" : "font-medium text-destructive"}>
+                      {points === null ? "…" : pts(pointsAvailable - pointsPrice)}
+                    </span>
+                  </p>
+                  {points !== null && !pointsOk ? (
+                    <p className="text-[11px] text-destructive">
+                      Not enough {target.shopName} points. Points are earned in this shop when you
+                      buy its vouchers with coins.
+                    </p>
+                  ) : null}
+                  <p className="text-[11px] text-muted-foreground">
+                    Points buy one voucher at a time and do not earn new points.
+                  </p>
                 </>
-              ) : null}
-              {notEnough ? (
-                <p className="text-[11px] text-destructive">
-                  Not enough coins in your Universe wallet.
-                </p>
-              ) : null}
+              ) : (
+                <>
+                  <p className="flex justify-between">
+                    <span className="text-muted-foreground">Unit price</span>
+                    <span className="font-medium">{peso(unit)}</span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="text-muted-foreground">Total</span>
+                    <span className="font-semibold text-destructive">−{peso(total)}</span>
+                  </p>
+                  {balance !== null ? (
+                    <>
+                      <p className="flex justify-between">
+                        <span className="text-muted-foreground">Universe wallet</span>
+                        <span className="font-medium">{peso(balance)}</span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span className="text-muted-foreground">Balance after</span>
+                        <span className={notEnough ? "font-medium text-destructive" : "font-medium"}>
+                          {peso(balance - total)}
+                        </span>
+                      </p>
+                    </>
+                  ) : null}
+                  {notEnough ? (
+                    <p className="text-[11px] text-destructive">
+                      Not enough coins in your Universe wallet.
+                    </p>
+                  ) : null}
+                </>
+              )}
             </div>
           ) : null}
 
