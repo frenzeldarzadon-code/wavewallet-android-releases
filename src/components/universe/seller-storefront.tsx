@@ -108,7 +108,8 @@ export function SellerStorefrontSection({
                       </Button>
                     )}
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             )}
           </CardContent>
