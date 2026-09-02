@@ -654,11 +654,16 @@ function AdminVouchers() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {pendingDelete?.kind === "batch" ? "Delete whole batch?" : "Delete voucher code?"}
+              {pendingDelete?.kind === "batch"
+                ? "Delete whole batch?"
+                : pendingDelete?.kind === "unused"
+                  ? "Delete unused vouchers?"
+                  : "Delete voucher code?"}
             </DialogTitle>
             <DialogDescription>
-              This permanently removes unused inventory. Sold codes, sales, balances, commissions,
-              points and audit history are never touched.
+              {pendingDelete?.kind === "unused"
+                ? "Only the unused WaveWallet voucher records in this batch will be deleted. Sold codes, sales, balances, commissions, points and audit history stay untouched. Vouchers on the Omada controller are NOT deleted or changed."
+                : "This permanently removes unused inventory. Sold codes, sales, balances, commissions, points and audit history are never touched."}
             </DialogDescription>
           </DialogHeader>
           {pendingDelete ? (
@@ -666,29 +671,35 @@ function AdminVouchers() {
               <div className="flex justify-between gap-3">
                 <dt className="text-muted-foreground">Codes to delete</dt>
                 <dd className="font-medium">
-                  {pendingDelete.kind === "batch" ? pendingDelete.batch.unused_count : 1}
+                  {pendingDelete.kind === "code" ? 1 : pendingDelete.batch.unused_count}
                 </dd>
               </div>
+              {pendingDelete.kind === "unused" ? (
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">Sold codes kept</dt>
+                  <dd className="font-medium">{pendingDelete.batch.sold_count}</dd>
+                </div>
+              ) : null}
               <div className="flex justify-between gap-3">
                 <dt className="text-muted-foreground">Product</dt>
                 <dd className="font-medium">
-                  {pendingDelete.kind === "batch"
-                    ? pendingDelete.batch.product_name || "—"
-                    : products.find((p) => p.id === pendingDelete.code.product_id)?.name ?? "—"}
+                  {pendingDelete.kind === "code"
+                    ? products.find((p) => p.id === pendingDelete.code.product_id)?.name ?? "—"
+                    : pendingDelete.batch.product_name || "—"}
                 </dd>
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-muted-foreground">Batch ID</dt>
                 <dd className="font-mono">
-                  {pendingDelete.kind === "batch"
-                    ? pendingDelete.batch.batch_id
-                    : pendingDelete.code.import_id ?? "—"}
+                  {pendingDelete.kind === "code"
+                    ? pendingDelete.code.import_id ?? "—"
+                    : pendingDelete.batch.batch_id}
                 </dd>
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-muted-foreground">Uploaded</dt>
                 <dd>
-                  {pendingDelete.kind === "batch"
+                  {pendingDelete.kind === "batch" || pendingDelete.kind === "unused"
                     ? shortDateTime(pendingDelete.batch.created_at)
                     : pendingDelete.batch
                       ? shortDateTime(pendingDelete.batch.created_at)
