@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState, PageSection } from "@/components/ui-kit";
 import { ShopInvitationsCard } from "@/components/universe/shop-invitations-card";
 import { UniverseShell } from "@/components/universe/universe-shell";
+import { UniverseShopDiscovery } from "@/components/universe/universe-shop-discovery";
 import { homeFor, useSession } from "@/lib/session";
 import {
   fetchMyMemberships,
@@ -73,9 +74,19 @@ function UniverseShops() {
   };
 
   return (
-    <UniverseShell title="Shops" subtitle="Your shops, and joining another one">
+    <UniverseShell title="Shops" subtitle="Find vouchers, your shops, and joining another one">
       <div className="space-y-6 px-4 sm:px-0">
+        {session.account ? (
+          <PageSection
+            title="Find a Universe shop or seller"
+            description="Search by shop or voucher name. Buy straight from the shop, or browse its sellers and buy from a seller's profile — either way it is paid from your Universe wallet, no membership needed."
+          >
+            <UniverseShopDiscovery viewerId={session.account.id} />
+          </PageSection>
+        ) : null}
+
         <ShopInvitationsCard onChanged={() => void load()} />
+
 
         <PageSection
           title="Your shops"
