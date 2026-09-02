@@ -117,8 +117,7 @@ export function PostComposer({
   const promotionAvailable = state.promotion_enabled && tiers.length > 0;
   const tier = useMemo(() => tiers.find((t) => t.id === tierId) ?? null, [tiers, tierId]);
   // Always free: posting and promoting never deduct anything.
-  const charge = postCharge(state, promote, tier);
-  const affordable = true;
+  const affordable = postCharge(state, promote, tier).amount === 0;
   // Detection is free and local: it never touches the network and never
   // deducts anything. It only decides which notice the review step shows.
   const detection = useMemo(() => detectPromotion(body, { hasImage: file !== null }), [body, file]);
