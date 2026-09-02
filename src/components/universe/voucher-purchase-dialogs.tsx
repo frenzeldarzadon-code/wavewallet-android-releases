@@ -331,10 +331,16 @@ export function VoucherPurchaseDialogs({
               Cancel
             </Button>
             <Button
-              disabled={busy || !online || notEnough || qty > maxQty || !target}
+              disabled={busy || !online || !target || !canConfirm}
               onClick={() => void confirm()}
             >
-              {busy ? "Issuing…" : `Confirm & pay ${peso(total)}`}
+              {busy
+                ? "Issuing…"
+                : usingPoints
+                  ? pointsOk
+                    ? `Confirm & pay ${pointsPrice} pts`
+                    : "Not enough points"
+                  : `Confirm & pay ${peso(total)}`}
             </Button>
           </DialogFooter>
         </DialogContent>
