@@ -122,36 +122,73 @@ export const voucherCost = (list: number, discountPercent: number) => {
 /* Reads                                                               */
 /* ------------------------------------------------------------------ */
 
+export interface WalletView {
+  accountId: string | null;
+  balance: number;
+  /** True when the shop is a Universe shop (or no shop): the single global wallet. */
+  isGlobal: boolean;
+}
+
 /**
- * Balance of ONE shop wallet. A member holds a separate wallet per shop, so the
- * shop is never optional: `null` reads the global (Universe) wallet. Entering a
- * shop only changes which wallet is read — it never moves credits.
+ * Which wallet backs (member, shop). New Generation shops keep a wallet per
+ * shop; Universe shops share the member's single global wallet. The database
+ * decides — the client never guesses from the shop kind.
+ */
+export async function fetchWalletView(
+  userId: string,
+  ecosystemId: string | null,
+): Promise<WalletView> {
+  const { data, error } = await supabase.rpc("wallet_view", {
+    _user_id: userId,
+    ...(ecosystemId ? { _ecosystem_id: ecosystemId } : {}),
+  });
+  if (error) {
+    // Fall back to the direct read so a transient RPC failure never hides a balance.
+    const q = supabase.from("credit_accounts").select("id, balance").eq("user_id", userId);
+    const { data: row } = await (ecosystemId
+      ? q.eq("ecosystem_id", ecosystemId)
+      : q.is("ecosystem_id", null)
+    ).maybeSingle();
+    return { accountId: row?.id ?? null, balance: Number(row?.balance ?? 0), isGlobal: !ecosystemId };
+  }
+  const row = (data as { account_id: string; balance: number; is_global: boolean }[] | null)?.[0];
+  return {
+    accountId: row?.account_id ?? null,
+    balance: Number(row?.balance ?? 0),
+    isGlobal: row ? Boolean(row.is_global) : !ecosystemId,
+  };
+}
+
+/**
+ * Balance of the wallet that serves this shop. New Generation shops have their
+ * own wallet per member; Universe shops (and `null`) read the global wallet.
+ * Entering a shop only changes which wallet is read — it never moves credits.
  */
 export async function fetchCreditBalance(
   userId: string,
   ecosystemId: string | null,
 ): Promise<number> {
-  const q = supabase.from("credit_accounts").select("balance").eq("user_id", userId);
-  const { data } = await (ecosystemId
-    ? q.eq("ecosystem_id", ecosystemId)
-    : q.is("ecosystem_id", null)
-  ).maybeSingle();
-  return Number(data?.balance ?? 0);
+  return (await fetchWalletView(userId, ecosystemId)).balance;
 }
 
-/** Credit movements inside ONE shop. History stays shop-scoped like the wallet. */
+/**
+ * Credit movements of the wallet serving this shop. Shop wallets are filtered by
+ * shop; the global Universe wallet shows every movement on that wallet (sales
+ * of any Universe shop are still tagged with the selling shop).
+ */
 export async function fetchCreditLedger(
   userId: string,
   ecosystemId: string | null,
   limit = 100,
 ): Promise<CreditEntry[]> {
+  const view = await fetchWalletView(userId, ecosystemId);
   const q = supabase.from("credit_ledger").select(LEDGER_COLUMNS).eq("user_id", userId);
-  const { data } = await (ecosystemId
-    ? q.eq("ecosystem_id", ecosystemId)
-    : q.is("ecosystem_id", null)
-  )
-    .order("created_at", { ascending: false })
-    .limit(limit);
+  const scoped = view.isGlobal && view.accountId
+    ? q.eq("account_id", view.accountId)
+    : ecosystemId
+      ? q.eq("ecosystem_id", ecosystemId)
+      : q.is("ecosystem_id", null);
+  const { data } = await scoped.order("created_at", { ascending: false }).limit(limit);
   return ((data ?? []) as unknown as CreditEntry[]).map(normalizeEntry);
 }
 
@@ -656,11 +693,21 @@ export interface PurchaseResult {
   commission_percent: number;
 }
 
-export async function purchaseVoucher(productId: string, quantity = 1): Promise<PurchaseResult> {
+/**
+ * Buys vouchers. `sellerId` is only meaningful for Universe shops: it names the
+ * authorized seller whose public storefront the buyer used. The database
+ * re-validates the authorization — an unauthorized id is rejected server-side.
+ */
+export async function purchaseVoucher(
+  productId: string,
+  quantity = 1,
+  sellerId?: string | null,
+): Promise<PurchaseResult> {
   requireOnline();
   const { data, error } = await supabase.rpc("purchase_voucher", {
     _product_id: productId,
     _quantity: quantity,
+    ...(sellerId ? { _seller_id: sellerId } : {}),
   });
   if (error) throw new Error(friendlyWalletError(error.message));
   const row = (data as unknown as PurchaseResult[])[0];

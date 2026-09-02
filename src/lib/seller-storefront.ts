@@ -1,0 +1,109 @@
+/**
+ * Universe seller storefronts.
+ *
+ * A Universe shop's admin, resellers and subresellers are its authorized
+ * sellers. Each seller's public profile shows the shop products they may sell;
+ * a purchase made there is attributed to that seller by the database, which
+ * re-checks the authorization on every purchase.
+ *
+ * Everything here is identity + product data only: no roles, rates, uplines,
+ * wallets or private shop relationships ever reach the client.
+ */
+import { supabase } from "@/integrations/supabase/client";
+
+export interface StorefrontProduct {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  available: number;
+}
+
+export interface StorefrontShop {
+  id: string;
+  name: string;
+  slug: string;
+  products: StorefrontProduct[];
+}
+
+export interface SellerStorefront {
+  sellerId: string;
+  sellerName: string;
+  sellerHandle: string;
+  avatarPath: string | null;
+  shops: StorefrontShop[];
+}
+
+type Row = {
+  seller_id: string;
+  seller_name: string;
+  seller_handle: string;
+  avatar_path: string | null;
+  shop_id: string;
+  shop_name: string;
+  shop_slug: string;
+  product_id: string;
+  product_name: string;
+  description: string | null;
+  price: number;
+  available: number;
+};
+
+/** Pure: groups the flat database rows by shop, keeping the database order. */
+export function groupStorefrontRows(rows: Row[]): SellerStorefront | null {
+  const first = rows[0];
+  if (!first) return null;
+  const shops = new Map<string, StorefrontShop>();
+  for (const r of rows) {
+    let shop = shops.get(r.shop_id);
+    if (!shop) {
+      shop = { id: r.shop_id, name: r.shop_name, slug: r.shop_slug, products: [] };
+      shops.set(r.shop_id, shop);
+    }
+    shop.products.push({
+      id: r.product_id,
+      name: r.product_name,
+      description: r.description,
+      price: Number(r.price),
+      available: Number(r.available ?? 0),
+    });
+  }
+  return {
+    sellerId: first.seller_id,
+    sellerName: first.seller_name,
+    sellerHandle: first.seller_handle,
+    avatarPath: first.avatar_path,
+    shops: [...shops.values()],
+  };
+}
+
+/** Public storefront of one seller (by @handle). Null when they sell nothing. */
+export async function fetchSellerStorefront(handle: string): Promise<SellerStorefront | null> {
+  const { data, error } = await supabase.rpc("seller_storefront", { _handle: handle });
+  if (error) throw new Error(error.message);
+  return groupStorefrontRows((data ?? []) as Row[]);
+}
+
+export interface ShopSeller {
+  sellerId: string;
+  sellerName: string;
+  sellerHandle: string;
+  avatarPath: string | null;
+}
+
+/** Authorized sellers of a Universe shop — identity only. */
+export async function fetchUniverseSellers(slug: string): Promise<ShopSeller[]> {
+  const { data, error } = await supabase.rpc("universe_sellers_for_shop", { _slug: slug });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as {
+    seller_id: string;
+    seller_name: string;
+    seller_handle: string;
+    avatar_path: string | null;
+  }[]).map((r) => ({
+    sellerId: r.seller_id,
+    sellerName: r.seller_name,
+    sellerHandle: r.seller_handle,
+    avatarPath: r.avatar_path,
+  }));
+}

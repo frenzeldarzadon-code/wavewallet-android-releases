@@ -5331,6 +5331,58 @@ export type Database = {
           },
         ]
       }
+      shop_seller_authorizations: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          ecosystem_id: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          ecosystem_id: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          ecosystem_id?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_seller_authorizations_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_seller_authorizations_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_seller_authorizations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shop_subscriptions: {
         Row: {
           allocation_total: number
@@ -6963,6 +7015,98 @@ export type Database = {
           },
         ]
       }
+      universe_wallet_consolidations: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          ecosystem_id: string
+          global_account_id: string
+          global_ledger_id: string | null
+          id: string
+          shop_account_id: string
+          shop_ledger_id: string | null
+          tx_id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          ecosystem_id: string
+          global_account_id: string
+          global_ledger_id?: string | null
+          id?: string
+          shop_account_id: string
+          shop_ledger_id?: string | null
+          tx_id: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          ecosystem_id?: string
+          global_account_id?: string
+          global_ledger_id?: string | null
+          id?: string
+          shop_account_id?: string
+          shop_ledger_id?: string | null
+          tx_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "universe_wallet_consolidations_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "universe_wallet_consolidations_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "universe_wallet_consolidations_global_account_id_fkey"
+            columns: ["global_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "universe_wallet_consolidations_global_ledger_id_fkey"
+            columns: ["global_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "universe_wallet_consolidations_shop_account_id_fkey"
+            columns: ["shop_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "universe_wallet_consolidations_shop_ledger_id_fkey"
+            columns: ["shop_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "universe_wallet_consolidations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -7516,6 +7660,7 @@ export type Database = {
           refunded_at: string | null
           reseller_id: string | null
           sale_price: number
+          seller_id: string | null
           tx_id: string
           unit_price: number | null
           upline_commission_amount: number
@@ -7549,6 +7694,7 @@ export type Database = {
           refunded_at?: string | null
           reseller_id?: string | null
           sale_price: number
+          seller_id?: string | null
           tx_id: string
           unit_price?: number | null
           upline_commission_amount?: number
@@ -7582,6 +7728,7 @@ export type Database = {
           refunded_at?: string | null
           reseller_id?: string | null
           sale_price?: number
+          seller_id?: string | null
           tx_id?: string
           unit_price?: number | null
           upline_commission_amount?: number
@@ -7608,6 +7755,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "voucher_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_sales_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -8457,6 +8611,16 @@ export type Database = {
         Args: { _recipient: string; _sender: string }
         Returns: number
       }
+      consolidate_universe_wallets: {
+        Args: { _dry_run?: boolean; _ecosystem_id: string }
+        Returns: {
+          amount: number
+          detail: string
+          ecosystem_id: string
+          outcome: string
+          user_id: string
+        }[]
+      }
       countable_members: {
         Args: { _ecosystem_id: string }
         Returns: {
@@ -8993,6 +9157,7 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_universe_shop: { Args: { _ecosystem_id: string }; Returns: boolean }
       join_shop_by_code: { Args: { _code: string }; Returns: string }
       joinable_ecosystems: {
         Args: never
@@ -9758,7 +9923,7 @@ export type Database = {
         }[]
       }
       purchase_voucher: {
-        Args: { _product_id: string; _quantity?: number }
+        Args: { _product_id: string; _quantity?: number; _seller_id?: string }
         Returns: {
           codes: string[]
           commission_amount: number
@@ -10821,6 +10986,27 @@ export type Database = {
         }[]
       }
       seed_retail_catalog: { Args: { _ecosystem_id: string }; Returns: number }
+      seed_seller_authorizations: {
+        Args: { _ecosystem_id: string }
+        Returns: number
+      }
+      seller_storefront: {
+        Args: { _handle: string }
+        Returns: {
+          available: number
+          avatar_path: string
+          description: string
+          price: number
+          product_id: string
+          product_name: string
+          seller_handle: string
+          seller_id: string
+          seller_name: string
+          shop_id: string
+          shop_name: string
+          shop_slug: string
+        }[]
+      }
       send_friend_request: { Args: { _user: string }; Returns: string }
       set_admin_sale_commission: {
         Args: { _ecosystem_id: string; _percent: number }
@@ -12152,6 +12338,10 @@ export type Database = {
         }
       }
       switch_ecosystem: { Args: { _ecosystem_id: string }; Returns: string }
+      sync_seller_authorization: {
+        Args: { _ecosystem_id: string; _user_id: string }
+        Returns: undefined
+      }
       system_import_voucher_codes: {
         Args: {
           _codes: string[]
@@ -12245,6 +12435,15 @@ export type Database = {
         }[]
       }
       universe_relationship: { Args: { _user: string }; Returns: Json }
+      universe_sellers_for_shop: {
+        Args: { _slug: string }
+        Returns: {
+          avatar_path: string
+          seller_handle: string
+          seller_id: string
+          seller_name: string
+        }[]
+      }
       update_app_release: {
         Args: {
           _android_download_url: string
@@ -12876,6 +13075,14 @@ export type Database = {
           handle: string
           id: string
           relation: string
+        }[]
+      }
+      wallet_view: {
+        Args: { _ecosystem_id?: string; _user_id: string }
+        Returns: {
+          account_id: string
+          balance: number
+          is_global: boolean
         }[]
       }
       ww_money: { Args: { _amount: number }; Returns: string }

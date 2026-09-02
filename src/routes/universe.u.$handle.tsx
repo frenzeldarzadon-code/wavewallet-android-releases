@@ -13,6 +13,7 @@ import { RelationshipActions } from "@/components/universe/relationship-actions"
 import { SocialImage } from "@/components/social/social-image";
 import { fetchProfilePosts, type ProfilePost } from "@/lib/universe-social";
 import { useSession } from "@/lib/session";
+import { SellerStorefrontSection } from "@/components/universe/seller-storefront";
 
 export const Route = createFileRoute("/universe/u/$handle")({
   head: () => ({
@@ -122,6 +123,10 @@ function UniverseMemberProfile() {
             </CardContent>
           </Card>
         )}
+
+        {profile && !profile.is_platform ? (
+          <SellerStorefrontSection handle={handle} viewerId={session.account?.id ?? null} />
+        ) : null}
 
         {profile && !profile.is_platform ? (
           <section className="space-y-3">
