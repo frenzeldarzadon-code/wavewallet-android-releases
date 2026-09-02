@@ -107,6 +107,7 @@ import { Route as UniverseMembersRouteImport } from './routes/universe.members'
 import { Route as UniverseMessagesRouteImport } from './routes/universe.messages'
 import { Route as UniverseNotificationsRouteImport } from './routes/universe.notifications'
 import { Route as UniverseProfileRouteImport } from './routes/universe.profile'
+import { Route as UniverseSearchRouteImport } from './routes/universe.search'
 import { Route as UniverseShopsRouteImport } from './routes/universe.shops'
 import { Route as ApiPublicAppVersionRouteImport } from './routes/api/public/app-version'
 import { Route as ApiPublicOmadaHealthSweepRouteImport } from './routes/api/public/omada-health-sweep'
@@ -609,6 +610,11 @@ const UniverseProfileRoute = UniverseProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => UniverseRoute,
 } as any)
+const UniverseSearchRoute = UniverseSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => UniverseRoute,
+} as any)
 const UniverseShopsRoute = UniverseShopsRouteImport.update({
   id: '/shops',
   path: '/shops',
@@ -757,6 +763,7 @@ export interface FileRoutesByFullPath {
   '/universe/messages': typeof UniverseMessagesRoute
   '/universe/notifications': typeof UniverseNotificationsRoute
   '/universe/profile': typeof UniverseProfileRoute
+  '/universe/search': typeof UniverseSearchRoute
   '/universe/shops': typeof UniverseShopsRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
@@ -862,6 +869,7 @@ export interface FileRoutesByTo {
   '/universe/messages': typeof UniverseMessagesRoute
   '/universe/notifications': typeof UniverseNotificationsRoute
   '/universe/profile': typeof UniverseProfileRoute
+  '/universe/search': typeof UniverseSearchRoute
   '/universe/shops': typeof UniverseShopsRoute
   '/admin': typeof AdminIndexRoute
   '/app': typeof AppIndexRoute
@@ -973,6 +981,7 @@ export interface FileRoutesById {
   '/universe/messages': typeof UniverseMessagesRoute
   '/universe/notifications': typeof UniverseNotificationsRoute
   '/universe/profile': typeof UniverseProfileRoute
+  '/universe/search': typeof UniverseSearchRoute
   '/universe/shops': typeof UniverseShopsRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
@@ -1085,6 +1094,7 @@ export interface FileRouteTypes {
     | '/universe/messages'
     | '/universe/notifications'
     | '/universe/profile'
+    | '/universe/search'
     | '/universe/shops'
     | '/admin/'
     | '/app/'
@@ -1190,6 +1200,7 @@ export interface FileRouteTypes {
     | '/universe/messages'
     | '/universe/notifications'
     | '/universe/profile'
+    | '/universe/search'
     | '/universe/shops'
     | '/admin'
     | '/app'
@@ -1300,6 +1311,7 @@ export interface FileRouteTypes {
     | '/universe/messages'
     | '/universe/notifications'
     | '/universe/profile'
+    | '/universe/search'
     | '/universe/shops'
     | '/admin/'
     | '/app/'
@@ -2036,6 +2048,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UniverseProfileRouteImport
       parentRoute: typeof UniverseRoute
     }
+    '/universe/search': {
+      id: '/universe/search'
+      path: '/search'
+      fullPath: '/universe/search'
+      preLoaderRoute: typeof UniverseSearchRouteImport
+      parentRoute: typeof UniverseRoute
+    }
     '/universe/shops': {
       id: '/universe/shops'
       path: '/shops'
@@ -2294,6 +2313,7 @@ interface UniverseRouteChildren {
   UniverseMessagesRoute: typeof UniverseMessagesRoute
   UniverseNotificationsRoute: typeof UniverseNotificationsRoute
   UniverseProfileRoute: typeof UniverseProfileRoute
+  UniverseSearchRoute: typeof UniverseSearchRoute
   UniverseShopsRoute: typeof UniverseShopsRoute
   UniverseIndexRoute: typeof UniverseIndexRoute
   UniverseUHandleRoute: typeof UniverseUHandleRoute
@@ -2304,6 +2324,7 @@ const UniverseRouteChildren: UniverseRouteChildren = {
   UniverseMessagesRoute: UniverseMessagesRoute,
   UniverseNotificationsRoute: UniverseNotificationsRoute,
   UniverseProfileRoute: UniverseProfileRoute,
+  UniverseSearchRoute: UniverseSearchRoute,
   UniverseShopsRoute: UniverseShopsRoute,
   UniverseIndexRoute: UniverseIndexRoute,
   UniverseUHandleRoute: UniverseUHandleRoute,
