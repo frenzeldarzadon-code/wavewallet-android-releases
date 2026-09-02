@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   batchDeleteBlockReason,
   canDeleteCode,
+  canDeleteUnusedCodes,
   isBatchDeletable,
   type VoucherBatch,
 } from "@/lib/voucher-inventory";
@@ -54,5 +55,26 @@ describe("whole-batch deletion", () => {
     expect(batchDeleteBlockReason(batch({ total_codes: 0, unused_count: 0 }))).toContain(
       "no codes left",
     );
+  });
+});
+
+describe("delete-unused-only cleanup for mixed batches", () => {
+  it("is unavailable for a fully unused batch (whole-batch delete covers it)", () => {
+    expect(canDeleteUnusedCodes(batch())).toBe(false);
+  });
+
+  it("is available when at least one code is used and at least one is unused", () => {
+    expect(canDeleteUnusedCodes(batch({ unused_count: 7, sold_count: 3 }))).toBe(true);
+  });
+
+  it("is unavailable when every code is used (nothing unused to clean)", () => {
+    expect(canDeleteUnusedCodes(batch({ unused_count: 0, sold_count: 10 }))).toBe(false);
+  });
+
+  it("never replaces whole-batch deletion eligibility rules", () => {
+    // A mixed batch still cannot be deleted whole — cleanup is unused-only.
+    const mixed = batch({ unused_count: 7, sold_count: 3 });
+    expect(isBatchDeletable(mixed)).toBe(false);
+    expect(canDeleteUnusedCodes(mixed)).toBe(true);
   });
 });

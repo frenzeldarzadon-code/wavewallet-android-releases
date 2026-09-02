@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
+  deleteUnusedVoucherBatch,
   deleteVoucherBatch,
   deleteVoucherCode,
   fetchInventoryCounts,
@@ -44,6 +45,7 @@ import { toast } from "sonner";
 import {
   batchDeleteBlockReason,
   canDeleteCode,
+  canDeleteUnusedCodes,
   type VoucherBatch,
 } from "@/lib/voucher-inventory";
 
@@ -81,7 +83,8 @@ interface CodeRow {
 
 type PendingDelete =
   | { kind: "code"; code: CodeRow; batch: VoucherBatch | undefined }
-  | { kind: "batch"; batch: VoucherBatch };
+  | { kind: "batch"; batch: VoucherBatch }
+  | { kind: "unused"; batch: VoucherBatch };
 
 function AdminVouchers() {
   const { ecosystemDbId } = useSession("admin");
@@ -180,6 +183,9 @@ function AdminVouchers() {
       if (pendingDelete.kind === "code") {
         await deleteVoucherCode(pendingDelete.code.id);
         toast.success("Voucher code deleted");
+      } else if (pendingDelete.kind === "unused") {
+        const n = await deleteUnusedVoucherBatch(pendingDelete.batch.batch_id);
+        toast.success(`Cleaned up — ${n} unused code${n === 1 ? "" : "s"} removed`);
       } else {
         const n = await deleteVoucherBatch(pendingDelete.batch.batch_id);
         toast.success(`Batch deleted — ${n} unused code${n === 1 ? "" : "s"} removed`);
@@ -455,7 +461,17 @@ function AdminVouchers() {
                             {b.sold_count}
                           </TableCell>
                           <TableCell className="text-right">
-                            {blocked ? (
+                            {canDeleteUnusedCodes(b) ? (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-destructive"
+                                title="Deletes only the unused codes. Sold codes and Omada vouchers are never touched."
+                                onClick={() => setPendingDelete({ kind: "unused", batch: b })}
+                              >
+                                <Trash2 className="size-4" /> Delete unused vouchers
+                              </Button>
+                            ) : blocked ? (
                               <span
                                 className="text-[11px] text-muted-foreground"
                                 title={blocked}
@@ -638,11 +654,16 @@ function AdminVouchers() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {pendingDelete?.kind === "batch" ? "Delete whole batch?" : "Delete voucher code?"}
+              {pendingDelete?.kind === "batch"
+                ? "Delete whole batch?"
+                : pendingDelete?.kind === "unused"
+                  ? "Delete unused vouchers?"
+                  : "Delete voucher code?"}
             </DialogTitle>
             <DialogDescription>
-              This permanently removes unused inventory. Sold codes, sales, balances, commissions,
-              points and audit history are never touched.
+              {pendingDelete?.kind === "unused"
+                ? "Only the unused WaveWallet voucher records in this batch will be deleted. Sold codes, sales, balances, commissions, points and audit history stay untouched. Vouchers on the Omada controller are NOT deleted or changed."
+                : "This permanently removes unused inventory. Sold codes, sales, balances, commissions, points and audit history are never touched."}
             </DialogDescription>
           </DialogHeader>
           {pendingDelete ? (
@@ -650,29 +671,35 @@ function AdminVouchers() {
               <div className="flex justify-between gap-3">
                 <dt className="text-muted-foreground">Codes to delete</dt>
                 <dd className="font-medium">
-                  {pendingDelete.kind === "batch" ? pendingDelete.batch.unused_count : 1}
+                  {pendingDelete.kind === "code" ? 1 : pendingDelete.batch.unused_count}
                 </dd>
               </div>
+              {pendingDelete.kind === "unused" ? (
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">Sold codes kept</dt>
+                  <dd className="font-medium">{pendingDelete.batch.sold_count}</dd>
+                </div>
+              ) : null}
               <div className="flex justify-between gap-3">
                 <dt className="text-muted-foreground">Product</dt>
                 <dd className="font-medium">
-                  {pendingDelete.kind === "batch"
-                    ? pendingDelete.batch.product_name || "—"
-                    : products.find((p) => p.id === pendingDelete.code.product_id)?.name ?? "—"}
+                  {pendingDelete.kind === "code"
+                    ? products.find((p) => p.id === pendingDelete.code.product_id)?.name ?? "—"
+                    : pendingDelete.batch.product_name || "—"}
                 </dd>
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-muted-foreground">Batch ID</dt>
                 <dd className="font-mono">
-                  {pendingDelete.kind === "batch"
-                    ? pendingDelete.batch.batch_id
-                    : pendingDelete.code.import_id ?? "—"}
+                  {pendingDelete.kind === "code"
+                    ? pendingDelete.code.import_id ?? "—"
+                    : pendingDelete.batch.batch_id}
                 </dd>
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-muted-foreground">Uploaded</dt>
                 <dd>
-                  {pendingDelete.kind === "batch"
+                  {pendingDelete.kind === "batch" || pendingDelete.kind === "unused"
                     ? shortDateTime(pendingDelete.batch.created_at)
                     : pendingDelete.batch
                       ? shortDateTime(pendingDelete.batch.created_at)
