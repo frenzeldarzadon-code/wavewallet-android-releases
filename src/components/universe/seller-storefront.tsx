@@ -75,10 +75,12 @@ export function SellerStorefrontSection({
                 {shop.products.map((p) => {
                   const open = () =>
                     setBuying({
+                      shopId: shop.id,
                       shopName: shop.name,
                       product: p,
                       sellerId: isSelf ? null : store.sellerId,
                       sellerName: isSelf ? null : store.sellerName,
+                      buyerId: viewerId,
                     });
                   const canBuy = Boolean(viewerId) && p.available > 0;
                   return (
