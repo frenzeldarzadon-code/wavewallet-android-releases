@@ -17,6 +17,8 @@ export interface StorefrontProduct {
   description: string | null;
   price: number;
   available: number;
+  /** Points price in the SELLING shop's points; null/0 = not redeemable with points. */
+  pointsPrice?: number | null;
 }
 
 export interface StorefrontShop {
