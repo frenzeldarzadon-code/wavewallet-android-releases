@@ -200,6 +200,38 @@ export function VoucherPurchaseDialogs({
                 <p className="text-xs text-muted-foreground">{target.product.description}</p>
               ) : null}
 
+              {pointsOffered ? (
+                <div className="space-y-1.5 py-1">
+                  <Label>Pay with</Label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={method === "credits" ? "default" : "outline"}
+                      onClick={() => setMethod("credits")}
+                    >
+                      <span className="truncate">Coins · {peso(unit)}</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={method === "points" ? "default" : "outline"}
+                      className={
+                        method === "points" ? "bg-points text-points-foreground hover:bg-points/90" : ""
+                      }
+                      onClick={() => setMethod("points")}
+                    >
+                      <span className="truncate">Points · {pointsPrice} pts</span>
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Points come from your {target.shopName} rewards balance, not your coin wallet.
+                  </p>
+                </div>
+              ) : null}
+
+              {!usingPoints ? (
+              <>
               <div className="flex items-center justify-between gap-2 py-1">
                 <span className="text-muted-foreground">Quantity</span>
                 <div className="flex items-center gap-2">
