@@ -57,6 +57,7 @@ type Row = {
   description: string | null;
   price: number;
   available: number;
+  points_price?: number | null;
 };
 
 /** Pure: groups the flat database rows by shop, keeping the database order. */
@@ -76,6 +77,7 @@ export function groupStorefrontRows(rows: Row[]): SellerStorefront | null {
       description: r.description,
       price: Number(r.price),
       available: Number(r.available ?? 0),
+      pointsPrice: r.points_price == null ? null : Number(r.points_price),
     });
   }
   return {
