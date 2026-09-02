@@ -118,9 +118,9 @@ export function EcosystemSocialCard({ ecosystemId }: { ecosystemId: string }) {
 
           <div className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2 sm:col-span-2">
             <div>
-              <Label htmlFor="ecoPromoOn">Paid promotions available</Label>
+              <Label htmlFor="ecoPromoOn">Promoted posts available</Label>
               <p className="text-xs text-muted-foreground">
-                Members can pay to highlight a post. Promoted posts are always labelled.
+                Members can feature a post for free. Promoted posts are always labelled.
               </p>
             </div>
             <Switch
