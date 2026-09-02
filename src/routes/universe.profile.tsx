@@ -32,6 +32,7 @@ function UniverseProfile() {
     <UniverseShell title="Profile" subtitle="Your global identity">
       <div className="space-y-6 px-4 sm:px-0">
         <ProfilePage />
+        <UniverseVouchersCard />
         <AddressCard />
         <RelationshipsCard />
         <ConnectedLoginsCard />
