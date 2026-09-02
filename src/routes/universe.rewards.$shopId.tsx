@@ -16,11 +16,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * touches the global coin wallet. No membership is required.
  */
 export const Route = createFileRoute("/universe/rewards/$shopId")({
-  validateSearch: (search: Record<string, unknown>): { name?: string } => ({
-    ...(typeof search.name === "string" && search.name.trim()
-      ? { name: search.name.trim().slice(0, 80) }
-      : {}),
-  }),
+  validateSearch: (search: Record<string, unknown>): { name?: string } => {
+    const raw = search["name"];
+    return typeof raw === "string" && raw.trim() ? { name: raw.trim().slice(0, 80) } : {};
+  },
   head: () => ({
     meta: [
       { title: "Shop Rewards — WaveWallet Universe" },
