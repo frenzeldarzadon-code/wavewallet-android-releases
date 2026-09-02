@@ -355,15 +355,11 @@ export const MAX_GIFT = 1000;
 
 /** Plain-language disclosure shown before the member writes a post. */
 export function freePostDisclosure(
-  state: Pick<SocialState, "free_posts_left" | "free_posts_per_day" | "post_cost">,
+  _state?: Partial<Pick<SocialState, "free_posts_left" | "free_posts_per_day" | "post_cost">>,
 ): string[] {
-  const left = Math.max(0, state.free_posts_left ?? 0);
   return [
-    `Free posts remaining today: ${left} of ${state.free_posts_per_day}`,
-    left > 0
-      ? `After your free posts are used, additional posts cost ${state.post_cost} paid social credit${state.post_cost === 1 ? "" : "s"}.`
-      : `You have used today's free posts — additional posts cost ${state.post_cost} paid social credit${state.post_cost === 1 ? "" : "s"}.`,
-    "Free promotional social credits cannot be gifted.",
+    "Posting in the Universe is free.",
+    "Promotions, likes, replies and messages are free too — your coins are only ever spent on vouchers and transfers you choose.",
   ];
 }
 
