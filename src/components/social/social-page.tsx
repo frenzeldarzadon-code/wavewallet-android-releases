@@ -43,14 +43,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { EmptyState, PageSection } from "@/components/ui-kit";
+import { EmptyState } from "@/components/ui-kit";
 import { ImageCropper } from "@/components/image-cropper";
 import { MemberAvatar } from "@/components/member-avatar";
 import { displayHandle } from "@/lib/profile";
