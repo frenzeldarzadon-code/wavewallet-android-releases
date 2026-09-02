@@ -107,3 +107,66 @@ export async function fetchUniverseSellers(slug: string): Promise<ShopSeller[]> 
     avatarPath: r.avatar_path,
   }));
 }
+
+// ---------------------------------------------------------------------------
+// Universe discovery: search Universe shops by shop name or voucher name.
+// ---------------------------------------------------------------------------
+
+export interface DiscoveredProduct extends StorefrontProduct {
+  /** True when this product's name matched the search term. */
+  matches: boolean;
+}
+
+export interface DiscoveredShop extends Omit<StorefrontShop, "products"> {
+  description: string | null;
+  products: DiscoveredProduct[];
+}
+
+type SearchRow = {
+  shop_id: string;
+  shop_name: string;
+  shop_slug: string;
+  shop_description: string | null;
+  product_id: string | null;
+  product_name: string | null;
+  product_description: string | null;
+  price: number | null;
+  available: number | null;
+  product_matches: boolean | null;
+};
+
+/** Pure: groups flat search rows by shop; shops without products are kept. */
+export function groupShopSearchRows(rows: SearchRow[]): DiscoveredShop[] {
+  const shops = new Map<string, DiscoveredShop>();
+  for (const r of rows) {
+    let shop = shops.get(r.shop_id);
+    if (!shop) {
+      shop = {
+        id: r.shop_id,
+        name: r.shop_name,
+        slug: r.shop_slug,
+        description: r.shop_description,
+        products: [],
+      };
+      shops.set(r.shop_id, shop);
+    }
+    if (r.product_id && r.product_name) {
+      shop.products.push({
+        id: r.product_id,
+        name: r.product_name,
+        description: r.product_description,
+        price: Number(r.price ?? 0),
+        available: Number(r.available ?? 0),
+        matches: Boolean(r.product_matches),
+      });
+    }
+  }
+  return [...shops.values()];
+}
+
+/** Signed-in only. Public shop + voucher fields; never hierarchy or rates. */
+export async function searchUniverseShops(q: string, limit = 20): Promise<DiscoveredShop[]> {
+  const { data, error } = await supabase.rpc("universe_shop_search", { _q: q, _limit: limit });
+  if (error) throw new Error(error.message);
+  return groupShopSearchRows((data ?? []) as SearchRow[]);
+}
