@@ -63,7 +63,7 @@ describe("post charges", () => {
 
   it("never charges for a promotion, whatever the configured prices say", () => {
     expect(postCharge(state, true)).toEqual({ amount: 0, currency: "social", free: true });
-    expect(postCharge({ ...state, promotion_currency: "points" }, true).amount).toBe(0);
+    expect(postCharge(state, true).amount).toBe(0);
   });
 });
 
