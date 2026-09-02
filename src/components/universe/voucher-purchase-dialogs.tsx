@@ -9,7 +9,7 @@
  * issues or reprices a voucher — the database does all of that atomically, so
  * a cancelled or failed purchase consumes neither coins nor codes.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,16 +33,25 @@ import { beginCriticalOperation } from "@/lib/app-update";
 import { useOnline } from "@/lib/pwa";
 import { peso } from "@/lib/wavewallet";
 import { purchaseVoucher } from "@/lib/wallet";
+import { fetchPointsAccount, purchaseVoucherWithPoints, type PointsAccount } from "@/lib/rewards";
+import { pts } from "@/lib/points";
 import type { StorefrontProduct } from "@/lib/seller-storefront";
 
 export const MAX_QTY = 500;
 
+/** Coins come from the global Universe wallet; points from the SELLING shop only. */
+export type PurchaseMethod = "credits" | "points";
+
 export interface PurchaseTarget {
+  /** Owning/selling shop of the product — decides the points & rewards context. */
+  shopId: string;
   shopName: string;
   product: StorefrontProduct;
   /** Authorized seller to attribute the sale to; null = direct shop purchase. */
   sellerId: string | null;
   sellerName: string | null;
+  /** Signed-in buyer; used to read their points in the selling shop. */
+  buyerId: string | null;
 }
 
 interface Issued {
@@ -51,6 +60,8 @@ interface Issued {
   earned: number;
   saleId: string | null;
 }
+
+const NO_POINTS: PointsAccount = { balance: 0, held: 0, available: 0 };
 
 export function VoucherPurchaseDialogs({
   target,
