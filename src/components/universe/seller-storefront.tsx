@@ -72,9 +72,24 @@ export function SellerStorefrontSection({
               <EmptyState title="No vouchers on sale" />
             ) : (
               <ul className="divide-y">
-                {shop.products.map((p) => (
+                {shop.products.map((p) => {
+                  const open = () =>
+                    setBuying({
+                      shopName: shop.name,
+                      product: p,
+                      sellerId: isSelf ? null : store.sellerId,
+                      sellerName: isSelf ? null : store.sellerName,
+                    });
+                  const canBuy = Boolean(viewerId) && p.available > 0;
+                  return (
                   <li key={p.id} className="flex items-center justify-between gap-3 py-2">
-                    <div className="min-w-0">
+                    <button
+                      type="button"
+                      className="min-w-0 flex-1 text-left disabled:cursor-default"
+                      disabled={!canBuy}
+                      onClick={open}
+                      aria-label={`Open ${p.name}`}
+                    >
                       <p className="truncate text-sm font-medium">{p.name}</p>
                       {p.description ? (
                         <p className="truncate text-xs text-muted-foreground">{p.description}</p>
@@ -82,20 +97,9 @@ export function SellerStorefrontSection({
                       <p className="text-xs text-muted-foreground">
                         {peso(p.price)} · {p.available > 0 ? `${p.available} available` : "Out of stock"}
                       </p>
-                    </div>
+                    </button>
                     {viewerId ? (
-                      <Button
-                        size="sm"
-                        disabled={p.available <= 0}
-                        onClick={() =>
-                          setBuying({
-                            shopName: shop.name,
-                            product: p,
-                            sellerId: isSelf ? null : store.sellerId,
-                            sellerName: isSelf ? null : store.sellerName,
-                          })
-                        }
-                      >
+                      <Button size="sm" disabled={!canBuy} onClick={open}>
                         Buy
                       </Button>
                     ) : (
@@ -104,7 +108,8 @@ export function SellerStorefrontSection({
                       </Button>
                     )}
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             )}
           </CardContent>

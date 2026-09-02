@@ -35,6 +35,7 @@ export function IssuedVouchersDialog({
   summary,
   pointsEarned,
   saleId,
+  historyTo,
   onClose,
 }: {
   vouchers: VoucherImageData[];
@@ -42,6 +43,8 @@ export function IssuedVouchersDialog({
   pointsEarned: number;
   /** Voucher sale this purchase created — used only to open the print flow. */
   saleId?: string | null;
+  /** Where these vouchers can be retrieved again later (existing history page). */
+  historyTo?: "/universe/wallet" | "/app/history" | "/reseller/history";
   onClose: () => void;
 }) {
   const [busy, setBusy] = useState<null | "download" | "share">(null);
@@ -188,6 +191,15 @@ export function IssuedVouchersDialog({
             )}
           </Button>
         </div>
+
+        {historyTo ? (
+          <p className="text-center text-xs text-muted-foreground">
+            These codes are saved to your purchase history.{" "}
+            <Link to={historyTo} onClick={onClose} className="font-medium text-primary underline">
+              Open Wallet Center
+            </Link>
+          </p>
+        ) : null}
 
         <DialogFooter>
           <Button onClick={onClose}>Done</Button>
