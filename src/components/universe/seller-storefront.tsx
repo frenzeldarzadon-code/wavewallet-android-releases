@@ -97,7 +97,14 @@ export function SellerStorefrontSection({
                         <p className="truncate text-xs text-muted-foreground">{p.description}</p>
                       ) : null}
                       <p className="text-xs text-muted-foreground">
-                        {peso(p.price)} · {p.available > 0 ? `${p.available} available` : "Out of stock"}
+                        {peso(p.price)}
+                        {(p.pointsPrice ?? 0) > 0 ? (
+                          <>
+                            {" "}
+                            · <span className="text-points">or {p.pointsPrice} pts</span>
+                          </>
+                        ) : null}{" "}
+                        · {p.available > 0 ? `${p.available} available` : "Out of stock"}
                       </p>
                     </button>
                     {viewerId ? (
@@ -114,6 +121,24 @@ export function SellerStorefrontSection({
                 })}
               </ul>
             )}
+            {/* Rewards belong to the SELLING shop, never to this seller. */}
+            <Link
+              to="/universe/rewards/$shopId"
+              params={{ shopId: shop.id }}
+              search={{ name: shop.name }}
+              className="flex items-center justify-between gap-3 rounded-xl border border-points/40 bg-points/8 px-3 py-2.5 text-sm transition-colors hover:bg-points/15"
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                <Gift className="size-4 shrink-0 text-points" />
+                <span className="min-w-0">
+                  <span className="block truncate font-semibold text-points">{shop.name} Rewards</span>
+                  <span className="block text-[11px] text-muted-foreground">
+                    Redeem the points you earn buying {shop.name} vouchers
+                  </span>
+                </span>
+              </span>
+              <ArrowRight className="size-4 shrink-0 text-points" />
+            </Link>
           </CardContent>
         </Card>
       ))}
