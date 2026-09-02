@@ -677,11 +677,8 @@ export async function setBlocked(memberId: string, blocked: boolean) {
   if (error) fail(error.message);
 }
 
-export async function exchangeForSocialCredits(kind: "credit" | "points", amount: number) {
-  const { data, error } = await supabase.rpc("social_exchange", { _kind: kind, _amount: amount });
-  if (error) fail(error.message);
-  return data as unknown as { granted: number; balance: number; tx_id: string };
-}
+// `social_exchange` is retired: Universe social activity is free, so coins and
+// points are never exchanged for social credits. The database refuses the call.
 
 export interface GiftResult {
   amount: number;
