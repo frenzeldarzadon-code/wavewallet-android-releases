@@ -109,6 +109,7 @@ import { Route as UniverseNotificationsRouteImport } from './routes/universe.not
 import { Route as UniverseProfileRouteImport } from './routes/universe.profile'
 import { Route as UniverseSearchRouteImport } from './routes/universe.search'
 import { Route as UniverseShopsRouteImport } from './routes/universe.shops'
+import { Route as UniverseWalletRouteImport } from './routes/universe.wallet'
 import { Route as ApiPublicAppVersionRouteImport } from './routes/api/public/app-version'
 import { Route as ApiPublicOmadaHealthSweepRouteImport } from './routes/api/public/omada-health-sweep'
 import { Route as ApiPublicPortalContextRouteImport } from './routes/api/public/portal-context'
@@ -620,6 +621,11 @@ const UniverseShopsRoute = UniverseShopsRouteImport.update({
   path: '/shops',
   getParentRoute: () => UniverseRoute,
 } as any)
+const UniverseWalletRoute = UniverseWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => UniverseRoute,
+} as any)
 const ApiPublicAppVersionRoute = ApiPublicAppVersionRouteImport.update({
   id: '/api/public/app-version',
   path: '/api/public/app-version',
@@ -765,6 +771,7 @@ export interface FileRoutesByFullPath {
   '/universe/profile': typeof UniverseProfileRoute
   '/universe/search': typeof UniverseSearchRoute
   '/universe/shops': typeof UniverseShopsRoute
+  '/universe/wallet': typeof UniverseWalletRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/reseller/': typeof ResellerIndexRoute
@@ -871,6 +878,7 @@ export interface FileRoutesByTo {
   '/universe/profile': typeof UniverseProfileRoute
   '/universe/search': typeof UniverseSearchRoute
   '/universe/shops': typeof UniverseShopsRoute
+  '/universe/wallet': typeof UniverseWalletRoute
   '/admin': typeof AdminIndexRoute
   '/app': typeof AppIndexRoute
   '/reseller': typeof ResellerIndexRoute
@@ -983,6 +991,7 @@ export interface FileRoutesById {
   '/universe/profile': typeof UniverseProfileRoute
   '/universe/search': typeof UniverseSearchRoute
   '/universe/shops': typeof UniverseShopsRoute
+  '/universe/wallet': typeof UniverseWalletRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/reseller/': typeof ResellerIndexRoute
@@ -1096,6 +1105,7 @@ export interface FileRouteTypes {
     | '/universe/profile'
     | '/universe/search'
     | '/universe/shops'
+    | '/universe/wallet'
     | '/admin/'
     | '/app/'
     | '/reseller/'
@@ -1202,6 +1212,7 @@ export interface FileRouteTypes {
     | '/universe/profile'
     | '/universe/search'
     | '/universe/shops'
+    | '/universe/wallet'
     | '/admin'
     | '/app'
     | '/reseller'
@@ -1313,6 +1324,7 @@ export interface FileRouteTypes {
     | '/universe/profile'
     | '/universe/search'
     | '/universe/shops'
+    | '/universe/wallet'
     | '/admin/'
     | '/app/'
     | '/reseller/'
@@ -2062,6 +2074,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UniverseShopsRouteImport
       parentRoute: typeof UniverseRoute
     }
+    '/universe/wallet': {
+      id: '/universe/wallet'
+      path: '/wallet'
+      fullPath: '/universe/wallet'
+      preLoaderRoute: typeof UniverseWalletRouteImport
+      parentRoute: typeof UniverseRoute
+    }
     '/api/public/app-version': {
       id: '/api/public/app-version'
       path: '/api/public/app-version'
@@ -2315,6 +2334,7 @@ interface UniverseRouteChildren {
   UniverseProfileRoute: typeof UniverseProfileRoute
   UniverseSearchRoute: typeof UniverseSearchRoute
   UniverseShopsRoute: typeof UniverseShopsRoute
+  UniverseWalletRoute: typeof UniverseWalletRoute
   UniverseIndexRoute: typeof UniverseIndexRoute
   UniverseUHandleRoute: typeof UniverseUHandleRoute
 }
@@ -2326,6 +2346,7 @@ const UniverseRouteChildren: UniverseRouteChildren = {
   UniverseProfileRoute: UniverseProfileRoute,
   UniverseSearchRoute: UniverseSearchRoute,
   UniverseShopsRoute: UniverseShopsRoute,
+  UniverseWalletRoute: UniverseWalletRoute,
   UniverseIndexRoute: UniverseIndexRoute,
   UniverseUHandleRoute: UniverseUHandleRoute,
 }
