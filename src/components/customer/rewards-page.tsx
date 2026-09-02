@@ -70,7 +70,7 @@ export function RewardsPage({
     try {
       const [p, r, m] = await Promise.all([
         fetchPointsAccount(userId, ecosystemDbId),
-        fetchRewards(),
+        fetchRewards(shop ? shop.id : null),
         fetchMyRedemptions(userId, ecosystemDbId),
       ]);
       setPoints(p);
