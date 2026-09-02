@@ -79,6 +79,8 @@ export function VoucherPurchaseDialogs({
   const [qtyText, setQtyText] = useState("1");
   const [customerName, setCustomerName] = useState("");
   const [payment, setPayment] = useState<PaymentStatus>(null);
+  const [method, setMethod] = useState<PurchaseMethod>("credits");
+  const [points, setPoints] = useState<PointsAccount | null>(null);
   const [busy, setBusy] = useState(false);
   const [issued, setIssued] = useState<Issued | null>(null);
   const [lastTargetKey, setLastTargetKey] = useState<string | null>(null);
@@ -91,41 +93,80 @@ export function VoucherPurchaseDialogs({
     setQtyText("1");
     setCustomerName("");
     setPayment(null);
+    setMethod("credits");
   }
 
+  // Points belong to the SELLING shop (never the seller, never the coin wallet).
+  const pointsPrice = target?.product.pointsPrice ?? 0;
+  const pointsOffered = pointsPrice > 0;
+  const buyerId = target?.buyerId ?? null;
+  const shopId = target?.shopId ?? null;
+  useEffect(() => {
+    if (!buyerId || !shopId || !pointsOffered) {
+      setPoints(null);
+      return;
+    }
+    let active = true;
+    setPoints(null);
+    void fetchPointsAccount(buyerId, shopId)
+      .then((p) => active && setPoints(p))
+      .catch(() => active && setPoints(NO_POINTS));
+    return () => {
+      active = false;
+    };
+  }, [buyerId, shopId, pointsOffered]);
+
+  const usingPoints = method === "points" && pointsOffered;
   const maxQty = target ? Math.min(MAX_QTY, Math.max(1, target.product.available)) : 1;
   const unit = target?.product.price ?? 0;
   const total = Math.round(unit * qty * 100) / 100;
   const notEnough = balance !== null && total > balance;
+  const pointsAvailable = points?.available ?? 0;
+  const pointsOk = points !== null && pointsAvailable >= pointsPrice;
+  const canConfirm = usingPoints ? pointsOk : !notEnough && qty <= maxQty;
 
   const confirm = async () => {
     if (!target) return;
     setBusy(true);
     const endCritical = beginCriticalOperation();
     try {
-      const res = await purchaseVoucher(target.product.id, qty, target.sellerId);
       const issuedAt = new Date();
       const name = customerName.trim();
-      setIssued({
-        vouchers: res.codes.map((code, i) => ({
-          code,
-          productName: res.product_name,
-          description: target.product.description ?? null,
-          priceLabel: peso(unit),
-          shopName: target.shopName,
-          customerName: name || null,
-          paymentStatus: payment,
-          index: i + 1,
-          total: res.codes.length,
-          txId: res.tx_id,
-          issuedAt,
-        })),
-        summary: `${res.product_name}${res.quantity > 1 ? ` ×${res.quantity}` : ""} · ${peso(
-          res.sale_price,
-        )} · ${res.tx_id}`,
-        earned: Number(res.points_earned ?? 0),
-        saleId: res.sale_id ?? null,
+      const voucher = (code: string, i: number, count: number, txId: string, productName: string) => ({
+        code,
+        productName,
+        description: target.product.description ?? null,
+        priceLabel: peso(unit),
+        shopName: target.shopName,
+        customerName: name || null,
+        paymentStatus: payment,
+        index: i + 1,
+        total: count,
+        txId,
+        issuedAt,
       });
+      if (usingPoints) {
+        // Existing points flow: one voucher per purchase, no new points earned.
+        const res = await purchaseVoucherWithPoints(target.product.id, target.sellerId);
+        setIssued({
+          vouchers: [voucher(res.code, 0, 1, res.tx_id, res.product_name)],
+          summary: `${res.product_name} · ${res.points_spent} pts · ${res.tx_id}`,
+          earned: 0,
+          saleId: res.sale_id ?? null,
+        });
+      } else {
+        const res = await purchaseVoucher(target.product.id, qty, target.sellerId);
+        setIssued({
+          vouchers: res.codes.map((code, i) =>
+            voucher(code, i, res.codes.length, res.tx_id, res.product_name),
+          ),
+          summary: `${res.product_name}${res.quantity > 1 ? ` ×${res.quantity}` : ""} · ${peso(
+            res.sale_price,
+          )} · ${res.tx_id}`,
+          earned: Number(res.points_earned ?? 0),
+          saleId: res.sale_id ?? null,
+        });
+      }
       onClose();
       await onPurchased();
     } catch (e) {
