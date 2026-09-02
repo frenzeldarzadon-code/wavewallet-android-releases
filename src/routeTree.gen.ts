@@ -107,7 +107,9 @@ import { Route as UniverseMembersRouteImport } from './routes/universe.members'
 import { Route as UniverseMessagesRouteImport } from './routes/universe.messages'
 import { Route as UniverseNotificationsRouteImport } from './routes/universe.notifications'
 import { Route as UniverseProfileRouteImport } from './routes/universe.profile'
+import { Route as UniverseSearchRouteImport } from './routes/universe.search'
 import { Route as UniverseShopsRouteImport } from './routes/universe.shops'
+import { Route as UniverseWalletRouteImport } from './routes/universe.wallet'
 import { Route as ApiPublicAppVersionRouteImport } from './routes/api/public/app-version'
 import { Route as ApiPublicOmadaHealthSweepRouteImport } from './routes/api/public/omada-health-sweep'
 import { Route as ApiPublicPortalContextRouteImport } from './routes/api/public/portal-context'
@@ -609,9 +611,19 @@ const UniverseProfileRoute = UniverseProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => UniverseRoute,
 } as any)
+const UniverseSearchRoute = UniverseSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => UniverseRoute,
+} as any)
 const UniverseShopsRoute = UniverseShopsRouteImport.update({
   id: '/shops',
   path: '/shops',
+  getParentRoute: () => UniverseRoute,
+} as any)
+const UniverseWalletRoute = UniverseWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
   getParentRoute: () => UniverseRoute,
 } as any)
 const ApiPublicAppVersionRoute = ApiPublicAppVersionRouteImport.update({
@@ -757,7 +769,9 @@ export interface FileRoutesByFullPath {
   '/universe/messages': typeof UniverseMessagesRoute
   '/universe/notifications': typeof UniverseNotificationsRoute
   '/universe/profile': typeof UniverseProfileRoute
+  '/universe/search': typeof UniverseSearchRoute
   '/universe/shops': typeof UniverseShopsRoute
+  '/universe/wallet': typeof UniverseWalletRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/reseller/': typeof ResellerIndexRoute
@@ -862,7 +876,9 @@ export interface FileRoutesByTo {
   '/universe/messages': typeof UniverseMessagesRoute
   '/universe/notifications': typeof UniverseNotificationsRoute
   '/universe/profile': typeof UniverseProfileRoute
+  '/universe/search': typeof UniverseSearchRoute
   '/universe/shops': typeof UniverseShopsRoute
+  '/universe/wallet': typeof UniverseWalletRoute
   '/admin': typeof AdminIndexRoute
   '/app': typeof AppIndexRoute
   '/reseller': typeof ResellerIndexRoute
@@ -973,7 +989,9 @@ export interface FileRoutesById {
   '/universe/messages': typeof UniverseMessagesRoute
   '/universe/notifications': typeof UniverseNotificationsRoute
   '/universe/profile': typeof UniverseProfileRoute
+  '/universe/search': typeof UniverseSearchRoute
   '/universe/shops': typeof UniverseShopsRoute
+  '/universe/wallet': typeof UniverseWalletRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/reseller/': typeof ResellerIndexRoute
@@ -1085,7 +1103,9 @@ export interface FileRouteTypes {
     | '/universe/messages'
     | '/universe/notifications'
     | '/universe/profile'
+    | '/universe/search'
     | '/universe/shops'
+    | '/universe/wallet'
     | '/admin/'
     | '/app/'
     | '/reseller/'
@@ -1190,7 +1210,9 @@ export interface FileRouteTypes {
     | '/universe/messages'
     | '/universe/notifications'
     | '/universe/profile'
+    | '/universe/search'
     | '/universe/shops'
+    | '/universe/wallet'
     | '/admin'
     | '/app'
     | '/reseller'
@@ -1300,7 +1322,9 @@ export interface FileRouteTypes {
     | '/universe/messages'
     | '/universe/notifications'
     | '/universe/profile'
+    | '/universe/search'
     | '/universe/shops'
+    | '/universe/wallet'
     | '/admin/'
     | '/app/'
     | '/reseller/'
@@ -2036,11 +2060,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UniverseProfileRouteImport
       parentRoute: typeof UniverseRoute
     }
+    '/universe/search': {
+      id: '/universe/search'
+      path: '/search'
+      fullPath: '/universe/search'
+      preLoaderRoute: typeof UniverseSearchRouteImport
+      parentRoute: typeof UniverseRoute
+    }
     '/universe/shops': {
       id: '/universe/shops'
       path: '/shops'
       fullPath: '/universe/shops'
       preLoaderRoute: typeof UniverseShopsRouteImport
+      parentRoute: typeof UniverseRoute
+    }
+    '/universe/wallet': {
+      id: '/universe/wallet'
+      path: '/wallet'
+      fullPath: '/universe/wallet'
+      preLoaderRoute: typeof UniverseWalletRouteImport
       parentRoute: typeof UniverseRoute
     }
     '/api/public/app-version': {
@@ -2294,7 +2332,9 @@ interface UniverseRouteChildren {
   UniverseMessagesRoute: typeof UniverseMessagesRoute
   UniverseNotificationsRoute: typeof UniverseNotificationsRoute
   UniverseProfileRoute: typeof UniverseProfileRoute
+  UniverseSearchRoute: typeof UniverseSearchRoute
   UniverseShopsRoute: typeof UniverseShopsRoute
+  UniverseWalletRoute: typeof UniverseWalletRoute
   UniverseIndexRoute: typeof UniverseIndexRoute
   UniverseUHandleRoute: typeof UniverseUHandleRoute
 }
@@ -2304,7 +2344,9 @@ const UniverseRouteChildren: UniverseRouteChildren = {
   UniverseMessagesRoute: UniverseMessagesRoute,
   UniverseNotificationsRoute: UniverseNotificationsRoute,
   UniverseProfileRoute: UniverseProfileRoute,
+  UniverseSearchRoute: UniverseSearchRoute,
   UniverseShopsRoute: UniverseShopsRoute,
+  UniverseWalletRoute: UniverseWalletRoute,
   UniverseIndexRoute: UniverseIndexRoute,
   UniverseUHandleRoute: UniverseUHandleRoute,
 }

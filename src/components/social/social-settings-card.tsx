@@ -5,13 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { PageSection } from "@/components/ui-kit";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -97,26 +90,24 @@ export function SocialSettingsCard() {
   };
 
   return (
-    <PageSection devSlot="social-settings-card.community-social-credits"
+    <PageSection
+      devSlot="social-settings-card.community-social-credits"
       title="Community & social credits"
-      description="Free daily posts, exchange rates, promotion pricing and rewarded-ad limits for every shop."
+      description="Community switches and rewarded-ad limits for every shop. Social activity itself is free."
     >
       <Card className="shadow-[var(--shadow-card)]">
         <CardHeader>
           <CardTitle className="text-sm">Social credit economics</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1.5 sm:col-span-2">
-            {num("free_posts_per_day", "Free posts per member per day")}
-            <p className="text-xs text-muted-foreground">
-              A free POST allowance, not free social credits. Members post this many times a day
-              without spending anything; further posts cost paid social credits. There is no longer
-              a daily free social-credit balance, and promotional credits can never be gifted.
+          <div className="rounded-xl border border-success/40 bg-success/5 px-3 py-2 text-xs text-muted-foreground sm:col-span-2">
+            <p className="font-semibold text-foreground">Universe social activity is free</p>
+            <p>
+              Posting, promoting, replies, likes and messages never deduct coins, social credits or
+              points. Post costs, promotion prices and coin/point exchange rates are retired and
+              ignored by the database — only the switches below still apply.
             </p>
           </div>
-          {num("post_cost", "Cost of a post beyond the free allowance")}
-          {num("credit_exchange_rate", "Social credits per 1 wallet credit")}
-          {num("points_exchange_rate", "Social credits per 1 point")}
 
           <div className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2 sm:col-span-2">
             <Label htmlFor="promoEnabled">Allow promoted posts</Label>
@@ -126,23 +117,6 @@ export function SocialSettingsCard() {
               onCheckedChange={(v) => set("promotion_enabled", v)}
             />
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="promoCurrency">Promotion is paid in</Label>
-            <Select
-              value={form.promotion_currency}
-              onValueChange={(v) => set("promotion_currency", v)}
-            >
-              <SelectTrigger id="promoCurrency">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="social">Social credits</SelectItem>
-                <SelectItem value="points">Points</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          {num("promotion_cost_social", "Promotion cost (social credits)")}
-          {num("promotion_cost_points", "Promotion cost (points)")}
 
           <div className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2 sm:col-span-2">
             <div>

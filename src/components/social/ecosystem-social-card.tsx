@@ -17,25 +17,9 @@ import {
 
 type Field = keyof Omit<EcosystemSocialSettings, "social_enabled" | "promotion_enabled">;
 
-const FIELDS: { key: Field; label: string; hint: string }[] = [
-  // The daily free-credit allowance is retired: members get free POSTS per day
-  // instead, and only the platform owner sets that.
-  {
-    key: "post_cost",
-    label: "Cost to post",
-    hint: "Paid social credits per post, once the free daily posts are used",
-  },
-  {
-    key: "credit_exchange_rate",
-    label: "Credits per social credit",
-    hint: "Wallet credits charged for 1 social credit",
-  },
-  {
-    key: "points_exchange_rate",
-    label: "Points per social credit",
-    hint: "Points charged for 1 social credit",
-  },
-];
+// Pricing overrides are retired: Universe social activity is free and the
+// database ignores post costs and exchange rates. Nothing is editable here.
+const FIELDS: { key: Field; label: string; hint: string }[] = [];
 
 /**
  * Per-shop community settings. Blank fields inherit the platform default, so an
@@ -92,7 +76,8 @@ export function EcosystemSocialCard({ ecosystemId }: { ecosystemId: string }) {
   const platform = (key: Field) => (effective ? String(effective[key as keyof SocialState]) : "—");
 
   return (
-    <PageSection devSlot="ecosystem-social-card.community-settings"
+    <PageSection
+      devSlot="ecosystem-social-card.community-settings"
       title="Community settings"
       description="These apply to your shop only. Leave a field empty to follow the platform default."
     >
@@ -134,9 +119,9 @@ export function EcosystemSocialCard({ ecosystemId }: { ecosystemId: string }) {
 
           <div className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2 sm:col-span-2">
             <div>
-              <Label htmlFor="ecoPromoOn">Paid promotions available</Label>
+              <Label htmlFor="ecoPromoOn">Promoted posts available</Label>
               <p className="text-xs text-muted-foreground">
-                Members can pay to highlight a post. Promoted posts are always labelled.
+                Members can feature a post for free. Promoted posts are always labelled.
               </p>
             </div>
             <Switch

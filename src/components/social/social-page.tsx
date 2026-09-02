@@ -1,5 +1,4 @@
 import {
-  Coins,
   EyeOff,
   Flag,
   Gift,
@@ -44,14 +43,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { EmptyState, PageSection } from "@/components/ui-kit";
+import { EmptyState } from "@/components/ui-kit";
 import { ImageCropper } from "@/components/image-cropper";
 import { MemberAvatar } from "@/components/member-avatar";
 import { displayHandle } from "@/lib/profile";
@@ -75,8 +67,6 @@ import {
   deleteComment,
   deletePost,
   distributionSummary,
-  exchangeForSocialCredits,
-  exchangeGain,
   fetchComments,
   fetchDistributionStatus,
   fetchFeed,
@@ -151,12 +141,6 @@ export function SocialPage() {
 
   // composer
   const [composerOpen, setComposerOpen] = useState(false);
-
-  // exchange
-  const [exchangeOpen, setExchangeOpen] = useState(false);
-  const [exchangeKind, setExchangeKind] = useState<"credit" | "points">("credit");
-  const [exchangeAmount, setExchangeAmount] = useState("1");
-  const [exchanging, setExchanging] = useState(false);
 
   // reporting
   const [report, setReport] = useState<{ type: "post" | "comment"; id: string } | null>(null);
@@ -249,76 +233,30 @@ export function SocialPage() {
     }
   };
 
-  const runExchange = async () => {
-    const amount = Number(exchangeAmount);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      toast.error("Enter how much you want to exchange");
-      return;
-    }
-    setExchanging(true);
-    try {
-      const res = await exchangeForSocialCredits(exchangeKind, Math.trunc(amount));
-      toast.success(`+${res.granted} social credits`, {
-        description: "Social credits cannot be exchanged back.",
-      });
-      setExchangeOpen(false);
-      session.reload();
-      await refresh();
-    } catch (e) {
-      toast.error("Exchange failed", { description: (e as Error).message });
-    } finally {
-      setExchanging(false);
-    }
-  };
-
   return (
     <>
-      <PageSection devSlot="social-page.community"
-        title="Community"
-        description={`Share updates and promote your products with the wider WaveWallet Universe.`}
-      >
-        <Card className="shadow-[var(--shadow-card)]">
-          <CardContent className="space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2 text-sm">
-                <Coins className="size-4 text-success" aria-hidden />
-                <span className="font-semibold">
-                  {state?.purchased_balance ?? "—"} paid social credits
-                </span>
-                <span className="text-muted-foreground">
-                  · {Math.max(0, state?.free_posts_left ?? 0)} free post
-                  {state?.free_posts_left === 1 ? "" : "s"} left today of{" "}
-                  {state?.free_posts_per_day ?? 1}
-                  {(state?.free_balance ?? 0) > 0
-                    ? ` · ${state?.free_balance} promotional (not giftable)`
-                    : ""}
-                </span>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9"
-                onClick={() => setExchangeOpen(true)}
-              >
-                Get more
-              </Button>
-            </div>
-
-            <Button
-              className="h-12 w-full text-base"
-              disabled={!state}
-              onClick={() => setComposerOpen(true)}
-            >
-              <Send className="size-4" /> Create post
-            </Button>
-
-            <p className="text-xs text-muted-foreground">
-              Write first — you choose where to share it and whether to promote it before anything
-              is deducted. A normal post costs {state?.post_cost ?? 1} social credit.
-            </p>
-          </CardContent>
-        </Card>
-      </PageSection>
+      <div className="px-4 sm:px-0">
+        <button
+          type="button"
+          disabled={!state}
+          onClick={() => setComposerOpen(true)}
+          className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-left shadow-[var(--shadow-card)] transition-colors hover:bg-muted/40 disabled:opacity-60"
+          aria-label="Create a post"
+        >
+          <MemberAvatar name={account.name} className="size-10" />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-base text-muted-foreground">
+              What's happening in your area?
+            </span>
+            <span className="block text-xs text-muted-foreground/80">
+              Free to post · photos, @mentions and promotions included
+            </span>
+          </span>
+          <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground">
+            <Send className="size-4" /> Post
+          </span>
+        </button>
+      </div>
 
       {state ? (
         <PostComposer
@@ -334,14 +272,16 @@ export function SocialPage() {
       ) : null}
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading the feed…</p>
+        <p className="px-4 text-sm text-muted-foreground sm:px-0">Loading the feed…</p>
       ) : posts.length === 0 ? (
-        <EmptyState
-          title="No posts yet"
-          description="Be the first to share something with your shop community."
-        />
+        <div className="px-4 sm:px-0">
+          <EmptyState
+            title="No posts yet"
+            description="Be the first to share something with the Universe — it's free."
+          />
+        </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3 px-4 sm:px-0">
           {posts.map((post) => (
             <PostCard
               key={post.id}
@@ -357,79 +297,6 @@ export function SocialPage() {
           ))}
         </div>
       )}
-
-      {/* Exchange */}
-      <Dialog open={exchangeOpen} onOpenChange={setExchangeOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Get more social credits</DialogTitle>
-            <DialogDescription>
-              Exchange wallet credits or points for social credits. This is one-way — social credits
-              can never be converted back into credits or points.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant={exchangeKind === "credit" ? "default" : "outline"}
-                className="h-11"
-                onClick={() => setExchangeKind("credit")}
-              >
-                Wallet credits
-              </Button>
-              <Button
-                variant={exchangeKind === "points" ? "default" : "outline"}
-                className="h-11"
-                onClick={() => setExchangeKind("points")}
-              >
-                Points
-              </Button>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="exchangeAmount">
-                {exchangeKind === "credit" ? "Wallet credits to spend" : "Points to spend"}
-              </Label>
-              <Input
-                id="exchangeAmount"
-                inputMode="numeric"
-                value={exchangeAmount}
-                onChange={(e) => setExchangeAmount(e.target.value.replace(/[^0-9]/g, ""))}
-                className="h-11"
-              />
-            </div>
-            <p className="text-sm text-muted-foreground">
-              You will receive{" "}
-              <strong className="text-success">
-                {state ? exchangeGain(state, exchangeKind, Number(exchangeAmount || 0)) : 0}
-              </strong>{" "}
-              social credits. Available:{" "}
-              {exchangeKind === "credit"
-                ? `${account.creditBalance ?? 0} credits`
-                : `${account.pointsBalance ?? 0} points`}
-              .
-            </p>
-            {state?.ads_enabled ? (
-              <p className="text-xs text-muted-foreground">
-                Rewarded ads grant {state.ad_reward_amount} social credits after a verified
-                completed ad ({state.ads_claimed_today}/{state.ad_daily_limit} claimed today).
-              </p>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                Watch-an-ad rewards are not available yet — the platform owner has not enabled a
-                verified rewarded-ad provider.
-              </p>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setExchangeOpen(false)}>
-              Cancel
-            </Button>
-            <Button disabled={exchanging} onClick={() => void runExchange()}>
-              {exchanging ? <Loader2 className="size-4 animate-spin" /> : null} Exchange
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Report */}
       <Dialog open={report !== null} onOpenChange={(o) => !o && setReport(null)}>
@@ -588,8 +455,6 @@ function PostCard({
       setGifting(false);
     }
   };
-
-
 
   return (
     <Card className="shadow-[var(--shadow-card)]">
@@ -789,11 +654,7 @@ function PostCard({
                 value={reply}
                 onChange={setReply}
                 maxLength={COMMENT_MAX_CHARS}
-                placeholder={
-                  cost > 0
-                    ? `Reply (costs ${cost} social credit) — type @ to mention`
-                    : "Reply (free) — type @ to mention"
-                }
+                placeholder="Reply (free) — type @ to mention"
               />
               <Button
                 className="h-11"
@@ -811,9 +672,7 @@ function PostCard({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Post this reply?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {chargeSummary(cost, "social")} You have {state?.balance ?? 0} social credits.
-            </AlertDialogDescription>
+            <AlertDialogDescription>{chargeSummary(cost, "social")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>

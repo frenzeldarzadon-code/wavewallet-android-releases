@@ -289,41 +289,20 @@ const fail = (message: string): never => {
 // ---------------------------------------------------------------- pure logic
 
 /**
- * Cost and currency of the next post.
+ * Cost of the next post: always nothing.
  *
- * An ordinary post is free while the member still has a free post left today —
- * that is an allowance of POSTS, not of social credits. Promotions are always
- * paid, because the free allowance covers normal posting only.
+ * Universe social activity is free. Posting and promoting never consume
+ * WaveWallet coins, social credits or points — the database function
+ * `social_create_post` enforces the same rule and never writes a debit. The
+ * signature is kept so callers can still describe a promotion tier.
  */
 export function postCharge(
-  state: Pick<
-    SocialState,
-    | "post_cost"
-    | "promotion_currency"
-    | "promotion_cost_social"
-    | "promotion_cost_points"
-    | "free_posts_left"
-  >,
-  promote: boolean,
-  tier?: PromotionTier | null,
-  currency?: SocialCurrency,
+  _state: Pick<SocialState, "post_cost" | "free_posts_left">,
+  _promote: boolean,
+  _tier?: PromotionTier | null,
+  _currency?: SocialCurrency,
 ): { amount: number; currency: SocialCurrency; free: boolean } {
-  if (!promote) {
-    const free = (state.free_posts_left ?? 0) > 0;
-    return { amount: free ? 0 : state.post_cost, currency: "social", free };
-  }
-  if (tier) {
-    const cur: SocialCurrency =
-      tier.currency === "both" ? (currency ?? "social") : (tier.currency as SocialCurrency);
-    return {
-      amount: cur === "points" ? tier.price_points : tier.price_social,
-      currency: cur,
-      free: false,
-    };
-  }
-  return state.promotion_currency === "points"
-    ? { amount: state.promotion_cost_points, currency: "points", free: false }
-    : { amount: state.promotion_cost_social, currency: "social", free: false };
+  return { amount: 0, currency: "social", free: true };
 }
 
 /** Tiers the member may actually buy right now. */
@@ -376,15 +355,11 @@ export const MAX_GIFT = 1000;
 
 /** Plain-language disclosure shown before the member writes a post. */
 export function freePostDisclosure(
-  state: Pick<SocialState, "free_posts_left" | "free_posts_per_day" | "post_cost">,
+  _state?: Partial<Pick<SocialState, "free_posts_left" | "free_posts_per_day" | "post_cost">>,
 ): string[] {
-  const left = Math.max(0, state.free_posts_left ?? 0);
   return [
-    `Free posts remaining today: ${left} of ${state.free_posts_per_day}`,
-    left > 0
-      ? `After your free posts are used, additional posts cost ${state.post_cost} paid social credit${state.post_cost === 1 ? "" : "s"}.`
-      : `You have used today's free posts — additional posts cost ${state.post_cost} paid social credit${state.post_cost === 1 ? "" : "s"}.`,
-    "Free promotional social credits cannot be gifted.",
+    "Posting in the Universe is free.",
+    "Promotions, likes, replies and messages are free too — your coins are only ever spent on vouchers and transfers you choose.",
   ];
 }
 
@@ -702,11 +677,8 @@ export async function setBlocked(memberId: string, blocked: boolean) {
   if (error) fail(error.message);
 }
 
-export async function exchangeForSocialCredits(kind: "credit" | "points", amount: number) {
-  const { data, error } = await supabase.rpc("social_exchange", { _kind: kind, _amount: amount });
-  if (error) fail(error.message);
-  return data as unknown as { granted: number; balance: number; tx_id: string };
-}
+// `social_exchange` is retired: Universe social activity is free, so coins and
+// points are never exchanged for social credits. The database refuses the call.
 
 export interface GiftResult {
   amount: number;
