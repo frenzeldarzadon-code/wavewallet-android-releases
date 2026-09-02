@@ -81,7 +81,7 @@ export function RewardsPage({
     } finally {
       setLoading(false);
     }
-  }, [userId, ecosystemDbId]);
+  }, [userId, ecosystemDbId, shop]);
 
   useEffect(() => {
     void load();
