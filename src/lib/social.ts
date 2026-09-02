@@ -289,41 +289,20 @@ const fail = (message: string): never => {
 // ---------------------------------------------------------------- pure logic
 
 /**
- * Cost and currency of the next post.
+ * Cost of the next post: always nothing.
  *
- * An ordinary post is free while the member still has a free post left today —
- * that is an allowance of POSTS, not of social credits. Promotions are always
- * paid, because the free allowance covers normal posting only.
+ * Universe social activity is free. Posting and promoting never consume
+ * WaveWallet coins, social credits or points — the database function
+ * `social_create_post` enforces the same rule and never writes a debit. The
+ * signature is kept so callers can still describe a promotion tier.
  */
 export function postCharge(
-  state: Pick<
-    SocialState,
-    | "post_cost"
-    | "promotion_currency"
-    | "promotion_cost_social"
-    | "promotion_cost_points"
-    | "free_posts_left"
-  >,
-  promote: boolean,
-  tier?: PromotionTier | null,
-  currency?: SocialCurrency,
+  _state: Pick<SocialState, "post_cost" | "free_posts_left">,
+  _promote: boolean,
+  _tier?: PromotionTier | null,
+  _currency?: SocialCurrency,
 ): { amount: number; currency: SocialCurrency; free: boolean } {
-  if (!promote) {
-    const free = (state.free_posts_left ?? 0) > 0;
-    return { amount: free ? 0 : state.post_cost, currency: "social", free };
-  }
-  if (tier) {
-    const cur: SocialCurrency =
-      tier.currency === "both" ? (currency ?? "social") : (tier.currency as SocialCurrency);
-    return {
-      amount: cur === "points" ? tier.price_points : tier.price_social,
-      currency: cur,
-      free: false,
-    };
-  }
-  return state.promotion_currency === "points"
-    ? { amount: state.promotion_cost_points, currency: "points", free: false }
-    : { amount: state.promotion_cost_social, currency: "social", free: false };
+  return { amount: 0, currency: "social", free: true };
 }
 
 /** Tiers the member may actually buy right now. */
