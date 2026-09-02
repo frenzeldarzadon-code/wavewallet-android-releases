@@ -192,6 +192,15 @@ export function IssuedVouchersDialog({
           </Button>
         </div>
 
+        {historyTo ? (
+          <p className="text-center text-xs text-muted-foreground">
+            These codes are saved to your purchase history.{" "}
+            <Link to={historyTo} onClick={onClose} className="font-medium text-primary underline">
+              Open Wallet Center
+            </Link>
+          </p>
+        ) : null}
+
         <DialogFooter>
           <Button onClick={onClose}>Done</Button>
         </DialogFooter>
