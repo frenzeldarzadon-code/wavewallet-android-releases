@@ -217,7 +217,7 @@ export function VoucherPurchaseDialogs({
                       size="sm"
                       variant={method === "points" ? "default" : "outline"}
                       className={
-                        method === "points" ? "bg-points text-points-foreground hover:bg-points/90" : ""
+                        method === "points" ? "bg-points hover:bg-points/90" : "text-points"
                       }
                       onClick={() => setMethod("points")}
                     >
