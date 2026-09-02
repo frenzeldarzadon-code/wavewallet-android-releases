@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   batchDeleteBlockReason,
   canDeleteCode,
+  canDeleteUnusedCodes,
   isBatchDeletable,
   type VoucherBatch,
 } from "@/lib/voucher-inventory";
