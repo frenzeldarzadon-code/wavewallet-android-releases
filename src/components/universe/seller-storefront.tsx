@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -130,9 +129,7 @@ export function SellerStorefrontSection({
                       </Button>
                     ) : (
                       <Button asChild size="sm" variant="outline">
-                        <Link to="/" search={{ mode: "signin" } as never}>
-                          Sign in to buy
-                        </Link>
+                        <a href="/?mode=signin">Sign in to buy</a>
                       </Button>
                     )}
                   </li>
@@ -203,7 +200,7 @@ export function SellerStorefrontSection({
           </ul>
           {issued && issued.points_earned > 0 ? (
             <p className="text-xs text-muted-foreground">
-              You earned {issued.points_earned} points in {buying?.shop.name ?? "this shop"}.
+              You earned {issued.points_earned} points in the selling shop.
             </p>
           ) : null}
           <DialogFooter>
