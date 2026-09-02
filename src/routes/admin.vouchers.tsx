@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
+  deleteUnusedVoucherBatch,
   deleteVoucherBatch,
   deleteVoucherCode,
   fetchInventoryCounts,
@@ -44,6 +45,7 @@ import { toast } from "sonner";
 import {
   batchDeleteBlockReason,
   canDeleteCode,
+  canDeleteUnusedCodes,
   type VoucherBatch,
 } from "@/lib/voucher-inventory";
 
@@ -81,7 +83,8 @@ interface CodeRow {
 
 type PendingDelete =
   | { kind: "code"; code: CodeRow; batch: VoucherBatch | undefined }
-  | { kind: "batch"; batch: VoucherBatch };
+  | { kind: "batch"; batch: VoucherBatch }
+  | { kind: "unused"; batch: VoucherBatch };
 
 function AdminVouchers() {
   const { ecosystemDbId } = useSession("admin");
