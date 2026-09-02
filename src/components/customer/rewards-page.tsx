@@ -37,8 +37,19 @@ import {
 import { toast } from "sonner";
 import { formatPoints } from "@/lib/points";
 
-export function RewardsPage() {
-  const { account, ecosystem, ecosystemDbId } = useSession();
+export function RewardsPage({
+  shop,
+}: {
+  /**
+   * Explicit Universe shop context (selling shop of a storefront product).
+   * When omitted the member's current shop is used, exactly as before.
+   */
+  shop?: { id: string; name: string };
+} = {}) {
+  const session = useSession();
+  const { account } = session;
+  const ecosystem = shop ? { name: shop.name } : session.ecosystem;
+  const ecosystemDbId = shop ? shop.id : session.ecosystemDbId;
   const [points, setPoints] = useState<PointsAccount>({ balance: 0, held: 0, available: 0 });
   const [rewards, setRewards] = useState<RewardListing[]>([]);
   const [mine, setMine] = useState<RedemptionRow[]>([]);
