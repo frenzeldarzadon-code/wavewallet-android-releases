@@ -112,8 +112,15 @@ export async function fetchPointsLedger(
   return (data ?? []) as unknown as PointsEntry[];
 }
 
-export async function fetchRewards(): Promise<RewardListing[]> {
-  const { data, error } = await supabase.rpc("list_rewards");
+/**
+ * Rewards of the member's current shop, or — for a Universe shop — of the
+ * explicit selling shop. Points and rewards stay scoped to that shop.
+ */
+export async function fetchRewards(ecosystemId?: string | null): Promise<RewardListing[]> {
+  const { data, error } = await supabase.rpc(
+    "list_rewards",
+    (ecosystemId ? { _ecosystem_id: ecosystemId } : {}) as never,
+  );
   if (error) throw new Error(friendlyWalletError(error.message));
   return ((data ?? []) as unknown as RewardListing[]).map((r) => ({
     ...r,
