@@ -183,6 +183,9 @@ function AdminVouchers() {
       if (pendingDelete.kind === "code") {
         await deleteVoucherCode(pendingDelete.code.id);
         toast.success("Voucher code deleted");
+      } else if (pendingDelete.kind === "unused") {
+        const n = await deleteUnusedVoucherBatch(pendingDelete.batch.batch_id);
+        toast.success(`Cleaned up — ${n} unused code${n === 1 ? "" : "s"} removed`);
       } else {
         const n = await deleteVoucherBatch(pendingDelete.batch.batch_id);
         toast.success(`Batch deleted — ${n} unused code${n === 1 ? "" : "s"} removed`);
@@ -458,7 +461,17 @@ function AdminVouchers() {
                             {b.sold_count}
                           </TableCell>
                           <TableCell className="text-right">
-                            {blocked ? (
+                            {canDeleteUnusedCodes(b) ? (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-destructive"
+                                title="Deletes only the unused codes. Sold codes and Omada vouchers are never touched."
+                                onClick={() => setPendingDelete({ kind: "unused", batch: b })}
+                              >
+                                <Trash2 className="size-4" /> Delete unused vouchers
+                              </Button>
+                            ) : blocked ? (
                               <span
                                 className="text-[11px] text-muted-foreground"
                                 title={blocked}
