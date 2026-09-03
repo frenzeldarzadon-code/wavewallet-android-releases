@@ -277,11 +277,9 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
           ) : visible.length === 0 ? (
             <EmptyState
               title={stage === "new" ? "No new orders" : "Nothing in this stage"}
-              description={
-                orders.length === 0
-                  ? "Orders placed in your Retail storefront will appear here."
-                  : undefined
-              }
+              {...(orders.length === 0
+                ? { description: "Orders placed in your Retail storefront will appear here." }
+                : {})}
             />
           ) : (
             <div className="space-y-3">
