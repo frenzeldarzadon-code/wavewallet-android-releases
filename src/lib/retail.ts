@@ -11,7 +11,6 @@ import { requireOnline } from "@/lib/offline-guard";
 import { supabase } from "@/integrations/supabase/client";
 import {
   MAX_UPLOAD_BYTES,
-  REWARD_TARGET,
   loadImage,
   optimizeImage,
   optimizedName,
