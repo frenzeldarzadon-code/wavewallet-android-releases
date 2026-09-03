@@ -513,6 +513,8 @@ export interface CreatePostResult {
 export async function createPost(input: {
   body: string;
   imagePath?: string | null;
+  videoPath?: string | null;
+  meta?: PostMeta | null;
   promote: boolean;
   tierId?: string | null;
   currency?: SocialCurrency;
@@ -523,6 +525,10 @@ export async function createPost(input: {
   const { data, error } = await supabase.rpc("social_create_post", {
     _body: input.body.trim(),
     ...(input.imagePath ? { _image_path: input.imagePath } : {}),
+    ...(input.videoPath ? { _video_path: input.videoPath } : {}),
+    ...(input.meta && Object.keys(input.meta).length > 0
+      ? { _meta: input.meta as unknown as Record<string, never> }
+      : {}),
     _promote: input.promote,
     ...(input.tierId ? { _tier_id: input.tierId } : {}),
     ...(input.currency ? { _currency: input.currency } : {}),
