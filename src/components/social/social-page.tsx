@@ -128,16 +128,16 @@ function AuthorLink({ handle, children }: { handle: string | null; children: Rea
   );
 }
 
-export function SocialPage() {
+/**
+ * Universe feed. Without `hashtag` it is the Home feed with the composer on
+ * top; with `hashtag` it lists only posts carrying that tag (no composer).
+ */
+export function SocialPage({ hashtag }: { hashtag?: string } = {}) {
   const session = useSession();
   const account = session.account;
   const [state, setState] = useState<SocialState | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // composer
-  const [composerOpen, setComposerOpen] = useState(false);
-  const [quickPost, setQuickPost] = useState("");
 
   // reporting
   const [report, setReport] = useState<{ type: "post" | "comment"; id: string } | null>(null);
@@ -145,7 +145,7 @@ export function SocialPage() {
 
   const refresh = useCallback(async () => {
     try {
-      const [s, f] = await Promise.all([fetchSocialState(), fetchFeed()]);
+      const [s, f] = await Promise.all([fetchSocialState(), fetchFeed(undefined, hashtag ?? null)]);
       setState(s);
       setPosts(f);
     } catch (e) {
@@ -153,10 +153,11 @@ export function SocialPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [hashtag]);
 
   useEffect(() => {
     if (!account) return;
+    setLoading(true);
     void refresh();
   }, [account, refresh]);
 
