@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Gift } from "lucide-react";
+import { ArrowRight, Gift, Loader2, ShieldCheck, ShoppingBag, Ticket } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,32 +48,47 @@ export function SellerStorefrontSection({
     void load();
   }, [load]);
 
-  if (loading) return <p className="text-sm text-muted-foreground">Loading vouchers…</p>;
+  if (loading) return (
+    <div className="space-y-3" aria-label="Loading storefront">
+      <div className="h-24 animate-pulse rounded-lg border border-border bg-card" />
+      <div className="h-44 animate-pulse rounded-lg border border-border bg-card" />
+    </div>
+  );
   if (!store || store.shops.length === 0) return null;
 
   const isSelf = viewerId !== null && viewerId === store.sellerId;
 
   return (
-    <section className="space-y-3">
-      <div className="flex items-baseline justify-between gap-2">
+    <section className="space-y-4">
+      <div className="rounded-lg border border-border bg-card p-4 shadow-[var(--shadow-card)]">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
         <div className="min-w-0">
-          <h2 className="truncate text-base font-bold text-success">{store.storeName}</h2>
-          <p className="text-xs text-muted-foreground">Vouchers sold by {store.sellerName}</p>
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-success"><ShieldCheck className="size-3.5" /> Authorized Universe seller</p>
+          <h2 className="mt-1 truncate text-xl font-bold">{store.storeName}</h2>
+          <p className="text-sm text-muted-foreground">Vouchers sold by {store.sellerName}</p>
         </div>
         {viewerId && balance !== null ? (
-          <p className="text-xs text-muted-foreground">
-            Universe wallet: <span className="font-semibold text-foreground">{peso(balance)}</span>
-          </p>
+          <Link to="/universe/wallet" className="shrink-0 rounded-md bg-success-soft px-3 py-2 text-right">
+            <span className="block text-[10px] font-medium uppercase text-muted-foreground">Your wallet</span>
+            <span className="block text-sm font-bold text-success">{peso(balance)}</span>
+          </Link>
         ) : null}
+        </div>
       </div>
       {store.shops.map((shop) => (
-        <Card key={shop.id} className="shadow-[var(--shadow-card)]">
-          <CardContent className="space-y-3 py-4">
-            <p className="text-sm font-medium">{shop.name}</p>
+        <Card key={shop.id} className="overflow-hidden rounded-lg shadow-[var(--shadow-card)]">
+          <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 border-b border-border bg-brand-soft/40 px-4 py-3">
+            <span className="flex size-9 items-center justify-center rounded-md bg-primary text-primary-foreground"><ShoppingBag className="size-4" /></span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold">{shop.name}</p>
+              <p className="text-xs text-muted-foreground">Choose a voucher to start checkout</p>
+            </div>
+          </div>
+          <CardContent className="space-y-4 py-4">
             {shop.products.length === 0 ? (
-              <EmptyState title="No vouchers on sale" />
+              <EmptyState title="No vouchers on sale" description="Check back when this shop adds more stock." />
             ) : (
-              <ul className="divide-y">
+              <ul className="grid gap-2 sm:grid-cols-2">
                 {shop.products.map((p) => {
                   const open = () =>
                     setBuying({
@@ -86,19 +101,21 @@ export function SellerStorefrontSection({
                     });
                   const canBuy = Boolean(viewerId) && p.available > 0;
                   return (
-                  <li key={p.id} className="flex items-center justify-between gap-3 py-2">
+                  <li key={p.id} className="grid min-h-32 grid-rows-[1fr_auto] rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary/35 hover:bg-brand-soft/20">
                     <button
                       type="button"
-                      className="min-w-0 flex-1 text-left disabled:cursor-default"
+                      className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-2.5 text-left disabled:cursor-default"
                       disabled={!canBuy}
                       onClick={open}
                       aria-label={`Open ${p.name}`}
                     >
-                      <p className="truncate text-sm font-medium">{p.name}</p>
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-brand-soft text-primary"><Ticket className="size-4" /></span>
+                      <span className="min-w-0">
+                      <span className="block truncate text-sm font-bold">{p.name}</span>
                       {p.description ? (
-                        <p className="truncate text-xs text-muted-foreground">{p.description}</p>
+                        <span className="mt-0.5 block line-clamp-2 text-xs text-muted-foreground">{p.description}</span>
                       ) : null}
-                      <p className="text-xs text-muted-foreground">
+                      <span className="mt-2 block text-sm font-bold text-foreground">
                         {peso(p.price)}
                         {(p.pointsPrice ?? 0) > 0 ? (
                           <>
@@ -106,15 +123,16 @@ export function SellerStorefrontSection({
                             · <span className="text-points">or {p.pointsPrice} pts</span>
                           </>
                         ) : null}{" "}
-                        · {p.available > 0 ? `${p.available} available` : "Out of stock"}
-                      </p>
+                      </span>
+                      <span className="mt-0.5 block text-[11px] text-muted-foreground">{p.available > 0 ? `${p.available} available` : "Out of stock"}</span>
+                      </span>
                     </button>
                     {viewerId ? (
-                      <Button size="sm" disabled={!canBuy} onClick={open}>
-                        Buy
+                      <Button className="mt-3 w-full" size="sm" disabled={!canBuy} onClick={open}>
+                        {p.available > 0 ? "Choose voucher" : "Out of stock"} <ArrowRight className="size-3.5" />
                       </Button>
                     ) : (
-                      <Button asChild size="sm" variant="outline">
+                       <Button asChild size="sm" variant="outline" className="mt-3 w-full">
                         <a href="/?mode=signin">Sign in to buy</a>
                       </Button>
                     )}
@@ -128,7 +146,7 @@ export function SellerStorefrontSection({
               to="/universe/rewards/$shopId"
               params={{ shopId: shop.id }}
               search={{ name: shop.name }}
-              className="flex items-center justify-between gap-3 rounded-xl border border-points/40 bg-points/8 px-3 py-2.5 text-sm transition-colors hover:bg-points/15"
+               className="flex items-center justify-between gap-3 rounded-lg border border-points/40 bg-points/8 px-3 py-3 text-sm transition-colors hover:bg-points/15"
             >
               <span className="flex min-w-0 items-center gap-2">
                 <Gift className="size-4 shrink-0 text-points" />

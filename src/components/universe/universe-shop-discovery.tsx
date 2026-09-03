@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Loader2, Search, Store, Ticket } from "lucide-react";
+import { ArrowRight, Loader2, Search, Store, Ticket, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { MemberAvatar } from "@/components/member-avatar";
@@ -49,7 +49,7 @@ export function UniverseShopDiscovery() {
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          className="h-11 rounded-xl pl-9 shadow-[var(--shadow-card)]"
+        className="h-12 rounded-lg border-border bg-card pl-10 text-base shadow-[var(--shadow-card)]"
           placeholder="Search a shop or voucher, e.g. Sagada Wave or 1 Day"
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -57,9 +57,9 @@ export function UniverseShopDiscovery() {
         />
       </div>
       {loading && shops.length === 0 ? (
-        <p className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" /> Searching…
-        </p>
+        <div className="space-y-3" aria-label="Loading shops">
+          {[0, 1].map((item) => <div key={item} className="h-48 animate-pulse rounded-lg border border-border bg-card" />)}
+        </div>
       ) : shops.length === 0 ? (
         <EmptyState
           title="No Universe shops found"
@@ -101,10 +101,10 @@ function ShopResult({ shop, searching }: { shop: DiscoveredShop; searching: bool
   }, [shop.slug]);
 
   return (
-    <Card className="overflow-hidden border-border/70 shadow-[var(--shadow-card)]">
+    <Card className="overflow-hidden rounded-lg border-border shadow-[var(--shadow-card)]">
       {/* Shop = discovery context */}
-      <div className="flex items-start gap-3 bg-gradient-to-r from-primary/10 via-primary/5 to-success/10 px-4 py-4">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 border-b border-border bg-brand-soft/50 px-4 py-4">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
           <Store className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
@@ -127,16 +127,15 @@ function ShopResult({ shop, searching }: { shop: DiscoveredShop; searching: bool
           {shop.products.length === 0 ? (
             <p className="text-xs text-muted-foreground">No vouchers on sale right now.</p>
           ) : (
-            <ul className="flex flex-wrap gap-2">
+            <ul className="grid gap-2 sm:grid-cols-2">
               {visible.map((p) => (
                 <li
                   key={p.id}
-                  className="rounded-lg border border-border bg-muted/40 px-3 py-1.5 text-xs"
+                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-md border border-border bg-muted/30 px-3 py-2.5 text-xs"
                 >
-                  <span className="font-semibold">{p.name}</span>
-                  <span className="text-muted-foreground">
-                    {" "}
-                    · {peso(p.price)} ·{" "}
+                  <span className="min-w-0 truncate font-semibold">{p.name}</span>
+                  <span className="shrink-0 text-right font-medium text-foreground">
+                    {peso(p.price)}<span className="mx-1 text-muted-foreground">·</span>
                     {p.available > 0 ? (
                       <span className="text-success">{p.available} available</span>
                     ) : (
@@ -161,8 +160,8 @@ function ShopResult({ shop, searching }: { shop: DiscoveredShop; searching: bool
         {/* Sellers — the only way to buy */}
         <div>
           <div className="mb-2 flex items-baseline justify-between gap-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Buy from a seller
+            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <Users className="size-3.5" /> Choose an authorized seller
             </p>
             {sellers && sellers.length > 0 ? (
               <p className="text-[11px] text-muted-foreground">
@@ -177,7 +176,7 @@ function ShopResult({ shop, searching }: { shop: DiscoveredShop; searching: bool
           ) : sellers.length === 0 ? (
             <p className="text-xs text-muted-foreground">No sellers listed yet.</p>
           ) : (
-            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <ul className="grid gap-2 sm:grid-cols-2">
               {sellers.map((s) => (
                 <li key={s.sellerId}>
                   <SellerCard seller={s} />
@@ -197,19 +196,16 @@ function SellerCard({ seller }: { seller: ShopSeller }) {
     <Link
       to="/universe/u/$handle"
       params={{ handle: seller.sellerHandle }}
-      className="group flex h-full flex-col items-center rounded-2xl border border-border bg-card p-3 text-center shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="group grid h-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border bg-card p-3 text-left transition-colors hover:border-primary/40 hover:bg-brand-soft/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <span className="rounded-full bg-gradient-to-br from-primary to-success p-[2px]">
-        <MemberAvatar
-          path={seller.avatarPath}
-          name={seller.sellerName}
-          className="size-16 border-2 border-card text-base"
-        />
+      <MemberAvatar path={seller.avatarPath} name={seller.sellerName} className="size-12" />
+      <span className="min-w-0">
+        <span className="block truncate text-sm font-semibold leading-tight">{seller.sellerName}</span>
+        <span className="mt-0.5 block truncate text-xs font-medium text-success">{seller.storeName}</span>
+        <span className="mt-1 block text-[11px] text-muted-foreground">Authorized seller</span>
       </span>
-      <p className="mt-2 w-full truncate text-sm font-semibold leading-tight">{seller.sellerName}</p>
-      <p className="w-full truncate text-xs font-medium text-success">{seller.storeName}</p>
-      <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground transition-colors group-hover:bg-primary/90">
-        View My Shop <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+      <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground" aria-label="View My Shop">
+        <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
       </span>
     </Link>
   );
