@@ -93,9 +93,10 @@ function StartShopPage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-10">
-      <Link to="/guide" className="text-xs font-medium text-primary">
-        ← Back to the guide
-      </Link>
+      <div className="flex flex-wrap gap-4 text-xs font-medium text-primary">
+        <Link to="/guide">← Back to the guide</Link>
+        {signedIn ? <Link to="/universe/shops">Your shops</Link> : null}
+      </div>
       <StatusBadge tone="brand" className="mt-4">
         Free to create · run as many shops as you need
       </StatusBadge>
@@ -123,8 +124,8 @@ function StartShopPage() {
                   </p>
                 ) : type ? (
                   <p className="text-[11px] leading-relaxed text-muted-foreground">
-                    Live on the Universe immediately. Sales use members&apos; Universe wallets and the
-                    platform fee is included in customer prices.
+                    Live on the Universe immediately. Sales use members&apos; Universe wallets and
+                    the platform fee is included in customer prices.
                   </p>
                 ) : null}
               </div>
