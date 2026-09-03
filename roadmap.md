@@ -47,8 +47,8 @@
 - [x] Preserve explicit join, invitation, later shop creation, existing login, and shop isolation flows
 - [x] Verify auth UX, membership safety, tests, and typecheck; do not publish
 
-## Final Lovable branding cleanup — IN PROGRESS (UNPUBLISHED)
-- [ ] Neutralize Super Admin-visible provider-credit wording without changing stored accounting identifiers
-- [ ] Sanitize known historical provider labels at presentation time
-- [ ] Complete source/browser audit, tests, and auth-email limitation report
-- [ ] Do not publish
+## Final Lovable branding cleanup — COMPLETE (UNPUBLISHED)
+- [x] Neutralize Super Admin-visible provider-credit wording without changing stored accounting identifiers
+- [x] Sanitize known historical provider labels at presentation time
+- [x] Complete source/browser audit, tests, and auth-email limitation report
+- [x] Do not publish
