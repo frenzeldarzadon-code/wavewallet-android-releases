@@ -342,7 +342,7 @@ BEGIN
   PERFORM set_config('request.jwt.claims', c_adm, true);
   PERFORM public.retail_review_order(_ord3.id, true, NULL);
   INSERT INTO public.credit_ledger (account_id, user_id, ecosystem_id, direction, amount, balance_after, reason, reference, tx_id, entry_kind)
-  VALUES (_acct_col, _col, NULL, 'credit', 109, 0, 'R6 collector funding', 'R6', public.new_tx_id(), 'general'); -- 12 + 109 = 121
+  VALUES (_acct_col, _col, NULL, 'credit', 121 - (SELECT balance FROM public.credit_accounts WHERE id = _acct_col), 0, 'R6 collector funding', 'R6', public.new_tx_id(), 'general'); -- top up to exactly 121 available
   PERFORM set_config('request.jwt.claims', c_res, true);
   PERFORM public.retail_cod_assign(_ord3.id, false, _del, _col);
   PERFORM set_config('request.jwt.claims', c_col, true);
