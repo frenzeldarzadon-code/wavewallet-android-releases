@@ -220,6 +220,7 @@ function SuperReports() {
           <StatCard label="Coins generated" value={peso(creditFlow.generated)} />
         </div>
         <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatCard label="Wholesale discounts given" value={peso(salesTotals.resellerMargin)} tone="negative" />
           <StatCard
             label="Platform fee (reporting only)"
             value={peso(salesTotals.platformFee)}
