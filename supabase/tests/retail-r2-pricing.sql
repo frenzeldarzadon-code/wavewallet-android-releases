@@ -161,7 +161,10 @@ BEGIN
   -- ---------------- 8. buyer listing exposes wholesale, hides SKU/barcode ----------------
   PERFORM set_config('request.jwt.claims', claims_cus, true);
   ASSERT EXISTS (SELECT 1 FROM public.list_retail_products(_u) WHERE id = _prod AND wholesale_price = 90 AND wholesale_min_qty = 12), 'wholesale visible to buyers';
-  ASSERT NOT EXISTS (SELECT 1 FROM information_schema.routine_columns_dummy_check LIMIT 0), 'noop';
+  ASSERT NOT EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+                      WHERE n.nspname = 'public' AND p.proname = 'list_retail_products'
+                        AND (pg_get_function_result(p.oid) ILIKE '%sku%' OR pg_get_function_result(p.oid) ILIKE '%barcode%')),
+         'buyer listing must not expose SKU/barcode';
 
   UPDATE public.platform_settings SET retail_platform_fee_percent = _prev_fee WHERE id = 1;
   RAISE EXCEPTION 'RETAIL_R2_TESTS_PASSED';
