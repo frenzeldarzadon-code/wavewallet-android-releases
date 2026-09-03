@@ -42,7 +42,8 @@ export function HiddenPostsCard({ ecosystemId }: { ecosystemId?: string | null }
   };
 
   return (
-    <PageSection devSlot="hidden-posts-card.posts-hidden-from-my-shop"
+    <PageSection
+      devSlot="hidden-posts-card.posts-hidden-from-my-shop"
       title="Posts hidden from my shop"
       description="Universe posts publish immediately — no approval needed. You can hide one from your own members; it stays public elsewhere, and only the platform owner can delete it for everyone."
     >

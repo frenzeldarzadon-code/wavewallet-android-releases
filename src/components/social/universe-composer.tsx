@@ -139,10 +139,7 @@ export function UniverseComposer({
   const dirty = composerIsDirty({ body, hasImage, hasVideo, meta });
   const styled = styleApplies({ style: meta.style, body, hasMedia });
 
-  const detection = useMemo(
-    () => detectPromotion(body, { hasImage: hasMedia }),
-    [body, hasMedia],
-  );
+  const detection = useMemo(() => detectPromotion(body, { hasImage: hasMedia }), [body, hasMedia]);
   const promotionBlocker = promotionGate({
     detection,
     promote,
@@ -266,7 +263,11 @@ export function UniverseComposer({
           preloaded: crop.image,
         });
       } else if (video) {
-        videoPath = await uploadSocialVideo({ ecosystemId: state.ecosystem_id, userId, file: video });
+        videoPath = await uploadSocialVideo({
+          ecosystemId: state.ecosystem_id,
+          userId,
+          file: video,
+        });
       }
       const cleanMeta = compactMeta({ ...meta, ...(hasMedia ? { style: undefined } : {}) });
       const res = await createPost({
@@ -343,7 +344,10 @@ export function UniverseComposer({
                 </span>
               ) : null}
               {meta.location ? (
-                <span className="font-normal text-muted-foreground"> · at {meta.location.label}</span>
+                <span className="font-normal text-muted-foreground">
+                  {" "}
+                  · at {meta.location.label}
+                </span>
               ) : null}
             </p>
             <Popover open={audienceOpen} onOpenChange={setAudienceOpen}>
@@ -604,7 +608,9 @@ export function UniverseComposer({
                     onClick={() => setTierId(t.id)}
                     className={cn(
                       "rounded-full border px-3 py-1.5 text-xs font-medium",
-                      tierId === t.id ? "border-primary bg-primary/5 text-primary" : "border-border",
+                      tierId === t.id
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border",
                     )}
                   >
                     {t.name} · {tierDuration(t.duration_hours)}

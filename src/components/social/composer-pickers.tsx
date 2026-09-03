@@ -222,7 +222,9 @@ export function FeelingPicker({
             }}
             className={cn(
               "flex h-12 items-center gap-2 rounded-xl border px-3 text-left text-sm",
-              active ? "border-primary bg-primary/5 font-semibold" : "border-border hover:bg-accent",
+              active
+                ? "border-primary bg-primary/5 font-semibold"
+                : "border-border hover:bg-accent",
             )}
           >
             <span className="text-xl" aria-hidden>
@@ -440,7 +442,11 @@ export function TagPicker({
     };
   }, [query]);
 
-  const cleanTag = tag.trim().replace(/^#+/, "").replace(/[^A-Za-z0-9_]/g, "").toLowerCase();
+  const cleanTag = tag
+    .trim()
+    .replace(/^#+/, "")
+    .replace(/[^A-Za-z0-9_]/g, "")
+    .toLowerCase();
   const tagOk = cleanTag.length >= 2 && cleanTag.length <= 40;
 
   return (

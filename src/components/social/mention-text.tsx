@@ -22,11 +22,21 @@ export function MentionText({
     <p className={cn("whitespace-pre-wrap break-words text-sm", className)}>
       {parseMentions(body).map((seg, i) =>
         seg.kind === "mention" ? (
-          <Link key={`${seg.handle}-${i}`} to="/universe/u/$handle" params={{ handle: seg.handle }} className={link}>
+          <Link
+            key={`${seg.handle}-${i}`}
+            to="/universe/u/$handle"
+            params={{ handle: seg.handle }}
+            className={link}
+          >
             @{seg.handle}
           </Link>
         ) : seg.kind === "hashtag" ? (
-          <Link key={`${seg.tag}-${i}`} to="/universe/tag/$tag" params={{ tag: seg.tag }} className={link}>
+          <Link
+            key={`${seg.tag}-${i}`}
+            to="/universe/tag/$tag"
+            params={{ tag: seg.tag }}
+            className={link}
+          >
             #{seg.tag}
           </Link>
         ) : (

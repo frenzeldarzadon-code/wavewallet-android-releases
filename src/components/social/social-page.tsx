@@ -486,15 +486,15 @@ function PostCard({
               <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
                 {meta.feeling ? (
                   <span>
-                    {feelingPhrase(meta.feeling)}{" "}
-                    <span aria-hidden>{meta.feeling.emoji}</span>
+                    {feelingPhrase(meta.feeling)} <span aria-hidden>{meta.feeling.emoji}</span>
                   </span>
                 ) : null}
                 {meta.location ? (
                   <span className="inline-flex items-center gap-1">
                     {meta.feeling ? "·" : null}
                     <MapPin className="size-3.5 text-primary" aria-hidden />
-                    {typeof meta.location.lat === "number" && typeof meta.location.lng === "number" ? (
+                    {typeof meta.location.lat === "number" &&
+                    typeof meta.location.lng === "number" ? (
                       <a
                         href={`https://www.openstreetmap.org/?mlat=${meta.location.lat}&mlon=${meta.location.lng}#map=13/${meta.location.lat}/${meta.location.lng}`}
                         target="_blank"
@@ -531,7 +531,11 @@ function PostCard({
             disabled={dmOpening}
             onClick={() => void openDm()}
           >
-            {dmOpening ? <Loader2 className="size-4 animate-spin" /> : <MessageCircle className="size-4" />}
+            {dmOpening ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <MessageCircle className="size-4" />
+            )}
             Message {post.author_name.split(" ")[0]} privately
           </Button>
         ) : null}

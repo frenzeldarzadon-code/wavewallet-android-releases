@@ -1,4 +1,11 @@
-import { useEffect, useImperativeHandle, useRef, useState, type KeyboardEvent, type Ref } from "react";
+import {
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type Ref,
+} from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { MemberAvatar } from "@/components/member-avatar";
 import { applyMention, mentionDraft, type MentionDraft } from "@/lib/mentions";

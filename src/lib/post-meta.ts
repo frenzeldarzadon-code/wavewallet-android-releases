@@ -111,7 +111,8 @@ export function styleApplies(input: {
 export function validateLocationLabel(label: string): string | null {
   const l = label.trim();
   if (l.length < 2) return "Enter a place name (at least 2 characters)";
-  if (l.length > LOCATION_LABEL_MAX) return `Keep the place name under ${LOCATION_LABEL_MAX} characters`;
+  if (l.length > LOCATION_LABEL_MAX)
+    return `Keep the place name under ${LOCATION_LABEL_MAX} characters`;
   return null;
 }
 
@@ -157,9 +158,7 @@ export function composerIsDirty(input: {
   hasVideo: boolean;
   meta: PostMeta;
 }): boolean {
-  return (
-    composerHasContent(input) || Object.keys(compactMeta(input.meta)).length > 0
-  );
+  return composerHasContent(input) || Object.keys(compactMeta(input.meta)).length > 0;
 }
 
 export const ACCEPTED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];

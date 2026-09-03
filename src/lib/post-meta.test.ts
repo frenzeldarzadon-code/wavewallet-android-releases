@@ -16,10 +16,9 @@ import {
 describe("hashtags", () => {
   it("parses #tags into clickable segments alongside mentions", () => {
     const segs = parseMentions("Fresh load today @maria_dc #sagada #WiFi_2026");
-    expect(segs.filter((s) => s.kind === "hashtag").map((s) => (s as { tag: string }).tag)).toEqual([
-      "sagada",
-      "wifi_2026",
-    ]);
+    expect(segs.filter((s) => s.kind === "hashtag").map((s) => (s as { tag: string }).tag)).toEqual(
+      ["sagada", "wifi_2026"],
+    );
     expect(segs.some((s) => s.kind === "mention")).toBe(true);
   });
 
