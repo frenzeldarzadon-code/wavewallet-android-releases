@@ -1141,7 +1141,9 @@ export const CUSTOMER_STAGES: { id: CustomerStage; label: string; hint: string }
 ];
 
 /** Which history tab an order belongs to, from existing fields only. */
-export function customerStage(o: Pick<RetailOrder, "status" | "fulfillment_status">): CustomerStage {
+export function customerStage(
+  o: Pick<RetailOrder, "status" | "fulfillment_status">,
+): CustomerStage {
   if (o.status === "rejected" || o.status === "cancelled") return "cancelled";
   if (o.status === "approved" && o.fulfillment_status === "completed") return "completed";
   if (o.status === "approved" && o.fulfillment_status === "closed") return "cancelled";

@@ -241,26 +241,142 @@ describe("seller workspace stages", () => {
   const base = { payment_method: "cash" as const, cod_settled_at: null, hold_held: false };
   it("maps the existing state machine onto workspace tabs", () => {
     expect(orderStage({ ...base, status: "pending", fulfillment_status: "awaiting" })).toBe("new");
-    expect(orderStage({ ...base, status: "approved", fulfillment_status: "accepted" })).toBe("preparing");
-    expect(orderStage({ ...base, status: "approved", fulfillment_status: "preparing" })).toBe("preparing");
+    expect(orderStage({ ...base, status: "approved", fulfillment_status: "accepted" })).toBe(
+      "preparing",
+    );
+    expect(orderStage({ ...base, status: "approved", fulfillment_status: "preparing" })).toBe(
+      "preparing",
+    );
     expect(orderStage({ ...base, status: "approved", fulfillment_status: "ready" })).toBe("ready");
-    expect(orderStage({ ...base, status: "approved", fulfillment_status: "out_for_delivery" })).toBe("in_delivery");
-    expect(orderStage({ ...base, status: "approved", fulfillment_status: "delivered" })).toBe("delivered");
-    expect(orderStage({ ...base, status: "approved", fulfillment_status: "completed" })).toBe("completed");
-    expect(orderStage({ ...base, status: "rejected", fulfillment_status: "closed" })).toBe("closed");
-    expect(orderStage({ ...base, status: "cancelled", fulfillment_status: "closed" })).toBe("closed");
+    expect(
+      orderStage({ ...base, status: "approved", fulfillment_status: "out_for_delivery" }),
+    ).toBe("in_delivery");
+    expect(orderStage({ ...base, status: "approved", fulfillment_status: "delivered" })).toBe(
+      "delivered",
+    );
+    expect(orderStage({ ...base, status: "approved", fulfillment_status: "completed" })).toBe(
+      "completed",
+    );
+    expect(orderStage({ ...base, status: "rejected", fulfillment_status: "closed" })).toBe(
+      "closed",
+    );
+    expect(orderStage({ ...base, status: "cancelled", fulfillment_status: "closed" })).toBe(
+      "closed",
+    );
   });
   it("keeps a COD order out of Completed until its float is settled", () => {
-    const cod = { ...base, payment_method: "cod" as const, status: "approved" as const, fulfillment_status: "completed" as const };
+    const cod = {
+      ...base,
+      payment_method: "cod" as const,
+      status: "approved" as const,
+      fulfillment_status: "completed" as const,
+    };
     expect(orderStage({ ...cod, hold_held: true })).toBe("delivered");
     expect(orderStage({ ...cod, cod_settled_at: "2026-09-03T00:00:00Z" })).toBe("completed");
   });
   it("builds a timeline from existing timestamps only", () => {
     const t = orderTimeline({
-      created_at: "2026-09-01T00:00:00Z", status: "approved", fulfillment: "delivery", payment_method: "cod",
-      delivered_at: "2026-09-02T00:00:00Z", completed_at: "2026-09-02T01:00:00Z",
-      cod_cash_received_at: "2026-09-02T02:00:00Z", cod_settled_at: "2026-09-02T02:00:01Z",
+      created_at: "2026-09-01T00:00:00Z",
+      status: "approved",
+      fulfillment: "delivery",
+      payment_method: "cod",
+      delivered_at: "2026-09-02T00:00:00Z",
+      completed_at: "2026-09-02T01:00:00Z",
+      cod_cash_received_at: "2026-09-02T02:00:00Z",
+      cod_settled_at: "2026-09-02T02:00:01Z",
     });
-    expect(t.map((x) => x.label)).toEqual(["Order placed", "Delivered", "Buyer confirmed receipt", "Collector confirmed cash", "Settled"]);
+    expect(t.map((x) => x.label)).toEqual([
+      "Order placed",
+      "Delivered",
+      "Buyer confirmed receipt",
+      "Collector confirmed cash",
+      "Settled",
+    ]);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Customer order history helpers                                       */
+/* ------------------------------------------------------------------ */
+import {
+  canOpenOrderChat,
+  countByCustomerStage,
+  customerOrderTotals,
+  customerPaymentLabel,
+  customerStage,
+  customerTrackingSteps,
+  type RetailOrder,
+} from "./retail";
+
+const baseOrder = (over: Partial<RetailOrder>): RetailOrder =>
+  ({
+    id: "o",
+    order_no: "R-1",
+    status: "approved",
+    fulfillment: "delivery",
+    fulfillment_status: "accepted",
+    payment_method: "cod",
+    total: 101,
+    delivery_fee: 20,
+    items: [],
+    created_at: "2026-09-01T00:00:00Z",
+    ...over,
+  }) as RetailOrder;
+
+describe("customer order history", () => {
+  it("buckets orders into Active / Completed / Cancelled only", () => {
+    expect(customerStage(baseOrder({ status: "pending" }))).toBe("active");
+    expect(customerStage(baseOrder({ fulfillment_status: "out_for_delivery" }))).toBe("active");
+    expect(customerStage(baseOrder({ fulfillment_status: "delivered" }))).toBe("active");
+    expect(customerStage(baseOrder({ fulfillment_status: "completed" }))).toBe("completed");
+    expect(customerStage(baseOrder({ status: "rejected" }))).toBe("cancelled");
+    expect(customerStage(baseOrder({ status: "cancelled" }))).toBe("cancelled");
+    expect(
+      countByCustomerStage([
+        baseOrder({ status: "pending" }),
+        baseOrder({ fulfillment_status: "completed" }),
+        baseOrder({ status: "cancelled" }),
+      ]),
+    ).toEqual({ active: 1, completed: 1, cancelled: 1 });
+  });
+
+  it("shows ₱101 + ₱20 = ₱121 with no second fee line", () => {
+    expect(customerOrderTotals(baseOrder({}))).toEqual({ products: 101, delivery: 20, total: 121 });
+    // Pickup never charges delivery; coin-paid delivery carries no delivery fee.
+    expect(customerOrderTotals(baseOrder({ fulfillment: "pickup" })).total).toBe(101);
+    expect(
+      customerOrderTotals(baseOrder({ payment_method: "credit", delivery_fee: 0 })).total,
+    ).toBe(101);
+  });
+
+  it("tracking steps mark the current R6 state and skip out-for-delivery on pickup", () => {
+    const d = customerTrackingSteps(baseOrder({ fulfillment_status: "out_for_delivery" }));
+    expect(d.map((s) => s.label)).toEqual([
+      "Order placed",
+      "Accepted",
+      "Preparing",
+      "Ready to go out",
+      "Out for delivery",
+      "Delivered",
+      "Received",
+    ]);
+    expect(d.find((s) => s.current)?.label).toBe("Out for delivery");
+    expect(d.filter((s) => s.done)).toHaveLength(5);
+    const p = customerTrackingSteps(baseOrder({ fulfillment: "pickup", status: "pending" }));
+    expect(p.map((s) => s.label)).not.toContain("Out for delivery");
+    expect(p.find((s) => s.current)?.label).toBe("Order placed");
+    const done = customerTrackingSteps(baseOrder({ fulfillment_status: "completed" }));
+    expect(done.every((s) => s.done)).toBe(true);
+  });
+
+  it("chat only for live delivery orders; payment label never exposes internals", () => {
+    expect(canOpenOrderChat(baseOrder({ status: "pending" }))).toBe(true);
+    expect(canOpenOrderChat(baseOrder({ status: "cancelled" }))).toBe(false);
+    expect(canOpenOrderChat(baseOrder({ fulfillment: "pickup" }))).toBe(false);
+    expect(customerPaymentLabel(baseOrder({ status: "rejected" }))).toBe("Nothing charged");
+    expect(
+      customerPaymentLabel(baseOrder({ payment_method: "credit", status: "pending" })),
+    ).toMatch(/held/);
+    expect(customerPaymentLabel(baseOrder({}))).toBe("Pay cash on delivery");
   });
 });

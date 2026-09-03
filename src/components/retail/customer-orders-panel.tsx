@@ -90,9 +90,10 @@ export function CustomerOrdersPanel({
   const [stage, setStage] = useState<CustomerStage>("active");
   const [openId, setOpenId] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [confirm, setConfirm] = useState<{ kind: "cancel" | "received"; order: RetailOrder } | null>(
-    null,
-  );
+  const [confirm, setConfirm] = useState<{
+    kind: "cancel" | "received";
+    order: RetailOrder;
+  } | null>(null);
 
   const counts = useMemo(() => countByCustomerStage(orders), [orders]);
   const visible = useMemo(() => orders.filter((o) => customerStage(o) === stage), [orders, stage]);
@@ -238,7 +239,9 @@ export function CustomerOrdersPanel({
                     ) : null}
                   </ul>
 
-                  <p className="rounded-lg bg-muted/60 px-2.5 py-1.5 text-xs">{customerNextStep(o)}</p>
+                  <p className="rounded-lg bg-muted/60 px-2.5 py-1.5 text-xs">
+                    {customerNextStep(o)}
+                  </p>
 
                   <div className="flex flex-wrap items-end justify-between gap-2">
                     <div className="text-[11px] text-muted-foreground">
@@ -302,7 +305,15 @@ export function CustomerOrdersPanel({
           side="bottom"
           className="max-h-[92dvh] overflow-y-auto rounded-t-3xl sm:mx-auto sm:max-w-lg"
         >
-          {open ? <OrderDetail order={open} busy={busy === open.id} onChat={goChat} onRate={onRate} onConfirm={(kind) => setConfirm({ kind, order: open })} /> : null}
+          {open ? (
+            <OrderDetail
+              order={open}
+              busy={busy === open.id}
+              onChat={goChat}
+              onRate={onRate}
+              onConfirm={(kind) => setConfirm({ kind, order: open })}
+            />
+          ) : null}
         </SheetContent>
       </Sheet>
 
@@ -352,7 +363,9 @@ function OrderDetail({
 }) {
   const t = customerOrderTotals(o);
   const steps = customerTrackingSteps(o);
-  const history = orderTimeline(o).filter((h) => h.label !== "Settled" && h.label !== "Collector confirmed cash");
+  const history = orderTimeline(o).filter(
+    (h) => h.label !== "Settled" && h.label !== "Collector confirmed cash",
+  );
   const blocked = customerCancelBlockedReason(o);
   const closed = o.status === "rejected" || o.status === "cancelled";
 
@@ -397,13 +410,22 @@ function OrderDetail({
                   )}
                 />
                 {i < steps.length - 1 ? (
-                  <span className={cn("w-px flex-1 min-h-4", s.done && !s.current ? "bg-success" : "bg-border")} />
+                  <span
+                    className={cn(
+                      "w-px flex-1 min-h-4",
+                      s.done && !s.current ? "bg-success" : "bg-border",
+                    )}
+                  />
                 ) : null}
               </div>
               <p
                 className={cn(
                   "pb-3 text-xs",
-                  s.current ? "font-semibold text-foreground" : s.done ? "text-foreground" : "text-muted-foreground",
+                  s.current
+                    ? "font-semibold text-foreground"
+                    : s.done
+                      ? "text-foreground"
+                      : "text-muted-foreground",
                 )}
               >
                 {s.label}
