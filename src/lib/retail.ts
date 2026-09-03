@@ -908,6 +908,8 @@ export async function placeRetailOrder(
   draft: CheckoutDraft,
   /** Universe storefront the buyer purchased through (authorized seller); cashback attribution. */
   sellerId?: string | null,
+  /** Per-checkout-attempt id: a retry with the same ref returns the same order (no duplicate). */
+  clientRef?: string | null,
 ): Promise<PlacedOrder> {
   requireOnline();
   const items = Object.entries(cart)
@@ -921,6 +923,7 @@ export async function placeRetailOrder(
     ...(draft.address.trim() ? { _address: draft.address.trim() } : {}),
     ...(draft.notes.trim() ? { _notes: draft.notes.trim() } : {}),
     ...(sellerId ? { _seller_id: sellerId } : {}),
+    ...(clientRef ? { _client_ref: clientRef } : {}),
   });
   if (error) throw new Error(error.message);
   const row = (data as Array<Record<string, unknown>> | null)?.[0];

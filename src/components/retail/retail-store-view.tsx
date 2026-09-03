@@ -114,6 +114,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
   const [catalogQuery, setCatalogQuery] = useState<CatalogQuery>(DEFAULT_CATALOG_QUERY);
   const [pageLimit, setPageLimit] = useState(CATALOG_PAGE_SIZE);
   const [busy, setBusy] = useState(false);
+  const [checkoutRef, setCheckoutRef] = useState<string | null>(null);
   const [codQuote, setCodQuote] = useState<CodQuote | null>(null);
   const [draft, setDraft] = useState<CheckoutDraft>({
     fulfillment: null,
@@ -217,9 +218,14 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
   };
 
   const submit = async () => {
+    if (busy) return;
     setBusy(true);
     try {
-      const placed = await placeRetailOrder(ecosystemDbId, cart, draft);
+      // One ref per checkout attempt: a double tap or network retry replays the same order.
+      const ref = checkoutRef ?? crypto.randomUUID();
+      setCheckoutRef(ref);
+      const placed = await placeRetailOrder(ecosystemDbId, cart, draft, undefined, ref);
+      setCheckoutRef(null);
       toast.success(`Order ${placed.orderNo} sent for approval`, {
         description:
           draft.payment === "credit"
@@ -669,19 +675,47 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
             )}
           </div>
 
-          {problem ? <p className="text-xs text-destructive">{problem}</p> : null}
+          <div className="space-y-1 rounded-2xl border border-border bg-muted/40 px-3 py-2.5 text-sm">
+            <div className="flex justify-between gap-2 text-xs text-muted-foreground">
+              <span>Products ({count} item{count === 1 ? "" : "s"})</span>
+              <span>{peso(total)}</span>
+            </div>
+            {draft.payment === "cod" ? (
+              <div className="flex justify-between gap-2 text-xs text-muted-foreground">
+                <span>Delivery fee</span>
+                <span>{codQuote ? peso(codDeliveryFee) : "…"}</span>
+              </div>
+            ) : null}
+            <div className="flex items-baseline justify-between gap-2 border-t border-border pt-1.5">
+              <span className="font-semibold">Total to pay</span>
+              <span className="text-lg font-bold tabular-nums">
+                {draft.payment === "cod" ? (codQuote ? peso(codTotal) : "…") : peso(total)}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Prices, stock and fees are confirmed by the shop's system when you place the order.
+            </p>
+          </div>
+
+          {problem ? (
+            <p role="alert" className="text-xs text-destructive">
+              {problem}
+            </p>
+          ) : null}
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setCheckout(false)} disabled={busy}>
               Keep shopping
             </Button>
-            <Button onClick={() => void submit()} disabled={busy || !!problem}>
+            <Button size="lg" onClick={() => void submit()} disabled={busy || !!problem}>
               {busy ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
                 <PackageCheck className="size-4" />
               )}
-              Place order
+              {busy
+                ? "Placing order…"
+                : `Place order · ${draft.payment === "cod" ? (codQuote ? peso(codTotal) : peso(total)) : peso(total)}`}
             </Button>
           </DialogFooter>
         </DialogContent>
