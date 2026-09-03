@@ -174,23 +174,7 @@ export function PromotionTiersCard({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="tierCurrency">Payable with</Label>
-              <Select
-                value={draft.currency}
-                onValueChange={(v) => set("currency", v as Draft["currency"])}
-              >
-                <SelectTrigger id="tierCurrency">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="both">Social credits or points</SelectItem>
-                  <SelectItem value="social">Social credits only</SelectItem>
-                  <SelectItem value="points">Points only</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="tierElig">Who can buy it</Label>
+              <Label htmlFor="tierElig">Who can use it</Label>
               <Select
                 value={draft.eligibility}
                 onValueChange={(v) => set("eligibility", v as Draft["eligibility"])}
