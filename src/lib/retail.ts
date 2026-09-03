@@ -620,9 +620,6 @@ export async function saveShopBranding(
     ...(images.coverPath ? { _cover_path: images.coverPath } : {}),
     _clear_logo: !images.logoPath,
     _clear_cover: !images.coverPath,
-    _accepting_orders: null,
-    _paused_note: null,
-    _theme: null,
   });
   if (error) throw new Error(error.message);
   const stale = [previous?.logoPath, previous?.coverPath].filter(
