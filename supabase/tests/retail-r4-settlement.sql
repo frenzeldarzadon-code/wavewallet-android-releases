@@ -213,7 +213,7 @@ BEGIN
 
   -- ===== P: platform fee reporting only; Super Admin gets nothing =====
   ASSERT (SELECT balance FROM public.credit_accounts WHERE id = _sag) = _sa0, 'P super admin wallet unchanged';
-  ASSERT NOT EXISTS (SELECT 1 FROM public.credit_ledger WHERE user_id = _sa AND id > 0 AND reason LIKE 'Retail%'), 'P no super admin retail ledger rows';
+  ASSERT NOT EXISTS (SELECT 1 FROM public.credit_ledger WHERE user_id = _sa AND entry_kind IN ('retail_hold','retail_settlement','retail_cashback','retail_refund')), 'P no super admin retail ledger rows';
   ASSERT NOT EXISTS (SELECT 1 FROM public.retail_platform_fees f GROUP BY f.order_id HAVING count(*) > 1), 'P fee once per order';
   ASSERT (SELECT count(*) FROM public.retail_platform_fees f JOIN public.retail_orders o ON o.id = f.order_id WHERE o.status <> 'approved') = 0, 'P fees only on approved orders';
 
@@ -222,7 +222,8 @@ BEGIN
 
   -- ===== reconciliation over the whole Universe run =====
   ASSERT _debits = _admin_credits + _cb_credits + _fees + _refunds, 'RECONCILE: debits = admin + cashback + fees + refunds';
-  ASSERT (SELECT coalesce(sum(amount),0) FROM public.credit_ledger WHERE entry_kind = 'retail_hold' AND reason LIKE '%RO-%' AND user_id = _cus AND id IN (SELECT id FROM public.credit_ledger ORDER BY id DESC LIMIT 40)) = _debits, 'ledger debits match';
+  ASSERT (SELECT coalesce(sum(amount),0) FROM public.credit_ledger WHERE entry_kind = 'retail_hold' AND user_id = _cus AND created_at >= now()) = _debits, 'ledger debits match';
+  ASSERT (SELECT coalesce(sum(amount),0) FROM public.credit_ledger WHERE entry_kind IN ('retail_settlement','retail_cashback','retail_refund') AND ecosystem_id = _u AND created_at >= now()) + (SELECT coalesce(sum(fee_credits),0) FROM public.retail_platform_fees WHERE ecosystem_id = _u AND created_at >= now()) = _debits, 'ledger credits + fees = debits (no coins created)';
   ASSERT _cus0 = (SELECT balance FROM public.credit_accounts WHERE id = _cg), 'buyer end balance';
   ASSERT (SELECT balance FROM public.credit_accounts WHERE id = _ag) - _adm0 = 0, 'admin end balance';
 
