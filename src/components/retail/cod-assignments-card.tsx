@@ -46,11 +46,15 @@ import {
 } from "@/lib/retail";
 import {
   confirmCashReceived,
+  dutyNextStep,
+  dutySteps,
   fetchCodHeldTotal,
   fetchMyCodAssignments,
   respondToCollectorRequest,
   type CodAssignment,
 } from "@/lib/retail-cod";
+import { isOffline } from "@/lib/offline-guard";
+import { cn } from "@/lib/utils";
 
 export function CodAssignmentsCard({
   available,
@@ -63,17 +67,22 @@ export function CodAssignmentsCard({
   const [rows, setRows] = useState<CodAssignment[]>([]);
   const [held, setHeld] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [cashFor, setCashFor] = useState<CodAssignment | null>(null);
   const [cashAmount, setCashAmount] = useState("");
+  const [approveFor, setApproveFor] = useState<CodAssignment | null>(null);
 
   const load = useCallback(async () => {
+    setLoadError(null);
     try {
       const [r, h] = await Promise.all([fetchMyCodAssignments(), fetchCodHeldTotal()]);
       setRows(r);
       setHeld(h);
     } catch (e) {
-      toast.error((e as Error).message);
+      setLoadError(
+        isOffline() ? "You are offline. Reconnect to load your duties." : (e as Error).message,
+      );
     } finally {
       setLoading(false);
     }
@@ -84,7 +93,7 @@ export function CodAssignmentsCard({
   }, [load]);
 
   if (!RETAIL_VISIBLE) return null;
-  if (!loading && rows.length === 0 && held === 0) return null;
+  if (!loading && !loadError && rows.length === 0 && held === 0) return null;
 
   const run = async (id: string, fn: () => Promise<void>, ok: string, description?: string) => {
     if (busy) return;
@@ -109,6 +118,8 @@ export function CodAssignmentsCard({
     void navigate({ to: "/universe/messages", search: { thread: a.chat_thread_id } });
   };
 
+  const actionNeeded = rows.filter((a) => dutyNextStep(a).mine).length;
+
   return (
     <PageSection
       devSlot="cod-assignments-card.duties"
@@ -132,8 +143,30 @@ export function CodAssignmentsCard({
         </Card>
       </div>
 
+      {actionNeeded > 0 ? (
+        <p className="mb-2 text-xs font-medium text-primary">
+          {actionNeeded} {actionNeeded === 1 ? "duty needs" : "duties need"} your action
+        </p>
+      ) : null}
+
       {loading ? (
-        <p className="text-xs text-muted-foreground">Loading…</p>
+        <p className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="size-3 animate-spin" /> Loading your duties…
+        </p>
+      ) : loadError ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2">
+          <p className="text-xs text-destructive">{loadError}</p>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setLoading(true);
+              void load();
+            }}
+          >
+            Retry
+          </Button>
+        </div>
       ) : (
         <div className="space-y-2">
           {rows.map((a) => {
@@ -151,8 +184,13 @@ export function CodAssignmentsCard({
               a.status === "approved" &&
               a.fulfillment_status === "out_for_delivery";
             const shortBy = Math.max(0, a.expected_cash - available);
+            const next = dutyNextStep(a);
+            const steps = dutySteps(a);
             return (
-              <Card key={`${a.id}-${a.my_role}`} className="shadow-[var(--shadow-card)]">
+              <Card
+                key={`${a.id}-${a.my_role}`}
+                className={cn("shadow-[var(--shadow-card)]", next.mine && "border-primary/50")}
+              >
                 <CardContent className="space-y-2 py-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="min-w-0">
@@ -184,6 +222,49 @@ export function CodAssignmentsCard({
                       </StatusBadge>
                     </div>
                   </div>
+
+                  <p
+                    className={cn(
+                      "rounded-md px-2.5 py-1.5 text-xs",
+                      next.mine
+                        ? "bg-primary/10 font-medium text-primary"
+                        : "bg-muted/50 text-muted-foreground",
+                    )}
+                  >
+                    {next.mine ? "Your move: " : "Next: "}
+                    {next.text}
+                  </p>
+
+                  {a.status === "approved" ? (
+                    <ol className="flex items-center gap-1 overflow-x-auto pb-0.5 text-[10px]">
+                      {steps.map((s, i) => (
+                        <li key={s.label} className="flex shrink-0 items-center gap-1">
+                          {i > 0 ? (
+                            <span className={cn("h-px w-3", s.done ? "bg-success" : "bg-border")} />
+                          ) : null}
+                          <span
+                            className={cn(
+                              "rounded-full border px-1.5 py-0.5",
+                              s.done
+                                ? "border-success/40 bg-success/10 text-success"
+                                : s.current
+                                  ? "border-primary/50 text-primary"
+                                  : "border-border text-muted-foreground",
+                            )}
+                          >
+                            {s.label}
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : null}
+
+                  {!isCollector && a.expected_cash > 0 ? (
+                    <p className="text-[11px] text-muted-foreground">
+                      Customer pays {peso(a.expected_cash)} in cash
+                      {a.self_delivery ? "" : " to the collector"} on handover.
+                    </p>
+                  ) : null}
 
                   {isCollector ? (
                     <div className="space-y-0.5 rounded-lg bg-muted/50 px-2.5 py-2 text-[11px]">
@@ -250,14 +331,7 @@ export function CodAssignmentsCard({
                           title={
                             shortBy > 0 ? `You need ${peso(shortBy)} more available` : undefined
                           }
-                          onClick={() =>
-                            void run(
-                              a.id,
-                              () => respondToCollectorRequest(a.id, true),
-                              "Float held",
-                              `${peso(a.expected_cash)} is now locked until the order settles or is cancelled.`,
-                            )
-                          }
+                          onClick={() => setApproveFor(a)}
                         >
                           {busy === a.id ? (
                             <Loader2 className="size-4 animate-spin" />
@@ -324,6 +398,43 @@ export function CodAssignmentsCard({
         </div>
       )}
 
+      <Dialog open={!!approveFor} onOpenChange={(open) => !open && setApproveFor(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Hold {approveFor ? peso(approveFor.expected_cash) : ""} as the float?
+            </DialogTitle>
+            <DialogDescription>
+              Approving {approveFor?.order_no} locks{" "}
+              {approveFor ? peso(approveFor.expected_cash) : ""} of your available Universe coins
+              until the order settles or is cancelled. Held coins cannot be spent or transferred.
+              You have {peso(available)} available.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setApproveFor(null)}>
+              Back
+            </Button>
+            <Button
+              disabled={!!busy || !approveFor || approveFor.expected_cash > available}
+              onClick={() => {
+                const a = approveFor;
+                if (!a) return;
+                setApproveFor(null);
+                void run(
+                  a.id,
+                  () => respondToCollectorRequest(a.id, true),
+                  "Float held",
+                  `${peso(a.expected_cash)} is now locked until the order settles or is cancelled.`,
+                );
+              }}
+            >
+              <Lock className="size-4" /> Approve &amp; hold
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!cashFor} onOpenChange={(open) => !open && setCashFor(null)}>
         <DialogContent>
           <DialogHeader>
@@ -344,6 +455,12 @@ export function CodAssignmentsCard({
               value={cashAmount}
               onChange={(e) => setCashAmount(e.target.value)}
             />
+            {cashFor && cashAmount !== "" && Number(cashAmount) !== cashFor.expected_cash ? (
+              <p className="text-[11px] text-destructive">
+                {peso(Number(cashAmount))} differs from the expected {peso(cashFor.expected_cash)}.
+                This will NOT settle the float — it opens a discrepancy for the shop admin.
+              </p>
+            ) : null}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCashFor(null)}>

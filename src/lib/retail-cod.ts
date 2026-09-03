@@ -115,6 +115,115 @@ export function codStageLabel(o: CodOrder): string {
 }
 
 /* ------------------------------------------------------------------ */
+/* Duty workspace helpers (delivery person / collector) — display only */
+/* ------------------------------------------------------------------ */
+
+export type DutyRow = Pick<
+  CodAssignment,
+  | "my_role"
+  | "status"
+  | "fulfillment_status"
+  | "collector_status"
+  | "hold_held"
+  | "cash_received_at"
+  | "discrepancy"
+  | "settled_at"
+  | "completed_at"
+  | "expected_cash"
+>;
+
+export interface DutyStep {
+  label: string;
+  done: boolean;
+  current: boolean;
+}
+
+/**
+ * Compact operational timeline derived only from fields the assignments RPC
+ * already returns (no extra table). Steps never show money that has not moved.
+ */
+export function dutySteps(a: DutyRow): DutyStep[] {
+  const fs = a.fulfillment_status;
+  const outOrLater = ["out_for_delivery", "delivered", "completed"].includes(fs);
+  const deliveredOrLater = ["delivered", "completed"].includes(fs);
+  const held = a.hold_held || !!a.settled_at || !!a.cash_received_at;
+  const cash = !!a.cash_received_at || !!a.settled_at;
+  const settled = !!a.settled_at;
+  if (a.collector_status === "none") {
+    // No cash float on this order (e.g. plain cash): only the delivery legs apply.
+    const raw = [
+      { label: "Assigned", done: true },
+      { label: "Out for delivery", done: outOrLater },
+      { label: "Delivered", done: deliveredOrLater },
+    ];
+    const firstOpen = raw.findIndex((s) => !s.done);
+    return raw.map((s, i) => ({ ...s, current: i === firstOpen }));
+  }
+  const raw = [
+    { label: "Assigned", done: true },
+    { label: "Float held", done: held },
+    { label: "Out for delivery", done: outOrLater },
+    { label: "Delivered", done: deliveredOrLater },
+    { label: "Cash received", done: cash },
+    { label: "Settled", done: settled },
+  ];
+  const firstOpen = raw.findIndex((s) => !s.done);
+  return raw.map((s, i) => ({ ...s, current: i === firstOpen }));
+}
+
+/**
+ * The one sentence a duty holder needs: what happens next and whether it is
+ * their move. Mirrors the backend transition rules; never authorizes anything.
+ */
+export function dutyNextStep(a: DutyRow): { text: string; mine: boolean } {
+  if (a.status !== "approved") {
+    return {
+      text: a.status === "pending" ? "Waiting for shop approval" : `Order ${a.status}`,
+      mine: false,
+    };
+  }
+  if (a.settled_at) return { text: "Settled — nothing left to do", mine: false };
+  if (a.discrepancy) return { text: "Cash discrepancy — the shop admin is reviewing", mine: false };
+  if (a.cash_received_at) return { text: "Cash confirmed — settling", mine: false };
+  const collector = a.my_role === "collector";
+  if (a.collector_status === "none") {
+    if (a.fulfillment_status === "out_for_delivery")
+      return { text: "Deliver the parcel, then mark it delivered", mine: true };
+    if (["delivered", "completed"].includes(a.fulfillment_status))
+      return { text: "Delivered — nothing left to do", mine: false };
+    return { text: "Waiting for the shop to hand the parcel over", mine: false };
+  }
+  if (!a.hold_held) {
+    if (a.collector_status === "proposed") {
+      return collector
+        ? { text: "Approve to hold the float, or decline", mine: true }
+        : { text: "Waiting for the collector to approve the float", mine: false };
+    }
+    if (a.collector_status === "declined") {
+      return { text: "Collector declined — the shop must assign another", mine: false };
+    }
+    return { text: "Waiting for a collector", mine: false };
+  }
+  switch (a.fulfillment_status) {
+    case "accepted":
+    case "preparing":
+    case "ready":
+      return { text: "Waiting for the shop to hand the parcel over", mine: false };
+    case "out_for_delivery":
+      return collector
+        ? { text: "Confirm the cash once the customer pays", mine: true }
+        : { text: "Deliver the parcel, then mark it delivered", mine: true };
+    case "delivered":
+    case "completed":
+      return collector
+        ? { text: "Confirm the cash you received to settle the float", mine: true }
+        : { text: "Delivered — waiting for the collector to confirm cash", mine: false };
+    default:
+      return { text: "Waiting for the shop", mine: false };
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* RPC wrappers                                                        */
 /* ------------------------------------------------------------------ */
 
