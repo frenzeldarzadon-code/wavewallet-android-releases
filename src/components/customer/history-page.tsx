@@ -243,7 +243,7 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
         let configured = false;
         let note: string | null = null;
         results.forEach((res, i) => {
-          for (const code of groups[i][1]) map[code] = res.statuses[code] ?? null;
+          for (const code of groups[i]?.[1] ?? []) map[code] = res.statuses[code] ?? null;
           configured = configured || res.configured;
           note = note ?? res.error ?? null;
         });
