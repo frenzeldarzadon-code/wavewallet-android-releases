@@ -47,11 +47,15 @@ export const Route = createFileRoute("/universe/shops")({
 function UniverseShops() {
   const session = useSession();
   const [memberships, setMemberships] = useState<Membership[]>([]);
+  const [types, setTypes] = useState<Record<string, ShopTypeState>>({});
   const [found, setFound] = useState<ShopSummary | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setMemberships(await fetchMyMemberships());
+    const list = await fetchMyMemberships();
+    setMemberships(list);
+    // Type labels so several shops are told apart at a glance.
+    setTypes(await fetchShopTypes(list.map((m) => m.ecosystemId)));
   }, []);
 
   useEffect(() => {
@@ -59,6 +63,7 @@ function UniverseShops() {
   }, [load]);
 
   const mine = switchableMemberships(memberships);
+  const managed = mine.filter((m) => m.role === "admin").length;
 
   const enter = async (ecosystemId: string, isActive: boolean) => {
     if (busy) return;
