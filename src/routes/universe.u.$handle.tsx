@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui-kit";
 import { MemberAvatar } from "@/components/member-avatar";
 import { UniverseShell } from "@/components/universe/universe-shell";
 import { displayHandle } from "@/lib/profile";
+import { avatarUrl } from "@/lib/profile";
 import { SuperAdminBadge } from "@/components/role-badge";
 import { fetchUniverseProfile, type UniverseProfile } from "@/lib/social";
 import { RelationshipActions } from "@/components/universe/relationship-actions";
@@ -47,6 +48,7 @@ function UniverseMemberProfile() {
   const [profile, setProfile] = useState<UniverseProfile | null>(null);
   const [posts, setPosts] = useState<ProfilePost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -55,7 +57,11 @@ function UniverseMemberProfile() {
       .then((rows) => active && setPosts(rows))
       .catch(() => undefined);
     void fetchUniverseProfile(handle)
-      .then((p) => active && setProfile(p))
+      .then((p) => {
+        if (!active) return;
+        setProfile(p);
+        void avatarUrl(p?.cover_path).then((url) => active && setCoverUrl(url));
+      })
       .catch((e: Error) => toast.error("Could not open that profile", { description: e.message }))
       .finally(() => active && setLoading(false));
     return () => {
@@ -75,7 +81,7 @@ function UniverseMemberProfile() {
           />
         ) : (
           <Card className="overflow-hidden rounded-lg shadow-[var(--shadow-card)]">
-            <div className="h-16 bg-brand-soft" />
+            <div className="h-28 bg-brand-soft bg-cover bg-center" style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : undefined} />
             <CardContent className="space-y-3 py-5">
               <div className="-mt-12 grid grid-cols-[auto_minmax(0,1fr)] items-end gap-3">
                 <MemberAvatar

@@ -8,12 +8,13 @@ import { ExternalLink, Store } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MemberAvatar } from "@/components/member-avatar";
-import { fetchMyProfile, type MyProfile } from "@/lib/profile";
+import { avatarUrl, fetchMyProfile, type MyProfile } from "@/lib/profile";
 import { fetchSellerStorefront } from "@/lib/seller-storefront";
 
 export function PublicIdentityCard({ userId }: { userId: string }) {
   const [profile, setProfile] = useState<MyProfile | null>(null);
   const [storeName, setStoreName] = useState<string | null>(null);
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -21,6 +22,7 @@ export function PublicIdentityCard({ userId }: { userId: string }) {
       .then(async (p) => {
         if (!alive || !p) return;
         setProfile(p);
+        void avatarUrl(p.cover_path).then((url) => alive && setCoverUrl(url));
         if (p.handle) {
           const store = await fetchSellerStorefront(p.handle).catch(() => null);
           if (alive) setStoreName(store && store.shops.length > 0 ? store.storeName : null);
@@ -36,7 +38,7 @@ export function PublicIdentityCard({ userId }: { userId: string }) {
 
   return (
     <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--shadow-card)]">
-      <div className="h-16 bg-gradient-to-r from-primary/80 to-primary" />
+      <div className="h-28 bg-brand-soft bg-cover bg-center" style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : undefined} />
       <div className="-mt-7 flex items-end gap-3 px-4">
         <MemberAvatar
           path={profile.avatar_path}

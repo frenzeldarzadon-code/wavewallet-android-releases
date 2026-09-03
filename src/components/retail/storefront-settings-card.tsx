@@ -33,6 +33,7 @@ const pick = (s: StoreSettings): StorefrontSettings => ({
   coverPath: s.coverPath,
   acceptingOrders: s.acceptingOrders,
   pausedNote: s.pausedNote,
+  theme: s.theme,
 });
 
 export function StorefrontSettingsCard({ ecosystemId }: { ecosystemId: string | null }) {
@@ -230,6 +231,15 @@ export function StorefrontSettingsCard({ ecosystemId }: { ecosystemId: string | 
                 Images are cropped and compressed on your phone before upload. Square logo, wide
                 cover.
               </p>
+
+              <div className="space-y-2">
+                <Label>Storefront design</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["clear", "fresh", "warm"] as const).map((theme) => (
+                    <Button key={theme} type="button" variant={form.theme === theme ? "default" : "outline"} className="capitalize" onClick={() => setForm({ ...form, theme })}>{theme}</Button>
+                  ))}
+                </div>
+              </div>
 
               <div className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2.5">
                 <div className="min-w-0">

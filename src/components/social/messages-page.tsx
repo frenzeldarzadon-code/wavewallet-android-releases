@@ -457,12 +457,12 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
                     <Users className="size-4" />
                   </span>
                 ) : (
-                  <MemberAvatar path={t.member_avatar} name={t.member_name ?? "Member"} />
+                  <span className="relative"><MemberAvatar path={t.member_avatar} name={t.member_name ?? "Member"} />{t.member_online ? <span aria-label="Online" className="absolute bottom-0 right-0 size-3 rounded-full border-2 border-card bg-success" /> : null}</span>
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="truncate text-sm font-semibold">{threadTitle(t)}</span>
-                    {t.kind === "order" ? <StatusBadge tone="brand">Order chat</StatusBadge> : null}
+                    {t.kind === "order" ? <StatusBadge tone="brand">Order chat</StatusBadge> : t.member_online ? <span className="text-[11px] font-medium text-success">Online</span> : null}
                     {t.last_message_at ? (
                       <span className="ml-auto shrink-0 text-xs text-muted-foreground">
                         {relativeTime(t.last_message_at)}

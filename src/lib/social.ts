@@ -140,6 +140,7 @@ export interface MentionSuggestion {
   full_name: string;
   handle: string;
   avatar_path: string | null;
+  cover_path: string | null;
 }
 
 /** Public Universe profile — identity only, never wallets or messages. */
