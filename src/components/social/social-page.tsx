@@ -233,39 +233,13 @@ export function SocialPage({ hashtag }: { hashtag?: string } = {}) {
 
   return (
     <>
-      <div className="px-4 sm:px-0">
-        <div className="flex w-full items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 shadow-[var(--shadow-card)]">
-          <MemberAvatar name={account.name} className="size-10" />
-          <Input
-            value={quickPost}
-            onChange={(event) => setQuickPost(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && quickPost.trim()) setComposerOpen(true);
-            }}
-            placeholder="What's happening in your area?"
-            aria-label="Write a post"
-            className="min-w-0 flex-1 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
-          />
-          <Button type="button" size="sm" disabled={!state || !quickPost.trim()} onClick={() => setComposerOpen(true)}>
-            <Send className="size-4" /> <span className="hidden sm:inline">Post</span>
-          </Button>
-        </div>
-      </div>
-
-      {state ? (
-        <PostComposer
-          open={composerOpen}
-          onOpenChange={setComposerOpen}
+      {state && !hashtag ? (
+        <UniverseComposer
           state={state}
           tiers={tiers}
           userId={account.id}
-          pointsBalance={account.pointsBalance ?? 0}
           ownShopName={session.ecosystem?.name ?? "My shop"}
-          initialBody={quickPost}
-          onPosted={async () => {
-            setQuickPost("");
-            await refresh();
-          }}
+          onPosted={refresh}
         />
       ) : null}
 
