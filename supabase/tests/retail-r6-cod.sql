@@ -179,6 +179,9 @@ BEGIN
 
   -- ===== fulfillment: out for delivery (hand-off) -> customer cancellation blocked =====
   PERFORM set_config('request.jwt.claims', c_res, true);
+  -- (the earlier blocked attempt rolled back its own preparing/ready steps)
+  PERFORM public.retail_update_fulfillment(_ord.id, 'preparing');
+  PERFORM public.retail_update_fulfillment(_ord.id, 'ready');
   PERFORM public.retail_update_fulfillment(_ord.id, 'out_for_delivery');
   PERFORM set_config('request.jwt.claims', c_cus, true);
   BEGIN PERFORM public.cancel_retail_order(_ord.id); _ok := true; EXCEPTION WHEN OTHERS THEN _ok := false; END;
