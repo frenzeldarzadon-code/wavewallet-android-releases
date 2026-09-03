@@ -4705,6 +4705,9 @@ export type Database = {
       }
       retail_order_items: {
         Row: {
+          cashback_amount: number
+          cashback_mode: string
+          cashback_value: number
           created_at: string
           fee_amount: number | null
           id: string
@@ -4719,6 +4722,9 @@ export type Database = {
           wholesale_applied: boolean
         }
         Insert: {
+          cashback_amount?: number
+          cashback_mode?: string
+          cashback_value?: number
           created_at?: string
           fee_amount?: number | null
           id?: string
@@ -4733,6 +4739,9 @@ export type Database = {
           wholesale_applied?: boolean
         }
         Update: {
+          cashback_amount?: number
+          cashback_mode?: string
+          cashback_value?: number
           created_at?: string
           fee_amount?: number | null
           id?: string
@@ -4765,6 +4774,9 @@ export type Database = {
       }
       retail_orders: {
         Row: {
+          cashback_ledger_id: string | null
+          cashback_recipient_id: string | null
+          cashback_total: number
           created_at: string
           credit_hold_tx: string | null
           credit_released: boolean
@@ -4785,6 +4797,7 @@ export type Database = {
           platform_fee_amount: number | null
           platform_fee_percent: number | null
           refund_ledger_id: string | null
+          seller_id: string | null
           seller_total: number | null
           settled_to: string | null
           settlement_ledger_id: string | null
@@ -4794,6 +4807,9 @@ export type Database = {
           wallet_account_id: string | null
         }
         Insert: {
+          cashback_ledger_id?: string | null
+          cashback_recipient_id?: string | null
+          cashback_total?: number
           created_at?: string
           credit_hold_tx?: string | null
           credit_released?: boolean
@@ -4814,6 +4830,7 @@ export type Database = {
           platform_fee_amount?: number | null
           platform_fee_percent?: number | null
           refund_ledger_id?: string | null
+          seller_id?: string | null
           seller_total?: number | null
           settled_to?: string | null
           settlement_ledger_id?: string | null
@@ -4823,6 +4840,9 @@ export type Database = {
           wallet_account_id?: string | null
         }
         Update: {
+          cashback_ledger_id?: string | null
+          cashback_recipient_id?: string | null
+          cashback_total?: number
           created_at?: string
           credit_hold_tx?: string | null
           credit_released?: boolean
@@ -4843,6 +4863,7 @@ export type Database = {
           platform_fee_amount?: number | null
           platform_fee_percent?: number | null
           refund_ledger_id?: string | null
+          seller_id?: string | null
           seller_total?: number | null
           settled_to?: string | null
           settlement_ledger_id?: string | null
@@ -4852,6 +4873,13 @@ export type Database = {
           wallet_account_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "retail_orders_cashback_ledger_id_fkey"
+            columns: ["cashback_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "retail_orders_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
@@ -5019,6 +5047,8 @@ export type Database = {
           archived: boolean
           barcode: string | null
           brand: string | null
+          cashback_mode: string
+          cashback_value: number
           category: string | null
           created_at: string
           description: string | null
@@ -5045,6 +5075,8 @@ export type Database = {
           archived?: boolean
           barcode?: string | null
           brand?: string | null
+          cashback_mode?: string
+          cashback_value?: number
           category?: string | null
           created_at?: string
           description?: string | null
@@ -5071,6 +5103,8 @@ export type Database = {
           archived?: boolean
           barcode?: string | null
           brand?: string | null
+          cashback_mode?: string
+          cashback_value?: number
           category?: string | null
           created_at?: string
           description?: string | null
@@ -10579,6 +10613,19 @@ export type Database = {
         }
         Returns: Json
       }
+      retail_cashback_recipient: {
+        Args: { _buyer: string; _ecosystem_id: string; _seller: string }
+        Returns: string
+      }
+      retail_line_cashback: {
+        Args: {
+          _mode: string
+          _qty: number
+          _seller_line: number
+          _value: number
+        }
+        Returns: number
+      }
       retail_place_order: {
         Args: {
           _address?: string
@@ -10587,6 +10634,7 @@ export type Database = {
           _items: Json
           _notes?: string
           _payment_method: string
+          _seller_id?: string
         }
         Returns: {
           order_id: string
