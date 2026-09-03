@@ -297,7 +297,7 @@ export function ProfilePage() {
             <div className="space-y-2">
               <Label>Profile photo</Label>
               {file ? (
-                <ImageCropper file={file} aspect={1} circular onChange={setCrop} />
+                <ImageCropper file={file} aspect={1} circular onChange={setCrop} resultLabel="Profile photo" />
               ) : (
                 <div className="flex items-center gap-4">
                   <MemberAvatar
