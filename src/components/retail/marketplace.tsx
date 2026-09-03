@@ -167,37 +167,38 @@ export function MarketplaceHeader({
           >
             <p className="font-semibold">Temporarily closed for new orders</p>
             <p className="opacity-90">
-              {pausedNote?.trim() || "You can still browse. Orders you already placed continue as normal."}
+              {pausedNote?.trim() ||
+                "You can still browse. Orders you already placed continue as normal."}
             </p>
           </div>
         ) : null}
         {onSearch ? (
-        <label className="relative block">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden
-          />
-          <Input
-            type="search"
-            inputMode="search"
-            enterKeyHint="search"
-            value={search ?? ""}
-            onChange={(e) => onSearch(e.target.value)}
-            placeholder="Search products, brands…"
-            aria-label="Search products"
-            className="h-11 rounded-2xl border-0 bg-background pl-9 pr-9 text-foreground shadow-[var(--shadow-card)]"
-          />
-          {search ? (
-            <button
-              type="button"
-              aria-label="Clear search"
-              onClick={() => onSearch("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:bg-muted"
-            >
-              <X className="size-4" />
-            </button>
-          ) : null}
-        </label>
+          <label className="relative block">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              type="search"
+              inputMode="search"
+              enterKeyHint="search"
+              value={search ?? ""}
+              onChange={(e) => onSearch(e.target.value)}
+              placeholder="Search products, brands…"
+              aria-label="Search products"
+              className="h-11 rounded-2xl border-0 bg-background pl-9 pr-9 text-foreground shadow-[var(--shadow-card)]"
+            />
+            {search ? (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => onSearch("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:bg-muted"
+              >
+                <X className="size-4" />
+              </button>
+            ) : null}
+          </label>
         ) : null}
       </div>
     </section>

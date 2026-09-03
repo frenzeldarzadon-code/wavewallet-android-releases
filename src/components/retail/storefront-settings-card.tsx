@@ -76,7 +76,9 @@ export function StorefrontSettingsCard({ ecosystemId }: { ecosystemId: string | 
     try {
       const path = await uploadStorefrontImage(ecosystemId, kind, file);
       setForm((f) => (kind === "logo" ? { ...f, logoPath: path } : { ...f, coverPath: path }));
-      toast.success(kind === "logo" ? "Logo ready — save to apply." : "Cover ready — save to apply.");
+      toast.success(
+        kind === "logo" ? "Logo ready — save to apply." : "Cover ready — save to apply.",
+      );
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -189,7 +191,8 @@ export function StorefrontSettingsCard({ ecosystemId }: { ecosystemId: string | 
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{ecosystem?.name}</p>
                     <p className="line-clamp-2 text-[11px] text-muted-foreground">
-                      {ecosystem?.description?.trim() || "Add a short description in Shop settings."}
+                      {ecosystem?.description?.trim() ||
+                        "Add a short description in Shop settings."}
                     </p>
                     {form.logoPath ? (
                       <button
@@ -224,7 +227,8 @@ export function StorefrontSettingsCard({ ecosystemId }: { ecosystemId: string | 
                 }}
               />
               <p className="text-[11px] text-muted-foreground">
-                Images are cropped and compressed on your phone before upload. Square logo, wide cover.
+                Images are cropped and compressed on your phone before upload. Square logo, wide
+                cover.
               </p>
 
               <div className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2.5">
@@ -269,7 +273,11 @@ export function StorefrontSettingsCard({ ecosystemId }: { ecosystemId: string | 
                   onClick={() => void save()}
                   disabled={busy || !dirty || !!problem || uploading !== null}
                 >
-                  {busy ? <Loader2 className="size-4 animate-spin" /> : <Store className="size-4" />}
+                  {busy ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Store className="size-4" />
+                  )}
                   Save storefront
                 </Button>
                 <Button asChild variant="outline">
