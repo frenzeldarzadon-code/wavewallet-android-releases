@@ -13,7 +13,7 @@ import {
   DEFAULT_STORE_SETTINGS,
   fetchStoreSettings,
   removeRetailImages,
-  saveStorefrontSettings,
+  saveShopBranding,
   uploadStorefrontImage,
   type StorefrontSettings,
 } from "@/lib/retail";
@@ -108,7 +108,7 @@ export function ShopBrandingCard({
   const save = async () => {
     setBusy(true);
     try {
-      await saveStorefrontSettings(ecosystemId, form, saved);
+      await saveShopBranding(ecosystemId, form, saved);
       setSaved(form);
       setPendingUploads([]);
       toast.success("Shop images saved", {

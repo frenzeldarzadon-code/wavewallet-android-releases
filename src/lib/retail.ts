@@ -608,6 +608,27 @@ export async function saveStorefrontSettings(
   if (stale.length) await removeRetailImages(ecosystemId, stale);
 }
 
+/** Saves branding for any Universe Voucher/Retail shop; the RPC re-checks admin scope. */
+export async function saveShopBranding(
+  ecosystemId: string,
+  images: Pick<StorefrontSettings, "logoPath" | "coverPath">,
+  previous?: Pick<StorefrontSettings, "logoPath" | "coverPath">,
+): Promise<void> {
+  const { error } = await supabase.rpc("update_shop_branding", {
+    _ecosystem_id: ecosystemId,
+    ...(images.logoPath ? { _logo_path: images.logoPath } : {}),
+    ...(images.coverPath ? { _cover_path: images.coverPath } : {}),
+    _clear_logo: !images.logoPath,
+    _clear_cover: !images.coverPath,
+  });
+  if (error) throw new Error(error.message);
+  const stale = [previous?.logoPath, previous?.coverPath].filter(
+    (path): path is string =>
+      !!path && path !== images.logoPath && path !== images.coverPath && path.includes("/storefront/"),
+  );
+  await removeRetailImages(ecosystemId, stale);
+}
+
 /**
  * R6 — cash-on-delivery configuration (shop admin only). The split must total
  * exactly 100 %; the database re-checks it and snapshots the values onto each

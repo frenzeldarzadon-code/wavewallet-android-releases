@@ -45,6 +45,10 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
+import {
+  ImageUploadCropDialog,
+  type ConfirmedImageCrop,
+} from "@/components/image-upload-crop-dialog";
 import { ProductDetailSheet } from "@/components/retail/marketplace";
 import { RetailImage } from "@/components/retail/retail-image";
 import {
@@ -57,6 +61,7 @@ import {
   isProductReady,
   loadStarterCatalog,
   productCategories,
+  removeRetailImages,
   saveRetailProduct,
   sellerToCustomer,
   setRetailProductArchived,
@@ -195,6 +200,8 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const [pendingImages, setPendingImages] = useState<string[]>([]);
   const [feePercent, setFeePercent] = useState(0);
   const [settings, setSettings] = useState<StoreSettings | null>(null);
   const [priceMode, setPriceMode] = useState<"cut" | "retail">("cut");
@@ -249,15 +256,23 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
     setAttempted(false);
     setPriceMode("cut");
     setDraft(d);
+    setPendingImages([]);
   };
 
-  const upload = async (file: File) => {
+  const upload = async ({ file, crop, image }: ConfirmedImageCrop) => {
     if (!draft) return;
     setUploading(true);
     try {
-      const path = await uploadRetailImage(ecosystemId, file);
+      const replacedPending = draft.image_path;
+      const path = await uploadRetailImage(ecosystemId, file, crop, image);
+      if (replacedPending && pendingImages.includes(replacedPending)) {
+        await removeRetailImages(ecosystemId, [replacedPending]);
+        setPendingImages((paths) => paths.filter((candidate) => candidate !== replacedPending));
+      }
+      setPendingImages((paths) => [...paths, path]);
       setDraft((d) => (d ? { ...d, image_path: path } : d));
-      toast.success("Photo ready — it is compressed and cropped for the marketplace");
+      setCropFile(null);
+      toast.success("Product crop ready — save the product to apply it");
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -285,6 +300,7 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
   const persist = async (d: ProductDraft, successMessage: string) => {
     setBusy(true);
     try {
+      const previousImagePath = d.id ? rows.find((row) => row.id === d.id)?.image_path : null;
       await saveRetailProduct(ecosystemId, {
         ...(d.id ? { id: d.id } : {}),
         name: d.name,
@@ -306,7 +322,8 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
         public_visible: d.public_visible,
         active: d.active,
         published: d.published,
-      });
+      }, previousImagePath);
+      setPendingImages([]);
       toast.success(successMessage);
       await load();
       return true;
@@ -330,6 +347,32 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
       draft.id ? "Product updated" : draft.published ? "Product is live" : "Product saved as draft",
     );
     if (ok) setDraft(null);
+  };
+
+  const closeDraft = async () => {
+    if (busy || uploading) return;
+    try {
+      await removeRetailImages(ecosystemId, pendingImages);
+      setPendingImages([]);
+      setCropFile(null);
+      setDraft(null);
+    } catch (error) {
+      toast.error("Could not discard pending photo", { description: (error as Error).message });
+    }
+  };
+
+  const removeDraftPhoto = async () => {
+    if (!draft?.image_path) return;
+    if (pendingImages.includes(draft.image_path)) {
+      try {
+        await removeRetailImages(ecosystemId, [draft.image_path]);
+        setPendingImages((paths) => paths.filter((path) => path !== draft.image_path));
+      } catch (error) {
+        toast.error("Could not remove pending photo", { description: (error as Error).message });
+        return;
+      }
+    }
+    setDraft({ ...draft, image_path: null });
   };
 
   const duplicate = async (p: RetailProductRow) => {
@@ -582,7 +625,7 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
       </PageSection>
 
       {/* ---------------- Editor ---------------- */}
-      <Sheet open={!!draft} onOpenChange={(o) => !o && !busy && setDraft(null)}>
+      <Sheet open={!!draft} onOpenChange={(o) => !o && void closeDraft()}>
         <SheetContent
           side="bottom"
           className="mx-auto flex h-[96dvh] w-full flex-col gap-0 rounded-t-3xl p-0 sm:max-w-2xl"
@@ -599,8 +642,8 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
 
               <div className="flex-1 space-y-3 overflow-y-auto bg-muted/30 p-4">
                 <Section
-                  title="Photo"
-                  hint="One square photo, compressed on your phone before upload (JPEG, PNG or WebP)."
+                  title="Product photo"
+                  hint="Shown in Top Selling Products, product cards, details and your storefront. Optional."
                 >
                   <div className="flex items-center gap-3">
                     <RetailImage
@@ -616,7 +659,7 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
                         className="hidden"
                         onChange={(e) => {
                           const f = e.target.files?.[0];
-                          if (f) void upload(f);
+                           if (f) setCropFile(f);
                           e.target.value = "";
                         }}
                       />
@@ -639,7 +682,7 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
                           variant="ghost"
                           className="text-destructive"
                           disabled={uploading}
-                          onClick={() => setDraft({ ...draft, image_path: null })}
+                           onClick={() => void removeDraftPhoto()}
                         >
                           <Trash2 className="size-4" /> Remove photo
                         </Button>
@@ -992,7 +1035,7 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
                 >
                   <Eye className="size-4" />
                 </Button>
-                <Button variant="ghost" onClick={() => setDraft(null)} disabled={busy}>
+                 <Button variant="ghost" onClick={() => void closeDraft()} disabled={busy || uploading}>
                   Cancel
                 </Button>
                 <Button className="flex-1" onClick={() => void save()} disabled={busy || uploading}>
@@ -1004,6 +1047,17 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
           ) : null}
         </SheetContent>
       </Sheet>
+
+      <ImageUploadCropDialog
+        file={cropFile}
+        aspect={1}
+        title="Crop product photo"
+        description="Drag and zoom until the product is framed clearly. The square preview is exactly what shoppers will see."
+        resultLabel="Final marketplace photo"
+        busy={uploading}
+        onCancel={() => setCropFile(null)}
+        onConfirm={(value) => void upload(value)}
+      />
 
       {/* ---------------- Customer preview (same component customers use) ---------------- */}
       <ProductDetailSheet
