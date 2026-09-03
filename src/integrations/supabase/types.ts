@@ -6412,9 +6412,11 @@ export type Database = {
           comment_count: number
           created_at: string
           ecosystem_id: string
+          hashtags: string[]
           id: string
           image_path: string | null
           like_count: number
+          meta: Json
           promoted: boolean
           promotion_cost: number | null
           promotion_currency: string | null
@@ -6431,6 +6433,7 @@ export type Database = {
           status: string
           updated_at: string
           used_free_post: boolean
+          video_path: string | null
         }
         Insert: {
           audience?: string
@@ -6439,9 +6442,11 @@ export type Database = {
           comment_count?: number
           created_at?: string
           ecosystem_id: string
+          hashtags?: string[]
           id?: string
           image_path?: string | null
           like_count?: number
+          meta?: Json
           promoted?: boolean
           promotion_cost?: number | null
           promotion_currency?: string | null
@@ -6458,6 +6463,7 @@ export type Database = {
           status?: string
           updated_at?: string
           used_free_post?: boolean
+          video_path?: string | null
         }
         Update: {
           audience?: string
@@ -6466,9 +6472,11 @@ export type Database = {
           comment_count?: number
           created_at?: string
           ecosystem_id?: string
+          hashtags?: string[]
           id?: string
           image_path?: string | null
           like_count?: number
+          meta?: Json
           promoted?: boolean
           promotion_cost?: number | null
           promotion_currency?: string | null
@@ -6485,6 +6493,7 @@ export type Database = {
           status?: string
           updated_at?: string
           used_free_post?: boolean
+          video_path?: string | null
         }
         Relationships: [
           {
@@ -12426,6 +12435,7 @@ export type Database = {
         Args: { _provider: string; _provider_event_id: string }
         Returns: Json
       }
+      social_clean_post_meta: { Args: { _meta: Json }; Returns: Json }
       social_create_comment: {
         Args: { _body: string; _parent_id?: string; _post_id: string }
         Returns: Json
@@ -12436,9 +12446,11 @@ export type Database = {
           _body: string
           _currency?: string
           _image_path?: string
+          _meta?: Json
           _promote?: boolean
           _shop_ids?: string[]
           _tier_id?: string
+          _video_path?: string
         }
         Returns: Json
       }
@@ -12455,8 +12467,9 @@ export type Database = {
         Args: { _amount: number; _kind: string }
         Returns: Json
       }
+      social_extract_hashtags: { Args: { _body: string }; Returns: string[] }
       social_feed: {
-        Args: { _before?: string; _limit?: number }
+        Args: { _before?: string; _hashtag?: string; _limit?: number }
         Returns: {
           audience: string
           author_avatar: string
@@ -12469,14 +12482,17 @@ export type Database = {
           can_hide: boolean
           comment_count: number
           created_at: string
+          hashtags: string[]
           id: string
           image_path: string
           like_count: number
           liked_by_me: boolean
+          meta: Json
           origin_ecosystem_name: string
           promoted: boolean
           promotion_expires_at: string
           promotion_tier_name: string
+          video_path: string
         }[]
       }
       social_free_posts_used: { Args: { _user: string }; Returns: number }
