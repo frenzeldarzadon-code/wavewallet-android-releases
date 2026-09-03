@@ -568,6 +568,45 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
                     charged (wholesale when the minimum quantity is reached).
                   </p>
                 </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="rp-cashback-mode">Seller cashback</Label>
+                  <Select
+                    value={draft.cashback_mode}
+                    onValueChange={(v) =>
+                      setDraft({ ...draft, cashback_mode: v as RetailCashbackMode })
+                    }
+                  >
+                    <SelectTrigger id="rp-cashback-mode">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="disabled">Disabled</SelectItem>
+                      <SelectItem value="percent">Percentage of amount paid</SelectItem>
+                      <SelectItem value="fixed">Fixed coins per unit</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {draft.cashback_mode !== "disabled" && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="rp-cashback-value">
+                      {draft.cashback_mode === "percent" ? "Cashback %" : "Cashback coins per unit"}
+                    </Label>
+                    <Input
+                      id="rp-cashback-value"
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      max={draft.cashback_mode === "percent" ? 100 : undefined}
+                      value={draft.cashback_value}
+                      onChange={(e) => setDraft({ ...draft, cashback_value: e.target.value })}
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Paid to the storefront seller out of your amount when the order is approved —
+                      based on what the buyer actually paid (wholesale price when it applies), never
+                      on the platform fee. The customer price does not change.
+                    </p>
+                  </div>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="rp-desc">Short description</Label>
