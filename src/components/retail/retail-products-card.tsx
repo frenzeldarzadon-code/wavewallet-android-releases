@@ -48,6 +48,7 @@ import {
   setRetailProductPublished,
   uploadRetailImage,
   type CatalogFilter,
+  type RetailCashbackMode,
   type RetailProductRow,
 } from "@/lib/retail";
 
