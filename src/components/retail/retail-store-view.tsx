@@ -318,15 +318,45 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                       </li>
                     ))}
                   </ul>
-                  {o.delivery_address ? (
-                    <p className="text-[11px] text-muted-foreground">
-                      Deliver to: {o.delivery_address}
-                      {o.delivery_notes ? ` · ${o.delivery_notes}` : ""}
-                    </p>
+                  {o.fulfillment === "delivery" ? (
+                    <div className="space-y-1 rounded-xl border border-border px-3 py-2 text-[11px] text-muted-foreground">
+                      <p className="flex items-center gap-1 font-medium text-foreground">
+                        <Truck className="size-3.5 text-primary" /> Delivery details
+                      </p>
+                      {o.delivery_address ? (
+                        <p>
+                          Deliver to: {o.delivery_address}
+                          {o.delivery_notes ? ` · ${o.delivery_notes}` : ""}
+                        </p>
+                      ) : null}
+                      {o.status === "approved" ? (
+                        <p>
+                          {o.self_delivery
+                            ? "Delivered by the seller"
+                            : o.delivery_person_name
+                              ? `Delivery person: ${o.delivery_person_name}`
+                              : "Delivery person not assigned yet"}
+                          {o.payment_method === "cod" && o.collector_name ? ` · Cash collected by: ${o.collector_name}` : ""}
+                        </p>
+                      ) : null}
+                      {o.payment_method === "cod" ? (
+                        <p>
+                          Cash on delivery: {peso(o.total)} products + {peso(o.delivery_fee ?? 0)} delivery ={" "}
+                          <strong className="text-foreground">{peso(codCashTotal(o))}</strong> · {codStageLabel(o)}
+                        </p>
+                      ) : null}
+                    </div>
                   ) : null}
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-semibold">Total {credits(o.total)}</p>
-                    <div className="flex gap-2">
+                    <p className="text-sm font-semibold">
+                      {o.payment_method === "cod" ? `Pay ${peso(codCashTotal(o))} cash` : `Total ${credits(o.total)}`}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {o.fulfillment === "delivery" && o.status === "approved" ? (
+                        <Button size="sm" variant="outline" onClick={() => void goToChat(o)}>
+                          <MessageCircle className="size-4" /> Order chat
+                        </Button>
+                      ) : null}
                       {canConfirmReceipt(o) ? (
                         <Button
                           size="sm"
@@ -357,6 +387,10 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                             }
                           }}
                         >
+                          <X className="size-4" /> Cancel
+                        </Button>
+                      ) : customerCancelBlockedReason(o) ? (
+                        <Button size="sm" variant="outline" disabled title={customerCancelBlockedReason(o) ?? undefined}>
                           <X className="size-4" /> Cancel
                         </Button>
                       ) : null}
