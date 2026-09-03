@@ -176,9 +176,8 @@ BEGIN
   -- ---------------- 8. Public exposure ----------------
   ASSERT NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'retail_products' AND 'anon' = ANY(roles)),
          'anon must not read retail_products rows directly';
-  ASSERT NOT EXISTS (SELECT 1 FROM information_schema.routines r
-                      WHERE r.routine_name = 'list_retail_products'
-                        AND pg_get_function_result((r.specific_schema||'.'||r.specific_name)::text::regprocedure) LIKE '%wholesale%'),
+  ASSERT NOT EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'list_retail_products'
+                        AND pg_get_function_result(oid) LIKE '%wholesale%'),
          'buyer listing must not return wholesale fields';
 
   RAISE EXCEPTION 'RETAIL_R1_TESTS_PASSED';
