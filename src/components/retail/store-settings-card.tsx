@@ -22,7 +22,7 @@ import {
 const rows: Array<{ key: keyof StoreSettings; label: string; hint: string }> = [
   { key: "voucherEnabled", label: "Voucher store", hint: "Sell WiFi voucher codes." },
   { key: "retailEnabled", label: "Retail store", hint: "Sell physical goods." },
-  { key: "cashEnabled", label: "Accept cash", hint: "Cash / cash-on-delivery for retail orders." },
+  { key: "cashEnabled", label: "Accept cash", hint: "Pay cash at pickup or hand-over. Cash on delivery is configured below." },
   { key: "creditEnabled", label: "Accept shop coins", hint: "Pay retail orders from the shop wallet." },
   { key: "pickupEnabled", label: "Offer pickup", hint: "Customers collect at your shop." },
   { key: "deliveryEnabled", label: "Offer delivery", hint: "Door-to-door with an address." },
