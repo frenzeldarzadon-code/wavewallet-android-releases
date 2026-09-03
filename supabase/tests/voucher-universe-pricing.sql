@@ -47,7 +47,7 @@ BEGIN
 
   -- Snapshots that must not change.
   SELECT md5(string_agg(row_to_json(v)::text, '|' ORDER BY v.id)) INTO _hist_before
-    FROM public.voucher_sales v;
+    FROM public.voucher_sales v WHERE v.created_at < now();
   SELECT md5(string_agg(m.user_id::text || ':' || coalesce(m.sale_commission_percent,-1) || ':' || coalesce(m.reseller_discount_percent,-1), '|' ORDER BY m.user_id))
     INTO _rates_before FROM public.ecosystem_memberships m WHERE m.ecosystem_id = _shop;
 
@@ -138,7 +138,7 @@ BEGIN
 
   ---------------------------------------------------------------- 8
   SELECT md5(string_agg(row_to_json(v)::text, '|' ORDER BY v.id)) INTO _hist_after
-    FROM public.voucher_sales v WHERE v.product_id NOT IN (_prod, _promo, _new_prod);
+    FROM public.voucher_sales v WHERE v.created_at < now();  -- rows made in this run share now()
   ASSERT _hist_before = _hist_after, '8: historical voucher sales untouched';
   SELECT md5(string_agg(m.user_id::text || ':' || coalesce(m.sale_commission_percent,-1) || ':' || coalesce(m.reseller_discount_percent,-1), '|' ORDER BY m.user_id))
     INTO _rates_after FROM public.ecosystem_memberships m WHERE m.ecosystem_id = _shop;
