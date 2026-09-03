@@ -5,6 +5,31 @@ import { adminBottomNavFor, adminNav, withBadges } from "@/lib/navigation";
 import { useMemberInbox } from "@/components/member-inbox-panel";
 import { useShopStatus } from "@/lib/shop-status";
 import { shopTypeLabel } from "@/lib/shop-type";
+import { useEffect, useState } from "react";
+import { fetchPendingRetailOrderCount } from "@/lib/retail";
+
+/** New Retail orders waiting for approval — same nav badge system as applications. */
+function usePendingRetailOrders(ecosystemId: string | null, retail: boolean) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!ecosystemId || !retail) {
+      setCount(0);
+      return;
+    }
+    let live = true;
+    const tick = () =>
+      fetchPendingRetailOrderCount(ecosystemId)
+        .then((n) => live && setCount(n))
+        .catch(() => undefined);
+    void tick();
+    const id = window.setInterval(tick, 60_000);
+    return () => {
+      live = false;
+      window.clearInterval(id);
+    };
+  }, [ecosystemId, retail]);
+  return count;
+}
 
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
@@ -14,6 +39,7 @@ function AdminLayout() {
   const session = useSession("admin");
   const { pending } = useMemberInbox();
   const shopStatus = useShopStatus(session.ecosystemDbId);
+  const newOrders = usePendingRetailOrders(session.ecosystemDbId, shopStatus.shopType === "retail");
 
   // Never render a blank screen: the session resolves asynchronously, and an
   // admin whose active shop is not resolved yet gets a readable state instead.
@@ -32,7 +58,7 @@ function AdminLayout() {
   // The console only offers the tools of the shop type being managed.
   const nav = withBadges(
     adminNav({ goLive: shopStatus.isDemo, shopType: shopStatus.shopType }),
-    { "/admin/applications": pending },
+    { "/admin/applications": pending, "/admin/orders": newOrders },
   );
   return (
     <AppShell
