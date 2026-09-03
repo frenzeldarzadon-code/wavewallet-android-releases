@@ -11,9 +11,7 @@ import {
   Banknote,
   Loader2,
   MessageCircle,
-  Minus,
   PackageCheck,
-  Plus,
   ShoppingCart,
   Star,
   Store,
@@ -21,7 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,8 +35,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
-import { RatingPicker, RatingStars } from "@/components/rating-stars";
-import { RetailImage } from "@/components/retail/retail-image";
+import { RatingPicker } from "@/components/rating-stars";
 import { RETAIL_VISIBLE } from "@/lib/features";
 import { useSession } from "@/lib/session";
 import { fetchCreditBalance } from "@/lib/wallet";
@@ -75,11 +72,33 @@ import {
   type StoreSettings,
 } from "@/lib/retail";
 import { codStageLabel, fetchCodQuote, openOrderChat } from "@/lib/retail-cod";
+import {
+  CATALOG_PAGE_SIZE,
+  DEFAULT_CATALOG_QUERY,
+  applyCatalogQuery,
+  catalogCategories,
+  catalogQueryActive,
+  useDebouncedValue,
+  type CatalogQuery,
+} from "@/lib/retail-catalog";
+import {
+  CartSheet,
+  CatalogToolbar,
+  CategoryTiles,
+  MarketplaceEmpty,
+  MarketplaceError,
+  MarketplaceHeader,
+  ProductCard,
+  ProductDetailSheet,
+  ProductGridSkeleton,
+  productGridClass,
+} from "@/components/retail/marketplace";
+import { EcosystemSwitcher } from "@/components/ecosystem-switcher";
 
 const credits = (n: number) => `${n.toLocaleString(undefined, { maximumFractionDigits: 2 })} coins`;
 
 export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
-  const { account, ecosystemDbId } = useSession(role);
+  const { account, ecosystem, ecosystemDbId } = useSession(role);
   const navigate = useNavigate();
   const [products, setProducts] = useState<RetailProduct[]>([]);
   const [settings, setSettings] = useState<StoreSettings>(DEFAULT_STORE_SETTINGS);
@@ -88,7 +107,12 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
   const [feePercent, setFeePercent] = useState(0);
   const [cart, setCart] = useState<Cart>({});
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [checkout, setCheckout] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const [catalogQuery, setCatalogQuery] = useState<CatalogQuery>(DEFAULT_CATALOG_QUERY);
+  const [pageLimit, setPageLimit] = useState(CATALOG_PAGE_SIZE);
   const [busy, setBusy] = useState(false);
   const [codQuote, setCodQuote] = useState<CodQuote | null>(null);
   const [draft, setDraft] = useState<CheckoutDraft>({
@@ -107,6 +131,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
   const load = useCallback(async () => {
     if (!ecosystemDbId || !userId) return;
     setLoading(true);
+    setLoadError(null);
     try {
       const [p, s, o, b, f] = await Promise.all([
         fetchRetailProducts(ecosystemDbId),
@@ -121,7 +146,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
       setBalance(b);
       setFeePercent(f);
     } catch (e) {
-      toast.error((e as Error).message);
+      setLoadError((e as Error).message);
     } finally {
       setLoading(false);
     }
@@ -130,6 +155,19 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Discovery runs over the shop's already-loaded catalog; the search box is
+  // debounced so typing never re-filters on every keystroke.
+  const debouncedSearch = useDebouncedValue(catalogQuery.search);
+  const categories = useMemo(() => catalogCategories(products), [products]);
+  const visibleProducts = useMemo(
+    () => applyCatalogQuery(products, { ...catalogQuery, search: debouncedSearch }, feePercent),
+    [products, catalogQuery, debouncedSearch, feePercent],
+  );
+  const filtersActive = catalogQueryActive(catalogQuery);
+  useEffect(() => {
+    setPageLimit(CATALOG_PAGE_SIZE);
+  }, [debouncedSearch, catalogQuery.category, catalogQuery.sort, catalogQuery.inStockOnly]);
 
   const lines = cartLines(cart, products, feePercent);
   const quote = cartQuote(cart, products, feePercent);
@@ -212,101 +250,116 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
     );
   }
 
+  const shopName = ecosystem?.name ?? "Retail shop";
+  const detailProduct = detailId ? (products.find((p) => p.id === detailId) ?? null) : null;
+
   return (
     <>
-      <PageSection
-        devSlot="retail-store-view.retail-store-2"
-        title="Retail store"
-        description={`Physical goods from this shop · wallet: ${credits(balance)}`}
-        action={
-          count > 0 ? (
-            <Button size="sm" onClick={() => setCheckout(true)}>
-              <ShoppingCart className="size-4" /> Cart ({count})
-            </Button>
-          ) : null
-        }
-      >
+      <MarketplaceHeader
+        shopName={shopName}
+        description={ecosystem?.description ?? null}
+        productCount={products.length}
+        search={catalogQuery.search}
+        onSearch={(search) => setCatalogQuery((q) => ({ ...q, search }))}
+        cartCount={count}
+        onOpenCart={() => setCartOpen(true)}
+        aside={<EcosystemSwitcher mini />}
+      />
+
+      <section className="space-y-3" aria-label="Products">
         {loading ? (
-          <p className="text-xs text-muted-foreground">Loading products…</p>
+          <ProductGridSkeleton />
+        ) : loadError ? (
+          <MarketplaceError message={loadError} onRetry={() => void load()} />
         ) : products.length === 0 ? (
-          <EmptyState title="No retail products yet" description="Check back soon." />
+          <MarketplaceEmpty filtered={false} />
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
-            {products.map((p) => {
-              const qty = cart[p.id] ?? 0;
-              return (
-                <Card key={p.id} className="overflow-hidden shadow-[var(--shadow-card)]">
-                  <RetailImage path={p.image_path} alt={p.name} />
-                  <CardContent className="space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold">{p.name}</p>
-                        {[p.brand, p.variant, p.size_label].filter(Boolean).length > 0 ? (
-                          <p className="text-[11px] text-muted-foreground">
-                            {[p.brand, p.variant, p.size_label].filter(Boolean).join(" · ")}
-                          </p>
-                        ) : null}
-                      </div>
-                      <StatusBadge tone={p.stock > 0 ? "success" : "danger"}>
-                        {p.stock > 0 ? `${p.stock} in stock` : "Out of stock"}
-                      </StatusBadge>
-                    </div>
-                    {p.description ? (
-                      <p className="text-xs text-muted-foreground">{p.description}</p>
-                    ) : null}
-                    <RatingStars avg={p.rating_avg} count={p.rating_count} />
-                    <div className="flex items-center justify-between gap-2 pt-1">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-primary">
-                          {credits(sellerToCustomer(p.price, feePercent))}
-                        </p>
-                        {(p.wholesale_price ?? 0) > 0 && (p.wholesale_min_qty ?? 0) > 0 ? (
-                          <p className="text-[11px] text-muted-foreground">
-                            {credits(sellerToCustomer(p.wholesale_price ?? 0, feePercent))} each
-                            from {p.wholesale_min_qty} {p.unit ?? "pcs"}
-                          </p>
-                        ) : null}
-                      </div>
-                      {qty > 0 ? (
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="size-9"
-                            aria-label={`Remove one ${p.name}`}
-                            onClick={() => setCart(changeQuantity(cart, p, -1))}
-                          >
-                            <Minus className="size-4" />
-                          </Button>
-                          <span className="w-6 text-center text-sm font-semibold">{qty}</span>
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="size-9"
-                            aria-label={`Add one ${p.name}`}
-                            disabled={qty >= p.stock}
-                            onClick={() => setCart(changeQuantity(cart, p, 1))}
-                          >
-                            <Plus className="size-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button
-                          size="sm"
-                          disabled={p.stock === 0}
-                          onClick={() => setCart(changeQuantity(cart, p, 1))}
-                        >
-                          <Plus className="size-4" /> Add
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+          <>
+            <CategoryTiles
+              categories={categories}
+              active={catalogQuery.category}
+              total={products.length}
+              onSelect={(category) => setCatalogQuery((q) => ({ ...q, category }))}
+            />
+            <CatalogToolbar
+              query={catalogQuery}
+              count={visibleProducts.length}
+              active={filtersActive}
+              onChange={setCatalogQuery}
+              onReset={() => setCatalogQuery(DEFAULT_CATALOG_QUERY)}
+            />
+            {visibleProducts.length === 0 ? (
+              <MarketplaceEmpty filtered onClear={() => setCatalogQuery(DEFAULT_CATALOG_QUERY)} />
+            ) : (
+              <>
+                <div className={productGridClass}>
+                  {visibleProducts.slice(0, pageLimit).map((p) => (
+                    <ProductCard
+                      key={p.id}
+                      product={p}
+                      feePercent={feePercent}
+                      quantity={cart[p.id] ?? 0}
+                      onOpen={() => setDetailId(p.id)}
+                      onAdd={() => setCart(changeQuantity(cart, p, 1))}
+                      onRemove={() => setCart(changeQuantity(cart, p, -1))}
+                    />
+                  ))}
+                </div>
+                {visibleProducts.length > pageLimit ? (
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setPageLimit((n) => n + CATALOG_PAGE_SIZE)}
+                  >
+                    Show more ({visibleProducts.length - pageLimit} left)
+                  </Button>
+                ) : null}
+              </>
+            )}
+          </>
         )}
-      </PageSection>
+      </section>
+
+      {count > 0 && !cartOpen && !checkout && !detailProduct ? (
+        <div className="pointer-events-none sticky bottom-3 z-30 flex justify-center">
+          <Button
+            size="lg"
+            className="pointer-events-auto rounded-full shadow-[var(--shadow-float)]"
+            onClick={() => setCartOpen(true)}
+          >
+            <ShoppingCart className="size-4" /> {count} item{count === 1 ? "" : "s"} · {peso(total)}
+          </Button>
+        </div>
+      ) : null}
+
+      <ProductDetailSheet
+        product={detailProduct}
+        feePercent={feePercent}
+        settings={settings}
+        shopName={shopName}
+        quantity={detailProduct ? (cart[detailProduct.id] ?? 0) : 0}
+        onChange={(delta) => detailProduct && setCart(changeQuantity(cart, detailProduct, delta))}
+        onClose={() => setDetailId(null)}
+        onBuyNow={() => {
+          setDetailId(null);
+          setCheckout(true);
+        }}
+      />
+
+      <CartSheet
+        open={cartOpen}
+        lines={lines}
+        quote={quote}
+        feePercent={feePercent}
+        settings={settings}
+        onChange={(p, delta) => setCart(changeQuantity(cart, p, delta))}
+        onRemove={(p) => setCart(changeQuantity(cart, p, -(cart[p.id] ?? 0)))}
+        onClose={() => setCartOpen(false)}
+        onCheckout={() => {
+          setCartOpen(false);
+          setCheckout(true);
+        }}
+      />
 
       <PageSection
         devSlot="retail-store-view.my-orders"
@@ -492,12 +545,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
               </li>
             ))}
           </ul>
-          {quote.fee > 0 ? (
-            <p className="text-[11px] text-muted-foreground">
-              Includes {credits(quote.fee)} platform fee ({feePercent}% of the shop's{" "}
-              {credits(quote.sellerTotal)}).
-            </p>
-          ) : null}
+          {/* Retail Prices already include everything; the platform fee is never a customer line. */}
 
           <div className="space-y-2">
             <Label>How do you want it?</Label>

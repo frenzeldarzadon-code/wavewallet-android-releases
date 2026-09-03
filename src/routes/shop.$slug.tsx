@@ -7,14 +7,23 @@
  * members, wallets, orders or voucher codes.
  */
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, MapPin, Star, Store, Ticket } from "lucide-react";
+import { ArrowRight, MapPin, Store, Ticket } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { RatingStars } from "@/components/rating-stars";
-import { RetailImage } from "@/components/retail/retail-image";
+import {
+  MarketplaceEmpty,
+  ProductCard,
+  ProductDetailSheet,
+  productGridClass,
+} from "@/components/retail/marketplace";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
+import { DEFAULT_STORE_SETTINGS, type RetailProduct } from "@/lib/retail";
+import { matchesSearch, useDebouncedValue } from "@/lib/retail-catalog";
 import { RETAIL_VISIBLE } from "@/lib/features";
 import { shortDateTime } from "@/lib/wavewallet";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,6 +68,9 @@ function PublicStorefront() {
   const [reviews, setReviews] = useState<PublicReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [signedIn, setSignedIn] = useState(false);
+  const [search, setSearch] = useState("");
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const debouncedSearch = useDebouncedValue(search);
 
   useEffect(() => {
     void supabase.auth.getUser().then(({ data }) => setSignedIn(!!data.user));
@@ -105,14 +117,34 @@ function PublicStorefront() {
   }
 
   const action = visitorAction(shop, signedIn);
-  const retail = products.filter((p) => p.kind === "retail");
+  // Public prices are already the customer Retail Price (fee inside, computed
+  // by the database), so the cards render them with a 0 % presentation fee.
+  const retail: RetailProduct[] = products
+    .filter((p) => p.kind === "retail")
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      image_path: p.image_path,
+      price: p.price,
+      stock: p.available,
+      sold_count: 0,
+      public_visible: true,
+      rating_avg: p.rating_avg,
+      rating_count: p.rating_count,
+    }));
+  const retailVisible = retail.filter((p) => matchesSearch(p, debouncedSearch));
+  const detail = detailId ? (retail.find((p) => p.id === detailId) ?? null) : null;
   const vouchers = products.filter((p) => p.kind === "voucher");
 
   const cta =
     action === "open"
       ? { label: "Open your shop", onClick: () => void navigate({ to: "/app" }) }
       : action === "join"
-        ? { label: "Request to join", onClick: () => void navigate({ to: "/join/$slug", params: { slug } }) }
+        ? {
+            label: "Request to join",
+            onClick: () => void navigate({ to: "/join/$slug", params: { slug } }),
+          }
         : action === "sign-in"
           ? { label: "Sign in to join", onClick: () => void navigate({ to: "/" }) }
           : null;
@@ -156,12 +188,15 @@ function PublicStorefront() {
         )}
         {shop.contact_email || shop.contact_phone ? (
           <p className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
-            <MapPin className="size-3" /> {[shop.contact_email, shop.contact_phone].filter(Boolean).join(" · ")}
+            <MapPin className="size-3" />{" "}
+            {[shop.contact_email, shop.contact_phone].filter(Boolean).join(" · ")}
           </p>
         ) : null}
       </header>
 
-      <Tabs defaultValue={RETAIL_VISIBLE && (retail.length || !vouchers.length) ? "retail" : "voucher"}>
+      <Tabs
+        defaultValue={RETAIL_VISIBLE && (retail.length || !vouchers.length) ? "retail" : "voucher"}
+      >
         <TabsList className="w-full">
           {RETAIL_VISIBLE ? (
             <TabsTrigger value="retail" className="flex-1">
@@ -178,30 +213,65 @@ function PublicStorefront() {
 
         <TabsContent value="retail" hidden={!RETAIL_VISIBLE}>
           {retail.length === 0 ? (
-            <EmptyState title="No public retail products" />
+            <MarketplaceEmpty
+              filtered={false}
+              hint="This shop has not published any retail products publicly yet."
+            />
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {retail.map((p) => (
-                <Card key={p.id} className="overflow-hidden shadow-[var(--shadow-card)]">
-                  <RetailImage path={p.image_path} alt={p.name} />
-                  <CardContent className="space-y-1">
-                    <p className="text-sm font-semibold">{p.name}</p>
-                    {p.description ? (
-                      <p className="text-xs text-muted-foreground">{p.description}</p>
-                    ) : null}
-                    <p className="text-xs text-muted-foreground">
-                      {credits(p.price)} · {p.available > 0 ? `${p.available} in stock` : "Out of stock"}
-                    </p>
-                    {p.rating_count > 0 ? (
-                      <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Star className="size-3" /> {p.rating_avg.toFixed(1)} ({p.rating_count})
-                      </p>
-                    ) : null}
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="space-y-3">
+              <label className="relative block">
+                <Search
+                  className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden
+                />
+                <Input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search products…"
+                  aria-label="Search products"
+                  className="h-11 rounded-2xl pl-9"
+                />
+              </label>
+              {retailVisible.length === 0 ? (
+                <MarketplaceEmpty filtered onClear={() => setSearch("")} />
+              ) : (
+                <div className={productGridClass}>
+                  {retailVisible.map((p) => (
+                    <ProductCard
+                      key={p.id}
+                      product={p}
+                      feePercent={0}
+                      quantity={0}
+                      onOpen={() => setDetailId(p.id)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
+          <ProductDetailSheet
+            product={detail}
+            feePercent={0}
+            settings={{ ...DEFAULT_STORE_SETTINGS, pickupEnabled: false, deliveryEnabled: false }}
+            shopName={shop.name}
+            quantity={0}
+            onChange={() => undefined}
+            onClose={() => setDetailId(null)}
+            onBuyNow={() => undefined}
+            footer={
+              <div className="flex w-full items-center justify-between gap-3">
+                <p className="text-xs text-muted-foreground">
+                  {cta ? "Join this shop to order." : "Ordering is for shop members."}
+                </p>
+                {cta ? (
+                  <Button onClick={cta.onClick}>
+                    {cta.label} <ArrowRight className="size-4" />
+                  </Button>
+                ) : null}
+              </div>
+            }
+          />
         </TabsContent>
 
         <TabsContent value="voucher">
@@ -240,8 +310,12 @@ function PublicStorefront() {
                       <p className="text-sm font-medium">{r.author_name}</p>
                       <RatingStars avg={r.rating} count={null} />
                     </div>
-                    {r.comment ? <p className="text-xs text-muted-foreground">{r.comment}</p> : null}
-                    <p className="text-[11px] text-muted-foreground">{shortDateTime(r.created_at)}</p>
+                    {r.comment ? (
+                      <p className="text-xs text-muted-foreground">{r.comment}</p>
+                    ) : null}
+                    <p className="text-[11px] text-muted-foreground">
+                      {shortDateTime(r.created_at)}
+                    </p>
                   </div>
                 ))}
               </CardContent>
