@@ -57,9 +57,17 @@
 - Shared `ImageCropper` now shows the real photo (own object URL), dimmed cut-away area, crop boundary, live result preview, pinch/scroll/slider zoom, 1:1 drag.
 - Profile cover crop/encode/display unified at 3:1 (`PROFILE_COVER_TARGET`).
 
-## Universe marketplace/profile visual refinement — IN PROGRESS (UNPUBLISHED)
-- [ ] Guarantee profile identity text remains fully readable below cover images on mobile and desktop
-- [ ] Use existing shop cover/logo assets in Featured and Top Selling shop cards with safe visual fallbacks
-- [ ] Use real Retail product images and local voucher artwork fallbacks in marketplace/storefront cards
-- [ ] Verify 390px mobile and desktop layouts, tests, typecheck, and no functional changes
+## Universe marketplace/profile visual refinement — COMPLETE (UNPUBLISHED)
+- [x] Guarantee profile identity text remains fully readable below cover images on mobile and desktop
+- [x] Use existing shop cover/logo assets in Featured and Top Selling shop cards with safe visual fallbacks
+- [x] Use real Retail product images and local voucher artwork fallbacks in marketplace/storefront cards
+- [x] Verify 390px mobile and desktop layouts, tests, typecheck, and no functional changes
+- [x] Do not publish
+
+## Shop and Retail image management — IN PROGRESS (UNPUBLISHED)
+- [ ] Add universally discoverable shop logo/cover management for authorized shop admins
+- [ ] Add live crop and final preview before shop and Retail product image uploads
+- [ ] Support safe replace/remove with stale-file cleanup
+- [ ] Verify images flow through Universe discovery, product cards/details, and public storefront
+- [ ] Verify tenant isolation, mobile/desktop layouts, tests, and typecheck
 - [ ] Do not publish
