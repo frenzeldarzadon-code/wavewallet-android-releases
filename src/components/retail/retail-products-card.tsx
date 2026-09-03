@@ -225,6 +225,8 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
         unit: draft.unit,
         sku: draft.sku,
         barcode: draft.barcode,
+        cashback_mode: draft.cashback_mode,
+        cashback_value: Number(draft.cashback_value) || 0,
         price,
         wholesale_price: Number(draft.wholesale_price) || 0,
         wholesale_min_qty: Number(draft.wholesale_min_qty) || 0,
