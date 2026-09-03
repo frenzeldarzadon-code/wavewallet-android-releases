@@ -9000,6 +9000,7 @@ export type Database = {
           _name: string
           _plan_name?: string
           _plan_price?: number
+          _shop_type?: string
           _signup_enabled?: boolean
           _slug?: string
         }
@@ -9078,6 +9079,81 @@ export type Database = {
       }
       create_review_shop: {
         Args: { _description?: string; _name: string }
+        Returns: {
+          admin_assigned_at: string | null
+          admin_assigned_by: string | null
+          admin_sale_commission_percent: number
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          cash_in_gcash_number: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          credits_per_point: number
+          current_period_end: string | null
+          default_commission_percent: number
+          default_reseller_discount_percent: number
+          default_sale_commission_percent: number
+          default_subreseller_discount_percent: number
+          default_subreseller_sale_commission_percent: number
+          default_upline_commission_percent: number
+          description: string | null
+          facebook_page_name: string | null
+          facebook_page_url: string | null
+          frozen_at: string | null
+          frozen_by: string | null
+          frozen_reason: string | null
+          grace_period_days: number
+          id: string
+          is_review: boolean
+          is_test: boolean
+          last_activity_at: string | null
+          name: string
+          operations_frozen: boolean
+          payment_reference: string | null
+          plan_name: string
+          plan_price: number
+          points_rule_updated_at: string
+          points_rule_version: number
+          public_storefront_enabled: boolean
+          retail_cash_enabled: boolean
+          retail_cod_enabled: boolean
+          retail_credit_enabled: boolean
+          retail_delivery_enabled: boolean
+          retail_delivery_fee: number
+          retail_delivery_split_collector_pct: number
+          retail_delivery_split_delivery_pct: number
+          retail_pickup_enabled: boolean
+          review_ends_at: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shop_barangay: string | null
+          shop_city_municipality: string | null
+          shop_code: string | null
+          shop_kind: string
+          shop_province: string | null
+          shop_street: string | null
+          signup_enabled: boolean
+          signup_token: string
+          slug: string
+          store_retail_enabled: boolean
+          store_voucher_enabled: boolean
+          submitted_at: string | null
+          subscription_state: Database["public"]["Enums"]["subscription_state"]
+          updated_at: string
+          use_platform_payment_methods: boolean
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ecosystems"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_universe_shop: {
+        Args: { _description?: string; _name: string; _shop_type: string }
         Returns: {
           admin_assigned_at: string | null
           admin_assigned_by: string | null
@@ -12002,6 +12078,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_shop_type: {
+        Args: { _ecosystem_id: string; _shop_type: string }
+        Returns: string
+      }
       set_subreseller_parent: {
         Args: { _ecosystem_id?: string; _reseller_id: string; _user_id: string }
         Returns: undefined
@@ -12210,6 +12290,7 @@ export type Database = {
           source: string
         }[]
       }
+      shop_type: { Args: { _ecosystem_id: string }; Returns: string }
       shops_in_municipality: {
         Args: { _city: string; _province: string }
         Returns: {

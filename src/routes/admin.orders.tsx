@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ShopTypeGate } from "@/components/shop/shop-type-gate";
 import { RetailOrdersPanel } from "@/components/retail/retail-orders-panel";
 import { useSession } from "@/lib/session";
 
@@ -20,10 +21,20 @@ export const Route = createFileRoute("/admin/orders")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: AdminOrders,
+  component: AdminOrdersGate,
 });
 
 function AdminOrders() {
   const { ecosystemDbId } = useSession("admin");
   return <RetailOrdersPanel ecosystemId={ecosystemDbId} />;
+}
+
+/** Only the tools of this shop's type are offered (see Shop type in settings). */
+function AdminOrdersGate() {
+  const { ecosystemDbId } = useSession("admin");
+  return (
+    <ShopTypeGate ecosystemId={ecosystemDbId} requires="retail">
+      <AdminOrders />
+    </ShopTypeGate>
+  );
 }
