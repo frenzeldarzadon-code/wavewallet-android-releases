@@ -348,6 +348,26 @@ export async function fetchRetailProducts(ecosystemId: string): Promise<RetailPr
   }));
 }
 
+/** Retail cashback per product: an EARNING for the attributed seller, never a price cut. */
+export type RetailCashbackMode = "disabled" | "percent" | "fixed";
+
+/**
+ * Presentation mirror of the database `retail_line_cashback`: the base is the
+ * ACTUAL seller amount paid for the line (wholesale price when it applies);
+ * fixed is per unit; both are capped at the line so cashback never exceeds it.
+ */
+export const lineCashback = (
+  mode: RetailCashbackMode,
+  value: number,
+  sellerLine: number,
+  qty: number,
+): number => {
+  const line = Math.round(sellerLine * 100) / 100;
+  if (mode === "percent") return Math.min(Math.round(line * value) / 100, line);
+  if (mode === "fixed") return Math.min(Math.round(value * qty * 100) / 100, line);
+  return 0;
+};
+
 /** Catalog metadata shared by starter-catalog and manually added products. */
 export interface RetailProductDetails {
   category: string | null;
@@ -364,6 +384,9 @@ export interface RetailProductDetails {
   published: boolean;
   /** Set when the row came from the shared starter catalog. */
   template_id: string | null;
+  cashback_mode: RetailCashbackMode;
+  /** Percent of the amount paid, or coins per unit, depending on the mode. */
+  cashback_value: number;
 }
 
 export interface RetailProductRow
