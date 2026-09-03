@@ -269,8 +269,29 @@ export function ProfilePage() {
           <CardContent className="space-y-5 p-4 sm:p-5">
             <div className="space-y-2">
               <Label>Profile cover</Label>
-              {coverFile ? <ImageCropper file={coverFile} aspect={16 / 7} onChange={setCoverCrop} /> : <div className="h-28 rounded-lg bg-brand-soft" />}
-              <Button type="button" variant="outline" className="h-11 w-full" onClick={() => document.getElementById("cover-input")?.click()}><ImagePlus className="size-4" /> {profile?.cover_path ? "Replace cover" : "Add cover"}</Button>
+              {coverFile ? (
+                <ImageCropper
+                  file={coverFile}
+                  aspect={PROFILE_COVER_ASPECT}
+                  onChange={setCoverCrop}
+                  resultLabel="Cover as shown on your profile"
+                />
+              ) : (
+                <div
+                  className="aspect-[3/1] w-full rounded-lg border border-border bg-brand-soft bg-cover bg-center"
+                  style={currentCoverUrl ? { backgroundImage: `url(${currentCoverUrl})` } : undefined}
+                  role="img"
+                  aria-label={currentCoverUrl ? "Current profile cover" : "No cover yet"}
+                />
+              )}
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" className="h-11 flex-1" onClick={() => document.getElementById("cover-input")?.click()}><ImagePlus className="size-4" /> {profile?.cover_path || coverFile ? "Replace cover" : "Add cover"}</Button>
+                {coverFile ? (
+                  <Button type="button" variant="ghost" className="h-11 flex-1" onClick={() => { setCoverFile(null); setCoverCrop(null); }}>
+                    <X className="size-4" /> Cancel
+                  </Button>
+                ) : null}
+              </div>
               <input id="cover-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={(e) => { const picked = e.target.files?.[0] ?? null; if (picked) { const problem = validateImageFile(picked); if (problem) toast.error(problem); else setCoverFile(picked); } e.target.value = ""; }} />
             </div>
             <div className="space-y-2">
