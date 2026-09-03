@@ -544,6 +544,18 @@ export const STOREFRONT_LOGO_TARGET: ImageTarget = {
   quality: 0.85,
   maxBytes: 150 * 1024,
 };
+export const STOREFRONT_COVER_TARGET: ImageTarget = {
+  width: 1200,
+  height: 600,
+  quality: 0.82,
+  maxBytes: 300 * 1024,
+};
+export const RETAIL_PRODUCT_TARGET: ImageTarget = {
+  width: 800,
+  height: 800,
+  quality: 0.82,
+  maxBytes: 300 * 1024,
+};
 
 /**
  * Uploads a shop logo or cover into the shop's own `storefront/` folder of the
@@ -561,7 +573,7 @@ export async function uploadStorefrontImage(
   const source = preloaded ?? (await loadImage(file));
   const { blob, mime } = await optimizeImage(
     source,
-    kind === "logo" ? STOREFRONT_LOGO_TARGET : REWARD_TARGET,
+    kind === "logo" ? STOREFRONT_LOGO_TARGET : STOREFRONT_COVER_TARGET,
     crop,
   );
   const path = `${ecosystemId}/storefront/${optimizedName(`${kind}-${crypto.randomUUID()}`, mime)}`;
@@ -908,7 +920,7 @@ export async function uploadRetailImage(
   const problem = validateRetailImage(file);
   if (problem) throw new Error(problem);
   const source = preloaded ?? (await loadImage(file));
-  const { blob, mime } = await optimizeImage(source, REWARD_TARGET, crop);
+  const { blob, mime } = await optimizeImage(source, RETAIL_PRODUCT_TARGET, crop);
   const path = `${ecosystemId}/${optimizedName(crypto.randomUUID(), mime)}`;
   const { error } = await supabase.storage
     .from(RETAIL_IMAGE_BUCKET)

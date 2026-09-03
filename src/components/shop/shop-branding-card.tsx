@@ -205,7 +205,7 @@ export function ShopBrandingCard({
 
       <ImageUploadCropDialog
         file={pendingCrop?.file ?? null}
-        aspect={pendingCrop?.kind === "logo" ? 1 : 16 / 10}
+        aspect={pendingCrop?.kind === "logo" ? 1 : 2}
         circular={pendingCrop?.kind === "logo"}
         title={pendingCrop?.kind === "logo" ? "Crop shop logo" : "Crop shop cover"}
         description="Drag to reposition and zoom. The result preview is exactly what will be saved."
