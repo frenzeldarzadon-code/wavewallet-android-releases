@@ -66,7 +66,8 @@ BEGIN
   PERFORM set_config('request.jwt.claims', json_build_object('sub', _cust)::text, true);
   SELECT sale_id, tx_id INTO _sale, _tx FROM public.purchase_voucher(_prod, 1, _res);
   SELECT sale_price, platform_fee_amount, seller_amount INTO _price, _fee, _cut FROM public.voucher_sales WHERE id = _sale;
-  ASSERT _price = 100 AND _fee = 1.00 AND _cut = 99.00, format('H/L: price %s fee %s cut %s', _price, _fee, _cut);
+  ASSERT _price = 100 AND _fee = public.voucher_platform_fee_amount(100, 1) AND _cut = public.voucher_seller_cut(100, 1) AND _fee + _cut = 100,
+    format('H/L: price %s fee %s cut %s (fee is 1%% of the seller cut, contained in the price)', _price, _fee, _cut);
   -- A/H: exactly one debit, equal to the customer price
   SELECT count(*), coalesce(sum(amount),0) INTO _n, _debits FROM public.credit_ledger WHERE sale_id = _sale AND direction = 'debit';
   ASSERT _n = 1 AND _debits = 100, format('A/H: one buyer debit of ₱100, got %s rows / %s', _n, _debits);
@@ -120,7 +121,7 @@ BEGIN
   SELECT count(*), coalesce(sum(amount),0) INTO _n, _debits FROM public.credit_ledger WHERE sale_id = _sale AND direction = 'debit';
   ASSERT _n = 1 AND _debits = 100, 'E: admin pays full ₱100 once';
   ASSERT (SELECT count(*) FROM public.credit_ledger WHERE sale_id = _sale AND direction='credit') = 1, 'E: admin gets exactly one remainder row';
-  ASSERT (SELECT amount FROM public.credit_ledger WHERE sale_id = _sale AND direction='credit' AND user_id = _admin) = 99.00, 'E: admin remainder = ₱99 (₱100 − ₱1 fee)';
+  ASSERT (SELECT amount FROM public.credit_ledger WHERE sale_id = _sale AND direction='credit' AND user_id = _admin) = public.voucher_seller_cut(100, 1), 'E: admin remainder = seller cut (₱100 − fee)';
   _trace := _trace || E'\nsale 4 (admin self): ' || (SELECT string_agg(format('%s %s %s', direction, amount, entry_kind), ' | ' ORDER BY direction DESC, amount DESC) FROM public.credit_ledger WHERE sale_id = _sale);
 
   ------------------------------------------------------------------ 5. I: replay protection
@@ -149,7 +150,7 @@ BEGIN
   SELECT coalesce(sum(amount),0) INTO _ref_credits FROM public.credit_ledger WHERE sale_id = _sale AND entry_kind = 'refund';
   SELECT coalesce(sum(amount),0) INTO _ref_debits FROM public.credit_ledger WHERE sale_id = _sale AND entry_kind = 'sale_commission_reversal';
   ASSERT _ref_credits = 100, format('J: refund credits exactly the original ₱100, got %s', _ref_credits);
-  ASSERT _ref_debits = 99, format('J: commission reversal claws back exactly ₱99, got %s', _ref_debits);
+  ASSERT _ref_debits = public.voucher_seller_cut(100, 1), format('J: commission reversal claws back exactly the distributed cut, got %s', _ref_debits);
   -- whole-sale net: debits == credits (fee returns to circulation on refund)
   ASSERT (SELECT coalesce(sum(CASE WHEN direction='debit' THEN amount ELSE -amount END),0) FROM public.credit_ledger WHERE sale_id = _sale) = 0, 'J/G: net movement after refund is 0';
   BEGIN
