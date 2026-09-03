@@ -9,31 +9,35 @@
 
 /** Same shape the database accepts: 3-20 lowercase letters, digits, dot, underscore. */
 const HANDLE_BODY = "[a-z0-9_.]{3,20}";
-const MENTION_RE = new RegExp(`@(${HANDLE_BODY})`, "gi");
+/** Hashtags mirror `social_extract_hashtags` in the database: 2-40 word characters. */
+const HASHTAG_BODY = "[a-z0-9_]{2,40}";
+const TOKEN_RE = new RegExp(`@(${HANDLE_BODY})|#(${HASHTAG_BODY})`, "gi");
 
 export type TextSegment =
-  { kind: "text"; text: string } | { kind: "mention"; text: string; handle: string };
+  | { kind: "text"; text: string }
+  | { kind: "mention"; text: string; handle: string }
+  | { kind: "hashtag"; text: string; tag: string };
 
-/** Splits a body into plain text and @mention segments, in order. */
+/** Splits a body into plain text, @mention and #hashtag segments, in order. */
 export function parseMentions(body: string): TextSegment[] {
   const segments: TextSegment[] = [];
-  const re = new RegExp(MENTION_RE.source, "gi");
+  const re = new RegExp(TOKEN_RE.source, "gi");
   let last = 0;
   let match: RegExpExecArray | null;
   while ((match = re.exec(body)) !== null) {
     const before = body.slice(last, match.index);
-    // A handle only starts at a word boundary, so emails never become mentions.
+    // A token only starts at a word boundary, so emails never become mentions.
     const prev = match.index === 0 ? "" : body[match.index - 1]!;
     if (prev && !/[\s(<[{]/.test(prev)) {
       last = match.index;
       continue;
     }
     if (before) segments.push({ kind: "text", text: before });
-    segments.push({
-      kind: "mention",
-      text: match[0],
-      handle: (match[1] ?? "").toLowerCase(),
-    });
+    if (match[1] !== undefined) {
+      segments.push({ kind: "mention", text: match[0], handle: match[1].toLowerCase() });
+    } else {
+      segments.push({ kind: "hashtag", text: match[0], tag: (match[2] ?? "").toLowerCase() });
+    }
     last = match.index + match[0].length;
   }
   const rest = body.slice(last);
@@ -48,6 +52,20 @@ export function extractMentions(body: string): string[] {
     if (s.kind === "mention" && !out.includes(s.handle)) out.push(s.handle);
   }
   return out;
+}
+
+/** Unique, lowercased hashtags in a body — the same set the database stores. */
+export function extractHashtags(body: string): string[] {
+  const out: string[] = [];
+  for (const s of parseMentions(body)) {
+    if (s.kind === "hashtag" && !out.includes(s.tag)) out.push(s.tag);
+  }
+  return out;
+}
+
+/** Universe hashtag page for a tag — the one place that builds the link. */
+export function hashtagPath(tag: string): string {
+  return `/universe/tag/${tag.replace(/^#+/, "").toLowerCase()}`;
 }
 
 export interface MentionDraft {
