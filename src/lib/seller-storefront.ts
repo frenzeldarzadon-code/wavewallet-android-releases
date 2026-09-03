@@ -19,6 +19,8 @@ export interface StorefrontProduct {
   available: number;
   /** Points price in the SELLING shop's points; null/0 = not redeemable with points. */
   pointsPrice?: number | null;
+  /** Voucher uploads are not supported yet; reserved for existing public product imagery. */
+  imagePath?: string | null;
 }
 
 export interface StorefrontShop {
@@ -87,6 +89,7 @@ export function groupStorefrontRows(rows: Row[]): SellerStorefront | null {
       price: Number(r.price),
       available: Number(r.available ?? 0),
       pointsPrice: r.points_price == null ? null : Number(r.points_price),
+      imagePath: null,
     });
   }
   return {

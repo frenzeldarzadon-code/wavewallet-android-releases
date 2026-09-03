@@ -82,20 +82,20 @@ function UniverseMemberProfile() {
         ) : (
           <Card className="overflow-hidden rounded-lg shadow-[var(--shadow-card)]">
             <div className="aspect-[3/1] w-full bg-brand-soft bg-cover bg-center" style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : undefined} />
-            <CardContent className="space-y-3 py-5">
-              <div className="-mt-12 grid grid-cols-[auto_minmax(0,1fr)] items-end gap-3">
+            <CardContent className="space-y-3 bg-card pb-5 pt-3">
+              <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
                 <MemberAvatar
                   path={profile.avatar_path}
                   name={profile.full_name}
-                  className="size-20 border-4 border-card"
+                  className="-mt-12 size-24 border-4 border-card shadow-[var(--shadow-card)]"
                 />
-                <div className="min-w-0">
-                  <h1 className="truncate text-lg font-semibold">{profile.full_name}</h1>
+                <div className="min-w-0 pt-1">
+                  <h1 className="break-words text-xl font-bold leading-tight">{profile.full_name}</h1>
                   {profile.is_platform ? (
                     <SuperAdminBadge className="mt-1" />
                   ) : (
                     <>
-                      <p className="truncate text-sm text-primary">
+                      <p className="mt-1 break-all text-sm font-medium text-primary">
                         {displayHandle(profile.handle)}
                       </p>
                       <p className="text-xs text-muted-foreground">
