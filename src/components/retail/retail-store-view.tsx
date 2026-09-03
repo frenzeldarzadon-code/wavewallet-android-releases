@@ -49,7 +49,6 @@ import {
   fetchRetailProducts,
   sellerToCustomer,
   fetchStoreSettings,
-  orderTone,
   placeRetailOrder,
   rateRetailProduct,
   type Cart,
