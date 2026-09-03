@@ -4777,6 +4777,7 @@ export type Database = {
           cashback_ledger_id: string | null
           cashback_recipient_id: string | null
           cashback_total: number
+          completed_at: string | null
           created_at: string
           credit_hold_tx: string | null
           credit_released: boolean
@@ -4785,10 +4786,13 @@ export type Database = {
           decided_at: string | null
           decided_by: string | null
           decision_note: string | null
+          delivered_at: string | null
           delivery_address: string | null
           delivery_notes: string | null
           ecosystem_id: string
           fulfillment: string
+          fulfillment_status: string
+          fulfillment_updated_at: string | null
           hold_ledger_id: string | null
           id: string
           notified_at: string | null
@@ -4810,6 +4814,7 @@ export type Database = {
           cashback_ledger_id?: string | null
           cashback_recipient_id?: string | null
           cashback_total?: number
+          completed_at?: string | null
           created_at?: string
           credit_hold_tx?: string | null
           credit_released?: boolean
@@ -4818,10 +4823,13 @@ export type Database = {
           decided_at?: string | null
           decided_by?: string | null
           decision_note?: string | null
+          delivered_at?: string | null
           delivery_address?: string | null
           delivery_notes?: string | null
           ecosystem_id: string
           fulfillment: string
+          fulfillment_status?: string
+          fulfillment_updated_at?: string | null
           hold_ledger_id?: string | null
           id?: string
           notified_at?: string | null
@@ -4843,6 +4851,7 @@ export type Database = {
           cashback_ledger_id?: string | null
           cashback_recipient_id?: string | null
           cashback_total?: number
+          completed_at?: string | null
           created_at?: string
           credit_hold_tx?: string | null
           credit_released?: boolean
@@ -4851,10 +4860,13 @@ export type Database = {
           decided_at?: string | null
           decided_by?: string | null
           decision_note?: string | null
+          delivered_at?: string | null
           delivery_address?: string | null
           delivery_notes?: string | null
           ecosystem_id?: string
           fulfillment?: string
+          fulfillment_status?: string
+          fulfillment_updated_at?: string | null
           hold_ledger_id?: string | null
           id?: string
           notified_at?: string | null
@@ -9433,19 +9445,24 @@ export type Database = {
       list_retail_orders: {
         Args: { _ecosystem_id: string; _status?: string }
         Returns: {
+          completed_at: string
           created_at: string
           customer_id: string
           customer_name: string
           decision_note: string
+          delivered_at: string
           delivery_address: string
           delivery_notes: string
           fulfillment: string
+          fulfillment_status: string
           id: string
           items: Json
           order_no: string
           payment_method: string
           platform_fee_amount: number
           platform_fee_percent: number
+          seller_id: string
+          seller_name: string
           seller_total: number
           status: string
           total: number
@@ -9804,18 +9821,23 @@ export type Database = {
       my_retail_orders: {
         Args: { _ecosystem_id: string }
         Returns: {
+          completed_at: string
           created_at: string
           decision_note: string
+          delivered_at: string
           delivery_address: string
           delivery_notes: string
           fulfillment: string
+          fulfillment_status: string
           id: string
           items: Json
           order_no: string
           payment_method: string
           platform_fee_amount: number
           platform_fee_percent: number
+          seller_name: string
           seller_total: number
+          shop_name: string
           status: string
           total: number
         }[]
@@ -10617,6 +10639,10 @@ export type Database = {
         Args: { _buyer: string; _ecosystem_id: string; _seller: string }
         Returns: string
       }
+      retail_fulfillment_step_ok: {
+        Args: { _from: string; _fulfillment: string; _to: string }
+        Returns: boolean
+      }
       retail_line_cashback: {
         Args: {
           _mode: string
@@ -10661,6 +10687,10 @@ export type Database = {
       retail_settlement_recipient: {
         Args: { _ecosystem_id: string }
         Returns: string
+      }
+      retail_update_fulfillment: {
+        Args: { _next: string; _order_id: string }
+        Returns: undefined
       }
       retail_wallet_for: {
         Args: { _ecosystem_id: string; _user_id: string }
