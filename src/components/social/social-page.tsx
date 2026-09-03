@@ -25,17 +25,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -45,23 +34,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui-kit";
-import { ImageCropper } from "@/components/image-cropper";
 import { MemberAvatar } from "@/components/member-avatar";
 import { displayHandle } from "@/lib/profile";
 import { useSession } from "@/lib/session";
-import type { CropRect } from "@/lib/image-optimize";
 import {
   canGift,
   giftIssue,
   giftSocialCredits,
   COMMENT_MAX_CHARS,
-  POST_MAX_CHARS,
-  SOCIAL_IMAGE_ASPECT,
-  audienceHelp,
-  audienceLabel,
   availableTiers,
   createComment,
-  createPost,
   deleteComment,
   deletePost,
   distributionSummary,
@@ -69,26 +51,20 @@ import {
   fetchDistributionStatus,
   fetchFeed,
   fetchSocialState,
+  openThread,
   relativeTime,
   reportContent,
   setBlocked,
   socialImageUrl,
-  tierDuration,
   toggleLike,
-  uploadSocialImage,
   validateCommentBody,
-  validatePostBody,
-  validateSocialImage,
   type FeedComment,
   type FeedPost,
   type DistributionStatus,
-  type PostAudience,
   type PromotionTier,
-  type SocialCurrency,
   type SocialState,
 } from "@/lib/social";
 import { canReplyTo, hidePostForShop, sendMessage, threadComments } from "@/lib/social";
-import { PostComposer } from "@/components/social/post-composer";
 import { RelationshipMenu } from "@/components/universe/relationship-actions";
 import { MentionText } from "@/components/social/mention-text";
 import { RoleBadge } from "@/components/role-badge";
@@ -111,6 +87,28 @@ function PostImage({ path }: { path: string }) {
       alt="Post attachment"
       loading="lazy"
       className="aspect-4/3 w-full rounded-xl object-cover"
+    />
+  );
+}
+
+/** Signed-url video for a post; metadata only until the member presses play. */
+function PostVideo({ path }: { path: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    void socialImageUrl(path).then((u) => active && setUrl(u));
+    return () => {
+      active = false;
+    };
+  }, [path]);
+  if (!url) return <div className="aspect-video w-full animate-pulse rounded-xl bg-muted" />;
+  return (
+    <video
+      src={url}
+      controls
+      playsInline
+      preload="metadata"
+      className="aspect-video w-full rounded-xl bg-image-scrim object-contain"
     />
   );
 }
