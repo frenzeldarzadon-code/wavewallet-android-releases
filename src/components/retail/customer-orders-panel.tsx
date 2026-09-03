@@ -128,8 +128,8 @@ export function CustomerOrdersPanel({
 
   return (
     <PageSection
+      className="scroll-mt-4"
       devSlot="customer-orders-panel"
-      id="orders"
       title="My orders"
       description="Track each order from review to hand-over."
     >
@@ -179,15 +179,12 @@ export function CustomerOrdersPanel({
           ))}
         </div>
       ) : error ? (
-        <EmptyState
-          title="Couldn't load your orders"
-          description={error}
-          action={
-            <Button size="sm" variant="outline" onClick={onRetry}>
-              Retry
-            </Button>
-          }
-        />
+        <div className="space-y-2">
+          <EmptyState title="Couldn't load your orders" description={error} />
+          <Button size="sm" variant="outline" onClick={onRetry}>
+            Retry
+          </Button>
+        </div>
       ) : visible.length === 0 ? (
         <EmptyState
           title={
@@ -195,7 +192,7 @@ export function CustomerOrdersPanel({
               ? "No retail orders yet"
               : `No ${CUSTOMER_STAGES.find((t) => t.id === stage)?.label.toLowerCase()} orders`
           }
-          description={CUSTOMER_STAGES.find((t) => t.id === stage)?.hint}
+          description={CUSTOMER_STAGES.find((t) => t.id === stage)?.hint ?? ""}
         />
       ) : (
         <div className="space-y-2">
