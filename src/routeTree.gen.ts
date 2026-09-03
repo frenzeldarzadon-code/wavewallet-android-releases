@@ -24,6 +24,7 @@ import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StartShopRouteImport } from './routes/start-shop'
 import { Route as SuperRouteImport } from './routes/super'
+import { Route as TmpOrdersPreviewRouteImport } from './routes/tmp-orders-preview'
 import { Route as UniverseRouteImport } from './routes/universe'
 import { Route as WifiRouteImport } from './routes/wifi'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -194,6 +195,11 @@ const StartShopRoute = StartShopRouteImport.update({
 const SuperRoute = SuperRouteImport.update({
   id: '/super',
   path: '/super',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TmpOrdersPreviewRoute = TmpOrdersPreviewRouteImport.update({
+  id: '/tmp-orders-preview',
+  path: '/tmp-orders-preview',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UniverseRoute = UniverseRouteImport.update({
@@ -697,6 +703,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/start-shop': typeof StartShopRoute
   '/super': typeof SuperRouteWithChildren
+  '/tmp-orders-preview': typeof TmpOrdersPreviewRoute
   '/universe': typeof UniverseRouteWithChildren
   '/wifi': typeof WifiRoute
   '/admin/applications': typeof AdminApplicationsRoute
@@ -806,6 +813,7 @@ export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/start-shop': typeof StartShopRoute
+  '/tmp-orders-preview': typeof TmpOrdersPreviewRoute
   '/wifi': typeof WifiRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
@@ -919,6 +927,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/start-shop': typeof StartShopRoute
   '/super': typeof SuperRouteWithChildren
+  '/tmp-orders-preview': typeof TmpOrdersPreviewRoute
   '/universe': typeof UniverseRouteWithChildren
   '/wifi': typeof WifiRoute
   '/admin/applications': typeof AdminApplicationsRoute
@@ -1034,6 +1043,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/start-shop'
     | '/super'
+    | '/tmp-orders-preview'
     | '/universe'
     | '/wifi'
     | '/admin/applications'
@@ -1143,6 +1153,7 @@ export interface FileRouteTypes {
     | '/setup'
     | '/sitemap.xml'
     | '/start-shop'
+    | '/tmp-orders-preview'
     | '/wifi'
     | '/admin/applications'
     | '/admin/credits'
@@ -1255,6 +1266,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/start-shop'
     | '/super'
+    | '/tmp-orders-preview'
     | '/universe'
     | '/wifi'
     | '/admin/applications'
@@ -1369,6 +1381,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StartShopRoute: typeof StartShopRoute
   SuperRoute: typeof SuperRouteWithChildren
+  TmpOrdersPreviewRoute: typeof TmpOrdersPreviewRoute
   UniverseRoute: typeof UniverseRouteWithChildren
   WifiRoute: typeof WifiRoute
   ApiPortalTemplateDownloadRoute: typeof ApiPortalTemplateDownloadRoute
@@ -1489,6 +1502,13 @@ declare module '@tanstack/react-router' {
       path: '/super'
       fullPath: '/super'
       preLoaderRoute: typeof SuperRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tmp-orders-preview': {
+      id: '/tmp-orders-preview'
+      path: '/tmp-orders-preview'
+      fullPath: '/tmp-orders-preview'
+      preLoaderRoute: typeof TmpOrdersPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/universe': {
@@ -2392,6 +2412,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StartShopRoute: StartShopRoute,
   SuperRoute: SuperRouteWithChildren,
+  TmpOrdersPreviewRoute: TmpOrdersPreviewRoute,
   UniverseRoute: UniverseRouteWithChildren,
   WifiRoute: WifiRoute,
   ApiPortalTemplateDownloadRoute: ApiPortalTemplateDownloadRoute,
