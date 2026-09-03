@@ -21,12 +21,12 @@ export interface PostFeeling {
 }
 
 export interface PostMeta {
-  location?: PostLocation;
-  feeling?: PostFeeling;
+  location?: PostLocation | undefined;
+  feeling?: PostFeeling | undefined;
   /** One of POST_STYLES ids. Ignored when media is attached. */
-  style?: string;
+  style?: string | undefined;
   /** Author invites readers to continue privately in the existing messenger. */
-  dm_invite?: boolean;
+  dm_invite?: boolean | undefined;
 }
 
 export const LOCATION_LABEL_MAX = 80;
