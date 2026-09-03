@@ -19,13 +19,13 @@ import { SellerStorefrontSection } from "@/components/universe/seller-storefront
 export const Route = createFileRoute("/universe/u/$handle")({
   head: () => ({
     meta: [
-      { title: "Universe Profile — WaveWallet" },
+      { title: "Universe Profile — ONE WAVE" },
       {
         name: "description",
         content:
           "Public ONE WAVE Universe profile: display name, unique @handle, photo and bio. No wallet or transaction details are shown.",
       },
-      { property: "og:title", content: "Universe Profile — WaveWallet" },
+      { property: "og:title", content: "Universe Profile — ONE WAVE" },
       {
         property: "og:description",
         content: "A member's public ONE WAVE Universe identity.",

@@ -21,13 +21,13 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/reseller/redemptions")({
   head: () => ({
     meta: [
-      { title: "Reward Redemptions — WaveWallet Reseller" },
+      { title: "Reward Redemptions — ONE WAVE Reseller" },
       {
         name: "description",
         content:
           "Verify redemption codes from customers and approve or reject physical reward releases at your store.",
       },
-      { property: "og:title", content: "Reward Redemptions — WaveWallet Reseller" },
+      { property: "og:title", content: "Reward Redemptions — ONE WAVE Reseller" },
       {
         property: "og:description",
         content: "Look up a redemption code, confirm the reward and release it in one tap.",

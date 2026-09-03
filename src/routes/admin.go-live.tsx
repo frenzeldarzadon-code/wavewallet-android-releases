@@ -20,7 +20,7 @@ import { useSession } from "@/lib/session";
 import { useShopStatus } from "@/lib/shop-status";
 import { reviewCountdown } from "@/lib/review-demo";
 
-const TITLE = "Go Live — WaveWallet shop subscription";
+const TITLE = "Go Live — ONE WAVE shop subscription";
 const DESCRIPTION =
   "Manage your WaveWallet shop subscription: pick a plan, pay it and renew, extend or change plan at any time.";
 

@@ -15,13 +15,13 @@ import { supportContact } from "@/lib/credit-purchases";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Reset your password — WaveWallet" },
+      { title: "Reset your password — ONE WAVE" },
       {
         name: "description",
         content:
           "Request a WaveWallet password reset link or set a new password after following the emailed recovery link.",
       },
-      { property: "og:title", content: "Reset your password — WaveWallet" },
+      { property: "og:title", content: "Reset your password — ONE WAVE" },
       {
         property: "og:description",
         content: "Request a reset link or choose a new WaveWallet password.",

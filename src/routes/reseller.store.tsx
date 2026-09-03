@@ -4,13 +4,13 @@ import { RetailStoreView } from "@/components/retail/retail-store-view";
 export const Route = createFileRoute("/reseller/store")({
   head: () => ({
     meta: [
-      { title: "Retail Store — WaveWallet Reseller" },
+      { title: "Retail Store — ONE WAVE Reseller" },
       {
         name: "description",
         content:
           "Order physical goods from your shop's retail store with pickup or delivery, paid in cash or shop coins.",
       },
-      { property: "og:title", content: "Retail Store — WaveWallet Reseller" },
+      { property: "og:title", content: "Retail Store — ONE WAVE Reseller" },
       {
         property: "og:description",
         content: "Retail goods ordering for resellers, approved by the shop admin.",

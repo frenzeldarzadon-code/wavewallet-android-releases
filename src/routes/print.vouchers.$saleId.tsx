@@ -25,13 +25,13 @@ import {
 export const Route = createFileRoute("/print/vouchers/$saleId")({
   head: () => ({
     meta: [
-      { title: "Print Vouchers — WaveWallet" },
+      { title: "Print Vouchers — ONE WAVE" },
       {
         name: "description",
         content:
           "Print the vouchers from one WaveWallet purchase as 2in x 1.5in cards, several per sheet, using your own printer.",
       },
-      { property: "og:title", content: "Print Vouchers — WaveWallet" },
+      { property: "og:title", content: "Print Vouchers — ONE WAVE" },
       {
         property: "og:description",
         content: "Choose a template and print your issued WaveWallet voucher codes at actual size.",

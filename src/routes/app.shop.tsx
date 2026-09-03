@@ -56,13 +56,13 @@ import { pts } from "@/lib/points";
 export const Route = createFileRoute("/app/shop")({
   head: () => ({
     meta: [
-      { title: "Voucher Shop — WaveWallet" },
+      { title: "Voucher Shop — ONE WAVE" },
       {
         name: "description",
         content:
           "Buy WiFi vouchers with your shop coins or points. One unused code is issued per purchase and marked sold instantly.",
       },
-      { property: "og:title", content: "Voucher Shop — WaveWallet" },
+      { property: "og:title", content: "Voucher Shop — ONE WAVE" },
       {
         property: "og:description",
         content: "Buy WiFi vouchers with coins or points — codes are issued atomically and never reused.",

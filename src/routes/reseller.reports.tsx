@@ -27,13 +27,13 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/reseller/reports")({
   head: () => ({
     meta: [
-      { title: "Earnings & Reports — WaveWallet Reseller" },
+      { title: "Earnings & Reports — ONE WAVE Reseller" },
       {
         name: "description",
         content:
           "Track your voucher margins, commission coins, customer coin loads and transaction history across daily, monthly, quarterly, yearly and custom ranges.",
       },
-      { property: "og:title", content: "Earnings & Reports — WaveWallet Reseller" },
+      { property: "og:title", content: "Earnings & Reports — ONE WAVE Reseller" },
       {
         property: "og:description",
         content: "Your own earnings, commission coins and customer coin loads — nobody else's.",

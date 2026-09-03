@@ -19,12 +19,12 @@ import { SubscriptionCountdownCard } from "@/components/subscription/subscriptio
 export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [
-      { title: "Admin Dashboard — WaveWallet" },
+      { title: "Admin Dashboard — ONE WAVE" },
       {
         name: "description",
         content: "Shop overview: members, resellers, outstanding coins and points, ratings and recent activity.",
       },
-      { property: "og:title", content: "Admin Dashboard — WaveWallet" },
+      { property: "og:title", content: "Admin Dashboard — ONE WAVE" },
       {
         property: "og:description",
         content: "Shop overview: members, resellers, outstanding coins and points, ratings and recent activity.",

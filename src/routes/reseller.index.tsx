@@ -19,13 +19,13 @@ import {
 export const Route = createFileRoute("/reseller/")({
   head: () => ({
     meta: [
-      { title: "Reseller Wallet — WaveWallet" },
+      { title: "Reseller Wallet — ONE WAVE" },
       {
         name: "description",
         content:
           "Reseller coin wallet: live balance, coins loaded to customers and discounted voucher purchases.",
       },
-      { property: "og:title", content: "Reseller Wallet — WaveWallet" },
+      { property: "og:title", content: "Reseller Wallet — ONE WAVE" },
       {
         property: "og:description",
         content: "Track your reseller coin balance and every load you make to customers.",

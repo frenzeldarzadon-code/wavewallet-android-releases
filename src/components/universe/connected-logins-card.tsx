@@ -1,7 +1,7 @@
 /**
  * Connected logins for the one global identity.
  *
- * Shows every sign-in method attached to this WaveWallet account. Unlinking is
+ * Shows every sign-in method attached to this ONE WAVE account. Unlinking is
  * refused whenever it would leave the account with no way to sign in, and
  * providers that are not configured in the auth environment are disabled with
  * an explanation instead of failing at click time.
@@ -46,7 +46,7 @@ export function ConnectedLoginsCard() {
   return (
     <PageSection devSlot="connected-logins-card.connected-logins"
       title="Connected logins"
-      description="Ways you can sign in to this WaveWallet account. One person, one account — connecting a social login never creates a second identity."
+      description="Ways you can sign in to this ONE WAVE account. One person, one account — connecting a social login never creates a second identity."
     >
       {loading ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">

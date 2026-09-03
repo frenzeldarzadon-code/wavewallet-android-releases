@@ -101,7 +101,7 @@ export function NotificationsPage() {
       await registerThisDevice().catch(() => undefined);
       reloadDevices();
       toast.success("Alerts on", {
-        description: "You will see pop-up alerts while WaveWallet is open in this browser.",
+        description: "You will see pop-up alerts while ONE WAVE is open in this browser.",
       });
     } else if (result === "denied") {
       toast.error("Your browser blocked alerts", {
@@ -278,7 +278,7 @@ export function NotificationsPage() {
               ))}
             </ul>
             <p className="mt-1">
-              Until then WaveWallet only alerts you while a tab is open, and everything is always
+              Until then ONE WAVE only alerts you while a tab is open, and everything is always
               waiting for you here.
             </p>
           </div>

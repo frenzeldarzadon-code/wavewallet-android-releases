@@ -12,13 +12,13 @@ import { useSession } from "@/lib/session";
 export const Route = createFileRoute("/app/monitor")({
   head: () => ({
     meta: [
-      { title: "Live Voucher Monitoring — WaveWallet" },
+      { title: "Live Voucher Monitoring — ONE WAVE" },
       {
         name: "description",
         content:
           "Watch your Wi-Fi vouchers live: status, running time, remaining time and data straight from your shop's hotspot controller.",
       },
-      { property: "og:title", content: "Live Voucher Monitoring — WaveWallet" },
+      { property: "og:title", content: "Live Voucher Monitoring — ONE WAVE" },
       {
         property: "og:description",
         content:

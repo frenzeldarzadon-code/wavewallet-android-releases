@@ -27,13 +27,13 @@ export const Route = createFileRoute("/wifi")({
   }),
   head: () => ({
     meta: [
-      { title: "Your shop's Wi-Fi customer portal — WaveWallet" },
+      { title: "Your shop's Wi-Fi customer portal — ONE WAVE" },
       {
         name: "description",
         content:
           "You're connected. Sign in or create your ONE WAVE account for this hotspot shop to buy vouchers, hold coins and watch your voucher live.",
       },
-      { property: "og:title", content: "Your shop's Wi-Fi customer portal — WaveWallet" },
+      { property: "og:title", content: "Your shop's Wi-Fi customer portal — ONE WAVE" },
       {
         property: "og:description",
         content: "Sign in or sign up with the hotspot shop you just connected to.",

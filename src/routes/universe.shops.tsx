@@ -32,7 +32,7 @@ export const Route = createFileRoute("/universe/shops")({
       {
         name: "description",
         content:
-          "Browse WaveWallet shops, switch between the ones you belong to and join a new hotspot shop instantly.",
+          "Browse ONE WAVE shops, switch between the ones you belong to and join a new hotspot shop instantly.",
       },
       { property: "og:title", content: "Shop Directory — ONE WAVE Universe" },
       {

@@ -20,13 +20,13 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/join/$slug")({
   head: () => ({
     meta: [
-      { title: "Create your customer account — WaveWallet" },
+      { title: "Create your customer account — ONE WAVE" },
       {
         name: "description",
         content:
           "Join your hotspot operator's WaveWallet shop to buy vouchers, hold coins, earn points and redeem rewards.",
       },
-      { property: "og:title", content: "Create your customer account — WaveWallet" },
+      { property: "og:title", content: "Create your customer account — ONE WAVE" },
       {
         property: "og:description",
         content: "Sign up with your operator's link and start buying vouchers with coins or points.",

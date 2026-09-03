@@ -33,13 +33,13 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/reseller/customers")({
   head: () => ({
     meta: [
-      { title: "Load Customer Coins — WaveWallet Reseller" },
+      { title: "Load Customer Coins — ONE WAVE Reseller" },
       {
         name: "description",
         content:
           "Find a customer in your shop and load coins from your reseller wallet with a confirmed transaction ID.",
       },
-      { property: "og:title", content: "Load Customer Coins — WaveWallet Reseller" },
+      { property: "og:title", content: "Load Customer Coins — ONE WAVE Reseller" },
       {
         property: "og:description",
         content: "Load coins to customers of your shop from your reseller wallet.",

@@ -20,7 +20,7 @@ import { useHelpVisible } from "@/components/help-tip";
 import { InstallAppCard } from "@/components/install-app-card";
 import { loadGuide } from "@/lib/guide.functions";
 
-const TITLE = "Guide & Help — WaveWallet";
+const TITLE = "Guide & Help — ONE WAVE";
 const DESCRIPTION =
   "The complete WaveWallet guide for shop owners: Coins, resellers, WiFi vouchers, cashback, points, cash in and cash out, and the subscription plans.";
 

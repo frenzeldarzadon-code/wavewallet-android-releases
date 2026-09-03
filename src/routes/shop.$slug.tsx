@@ -41,13 +41,13 @@ import {
 export const Route = createFileRoute("/shop/$slug")({
   head: ({ params }) => ({
     meta: [
-      { title: `${params.slug} Storefront — WaveWallet` },
+      { title: `${params.slug} Storefront — ONE WAVE` },
       {
         name: "description",
         content:
           "Browse this WaveWallet shop's public products, prices and customer ratings, then request to join to place an order.",
       },
-      { property: "og:title", content: `${params.slug} Storefront — WaveWallet` },
+      { property: "og:title", content: `${params.slug} Storefront — ONE WAVE` },
       {
         property: "og:description",
         content: "Public products, prices and ratings for this WaveWallet shop.",

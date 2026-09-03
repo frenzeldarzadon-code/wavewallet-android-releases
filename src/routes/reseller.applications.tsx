@@ -7,13 +7,13 @@ import { useSession } from "@/lib/session";
 export const Route = createFileRoute("/reseller/applications")({
   head: () => ({
     meta: [
-      { title: "New Members — WaveWallet Reseller" },
+      { title: "New Members — ONE WAVE Reseller" },
       {
         name: "description",
         content:
           "Review members who just joined your shop and keep or remove them.",
       },
-      { property: "og:title", content: "New Members — WaveWallet Reseller" },
+      { property: "og:title", content: "New Members — ONE WAVE Reseller" },
       {
         property: "og:description",
         content: "Keep or remove members who joined your shop automatically.",

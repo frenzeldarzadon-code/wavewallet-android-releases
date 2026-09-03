@@ -14,13 +14,13 @@ import { platformSettings } from "@/lib/wavewallet";
 export const Route = createFileRoute("/setup")({
   head: () => ({
     meta: [
-      { title: "Initial Super Admin Setup — WaveWallet" },
+      { title: "Initial Super Admin Setup — ONE WAVE" },
       {
         name: "description",
         content:
           "One-time secure setup of the first WaveWallet platform owner account. Available only until a real Super Admin exists.",
       },
-      { property: "og:title", content: "Initial Super Admin Setup — WaveWallet" },
+      { property: "og:title", content: "Initial Super Admin Setup — ONE WAVE" },
       {
         property: "og:description",
         content: "One-time secure setup of the first WaveWallet platform owner account.",

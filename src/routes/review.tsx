@@ -42,7 +42,7 @@ import {
   type DemoState,
 } from "@/lib/review-demo";
 
-const TITLE = "Review shop — WaveWallet";
+const TITLE = "Review shop — ONE WAVE";
 const DESCRIPTION =
   "Explore the full WaveWallet flow for 5 days with simulated Demo Coins before you subscribe.";
 

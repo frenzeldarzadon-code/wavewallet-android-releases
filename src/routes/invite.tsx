@@ -16,13 +16,13 @@ export const Route = createFileRoute("/invite")({
   }),
   head: () => ({
     meta: [
-      { title: "Operator onboarding — WaveWallet" },
+      { title: "Operator onboarding — ONE WAVE" },
       {
         name: "description",
         content:
           "Accept your WaveWallet operator invitation and set up the account for your assigned hotspot shop.",
       },
-      { property: "og:title", content: "Operator onboarding — WaveWallet" },
+      { property: "og:title", content: "Operator onboarding — ONE WAVE" },
       {
         property: "og:description",
         content: "Invitation-only onboarding for hotspot operators running a WaveWallet shop.",
