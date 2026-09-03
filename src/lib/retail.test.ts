@@ -141,6 +141,8 @@ describe("admin catalog filtering", () => {
     ...product("x", 10, 5),
     active: true,
     archived: false,
+    cashback_mode: "disabled",
+    cashback_value: 0,
     category: "Instant Noodles",
     brand: "Lucky Me",
     variant: null,

@@ -348,6 +348,26 @@ export async function fetchRetailProducts(ecosystemId: string): Promise<RetailPr
   }));
 }
 
+/** Retail cashback per product: an EARNING for the attributed seller, never a price cut. */
+export type RetailCashbackMode = "disabled" | "percent" | "fixed";
+
+/**
+ * Presentation mirror of the database `retail_line_cashback`: the base is the
+ * ACTUAL seller amount paid for the line (wholesale price when it applies);
+ * fixed is per unit; both are capped at the line so cashback never exceeds it.
+ */
+export const lineCashback = (
+  mode: RetailCashbackMode,
+  value: number,
+  sellerLine: number,
+  qty: number,
+): number => {
+  const line = Math.round(sellerLine * 100) / 100;
+  if (mode === "percent") return Math.min(Math.round(line * value) / 100, line);
+  if (mode === "fixed") return Math.min(Math.round(value * qty * 100) / 100, line);
+  return 0;
+};
+
 /** Catalog metadata shared by starter-catalog and manually added products. */
 export interface RetailProductDetails {
   category: string | null;
@@ -364,6 +384,9 @@ export interface RetailProductDetails {
   published: boolean;
   /** Set when the row came from the shared starter catalog. */
   template_id: string | null;
+  cashback_mode: RetailCashbackMode;
+  /** Percent of the amount paid, or coins per unit, depending on the mode. */
+  cashback_value: number;
 }
 
 export interface RetailProductRow
@@ -388,6 +411,8 @@ export async function fetchAllRetailProducts(ecosystemId: string): Promise<Retai
     price: Number(p.price),
     wholesale_price: Number(p.wholesale_price ?? 0),
     wholesale_min_qty: Number(p.wholesale_min_qty ?? 0),
+    cashback_mode: (p.cashback_mode ?? "disabled") as RetailCashbackMode,
+    cashback_value: Number(p.cashback_value ?? 0),
     rating_avg: 0,
     rating_count: 0,
   }));
@@ -442,6 +467,11 @@ export async function saveRetailProduct(
     sku: trimmed(input.sku),
     barcode: trimmed(input.barcode),
     published: input.published ?? false,
+    cashback_mode: input.cashback_mode ?? "disabled",
+    cashback_value:
+      input.cashback_mode === "percent"
+        ? Math.min(100, Math.max(0, input.cashback_value ?? 0))
+        : Math.max(0, input.cashback_value ?? 0),
   };
   const { error } = input.id
     ? await supabase.from("retail_products").update(payload).eq("id", input.id)
@@ -566,6 +596,8 @@ export async function placeRetailOrder(
   ecosystemId: string,
   cart: Cart,
   draft: CheckoutDraft,
+  /** Universe storefront the buyer purchased through (authorized seller); cashback attribution. */
+  sellerId?: string | null,
 ): Promise<PlacedOrder> {
   requireOnline();
   const items = Object.entries(cart)
@@ -578,6 +610,7 @@ export async function placeRetailOrder(
     _payment_method: draft.payment ?? "cash",
     ...(draft.address.trim() ? { _address: draft.address.trim() } : {}),
     ...(draft.notes.trim() ? { _notes: draft.notes.trim() } : {}),
+    ...(sellerId ? { _seller_id: sellerId } : {}),
   });
   if (error) throw new Error(error.message);
   const row = (data as Array<Record<string, unknown>> | null)?.[0];
