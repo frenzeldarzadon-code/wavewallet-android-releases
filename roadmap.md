@@ -56,3 +56,10 @@
 ## Image cropper live preview — COMPLETE (UNPUBLISHED)
 - Shared `ImageCropper` now shows the real photo (own object URL), dimmed cut-away area, crop boundary, live result preview, pinch/scroll/slider zoom, 1:1 drag.
 - Profile cover crop/encode/display unified at 3:1 (`PROFILE_COVER_TARGET`).
+
+## Universe marketplace/profile visual refinement — IN PROGRESS (UNPUBLISHED)
+- [ ] Guarantee profile identity text remains fully readable below cover images on mobile and desktop
+- [ ] Use existing shop cover/logo assets in Featured and Top Selling shop cards with safe visual fallbacks
+- [ ] Use real Retail product images and local voucher artwork fallbacks in marketplace/storefront cards
+- [ ] Verify 390px mobile and desktop layouts, tests, typecheck, and no functional changes
+- [ ] Do not publish
