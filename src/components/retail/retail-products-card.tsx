@@ -110,6 +110,8 @@ const toDraft = (p: RetailProductRow): Draft => ({
   price: String(p.price),
   wholesale_price: String(p.wholesale_price),
   wholesale_min_qty: String(p.wholesale_min_qty ?? 0),
+  cashback_mode: p.cashback_mode ?? "disabled",
+  cashback_value: String(p.cashback_value ?? 0),
   stock: String(p.stock),
   image_path: p.image_path,
   public_visible: p.public_visible,
