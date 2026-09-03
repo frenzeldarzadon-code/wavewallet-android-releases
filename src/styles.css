@@ -204,6 +204,33 @@
   background-size: 34px 34px;
 }
 
+/* Text-only Universe post backgrounds. Every style fixes its own foreground so
+   contrast never depends on the light/dark theme. */
+@utility post-style-wave {
+  background-image: linear-gradient(135deg, oklch(0.55 0.19 256) 0%, oklch(0.68 0.16 230) 100%);
+  color: oklch(0.99 0.005 250);
+}
+@utility post-style-sunrise {
+  background-image: linear-gradient(135deg, oklch(0.75 0.16 55) 0%, oklch(0.68 0.2 25) 100%);
+  color: oklch(0.99 0.005 60);
+}
+@utility post-style-forest {
+  background-image: linear-gradient(135deg, oklch(0.52 0.14 155) 0%, oklch(0.66 0.15 175) 100%);
+  color: oklch(0.99 0.005 150);
+}
+@utility post-style-dusk {
+  background-image: linear-gradient(135deg, oklch(0.42 0.16 300) 0%, oklch(0.6 0.18 340) 100%);
+  color: oklch(0.99 0.005 320);
+}
+@utility post-style-ink {
+  background-image: linear-gradient(135deg, oklch(0.2 0.03 258) 0%, oklch(0.32 0.05 256) 100%);
+  color: oklch(0.97 0.01 250);
+}
+@utility post-style-paper {
+  background-image: linear-gradient(135deg, oklch(0.97 0.02 80) 0%, oklch(0.92 0.04 70) 100%);
+  color: oklch(0.25 0.03 60);
+}
+
 @utility card-sheen {
   background-image: linear-gradient(
     135deg,

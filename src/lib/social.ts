@@ -16,6 +16,7 @@ import {
   type CropRect,
   type ImageTarget,
 } from "@/lib/image-optimize";
+import { validateVideoFile, videoExtension, type PostMeta } from "@/lib/post-meta";
 
 export const SOCIAL_IMAGE_BUCKET = "social-images";
 export const MAX_SOCIAL_IMAGE_BYTES = MAX_UPLOAD_BYTES;
@@ -102,6 +103,11 @@ export interface FeedPost {
   author_avatar: string | null;
   body: string;
   image_path: string | null;
+  /** Optional attached video in the same private bucket as photos. */
+  video_path?: string | null;
+  /** Structured extras: location, feeling/activity, text style, DM invite. */
+  meta?: PostMeta | null;
+  hashtags?: string[] | null;
   promoted: boolean;
   promotion_tier_name: string | null;
   promotion_expires_at: string | null;
@@ -467,10 +473,11 @@ export async function fetchSocialState(): Promise<SocialState> {
   return data as unknown as SocialState;
 }
 
-export async function fetchFeed(before?: string): Promise<FeedPost[]> {
+export async function fetchFeed(before?: string, hashtag?: string | null): Promise<FeedPost[]> {
   const { data, error } = await supabase.rpc("social_feed", {
     _limit: 30,
     ...(before ? { _before: before } : {}),
+    ...(hashtag ? { _hashtag: hashtag } : {}),
   });
   if (error) fail(error.message);
   return (data ?? []) as FeedPost[];
@@ -506,6 +513,8 @@ export interface CreatePostResult {
 export async function createPost(input: {
   body: string;
   imagePath?: string | null;
+  videoPath?: string | null;
+  meta?: PostMeta | null;
   promote: boolean;
   tierId?: string | null;
   currency?: SocialCurrency;
@@ -516,6 +525,10 @@ export async function createPost(input: {
   const { data, error } = await supabase.rpc("social_create_post", {
     _body: input.body.trim(),
     ...(input.imagePath ? { _image_path: input.imagePath } : {}),
+    ...(input.videoPath ? { _video_path: input.videoPath } : {}),
+    ...(input.meta && Object.keys(input.meta).length > 0
+      ? { _meta: input.meta as unknown as Record<string, never> }
+      : {}),
     _promote: input.promote,
     ...(input.tierId ? { _tier_id: input.tierId } : {}),
     ...(input.currency ? { _currency: input.currency } : {}),
@@ -846,6 +859,30 @@ export async function uploadSocialImage(input: {
 export async function deleteSocialImage(path?: string | null): Promise<void> {
   if (!path) return;
   await supabase.storage.from(SOCIAL_IMAGE_BUCKET).remove([path]);
+}
+
+export function validateSocialVideo(file: File): string | null {
+  return validateVideoFile(file);
+}
+
+/**
+ * Uploads a short video next to the member's photos: same private bucket, same
+ * `${shop}/${member}/` folder, so the existing storage policies apply unchanged.
+ * Videos are stored as uploaded (no transcoding) and capped at 25 MB.
+ */
+export async function uploadSocialVideo(input: {
+  ecosystemId: string;
+  userId: string;
+  file: File;
+}): Promise<string> {
+  const problem = validateSocialVideo(input.file);
+  if (problem) throw new Error(problem);
+  const path = `${input.ecosystemId}/${input.userId}/${crypto.randomUUID()}.${videoExtension(input.file.type)}`;
+  const { error } = await supabase.storage
+    .from(SOCIAL_IMAGE_BUCKET)
+    .upload(path, input.file, { contentType: input.file.type, upsert: false });
+  if (error) throw new Error(error.message);
+  return path;
 }
 
 const urlCache = new Map<string, { url: string; expires: number }>();

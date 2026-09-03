@@ -4,37 +4,27 @@ import {
   Gift,
   Globe2,
   Heart,
-  ImagePlus,
   Loader2,
+  MapPin,
   MessageCircle,
-  Megaphone,
   Reply,
   Send,
   ShieldOff,
   Trash2,
-  Users,
   X,
 } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { UniverseComposer } from "@/components/social/universe-composer";
+import { StyledPostBody } from "@/components/social/composer-pickers";
+import { feelingPhrase, readPostMeta, styleApplies } from "@/lib/post-meta";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -44,23 +34,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui-kit";
-import { ImageCropper } from "@/components/image-cropper";
 import { MemberAvatar } from "@/components/member-avatar";
 import { displayHandle } from "@/lib/profile";
 import { useSession } from "@/lib/session";
-import type { CropRect } from "@/lib/image-optimize";
 import {
   canGift,
   giftIssue,
   giftSocialCredits,
   COMMENT_MAX_CHARS,
-  POST_MAX_CHARS,
-  SOCIAL_IMAGE_ASPECT,
-  audienceHelp,
-  audienceLabel,
   availableTiers,
   createComment,
-  createPost,
   deleteComment,
   deletePost,
   distributionSummary,
@@ -68,26 +51,20 @@ import {
   fetchDistributionStatus,
   fetchFeed,
   fetchSocialState,
+  openThread,
   relativeTime,
   reportContent,
   setBlocked,
   socialImageUrl,
-  tierDuration,
   toggleLike,
-  uploadSocialImage,
   validateCommentBody,
-  validatePostBody,
-  validateSocialImage,
   type FeedComment,
   type FeedPost,
   type DistributionStatus,
-  type PostAudience,
   type PromotionTier,
-  type SocialCurrency,
   type SocialState,
 } from "@/lib/social";
 import { canReplyTo, hidePostForShop, sendMessage, threadComments } from "@/lib/social";
-import { PostComposer } from "@/components/social/post-composer";
 import { RelationshipMenu } from "@/components/universe/relationship-actions";
 import { MentionText } from "@/components/social/mention-text";
 import { RoleBadge } from "@/components/role-badge";
@@ -114,6 +91,28 @@ function PostImage({ path }: { path: string }) {
   );
 }
 
+/** Signed-url video for a post; metadata only until the member presses play. */
+function PostVideo({ path }: { path: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    void socialImageUrl(path).then((u) => active && setUrl(u));
+    return () => {
+      active = false;
+    };
+  }, [path]);
+  if (!url) return <div className="aspect-video w-full animate-pulse rounded-xl bg-muted" />;
+  return (
+    <video
+      src={url}
+      controls
+      playsInline
+      preload="metadata"
+      className="aspect-video w-full rounded-xl bg-image-scrim object-contain"
+    />
+  );
+}
+
 /**
  * Wraps an avatar or name so it opens the author's public Universe profile.
  * Members without a handle are not linkable (the database gives everyone one,
@@ -128,16 +127,16 @@ function AuthorLink({ handle, children }: { handle: string | null; children: Rea
   );
 }
 
-export function SocialPage() {
+/**
+ * Universe feed. Without `hashtag` it is the Home feed with the composer on
+ * top; with `hashtag` it lists only posts carrying that tag (no composer).
+ */
+export function SocialPage({ hashtag }: { hashtag?: string } = {}) {
   const session = useSession();
   const account = session.account;
   const [state, setState] = useState<SocialState | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // composer
-  const [composerOpen, setComposerOpen] = useState(false);
-  const [quickPost, setQuickPost] = useState("");
 
   // reporting
   const [report, setReport] = useState<{ type: "post" | "comment"; id: string } | null>(null);
@@ -145,7 +144,7 @@ export function SocialPage() {
 
   const refresh = useCallback(async () => {
     try {
-      const [s, f] = await Promise.all([fetchSocialState(), fetchFeed()]);
+      const [s, f] = await Promise.all([fetchSocialState(), fetchFeed(undefined, hashtag ?? null)]);
       setState(s);
       setPosts(f);
     } catch (e) {
@@ -153,10 +152,11 @@ export function SocialPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [hashtag]);
 
   useEffect(() => {
     if (!account) return;
+    setLoading(true);
     void refresh();
   }, [account, refresh]);
 
@@ -232,39 +232,13 @@ export function SocialPage() {
 
   return (
     <>
-      <div className="px-4 sm:px-0">
-        <div className="flex w-full items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 shadow-[var(--shadow-card)]">
-          <MemberAvatar name={account.name} className="size-10" />
-          <Input
-            value={quickPost}
-            onChange={(event) => setQuickPost(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && quickPost.trim()) setComposerOpen(true);
-            }}
-            placeholder="What's happening in your area?"
-            aria-label="Write a post"
-            className="min-w-0 flex-1 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
-          />
-          <Button type="button" size="sm" disabled={!state || !quickPost.trim()} onClick={() => setComposerOpen(true)}>
-            <Send className="size-4" /> <span className="hidden sm:inline">Post</span>
-          </Button>
-        </div>
-      </div>
-
-      {state ? (
-        <PostComposer
-          open={composerOpen}
-          onOpenChange={setComposerOpen}
+      {state && !hashtag ? (
+        <UniverseComposer
           state={state}
           tiers={tiers}
           userId={account.id}
-          pointsBalance={account.pointsBalance ?? 0}
           ownShopName={session.ecosystem?.name ?? "My shop"}
-          initialBody={quickPost}
-          onPosted={async () => {
-            setQuickPost("");
-            await refresh();
-          }}
+          onPosted={refresh}
         />
       ) : null}
 
@@ -355,8 +329,29 @@ function PostCard({
   const [giftAmount, setGiftAmount] = useState("5");
   const [gifting, setGifting] = useState(false);
   const [hideReason, setHideReason] = useState("");
+  const [dmOpening, setDmOpening] = useState(false);
+  const navigate = useNavigate();
 
   const thread = threadComments(comments);
+  const meta = readPostMeta(post.meta);
+  const styled = styleApplies({
+    style: meta.style,
+    body: post.body,
+    hasMedia: Boolean(post.image_path || post.video_path),
+  });
+
+  /** "Message me" invite: opens (or creates) the existing private thread and jumps to Messages. */
+  const openDm = async () => {
+    setDmOpening(true);
+    try {
+      const threadId = await openThread(post.author_id);
+      await navigate({ to: "/universe/messages", search: { thread: threadId } });
+    } catch (e) {
+      toast.error("Could not open the conversation", { description: (e as Error).message });
+    } finally {
+      setDmOpening(false);
+    }
+  };
 
   const loadComments = async () => {
     try {
@@ -487,7 +482,37 @@ function PostCard({
               ) : null}
               <RoleBadge role={post.author_role} />
             </div>
-            <MentionText body={post.body} className="mt-1" />
+            {meta.feeling || meta.location ? (
+              <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
+                {meta.feeling ? (
+                  <span>
+                    {feelingPhrase(meta.feeling)} <span aria-hidden>{meta.feeling.emoji}</span>
+                  </span>
+                ) : null}
+                {meta.location ? (
+                  <span className="inline-flex items-center gap-1">
+                    {meta.feeling ? "·" : null}
+                    <MapPin className="size-3.5 text-primary" aria-hidden />
+                    {typeof meta.location.lat === "number" &&
+                    typeof meta.location.lng === "number" ? (
+                      <a
+                        href={`https://www.openstreetmap.org/?mlat=${meta.location.lat}&mlon=${meta.location.lng}#map=13/${meta.location.lat}/${meta.location.lng}`}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="hover:underline"
+                      >
+                        {meta.location.label}
+                      </a>
+                    ) : (
+                      <span>{meta.location.label}</span>
+                    )}
+                  </span>
+                ) : null}
+              </p>
+            ) : null}
+            {styled && meta.style ? null : post.body.trim() ? (
+              <MentionText body={post.body} className="mt-1" />
+            ) : null}
 
             {post.audience === "general" && post.author_id === meId ? (
               <GeneralStatus postId={post.id} />
@@ -495,7 +520,25 @@ function PostCard({
           </div>
         </div>
 
+        {styled && meta.style ? <StyledPostBody body={post.body} styleId={meta.style} /> : null}
         {post.image_path ? <PostImage path={post.image_path} /> : null}
+        {post.video_path ? <PostVideo path={post.video_path} /> : null}
+
+        {meta.dm_invite && post.author_id !== meId ? (
+          <Button
+            variant="outline"
+            className="h-11 w-full gap-2 rounded-xl border-primary/40 text-primary"
+            disabled={dmOpening}
+            onClick={() => void openDm()}
+          >
+            {dmOpening ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <MessageCircle className="size-4" />
+            )}
+            Message {post.author_name.split(" ")[0]} privately
+          </Button>
+        ) : null}
 
         <div className="flex flex-wrap items-center gap-1">
           <Button variant="ghost" size="sm" className="h-10 gap-1.5" onClick={onLike}>
