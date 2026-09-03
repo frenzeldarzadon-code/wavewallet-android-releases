@@ -42,6 +42,9 @@ export function MoneySettingsCard() {
       (Number.isFinite(form.retailFeePercent) && form.retailFeePercent >= 0 && form.retailFeePercent <= 100
         ? null
         : "The retail platform fee must be between 0% and 100%") ??
+      (Number.isFinite(form.voucherFeePercent) && form.voucherFeePercent >= 0 && form.voucherFeePercent <= 100
+        ? null
+        : "The voucher platform fee must be between 0% and 100%") ??
       (Number.isFinite(form.shopTransferFee) && form.shopTransferFee >= 0
         ? null
         : "The shop transfer fee must be zero or more coins.");
@@ -163,6 +166,22 @@ export function MoneySettingsCard() {
             Added on top of the seller's amount for retail orders and calculated only on the price actually
             charged (the wholesale price when its minimum quantity is reached). Each order stores the rate and
             fee in force when it was placed.
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="ms-voucher-fee">Universe voucher platform fee (%)</Label>
+          <Input
+            id="ms-voucher-fee"
+            inputMode="decimal"
+            value={form.voucherFeePercent}
+            onChange={(e) => set("voucherFeePercent", Number(e.target.value))}
+          />
+          <p className="text-xs text-muted-foreground">
+            Contained inside the customer price of Universe vouchers (a ₱10 voucher stays ₱10; at 1% the
+            seller's cut is ₱9.90). Each product keeps the rate in force when it was priced and each sale
+            stores its own rate and amount, so changing this never reprices existing products or sales.
+            Cashback is calculated separately on the full sale amount. New Generation shops carry no fee.
           </p>
         </div>
 
