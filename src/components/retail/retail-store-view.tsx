@@ -35,11 +35,13 @@ import {
   cancelRetailOrder,
   cartCount,
   cartLines,
-  cartTotal,
+  cartQuote,
   changeQuantity,
   checkoutProblem,
   fetchMyRetailOrders,
+  fetchRetailFeePercent,
   fetchRetailProducts,
+  sellerToCustomer,
   fetchStoreSettings,
   orderTone,
   placeRetailOrder,
@@ -59,6 +61,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
   const [settings, setSettings] = useState<StoreSettings>(DEFAULT_STORE_SETTINGS);
   const [orders, setOrders] = useState<RetailOrder[]>([]);
   const [balance, setBalance] = useState(0);
+  const [feePercent, setFeePercent] = useState(0);
   const [cart, setCart] = useState<Cart>({});
   const [loading, setLoading] = useState(true);
   const [checkout, setCheckout] = useState(false);
@@ -78,16 +81,18 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
     if (!ecosystemDbId || !userId) return;
     setLoading(true);
     try {
-      const [p, s, o, b] = await Promise.all([
+      const [p, s, o, b, f] = await Promise.all([
         fetchRetailProducts(ecosystemDbId),
         fetchStoreSettings(ecosystemDbId),
         fetchMyRetailOrders(ecosystemDbId),
         fetchCreditBalance(userId, ecosystemDbId),
+        fetchRetailFeePercent(),
       ]);
       setProducts(p);
       setSettings(s);
       setOrders(o);
       setBalance(b);
+      setFeePercent(f);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -101,8 +106,9 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
 
   if (!account || !ecosystemDbId) return null;
 
-  const lines = cartLines(cart, products);
-  const total = cartTotal(cart, products);
+  const lines = cartLines(cart, products, feePercent);
+  const quote = cartQuote(cart, products, feePercent);
+  const total = quote.total;
   const count = cartCount(cart);
   const problem = checkoutProblem(draft, total, settings, balance, count);
 
@@ -181,7 +187,17 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                     ) : null}
                     <RatingStars avg={p.rating_avg} count={p.rating_count} />
                     <div className="flex items-center justify-between gap-2 pt-1">
-                      <p className="text-sm font-semibold text-primary">{credits(p.price)}</p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-primary">
+                          {credits(sellerToCustomer(p.price, feePercent))}
+                        </p>
+                        {(p.wholesale_price ?? 0) > 0 && (p.wholesale_min_qty ?? 0) > 0 ? (
+                          <p className="text-[11px] text-muted-foreground">
+                            {credits(sellerToCustomer(p.wholesale_price ?? 0, feePercent))} each from{" "}
+                            {p.wholesale_min_qty} {p.unit ?? "pcs"}
+                          </p>
+                        ) : null}
+                      </div>
                       {qty > 0 ? (
                         <div className="flex items-center gap-2">
                           <Button
@@ -316,11 +332,20 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
               <li key={l.product.id} className="flex justify-between gap-2">
                 <span>
                   {l.quantity} × {l.product.name}
+                  {l.wholesale ? (
+                    <span className="ml-1 text-[11px] text-success">wholesale price</span>
+                  ) : null}
                 </span>
                 <span>{credits(l.lineTotal)}</span>
               </li>
             ))}
           </ul>
+          {quote.fee > 0 ? (
+            <p className="text-[11px] text-muted-foreground">
+              Includes {credits(quote.fee)} platform fee ({feePercent}% of the shop's{" "}
+              {credits(quote.sellerTotal)}).
+            </p>
+          ) : null}
 
           <div className="space-y-2">
             <Label>How do you want it?</Label>

@@ -3906,6 +3906,7 @@ export type Database = {
           payment_instructions: string
           plan_name: string
           plan_price: number
+          retail_platform_fee_percent: number
           shop_transfer_fee_credits: number
           support_message: string
           support_page_name: string
@@ -3938,6 +3939,7 @@ export type Database = {
           payment_instructions?: string
           plan_name?: string
           plan_price?: number
+          retail_platform_fee_percent?: number
           shop_transfer_fee_credits?: number
           support_message?: string
           support_page_name?: string
@@ -3970,6 +3972,7 @@ export type Database = {
           payment_instructions?: string
           plan_name?: string
           plan_price?: number
+          retail_platform_fee_percent?: number
           shop_transfer_fee_credits?: number
           support_message?: string
           support_page_name?: string
@@ -4700,33 +4703,45 @@ export type Database = {
       retail_order_items: {
         Row: {
           created_at: string
+          fee_amount: number | null
           id: string
           line_total: number
           order_id: string
           product_id: string
           product_name: string
           quantity: number
+          regular_unit_price: number | null
+          seller_line_total: number | null
           unit_price: number
+          wholesale_applied: boolean
         }
         Insert: {
           created_at?: string
+          fee_amount?: number | null
           id?: string
           line_total: number
           order_id: string
           product_id: string
           product_name: string
           quantity: number
+          regular_unit_price?: number | null
+          seller_line_total?: number | null
           unit_price: number
+          wholesale_applied?: boolean
         }
         Update: {
           created_at?: string
+          fee_amount?: number | null
           id?: string
           line_total?: number
           order_id?: string
           product_id?: string
           product_name?: string
           quantity?: number
+          regular_unit_price?: number | null
+          seller_line_total?: number | null
           unit_price?: number
+          wholesale_applied?: boolean
         }
         Relationships: [
           {
@@ -4764,7 +4779,10 @@ export type Database = {
           notified_at: string | null
           order_no: string
           payment_method: string
+          platform_fee_amount: number | null
+          platform_fee_percent: number | null
           refund_ledger_id: string | null
+          seller_total: number | null
           settled_to: string | null
           settlement_ledger_id: string | null
           status: string
@@ -4790,7 +4808,10 @@ export type Database = {
           notified_at?: string | null
           order_no: string
           payment_method: string
+          platform_fee_amount?: number | null
+          platform_fee_percent?: number | null
           refund_ledger_id?: string | null
+          seller_total?: number | null
           settled_to?: string | null
           settlement_ledger_id?: string | null
           status?: string
@@ -4816,7 +4837,10 @@ export type Database = {
           notified_at?: string | null
           order_no?: string
           payment_method?: string
+          platform_fee_amount?: number | null
+          platform_fee_percent?: number | null
           refund_ledger_id?: string | null
+          seller_total?: number | null
           settled_to?: string | null
           settlement_ledger_id?: string | null
           status?: string
@@ -4865,6 +4889,61 @@ export type Database = {
             columns: ["wallet_account_id"]
             isOneToOne: false
             referencedRelation: "credit_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      retail_platform_fees: {
+        Row: {
+          created_at: string
+          ecosystem_id: string
+          fee_credits: number
+          fee_percent: number
+          id: string
+          order_id: string
+          seller_credits: number
+          tx_id: string
+        }
+        Insert: {
+          created_at?: string
+          ecosystem_id: string
+          fee_credits: number
+          fee_percent: number
+          id?: string
+          order_id: string
+          seller_credits: number
+          tx_id: string
+        }
+        Update: {
+          created_at?: string
+          ecosystem_id?: string
+          fee_credits?: number
+          fee_percent?: number
+          id?: string
+          order_id?: string
+          seller_credits?: number
+          tx_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retail_platform_fees_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "retail_platform_fees_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "retail_platform_fees_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "retail_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -9316,6 +9395,9 @@ export type Database = {
           items: Json
           order_no: string
           payment_method: string
+          platform_fee_amount: number
+          platform_fee_percent: number
+          seller_total: number
           status: string
           total: number
         }[]
@@ -9338,6 +9420,8 @@ export type Database = {
           stock: number
           unit: string
           variant: string
+          wholesale_min_qty: number
+          wholesale_price: number
         }[]
       }
       list_rewards: {
@@ -9680,6 +9764,9 @@ export type Database = {
           items: Json
           order_no: string
           payment_method: string
+          platform_fee_amount: number
+          platform_fee_percent: number
+          seller_total: number
           status: string
           total: number
         }[]
@@ -10492,6 +10579,7 @@ export type Database = {
           total: number
         }[]
       }
+      retail_platform_fee_percent: { Args: never; Returns: number }
       retail_refund_hold: {
         Args: {
           _actor: string
@@ -11428,6 +11516,7 @@ export type Database = {
           _cashback_subreseller: number
           _credits_per_unit: number
           _php_per_unit: number
+          _retail_fee?: number
           _shop_transfer_fee?: number
           _withdrawal_fee: number
         }
@@ -11455,6 +11544,7 @@ export type Database = {
           payment_instructions: string
           plan_name: string
           plan_price: number
+          retail_platform_fee_percent: number
           shop_transfer_fee_credits: number
           support_message: string
           support_page_name: string
@@ -12594,6 +12684,7 @@ export type Database = {
               payment_instructions: string
               plan_name: string
               plan_price: number
+              retail_platform_fee_percent: number
               shop_transfer_fee_credits: number
               support_message: string
               support_page_name: string
@@ -12643,6 +12734,7 @@ export type Database = {
               payment_instructions: string
               plan_name: string
               plan_price: number
+              retail_platform_fee_percent: number
               shop_transfer_fee_credits: number
               support_message: string
               support_page_name: string
@@ -12884,6 +12976,7 @@ export type Database = {
           payment_instructions: string
           plan_name: string
           plan_price: number
+          retail_platform_fee_percent: number
           shop_transfer_fee_credits: number
           support_message: string
           support_page_name: string

@@ -74,8 +74,14 @@ export interface OrderItem {
   product_id: string;
   name: string;
   quantity: number;
+  /** Applicable seller unit amount snapshotted at order time. */
   unit_price: number;
+  /** Customer line total (seller amount + fee) snapshotted at order time. */
   line_total: number;
+  regular_unit_price?: number;
+  wholesale_applied?: boolean;
+  seller_line_total?: number;
+  fee_amount?: number;
 }
 
 export interface RetailOrder {
@@ -88,40 +94,132 @@ export interface RetailOrder {
   delivery_address: string | null;
   delivery_notes: string | null;
   payment_method: PaymentMethod;
+  /** Customer amount consumed (seller total + platform fee). */
   total: number;
+  seller_total?: number;
+  platform_fee_percent?: number;
+  platform_fee_amount?: number;
   decision_note: string | null;
   created_at: string;
   items: OrderItem[];
 }
 
 /* ------------------------------------------------------------------ */
-/* Cart maths — pure so checkout rules can be asserted in tests         */
+/* Pricing — presentation mirror of the database's authoritative path   */
 /* ------------------------------------------------------------------ */
+/*
+ * The database (`retail_place_order`) is the only place that decides what an
+ * order costs. The helpers below repeat the same arithmetic, in the same
+ * order, so what the buyer sees before confirming equals what the ledger
+ * holds:
+ *   1. applicable seller unit price — the shop's single wholesale tier once the
+ *      quantity reaches `wholesale_min_qty`, otherwise the regular price
+ *   2. seller line = round2(unit × qty)
+ *   3. fee line    = round2(seller line × fee% / 100)   ← discounted base only
+ *   4. customer line = seller line + fee line
+ * Order totals are sums of the rounded lines, never re-rounded.
+ */
 
 export type Cart = Record<string, number>;
 
-export interface CartLine {
+export const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+
+/** True when this quantity earns the product's wholesale price. */
+export function wholesaleApplies(
+  product: Pick<RetailProduct, "wholesale_price" | "wholesale_min_qty">,
+  quantity: number,
+): boolean {
+  const wp = Number(product.wholesale_price ?? 0);
+  const min = Number(product.wholesale_min_qty ?? 0);
+  return wp > 0 && min > 0 && quantity >= min;
+}
+
+/** Seller unit amount actually charged for this quantity. */
+export function applicableUnitPrice(
+  product: Pick<RetailProduct, "price" | "wholesale_price" | "wholesale_min_qty">,
+  quantity: number,
+): number {
+  return wholesaleApplies(product, quantity) ? Number(product.wholesale_price) : product.price;
+}
+
+/** Customer price for one unit at the seller amount `seller` (display only). */
+export const sellerToCustomer = (seller: number, feePercent: number) =>
+  round2(seller + round2((seller * feePercent) / 100));
+
+/** Seller amount that yields (as closely as 2 dp allows) the customer price. */
+export const customerToSeller = (customer: number, feePercent: number) =>
+  round2(customer / (1 + feePercent / 100));
+
+export interface LineQuote {
+  unitPrice: number;
+  wholesale: boolean;
+  sellerTotal: number;
+  fee: number;
+  customerTotal: number;
+}
+
+export function quoteLine(
+  product: Pick<RetailProduct, "price" | "wholesale_price" | "wholesale_min_qty">,
+  quantity: number,
+  feePercent: number,
+): LineQuote {
+  const unitPrice = applicableUnitPrice(product, quantity);
+  const sellerTotal = round2(unitPrice * quantity);
+  const fee = round2((sellerTotal * feePercent) / 100);
+  return {
+    unitPrice,
+    wholesale: wholesaleApplies(product, quantity),
+    sellerTotal,
+    fee,
+    customerTotal: round2(sellerTotal + fee),
+  };
+}
+
+export interface CartLine extends LineQuote {
   product: RetailProduct;
   quantity: number;
+  /** Customer line total — what the wallet is charged for this line. */
   lineTotal: number;
 }
 
-export const round2 = (n: number) => Math.round(n * 100) / 100;
-
-export function cartLines(cart: Cart, products: RetailProduct[]): CartLine[] {
+export function cartLines(cart: Cart, products: RetailProduct[], feePercent = 0): CartLine[] {
   return products
     .filter((p) => (cart[p.id] ?? 0) > 0)
     .map((product) => {
       const quantity = cart[product.id] ?? 0;
-      return { product, quantity, lineTotal: round2(product.price * quantity) };
+      const q = quoteLine(product, quantity, feePercent);
+      return { product, quantity, ...q, lineTotal: q.customerTotal };
     });
 }
 
 export const cartCount = (cart: Cart) =>
   Object.values(cart).reduce((sum, q) => sum + (q > 0 ? q : 0), 0);
 
-export const cartTotal = (cart: Cart, products: RetailProduct[]) =>
-  round2(cartLines(cart, products).reduce((sum, l) => sum + l.lineTotal, 0));
+export interface CartQuote {
+  sellerTotal: number;
+  fee: number;
+  total: number;
+}
+
+export function cartQuote(cart: Cart, products: RetailProduct[], feePercent = 0): CartQuote {
+  const lines = cartLines(cart, products, feePercent);
+  return {
+    sellerTotal: round2(lines.reduce((s, l) => s + l.sellerTotal, 0)),
+    fee: round2(lines.reduce((s, l) => s + l.fee, 0)),
+    total: round2(lines.reduce((s, l) => s + l.customerTotal, 0)),
+  };
+}
+
+/** Customer total the wallet is charged. */
+export const cartTotal = (cart: Cart, products: RetailProduct[], feePercent = 0) =>
+  cartQuote(cart, products, feePercent).total;
+
+/** Current platform fee percentage (read-only; changing it needs the platform owner). */
+export async function fetchRetailFeePercent(): Promise<number> {
+  const { data, error } = await supabase.rpc("retail_platform_fee_percent");
+  if (error) throw new Error(error.message);
+  return Number(data ?? 0);
+}
 
 /** Adds `delta` of a product while never exceeding its remaining stock. */
 export function changeQuantity(cart: Cart, product: RetailProduct, delta: number): Cart {
@@ -234,7 +332,8 @@ export async function saveStoreSettings(
 
 /**
  * Buyer-facing listing. The database returns only customer-safe columns —
- * wholesale price, SKU and barcode stay in the admin view.
+ * the wholesale price and minimum quantity are customer-facing (bulk buying);
+ * SKU and barcode stay in the admin view.
  */
 export async function fetchRetailProducts(ecosystemId: string): Promise<RetailProduct[]> {
   const { data, error } = await supabase.rpc("list_retail_products", {
@@ -244,6 +343,8 @@ export async function fetchRetailProducts(ecosystemId: string): Promise<RetailPr
   return ((data ?? []) as RetailProduct[]).map((p) => ({
     ...p,
     price: Number(p.price),
+    wholesale_price: Number(p.wholesale_price ?? 0),
+    wholesale_min_qty: Number(p.wholesale_min_qty ?? 0),
   }));
 }
 
@@ -491,10 +592,17 @@ const toOrders = (data: unknown): RetailOrder[] =>
   ((data ?? []) as RetailOrder[]).map((o) => ({
     ...o,
     total: Number(o.total),
+    seller_total: Number(o.seller_total ?? o.total),
+    platform_fee_percent: Number(o.platform_fee_percent ?? 0),
+    platform_fee_amount: Number(o.platform_fee_amount ?? 0),
     items: (o.items ?? []).map((i) => ({
       ...i,
       unit_price: Number(i.unit_price),
       line_total: Number(i.line_total),
+      regular_unit_price: Number(i.regular_unit_price ?? i.unit_price),
+      wholesale_applied: !!i.wholesale_applied,
+      seller_line_total: Number(i.seller_line_total ?? i.line_total),
+      fee_amount: Number(i.fee_amount ?? 0),
     })),
   }));
 

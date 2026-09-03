@@ -39,6 +39,9 @@ export function MoneySettingsCard() {
     const problem =
       validateValuation(form.creditsPerUnit, form.phpPerUnit, form.feePercent) ??
       validateCashInFee(form.cashInFeePercent) ??
+      (Number.isFinite(form.retailFeePercent) && form.retailFeePercent >= 0 && form.retailFeePercent <= 100
+        ? null
+        : "The retail platform fee must be between 0% and 100%") ??
       (Number.isFinite(form.shopTransferFee) && form.shopTransferFee >= 0
         ? null
         : "The shop transfer fee must be zero or more coins.");
@@ -145,6 +148,21 @@ export function MoneySettingsCard() {
           <p className="text-xs text-muted-foreground">
             Deducted from every transfer a member makes between two of their own shop wallets, and collected as
             platform earnings.
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="ms-retail-fee">Retail platform fee (%)</Label>
+          <Input
+            id="ms-retail-fee"
+            inputMode="decimal"
+            value={form.retailFeePercent}
+            onChange={(e) => set("retailFeePercent", Number(e.target.value))}
+          />
+          <p className="text-xs text-muted-foreground">
+            Added on top of the seller's amount for retail orders and calculated only on the price actually
+            charged (the wholesale price when its minimum quantity is reached). Each order stores the rate and
+            fee in force when it was placed.
           </p>
         </div>
 
