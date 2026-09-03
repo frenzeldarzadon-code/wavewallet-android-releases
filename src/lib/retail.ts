@@ -614,12 +614,15 @@ export async function saveShopBranding(
   images: Pick<StorefrontSettings, "logoPath" | "coverPath">,
   previous?: Pick<StorefrontSettings, "logoPath" | "coverPath">,
 ): Promise<void> {
-  const { error } = await supabase.rpc("update_shop_branding", {
+  const { error } = await supabase.rpc("update_retail_storefront", {
     _ecosystem_id: ecosystemId,
     ...(images.logoPath ? { _logo_path: images.logoPath } : {}),
     ...(images.coverPath ? { _cover_path: images.coverPath } : {}),
     _clear_logo: !images.logoPath,
     _clear_cover: !images.coverPath,
+    _accepting_orders: null,
+    _paused_note: null,
+    _theme: null,
   });
   if (error) throw new Error(error.message);
   const stale = [previous?.logoPath, previous?.coverPath].filter(
