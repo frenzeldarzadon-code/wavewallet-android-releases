@@ -89,7 +89,7 @@ interface Member {
 function AdminWallets() {
   const { ecosystemDbId, account, ecosystem } = useSession("admin");
   /** Universe shops (former Legacy shops) spend the member's global wallet. */
-  const isUniverseShop = ecosystem?.shop_kind === "universe";
+  const isUniverseShop = ecosystem?.shopKind === "universe";
   /**
    * The platform owner issues credits from the platform mint in EVERY shop:
    * no shop wallet, no source balance, no fee. The database enforces this.

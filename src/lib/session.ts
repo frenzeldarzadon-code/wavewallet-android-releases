@@ -143,6 +143,7 @@ function toEcosystem(row: DbEcosystem): Ecosystem {
     ...base,
     name: row.name,
     slug: row.slug,
+    shopKind: (row as { shop_kind?: string }).shop_kind ?? base.shopKind,
     // Always mirror the stored value, so clearing the description in Shop
     // settings is reflected after reload instead of falling back to a preset.
     description: row.description ?? "",
