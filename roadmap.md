@@ -52,3 +52,7 @@
 - [x] Sanitize known historical provider labels at presentation time
 - [x] Complete source/browser audit, tests, and auth-email limitation report
 - [x] Do not publish
+
+## Image cropper live preview — COMPLETE (UNPUBLISHED)
+- Shared `ImageCropper` now shows the real photo (own object URL), dimmed cut-away area, crop boundary, live result preview, pinch/scroll/slider zoom, 1:1 drag.
+- Profile cover crop/encode/display unified at 3:1 (`PROFILE_COVER_TARGET`).
