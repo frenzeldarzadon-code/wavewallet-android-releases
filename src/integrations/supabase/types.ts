@@ -4759,13 +4759,18 @@ export type Database = {
           delivery_notes: string | null
           ecosystem_id: string
           fulfillment: string
+          hold_ledger_id: string | null
           id: string
           notified_at: string | null
           order_no: string
           payment_method: string
+          refund_ledger_id: string | null
+          settled_to: string | null
+          settlement_ledger_id: string | null
           status: string
           total: number
           updated_at: string
+          wallet_account_id: string | null
         }
         Insert: {
           created_at?: string
@@ -4780,13 +4785,18 @@ export type Database = {
           delivery_notes?: string | null
           ecosystem_id: string
           fulfillment: string
+          hold_ledger_id?: string | null
           id?: string
           notified_at?: string | null
           order_no: string
           payment_method: string
+          refund_ledger_id?: string | null
+          settled_to?: string | null
+          settlement_ledger_id?: string | null
           status?: string
           total: number
           updated_at?: string
+          wallet_account_id?: string | null
         }
         Update: {
           created_at?: string
@@ -4801,13 +4811,18 @@ export type Database = {
           delivery_notes?: string | null
           ecosystem_id?: string
           fulfillment?: string
+          hold_ledger_id?: string | null
           id?: string
           notified_at?: string | null
           order_no?: string
           payment_method?: string
+          refund_ledger_id?: string | null
+          settled_to?: string | null
+          settlement_ledger_id?: string | null
           status?: string
           total?: number
           updated_at?: string
+          wallet_account_id?: string | null
         }
         Relationships: [
           {
@@ -4822,6 +4837,34 @@ export type Database = {
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "retail_orders_hold_ledger_id_fkey"
+            columns: ["hold_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "retail_orders_refund_ledger_id_fkey"
+            columns: ["refund_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "retail_orders_settlement_ledger_id_fkey"
+            columns: ["settlement_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "retail_orders_wallet_account_id_fkey"
+            columns: ["wallet_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -9295,8 +9338,6 @@ export type Database = {
           stock: number
           unit: string
           variant: string
-          wholesale_min_qty: number
-          wholesale_price: number
         }[]
       }
       list_rewards: {
@@ -10451,9 +10492,24 @@ export type Database = {
           total: number
         }[]
       }
+      retail_refund_hold: {
+        Args: {
+          _actor: string
+          _order: Database["public"]["Tables"]["retail_orders"]["Row"]
+        }
+        Returns: string
+      }
       retail_review_order: {
         Args: { _approve: boolean; _note?: string; _order_id: string }
         Returns: undefined
+      }
+      retail_settlement_recipient: {
+        Args: { _ecosystem_id: string }
+        Returns: string
+      }
+      retail_wallet_for: {
+        Args: { _ecosystem_id: string; _user_id: string }
+        Returns: string
       }
       reverse_credit_transfer: {
         Args: {
