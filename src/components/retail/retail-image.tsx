@@ -32,8 +32,8 @@ export function RetailImage({
       {url ? (
         <img src={url} alt={alt} loading="lazy" className="size-full object-cover" />
       ) : (
-        <div className="flex size-full items-center justify-center">
-          <ImageIcon className="size-6 text-muted-foreground/50" aria-hidden />
+        <div className="surface-gradient flex size-full items-center justify-center">
+          <ImageIcon className="size-6 text-primary-foreground/80" aria-hidden />
         </div>
       )}
     </div>

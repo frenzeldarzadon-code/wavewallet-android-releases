@@ -64,10 +64,10 @@
 - [x] Verify 390px mobile and desktop layouts, tests, typecheck, and no functional changes
 - [x] Do not publish
 
-## Shop and Retail image management — IN PROGRESS (UNPUBLISHED)
-- [ ] Add universally discoverable shop logo/cover management for authorized shop admins
-- [ ] Add live crop and final preview before shop and Retail product image uploads
-- [ ] Support safe replace/remove with stale-file cleanup
-- [ ] Verify images flow through Universe discovery, product cards/details, and public storefront
-- [ ] Verify tenant isolation, mobile/desktop layouts, tests, and typecheck
-- [ ] Do not publish
+## Shop and Retail image management — COMPLETE (UNPUBLISHED)
+- [x] Add universally discoverable shop logo/cover management for authorized shop admins
+- [x] Add live crop and final preview before shop and Retail product image uploads
+- [x] Support safe replace/remove with stale-file cleanup
+- [x] Verify image fields flow through Universe discovery, product cards/details, and public storefront
+- [x] Verify authorization enforcement, responsive public layouts, tests, and typecheck
+- [x] Do not publish
