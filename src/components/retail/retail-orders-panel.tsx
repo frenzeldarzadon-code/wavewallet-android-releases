@@ -261,7 +261,11 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                   {n > 0 ? (
                     <span
                       className={`rounded-full px-1.5 text-[10px] tabular-nums ${
-                        active ? "bg-primary-foreground/20" : t.id === "new" ? "bg-warning/20 text-warning-foreground" : "bg-muted"
+                        active
+                          ? "bg-primary-foreground/20"
+                          : t.id === "new"
+                            ? "bg-warning/20 text-warning-foreground"
+                            : "bg-muted"
                       }`}
                     >
                       {n}
@@ -501,11 +505,12 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                                 title: `Release held coins for ${o.order_no}?`,
                                 body: `Settles ${peso(o.cod_expected_cash ?? codCashTotal(o))} once through the standard path: your seller amount, cashback, and the delivery/collector shares. This cannot be undone.`,
                                 action: "Release & settle",
-                                run: () => void run(o.id, () => sellerReleaseCod(o.id), {
-                                title: `${o.order_no} settled`,
-                                description:
-                                  "The held float was settled once through the standard settlement path.",
-                              }),
+                                run: () =>
+                                  void run(o.id, () => sellerReleaseCod(o.id), {
+                                    title: `${o.order_no} settled`,
+                                    description:
+                                      "The held float was settled once through the standard settlement path.",
+                                  }),
                               })
                             }
                           >
@@ -522,11 +527,12 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                                   title: `Settle ${o.order_no} despite the discrepancy?`,
                                   body: `The collector reported ${peso(o.cod_actual_cash ?? 0)} against ${peso(o.cod_expected_cash ?? codCashTotal(o))} expected. Settlement uses the locked order economics; the reported cash stays on record. This cannot be undone.`,
                                   action: "Settle anyway",
-                                  run: () => void run(o.id, () => resolveCodDiscrepancy(o.id, "settle"), {
-                                  title: `${o.order_no} settled by admin`,
-                                  description:
-                                    "Settled on the locked order economics; the actual cash reported stays on record.",
-                                }),
+                                  run: () =>
+                                    void run(o.id, () => resolveCodDiscrepancy(o.id, "settle"), {
+                                      title: `${o.order_no} settled by admin`,
+                                      description:
+                                        "Settled on the locked order economics; the actual cash reported stays on record.",
+                                    }),
                                 })
                               }
                             >
@@ -545,7 +551,8 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                                   run: () =>
                                     void run(
                                       o.id,
-                                      () => resolveCodDiscrepancy(o.id, "cancel", "Cash discrepancy"),
+                                      () =>
+                                        resolveCodDiscrepancy(o.id, "cancel", "Cash discrepancy"),
                                       {
                                         title: `${o.order_no} cancelled`,
                                         description:

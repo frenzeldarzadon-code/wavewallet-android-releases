@@ -1039,13 +1039,7 @@ export async function rateRetailProduct(
 /* ------------------------------------------------------------------ */
 
 export type OrderStage =
-  | "new"
-  | "preparing"
-  | "ready"
-  | "in_delivery"
-  | "delivered"
-  | "completed"
-  | "closed";
+  "new" | "preparing" | "ready" | "in_delivery" | "delivered" | "completed" | "closed";
 
 export const ORDER_STAGES: { id: OrderStage; label: string; hint: string }[] = [
   { id: "new", label: "New", hint: "Approve or reject" },
@@ -1059,7 +1053,10 @@ export const ORDER_STAGES: { id: OrderStage; label: string; hint: string }[] = [
 
 /** Which workspace tab an order belongs to. Derived only from existing fields. */
 export function orderStage(
-  o: Pick<RetailOrder, "status" | "fulfillment_status" | "payment_method" | "cod_settled_at" | "hold_held">,
+  o: Pick<
+    RetailOrder,
+    "status" | "fulfillment_status" | "payment_method" | "cod_settled_at" | "hold_held"
+  >,
 ): OrderStage {
   if (o.status === "pending") return "new";
   if (o.status === "rejected" || o.status === "cancelled") return "closed";
@@ -1083,7 +1080,15 @@ export function orderStage(
 }
 
 export const countByStage = (orders: RetailOrder[]): Record<OrderStage, number> => {
-  const c = { new: 0, preparing: 0, ready: 0, in_delivery: 0, delivered: 0, completed: 0, closed: 0 };
+  const c = {
+    new: 0,
+    preparing: 0,
+    ready: 0,
+    in_delivery: 0,
+    delivered: 0,
+    completed: 0,
+    closed: 0,
+  };
   for (const o of orders) c[orderStage(o)] += 1;
   return c;
 };
@@ -1104,11 +1109,15 @@ export function orderTimeline(
 ): { label: string; at: string }[] {
   const t: { label: string; at: string }[] = [{ label: "Order placed", at: o.created_at }];
   if (o.delivered_at)
-    t.push({ label: o.fulfillment === "pickup" ? "Handed to customer" : "Delivered", at: o.delivered_at });
+    t.push({
+      label: o.fulfillment === "pickup" ? "Handed to customer" : "Delivered",
+      at: o.delivered_at,
+    });
   if (o.completed_at) t.push({ label: "Buyer confirmed receipt", at: o.completed_at });
   if (o.payment_method === "cod" && o.cod_cash_received_at)
     t.push({ label: "Collector confirmed cash", at: o.cod_cash_received_at });
-  if (o.payment_method === "cod" && o.cod_settled_at) t.push({ label: "Settled", at: o.cod_settled_at });
+  if (o.payment_method === "cod" && o.cod_settled_at)
+    t.push({ label: "Settled", at: o.cod_settled_at });
   return t.sort((a, b) => a.at.localeCompare(b.at));
 }
 

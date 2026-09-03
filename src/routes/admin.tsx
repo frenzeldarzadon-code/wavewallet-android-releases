@@ -39,7 +39,10 @@ function AdminLayout() {
   const session = useSession("admin");
   const { pending } = useMemberInbox();
   const shopStatus = useShopStatus(session.ecosystemDbId);
-  const newOrders = usePendingRetailOrders(session.ecosystemDbId, shopStatus.shopType === "universe_retail");
+  const newOrders = usePendingRetailOrders(
+    session.ecosystemDbId,
+    shopStatus.shopType === "universe_retail",
+  );
 
   // Never render a blank screen: the session resolves asynchronously, and an
   // admin whose active shop is not resolved yet gets a readable state instead.
@@ -54,12 +57,11 @@ function AdminLayout() {
     );
   }
 
-
   // The console only offers the tools of the shop type being managed.
-  const nav = withBadges(
-    adminNav({ goLive: shopStatus.isDemo, shopType: shopStatus.shopType }),
-    { "/admin/applications": pending, "/admin/orders": newOrders },
-  );
+  const nav = withBadges(adminNav({ goLive: shopStatus.isDemo, shopType: shopStatus.shopType }), {
+    "/admin/applications": pending,
+    "/admin/orders": newOrders,
+  });
   return (
     <AppShell
       session={session}
@@ -67,7 +69,9 @@ function AdminLayout() {
       bottomNav={adminBottomNavFor(shopStatus.shopType)}
       title={session.ecosystem.name}
       subtitle={
-        shopStatus.shopType ? `${shopTypeLabel(shopStatus.shopType)} · Admin console` : "Admin console"
+        shopStatus.shopType
+          ? `${shopTypeLabel(shopStatus.shopType)} · Admin console`
+          : "Admin console"
       }
     >
       <Outlet />
@@ -86,4 +90,3 @@ function ConsoleNotice({ title, body }: { title: string; body?: string }) {
     </div>
   );
 }
-
