@@ -208,10 +208,21 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
    * too — nothing is hidden behind an expander.
    */
   useEffect(() => {
-    const codes = Array.from(
-      new Set(purchases.flatMap((p) => p.codes.map((c) => c.toUpperCase()))),
-    ).slice(0, 200);
-    if (!scopeId || codes.length === 0) {
+    // One batched lookup per selling shop. In the shop-scoped view that is a
+    // single call; in the Universe wallet (no scope) purchases are grouped by
+    // the shop that issued them so each controller is asked only for its own.
+    const byShop = new Map<string, string[]>();
+    for (const p of purchases) {
+      const shop = scopeId ?? p.ecosystem_id;
+      if (!shop) continue;
+      const list = byShop.get(shop) ?? [];
+      for (const c of p.codes) list.push(c.toUpperCase());
+      byShop.set(shop, list);
+    }
+    const groups = Array.from(byShop.entries())
+      .map(([shop, codes]) => [shop, Array.from(new Set(codes)).slice(0, 200)] as const)
+      .filter(([, codes]) => codes.length > 0);
+    if (groups.length === 0) {
       setStatuses({});
       setStatusNote(null);
       setOmadaConfigured(false);
@@ -222,15 +233,25 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
     setStatusNote(null);
     void (async () => {
       try {
-        const res = await lookupOmadaVoucherStatuses({ data: { ecosystemId: scopeId, codes } });
+        const results = await Promise.all(
+          groups.map(([ecosystemId, codes]) =>
+            lookupOmadaVoucherStatuses({ data: { ecosystemId, codes } }),
+          ),
+        );
         if (cancelled) return;
         const map: CodeStatusMap = {};
-        for (const code of codes) map[code] = res.statuses[code] ?? null;
+        let configured = false;
+        let note: string | null = null;
+        results.forEach((res, i) => {
+          for (const code of groups[i][1]) map[code] = res.statuses[code] ?? null;
+          configured = configured || res.configured;
+          note = note ?? res.error ?? null;
+        });
         setStatuses(map);
-        setOmadaConfigured(res.configured);
+        setOmadaConfigured(configured);
         setStatusNote(
-          res.error ??
-            (res.configured
+          note ??
+            (configured
               ? null
               : "This shop has no hotspot controller connected, so voucher status is unavailable."),
         );
