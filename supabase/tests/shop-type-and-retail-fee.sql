@@ -123,8 +123,8 @@ BEGIN
   -- The owner switches the member into the new retail shop to place an order? Not needed:
   -- place an open order as the shop's own admin-member is blocked by RLS on self-purchase rules,
   -- so insert a pending order row directly (fixture) and check the guard.
-  INSERT INTO public.retail_orders (ecosystem_id, customer_id, status, fulfillment_status, payment_method, fulfillment_method, subtotal, total, seller_total, platform_fee_percent, platform_fee_amount)
-  VALUES (_r.id, _cus2, 'pending', 'awaiting', 'cash', 'pickup', 10, 10, 10, 1, 0.10);
+  INSERT INTO public.retail_orders (order_no, ecosystem_id, customer_id, customer_name, status, fulfillment_status, payment_method, fulfillment, total, seller_total, platform_fee_percent, platform_fee_amount)
+  VALUES ('TYPE-TEST-1', _r.id, _cus2, 'Fixture', 'pending', 'awaiting', 'cash', 'pickup', 10, 10, 1, 0.10);
   BEGIN
     PERFORM public.set_shop_type(_r.id, 'universe_voucher');
     RAISE EXCEPTION 'E5 should not reach';
@@ -164,7 +164,10 @@ BEGIN
   SELECT to_jsonb(e) - 'updated_at' INTO _snap1 FROM public.ecosystems e WHERE id = _s;
   ASSERT _snap0 = _snap1, 'F1 New Generation shop row untouched';
   PERFORM set_config('request.jwt.claims', c_cus2, true);
+  EXECUTE 'SET LOCAL ROLE authenticated';
   ASSERT (SELECT count(*) FROM public.shop_seller_authorizations WHERE ecosystem_id IN (_v.id, _r.id)) = 0, 'F2 outsider reads no seller authorizations of new shops';
+  ASSERT (SELECT count(*) FROM public.ecosystems WHERE id IN (_v.id, _r.id)) = 0, 'F2 outsider cannot read another member''s new shops';
+  EXECUTE 'RESET ROLE';
 
   RAISE EXCEPTION 'SHOP_TYPE_TESTS_PASSED';
 END $$;
