@@ -88,7 +88,7 @@ import {
 const credits = (n: number) => `${n.toLocaleString(undefined, { maximumFractionDigits: 2 })} coins`;
 
 export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null }) {
-  const { account, role } = useSession();
+  const { account } = useSession();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<RetailOrder[]>([]);
   const [status, setStatus] = useState<OrderStatus | "all">("pending");
@@ -100,7 +100,7 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
   const [assigning, setAssigning] = useState<RetailOrder | null>(null);
   const [cancelling, setCancelling] = useState<RetailOrder | null>(null);
   const [cancelNote, setCancelNote] = useState("");
-  const isAdmin = role === "admin" || role === "super_admin";
+  const isAdmin = account?.role === "admin" || account?.role === "super_admin";
 
   const load = useCallback(async () => {
     if (!ecosystemId) return;
