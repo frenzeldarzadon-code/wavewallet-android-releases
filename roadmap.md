@@ -32,3 +32,5 @@
 - [ ] Shop-scoped Retail Storefront Design entry and theme controls
 - [ ] Mobile/desktop, security, financial regression, and residue verification
 - [ ] Publish only if explicitly requested
+
+- [x] Direction A — Market Pulse approved; Color A / Type A / Discover First locked

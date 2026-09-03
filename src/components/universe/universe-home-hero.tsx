@@ -6,39 +6,8 @@
  * is a new feature, only discoverability.
  */
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Bell, Gift, Mail, Search, Store, User, Users, Wallet } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const tiles = [
-  {
-    to: "/universe/wallet",
-    title: "Wallet Center",
-    blurb: "Coins, purchases & history",
-    icon: Wallet,
-    tone: "bg-success text-success-foreground",
-  },
-  {
-    to: "/universe/profile",
-    title: "My profile",
-    blurb: "Identity, posts & storefront",
-    icon: User,
-    tone: "bg-brand-soft text-primary",
-  },
-  {
-    to: "/universe/shops",
-    title: "Universe shops",
-    blurb: "Browse shops & rewards",
-    icon: Store,
-    tone: "bg-brand-soft text-primary",
-  },
-] as const;
-
-const chips = [
-  { to: "/universe/members", label: "Members", icon: Users },
-  { to: "/universe/messages", label: "Messages", icon: Mail },
-  { to: "/universe/notifications", label: "Alerts", icon: Bell },
-  { to: "/universe/shops", label: "Rewards", icon: Gift },
-] as const;
 
 export function UniverseHomeHero() {
   return (
@@ -66,34 +35,6 @@ export function UniverseHomeHero() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        {tiles.map((t) => (
-          <Link
-            key={t.to}
-            to={t.to}
-            className="flex min-w-0 flex-col gap-2 rounded-lg border border-border bg-card p-3 shadow-[var(--shadow-card)] transition-colors hover:border-primary/30 hover:bg-accent/30"
-          >
-            <span className={`flex size-9 items-center justify-center rounded-lg ${t.tone}`}>
-              <t.icon className="size-4.5" />
-            </span>
-            <span className="leading-tight">
-              <span className="block truncate text-xs font-bold sm:text-sm">{t.title}</span>
-              <span className="hidden text-xs text-muted-foreground sm:block">{t.blurb}</span>
-            </span>
-          </Link>
-        ))}
-      </div>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border pb-3 lg:hidden">
-        {chips.map((c) => (
-          <Link
-            key={c.to}
-            to={c.to}
-            className="inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
-          >
-            <c.icon className="size-3.5" /> {c.label}
-          </Link>
-        ))}
-      </div>
     </section>
   );
 }
