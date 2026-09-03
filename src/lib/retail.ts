@@ -74,8 +74,14 @@ export interface OrderItem {
   product_id: string;
   name: string;
   quantity: number;
+  /** Applicable seller unit amount snapshotted at order time. */
   unit_price: number;
+  /** Customer line total (seller amount + fee) snapshotted at order time. */
   line_total: number;
+  regular_unit_price?: number;
+  wholesale_applied?: boolean;
+  seller_line_total?: number;
+  fee_amount?: number;
 }
 
 export interface RetailOrder {
@@ -88,7 +94,11 @@ export interface RetailOrder {
   delivery_address: string | null;
   delivery_notes: string | null;
   payment_method: PaymentMethod;
+  /** Customer amount consumed (seller total + platform fee). */
   total: number;
+  seller_total?: number;
+  platform_fee_percent?: number;
+  platform_fee_amount?: number;
   decision_note: string | null;
   created_at: string;
   items: OrderItem[];
@@ -322,7 +332,8 @@ export async function saveStoreSettings(
 
 /**
  * Buyer-facing listing. The database returns only customer-safe columns —
- * wholesale price, SKU and barcode stay in the admin view.
+ * the wholesale price and minimum quantity are customer-facing (bulk buying);
+ * SKU and barcode stay in the admin view.
  */
 export async function fetchRetailProducts(ecosystemId: string): Promise<RetailProduct[]> {
   const { data, error } = await supabase.rpc("list_retail_products", {
@@ -332,6 +343,8 @@ export async function fetchRetailProducts(ecosystemId: string): Promise<RetailPr
   return ((data ?? []) as RetailProduct[]).map((p) => ({
     ...p,
     price: Number(p.price),
+    wholesale_price: Number(p.wholesale_price ?? 0),
+    wholesale_min_qty: Number(p.wholesale_min_qty ?? 0),
   }));
 }
 
@@ -579,10 +592,17 @@ const toOrders = (data: unknown): RetailOrder[] =>
   ((data ?? []) as RetailOrder[]).map((o) => ({
     ...o,
     total: Number(o.total),
+    seller_total: Number(o.seller_total ?? o.total),
+    platform_fee_percent: Number(o.platform_fee_percent ?? 0),
+    platform_fee_amount: Number(o.platform_fee_amount ?? 0),
     items: (o.items ?? []).map((i) => ({
       ...i,
       unit_price: Number(i.unit_price),
       line_total: Number(i.line_total),
+      regular_unit_price: Number(i.regular_unit_price ?? i.unit_price),
+      wholesale_applied: !!i.wholesale_applied,
+      seller_line_total: Number(i.seller_line_total ?? i.line_total),
+      fee_amount: Number(i.fee_amount ?? 0),
     })),
   }));
 
