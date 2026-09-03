@@ -20,6 +20,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { peso } from "@/lib/wavewallet";
 import {
+  DEFAULT_VOUCHER_FEE_PERCENT,
+  fetchVoucherPlatformFeePercent,
+  platformFeeFromRetail,
+  retailFromSellerCut,
+  sellerCutFromRetail,
+  type VoucherPriceMode,
+} from "@/lib/voucher-pricing";
+import {
   canSubmitProductDeletion,
   deleteVoucherProduct,
   productDeletionWarning,
@@ -63,6 +71,10 @@ interface Draft {
   promo_price: string;
   promo_note: string;
   active: boolean;
+  /** Universe only: which price field is authoritative right now. */
+  price_mode: VoucherPriceMode;
+  /** Universe only: the seller's cut typed in "Set seller's cut" mode. */
+  seller_cut: string;
 }
 
 const emptyDraft: Draft = {
@@ -73,10 +85,15 @@ const emptyDraft: Draft = {
   promo_price: "",
   promo_note: "",
   active: true,
+  price_mode: "retail",
+  seller_cut: "",
 };
 
 function AdminProducts() {
-  const { ecosystemDbId } = useSession("admin");
+  const { ecosystemDbId, ecosystem } = useSession("admin");
+  // Universe shops carry the price-inclusive platform fee; New Generation shops do not.
+  const isUniverseShop = ecosystem?.shopKind === "universe";
+  const [feePercent, setFeePercent] = useState(DEFAULT_VOUCHER_FEE_PERCENT);
   const [products, setProducts] = useState<VoucherProductRow[]>([]);
   const [counts, setCounts] = useState<Record<string, InventoryCount>>({});
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -107,7 +124,23 @@ function AdminProducts() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (!isUniverseShop) return;
+    void fetchVoucherPlatformFeePercent().then(setFeePercent);
+  }, [isUniverseShop]);
+
   if (!ecosystemDbId) return null;
+
+  // The database snapshots the fee rate on insert / re-price and backs the fee
+  // out of the customer price; this only previews the same numbers.
+  const showFee = isUniverseShop && feePercent > 0;
+  const draftRetail = draft
+    ? draft.price_mode === "seller_cut" && isUniverseShop
+      ? retailFromSellerCut(Number(draft.seller_cut) || 0, feePercent)
+      : Number(draft.credit_price) || 0
+    : 0;
+  const draftCut = sellerCutFromRetail(draftRetail, isUniverseShop ? feePercent : 0);
+  const draftFee = platformFeeFromRetail(draftRetail, isUniverseShop ? feePercent : 0);
 
   const save = async () => {
     if (!draft) return;
@@ -120,7 +153,9 @@ function AdminProducts() {
       ecosystem_id: ecosystemDbId,
       name: draft.name.trim(),
       description: draft.description.trim(),
-      credit_price: Number(draft.credit_price) || 0,
+      // Whichever field was authoritative, the stored customer price is the
+      // single source of truth (Set seller's cut derives it additively).
+      credit_price: draftRetail,
       points_price: draft.points_price ? Number(draft.points_price) : null,
       promo_price: draft.promo_price ? Number(draft.promo_price) : null,
       promo_note: draft.promo_note.trim() || null,
@@ -229,6 +264,13 @@ function AdminProducts() {
                           {peso(p.credit_price)} {p.promo_note ? `· ${p.promo_note}` : ""}
                         </p>
                       ) : null}
+                      {showFee ? (
+                        <p className="text-[11px] text-muted-foreground">
+                          Your cut {peso(sellerCutFromRetail(listPrice(p), p.platform_fee_percent))} ·{" "}
+                          {p.platform_fee_percent}% platform fee{" "}
+                          {peso(platformFeeFromRetail(listPrice(p), p.platform_fee_percent))} inside the price
+                        </p>
+                      ) : null}
                     </div>
                     <StatusBadge tone="points">
                       {p.points_price ? `${p.points_price} pts` : "Points later"}
@@ -251,6 +293,10 @@ function AdminProducts() {
                           promo_price: p.promo_price === null ? "" : String(p.promo_price),
                           promo_note: p.promo_note ?? "",
                           active: p.active,
+                          price_mode: "retail",
+                          seller_cut: String(
+                            sellerCutFromRetail(p.credit_price, isUniverseShop ? p.platform_fee_percent : 0),
+                          ),
                         })
                       }
                     >
@@ -314,17 +360,62 @@ function AdminProducts() {
                   placeholder="What the customer gets"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              {isUniverseShop ? (
                 <div className="space-y-1.5">
-                  <Label htmlFor="pcredit">Coin price</Label>
-                  <Input
-                    id="pcredit"
-                    type="number"
-                    value={draft.credit_price}
-                    onChange={(e) => setDraft({ ...draft, credit_price: e.target.value })}
-                    placeholder="0"
-                  />
+                  <Label>Price by</Label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={draft.price_mode === "retail" ? "default" : "outline"}
+                      onClick={() =>
+                        setDraft({ ...draft, price_mode: "retail", credit_price: String(draftRetail) })
+                      }
+                    >
+                      Set retail price
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={draft.price_mode === "seller_cut" ? "default" : "outline"}
+                      onClick={() =>
+                        setDraft({ ...draft, price_mode: "seller_cut", seller_cut: String(draftCut) })
+                      }
+                    >
+                      Set seller's cut
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    {draft.price_mode === "retail"
+                      ? `You set what the customer pays; WaveWallet backs the ${feePercent}% platform fee out of it.`
+                      : `You set what you receive; WaveWallet adds the ${feePercent}% platform fee to make the customer price.`}
+                  </p>
                 </div>
+              ) : null}
+              <div className="grid grid-cols-2 gap-3">
+                {isUniverseShop && draft.price_mode === "seller_cut" ? (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="pcut">Seller's cut</Label>
+                    <Input
+                      id="pcut"
+                      type="number"
+                      value={draft.seller_cut}
+                      onChange={(e) => setDraft({ ...draft, seller_cut: e.target.value })}
+                      placeholder="0"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="pcredit">{isUniverseShop ? "Retail price (customer pays)" : "Coin price"}</Label>
+                    <Input
+                      id="pcredit"
+                      type="number"
+                      value={draft.credit_price}
+                      onChange={(e) => setDraft({ ...draft, credit_price: e.target.value })}
+                      placeholder="0"
+                    />
+                  </div>
+                )}
                 <div className="space-y-1.5">
                   <Label htmlFor="ppoints">Points price</Label>
                   <Input
@@ -336,6 +427,26 @@ function AdminProducts() {
                   />
                 </div>
               </div>
+              {isUniverseShop ? (
+                <div className="space-y-0.5 rounded-xl border border-border px-3 py-2 text-xs">
+                  <p className="flex justify-between">
+                    <span className="text-muted-foreground">Customer pays</span>
+                    <span className="font-semibold">{peso(draftRetail)}</span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="text-muted-foreground">Platform fee ({feePercent}%)</span>
+                    <span>{peso(draftFee)}</span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="text-muted-foreground">Your cut</span>
+                    <span className="font-semibold text-success">{peso(draftCut)}</span>
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Cashback for resellers is calculated separately on the full sale amount. A promo price
+                    replaces the customer price for everyone; the fee follows the price actually paid.
+                  </p>
+                </div>
+              ) : null}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="ppromo">Promo price</Label>

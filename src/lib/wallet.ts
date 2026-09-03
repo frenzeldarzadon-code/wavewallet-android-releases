@@ -73,6 +73,8 @@ export interface VoucherProductRow {
   active: boolean;
   archived: boolean;
   created_at: string;
+  /** Universe platform fee % snapshotted when the product was priced. */
+  platform_fee_percent: number;
 }
 
 export interface ShopProduct {
@@ -459,6 +461,7 @@ export async function fetchProducts(ecosystemId: string): Promise<VoucherProduct
     ...p,
     credit_price: Number(p.credit_price),
     promo_price: p.promo_price === null ? null : Number(p.promo_price),
+    platform_fee_percent: Number(p.platform_fee_percent ?? 0),
   }));
 }
 
