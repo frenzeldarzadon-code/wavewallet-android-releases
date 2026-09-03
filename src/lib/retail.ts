@@ -465,6 +465,11 @@ export async function saveRetailProduct(
     sku: trimmed(input.sku),
     barcode: trimmed(input.barcode),
     published: input.published ?? false,
+    cashback_mode: input.cashback_mode ?? "disabled",
+    cashback_value:
+      input.cashback_mode === "percent"
+        ? Math.min(100, Math.max(0, input.cashback_value ?? 0))
+        : Math.max(0, input.cashback_value ?? 0),
   };
   const { error } = input.id
     ? await supabase.from("retail_products").update(payload).eq("id", input.id)
