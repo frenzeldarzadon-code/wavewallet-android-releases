@@ -267,7 +267,7 @@ function GuidePage() {
           <CardContent className="px-4">
             <Sparkles className="size-5 text-primary" />
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Sign up for a free WaveWallet account and set up your own shop — loading resellers,
+              Sign up for a free ONE WAVE account and set up your own shop — loading resellers,
               selling WiFi vouchers, cashback and points. Pick a plan whenever you are ready to go
               live. Your account and shop always stay yours.
             </p>
@@ -285,10 +285,10 @@ function GuidePage() {
           <CardContent className="flex flex-wrap items-center justify-between gap-3 px-4">
             <div>
               <h3 className="text-sm font-semibold tracking-tight">
-                WaveWallet for Android — official app
+                ONE WAVE for Android — official app
               </h3>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                Install the official WaveWallet Android app directly from this site. No Play Store
+                Install the official ONE WAVE Android app directly from this site. No Play Store
                 needed. iPhone and iPad users can add the web app to the Home Screen instead.
               </p>
             </div>

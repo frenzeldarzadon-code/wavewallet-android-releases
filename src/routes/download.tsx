@@ -215,7 +215,7 @@ function DownloadPage() {
             <CardContent className="space-y-3 px-5 py-5 text-sm text-muted-foreground">
               <p className="flex items-start gap-2">
                 <ShieldCheck className="mt-0.5 size-4 shrink-0 text-success" />
-                The APK is digitally signed by WaveWallet. Updates released later install over the
+                The APK is digitally signed for ONE WAVE. Updates released later install over the
                 top and keep your account and data.
               </p>
               <p className="flex items-start gap-2">
@@ -286,8 +286,8 @@ function DownloadPage() {
 
       <footer className="border-t">
         <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-xs text-muted-foreground">
-          <span>Official WaveWallet download — wallet.sagadawave.com</span>
-          <span>© {new Date().getFullYear()} WaveWallet</span>
+          <span>Official ONE WAVE download — wallet.sagadawave.com</span>
+          <span>© {new Date().getFullYear()} ONE WAVE</span>
         </div>
       </footer>
     </div>

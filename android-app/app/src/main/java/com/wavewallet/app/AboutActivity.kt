@@ -32,7 +32,7 @@ class AboutActivity : AppCompatActivity() {
         line("Build type: ${BuildConfig.BUILD_TYPE}")
         line("Connects to: ${BuildConfig.APP_URL}")
         line(
-            "This app is the official ONE WAVE client. WaveWallet is its wallet product.  It uses the same accounts, " +
+            "This app is the official ONE WAVE client. WaveWallet is its wallet product. It uses the same accounts, " +
                 "the same wallets and the same backend as the website. No Coin, voucher, " +
                 "cash in, cash out or subscription action is stored on this device.",
             13f,
