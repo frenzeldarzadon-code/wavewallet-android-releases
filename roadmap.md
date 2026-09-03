@@ -8,3 +8,10 @@
 - [x] Home quick-start, profile public-identity card
 - [x] Typecheck, 1,256 tests, browser check
 - [x] Premium Universe UX/UI refinement
+
+## Retail R1 (approved 2026-09-03)
+- [x] Wallet routing via wallet kind (Universe global / NG shop wallet)
+- [x] Settlement on approve, refund on reject/cancel, ledger pointers, idempotency
+- [x] Frozen-shop checks for retail place/approve
+- [x] Remove public exposure of seller-only product fields
+- [x] SQL + unit tests; typecheck; report

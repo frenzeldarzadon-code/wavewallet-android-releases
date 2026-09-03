@@ -160,7 +160,7 @@ export function checkoutProblem(
     return "This shop does not accept cash";
   if (draft.payment === "credit") {
     if (!settings.creditEnabled) return "This shop does not accept coin payment";
-    if (total > creditBalance) return "Not enough coins in this shop's wallet";
+    if (total > creditBalance) return "Not enough coins in your wallet";
   }
   return null;
 }
@@ -232,6 +232,10 @@ export async function saveStoreSettings(
 /* Products                                                            */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Buyer-facing listing. The database returns only customer-safe columns —
+ * wholesale price, SKU and barcode stay in the admin view.
+ */
 export async function fetchRetailProducts(ecosystemId: string): Promise<RetailProduct[]> {
   const { data, error } = await supabase.rpc("list_retail_products", {
     _ecosystem_id: ecosystemId,
@@ -240,8 +244,6 @@ export async function fetchRetailProducts(ecosystemId: string): Promise<RetailPr
   return ((data ?? []) as RetailProduct[]).map((p) => ({
     ...p,
     price: Number(p.price),
-    wholesale_price: Number(p.wholesale_price ?? 0),
-    wholesale_min_qty: Number(p.wholesale_min_qty ?? 0),
   }));
 }
 
