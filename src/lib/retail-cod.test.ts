@@ -22,6 +22,8 @@ import {
   canSellerCancel,
   canSellerRelease,
   codStageLabel,
+  dutyNextStep,
+  dutySteps,
   fallbackCountdown,
   fallbackReleaseAt,
   splitDeliveryFee,
@@ -171,5 +173,77 @@ describe("3-day seller fallback", () => {
     expect(codStageLabel({ ...base, hold_held: false, collector_status: "proposed" })).toMatch(
       /Waiting for collector/,
     );
+  });
+});
+
+describe("duty workspace helpers", () => {
+  const base = {
+    status: "approved" as const,
+    fulfillment_status: "accepted" as const,
+    collector_status: "proposed",
+    hold_held: false,
+    cash_received_at: null,
+    discrepancy: false,
+    settled_at: null,
+    completed_at: null,
+    expected_cash: 121,
+  };
+
+  it("tells the collector to approve, and the courier to wait, before the float is held", () => {
+    expect(dutyNextStep({ ...base, my_role: "collector" })).toEqual({
+      text: "Approve to hold the float, or decline",
+      mine: true,
+    });
+    expect(dutyNextStep({ ...base, my_role: "delivery" }).mine).toBe(false);
+  });
+
+  it("hands the next move to the courier once the parcel is out, then to the collector", () => {
+    const out = {
+      ...base,
+      collector_status: "approved",
+      hold_held: true,
+      fulfillment_status: "out_for_delivery" as const,
+    };
+    expect(dutyNextStep({ ...out, my_role: "delivery" })).toMatchObject({ mine: true });
+    expect(dutyNextStep({ ...out, my_role: "collector" })).toMatchObject({ mine: true });
+    const delivered = { ...out, fulfillment_status: "delivered" as const };
+    expect(dutyNextStep({ ...delivered, my_role: "delivery" }).mine).toBe(false);
+    expect(dutyNextStep({ ...delivered, my_role: "collector" }).mine).toBe(true);
+  });
+
+  it("stops once cash is confirmed, flagged or settled", () => {
+    const held = {
+      ...base,
+      my_role: "collector" as const,
+      collector_status: "approved",
+      hold_held: true,
+    };
+    expect(
+      dutyNextStep({ ...held, cash_received_at: "2026-09-03T00:00:00Z", discrepancy: true }).mine,
+    ).toBe(false);
+    expect(
+      dutyNextStep({ ...held, hold_held: false, settled_at: "2026-09-03T00:00:00Z" }).text,
+    ).toMatch(/Settled/);
+  });
+
+  it("derives the timeline from existing fields only, marking the first open step", () => {
+    const steps = dutySteps({
+      ...base,
+      my_role: "collector",
+      collector_status: "approved",
+      hold_held: true,
+      fulfillment_status: "out_for_delivery",
+    });
+    expect(steps.map((s) => s.done)).toEqual([true, true, true, false, false, false]);
+    expect(steps.find((s) => s.current)?.label).toBe("Delivered");
+    const settled = dutySteps({
+      ...base,
+      my_role: "collector",
+      collector_status: "approved",
+      fulfillment_status: "completed",
+      cash_received_at: "x",
+      settled_at: "x",
+    });
+    expect(settled.every((s) => s.done)).toBe(true);
   });
 });
