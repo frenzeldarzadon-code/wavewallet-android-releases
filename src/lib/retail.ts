@@ -589,6 +589,8 @@ export async function placeRetailOrder(
   ecosystemId: string,
   cart: Cart,
   draft: CheckoutDraft,
+  /** Universe storefront the buyer purchased through (authorized seller); cashback attribution. */
+  sellerId?: string | null,
 ): Promise<PlacedOrder> {
   requireOnline();
   const items = Object.entries(cart)
@@ -601,6 +603,7 @@ export async function placeRetailOrder(
     _payment_method: draft.payment ?? "cash",
     ...(draft.address.trim() ? { _address: draft.address.trim() } : {}),
     ...(draft.notes.trim() ? { _notes: draft.notes.trim() } : {}),
+    ...(sellerId ? { _seller_id: sellerId } : {}),
   });
   if (error) throw new Error(error.message);
   const row = (data as Array<Record<string, unknown>> | null)?.[0];
