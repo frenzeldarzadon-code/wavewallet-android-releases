@@ -36,6 +36,7 @@ import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-
 import { MemberAvatar } from "@/components/member-avatar";
 import { FacebookSupportCard } from "@/components/facebook-support-card";
 import { ShopTransferCard } from "@/components/customer/shop-transfer-card";
+import { CodAssignmentsCard } from "@/components/retail/cod-assignments-card";
 import { PointsEarningsPanel } from "@/components/customer/points-earnings-panel";
 import { HistoryPage } from "@/components/customer/history-page";
 import { useSession } from "@/lib/session";
@@ -538,6 +539,16 @@ export function WalletCenter({
       {showSellerTotals ? null : (
         <PointsEarningsPanel userId={account.id} ecosystemId={ecosystemDbId} />
       )}
+
+      {universe ? (
+        <CodAssignmentsCard
+          available={globalBalance ?? 0}
+          onChanged={() => {
+            void loadShops();
+            setHistoryKey((k) => k + 1);
+          }}
+        />
+      ) : null}
 
       {universe ? (
         <HistoryPage key={`universe-${historyKey}`} ecosystemId={null} shopName="Universe wallet" />
