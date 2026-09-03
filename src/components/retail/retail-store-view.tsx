@@ -162,7 +162,9 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
         description:
           draft.payment === "credit"
             ? "Your coins are held until the shop admin approves or rejects."
-            : "Pay in cash — the shop admin confirms the order.",
+            : draft.payment === "cod"
+              ? `Pay ${peso(codTotal)} in cash when it arrives. No coins are taken from your wallet.`
+              : "Pay in cash — the shop admin confirms the order.",
       });
       setCart({});
       setCheckout(false);
