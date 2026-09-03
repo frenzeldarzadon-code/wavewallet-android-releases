@@ -79,7 +79,10 @@ export function deriveShopType(
 }
 
 export const isUniverseType = (t: ShopTypeState | null | undefined) =>
-  t === "universe_voucher" || t === "universe_retail" || t === "universe_mixed" || t === "universe_unset";
+  t === "universe_voucher" ||
+  t === "universe_retail" ||
+  t === "universe_mixed" ||
+  t === "universe_unset";
 
 /** Which admin areas a shop of this type manages. */
 export function showsVoucherTools(t: ShopTypeState | null | undefined): boolean {
@@ -134,7 +137,9 @@ export async function switchToShop(ecosystemId: string): Promise<void> {
  * the ecosystems RLS already lets the member see; shops that are not readable
  * are simply absent from the map.
  */
-export async function fetchShopTypes(ecosystemIds: string[]): Promise<Record<string, ShopTypeState>> {
+export async function fetchShopTypes(
+  ecosystemIds: string[],
+): Promise<Record<string, ShopTypeState>> {
   if (ecosystemIds.length === 0) return {};
   const { data } = await supabase
     .from("ecosystems")

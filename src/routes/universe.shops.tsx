@@ -146,7 +146,9 @@ function UniverseShops() {
                         disabled={busy === m.ecosystemId}
                         onClick={() => void enter(m.ecosystemId, m.isActive)}
                       >
-                        {busy === m.ecosystemId ? <Loader2 className="size-4 animate-spin" /> : null}
+                        {busy === m.ecosystemId ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : null}
                         {m.isActive ? "Open" : "Switch & open"}
                       </Button>
                     </div>
@@ -195,7 +197,9 @@ function UniverseShops() {
             <ul className="space-y-1.5 text-xs text-muted-foreground">
               {SHOP_TYPES.map((t) => (
                 <li key={t} className="flex gap-2">
-                  <span className="shrink-0 font-semibold text-foreground">{SHOP_TYPE_INFO[t].label}</span>
+                  <span className="shrink-0 font-semibold text-foreground">
+                    {SHOP_TYPE_INFO[t].label}
+                  </span>
                   <span>— {SHOP_TYPE_INFO[t].tagline}</span>
                 </li>
               ))}

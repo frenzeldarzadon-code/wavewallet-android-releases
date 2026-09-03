@@ -124,8 +124,8 @@ function StartShopPage() {
                   </p>
                 ) : type ? (
                   <p className="text-[11px] leading-relaxed text-muted-foreground">
-                    Live on the Universe immediately. Sales use members&apos; Universe wallets and the
-                    platform fee is included in customer prices.
+                    Live on the Universe immediately. Sales use members&apos; Universe wallets and
+                    the platform fee is included in customer prices.
                   </p>
                 ) : null}
               </div>
