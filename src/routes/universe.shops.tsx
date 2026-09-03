@@ -96,7 +96,11 @@ function UniverseShops() {
 
         <PageSection
           title="Your shops"
-          description="Each membership keeps its own role, wallet and history. Switching only changes which one is active."
+          description={
+            managed > 1
+              ? `You manage ${managed} shops. Each keeps its own type, role, wallet and history — switching only changes which one is active.`
+              : "Each membership keeps its own role, wallet and history. Switching only changes which one is active."
+          }
         >
           {mine.length === 0 ? (
             <EmptyState
@@ -105,33 +109,50 @@ function UniverseShops() {
             />
           ) : (
             <div className="space-y-2">
-              {mine.map((m) => (
-                <div
-                  key={m.ecosystemId}
-                  className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
-                >
-                  <Store className="size-5 text-primary" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">{m.ecosystemName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {roleLabels[m.role]}
-                      {m.isActive ? " · active" : ""}
-                    </p>
-                  </div>
-                  {m.isActive ? (
-                    <Check className="size-4 text-success" aria-label="Active shop" />
-                  ) : null}
-                  <Button
-                    size="sm"
-                    variant={m.isActive ? "default" : "outline"}
-                    disabled={busy === m.ecosystemId}
-                    onClick={() => void enter(m.ecosystemId, m.isActive)}
+              {mine.map((m) => {
+                const t = types[m.ecosystemId] ?? null;
+                const isNg = t === "new_generation";
+                return (
+                  <div
+                    key={m.ecosystemId}
+                    className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
                   >
-                    {busy === m.ecosystemId ? <Loader2 className="size-4 animate-spin" /> : null}
-                    {m.isActive ? "Open" : "Switch & open"}
-                  </Button>
-                </div>
-              ))}
+                    <Store className={isNg ? "size-5 text-warning" : "size-5 text-primary"} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">{m.ecosystemName}</p>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                        {t ? <ShopTypeBadge type={t} /> : null}
+                        <span>
+                          {roleLabels[m.role]}
+                          {m.isActive ? " · active" : ""}
+                        </span>
+                      </div>
+                    </div>
+                    {m.isActive ? (
+                      <Check className="size-4 text-success" aria-label="Active shop" />
+                    ) : null}
+                    <div className="flex items-center gap-2">
+                      {m.role === "admin" && m.isActive ? (
+                        <Button asChild size="sm" variant="ghost">
+                          <Link to="/admin/settings" aria-label={`Manage ${m.ecosystemName}`}>
+                            <Settings2 className="size-4" />
+                            Manage
+                          </Link>
+                        </Button>
+                      ) : null}
+                      <Button
+                        size="sm"
+                        variant={m.isActive ? "default" : "outline"}
+                        disabled={busy === m.ecosystemId}
+                        onClick={() => void enter(m.ecosystemId, m.isActive)}
+                      >
+                        {busy === m.ecosystemId ? <Loader2 className="size-4 animate-spin" /> : null}
+                        {m.isActive ? "Open" : "Switch & open"}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </PageSection>
@@ -168,14 +189,24 @@ function UniverseShops() {
 
         <PageSection
           title="Create a new shop"
-          description="Run your own WiFi voucher operation — set up your shop and go live when you are ready."
+          description="You can run several shops from this login. Pick the type first — it decides which tools the shop gets."
         >
-          <Button asChild variant="outline" className="w-full">
-            <Link to="/start-shop">
-              <Plus className="size-4" />
-              Create New Shop
-            </Link>
-          </Button>
+          <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+            <ul className="space-y-1.5 text-xs text-muted-foreground">
+              {SHOP_TYPES.map((t) => (
+                <li key={t} className="flex gap-2">
+                  <span className="shrink-0 font-semibold text-foreground">{SHOP_TYPE_INFO[t].label}</span>
+                  <span>— {SHOP_TYPE_INFO[t].tagline}</span>
+                </li>
+              ))}
+            </ul>
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/start-shop">
+                <Plus className="size-4" />
+                Create a new shop
+              </Link>
+            </Button>
+          </div>
         </PageSection>
 
         <p className="text-xs text-muted-foreground">
