@@ -57,17 +57,17 @@ export const Route = createFileRoute("/")({
 
   head: () => ({
     meta: [
-      { title: "WaveWallet — Voucher & Wallet Platform for Hotspot Operators" },
+      { title: "ONE WAVE — Wallet, Voucher & Retail Ecosystem" },
       {
         name: "description",
         content:
-          "WaveWallet is a multi-tenant coin wallet, voucher marketplace and rewards platform for Omada hotspot operators, resellers and their customers.",
+          "ONE WAVE brings WaveWallet, voucher marketplaces, Retail Market and Universe together for hotspot operators, sellers and their customers.",
       },
-      { property: "og:title", content: "WaveWallet — Voucher & Wallet Platform for Hotspot Operators" },
+      { property: "og:title", content: "ONE WAVE — Wallet, Voucher & Retail Ecosystem" },
       {
         property: "og:description",
         content:
-          "WaveWallet is a multi-tenant coin wallet, voucher marketplace and rewards platform for Omada hotspot operators, resellers and their customers.",
+          "ONE WAVE brings WaveWallet, voucher marketplaces, Retail Market and Universe together for hotspot operators, sellers and their customers.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -257,7 +257,7 @@ function LoginPage() {
         navigate({ to: "/start-shop", replace: true });
         return;
       }
-      toast.success("Welcome to WaveWallet.");
+      toast.success("Welcome to ONE WAVE.");
       navigate({ to: "/universe", replace: true });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not create your account.");
@@ -288,7 +288,7 @@ function LoginPage() {
           <div className="flex items-center gap-2.5">
             <img
               src={logo}
-              alt="WaveWallet logo"
+              alt="ONE WAVE logo"
               className="size-9 rounded-xl object-contain"
               width={36}
               height={36}
@@ -424,7 +424,7 @@ function LoginPage() {
               <CardContent className="space-y-3 py-5">
                 <div className="space-y-0.5">
                   <h1 className="text-xl font-semibold tracking-tight">Create your account</h1>
-                  <p className="text-xs text-auth-muted">How will you use WaveWallet?</p>
+                  <p className="text-xs text-auth-muted">How will you use ONE WAVE?</p>
                 </div>
                 <button
                   type="button"

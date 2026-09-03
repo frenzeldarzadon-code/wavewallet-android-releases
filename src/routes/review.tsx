@@ -142,7 +142,7 @@ function ReviewPage() {
     return (
       <Shell>
         <p className="text-sm text-muted-foreground">
-          Sign in to your WaveWallet account to open your review shop.
+          Sign in to your ONE WAVE account to open your review shop.
         </p>
         <Button asChild className="mt-3">
           <Link to="/">Sign in</Link>
@@ -197,7 +197,7 @@ function ReviewPage() {
             <p className="text-sm font-semibold text-destructive">Your 5-day review has ended</p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
               Simulated operations are frozen. Subscribe to turn this shop into a live account with
-              the same login — your WaveWallet account and shop settings stay exactly as they are.
+              the same login — your ONE WAVE account and shop settings stay exactly as they are.
             </p>
           </CardContent>
         </Card>

@@ -48,12 +48,12 @@ type Invitation = Database["public"]["Tables"]["admin_invitations"]["Row"];
 export const Route = createFileRoute("/super/admins")({
   head: () => ({
     meta: [
-      { title: "Shops & Admins — WaveWallet Super Admin" },
+      { title: "Shops & Admins — ONE WAVE Super Admin" },
       {
         name: "description",
         content: "Create tenant shops, edit plans, manage signup links and invite operators.",
       },
-      { property: "og:title", content: "Shops & Admins — WaveWallet Super Admin" },
+      { property: "og:title", content: "Shops & Admins — ONE WAVE Super Admin" },
       {
         property: "og:description",
         content: "Create tenant shops, edit plans, manage signup links and invite operators.",

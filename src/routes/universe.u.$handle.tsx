@@ -23,12 +23,12 @@ export const Route = createFileRoute("/universe/u/$handle")({
       {
         name: "description",
         content:
-          "Public WaveWallet Universe profile: display name, unique @handle, photo and bio. No wallet or transaction details are shown.",
+          "Public ONE WAVE Universe profile: display name, unique @handle, photo and bio. No wallet or transaction details are shown.",
       },
       { property: "og:title", content: "Universe Profile — WaveWallet" },
       {
         property: "og:description",
-        content: "A member's public WaveWallet Universe identity.",
+        content: "A member's public ONE WAVE Universe identity.",
       },
       { property: "og:type", content: "profile" },
       { name: "twitter:card", content: "summary" },
@@ -107,7 +107,7 @@ function UniverseMemberProfile() {
               </div>
               {profile.is_platform ? (
                 <p className="text-sm text-muted-foreground">
-                  This is the WaveWallet platform identity used for platform announcements and
+                  This is the ONE WAVE platform identity used for platform announcements and
                   moderation. The personal profile behind it is private.
                 </p>
               ) : (

@@ -21,9 +21,9 @@ import { SuperEarningsPanel } from "@/components/super-earnings-panel";
 export const Route = createFileRoute("/super/")({
   head: () => ({
     meta: [
-      { title: "Platform Overview — WaveWallet Super Admin" },
+      { title: "Platform Overview — ONE WAVE Super Admin" },
       { name: "description", content: "Cross-tenant overview of every WaveWallet shop, member accounts and platform earnings." },
-      { property: "og:title", content: "Platform Overview — WaveWallet Super Admin" },
+      { property: "og:title", content: "Platform Overview — ONE WAVE Super Admin" },
       { property: "og:description", content: "Cross-tenant overview of every WaveWallet shop, member accounts and platform earnings." },
     ],
   }),

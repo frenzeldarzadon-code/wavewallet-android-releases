@@ -26,13 +26,13 @@ class AboutActivity : AppCompatActivity() {
                 setPadding(0, 8, 0, 8)
             })
         }
-        line("WaveWallet", 22f, "#1D4ED8")
+        line("ONE WAVE", 22f, "#1D4ED8")
         line("Version ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})")
         line("Application ID: ${BuildConfig.APPLICATION_ID}")
         line("Build type: ${BuildConfig.BUILD_TYPE}")
         line("Connects to: ${BuildConfig.APP_URL}")
         line(
-            "This app is the official WaveWallet client. It uses the same accounts, " +
+            "This app is the official ONE WAVE client. WaveWallet is its wallet product.  It uses the same accounts, " +
                 "the same wallets and the same backend as the website. No Coin, voucher, " +
                 "cash in, cash out or subscription action is stored on this device.",
             13f,

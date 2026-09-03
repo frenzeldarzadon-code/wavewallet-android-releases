@@ -45,13 +45,13 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/admin/products")({
   head: () => ({
     meta: [
-      { title: "Voucher Products — WaveWallet Admin" },
+      { title: "Voucher Products — ONE WAVE Admin" },
       {
         name: "description",
         content:
           "Create, price and archive text-only voucher products for your shop. Coin price, points placeholder and promo pricing.",
       },
-      { property: "og:title", content: "Voucher Products — WaveWallet Admin" },
+      { property: "og:title", content: "Voucher Products — ONE WAVE Admin" },
       {
         property: "og:description",
         content: "Manage voucher products and pricing for your own shop only.",

@@ -4,13 +4,13 @@ import { ManualCreditCard } from "@/components/super/manual-credit-card";
 export const Route = createFileRoute("/super/credits")({
   head: () => ({
     meta: [
-      { title: "Coin Management — WaveWallet Super Admin" },
+      { title: "Coin Management — ONE WAVE Super Admin" },
       {
         name: "description",
         content:
           "Mint or remove coins in any WaveWallet shop from the platform console, with a full audit trail.",
       },
-      { property: "og:title", content: "Coin Management — WaveWallet Super Admin" },
+      { property: "og:title", content: "Coin Management — ONE WAVE Super Admin" },
       {
         property: "og:description",
         content:

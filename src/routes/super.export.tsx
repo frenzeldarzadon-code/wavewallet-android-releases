@@ -31,13 +31,13 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/super/export")({
   head: () => ({
     meta: [
-      { title: "Data Export & Backup — WaveWallet Super Admin" },
+      { title: "Data Export & Backup — ONE WAVE Super Admin" },
       {
         name: "description",
         content:
           "Download timestamped CSV backups of voucher inventory, coin and points ledgers, sales, earnings and member records for recovery and audit.",
       },
-      { property: "og:title", content: "Data Export & Backup — WaveWallet Super Admin" },
+      { property: "og:title", content: "Data Export & Backup — ONE WAVE Super Admin" },
       {
         property: "og:description",
         content:

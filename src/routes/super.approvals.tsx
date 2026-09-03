@@ -10,9 +10,9 @@ import { useSession } from "@/lib/session";
 export const Route = createFileRoute("/super/approvals")({
   head: () => ({
     meta: [
-      { title: "Approvals — WaveWallet Super Admin" },
+      { title: "Approvals — ONE WAVE Super Admin" },
       { name: "description", content: "Every pending platform approval in one place: shop coin payments and newly joined members." },
-      { property: "og:title", content: "Approvals — WaveWallet Super Admin" },
+      { property: "og:title", content: "Approvals — ONE WAVE Super Admin" },
       { property: "og:description", content: "Every pending platform approval in one place: shop coin payments and newly joined members." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

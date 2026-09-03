@@ -1,5 +1,5 @@
 /**
- * Public WaveWallet guide — the only anonymous experience.
+ * Public ONE WAVE guide — the only anonymous experience.
  *
  * Marketing plus education: no wallet, GCash, subscription or financial action
  * can be reached from here. Copy that changes over time lives in the CMS tables
@@ -40,9 +40,9 @@ import hero from "@/assets/guide-hero.jpg";
 const SITE = "https://wallet.sagadawave.com";
 const URL = `${SITE}/guide`;
 const OG_IMAGE = `${SITE}/og-wavewallet.jpg`;
-const TITLE = "WaveWallet — run a WiFi voucher shop with Coins, resellers and rewards";
+const TITLE = "ONE WAVE — run a WiFi voucher shop with Coins, resellers and rewards";
 const DESCRIPTION =
-  "WaveWallet turns your hotspot into a complete shop: Coins as revolving cashflow, resellers and subresellers with cashback, WiFi voucher sales, points and rewards. Plans from ₱50/month.";
+  "ONE WAVE turns your hotspot into a complete shop: Coins as revolving cashflow, resellers and subresellers with cashback, WiFi voucher sales, points and rewards. Plans from ₱50/month.";
 
 export const Route = createFileRoute("/guide")({
   loader: () => loadGuide(),
@@ -54,7 +54,7 @@ export const Route = createFileRoute("/guide")({
       { property: "og:description", content: DESCRIPTION },
       { property: "og:type", content: "website" },
       { property: "og:url", content: URL },
-      { property: "og:site_name", content: "WaveWallet" },
+      { property: "og:site_name", content: "ONE WAVE" },
       { property: "og:image", content: OG_IMAGE },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: OG_IMAGE },
@@ -93,8 +93,8 @@ export const Route = createFileRoute("/guide")({
 function Brand() {
   return (
     <Link to="/guide" className="flex items-center gap-2">
-      <img src={logo} alt="WaveWallet" width={32} height={32} className="size-8" />
-      <span className="text-sm font-semibold tracking-tight">WaveWallet</span>
+      <img src={logo} alt="ONE WAVE" width={32} height={32} className="size-8" />
+      <span className="text-sm font-semibold tracking-tight">ONE WAVE</span>
     </Link>
   );
 }
@@ -123,7 +123,7 @@ function GuideShell({ children }: { children: React.ReactNode }) {
             Coins are shop cashflow, not a payment instrument. Every movement is recorded in an
             immutable ledger.
           </span>
-          <span>© {new Date().getFullYear()} WaveWallet</span>
+          <span>© {new Date().getFullYear()} ONE WAVE</span>
         </div>
       </footer>
     </div>
@@ -155,7 +155,7 @@ function GuidePage() {
       if (error) throw new Error(error.message);
       setQuestion("");
       setContact("");
-      toast.success("Thanks — WaveWallet Support will review your question.");
+      toast.success("Thanks — ONE WAVE Support will review your question.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not send your question");
     } finally {
@@ -172,7 +172,7 @@ function GuidePage() {
             Run your WiFi voucher business like a real shop
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
-            WaveWallet gives your hotspot a wallet, a reseller network and a voucher store on one
+            ONE WAVE gives your hotspot a wallet, a reseller network and a voucher store on one
             mobile-first platform. Coins circulate as your shop&apos;s cashflow, resellers earn
             cashback, customers earn points, and every movement is recorded.
           </p>
@@ -199,7 +199,7 @@ function GuidePage() {
         </div>
         <img
           src={hero}
-          alt="A WaveWallet shop wallet, WiFi vouchers and a reseller network"
+          alt="A ONE WAVE shop wallet, WiFi vouchers and a reseller network"
           width={1600}
           height={912}
           className="w-full rounded-2xl border shadow-[var(--shadow-card)]"
@@ -310,7 +310,7 @@ function GuidePage() {
       <section className="mb-12">
         <h2 className="text-lg font-semibold tracking-tight">Ask a question</h2>
         <p className="mb-3 text-xs text-muted-foreground">
-          WaveWallet Support reviews and answers questions here. Published answers help the next
+          ONE WAVE Support reviews and answers questions here. Published answers help the next
           operator too.
         </p>
         <Card className="shadow-[var(--shadow-card)]">

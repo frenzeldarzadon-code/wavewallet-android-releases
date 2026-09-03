@@ -8,13 +8,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export const Route = createFileRoute("/universe/search")({
   head: () => ({
     meta: [
-      { title: "Search — WaveWallet Universe" },
+      { title: "Search — ONE WAVE Universe" },
       {
         name: "description",
         content:
           "Search Universe shops and voucher names, then pick an authorized seller and open their storefront.",
       },
-      { property: "og:title", content: "Search — WaveWallet Universe" },
+      { property: "og:title", content: "Search — ONE WAVE Universe" },
       {
         property: "og:description",
         content: "Find Universe shops, vouchers, sellers and members.",

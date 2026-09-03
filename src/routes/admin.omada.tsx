@@ -21,13 +21,13 @@ import { useSession } from "@/lib/session";
 export const Route = createFileRoute("/admin/omada")({
   head: () => ({
     meta: [
-      { title: "Omada Integration — WaveWallet Admin" },
+      { title: "Omada Integration — ONE WAVE Admin" },
       {
         name: "description",
         content:
           "Connect your shop's own Omada controller, generate hotspot vouchers and check voucher status.",
       },
-      { property: "og:title", content: "Omada Integration — WaveWallet Admin" },
+      { property: "og:title", content: "Omada Integration — ONE WAVE Admin" },
       {
         property: "og:description",
         content:

@@ -5,13 +5,13 @@ import { UniverseShell } from "@/components/universe/universe-shell";
 export const Route = createFileRoute("/universe/members")({
   head: () => ({
     meta: [
-      { title: "Find Members — WaveWallet Universe" },
+      { title: "Find Members — ONE WAVE Universe" },
       {
         name: "description",
         content:
-          "Search the WaveWallet Universe for members by name or @handle, and narrow by province, city or municipality and barangay.",
+          "Search the ONE WAVE Universe for members by name or @handle, and narrow by province, city or municipality and barangay.",
       },
-      { property: "og:title", content: "Find Members — WaveWallet Universe" },
+      { property: "og:title", content: "Find Members — ONE WAVE Universe" },
       {
         property: "og:description",
         content: "Search Universe members by name, @handle or area.",

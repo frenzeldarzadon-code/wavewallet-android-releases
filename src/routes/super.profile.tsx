@@ -8,7 +8,7 @@ export const Route = createFileRoute("/super/profile")({
       {
         name: "description",
         content:
-          "Update the platform owner display name, contact details and profile photo for the WaveWallet console.",
+          "Update the platform owner display name, contact details and profile photo for the ONE WAVE console.",
       },
       { property: "og:title", content: "Platform Owner Profile — WaveWallet" },
       {

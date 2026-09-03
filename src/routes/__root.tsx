@@ -81,22 +81,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "WaveWallet — Voucher & Wallet Platform for Hotspot Operators" },
+      { title: "ONE WAVE — Wallet, Voucher & Retail Ecosystem" },
       {
         name: "description",
         content:
-          "WaveWallet is a multi-tenant coin wallet, voucher marketplace and rewards platform for Omada hotspot operators, resellers and their customers.",
+          "ONE WAVE brings WaveWallet, voucher marketplaces, Retail Market and Universe together for hotspot operators, sellers and their customers.",
       },
-      { property: "og:title", content: "WaveWallet — Voucher & Wallet Platform for Hotspot Operators" },
+      { property: "og:title", content: "ONE WAVE — Wallet, Voucher & Retail Ecosystem" },
       {
         property: "og:description",
         content:
-          "WaveWallet is a multi-tenant coin wallet, voucher marketplace and rewards platform for Omada hotspot operators, resellers and their customers.",
+          "ONE WAVE brings WaveWallet, voucher marketplaces, Retail Market and Universe together for hotspot operators, sellers and their customers.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "WaveWallet — Voucher & Wallet Platform for Hotspot Operators" },
-      { name: "twitter:description", content: "WaveWallet is a multi-tenant coin wallet, voucher marketplace and rewards platform for Omada hotspot operators, resellers and their customers." },
+      { name: "twitter:title", content: "ONE WAVE — Wallet, Voucher & Retail Ecosystem" },
+      { name: "twitter:description", content: "ONE WAVE brings WaveWallet, voucher marketplaces, Retail Market and Universe together for hotspot operators, sellers and their customers." },
       { name: "google-site-verification", content: "UnARDDxep_CFJhJiBRoKdtC14Xd_YQtLq2R6mtfyB-M" },
       { name: "theme-color", content: "#1d4ed8" },
       { name: "application-name", content: "WaveWallet" },

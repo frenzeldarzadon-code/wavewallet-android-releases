@@ -31,9 +31,9 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/admin/settings")({
   head: () => ({
     meta: [
-      { title: "Shop Settings — WaveWallet Admin" },
+      { title: "Shop Settings — ONE WAVE Admin" },
       { name: "description", content: "Name your shop, set contact details, Facebook support channel and points earning rules." },
-      { property: "og:title", content: "Shop Settings — WaveWallet Admin" },
+      { property: "og:title", content: "Shop Settings — ONE WAVE Admin" },
       { property: "og:description", content: "Name your shop, set contact details, Facebook support channel and points earning rules." },
     ],
   }),

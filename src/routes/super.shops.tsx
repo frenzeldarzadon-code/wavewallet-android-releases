@@ -62,7 +62,7 @@ import {
   type Ecosystem,
 } from "@/lib/subscription-shops";
 
-const TITLE = "Subscription Shops — WaveWallet Super Admin";
+const TITLE = "Subscription Shops — ONE WAVE Super Admin";
 const DESCRIPTION =
   "Activate, renew and upgrade Subscription Shops, review Coin allocations and run the subscription lifecycle job.";
 

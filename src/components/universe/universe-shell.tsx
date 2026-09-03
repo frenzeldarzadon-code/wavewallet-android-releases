@@ -213,7 +213,7 @@ export function UniverseShell({
             </span>
             <span className="leading-tight">
               <span className="block text-lg font-bold tracking-tight">Universe</span>
-              <span className="block text-[11px] text-muted-foreground">WaveWallet community</span>
+              <span className="block text-[11px] text-muted-foreground">ONE WAVE community</span>
             </span>
           </Link>
 

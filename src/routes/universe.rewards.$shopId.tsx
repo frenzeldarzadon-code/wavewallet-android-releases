@@ -22,12 +22,12 @@ export const Route = createFileRoute("/universe/rewards/$shopId")({
   },
   head: () => ({
     meta: [
-      { title: "Shop Rewards — WaveWallet Universe" },
+      { title: "Shop Rewards — ONE WAVE Universe" },
       {
         name: "description",
         content: "Redeem the points you earned in this Universe shop for its rewards.",
       },
-      { property: "og:title", content: "Shop Rewards — WaveWallet Universe" },
+      { property: "og:title", content: "Shop Rewards — ONE WAVE Universe" },
       {
         property: "og:description",
         content: "Shop-specific rewards for points earned buying that shop's vouchers.",

@@ -167,7 +167,7 @@ function StartShopPage() {
             <>
               <p className="flex items-start gap-2 text-sm text-muted-foreground">
                 <Store className="mt-0.5 size-4 shrink-0 text-primary" />
-                Creating a shop needs a WaveWallet account. Sign up or sign in first — it takes a
+                Creating a shop needs a ONE WAVE account. Sign up or sign in first — it takes a
                 minute, and the guide stays open to everyone.
               </p>
               <Button asChild className="w-full">

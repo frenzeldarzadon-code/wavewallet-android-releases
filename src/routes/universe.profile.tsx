@@ -15,7 +15,7 @@ export const Route = createFileRoute("/universe/profile")({
       {
         name: "description",
         content:
-          "Your global WaveWallet identity: display name, unique @handle, profile photo, links and connected sign-in methods.",
+          "Your global ONE WAVE identity: display name, unique @handle, profile photo, links and connected sign-in methods.",
       },
       { property: "og:title", content: "My Universe Profile — WaveWallet" },
       {

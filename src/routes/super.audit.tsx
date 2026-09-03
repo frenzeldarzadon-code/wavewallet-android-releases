@@ -6,9 +6,9 @@ import { auditEvents, ecosystems, shortDateTime } from "@/lib/wavewallet";
 export const Route = createFileRoute("/super/audit")({
   head: () => ({
     meta: [
-      { title: "Audit Trail — WaveWallet Super Admin" },
+      { title: "Audit Trail — ONE WAVE Super Admin" },
       { name: "description", content: "Immutable log of Super Admin shop access and platform-level changes." },
-      { property: "og:title", content: "Audit Trail — WaveWallet Super Admin" },
+      { property: "og:title", content: "Audit Trail — ONE WAVE Super Admin" },
       { property: "og:description", content: "Immutable log of Super Admin shop access and platform-level changes." },
     ],
   }),

@@ -26,13 +26,13 @@ import {
 export const Route = createFileRoute("/admin/social")({
   head: () => ({
     meta: [
-      { title: "Community Moderation — WaveWallet Admin" },
+      { title: "Community Moderation — ONE WAVE Admin" },
       {
         name: "description",
         content:
           "Review reported posts and comments, remove content and monitor social coin activity in your shop.",
       },
-      { property: "og:title", content: "Community Moderation — WaveWallet Admin" },
+      { property: "og:title", content: "Community Moderation — ONE WAVE Admin" },
       {
         property: "og:description",
         content: "Moderate your shop community and audit social coin activity.",

@@ -5,13 +5,13 @@ import { useSession } from "@/lib/session";
 export const Route = createFileRoute("/admin/spending")({
   head: () => ({
     meta: [
-      { title: "Spending Tracker — WaveWallet Admin" },
+      { title: "Spending Tracker — ONE WAVE Admin" },
       {
         name: "description",
         content:
           "Track your shop's income and expenses: cashback earned per reseller, admin discounts, admin purchases and your own manual entries.",
       },
-      { property: "og:title", content: "Spending Tracker — WaveWallet Admin" },
+      { property: "og:title", content: "Spending Tracker — ONE WAVE Admin" },
       {
         property: "og:description",
         content:

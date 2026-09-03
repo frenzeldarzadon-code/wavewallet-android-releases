@@ -8,16 +8,16 @@ import { MarketPulse } from "@/components/universe/market-pulse";
 export const Route = createFileRoute("/universe/")({
   head: () => ({
     meta: [
-      { title: "Universe Feed — WaveWallet Community" },
+      { title: "Universe Feed — ONE WAVE Community" },
       {
         name: "description",
         content:
-          "The WaveWallet Universe feed: share updates and photos, reply, like and promote listings across the shops you belong to.",
+          "The ONE WAVE Universe feed: share updates and photos, reply, like and promote listings across the shops you belong to.",
       },
-      { property: "og:title", content: "Universe Feed — WaveWallet Community" },
+      { property: "og:title", content: "Universe Feed — ONE WAVE Community" },
       {
         property: "og:description",
-        content: "Posts, photos, replies and likes across the WaveWallet community.",
+        content: "Posts, photos, replies and likes across the ONE WAVE community.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

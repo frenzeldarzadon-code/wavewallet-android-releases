@@ -1,5 +1,5 @@
 /**
- * Public "Get the WaveWallet App" page.
+ * Public "Get the ONE WAVE App" page.
  *
  * Anonymous and shareable: it reads the official release metadata the platform
  * owner publishes and offers the signed Android APK plus the web/PWA option.
@@ -34,9 +34,9 @@ import logo from "@/assets/wavewallet-logo.webp";
 const SITE = "https://wallet.sagadawave.com";
 const URL = `${SITE}/download`;
 const OG_IMAGE = `${SITE}/og-wavewallet.jpg`;
-const TITLE = "Download the WaveWallet App — official Android APK";
+const TITLE = "Download the ONE WAVE App — official Android APK";
 const DESCRIPTION =
-  "Get the official WaveWallet Android app as a direct APK download, or use WaveWallet in your browser. No Play Store needed. iPhone and iPad users can install the web app.";
+  "Get the official ONE WAVE Android app as a direct APK download, or use ONE WAVE in your browser. No Play Store needed. iPhone and iPad users can install the web app.";
 
 export const Route = createFileRoute("/download")({
   head: () => ({
@@ -47,7 +47,7 @@ export const Route = createFileRoute("/download")({
       { property: "og:description", content: DESCRIPTION },
       { property: "og:type", content: "website" },
       { property: "og:url", content: URL },
-      { property: "og:site_name", content: "WaveWallet" },
+      { property: "og:site_name", content: "ONE WAVE" },
       { property: "og:image", content: OG_IMAGE },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: OG_IMAGE },
@@ -58,11 +58,11 @@ export const Route = createFileRoute("/download")({
 });
 
 const STEPS = [
-  "Tap “Download WaveWallet for Android”. The APK saves to your Downloads folder.",
+  "Tap “Download ONE WAVE for Android”. The APK saves to your Downloads folder.",
   "Open the downloaded file.",
   "If Android asks, allow installing apps from this source, then go back.",
   "Tap Install and wait a few seconds.",
-  "Open WaveWallet and sign in with your usual account.",
+  "Open ONE WAVE and sign in with your usual account.",
 ];
 
 function DownloadPage() {
@@ -83,8 +83,8 @@ function DownloadPage() {
       <header className="sticky top-0 z-30 border-b bg-background/85 backdrop-blur">
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4 py-3">
           <Link to="/guide" className="flex items-center gap-2">
-            <img src={logo} alt="WaveWallet" width={32} height={32} className="size-8" />
-            <span className="text-sm font-semibold tracking-tight">WaveWallet</span>
+            <img src={logo} alt="ONE WAVE" width={32} height={32} className="size-8" />
+            <span className="text-sm font-semibold tracking-tight">ONE WAVE</span>
           </Link>
           <Button asChild size="sm" variant="ghost">
             <Link to="/">Sign in</Link>
@@ -94,12 +94,12 @@ function DownloadPage() {
 
       <main className="mx-auto w-full max-w-3xl px-4 py-8">
         <section className="text-center">
-          <StatusBadge tone="brand">Official WaveWallet app</StatusBadge>
+          <StatusBadge tone="brand">Official ONE WAVE app</StatusBadge>
           <h1 className="mt-3 text-3xl font-semibold leading-tight tracking-tight">
-            Get the WaveWallet app
+            Get the ONE WAVE app
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
-            The official WaveWallet Android app installs directly from this site — no Play Store
+            The official ONE WAVE Android app installs directly from this site — no Play Store
             needed. It uses the same account, the same shops and the same Coins as the website.
           </p>
         </section>
@@ -110,7 +110,7 @@ function DownloadPage() {
             <div className="flex items-center gap-3">
               <img src={logo} alt="" width={44} height={44} className="size-11 rounded-xl" />
               <div>
-                <h2 className="text-base font-semibold tracking-tight">WaveWallet Android</h2>
+                <h2 className="text-base font-semibold tracking-tight">ONE WAVE Android</h2>
                 <p className="text-xs text-muted-foreground">
                   {loading
                     ? "Checking the latest release…"
@@ -146,19 +146,19 @@ function DownloadPage() {
                 onClick={() => void recordAppDownload()}
               >
                 <a href={release!.android_download_url} rel="noopener">
-                  <Download className="size-4" /> Download WaveWallet for Android
+                  <Download className="size-4" /> Download ONE WAVE for Android
                 </a>
               </Button>
             ) : (
               <p className="rounded-lg border border-dashed px-3 py-3 text-sm text-muted-foreground">
                 {loading
                   ? "Loading the official release…"
-                  : "The Android download is not published yet. You can use WaveWallet in your browser right now — see “Use WaveWallet on the web” below."}
+                  : "The Android download is not published yet. You can use ONE WAVE in your browser right now — see “Use ONE WAVE on the web” below."}
               </p>
             )}
 
             <p className="text-xs text-muted-foreground">
-              Only download WaveWallet from <strong>wallet.sagadawave.com</strong>. Files shared in
+              Only download ONE WAVE from <strong>wallet.sagadawave.com</strong>. Files shared in
               chat groups or on other sites are not official and may be unsafe.
             </p>
           </CardContent>
@@ -220,7 +220,7 @@ function DownloadPage() {
               </p>
               <p className="flex items-start gap-2">
                 <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" />
-                Your Coins, transactions and history live in your WaveWallet account, not on the
+                Your Coins, transactions and history live in your ONE WAVE account, not on the
                 phone. Signing in on the app shows exactly the same balances as the website.
               </p>
               {release?.android_sha256 ? (
@@ -246,7 +246,7 @@ function DownloadPage() {
                 <Apple className="size-5 text-primary" />
                 <h3 className="mt-2 text-sm font-semibold tracking-tight">iPhone &amp; iPad</h3>
                 <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                  There is no iOS app yet. Open WaveWallet in Safari, tap Share, then{" "}
+                  There is no iOS app yet. Open ONE WAVE in Safari, tap Share, then{" "}
                   <strong>Add to Home Screen</strong> — it opens full screen like an app.
                 </p>
               </CardContent>
@@ -255,14 +255,14 @@ function DownloadPage() {
               <CardContent className="px-5 py-5">
                 <Globe className="size-5 text-primary" />
                 <h3 className="mt-2 text-sm font-semibold tracking-tight">
-                  Use WaveWallet on the web
+                  Use ONE WAVE on the web
                 </h3>
                 <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                   You never have to install anything. Everything works in the browser on any phone
                   or computer.
                 </p>
                 <Button asChild variant="outline" size="sm" className="mt-3">
-                  <Link to="/">Open WaveWallet in the browser</Link>
+                  <Link to="/">Open ONE WAVE in the browser</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -277,7 +277,7 @@ function DownloadPage() {
         </section>
 
         <p className="mt-8 text-center text-sm text-muted-foreground">
-          New to WaveWallet?{" "}
+          New to ONE WAVE?{" "}
           <Link to="/guide" className="font-medium text-primary underline-offset-4 hover:underline">
             Read the guide
           </Link>

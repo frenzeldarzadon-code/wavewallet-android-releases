@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "WaveWallet",
-  "short_name": "WaveWallet",
-  "description": "WaveWallet — Coins, WiFi vouchers, cashback and points for hotspot shops.",
+  "name": "ONE WAVE",
+  "short_name": "ONE WAVE",
+  "description": "ONE WAVE — WaveWallet, WiFi vouchers, Retail Market, rewards and Universe.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

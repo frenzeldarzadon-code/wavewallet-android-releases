@@ -6,13 +6,13 @@ import { useSession } from "@/lib/session";
 export const Route = createFileRoute("/admin/applications")({
   head: () => ({
     meta: [
-      { title: "New Members — WaveWallet Admin" },
+      { title: "New Members — ONE WAVE Admin" },
       {
         name: "description",
         content:
           "Review members who just joined your shop and keep or remove them.",
       },
-      { property: "og:title", content: "New Members — WaveWallet Admin" },
+      { property: "og:title", content: "New Members — ONE WAVE Admin" },
       {
         property: "og:description",
         content: "Keep or remove members who joined your shop automatically.",

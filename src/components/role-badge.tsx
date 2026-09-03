@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
  * admin or reseller badge. The badge carries no personal information: it is
  * the platform identity, not the person behind it.
  */
-export const PLATFORM_IDENTITY_NAME = "WaveWallet Super Admin";
+export const PLATFORM_IDENTITY_NAME = "ONE WAVE Super Admin";
 
 const LABELS: Record<string, string> = {
   super_admin: "Super Admin",
