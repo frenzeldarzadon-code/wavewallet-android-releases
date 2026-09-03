@@ -135,7 +135,8 @@ export function compactMeta(meta: PostMeta): PostMeta {
     };
   }
   if (meta.feeling && meta.feeling.label.trim()) out.feeling = meta.feeling;
-  if (postStyle(meta.style)) out.style = meta.style;
+  const style = postStyle(meta.style);
+  if (style) out.style = style.id;
   if (meta.dm_invite) out.dm_invite = true;
   return out;
 }
