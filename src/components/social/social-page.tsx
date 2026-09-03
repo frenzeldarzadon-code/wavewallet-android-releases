@@ -59,9 +59,6 @@ import {
   audienceHelp,
   audienceLabel,
   availableTiers,
-  canAfford,
-  chargeSummary,
-  commentCharge,
   createComment,
   createPost,
   deleteComment,
@@ -71,7 +68,6 @@ import {
   fetchDistributionStatus,
   fetchFeed,
   fetchSocialState,
-  postCharge,
   relativeTime,
   reportContent,
   setBlocked,
@@ -350,7 +346,6 @@ function PostCard({
   const [comments, setComments] = useState<FeedComment[]>([]);
   const [reply, setReply] = useState("");
   const [replyTo, setReplyTo] = useState<FeedComment | null>(null);
-  const [confirmReply, setConfirmReply] = useState(false);
   const [busy, setBusy] = useState(false);
   const [dm, setDm] = useState("");
   const [dmOpen, setDmOpen] = useState(false);
@@ -360,7 +355,6 @@ function PostCard({
   const [gifting, setGifting] = useState(false);
   const [hideReason, setHideReason] = useState("");
 
-  const cost = commentCharge();
   const thread = threadComments(comments);
 
   const loadComments = async () => {
@@ -388,10 +382,7 @@ function PostCard({
       const res = await createComment(post.id, reply, replyTo?.id ?? null);
       setReply("");
       setReplyTo(null);
-      setConfirmReply(false);
-      toast.success("Reply posted", {
-        description: res.charged > 0 ? `${res.charged} social credit deducted.` : "Free reply.",
-      });
+      toast.success("Reply posted");
       await loadComments();
       await onChanged();
     } catch (e) {
@@ -659,7 +650,7 @@ function PostCard({
               <Button
                 className="h-11"
                 disabled={!reply.trim() || busy}
-                onClick={() => (cost > 0 ? setConfirmReply(true) : void submitReply())}
+                onClick={() => void submitReply()}
               >
                 <Send className="size-4" />
               </Button>
@@ -667,27 +658,6 @@ function PostCard({
           </div>
         ) : null}
       </CardContent>
-
-      <AlertDialog open={confirmReply} onOpenChange={setConfirmReply}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Post this reply?</AlertDialogTitle>
-            <AlertDialogDescription>{chargeSummary(cost, "social")}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={busy}
-              onClick={(e) => {
-                e.preventDefault();
-                void submitReply();
-              }}
-            >
-              Reply
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <Dialog open={hideOpen} onOpenChange={setHideOpen}>
         <DialogContent>

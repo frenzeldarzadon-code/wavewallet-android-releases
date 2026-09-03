@@ -94,6 +94,7 @@ export function SellerStorefrontSection({
                     setBuying({
                       shopId: shop.id,
                       shopName: shop.name,
+                      creditsPerPoint: shop.creditsPerPoint ?? null,
                       product: p,
                       sellerId: isSelf ? null : store.sellerId,
                       sellerName: isSelf ? null : store.sellerName,

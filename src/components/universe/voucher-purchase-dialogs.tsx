@@ -34,7 +34,7 @@ import { useOnline } from "@/lib/pwa";
 import { peso } from "@/lib/wavewallet";
 import { purchaseVoucher } from "@/lib/wallet";
 import { fetchPointsAccount, purchaseVoucherWithPoints, type PointsAccount } from "@/lib/rewards";
-import { pts } from "@/lib/points";
+import { pointsForSpend, pts } from "@/lib/points";
 import type { StorefrontProduct } from "@/lib/seller-storefront";
 
 export const MAX_QTY = 500;
@@ -46,6 +46,8 @@ export interface PurchaseTarget {
   /** Owning/selling shop of the product — decides the points & rewards context. */
   shopId: string;
   shopName: string;
+  /** Selling shop's coins-per-point ratio for the "points you will earn" preview. */
+  creditsPerPoint?: number | null;
   product: StorefrontProduct;
   /** Authorized seller to attribute the sale to; null = direct shop purchase. */
   sellerId: string | null;
@@ -343,6 +345,14 @@ export function VoucherPurchaseDialogs({
                         </span>
                       </p>
                     </>
+                  ) : null}
+                  {(target.creditsPerPoint ?? 0) > 0 ? (
+                    <p className="flex justify-between">
+                      <span className="text-muted-foreground">{target.shopName} points earned</span>
+                      <span className="font-medium text-points">
+                        +{pts(pointsForSpend(total, target.creditsPerPoint ?? 0))}
+                      </span>
+                    </p>
                   ) : null}
                   {notEnough ? (
                     <p className="text-[11px] text-destructive">

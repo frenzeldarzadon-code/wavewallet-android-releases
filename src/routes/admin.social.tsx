@@ -146,7 +146,7 @@ function AdminSocial() {
 
       <PageSection devSlot="social.social-coin-activity"
         title="Social coin activity"
-        description="Immutable ledger of daily allowances, exchanges, promotions and spending in your shop."
+        description="Historical ledger of social coin movements in your shop. Posting, replies and promotions are free today, so new spending entries are no longer created."
       >
         {activity.length === 0 ? (
           <EmptyState title="No social coin activity yet" />
