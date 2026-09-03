@@ -87,6 +87,8 @@ const empty: Draft = {
   price: "",
   wholesale_price: "",
   wholesale_min_qty: "0",
+  cashback_mode: "disabled",
+  cashback_value: "0",
   stock: "0",
   image_path: null,
   public_visible: true,
