@@ -15,7 +15,7 @@ DECLARE
   _n int; _hist_before text; _hist_after text; _ng uuid; _ng_buyer uuid; _ng_prod uuid;
   _gbal_before numeric; _gbal_after numeric; _rows int; _ref_credits numeric; _ref_debits numeric;
   _ret_prod uuid; _ret_shop uuid; _ret_order uuid; _ret_fee numeric; _ret_sub numeric; _ret_total numeric;
-  r record;
+  r record; _trace text := '';
 BEGIN
   SELECT user_id INTO _super FROM public.user_roles WHERE role = 'super_admin' LIMIT 1;
 
@@ -84,7 +84,7 @@ BEGIN
   SELECT coalesce(sum(amount),0) INTO _credits FROM public.credit_ledger WHERE sale_id = _sale AND direction = 'credit';
   ASSERT _debits = _credits + _fee, format('G: debit %s = credits %s + fee %s', _debits, _credits, _fee);
   ASSERT (SELECT coalesce(sum(commission_amount),0) FROM public.sale_commissions WHERE sale_id = _sale) = _credits, 'G: sale_commissions == ledger credits';
-  RAISE NOTICE 'TRACE sale 1 (customer via reseller): %', (SELECT string_agg(format('%s %s %s %s', direction, amount, entry_kind, coalesce(reason,'')), ' | ' ORDER BY direction DESC, amount DESC) FROM public.credit_ledger WHERE sale_id = _sale);
+  _trace := _trace || E'\nsale 1 (customer via reseller): ' || (SELECT string_agg(format('%s %s %s %s', direction, amount, entry_kind, coalesce(reason,'')), ' | ' ORDER BY direction DESC, amount DESC) FROM public.credit_ledger WHERE sale_id = _sale);
 
   ------------------------------------------------------------------ 2. reseller self-purchase (E/F)
   PERFORM set_config('request.jwt.claims', json_build_object('sub', _res)::text, true);
@@ -96,7 +96,7 @@ BEGIN
   ASSERT (SELECT amount FROM public.credit_ledger WHERE sale_id = _sale AND direction = 'credit' AND user_id = _res) = round(100 * _rate / 100.0, 2), 'E: own cashback amount';
   SELECT coalesce(sum(amount),0), platform_fee_amount INTO _credits, _fee FROM public.credit_ledger l JOIN public.voucher_sales s ON s.id = l.sale_id WHERE l.sale_id = _sale AND l.direction = 'credit' GROUP BY platform_fee_amount;
   ASSERT _debits = _credits + _fee, format('G: reseller self: %s = %s + %s', _debits, _credits, _fee);
-  RAISE NOTICE 'TRACE sale 2 (reseller self): %', (SELECT string_agg(format('%s %s %s', direction, amount, entry_kind), ' | ' ORDER BY direction DESC, amount DESC) FROM public.credit_ledger WHERE sale_id = _sale);
+  _trace := _trace || E'\nsale 2 (reseller self): ' || (SELECT string_agg(format('%s %s %s', direction, amount, entry_kind), ' | ' ORDER BY direction DESC, amount DESC) FROM public.credit_ledger WHERE sale_id = _sale);
 
   ------------------------------------------------------------------ 3. subreseller self-purchase (E)
   PERFORM set_config('request.jwt.claims', json_build_object('sub', _sub)::text, true);
@@ -112,7 +112,7 @@ BEGIN
   SELECT coalesce(sum(amount),0) INTO _credits FROM public.credit_ledger WHERE sale_id = _sale AND direction = 'credit';
   SELECT platform_fee_amount INTO _fee FROM public.voucher_sales WHERE id = _sale;
   ASSERT _debits = _credits + _fee, format('G: sub self: %s = %s + %s', _debits, _credits, _fee);
-  RAISE NOTICE 'TRACE sale 3 (subreseller self): %', (SELECT string_agg(format('%s %s %s', direction, amount, entry_kind), ' | ' ORDER BY direction DESC, amount DESC) FROM public.credit_ledger WHERE sale_id = _sale);
+  _trace := _trace || E'\nsale 3 (subreseller self): ' || (SELECT string_agg(format('%s %s %s', direction, amount, entry_kind), ' | ' ORDER BY direction DESC, amount DESC) FROM public.credit_ledger WHERE sale_id = _sale);
 
   ------------------------------------------------------------------ 4. admin self-purchase (E)
   PERFORM set_config('request.jwt.claims', json_build_object('sub', _admin)::text, true);
@@ -121,7 +121,7 @@ BEGIN
   ASSERT _n = 1 AND _debits = 100, 'E: admin pays full ₱100 once';
   ASSERT (SELECT count(*) FROM public.credit_ledger WHERE sale_id = _sale AND direction='credit') = 1, 'E: admin gets exactly one remainder row';
   ASSERT (SELECT amount FROM public.credit_ledger WHERE sale_id = _sale AND direction='credit' AND user_id = _admin) = 99.00, 'E: admin remainder = ₱99 (₱100 − ₱1 fee)';
-  RAISE NOTICE 'TRACE sale 4 (admin self): %', (SELECT string_agg(format('%s %s %s', direction, amount, entry_kind), ' | ' ORDER BY direction DESC, amount DESC) FROM public.credit_ledger WHERE sale_id = _sale);
+  _trace := _trace || E'\nsale 4 (admin self): ' || (SELECT string_agg(format('%s %s %s', direction, amount, entry_kind), ' | ' ORDER BY direction DESC, amount DESC) FROM public.credit_ledger WHERE sale_id = _sale);
 
   ------------------------------------------------------------------ 5. I: replay protection
   -- tx_id is unique in credit_ledger; a replayed insert of the same tx must fail.
@@ -203,11 +203,9 @@ BEGIN
     RAISE NOTICE 'N: no purchasable New Generation fixture; isolation covered by discount-rule assertions only';
   END IF;
 
-  ------------------------------------------------------------------ 10. K: Retail wholesale uses the discounted amount once as fee base
-  -- Pure pricing check via the retail helper (Retail stays disabled/hidden).
-  IF to_regprocedure('public.retail_quote_line(numeric,numeric,integer,integer,numeric)') IS NOT NULL THEN
-    RAISE NOTICE 'K: retail_quote_line present';
-  END IF;
+  ------------------------------------------------------------------ 10. K: wholesale fee base
+  -- Covered by supabase/tests/retail-r2-pricing.sql + src/lib/retail-pricing.test.ts
+  -- (fee is computed on the discounted wholesale seller amount, once; Retail stays hidden).
 
-  RAISE NOTICE 'financial-integrity-audit: all assertions passed';
+  RAISE NOTICE 'financial-integrity-audit: all assertions passed%', _trace;
 END $$;
