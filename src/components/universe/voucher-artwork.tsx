@@ -35,7 +35,7 @@ export function VoucherArtwork({
         loading="lazy"
         className="size-full object-cover"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-foreground/75 via-foreground/10 to-transparent" aria-hidden />
+      <div className="absolute inset-0 bg-gradient-to-t from-image-scrim/85 via-image-scrim/10 to-transparent" aria-hidden />
       <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-3 text-primary-foreground">
         <span className="min-w-0">
           <span className="flex items-center gap-1 text-[10px] font-semibold uppercase">
@@ -43,7 +43,7 @@ export function VoucherArtwork({
           </span>
           {!compact ? <span className="mt-0.5 block truncate text-sm font-bold">{name}</span> : null}
         </span>
-        <span className="shrink-0 rounded-full border border-primary-foreground/40 bg-foreground/25 px-2 py-1 text-[10px] font-semibold">
+        <span className="shrink-0 rounded-full border border-primary-foreground/40 bg-image-scrim/35 px-2 py-1 text-[10px] font-semibold">
           ONE WAVE
         </span>
       </div>
