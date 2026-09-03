@@ -341,7 +341,7 @@ export function VoucherPurchaseDialogs({
                       <p className="flex justify-between">
                         <span className="text-muted-foreground">Balance after</span>
                         <span className={notEnough ? "font-medium text-destructive" : "font-medium"}>
-                          {peso(balance - total)}
+                          {notEnough ? `−${peso(total - balance)}` : peso(balance - total)}
                         </span>
                       </p>
                     </>
