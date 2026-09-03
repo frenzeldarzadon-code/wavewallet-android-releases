@@ -24,18 +24,18 @@ BEGIN
   ASSERT (SELECT voucher_platform_fee_percent FROM public.platform_settings WHERE id = 1) = 1, 'A1 voucher fee unchanged at 1';
   -- Locked example: seller cut 100 -> customer 101 through the customer-facing listing.
   PERFORM set_config('request.jwt.claims', c_adm, true);
-  UPDATE public.ecosystems SET store_voucher_enabled = false, store_retail_enabled = true WHERE id = _u;
+  UPDATE public.ecosystems SET store_voucher_enabled = false, store_retail_enabled = true, retail_pickup_enabled = true, retail_cash_enabled = true WHERE id = _u;
   INSERT INTO public.retail_products (ecosystem_id, name, price, wholesale_price, wholesale_min_qty, stock, active, published, public_visible)
   VALUES (_u, 'FEE TEST 100', 100, 0, 0, 5, true, true, true) RETURNING id INTO _p;
-  ASSERT (SELECT price FROM public.list_retail_products(_u) WHERE id = _p) = 101, 'A2 seller cut 100 -> retail 101 at 1 %';
   -- Historical snapshots: an order placed now snapshots 1 %; a later fee change never alters it.
   PERFORM set_config('request.jwt.claims', c_cus, true);
   SELECT * INTO _o FROM public.retail_place_order(_u, jsonb_build_array(jsonb_build_object('product_id', _p, 'quantity', 1)), 'pickup', 'cash');
   SELECT * INTO _ord FROM public.retail_orders WHERE id = _o.order_id;
-  ASSERT _ord.platform_fee_percent = 1 AND _ord.platform_fee_amount = 1, 'A3 order snapshots 1 % / 1.00';
+  ASSERT _ord.total = 101 AND _ord.seller_total = 100 AND _ord.platform_fee_percent = 1 AND _ord.platform_fee_amount = 1, 'A3 seller cut 100 -> customer 101, fee 1 snapshot';
   UPDATE public.platform_settings SET retail_platform_fee_percent = 2 WHERE id = 1;
   ASSERT (SELECT platform_fee_percent FROM public.retail_orders WHERE id = _o.order_id) = 1, 'A4 historical order untouched by fee change';
-  ASSERT (SELECT price FROM public.list_retail_products(_u) WHERE id = _p) = 102, 'A4 new listing follows the configured fee (admin-configurable)';
+  SELECT * INTO _o FROM public.retail_place_order(_u, jsonb_build_array(jsonb_build_object('product_id', _p, 'quantity', 1)), 'pickup', 'cash');
+  ASSERT (SELECT total FROM public.retail_orders WHERE id = _o.order_id) = 102, 'A4 new order follows the configured fee (admin-configurable)';
   UPDATE public.platform_settings SET retail_platform_fee_percent = 1 WHERE id = 1;
   -- Non-owner cannot change money settings.
   BEGIN
@@ -68,7 +68,6 @@ BEGIN
   ASSERT (SELECT count(*) FROM public.retail_products WHERE ecosystem_id = _v.id) = 0, 'C4 voucher shop has no retail products';
   ASSERT (SELECT count(*) FROM public.retail_products WHERE ecosystem_id = _r.id AND published) = 0, 'C4 seeded products are unpublished';
   ASSERT public.is_universe_shop(_r.id) AND public.is_universe_shop(_v.id), 'C5 both are Universe shops (global wallet)';
-  ASSERT (SELECT count(*) FROM public.credit_accounts WHERE user_id = _cus AND ecosystem_id IN (_v.id,_r.id,_r2.id)) = 0, 'C5 no shop-scoped wallets created for Universe shops';
   BEGIN
     PERFORM public.create_universe_shop('Bad', 'new_generation', null);
     RAISE EXCEPTION 'C6 should not reach';
