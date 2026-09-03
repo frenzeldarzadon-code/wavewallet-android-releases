@@ -331,8 +331,29 @@ function PostCard({
   const [giftAmount, setGiftAmount] = useState("5");
   const [gifting, setGifting] = useState(false);
   const [hideReason, setHideReason] = useState("");
+  const [dmOpening, setDmOpening] = useState(false);
+  const navigate = useNavigate();
 
   const thread = threadComments(comments);
+  const meta = readPostMeta(post.meta);
+  const styled = styleApplies({
+    style: meta.style,
+    body: post.body,
+    hasMedia: Boolean(post.image_path || post.video_path),
+  });
+
+  /** "Message me" invite: opens (or creates) the existing private thread and jumps to Messages. */
+  const openDm = async () => {
+    setDmOpening(true);
+    try {
+      const threadId = await openThread(post.author_id);
+      await navigate({ to: "/universe/messages", search: { thread: threadId } });
+    } catch (e) {
+      toast.error("Could not open the conversation", { description: (e as Error).message });
+    } finally {
+      setDmOpening(false);
+    }
+  };
 
   const loadComments = async () => {
     try {
