@@ -442,7 +442,11 @@ export const lookupOmadaVoucherStatuses = createServerFn({ method: "POST" })
     try {
       await assertShopMember(context as unknown as AuthContext, data.ecosystemId);
     } catch {
-      const ctx = context as unknown as AuthContext;
+      const ctx = context as unknown as AuthContext & {
+        supabase: import("@supabase/supabase-js").SupabaseClient<
+          import("@/integrations/supabase/types").Database
+        >;
+      };
       const own = await ctx.supabase
         .from("voucher_codes")
         .select("code")
