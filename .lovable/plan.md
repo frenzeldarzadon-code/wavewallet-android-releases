@@ -1,25 +1,23 @@
-# Final Lovable branding cleanup
+# Universe marketplace and profile visual refinement
 
-## Scope and findings
-- The public sign-in, sign-up, password reset, 404, loading shell, metadata, favicon, PWA icons, and mobile/desktop screens already show ONE WAVE and contain no app-rendered Lovable badge or logo.
-- The published-site “Edit with Lovable” badge is already hidden.
-- One app-controlled user-facing area remains: the Super Admin reports page explicitly labels and records “Lovable AI credits”; existing records can also display that provider wording in the expense list.
-- The logo seen after email signup is not rendered by the app’s authentication pages. It comes from the platform’s default authentication email/sender experience because no branded email domain/templates are configured. The existing custom web domain can be used, but email-domain setup must be completed before ONE WAVE auth email templates can be installed safely.
-- Remaining source mentions in dependencies, generated cloud authentication integration, preview-session security, telemetry, API secret names, tests for preview URLs, and developer comments are internal/technical compatibility references and will not be renamed.
+## Scope
+- Keep the existing Universe Home, seller storefront, routing, ranking queries, prices, purchase actions, permissions, and storage architecture unchanged.
+- Improve only presentation using existing uploaded assets and the bundled ONE WAVE voucher artwork as an explicit fallback.
 
 ## Changes
-1. Replace only the Super Admin-visible Lovable credit wording with neutral “AI service credits” wording while preserving the existing stored category/provider values and accounting behavior for historical compatibility.
-2. Sanitize those known historical provider/category/description labels at presentation time so old expense rows no longer expose Lovable branding in the UI; do not rewrite database records.
-3. Update focused tests for the display mapping and leave all financial calculations, expense RPC behavior, wallet/order/shop logic, and authorization unchanged.
-4. Record this cleanup as complete and unpublished in the roadmap after verification.
+1. Separate profile covers from opaque identity content so only the avatar overlaps the boundary; allow long display names to wrap and keep the handle/joined date readable on mobile and desktop.
+2. Extend the existing Market Pulse result with the shop's already-stored storefront logo and cover paths, without changing ranking or sales calculations.
+3. Rework Featured and Top Selling shop cards to show those real images when available, stable image areas, shop type, and existing real rating/sales information; retain horizontal scrolling and See all.
+4. Keep real Retail product photos through the current signed-image component. Use deterministic bundled voucher artwork only when voucher products have no upload field, clearly as category artwork rather than a claimed product photo.
+5. Enrich the existing seller voucher cards with the same reusable voucher artwork while preserving titles, descriptions, prices, points, availability, and checkout behavior.
 
-## Authentication email branding
-- Configure branded ONE WAVE authentication emails only through the supported email-domain/template setup; do not alter authentication code or redirect behavior.
-- The required email-domain setup is a user-confirmed project setting. Once completed, install and style the six authentication email types with ONE WAVE branding and the existing logo/colors.
-- If setup is not completed, report the default platform-branded auth email as the sole unavoidable remaining Lovable reference rather than attempting a risky workaround.
+## Technical details
+- Add only non-financial return fields to `universe_market_pulse`; continue using its current ordering and completed-sales aggregates.
+- Reuse the existing private signed URL path for shop/retail assets and existing local voucher artwork pointers.
+- Add focused pure tests for deterministic fallbacks/data mapping where practical.
+- No schema tables, financial functions, RLS, wallet/order logic, or external imagery.
 
 ## Verification
-- Re-run the complete source audit and classify every remaining Lovable occurrence as internal/dev versus user-facing.
-- Browser-test desktop and mobile sign-in, sign-up, reset-password, unauthenticated/404, and visible Super Admin reporting labels without creating accounts, orders, or financial records.
-- Verify favicon/PWA metadata and ONE WAVE titles, run focused tests, full Vitest, and TypeScript checking.
-- Do not publish.
+- Run focused tests, full typecheck, and relevant test suite.
+- Inspect the live preview at 390px mobile and desktop, including long profile names and image/fallback cards.
+- Confirm no layout overlap, no browser errors, no data mutations, and no publication.
