@@ -393,36 +393,6 @@ export function canGift(
   return !isSelf && (state?.purchased_balance ?? 0) > 0;
 }
 
-export function currencyLabel(currency: "social" | "points"): string {
-  return currency === "points" ? "points" : "social credits";
-}
-
-/** Human confirmation line shown before anything is deducted. */
-export function chargeSummary(amount: number, currency: "social" | "points"): string {
-  if (amount <= 0) return "This is free — nothing will be deducted.";
-  return `This will deduct ${amount} ${amount === 1 ? currencyLabel(currency).replace(/s$/, "") : currencyLabel(currency)}.`;
-}
-
-export function canAfford(
-  state: Pick<SocialState, "balance">,
-  charge: { amount: number; currency: "social" | "points" },
-  pointsBalance: number,
-): boolean {
-  if (charge.amount <= 0) return true;
-  return charge.currency === "points"
-    ? pointsBalance >= charge.amount
-    : state.balance >= charge.amount;
-}
-
-export function exchangeGain(
-  state: Pick<SocialState, "credit_exchange_rate" | "points_exchange_rate">,
-  kind: "credit" | "points",
-  amount: number,
-): number {
-  const rate = kind === "credit" ? state.credit_exchange_rate : state.points_exchange_rate;
-  return Math.max(0, Math.trunc(amount)) * rate;
-}
-
 export function validatePostBody(body: string): string | null {
   const b = body.trim();
   if (!b) return "Write something first";
