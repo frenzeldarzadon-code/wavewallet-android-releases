@@ -14,6 +14,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { RatingStars } from "@/components/rating-stars";
+import { RetailImage } from "@/components/retail/retail-image";
+import { VoucherArtwork } from "@/components/universe/voucher-artwork";
 import {
   MarketplaceEmpty,
   MarketplaceHeader,
@@ -299,21 +301,29 @@ function PublicStorefront() {
             <EmptyState title="No public voucher products" />
           ) : (
             <PageSection title="Voucher products">
-              <Card className="shadow-[var(--shadow-card)]">
-                <CardContent className="divide-y divide-border px-0 py-0">
-                  {vouchers.map((v) => (
-                    <div key={v.id} className="flex items-center justify-between gap-3 px-4 py-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {vouchers.map((v) => (
+                  <Card key={v.id} className="min-w-0 overflow-hidden rounded-xl shadow-[var(--shadow-card)]">
+                    {v.image_path ? (
+                      <RetailImage path={v.image_path} alt={v.name} className="aspect-[16/10]" />
+                    ) : (
+                      <VoucherArtwork seed={`${shop.id}-${v.id}`} name={v.name} compact />
+                    )}
+                    <CardContent className="space-y-2 p-3">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{v.name}</p>
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="line-clamp-2 min-h-10 text-sm font-semibold leading-snug">{v.name}</p>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">
                           {v.available > 0 ? `${v.available} available` : "Sold out"}
                         </p>
                       </div>
-                      <p className="text-sm font-semibold">{credits(v.price)}</p>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
+                      <p className="text-sm font-bold text-primary">{credits(v.price)}</p>
+                      <Button className="w-full" size="sm" variant="outline" onClick={cta?.onClick} disabled={!cta}>
+                        {cta?.label ?? "Members only"} <ArrowRight className="size-3.5" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </PageSection>
           )}
         </TabsContent>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Gift, ShieldCheck, ShoppingBag, Ticket } from "lucide-react";
+import { ArrowRight, Gift, ShieldCheck, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { peso } from "@/lib/wavewallet";
 import { fetchCreditBalance } from "@/lib/wallet";
 import { fetchSellerStorefront, type SellerStorefront } from "@/lib/seller-storefront";
 import { VoucherPurchaseDialogs, type PurchaseTarget } from "./voucher-purchase-dialogs";
+import { VoucherArtwork } from "./voucher-artwork";
 
 /**
  * Public voucher storefront of one Universe seller. Buying here debits the
@@ -88,7 +89,7 @@ export function SellerStorefrontSection({
             {shop.products.length === 0 ? (
               <EmptyState title="No vouchers on sale" description="Check back when this shop adds more stock." />
             ) : (
-              <ul className="grid gap-2 sm:grid-cols-2">
+              <ul className="grid grid-cols-2 gap-3">
                 {shop.products.map((p) => {
                   const open = () =>
                     setBuying({
@@ -102,17 +103,17 @@ export function SellerStorefrontSection({
                     });
                   const canBuy = Boolean(viewerId) && p.available > 0;
                   return (
-                  <li key={p.id} className="grid min-h-32 grid-rows-[1fr_auto] rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary/35 hover:bg-brand-soft/20">
+                  <li key={p.id} className="grid min-w-0 grid-rows-[auto_1fr_auto] overflow-hidden rounded-xl border border-border bg-card shadow-[var(--shadow-card)] transition-transform hover:-translate-y-0.5 hover:border-primary/35">
+                    <VoucherArtwork seed={`${shop.id}-${p.id}`} name={p.name} compact className="aspect-[16/9]" />
                     <button
                       type="button"
-                      className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-2.5 text-left disabled:cursor-default"
+                      className="min-w-0 p-3 text-left disabled:cursor-default"
                       disabled={!canBuy}
                       onClick={open}
                       aria-label={`Open ${p.name}`}
                     >
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-brand-soft text-primary"><Ticket className="size-4" /></span>
                       <span className="min-w-0">
-                      <span className="block truncate text-sm font-bold">{p.name}</span>
+                      <span className="block line-clamp-2 text-sm font-bold leading-snug">{p.name}</span>
                       {p.description ? (
                         <span className="mt-0.5 block line-clamp-2 text-xs text-muted-foreground">{p.description}</span>
                       ) : null}
@@ -128,12 +129,12 @@ export function SellerStorefrontSection({
                       <span className="mt-0.5 block text-[11px] text-muted-foreground">{p.available > 0 ? `${p.available} available` : "Out of stock"}</span>
                       </span>
                     </button>
-                    {viewerId ? (
-                      <Button className="mt-3 w-full" size="sm" disabled={!canBuy} onClick={open}>
+                     {viewerId ? (
+                       <Button className="mx-3 mb-3 w-[calc(100%-1.5rem)]" size="sm" disabled={!canBuy} onClick={open}>
                         {p.available > 0 ? "Choose voucher" : "Out of stock"} <ArrowRight className="size-3.5" />
                       </Button>
                     ) : (
-                       <Button asChild size="sm" variant="outline" className="mt-3 w-full">
+                        <Button asChild size="sm" variant="outline" className="mx-3 mb-3 w-[calc(100%-1.5rem)]">
                         <a href="/?mode=signin">Sign in to buy</a>
                       </Button>
                     )}

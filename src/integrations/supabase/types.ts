@@ -13158,9 +13158,11 @@ export type Database = {
         Args: { _limit?: number }
         Returns: {
           commerce_kind: string
+          cover_path: string
           image_path: string
           item_id: string
           item_name: string
+          logo_path: string
           price: number
           rank: number
           rating_avg: number

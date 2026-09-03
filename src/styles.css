@@ -43,6 +43,7 @@
   --color-brand-soft: var(--brand-soft);
   --color-app: var(--app);
   --color-points: var(--points);
+  --color-image-scrim: var(--image-scrim);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -94,6 +95,7 @@
   --warning: oklch(0.72 0.16 68);
   --warning-foreground: oklch(0.22 0.05 68);
   --points: oklch(0.62 0.16 300);
+  --image-scrim: oklch(0.16 0.03 258);
   --border: oklch(0.918 0.012 252);
   --input: oklch(0.918 0.012 252);
   --ring: oklch(0.55 0.19 256);
@@ -138,6 +140,7 @@
   --warning: oklch(0.78 0.15 68);
   --warning-foreground: oklch(0.2 0.04 68);
   --points: oklch(0.7 0.15 300);
+  --image-scrim: oklch(0.12 0.025 258);
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 16%);
   --ring: oklch(0.66 0.17 256);

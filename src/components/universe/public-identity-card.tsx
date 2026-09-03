@@ -39,16 +39,19 @@ export function PublicIdentityCard({ userId }: { userId: string }) {
   return (
     <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--shadow-card)]">
       <div className="aspect-[3/1] w-full bg-brand-soft bg-cover bg-center" style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : undefined} />
-      <div className="-mt-7 flex items-end gap-3 px-4">
+      <div className="relative grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 bg-card px-4 pt-3">
         <MemberAvatar
           path={profile.avatar_path}
           name={profile.full_name}
-          className="size-16 border-4 border-card text-base"
+          className="-mt-10 size-20 border-4 border-card text-base shadow-[var(--shadow-card)]"
         />
-        <div className="min-w-0 flex-1 pb-1">
-          <p className="truncate text-base font-bold tracking-tight">{profile.full_name}</p>
-          <p className="truncate text-xs text-muted-foreground">
+        <div className="min-w-0 pb-1">
+          <p className="break-words text-base font-bold leading-snug">{profile.full_name}</p>
+          <p className="mt-0.5 break-all text-xs text-muted-foreground">
             {profile.handle ? `@${profile.handle}` : "No @handle yet"}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Joined {new Date(profile.joined_at).toLocaleDateString()}
           </p>
         </div>
       </div>
