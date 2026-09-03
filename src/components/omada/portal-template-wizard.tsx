@@ -3,7 +3,7 @@
  *
  * Admins never upload a template. WaveWallet derives the page from the
  * canonical Omada master the platform owner published, so the admin only has to
- * pick the exact portal, choose which WaveWallet features to expose, preview
+ * pick the exact portal, choose which ONE WAVE features to expose, preview
  * the page and download it.
  *
  * The controller is never written to: Omada 6.2.14.11 publishes no supported
@@ -417,7 +417,7 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
                    <div className="rounded-md border p-3">
                      <p className="text-sm font-medium">Import the downloaded page into Omada</p>
                     <p className="mt-1 text-[11px] text-muted-foreground">
-                       Import is a manual Omada step. WaveWallet does not mark it complete because it
+                       Import is a manual Omada step. ONE WAVE does not mark it complete because it
                        cannot verify the import from here.
                     </p>
                     <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs text-muted-foreground">

@@ -89,8 +89,8 @@ export function OmadaHealthCard({ ecosystemId }: { ecosystemId: string | null })
           <StatusBadge tone={tone(health.state)}>{LABEL[health.state]}</StatusBadge>
         </CardTitle>
         <CardDescription>
-          WaveWallet checks your controller automatically and reconnects on its own once it
-          answers again. Your vouchers, Coins and sales in WaveWallet keep working normally even
+          ONE WAVE checks your controller automatically and reconnects on its own once it
+          answers again. Your vouchers, Coins and sales in ONE WAVE keep working normally even
           while your controller is offline.
         </CardDescription>
       </CardHeader>
@@ -101,7 +101,7 @@ export function OmadaHealthCard({ ecosystemId }: { ecosystemId: string | null })
               Your Omada controller has been unreachable since {when(health.offlineSince)}.
             </p>
             <p className="mt-1 text-muted-foreground">
-              WaveWallet keeps retrying automatically, but it cannot restart your controller.
+              ONE WAVE keeps retrying automatically, but it cannot restart your controller.
               Restarting the Omada service needs server-level access on the machine that runs it.
             </p>
           </div>

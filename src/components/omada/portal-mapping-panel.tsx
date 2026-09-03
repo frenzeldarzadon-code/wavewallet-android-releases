@@ -270,7 +270,7 @@ export function PortalMappingPanel({
               {editingId ? "Edit this portal" : "Connect an Omada portal"}
             </CardTitle>
             <CardDescription>
-              One Omada site can have several portals. Choose the exact portal WaveWallet should
+              One Omada site can have several portals. Choose the exact portal ONE WAVE should
               serve — nothing is selected for you.
             </CardDescription>
           </CardHeader>

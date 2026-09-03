@@ -348,7 +348,7 @@ export function GoLiveCard({
     setServerField(null);
     setAttempted(true);
     if (methods.length > 1 && !methodId) {
-      setServerError("Tap the WaveWallet payment account you paid into.");
+      setServerError("Tap the ONE WAVE payment account you paid into.");
       document.getElementById("gl-methods")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
@@ -472,8 +472,8 @@ export function GoLiveCard({
       title={isLive ? "Renew, extend or change your plan" : "Go Live"}
       description={
         isLive
-          ? "These are the plans WaveWallet currently offers. Renew or extend your current plan, or move to another one — your shop, login and settings stay exactly as they are."
-          : "Pick one of the WaveWallet plans and pay it with GCash. Your shop keeps the same login, name and settings — only the Demo label goes away."
+          ? "These are the plans ONE WAVE currently offers. Renew or extend your current plan, or move to another one — your shop, login and settings stay exactly as they are."
+          : "Pick one of the ONE WAVE plans and pay it with GCash. Your shop keeps the same login, name and settings — only the Demo label goes away."
       }
     >
 
@@ -733,12 +733,12 @@ export function GoLiveCard({
                 <div>
                   <p className="flex items-center gap-1.5 text-sm font-semibold">
                     <ShieldCheck className="size-4 text-primary" /> Step 1 — Send{" "}
-                    <strong>{peso(due)}</strong> to WaveWallet
+                    <strong>{peso(due)}</strong> to ONE WAVE
                   </p>
                   <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                     {methods.length > 1
-                      ? "Pay using any one of the WaveWallet accounts below, then tap the one you used so we can verify your payment against it."
-                      : "Pay using the WaveWallet account below, exactly as shown."}
+                      ? "Pay using any one of the ONE WAVE accounts below, then tap the one you used so we can verify your payment against it."
+                      : "Pay using the ONE WAVE account below, exactly as shown."}
                     {" "}Scan the QR code or copy the account number — the account name must match before you send.
                   </p>
                 </div>
@@ -766,7 +766,7 @@ export function GoLiveCard({
                   </div>
                 ) : (
                   <p className="text-xs font-medium text-destructive">
-                    WaveWallet has not published a payment account yet — please contact support
+                    ONE WAVE has not published a payment account yet — please contact support
                     before paying.
                   </p>
                 )}

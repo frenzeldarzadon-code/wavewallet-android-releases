@@ -62,7 +62,7 @@ export function PlatformPaymentOptionCard({ ecosystemId }: { ecosystemId: string
         <div className="flex items-center justify-between gap-4">
           <Label htmlFor="use-platform-pm" className="font-normal text-muted-foreground">
             {state.enabled
-              ? "On — your members see WaveWallet's platform receiving accounts."
+              ? "On — your members see ONE WAVE's platform receiving accounts."
               : "Off — your members see the receiving accounts you configured above."}
           </Label>
           <Switch
@@ -74,7 +74,7 @@ export function PlatformPaymentOptionCard({ ecosystemId }: { ecosystemId: string
         </div>
         <p className="text-xs text-muted-foreground">
           Legacy shops may keep paying into the platform account instead of configuring their own. This changes only
-          what members see on Cash In — it never affects your own subscription payment to WaveWallet, and cash in
+          what members see on Cash In — it never affects your own subscription payment to ONE WAVE, and cash in
           matching, receipt checks and duplicate reference protection are unchanged.
         </p>
         {!state.canChange ? (

@@ -157,7 +157,7 @@ export function GuideFaqs({
           <AccordionContent className="text-sm">
             <div className="rounded-lg border border-success/40 bg-success/5 px-3 py-2">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-success">
-                Answered by WaveWallet Support
+                Answered by ONE WAVE Support
               </p>
               <p className="mt-1 whitespace-pre-line text-muted-foreground">{q.answer}</p>
             </div>

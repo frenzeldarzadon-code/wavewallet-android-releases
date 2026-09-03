@@ -61,7 +61,7 @@ export function SubscriptionHistoryCard({
   ) : rows.length === 0 ? (
     <p className="px-4 text-sm text-muted-foreground">
       No subscription transactions yet. Activations, renewals, extensions, plan changes and any
-      WaveWallet adjustments will appear here.
+      ONE WAVE adjustments will appear here.
     </p>
   ) : (
     <ul className="divide-y">
@@ -111,7 +111,7 @@ export function SubscriptionHistoryCard({
     <PageSection
       devSlot="subscription-history-card.subscription-history"
       title="Subscription history"
-      description="Every activation, renewal, extension, plan change and WaveWallet adjustment for this shop — the same records WaveWallet reviews."
+      description="Every activation, renewal, extension, plan change and WaveWallet adjustment for this shop — the same records ONE WAVE reviews."
     >
       <Card className="shadow-[var(--shadow-card)]">
         <CardContent className="px-0">
