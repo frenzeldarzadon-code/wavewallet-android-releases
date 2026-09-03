@@ -34,4 +34,4 @@ export function isSocialPath(path: string): boolean {
  * backend, data and routes are deliberately left intact so it can be switched
  * back on without a migration. The Voucher Shop is unaffected.
  */
-export const RETAIL_VISIBLE = false;
+export const RETAIL_VISIBLE = true;
