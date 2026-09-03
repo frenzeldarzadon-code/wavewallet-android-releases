@@ -6,7 +6,7 @@
  * The database refuses a second decision on the same order, so a double click
  * or two admins racing each other can never double-charge or oversell.
  */
-import { Check, Loader2, Mail, RefreshCw, X } from "lucide-react";
+import { ArrowRight, Check, Loader2, Mail, RefreshCw, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -24,8 +24,13 @@ import { shortDateTime } from "@/lib/wavewallet";
 import {
   fetchShopRetailOrders,
   fetchStoreSettings,
+  fulfillmentActionLabel,
+  fulfillmentLabel,
+  fulfillmentTone,
+  nextFulfillmentStep,
   orderTone,
   reviewRetailOrder,
+  updateRetailFulfillment,
   type OrderStatus,
   type RetailOrder,
 } from "@/lib/retail";
