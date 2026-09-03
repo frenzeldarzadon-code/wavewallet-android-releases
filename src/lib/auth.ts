@@ -19,6 +19,7 @@ export interface DbEcosystem {
   id: string;
   name: string;
   slug: string;
+  shop_kind?: string | null;
   description: string | null;
   contact_email: string | null;
   contact_phone: string | null;
