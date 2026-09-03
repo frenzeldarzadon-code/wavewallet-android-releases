@@ -158,10 +158,14 @@ export interface SaleReportRow {
   points_rule_version: number | null;
   refunded_at: string | null;
   refund_reason: string | null;
+  /** Reporting-only platform fee contained in `sale_price` (never a wallet credit). */
+  platform_fee_amount: number;
+  /** `sale_price` minus the platform fee — what the shop side actually shares out. */
+  seller_amount: number;
 }
 
 const SALE_COLUMNS =
-  "id, ecosystem_id, product_name, buyer_id, buyer_role, reseller_id, list_price, discount_percent, sale_price, payment_method, tx_id, created_at, points_spent, points_earned, credits_per_point_used, points_rule_version, refunded_at, refund_reason";
+  "id, ecosystem_id, product_name, buyer_id, buyer_role, reseller_id, list_price, discount_percent, sale_price, payment_method, tx_id, created_at, points_spent, points_earned, credits_per_point_used, points_rule_version, refunded_at, refund_reason, platform_fee_amount, seller_amount";
 
 export interface RefundResult {
   tx_id: string;
@@ -221,6 +225,8 @@ export async function fetchSalesReport(q: SaleQuery): Promise<SaleReportRow[]> {
       s.credits_per_point_used === null || s.credits_per_point_used === undefined
         ? null
         : Number(s.credits_per_point_used),
+    platform_fee_amount: Number(s.platform_fee_amount ?? 0),
+    seller_amount: Number(s.seller_amount ?? s.sale_price),
   }));
 }
 
@@ -234,6 +240,10 @@ export interface SalesSummary {
   resellerMargin: number;
   pointsSpent: number;
   pointsEarned: number;
+  /** Platform fee contained in the collected price — reporting only, never a coin credit. */
+  platformFee: number;
+  /** Net collected minus the platform fee (the shop-side share). */
+  sellerAmount: number;
 }
 
 /** Aggregates sale rows using only the values snapshotted on each sale. */
@@ -249,6 +259,12 @@ export function summariseSales(rows: SaleReportRow[]): SalesSummary {
     resellerMargin: credit.reduce((s, r) => s + (r.list_price - r.sale_price), 0),
     pointsSpent: rows.reduce((s, r) => s + r.points_spent, 0),
     pointsEarned: rows.reduce((s, r) => s + r.points_earned, 0),
+    platformFee: credit
+      .filter((r) => !r.refunded_at)
+      .reduce((s, r) => s + (r.platform_fee_amount ?? 0), 0),
+    sellerAmount: credit
+      .filter((r) => !r.refunded_at)
+      .reduce((s, r) => s + (r.seller_amount ?? r.sale_price), 0),
   };
 }
 

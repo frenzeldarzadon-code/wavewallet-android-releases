@@ -260,7 +260,12 @@ function AdminReports() {
             tone="positive"
             hint="After reseller discounts"
           />
-          <StatCard label="Reseller discounts" value={peso(salesTotals.resellerMargin)} tone="negative" />
+          <StatCard
+            label="Platform fee"
+            value={peso(salesTotals.platformFee)}
+            tone="negative"
+            hint={`Shop share ${peso(salesTotals.sellerAmount)} · contained in price`}
+          />
           <StatCard
             label="Vouchers sold"
             value={String(salesTotals.count)}

@@ -222,6 +222,11 @@ function SuperReports() {
         <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="Wholesale discounts given" value={peso(salesTotals.resellerMargin)} tone="negative" />
           <StatCard
+            label="Platform fee (reporting only)"
+            value={peso(salesTotals.platformFee)}
+            hint="Contained in collected prices · not a wallet credit"
+          />
+          <StatCard
             label="Seller cashback & upline"
             value={peso(creditFlow.cashbackPaid + creditFlow.uplinePaid)}
             hint="Paid by tenant shops, not the platform"
