@@ -104,7 +104,7 @@ BEGIN
   SELECT * INTO _ord FROM public.retail_orders WHERE id = _ord.id;
   ASSERT _ord.fulfillment_status = 'completed' AND _ord.completed_at IS NOT NULL AND _ord.status = 'approved', 'B customer completed';
   -- notifications recorded for the customer
-  SELECT count(*) INTO _n FROM public.member_notifications WHERE user_id = _cus AND body LIKE '%' || _ord.order_no || '%' OR (user_id = _cus AND title LIKE '%' || _ord.order_no || '%');
+  SELECT count(*) INTO _n FROM public.member_notifications WHERE user_id = _cus AND title LIKE '%' || _ord.order_no || '%';
   ASSERT _n >= 3, 'B customer notified: ' || _n;
 
   -- ===== F: completed orders cannot be changed =====
@@ -118,7 +118,7 @@ BEGIN
 
   -- ===== G + H: financial snapshot and ledger untouched by fulfillment =====
   _snap2 := to_jsonb(_ord) - 'fulfillment_status' - 'fulfillment_updated_at' - 'delivered_at' - 'completed_at' - 'updated_at';
-  ASSERT _snap = _snap2, 'G snapshot unchanged: ' || (_snap2 - (SELECT array_agg(k) FROM jsonb_object_keys(_snap) k WHERE _snap->k = _snap2->k))::text;
+  ASSERT _snap = _snap2, 'G snapshot changed';
   ASSERT (SELECT count(*) FROM public.credit_ledger) = _ledger0, 'H zero ledger rows';
   ASSERT (SELECT count(*) FROM public.retail_platform_fees) = _fees0, 'H zero fee rows';
   ASSERT (SELECT jsonb_agg(jsonb_build_object('id', id, 'b', balance) ORDER BY id) FROM public.credit_accounts WHERE user_id IN (_cus, _adm, _res, _sub, _cus2)) = _acct0, 'H balances unchanged';
