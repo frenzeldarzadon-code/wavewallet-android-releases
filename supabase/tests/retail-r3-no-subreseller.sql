@@ -23,9 +23,8 @@ DECLARE
   _prod uuid; _o record; _ord public.retail_orders; _l public.credit_ledger;
   _cg uuid; _rg uuid; _sg uuid; _ag uuid;
   _cus_bal numeric; _res_bal numeric; _sub_bal numeric; _adm_bal numeric;
-  _comm_before bigint; _ledger_before bigint;
+  _comm_before bigint; _prev_fee numeric;
   claims_cus text; claims_adm text; claims_sub text;
-  _vprod uuid; _sale record; _chain_roles text[];
 BEGIN
   claims_cus := json_build_object('sub', _cus, 'role', 'authenticated')::text;
   claims_adm := json_build_object('sub', _adm, 'role', 'authenticated')::text;
@@ -35,6 +34,8 @@ BEGIN
   ASSERT (SELECT role FROM public.ecosystem_memberships WHERE user_id = _sub AND ecosystem_id = _u) = 'subreseller', 'fixture: subreseller';
   ASSERT (SELECT reseller_id FROM public.ecosystem_memberships WHERE user_id = _sub AND ecosystem_id = _u) = _res, 'fixture: subreseller under reseller';
 
+  SELECT retail_platform_fee_percent INTO _prev_fee FROM public.platform_settings WHERE id = 1;
+  UPDATE public.platform_settings SET retail_platform_fee_percent = 1 WHERE id = 1; -- pin 1% so fee separation is visible
   UPDATE public.ecosystems SET store_retail_enabled = true, retail_credit_enabled = true,
          retail_pickup_enabled = true, operations_frozen = false WHERE id = _u;
   INSERT INTO public.shop_seller_authorizations (ecosystem_id, user_id, active)
@@ -116,5 +117,6 @@ BEGIN
          'voucher cashback_chain still pays the reseller upline';
   ASSERT (SELECT count(*) FROM public.sale_commissions) = _comm_before, 'Retail never touched sale_commissions';
 
+  UPDATE public.platform_settings SET retail_platform_fee_percent = _prev_fee WHERE id = 1;
   RAISE EXCEPTION 'RETAIL_R3_NO_SUBRESELLER_PASSED';
 END $$;
