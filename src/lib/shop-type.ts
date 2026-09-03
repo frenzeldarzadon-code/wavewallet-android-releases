@@ -128,3 +128,30 @@ export async function switchToShop(ecosystemId: string): Promise<void> {
   const { error } = await supabase.rpc("switch_ecosystem", { _ecosystem_id: ecosystemId });
   if (error) throw new Error(error.message);
 }
+
+/**
+ * Shop type for each of the caller's shops, keyed by ecosystem id. Reads only
+ * the ecosystems RLS already lets the member see; shops that are not readable
+ * are simply absent from the map.
+ */
+export async function fetchShopTypes(ecosystemIds: string[]): Promise<Record<string, ShopTypeState>> {
+  if (ecosystemIds.length === 0) return {};
+  const { data } = await supabase
+    .from("ecosystems")
+    .select("id, shop_kind, store_voucher_enabled, store_retail_enabled")
+    .in("id", ecosystemIds);
+  const out: Record<string, ShopTypeState> = {};
+  for (const row of (data ?? []) as {
+    id: string;
+    shop_kind: string | null;
+    store_voucher_enabled: boolean;
+    store_retail_enabled: boolean;
+  }[]) {
+    out[row.id] = deriveShopType({
+      shop_kind: row.shop_kind ?? "universe",
+      store_voucher_enabled: row.store_voucher_enabled,
+      store_retail_enabled: row.store_retail_enabled,
+    });
+  }
+  return out;
+}
