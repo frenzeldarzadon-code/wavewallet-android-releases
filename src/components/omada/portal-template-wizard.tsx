@@ -159,6 +159,31 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
     }
   };
 
+  /**
+   * Signed download links expire after a few minutes, so a fresh one is
+   * issued on every click (the server re-checks shop authorization each time)
+   * instead of relying on the link minted when the page was generated.
+   */
+  const download = async () => {
+    if (!ecosystemId || !mappingId) return;
+    setBusy("download");
+    try {
+      const link = await getPortalArtifactDownload({ data: { ecosystemId, mappingId } });
+      setDownloadLink(link);
+      const a = document.createElement("a");
+      a.href = link.url;
+      a.download = link.fileName;
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) {
+      toast.error("Could not start the download", { description: (e as Error).message });
+    } finally {
+      setBusy("");
+    }
+  };
+
   const generate = async () => {
     if (!ecosystemId || !mappingId) return;
     setBusy("generate");
@@ -347,11 +372,13 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
                   Generate portal page
                 </Button>
                 {generated && downloadLink ? (
-                  <Button asChild size="sm" variant="outline">
-                    <a href={downloadLink.url} download={downloadLink.fileName}>
+                  <Button size="sm" variant="outline" disabled={busy !== ""} onClick={() => void download()}>
+                    {busy === "download" ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
                       <Download className="mr-2 h-4 w-4" />
-                      Download ({readableSize(generated.bytes)})
-                    </a>
+                    )}
+                    Download ({readableSize(generated.bytes)})
                   </Button>
                 ) : (
                   <Button size="sm" variant="outline" disabled>
@@ -363,10 +390,10 @@ export function PortalTemplateWizard({ ecosystemId }: { ecosystemId: string | nu
 
               {downloadLink ? (
                 <p className="text-xs text-muted-foreground">
-                  If the download does not start, {" "}
-                  <a className="font-medium text-primary underline" href={downloadLink.url}>
-                    open/download the file
-                  </a>
+                  If the download does not start,{" "}
+                  <button type="button" className="font-medium text-primary underline" onClick={() => void download()}>
+                    try the download again
+                  </button>
                   .
                 </p>
               ) : null}
