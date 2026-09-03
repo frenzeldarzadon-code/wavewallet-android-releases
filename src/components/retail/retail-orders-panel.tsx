@@ -41,13 +41,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { MemberAvatar } from "@/components/member-avatar";
@@ -56,16 +49,20 @@ import { fetchCreditBalance } from "@/lib/wallet";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
   codCashTotal,
+  countByStage,
   fetchShopRetailOrders,
   fetchStoreSettings,
   fulfillmentActionLabel,
   fulfillmentLabel,
   fulfillmentTone,
   nextFulfillmentStep,
+  ORDER_STAGES,
+  orderStage,
+  orderTimeline,
   orderTone,
   reviewRetailOrder,
   updateRetailFulfillment,
-  type OrderStatus,
+  type OrderStage,
   type RetailOrder,
   type StoreSettings,
 } from "@/lib/retail";
@@ -87,11 +84,20 @@ import {
 
 const credits = (n: number) => `${n.toLocaleString(undefined, { maximumFractionDigits: 2 })} coins`;
 
+/** An irreversible action the seller must confirm before it is sent to the server. */
+interface Confirm {
+  title: string;
+  body: string;
+  action: string;
+  destructive?: boolean;
+  run: () => void;
+}
+
 export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null }) {
   const { account } = useSession();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<RetailOrder[]>([]);
-  const [status, setStatus] = useState<OrderStatus | "all">("pending");
+  const [stage, setStage] = useState<OrderStage>("new");
   const [settings, setSettings] = useState<StoreSettings | null>(null);
   const [available, setAvailable] = useState<number | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -100,16 +106,22 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
   const [assigning, setAssigning] = useState<RetailOrder | null>(null);
   const [cancelling, setCancelling] = useState<RetailOrder | null>(null);
   const [cancelNote, setCancelNote] = useState("");
+  const [confirm, setConfirm] = useState<Confirm | null>(null);
   const isAdmin = account?.role === "admin" || account?.role === "super_admin";
+  const counts = countByStage(orders);
+  const visible = orders.filter((o) => orderStage(o) === stage);
 
+  // Depend on the account *id*, not the object: the session object is re-created
+  // on every render, which previously made this refetch in a tight loop.
+  const accountId = account?.id ?? null;
   const load = useCallback(async () => {
     if (!ecosystemId) return;
     setLoading(true);
     try {
       const [o, s, b] = await Promise.all([
-        fetchShopRetailOrders(ecosystemId, status),
+        fetchShopRetailOrders(ecosystemId, "all"),
         fetchStoreSettings(ecosystemId),
-        account ? fetchCreditBalance(account.id, null) : Promise.resolve(null),
+        accountId ? fetchCreditBalance(accountId, null) : Promise.resolve(null),
       ]);
       setOrders(o);
       setSettings(s);
@@ -119,7 +131,7 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
     } finally {
       setLoading(false);
     }
-  }, [ecosystemId, status, account]);
+  }, [ecosystemId, accountId]);
 
   useEffect(() => {
     void load();
@@ -179,7 +191,7 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
     <PageSection
       devSlot="retail-orders-panel.retail-orders"
       title="Retail orders"
-      description="Every order stays pending until you approve or reject it."
+      description="New orders wait for your approval; then prepare, assign, hand off and settle — every step is recorded by the server."
       action={
         <Button size="sm" variant="outline" onClick={() => void load()}>
           <RefreshCw className="size-4" /> Refresh
@@ -223,26 +235,62 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
 
       <Card className="shadow-[var(--shadow-card)]">
         <CardContent className="space-y-3">
-          <Select value={status} onValueChange={(v) => setStatus(v as OrderStatus | "all")}>
-            <SelectTrigger className="h-11" aria-label="Filter orders">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-              <SelectItem value="all">All</SelectItem>
-            </SelectContent>
-          </Select>
+          <div
+            role="tablist"
+            aria-label="Order stage"
+            className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none]"
+          >
+            {ORDER_STAGES.map((t) => {
+              const active = t.id === stage;
+              const n = counts[t.id];
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  title={t.hint}
+                  onClick={() => setStage(t.id)}
+                  className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors ${
+                    active
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-card text-muted-foreground hover:bg-muted/60"
+                  }`}
+                >
+                  {t.label}
+                  {n > 0 ? (
+                    <span
+                      className={`rounded-full px-1.5 text-[10px] tabular-nums ${
+                        active
+                          ? "bg-primary-foreground/20"
+                          : t.id === "new"
+                            ? "bg-warning/20 text-warning-foreground"
+                            : "bg-muted"
+                      }`}
+                    >
+                      {n}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            {ORDER_STAGES.find((t) => t.id === stage)?.hint}
+          </p>
 
           {loading ? (
             <p className="text-xs text-muted-foreground">Loading orders…</p>
-          ) : orders.length === 0 ? (
-            <EmptyState title="No orders here" />
+          ) : visible.length === 0 ? (
+            <EmptyState
+              title={stage === "new" ? "No new orders" : "Nothing in this stage"}
+              {...(orders.length === 0
+                ? { description: "Orders placed in your Retail storefront will appear here." }
+                : {})}
+            />
           ) : (
             <div className="space-y-3">
-              {orders.map((o) => {
+              {visible.map((o) => {
                 const cod = o.payment_method === "cod";
                 const next = nextFulfillmentStep(o.fulfillment_status, o.fulfillment);
                 const needsCollectorFirst = cod && next === "out_for_delivery" && !o.hold_held;
@@ -394,7 +442,15 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                           size="sm"
                           variant="outline"
                           disabled={busy === o.id}
-                          onClick={() => void decide(o, false)}
+                          onClick={() =>
+                            setConfirm({
+                              title: `Reject ${o.order_no}?`,
+                              body: "Stock goes back on the shelf and any held coins return to the customer in full. This cannot be undone.",
+                              action: "Reject order",
+                              destructive: true,
+                              run: () => void decide(o, false),
+                            })
+                          }
                         >
                           <X className="size-4" /> Reject
                         </Button>
@@ -445,10 +501,16 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                             size="sm"
                             disabled={busy === o.id}
                             onClick={() =>
-                              void run(o.id, () => sellerReleaseCod(o.id), {
-                                title: `${o.order_no} settled`,
-                                description:
-                                  "The held float was settled once through the standard settlement path.",
+                              setConfirm({
+                                title: `Release held coins for ${o.order_no}?`,
+                                body: `Settles ${peso(o.cod_expected_cash ?? codCashTotal(o))} once through the standard path: your seller amount, cashback, and the delivery/collector shares. This cannot be undone.`,
+                                action: "Release & settle",
+                                run: () =>
+                                  void run(o.id, () => sellerReleaseCod(o.id), {
+                                    title: `${o.order_no} settled`,
+                                    description:
+                                      "The held float was settled once through the standard settlement path.",
+                                  }),
                               })
                             }
                           >
@@ -461,10 +523,16 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                               size="sm"
                               disabled={busy === o.id}
                               onClick={() =>
-                                void run(o.id, () => resolveCodDiscrepancy(o.id, "settle"), {
-                                  title: `${o.order_no} settled by admin`,
-                                  description:
-                                    "Settled on the locked order economics; the actual cash reported stays on record.",
+                                setConfirm({
+                                  title: `Settle ${o.order_no} despite the discrepancy?`,
+                                  body: `The collector reported ${peso(o.cod_actual_cash ?? 0)} against ${peso(o.cod_expected_cash ?? codCashTotal(o))} expected. Settlement uses the locked order economics; the reported cash stays on record. This cannot be undone.`,
+                                  action: "Settle anyway",
+                                  run: () =>
+                                    void run(o.id, () => resolveCodDiscrepancy(o.id, "settle"), {
+                                      title: `${o.order_no} settled by admin`,
+                                      description:
+                                        "Settled on the locked order economics; the actual cash reported stays on record.",
+                                    }),
                                 })
                               }
                             >
@@ -475,15 +543,23 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                               variant="outline"
                               disabled={busy === o.id}
                               onClick={() =>
-                                void run(
-                                  o.id,
-                                  () => resolveCodDiscrepancy(o.id, "cancel", "Cash discrepancy"),
-                                  {
-                                    title: `${o.order_no} cancelled`,
-                                    description:
-                                      "The collector's float was released in full and stock restored.",
-                                  },
-                                )
+                                setConfirm({
+                                  title: `Cancel ${o.order_no} and release the float?`,
+                                  body: "The collector's held coins are released in full and stock is restored. No one is paid. This cannot be undone.",
+                                  action: "Cancel & release",
+                                  destructive: true,
+                                  run: () =>
+                                    void run(
+                                      o.id,
+                                      () =>
+                                        resolveCodDiscrepancy(o.id, "cancel", "Cash discrepancy"),
+                                      {
+                                        title: `${o.order_no} cancelled`,
+                                        description:
+                                          "The collector's float was released in full and stock restored.",
+                                      },
+                                    ),
+                                })
                               }
                             >
                               <X className="size-4" /> Cancel &amp; release float
@@ -517,6 +593,14 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                     {o.status !== "pending" && o.decision_note ? (
                       <p className="text-[11px] text-muted-foreground">Note: {o.decision_note}</p>
                     ) : null}
+                    <ol className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                      {orderTimeline(o).map((t) => (
+                        <li key={t.label}>
+                          <span className="font-medium text-foreground/80">{t.label}</span>{" "}
+                          {shortDateTime(t.at)}
+                        </li>
+                      ))}
+                    </ol>
                   </div>
                 );
               })}
@@ -573,6 +657,31 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
               }}
             >
               Cancel order
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!confirm} onOpenChange={(open) => !open && setConfirm(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{confirm?.title}</DialogTitle>
+            <DialogDescription>{confirm?.body}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirm(null)}>
+              Go back
+            </Button>
+            <Button
+              variant={confirm?.destructive ? "destructive" : "default"}
+              disabled={!!busy}
+              onClick={() => {
+                const c = confirm;
+                setConfirm(null);
+                c?.run();
+              }}
+            >
+              {confirm?.action}
             </Button>
           </DialogFooter>
         </DialogContent>

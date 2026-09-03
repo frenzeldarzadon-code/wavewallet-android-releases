@@ -1032,3 +1032,97 @@ export async function rateRetailProduct(
   });
   if (error) throw new Error(error.message);
 }
+
+/* ------------------------------------------------------------------ */
+/* Seller workspace — operational stages (presentation over the R5/R6  */
+/* state machine; never a second status)                                */
+/* ------------------------------------------------------------------ */
+
+export type OrderStage =
+  "new" | "preparing" | "ready" | "in_delivery" | "delivered" | "completed" | "closed";
+
+export const ORDER_STAGES: { id: OrderStage; label: string; hint: string }[] = [
+  { id: "new", label: "New", hint: "Approve or reject" },
+  { id: "preparing", label: "To prepare", hint: "Accepted, not yet ready" },
+  { id: "ready", label: "Ready", hint: "Packed — assign & hand off" },
+  { id: "in_delivery", label: "In delivery", hint: "Out with the delivery person" },
+  { id: "delivered", label: "Delivered", hint: "Waiting for buyer / cash / settlement" },
+  { id: "completed", label: "Completed", hint: "Done and settled" },
+  { id: "closed", label: "Cancelled", hint: "Rejected or cancelled" },
+];
+
+/** Which workspace tab an order belongs to. Derived only from existing fields. */
+export function orderStage(
+  o: Pick<
+    RetailOrder,
+    "status" | "fulfillment_status" | "payment_method" | "cod_settled_at" | "hold_held"
+  >,
+): OrderStage {
+  if (o.status === "pending") return "new";
+  if (o.status === "rejected" || o.status === "cancelled") return "closed";
+  switch (o.fulfillment_status) {
+    case "awaiting":
+    case "accepted":
+    case "preparing":
+      return "preparing";
+    case "ready":
+      return "ready";
+    case "out_for_delivery":
+      return "in_delivery";
+    case "delivered":
+      return "delivered";
+    case "completed":
+      // A COD order is only truly done once its float has been settled.
+      return o.payment_method === "cod" && !o.cod_settled_at ? "delivered" : "completed";
+    default:
+      return "closed";
+  }
+}
+
+export const countByStage = (orders: RetailOrder[]): Record<OrderStage, number> => {
+  const c = {
+    new: 0,
+    preparing: 0,
+    ready: 0,
+    in_delivery: 0,
+    delivered: 0,
+    completed: 0,
+    closed: 0,
+  };
+  for (const o of orders) c[orderStage(o)] += 1;
+  return c;
+};
+
+/** Status history from the timestamps the order already carries (no new table). */
+export function orderTimeline(
+  o: Pick<
+    RetailOrder,
+    | "created_at"
+    | "status"
+    | "delivered_at"
+    | "completed_at"
+    | "cod_cash_received_at"
+    | "cod_settled_at"
+    | "fulfillment"
+    | "payment_method"
+  >,
+): { label: string; at: string }[] {
+  const t: { label: string; at: string }[] = [{ label: "Order placed", at: o.created_at }];
+  if (o.delivered_at)
+    t.push({
+      label: o.fulfillment === "pickup" ? "Handed to customer" : "Delivered",
+      at: o.delivered_at,
+    });
+  if (o.completed_at) t.push({ label: "Buyer confirmed receipt", at: o.completed_at });
+  if (o.payment_method === "cod" && o.cod_cash_received_at)
+    t.push({ label: "Collector confirmed cash", at: o.cod_cash_received_at });
+  if (o.payment_method === "cod" && o.cod_settled_at)
+    t.push({ label: "Settled", at: o.cod_settled_at });
+  return t.sort((a, b) => a.at.localeCompare(b.at));
+}
+
+/** Orders waiting for the seller's approval — feeds the console nav badge. */
+export async function fetchPendingRetailOrderCount(ecosystemId: string): Promise<number> {
+  const orders = await fetchShopRetailOrders(ecosystemId, "pending");
+  return orders.length;
+}
