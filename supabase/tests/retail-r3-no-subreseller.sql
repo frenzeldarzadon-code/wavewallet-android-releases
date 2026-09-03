@@ -70,7 +70,8 @@ BEGIN
   ASSERT (SELECT balance FROM public.credit_accounts WHERE id = _ag) = _adm_bal + 90.00, 'admin +90 (seller amount − cashback)';
   ASSERT (SELECT balance FROM public.credit_accounts WHERE id = _sg) = _sub_bal, 'SUBRESELLER balance unchanged';
   ASSERT NOT EXISTS (SELECT 1 FROM public.credit_ledger WHERE user_id = _sub AND entry_kind = 'retail_cashback'), 'no subreseller retail cashback ledger row';
-  ASSERT (SELECT count(*) FROM public.credit_ledger WHERE entry_kind = 'retail_cashback' AND tx_id LIKE _ord.tx_id || '%') = 1, 'exactly one cashback row';
+  SELECT * INTO _ord FROM public.retail_orders WHERE id = _o.order_id;
+  ASSERT _ord.cashback_ledger_id IS NOT NULL AND (SELECT count(*) FROM public.credit_ledger WHERE entry_kind = 'retail_cashback' AND reference = _ord.order_no) = 1, 'exactly one cashback row';
   ASSERT (SELECT count(*) FROM public.sale_commissions) = _comm_before, 'no sale_commissions rows from Retail';
   ASSERT 101.00 = 90.00 + 10.00 + 1.00, 'reconciliation: debit = admin + reseller + fee';
   _res_bal := _res_bal + 10; _adm_bal := _adm_bal + 90; _cus_bal := _cus_bal - 101;
