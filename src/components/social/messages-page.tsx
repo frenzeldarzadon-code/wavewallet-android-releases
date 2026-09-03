@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -142,6 +143,13 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadThreads, initialThreadId]);
 
+  useEffect(() => {
+    const touch = () => { void supabase.rpc("touch_member_presence"); };
+    touch();
+    const timer = window.setInterval(touch, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   const pickFile = (f: File | null) => {
     if (!f) {
       setFile(null);
@@ -212,6 +220,7 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
       preview: null,
       unread: 0,
       blocked: false,
+      member_online: false,
       kind: "direct",
       order_id: null,
       title: null,
@@ -275,7 +284,7 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
               </p>
             ) : active.member_handle ? (
               <p className="truncate text-xs text-muted-foreground">
-                {displayHandle(active.member_handle)}
+                {displayHandle(active.member_handle)} · {active.member_online ? "Online" : "Offline"}
               </p>
             ) : null}
           </div>
