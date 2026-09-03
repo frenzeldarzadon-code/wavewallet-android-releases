@@ -24,7 +24,7 @@ import {
 } from "@/lib/auth";
 import { isRealEmail, validateGlobalSignup } from "@/lib/account-identifiers";
 import { normalizeShopCode, safeReturnPath } from "@/lib/shop-directory";
-import { destinationAfterAuth } from "@/lib/shop-routing";
+import { destinationAfterAuth, NEW_MEMBER_DESTINATION } from "@/lib/shop-routing";
 import { signInWithUsername } from "@/lib/username-login.functions";
 import { LOGIN_PASSWORD_HINT, LOGIN_USERNAME_HINT } from "@/lib/username-login";
 import { newPasswordIssue } from "@/lib/password-policy";
@@ -77,11 +77,9 @@ export const Route = createFileRoute("/")({
 function LoginPage() {
   const navigate = useNavigate();
   const searchParams = Route.useSearch();
-  const shopParam = searchParams.shop ?? "";
-  // A shop link may ask explicitly for sign-in; otherwise a shop link means join.
-  const [mode, setMode] = useState<"signin" | "signup">(
-    searchParams.mode ?? (shopParam ? "signup" : "signin"),
-  );
+  // Public registration creates a ONE WAVE identity first. Explicit shop
+  // joining remains on the dedicated join routes after account creation.
+  const [mode, setMode] = useState<"signin" | "signup">(searchParams.mode ?? "signin");
   // Where a shop-specific link wants the customer back (e.g. the hotspot portal).
   const nextPath = safeReturnPath(searchParams.next ?? null);
   const [method, setMethod] = useState<"email" | "username">("email");
@@ -233,7 +231,7 @@ function LoginPage() {
         return;
       }
       toast.success("Welcome to ONE WAVE.");
-      navigate({ to: "/universe", replace: true });
+      navigate({ to: NEW_MEMBER_DESTINATION, replace: true });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not create your account.");
     } finally {

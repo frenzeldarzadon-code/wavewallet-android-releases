@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
+import { NEW_MEMBER_DESTINATION } from "@/lib/shop-routing";
 import { landingForMemberships, MY_SHOPS_PATH } from "@/lib/session";
 
 describe("landing after sign-in", () => {
   it("keeps members with no shop in the Universe", () => {
-    expect(landingForMemberships([])).toEqual({ to: "/universe", switchTo: null });
+    expect(NEW_MEMBER_DESTINATION).toBe("/universe");
+    expect(landingForMemberships([])).toEqual({
+      to: NEW_MEMBER_DESTINATION,
+      switchTo: null,
+    });
   });
 
   it("opens the only shop, switching to it when needed", () => {
