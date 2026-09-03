@@ -47,7 +47,8 @@ describe("wholesale qualification (single tier, existing schema)", () => {
   it("never applies wholesale when the shop has not configured it", () => {
     expect(applicableUnitPrice(product({ wholesale_price: 0 }), 50)).toBe(100);
     expect(applicableUnitPrice(product({ wholesale_min_qty: 0 }), 50)).toBe(100);
-    expect(applicableUnitPrice(product({ wholesale_price: undefined, wholesale_min_qty: undefined }), 50)).toBe(100);
+    const { wholesale_price: _w, wholesale_min_qty: _m, ...bare } = product();
+    expect(applicableUnitPrice(bare, 50)).toBe(100);
   });
 });
 
