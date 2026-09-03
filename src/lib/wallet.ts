@@ -521,8 +521,23 @@ export async function fetchMyPurchases(userId: string, ecosystemId: string | nul
       .limit(100),
     ecosystemId ? owned.eq("ecosystem_id", ecosystemId) : owned,
   ]);
+  let saleRows = (sales ?? []) as unknown as SaleRow[];
+  if (!ecosystemId) {
+    // Universe (global-wallet) history: only purchases made in Universe shops.
+    // New Generation shop purchases are paid from isolated shop wallets and
+    // stay in that shop's own history.
+    const shopIds = Array.from(new Set(saleRows.map((s) => s.ecosystem_id).filter(Boolean)));
+    const flags = await Promise.all(
+      shopIds.map(async (id) => {
+        const { data } = await supabase.rpc("is_universe_shop", { _ecosystem_id: id });
+        return [id, data === true] as const;
+      }),
+    );
+    const universe = new Set(flags.filter(([, ok]) => ok).map(([id]) => id));
+    saleRows = saleRows.filter((s) => universe.has(s.ecosystem_id));
+  }
   const codesBySale = groupSaleCodes((codes ?? []) as { code: string; sale_id: string | null }[]);
-  return ((sales ?? []) as unknown as SaleRow[]).map((s) => {
+  return saleRows.map((s) => {
     const list = codesBySale.get(s.id) ?? [];
     return {
       ...s,
