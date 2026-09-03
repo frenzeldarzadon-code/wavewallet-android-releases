@@ -306,10 +306,20 @@ BEGIN
   PERFORM set_config('request.jwt.claims', c_res, true);
   BEGIN PERFORM public.retail_cod_seller_release(_ord2.id); _ok := true; EXCEPTION WHEN OTHERS THEN _ok := false; END;
   ASSERT NOT _ok, '14 blocked at day 0';
-  -- backdate the buyer receipt (test-only; triggers bypassed for this single timestamp edit)
-  PERFORM set_config('session_replication_role', 'replica', true);
+  -- backdate the buyer receipt (test-only; the write-once guard is paused for this single timestamp edit, inside the rolled-back tx)
+  ALTER TABLE public.retail_orders DISABLE TRIGGER USER;
   UPDATE public.retail_orders SET completed_at = now() - interval '3 days 1 minute' WHERE id = _ord2.id;
-  PERFORM set_config('session_replication_role', 'origin', true);
+  ALTER TABLE public.retail_orders ENABLE TRIGGER USER;
+  -- day 2 (one minute short) still blocked: exact boundary
+  ALTER TABLE public.retail_orders DISABLE TRIGGER USER;
+  UPDATE public.retail_orders SET completed_at = now() - interval '2 days 23 hours 59 minutes' WHERE id = _ord2.id;
+  ALTER TABLE public.retail_orders ENABLE TRIGGER USER;
+  PERFORM set_config('request.jwt.claims', c_res, true);
+  BEGIN PERFORM public.retail_cod_seller_release(_ord2.id); _ok := true; EXCEPTION WHEN OTHERS THEN _ok := false; END;
+  ASSERT NOT _ok, '14 blocked one minute before 3 days';
+  ALTER TABLE public.retail_orders DISABLE TRIGGER USER;
+  UPDATE public.retail_orders SET completed_at = now() - interval '3 days 1 minute' WHERE id = _ord2.id;
+  ALTER TABLE public.retail_orders ENABLE TRIGGER USER;
   PERFORM set_config('request.jwt.claims', c_sub, true);
   BEGIN PERFORM public.retail_cod_seller_release(_ord2.id); _ok := true; EXCEPTION WHEN OTHERS THEN _ok := false; END;
   ASSERT NOT _ok, '15 only seller may release';
