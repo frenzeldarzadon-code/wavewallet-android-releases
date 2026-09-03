@@ -463,7 +463,37 @@ function PostCard({
               ) : null}
               <RoleBadge role={post.author_role} />
             </div>
-            <MentionText body={post.body} className="mt-1" />
+            {meta.feeling || meta.location ? (
+              <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
+                {meta.feeling ? (
+                  <span>
+                    {feelingPhrase(meta.feeling)}{" "}
+                    <span aria-hidden>{meta.feeling.emoji}</span>
+                  </span>
+                ) : null}
+                {meta.location ? (
+                  <span className="inline-flex items-center gap-1">
+                    {meta.feeling ? "·" : null}
+                    <MapPin className="size-3.5 text-primary" aria-hidden />
+                    {typeof meta.location.lat === "number" && typeof meta.location.lng === "number" ? (
+                      <a
+                        href={`https://www.openstreetmap.org/?mlat=${meta.location.lat}&mlon=${meta.location.lng}#map=13/${meta.location.lat}/${meta.location.lng}`}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="hover:underline"
+                      >
+                        {meta.location.label}
+                      </a>
+                    ) : (
+                      <span>{meta.location.label}</span>
+                    )}
+                  </span>
+                ) : null}
+              </p>
+            ) : null}
+            {styled && meta.style ? null : post.body.trim() ? (
+              <MentionText body={post.body} className="mt-1" />
+            ) : null}
 
             {post.audience === "general" && post.author_id === meId ? (
               <GeneralStatus postId={post.id} />
@@ -471,7 +501,21 @@ function PostCard({
           </div>
         </div>
 
+        {styled && meta.style ? <StyledPostBody body={post.body} styleId={meta.style} /> : null}
         {post.image_path ? <PostImage path={post.image_path} /> : null}
+        {post.video_path ? <PostVideo path={post.video_path} /> : null}
+
+        {meta.dm_invite && post.author_id !== meId ? (
+          <Button
+            variant="outline"
+            className="h-11 w-full gap-2 rounded-xl border-primary/40 text-primary"
+            disabled={dmOpening}
+            onClick={() => void openDm()}
+          >
+            {dmOpening ? <Loader2 className="size-4 animate-spin" /> : <MessageCircle className="size-4" />}
+            Message {post.author_name.split(" ")[0]} privately
+          </Button>
+        ) : null}
 
         <div className="flex flex-wrap items-center gap-1">
           <Button variant="ghost" size="sm" className="h-10 gap-1.5" onClick={onLike}>
