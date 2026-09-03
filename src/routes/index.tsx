@@ -23,10 +23,8 @@ import {
   signUpCustomerAccount,
 } from "@/lib/auth";
 import { isRealEmail, validateGlobalSignup } from "@/lib/account-identifiers";
-import { ShopFinder } from "@/components/shop/shop-finder";
-import type { ShopSummary } from "@/lib/shop-directory";
-import { joinShopByCode, normalizeShopCode, safeReturnPath } from "@/lib/shop-directory";
-import { destinationAfterAuth, rememberPendingShopCode } from "@/lib/shop-routing";
+import { normalizeShopCode, safeReturnPath } from "@/lib/shop-directory";
+import { destinationAfterAuth } from "@/lib/shop-routing";
 import { signInWithUsername } from "@/lib/username-login.functions";
 import { LOGIN_PASSWORD_HINT, LOGIN_USERNAME_HINT } from "@/lib/username-login";
 import { newPasswordIssue } from "@/lib/password-policy";
@@ -86,11 +84,6 @@ function LoginPage() {
   );
   // Where a shop-specific link wants the customer back (e.g. the hotspot portal).
   const nextPath = safeReturnPath(searchParams.next ?? null);
-  // Two ways in: join an existing WiFi voucher operation, or become an operator.
-  const [signupPath, setSignupPath] = useState<"choose" | "join" | "operator">(
-    shopParam && searchParams.mode !== "signin" ? "join" : "choose",
-  );
-  const [shop, setShop] = useState<ShopSummary | null>(null);
   const [method, setMethod] = useState<"email" | "username">("email");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -206,10 +199,6 @@ function LoginPage() {
 
   const signUp = async () => {
     if (signupBusy) return;
-    if (signupPath === "join" && !shop) {
-      toast.error("Enter the 7-digit Shop ID of the operator you want to join.");
-      return;
-    }
     const problem =
       validateGlobalSignup(form) ??
       addressIssue({
@@ -224,7 +213,6 @@ function LoginPage() {
       return;
     }
     setSignupBusy(true);
-    const joinCode = signupPath === "join" ? (shop?.shopCode ?? "") : "";
     try {
       const { needsEmailConfirmation } = await signUpCustomerAccount({
         fullName: form.name,
@@ -240,21 +228,8 @@ function LoginPage() {
       setForm({ name: "", email: "", phone: "", password: "", confirm: "" });
       setAddress(EMPTY_ADDRESS);
       if (needsEmailConfirmation && isRealEmail(form.email)) {
-        // The shop can only be joined by a confirmed, signed-in account.
-        if (joinCode) rememberPendingShopCode(joinCode);
         await supabase.auth.signOut();
         setApplied({ needsEmail: true });
-        return;
-      }
-      if (joinCode) {
-        await joinShopByCode(joinCode);
-        toast.success("You joined the shop — your wallet there is ready.");
-        navigate({ to: nextPath ?? "/app/shop", replace: true });
-        return;
-      }
-      if (signupPath === "operator") {
-        toast.success("Account created — now create your shop.");
-        navigate({ to: "/start-shop", replace: true });
         return;
       }
       toast.success("Welcome to ONE WAVE.");
@@ -312,7 +287,7 @@ function LoginPage() {
                 <MailCheck className="mx-auto size-8 text-success" />
                 <h1 className="text-base font-semibold">Account created</h1>
                 <p className="text-xs text-auth-muted">
-                  Sign in to browse shops and apply to the one you want to join.
+                  Sign in to continue to the ONE WAVE Universe.
                   {applied.needsEmail
                     ? " We also emailed you a confirmation link — please confirm your email address."
                     : ""}
@@ -419,69 +394,15 @@ function LoginPage() {
                 </Button>
               </CardContent>
             </Card>
-          ) : signupPath === "choose" ? (
-            <Card className="auth-card rounded-2xl">
-              <CardContent className="space-y-3 py-5">
-                <div className="space-y-0.5">
-                  <h1 className="text-xl font-semibold tracking-tight">Create your account</h1>
-                  <p className="text-xs text-auth-muted">How will you use ONE WAVE?</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSignupPath("join")}
-                  className="flex w-full items-start gap-3 rounded-xl border border-auth-border px-4 py-3 text-left hover:bg-primary/10"
-                >
-                  <UserPlus className="mt-0.5 size-4 text-auth-cyan" />
-                  <span>
-                    <span className="block text-sm font-semibold text-auth-fg">
-                      Sign up to an existing WiFi voucher operation
-                    </span>
-                    <span className="mt-0.5 block text-xs text-auth-muted">
-                      Enter the operator&apos;s 7-digit Shop ID, or find them by municipality.
-                    </span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSignupPath("operator")}
-                  className="flex w-full items-start gap-3 rounded-xl border border-auth-border px-4 py-3 text-left hover:bg-primary/10"
-                >
-                  <ShieldCheck className="mt-0.5 size-4 text-auth-cyan" />
-                  <span>
-                    <span className="block text-sm font-semibold text-auth-fg">
-                      Sign up as an operator of WiFi voucher
-                    </span>
-                    <span className="mt-0.5 block text-xs text-auth-muted">
-                      Create your own shop — free Demo mode first, Go Live when you are ready.
-                    </span>
-                  </span>
-                </button>
-                <p className="text-center text-xs text-auth-muted">
-                  Already have an account?{" "}
-                  <button
-                    type="button"
-                    className="font-semibold text-auth-cyan hover:underline"
-                    onClick={() => setMode("signin")}
-                  >
-                    Sign In
-                  </button>
-                </p>
-              </CardContent>
-            </Card>
           ) : (
             <Card className="auth-card rounded-2xl">
               <CardContent className="space-y-3 py-5">
                 <div className="space-y-0.5">
-                  <h1 className="text-xl font-semibold tracking-tight">
-                    {signupPath === "join" ? "Join a WiFi voucher shop" : "Become an operator"}
-                  </h1>
+                  <h1 className="text-xl font-semibold tracking-tight">Join ONE WAVE</h1>
                   <p className="text-xs text-auth-muted">
-                    Give us an email address or a mobile number — at least one is required.
+                    Create your account first. You can join or open shops later from Universe.
                   </p>
                 </div>
-                {signupPath === "join" ? (
-                  <ShopFinder value={shop} onChange={setShop} initialCode={shopParam} idPrefix="su" />
-                ) : null}
                 <div className="space-y-1.5">
                   <Label htmlFor="su-name">Full name</Label>
                   <Input
@@ -546,20 +467,11 @@ function LoginPage() {
                   <button
                     type="button"
                     className="hover:underline"
-                    onClick={() => {
-                      setSignupPath("choose");
-                      setShop(null);
-                    }}
-                  >
-                    ← Back
-                  </button>
-                  <button
-                    type="button"
-                    className="font-semibold text-auth-cyan hover:underline"
                     onClick={() => setMode("signin")}
                   >
-                    Sign In
+                    ← Back to sign in
                   </button>
+                  <span>Universe first</span>
                 </div>
               </CardContent>
             </Card>
