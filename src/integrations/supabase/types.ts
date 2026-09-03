@@ -11588,6 +11588,14 @@ export type Database = {
         }[]
       }
       shop_funding_admin: { Args: { _ecosystem: string }; Returns: string }
+      shop_member_wallets: {
+        Args: { _ecosystem_id: string }
+        Returns: {
+          balance: number
+          is_global: boolean
+          user_id: string
+        }[]
+      }
       shop_members: {
         Args: { _ecosystem_id: string }
         Returns: {
