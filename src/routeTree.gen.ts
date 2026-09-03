@@ -17,7 +17,6 @@ import { Route as GuideRouteImport } from './routes/guide'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as InviteRouteImport } from './routes/invite'
 import { Route as PortalRouteImport } from './routes/portal'
-import { Route as PreviewOrdersRouteImport } from './routes/preview-orders'
 import { Route as ResellerRouteImport } from './routes/reseller'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReviewRouteImport } from './routes/review'
@@ -160,11 +159,6 @@ const InviteRoute = InviteRouteImport.update({
 const PortalRoute = PortalRouteImport.update({
   id: '/portal',
   path: '/portal',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PreviewOrdersRoute = PreviewOrdersRouteImport.update({
-  id: '/preview-orders',
-  path: '/preview-orders',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResellerRoute = ResellerRouteImport.update({
@@ -696,7 +690,6 @@ export interface FileRoutesByFullPath {
   '/help': typeof HelpRoute
   '/invite': typeof InviteRoute
   '/portal': typeof PortalRoute
-  '/preview-orders': typeof PreviewOrdersRoute
   '/reseller': typeof ResellerRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
@@ -808,7 +801,6 @@ export interface FileRoutesByTo {
   '/help': typeof HelpRoute
   '/invite': typeof InviteRoute
   '/portal': typeof PortalRoute
-  '/preview-orders': typeof PreviewOrdersRoute
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
   '/setup': typeof SetupRoute
@@ -920,7 +912,6 @@ export interface FileRoutesById {
   '/help': typeof HelpRoute
   '/invite': typeof InviteRoute
   '/portal': typeof PortalRoute
-  '/preview-orders': typeof PreviewOrdersRoute
   '/reseller': typeof ResellerRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
@@ -1036,7 +1027,6 @@ export interface FileRouteTypes {
     | '/help'
     | '/invite'
     | '/portal'
-    | '/preview-orders'
     | '/reseller'
     | '/reset-password'
     | '/review'
@@ -1148,7 +1138,6 @@ export interface FileRouteTypes {
     | '/help'
     | '/invite'
     | '/portal'
-    | '/preview-orders'
     | '/reset-password'
     | '/review'
     | '/setup'
@@ -1259,7 +1248,6 @@ export interface FileRouteTypes {
     | '/help'
     | '/invite'
     | '/portal'
-    | '/preview-orders'
     | '/reseller'
     | '/reset-password'
     | '/review'
@@ -1374,7 +1362,6 @@ export interface RootRouteChildren {
   HelpRoute: typeof HelpRoute
   InviteRoute: typeof InviteRoute
   PortalRoute: typeof PortalRoute
-  PreviewOrdersRoute: typeof PreviewOrdersRoute
   ResellerRoute: typeof ResellerRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   ReviewRoute: typeof ReviewRoute
@@ -1453,13 +1440,6 @@ declare module '@tanstack/react-router' {
       path: '/portal'
       fullPath: '/portal'
       preLoaderRoute: typeof PortalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/preview-orders': {
-      id: '/preview-orders'
-      path: '/preview-orders'
-      fullPath: '/preview-orders'
-      preLoaderRoute: typeof PreviewOrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reseller': {
@@ -2405,7 +2385,6 @@ const rootRouteChildren: RootRouteChildren = {
   HelpRoute: HelpRoute,
   InviteRoute: InviteRoute,
   PortalRoute: PortalRoute,
-  PreviewOrdersRoute: PreviewOrdersRoute,
   ResellerRoute: ResellerRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   ReviewRoute: ReviewRoute,
