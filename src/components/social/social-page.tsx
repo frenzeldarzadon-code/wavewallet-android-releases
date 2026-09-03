@@ -4,20 +4,21 @@ import {
   Gift,
   Globe2,
   Heart,
-  ImagePlus,
   Loader2,
+  MapPin,
   MessageCircle,
-  Megaphone,
   Reply,
   Send,
   ShieldOff,
   Trash2,
-  Users,
   X,
 } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { UniverseComposer } from "@/components/social/universe-composer";
+import { StyledPostBody } from "@/components/social/composer-pickers";
+import { feelingPhrase, readPostMeta, styleApplies } from "@/lib/post-meta";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
