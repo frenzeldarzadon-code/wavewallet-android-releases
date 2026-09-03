@@ -1420,7 +1420,7 @@ export type Database = {
           id: string
           image_path: string | null
           read_at: string | null
-          recipient_id: string
+          recipient_id: string | null
           sender_id: string
           thread_id: string
         }
@@ -1431,7 +1431,7 @@ export type Database = {
           id?: string
           image_path?: string | null
           read_at?: string | null
-          recipient_id: string
+          recipient_id?: string | null
           sender_id: string
           thread_id: string
         }
@@ -1442,7 +1442,7 @@ export type Database = {
           id?: string
           image_path?: string | null
           read_at?: string | null
-          recipient_id?: string
+          recipient_id?: string | null
           sender_id?: string
           thread_id?: string
         }
@@ -1470,33 +1470,77 @@ export type Database = {
           },
         ]
       }
+      dm_thread_members: {
+        Row: {
+          added_at: string
+          last_read_at: string | null
+          member_role: string
+          removed_at: string | null
+          thread_id: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          last_read_at?: string | null
+          member_role?: string
+          removed_at?: string | null
+          thread_id: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          last_read_at?: string | null
+          member_role?: string
+          removed_at?: string | null
+          thread_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dm_thread_members_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "dm_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dm_threads: {
         Row: {
           created_at: string
           ecosystem_id: string
           id: string
+          kind: string
           last_message_at: string | null
           last_message_preview: string | null
-          user_a: string
-          user_b: string
+          order_id: string | null
+          title: string | null
+          user_a: string | null
+          user_b: string | null
         }
         Insert: {
           created_at?: string
           ecosystem_id: string
           id?: string
+          kind?: string
           last_message_at?: string | null
           last_message_preview?: string | null
-          user_a: string
-          user_b: string
+          order_id?: string | null
+          title?: string | null
+          user_a?: string | null
+          user_b?: string | null
         }
         Update: {
           created_at?: string
           ecosystem_id?: string
           id?: string
+          kind?: string
           last_message_at?: string | null
           last_message_preview?: string | null
-          user_a?: string
-          user_b?: string
+          order_id?: string | null
+          title?: string | null
+          user_a?: string | null
+          user_b?: string | null
         }
         Relationships: [
           {
@@ -1511,6 +1555,13 @@ export type Database = {
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dm_threads_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "retail_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -1866,8 +1917,12 @@ export type Database = {
           points_rule_version: number
           public_storefront_enabled: boolean
           retail_cash_enabled: boolean
+          retail_cod_enabled: boolean
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
+          retail_delivery_fee: number
+          retail_delivery_split_collector_pct: number
+          retail_delivery_split_delivery_pct: number
           retail_pickup_enabled: boolean
           review_ends_at: string | null
           reviewed_at: string | null
@@ -1928,8 +1983,12 @@ export type Database = {
           points_rule_version?: number
           public_storefront_enabled?: boolean
           retail_cash_enabled?: boolean
+          retail_cod_enabled?: boolean
           retail_credit_enabled?: boolean
           retail_delivery_enabled?: boolean
+          retail_delivery_fee?: number
+          retail_delivery_split_collector_pct?: number
+          retail_delivery_split_delivery_pct?: number
           retail_pickup_enabled?: boolean
           review_ends_at?: string | null
           reviewed_at?: string | null
@@ -1990,8 +2049,12 @@ export type Database = {
           points_rule_version?: number
           public_storefront_enabled?: boolean
           retail_cash_enabled?: boolean
+          retail_cod_enabled?: boolean
           retail_credit_enabled?: boolean
           retail_delivery_enabled?: boolean
+          retail_delivery_fee?: number
+          retail_delivery_split_collector_pct?: number
+          retail_delivery_split_delivery_pct?: number
           retail_pickup_enabled?: boolean
           review_ends_at?: string | null
           reviewed_at?: string | null
@@ -4777,6 +4840,19 @@ export type Database = {
           cashback_ledger_id: string | null
           cashback_recipient_id: string | null
           cashback_total: number
+          chat_thread_id: string | null
+          cod_actual_cash: number | null
+          cod_cash_received_at: string | null
+          cod_discrepancy: boolean
+          cod_expected_cash: number | null
+          cod_hold_ledger_id: string | null
+          cod_hold_tx: string | null
+          cod_settled_at: string | null
+          cod_settlement_kind: string | null
+          collector_id: string | null
+          collector_responded_at: string | null
+          collector_share_ledger_id: string | null
+          collector_status: string
           completed_at: string | null
           created_at: string
           credit_hold_tx: string | null
@@ -4788,7 +4864,12 @@ export type Database = {
           decision_note: string | null
           delivered_at: string | null
           delivery_address: string | null
+          delivery_fee: number
           delivery_notes: string | null
+          delivery_person_id: string | null
+          delivery_share_ledger_id: string | null
+          delivery_split_collector_pct: number | null
+          delivery_split_delivery_pct: number | null
           ecosystem_id: string
           fulfillment: string
           fulfillment_status: string
@@ -4801,6 +4882,7 @@ export type Database = {
           platform_fee_amount: number | null
           platform_fee_percent: number | null
           refund_ledger_id: string | null
+          self_delivery: boolean
           seller_id: string | null
           seller_total: number | null
           settled_to: string | null
@@ -4814,6 +4896,19 @@ export type Database = {
           cashback_ledger_id?: string | null
           cashback_recipient_id?: string | null
           cashback_total?: number
+          chat_thread_id?: string | null
+          cod_actual_cash?: number | null
+          cod_cash_received_at?: string | null
+          cod_discrepancy?: boolean
+          cod_expected_cash?: number | null
+          cod_hold_ledger_id?: string | null
+          cod_hold_tx?: string | null
+          cod_settled_at?: string | null
+          cod_settlement_kind?: string | null
+          collector_id?: string | null
+          collector_responded_at?: string | null
+          collector_share_ledger_id?: string | null
+          collector_status?: string
           completed_at?: string | null
           created_at?: string
           credit_hold_tx?: string | null
@@ -4825,7 +4920,12 @@ export type Database = {
           decision_note?: string | null
           delivered_at?: string | null
           delivery_address?: string | null
+          delivery_fee?: number
           delivery_notes?: string | null
+          delivery_person_id?: string | null
+          delivery_share_ledger_id?: string | null
+          delivery_split_collector_pct?: number | null
+          delivery_split_delivery_pct?: number | null
           ecosystem_id: string
           fulfillment: string
           fulfillment_status?: string
@@ -4838,6 +4938,7 @@ export type Database = {
           platform_fee_amount?: number | null
           platform_fee_percent?: number | null
           refund_ledger_id?: string | null
+          self_delivery?: boolean
           seller_id?: string | null
           seller_total?: number | null
           settled_to?: string | null
@@ -4851,6 +4952,19 @@ export type Database = {
           cashback_ledger_id?: string | null
           cashback_recipient_id?: string | null
           cashback_total?: number
+          chat_thread_id?: string | null
+          cod_actual_cash?: number | null
+          cod_cash_received_at?: string | null
+          cod_discrepancy?: boolean
+          cod_expected_cash?: number | null
+          cod_hold_ledger_id?: string | null
+          cod_hold_tx?: string | null
+          cod_settled_at?: string | null
+          cod_settlement_kind?: string | null
+          collector_id?: string | null
+          collector_responded_at?: string | null
+          collector_share_ledger_id?: string | null
+          collector_status?: string
           completed_at?: string | null
           created_at?: string
           credit_hold_tx?: string | null
@@ -4862,7 +4976,12 @@ export type Database = {
           decision_note?: string | null
           delivered_at?: string | null
           delivery_address?: string | null
+          delivery_fee?: number
           delivery_notes?: string | null
+          delivery_person_id?: string | null
+          delivery_share_ledger_id?: string | null
+          delivery_split_collector_pct?: number | null
+          delivery_split_delivery_pct?: number | null
           ecosystem_id?: string
           fulfillment?: string
           fulfillment_status?: string
@@ -4875,6 +4994,7 @@ export type Database = {
           platform_fee_amount?: number | null
           platform_fee_percent?: number | null
           refund_ledger_id?: string | null
+          self_delivery?: boolean
           seller_id?: string | null
           seller_total?: number | null
           settled_to?: string | null
@@ -4888,6 +5008,27 @@ export type Database = {
           {
             foreignKeyName: "retail_orders_cashback_ledger_id_fkey"
             columns: ["cashback_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "retail_orders_cod_hold_ledger_id_fkey"
+            columns: ["cod_hold_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "retail_orders_collector_share_ledger_id_fkey"
+            columns: ["collector_share_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "retail_orders_delivery_share_ledger_id_fkey"
+            columns: ["delivery_share_ledger_id"]
             isOneToOne: false
             referencedRelation: "credit_ledger"
             referencedColumns: ["id"]
@@ -8902,8 +9043,12 @@ export type Database = {
           points_rule_version: number
           public_storefront_enabled: boolean
           retail_cash_enabled: boolean
+          retail_cod_enabled: boolean
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
+          retail_delivery_fee: number
+          retail_delivery_split_collector_pct: number
+          retail_delivery_split_delivery_pct: number
           retail_pickup_enabled: boolean
           review_ends_at: string | null
           reviewed_at: string | null
@@ -8973,8 +9118,12 @@ export type Database = {
           points_rule_version: number
           public_storefront_enabled: boolean
           retail_cash_enabled: boolean
+          retail_cod_enabled: boolean
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
+          retail_delivery_fee: number
+          retail_delivery_split_collector_pct: number
+          retail_delivery_split_delivery_pct: number
           retail_pickup_enabled: boolean
           review_ends_at: string | null
           reviewed_at: string | null
@@ -9062,6 +9211,10 @@ export type Database = {
         Args: { _event: string; _note?: string }
         Returns: Json
       }
+      dm_is_active_member: {
+        Args: { _thread_id: string; _user_id: string }
+        Returns: boolean
+      }
       dm_messages_for: {
         Args: { _thread_id: string }
         Returns: {
@@ -9071,6 +9224,7 @@ export type Database = {
           image_path: string
           mine: boolean
           sender_id: string
+          sender_name: string
         }[]
       }
       dm_open_thread: { Args: { _member_id: string }; Returns: string }
@@ -9080,17 +9234,25 @@ export type Database = {
             Args: { _body: string; _image_path?: string; _member_id: string }
             Returns: Json
           }
+      dm_send_thread: {
+        Args: { _body: string; _image_path?: string; _thread_id: string }
+        Returns: Json
+      }
       dm_thread_list: {
         Args: never
         Returns: {
           blocked: boolean
+          kind: string
           last_message_at: string
           member_avatar: string
           member_handle: string
           member_id: string
           member_name: string
+          order_id: string
+          participants: Json
           preview: string
           thread_id: string
+          title: string
           unread: number
         }[]
       }
@@ -9445,6 +9607,18 @@ export type Database = {
       list_retail_orders: {
         Args: { _ecosystem_id: string; _status?: string }
         Returns: {
+          cashback_amount: number
+          chat_thread_id: string
+          cod_actual_cash: number
+          cod_cash_received_at: string
+          cod_discrepancy: boolean
+          cod_expected_cash: number
+          cod_settled_at: string
+          cod_settlement_kind: string
+          collector_id: string
+          collector_name: string
+          collector_share_amount: number
+          collector_status: string
           completed_at: string
           created_at: string
           customer_id: string
@@ -9452,15 +9626,24 @@ export type Database = {
           decision_note: string
           delivered_at: string
           delivery_address: string
+          delivery_fee: number
           delivery_notes: string
+          delivery_person_id: string
+          delivery_person_name: string
+          delivery_share_amount: number
+          delivery_split_collector_pct: number
+          delivery_split_delivery_pct: number
           fulfillment: string
           fulfillment_status: string
+          hold_held: boolean
           id: string
           items: Json
           order_no: string
           payment_method: string
           platform_fee_amount: number
           platform_fee_percent: number
+          self_delivery: boolean
+          seller_amount: number
           seller_id: string
           seller_name: string
           seller_total: number
@@ -9821,20 +10004,28 @@ export type Database = {
       my_retail_orders: {
         Args: { _ecosystem_id: string }
         Returns: {
+          chat_thread_id: string
+          cod_settled_at: string
+          collector_name: string
+          collector_status: string
           completed_at: string
           created_at: string
           decision_note: string
           delivered_at: string
           delivery_address: string
+          delivery_fee: number
           delivery_notes: string
+          delivery_person_name: string
           fulfillment: string
           fulfillment_status: string
+          hold_held: boolean
           id: string
           items: Json
           order_no: string
           payment_method: string
           platform_fee_amount: number
           platform_fee_percent: number
+          self_delivery: boolean
           seller_name: string
           seller_total: number
           shop_name: string
@@ -10639,6 +10830,86 @@ export type Database = {
         Args: { _buyer: string; _ecosystem_id: string; _seller: string }
         Returns: string
       }
+      retail_cod_assign: {
+        Args: {
+          _collector_id: string
+          _delivery_person_id: string
+          _order_id: string
+          _self_delivery: boolean
+        }
+        Returns: undefined
+      }
+      retail_cod_assignees: {
+        Args: { _order_id: string }
+        Returns: {
+          avatar_path: string
+          collector_eligible: boolean
+          full_name: string
+          handle: string
+          user_id: string
+        }[]
+      }
+      retail_cod_cancel_internal: {
+        Args: {
+          _actor: string
+          _kind: string
+          _note: string
+          _order_id: string
+        }
+        Returns: undefined
+      }
+      retail_cod_cash_received: {
+        Args: { _actual_cash: number; _order_id: string }
+        Returns: undefined
+      }
+      retail_cod_collector_respond: {
+        Args: { _accept: boolean; _order_id: string }
+        Returns: undefined
+      }
+      retail_cod_fallback_days: { Args: never; Returns: number }
+      retail_cod_held_total: { Args: never; Returns: number }
+      retail_cod_manager: {
+        Args: {
+          _o: Database["public"]["Tables"]["retail_orders"]["Row"]
+          _uid: string
+        }
+        Returns: boolean
+      }
+      retail_cod_quote: {
+        Args: { _ecosystem_id: string; _seller_total: number }
+        Returns: {
+          available: boolean
+          customer_total: number
+          delivery_fee: number
+          platform_fee: number
+          reason: string
+        }[]
+      }
+      retail_cod_resolve_discrepancy: {
+        Args: { _action: string; _note?: string; _order_id: string }
+        Returns: undefined
+      }
+      retail_cod_seller_cancel: {
+        Args: { _note?: string; _order_id: string }
+        Returns: undefined
+      }
+      retail_cod_seller_funded: {
+        Args: { _ecosystem_id: string; _fee: number }
+        Returns: boolean
+      }
+      retail_cod_seller_release: {
+        Args: { _order_id: string }
+        Returns: undefined
+      }
+      retail_cod_settle: {
+        Args: {
+          _actor: string
+          _actual: number
+          _kind: string
+          _order_id: string
+        }
+        Returns: undefined
+      }
       retail_fulfillment_step_ok: {
         Args: { _from: string; _fulfillment: string; _to: string }
         Returns: boolean
@@ -10652,6 +10923,35 @@ export type Database = {
         }
         Returns: number
       }
+      retail_my_cod_assignments: {
+        Args: never
+        Returns: {
+          actual_cash: number
+          cash_received_at: string
+          chat_thread_id: string
+          collector_status: string
+          completed_at: string
+          created_at: string
+          customer_name: string
+          delivery_address: string
+          delivery_fee: number
+          delivery_notes: string
+          discrepancy: boolean
+          expected_cash: number
+          fulfillment_status: string
+          hold_held: boolean
+          id: string
+          my_role: string
+          my_share: number
+          order_no: string
+          self_delivery: boolean
+          settled_at: string
+          shop_name: string
+          status: string
+          total: number
+        }[]
+      }
+      retail_order_chat: { Args: { _order_id: string }; Returns: string }
       retail_place_order: {
         Args: {
           _address?: string
@@ -10688,6 +10988,7 @@ export type Database = {
         Args: { _ecosystem_id: string }
         Returns: string
       }
+      retail_sync_order_chat: { Args: { _order_id: string }; Returns: string }
       retail_update_fulfillment: {
         Args: { _next: string; _order_id: string }
         Returns: undefined
@@ -11382,8 +11683,12 @@ export type Database = {
           points_rule_version: number
           public_storefront_enabled: boolean
           retail_cash_enabled: boolean
+          retail_cod_enabled: boolean
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
+          retail_delivery_fee: number
+          retail_delivery_split_collector_pct: number
+          retail_delivery_split_delivery_pct: number
           retail_pickup_enabled: boolean
           review_ends_at: string | null
           reviewed_at: string | null
@@ -11453,8 +11758,12 @@ export type Database = {
           points_rule_version: number
           public_storefront_enabled: boolean
           retail_cash_enabled: boolean
+          retail_cod_enabled: boolean
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
+          retail_delivery_fee: number
+          retail_delivery_split_collector_pct: number
+          retail_delivery_split_delivery_pct: number
           retail_pickup_enabled: boolean
           review_ends_at: string | null
           reviewed_at: string | null
@@ -11535,8 +11844,12 @@ export type Database = {
           points_rule_version: number
           public_storefront_enabled: boolean
           retail_cash_enabled: boolean
+          retail_cod_enabled: boolean
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
+          retail_delivery_fee: number
+          retail_delivery_split_collector_pct: number
+          retail_delivery_split_delivery_pct: number
           retail_pickup_enabled: boolean
           review_ends_at: string | null
           reviewed_at: string | null
@@ -11866,9 +12179,13 @@ export type Database = {
         Args: { _ecosystem_id: string }
         Returns: {
           cash_enabled: boolean
+          cod_enabled: boolean
+          collector_pct: number
           contact_email: string
           credit_enabled: boolean
           delivery_enabled: boolean
+          delivery_fee: number
+          delivery_pct: number
           pickup_enabled: boolean
           public_storefront: boolean
           retail_enabled: boolean
@@ -12901,8 +13218,12 @@ export type Database = {
           points_rule_version: number
           public_storefront_enabled: boolean
           retail_cash_enabled: boolean
+          retail_cod_enabled: boolean
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
+          retail_delivery_fee: number
+          retail_delivery_split_collector_pct: number
+          retail_delivery_split_delivery_pct: number
           retail_pickup_enabled: boolean
           review_ends_at: string | null
           reviewed_at: string | null
@@ -12977,8 +13298,12 @@ export type Database = {
           points_rule_version: number
           public_storefront_enabled: boolean
           retail_cash_enabled: boolean
+          retail_cod_enabled: boolean
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
+          retail_delivery_fee: number
+          retail_delivery_split_collector_pct: number
+          retail_delivery_split_delivery_pct: number
           retail_pickup_enabled: boolean
           review_ends_at: string | null
           reviewed_at: string | null
@@ -13093,6 +13418,16 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      update_retail_delivery_settings: {
+        Args: {
+          _cod_enabled: boolean
+          _collector_pct: number
+          _delivery_fee: number
+          _delivery_pct: number
+          _ecosystem_id: string
+        }
+        Returns: undefined
       }
       update_social_settings:
         | {
