@@ -77,7 +77,7 @@ BEGIN
   ---------------------------------------------------------------- 2, 3
   PERFORM set_config('request.jwt.claims', json_build_object('sub', _res)::text, true);
   SELECT sale_id INTO _sale FROM public.purchase_voucher(_prod, 1);
-  SELECT sale_price, platform_fee_amount, seller_amount, unit_price INTO _price, _fee, _cut, r
+  SELECT sale_price, platform_fee_amount, seller_amount INTO _price, _fee, _cut
     FROM public.voucher_sales WHERE id = _sale;
   ASSERT _price = 10.00, format('2: reseller pays the full ₱10, got %s', _price);
   ASSERT (SELECT discount_percent FROM public.voucher_sales WHERE id = _sale) = 0, '2: no reseller discount recorded';
