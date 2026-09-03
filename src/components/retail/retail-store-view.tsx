@@ -7,7 +7,7 @@
  * held when the order is placed and are returned in full if the admin rejects
  * it, so nothing is spent until an order is confirmed.
  */
-import { Loader2, Minus, PackageCheck, Plus, ShoppingCart, Star, X } from "lucide-react";
+import { Loader2, Minus, PackageCheck, Plus, ShoppingCart, Star, Store, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,13 @@ import { fetchCreditBalance } from "@/lib/wallet";
 import { shortDateTime } from "@/lib/wavewallet";
 import {
   DEFAULT_STORE_SETTINGS,
+  canCancelOrder,
+  canConfirmReceipt,
   cancelRetailOrder,
+  customerNextStep,
+  fulfillmentLabel,
+  fulfillmentTone,
+  updateRetailFulfillment,
   cartCount,
   cartLines,
   cartQuote,
@@ -239,7 +245,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
         )}
       </PageSection>
 
-      <PageSection devSlot="retail-store-view.my-orders" title="My orders" description="Every order stays pending until the shop admin reviews it.">
+      <PageSection devSlot="retail-store-view.my-orders" title="My orders" description="Track each order from review to hand-over.">
         {orders.length === 0 ? (
           <EmptyState title="No retail orders yet" />
         ) : (
@@ -248,14 +254,22 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
               <Card key={o.id} className="shadow-[var(--shadow-card)]">
                 <CardContent className="space-y-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-sm font-semibold">{o.order_no}</p>
+                      <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <Store className="size-3" />
+                        {o.shop_name ?? "Shop"}
+                        {o.seller_name ? ` · sold by ${o.seller_name}` : ""}
+                      </p>
                       <p className="text-[11px] text-muted-foreground">
                         {shortDateTime(o.created_at)} · {o.fulfillment} · {o.payment_method}
                       </p>
                     </div>
-                    <StatusBadge tone={orderTone(o.status)}>{o.status}</StatusBadge>
+                    <StatusBadge tone={fulfillmentTone(o)}>
+                      {o.status === "approved" ? fulfillmentLabel(o.fulfillment_status, o.fulfillment) : o.status}
+                    </StatusBadge>
                   </div>
+                  <p className="rounded-lg bg-muted/60 px-2.5 py-1.5 text-xs">{customerNextStep(o)}</p>
                   <ul className="space-y-1 text-xs text-muted-foreground">
                     {o.items.map((i) => (
                       <li key={i.product_id} className="flex justify-between gap-2">
@@ -275,7 +289,23 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-sm font-semibold">Total {credits(o.total)}</p>
                     <div className="flex gap-2">
-                      {o.status === "pending" ? (
+                      {canConfirmReceipt(o) ? (
+                        <Button
+                          size="sm"
+                          onClick={async () => {
+                            try {
+                              await updateRetailFulfillment(o.id, "completed");
+                              toast.success("Thanks — order marked as received");
+                              await load();
+                            } catch (e) {
+                              toast.error((e as Error).message);
+                            }
+                          }}
+                        >
+                          <PackageCheck className="size-4" /> I received it
+                        </Button>
+                      ) : null}
+                      {canCancelOrder(o) ? (
                         <Button
                           size="sm"
                           variant="outline"
@@ -292,7 +322,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                           <X className="size-4" /> Cancel
                         </Button>
                       ) : null}
-                      {o.status === "approved"
+                      {o.status === "approved" && o.fulfillment_status === "completed"
                         ? o.items.map((i) => (
                             <Button
                               key={i.product_id}

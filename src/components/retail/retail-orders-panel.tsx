@@ -87,6 +87,23 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
     }
   };
 
+  const advance = async (order: RetailOrder) => {
+    const next = nextFulfillmentStep(order.fulfillment_status, order.fulfillment);
+    if (!next || busy) return;
+    setBusy(order.id);
+    try {
+      await updateRetailFulfillment(order.id, next);
+      toast.success(`${order.order_no}: ${fulfillmentLabel(next, order.fulfillment)}`, {
+        description: "The customer has been notified. No coins moved.",
+      });
+      await load();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
   return (
     <PageSection devSlot="retail-orders-panel.retail-orders"
       title="Retail orders"
@@ -141,8 +158,18 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                         {shortDateTime(o.created_at)} · {o.fulfillment} · paid by {o.payment_method}
                       </p>
                     </div>
-                    <StatusBadge tone={orderTone(o.status)}>{o.status}</StatusBadge>
+                    <div className="flex flex-wrap gap-1">
+                      <StatusBadge tone={orderTone(o.status)}>{o.status}</StatusBadge>
+                      {o.status === "approved" ? (
+                        <StatusBadge tone={fulfillmentTone(o)}>
+                          {fulfillmentLabel(o.fulfillment_status, o.fulfillment)}
+                        </StatusBadge>
+                      ) : null}
+                    </div>
                   </div>
+                  {o.seller_name ? (
+                    <p className="text-[11px] text-muted-foreground">Storefront seller: {o.seller_name}</p>
+                  ) : null}
                   <ul className="space-y-1 text-xs text-muted-foreground">
                     {o.items.map((i) => (
                       <li key={i.product_id} className="flex justify-between gap-2">
@@ -199,7 +226,29 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                         </Button>
                       ) : null}
                     </div>
-                  ) : o.decision_note ? (
+                  ) : null}
+                  {o.status === "approved" ? (() => {
+                    const next = nextFulfillmentStep(o.fulfillment_status, o.fulfillment);
+                    return next ? (
+                      <Button size="sm" disabled={busy === o.id} onClick={() => void advance(o)}>
+                        {busy === o.id ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <ArrowRight className="size-4" />
+                        )}
+                        {fulfillmentActionLabel(next, o.fulfillment)}
+                      </Button>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground">
+                        {o.fulfillment_status === "delivered"
+                          ? "Waiting for the customer to confirm receipt."
+                          : o.completed_at
+                            ? `Completed ${shortDateTime(o.completed_at)}`
+                            : null}
+                      </p>
+                    );
+                  })() : null}
+                  {o.status !== "pending" && o.decision_note ? (
                     <p className="text-[11px] text-muted-foreground">Note: {o.decision_note}</p>
                   ) : null}
                 </div>
