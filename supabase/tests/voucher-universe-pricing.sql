@@ -161,6 +161,8 @@ BEGIN
   ASSERT public.voucher_discount_percent_for(_admin, _shop) = 0, '10: Universe admin has no purchase discount';
   PERFORM set_config('request.jwt.claims', json_build_object('sub', _super)::text, true);
   PERFORM public.admin_load_credits(_admin, 100, 'QA fund admin', 'QA-A', _shop);
+  INSERT INTO public.voucher_codes (ecosystem_id, product_id, code, status)
+  SELECT _shop, _new_prod, 'QAN-' || g, 'unused' FROM generate_series(1, 2) g;
   PERFORM set_config('request.jwt.claims', json_build_object('sub', _admin)::text, true);
   SELECT sale_id INTO _sale FROM public.purchase_voucher(_new_prod, 1);   -- ₱10 product, 2% snapshot
   SELECT sale_price, platform_fee_amount, seller_amount INTO _price, _fee, _cut FROM public.voucher_sales WHERE id = _sale;
