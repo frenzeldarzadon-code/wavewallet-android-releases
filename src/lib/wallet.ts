@@ -92,6 +92,7 @@ export interface ShopProduct {
 
 export interface SaleRow {
   id: string;
+  ecosystem_id: string;
   product_name: string;
   buyer_id: string;
   buyer_role: string;
