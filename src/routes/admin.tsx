@@ -1,9 +1,10 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { useSession } from "@/lib/session";
-import { adminBottomNav, adminNav, withBadges } from "@/lib/navigation";
+import { adminBottomNavFor, adminNav, withBadges } from "@/lib/navigation";
 import { useMemberInbox } from "@/components/member-inbox-panel";
 import { useShopStatus } from "@/lib/shop-status";
+import { shopTypeLabel } from "@/lib/shop-type";
 
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
@@ -28,16 +29,20 @@ function AdminLayout() {
   }
 
 
-  const nav = withBadges(adminNav({ goLive: shopStatus.isDemo }), {
-    "/admin/applications": pending,
-  });
+  // The console only offers the tools of the shop type being managed.
+  const nav = withBadges(
+    adminNav({ goLive: shopStatus.isDemo, shopType: shopStatus.shopType }),
+    { "/admin/applications": pending },
+  );
   return (
     <AppShell
       session={session}
       nav={nav}
-      bottomNav={adminBottomNav}
+      bottomNav={adminBottomNavFor(shopStatus.shopType)}
       title={session.ecosystem.name}
-      subtitle="Admin console"
+      subtitle={
+        shopStatus.shopType ? `${shopTypeLabel(shopStatus.shopType)} · Admin console` : "Admin console"
+      }
     >
       <Outlet />
     </AppShell>

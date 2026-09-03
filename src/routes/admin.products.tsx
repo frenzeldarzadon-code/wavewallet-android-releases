@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ShopTypeGate } from "@/components/shop/shop-type-gate";
 import { Archive, Pencil, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -59,7 +60,7 @@ export const Route = createFileRoute("/admin/products")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: AdminProducts,
+  component: AdminProductsGate,
 });
 
 interface Draft {
@@ -555,5 +556,15 @@ function AdminProducts() {
         </DialogContent>
       </Dialog>
     </PageSection>
+  );
+}
+
+/** Only the tools of this shop's type are offered (see Shop type in settings). */
+function AdminProductsGate() {
+  const { ecosystemDbId } = useSession("admin");
+  return (
+    <ShopTypeGate ecosystemId={ecosystemDbId} requires="voucher">
+      <AdminProducts />
+    </ShopTypeGate>
   );
 }

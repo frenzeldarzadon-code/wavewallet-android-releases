@@ -1,8 +1,8 @@
 /**
  * Store configuration for one shop's admin.
  *
- * Turning a store off only hides it: its products, orders and history stay
- * exactly where they are and reappear the moment it is turned back on.
+ * Which store this shop runs (Voucher vs Retail) is the Shop type setting;
+ * this card only manages how retail customers pay and receive orders.
  */
 import { Loader2, Store } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -20,8 +20,6 @@ import {
 } from "@/lib/retail";
 
 const rows: Array<{ key: keyof StoreSettings; label: string; hint: string }> = [
-  { key: "voucherEnabled", label: "Voucher store", hint: "Sell WiFi voucher codes." },
-  { key: "retailEnabled", label: "Retail store", hint: "Sell physical goods." },
   {
     key: "cashEnabled",
     label: "Accept cash",
@@ -86,8 +84,8 @@ export function StoreSettingsCard({ ecosystemId }: { ecosystemId: string | null 
   return (
     <PageSection
       devSlot="store-settings-card.stores"
-      title="Stores"
-      description="Choose which stores your shop offers and how customers can pay and receive orders."
+      title="Payment & fulfilment"
+      description="How customers can pay for retail orders and receive them."
     >
       <Card className="shadow-[var(--shadow-card)]">
         <CardContent className="space-y-3">

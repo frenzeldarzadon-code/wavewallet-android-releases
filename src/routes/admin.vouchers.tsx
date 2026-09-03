@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ShopTypeGate } from "@/components/shop/shop-type-gate";
 import { AlertTriangle, CheckCircle2, FileUp, Info, Package, Trash2, Upload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -67,7 +68,7 @@ export const Route = createFileRoute("/admin/vouchers")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: AdminVouchers,
+  component: AdminVouchersGate,
 });
 
 interface CodeRow {
@@ -754,5 +755,15 @@ function AdminVouchers() {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+/** Only the tools of this shop's type are offered (see Shop type in settings). */
+function AdminVouchersGate() {
+  const { ecosystemDbId } = useSession("admin");
+  return (
+    <ShopTypeGate ecosystemId={ecosystemDbId} requires="voucher">
+      <AdminVouchers />
+    </ShopTypeGate>
   );
 }

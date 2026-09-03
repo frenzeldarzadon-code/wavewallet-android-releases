@@ -47,6 +47,7 @@ import {
   Wifi,
 } from "lucide-react";
 import { RETAIL_VISIBLE, SOCIAL_ENABLED } from "@/lib/features";
+import { showsRetailTools, showsVoucherTools, type ShopTypeState } from "@/lib/shop-type";
 import type { Role } from "@/lib/wavewallet";
 
 export interface NavItem {
@@ -240,7 +241,16 @@ export const resellerBottomNav: NavItem[] = withCoreDestinations(
 /* Admin                                                               */
 /* ------------------------------------------------------------------ */
 
-export function adminNav(options?: { goLive?: boolean }): Nav {
+/**
+ * `shopType` narrows the Shop group to the tools that belong to that type:
+ * Universe Retail shops never see voucher inventory, voucher/New Generation
+ * shops never see retail products or orders. Undefined keeps today's full
+ * menu (used by layout tooling and while the type is still loading).
+ */
+export function adminNav(options?: { goLive?: boolean; shopType?: ShopTypeState | null }): Nav {
+  const t = options?.shopType;
+  const voucherTools = t ? showsVoucherTools(t) : true;
+  const retailTools = RETAIL_VISIBLE && (t ? showsRetailTools(t) : true);
   return [
     {
       label: "Overview",
@@ -265,17 +275,23 @@ export function adminNav(options?: { goLive?: boolean }): Nav {
     {
       label: "Shop",
       items: [
-        { to: "/admin/products", label: "Voucher products", icon: Package },
-        { to: "/admin/vouchers", label: "Code inventory", icon: Ticket },
-        { to: "/admin/shop", label: "Voucher shop", icon: ShoppingBag },
-        ...(RETAIL_VISIBLE
+        ...(voucherTools
+          ? ([
+              { to: "/admin/products", label: "Voucher products", icon: Package },
+              { to: "/admin/vouchers", label: "Code inventory", icon: Ticket },
+              { to: "/admin/shop", label: "Voucher shop", icon: ShoppingBag },
+            ] as NavItem[])
+          : []),
+        ...(retailTools
           ? ([
               { to: "/admin/retail", label: "Retail products", icon: Store },
               { to: "/admin/orders", label: "Retail orders", icon: ClipboardList },
             ] as NavItem[])
           : []),
         { to: "/admin/rewards", label: "Rewards", icon: Gift },
-        { to: "/admin/omada", label: "Omada management", icon: Wifi },
+        ...(voucherTools
+          ? ([{ to: "/admin/omada", label: "Omada management", icon: Wifi }] as NavItem[])
+          : []),
       ],
     },
     {
@@ -325,6 +341,17 @@ export const adminBottomNav: NavItem[] = [
   { to: "/admin/applications", label: "Members", icon: UserPlus },
   { to: "/admin/profile", label: "Profile", icon: User },
 ];
+
+/** Phone tab bar per shop type: a Retail shop's second tab is its orders, not voucher codes. */
+export function adminBottomNavFor(shopType?: ShopTypeState | null): NavItem[] {
+  if (shopType && showsRetailTools(shopType) && !showsVoucherTools(shopType)) {
+    return adminBottomNav.map((i) =>
+      i.to === "/admin/vouchers" ? { to: "/admin/orders", label: "Orders", icon: ClipboardList } : i,
+    );
+  }
+  return adminBottomNav;
+}
+
 
 /** Read-only screens a lapsed shop keeps. Subscription billing is not part of
  *  the Admin console — the database still refuses writes when a shop is locked. */

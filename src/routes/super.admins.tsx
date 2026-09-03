@@ -1,4 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { ShopTypeOptions } from "@/components/shop/shop-type-card";
+import type { ShopType } from "@/lib/shop-type";
 import { Building2, Copy, Play, Plus, Search, Settings2, ShieldAlert, Snowflake, Trash2, UserPlus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -81,6 +83,7 @@ const emptyForm = {
   gracePeriodDays: "5",
   signupEnabled: true,
   adminEmail: "",
+  shopType: "new_generation" as ShopType,
 };
 
 function SuperAdmins() {
@@ -251,6 +254,7 @@ function SuperAdmins() {
       _plan_price: Number(form.planPrice) || 0,
       _grace_period_days: Number(form.gracePeriodDays) || 0,
       _signup_enabled: form.signupEnabled,
+      _shop_type: form.shopType,
     });
     if (error || !data) {
       setSaving(false);
@@ -777,6 +781,10 @@ function CreateDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-2 sm:col-span-2">
+            <Label>Shop type</Label>
+            <ShopTypeOptions value={form.shopType} onChange={(t) => setForm({ ...form, shopType: t })} />
+          </div>
           <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="cName">Shop name</Label>
             <Input

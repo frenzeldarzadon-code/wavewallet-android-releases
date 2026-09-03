@@ -271,7 +271,7 @@ export async function fetchMoneySettings(): Promise<MoneySettings> {
     cashbackReseller: Number(data.cashback_reseller_percent),
     cashbackSubreseller: Number(data.cashback_subreseller_percent),
     shopTransferFee: Number(data.shop_transfer_fee_credits ?? 5),
-    retailFeePercent: Number(data.retail_platform_fee_percent ?? 0),
+    retailFeePercent: Number(data.retail_platform_fee_percent ?? 1),
     voucherFeePercent: Number(data.voucher_platform_fee_percent ?? 1),
   };
 }
