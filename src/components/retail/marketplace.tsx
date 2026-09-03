@@ -129,7 +129,7 @@ export function MarketplaceHeader({
               <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] opacity-80">
                 Retail shop
               </p>
-              <h1 className="truncate text-2xl font-bold leading-tight sm:text-3xl">{shopName}</h1>
+              <h1 className="line-clamp-2 break-words text-2xl font-bold leading-tight sm:text-3xl">{shopName}</h1>
               <p className="mt-1 line-clamp-2 text-xs opacity-80">
                 {description?.trim() ||
                   `${productCount} product${productCount === 1 ? "" : "s"} · pickup or delivery`}
