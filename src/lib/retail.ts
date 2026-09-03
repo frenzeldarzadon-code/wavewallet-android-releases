@@ -553,13 +553,16 @@ export async function uploadStorefrontImage(
   ecosystemId: string,
   kind: "logo" | "cover",
   file: File,
+  crop?: CropRect,
+  preloaded?: HTMLImageElement,
 ): Promise<string> {
   const problem = validateImageFile(file);
   if (problem) throw new Error(problem);
-  const source = await loadImage(file);
+  const source = preloaded ?? (await loadImage(file));
   const { blob, mime } = await optimizeImage(
     source,
     kind === "logo" ? STOREFRONT_LOGO_TARGET : REWARD_TARGET,
+    crop,
   );
   const path = `${ecosystemId}/storefront/${optimizedName(`${kind}-${crypto.randomUUID()}`, mime)}`;
   const { error } = await supabase.storage
@@ -567,6 +570,16 @@ export async function uploadStorefrontImage(
     .upload(path, blob, { contentType: mime, upsert: false });
   if (error) throw new Error(error.message);
   return path;
+}
+
+/** Removes only images inside the active shop's own folder; storage RLS re-checks ownership. */
+export async function removeRetailImages(ecosystemId: string, paths: Array<string | null | undefined>) {
+  const own = [...new Set(paths.filter(
+    (path): path is string => !!path && path.startsWith(`${ecosystemId}/`) && !path.startsWith("catalog/"),
+  ))];
+  if (!own.length) return;
+  const { error } = await supabase.storage.from(RETAIL_IMAGE_BUCKET).remove(own);
+  if (error) throw new Error(error.message);
 }
 
 /** Saves storefront identity through `update_retail_storefront` (server re-checks the shop admin). */
@@ -592,7 +605,7 @@ export async function saveStorefrontSettings(
   const stale = [previous?.logoPath, previous?.coverPath].filter(
     (p): p is string => !!p && p !== s.logoPath && p !== s.coverPath && p.includes("/storefront/"),
   );
-  if (stale.length) await supabase.storage.from(RETAIL_IMAGE_BUCKET).remove(stale);
+  if (stale.length) await removeRetailImages(ecosystemId, stale);
 }
 
 /**
@@ -762,6 +775,7 @@ const trimmed = (v: string | null | undefined) => {
 export async function saveRetailProduct(
   ecosystemId: string,
   input: RetailProductInput,
+  previousImagePath?: string | null,
 ): Promise<void> {
   const payload = {
     ecosystem_id: ecosystemId,
@@ -792,6 +806,9 @@ export async function saveRetailProduct(
     ? await supabase.from("retail_products").update(payload).eq("id", input.id)
     : await supabase.from("retail_products").insert(payload);
   if (error) throw new Error(error.message);
+  if (previousImagePath && previousImagePath !== input.image_path) {
+    await removeRetailImages(ecosystemId, [previousImagePath]);
+  }
 }
 
 /** Publishing is the only step that makes a product visible to customers. */

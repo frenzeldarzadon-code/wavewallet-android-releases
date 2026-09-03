@@ -17,6 +17,7 @@ import { CashInNumberCard } from "@/components/money/cash-in-number-card";
 import { PlatformPaymentOptionCard } from "@/components/money/platform-payment-option-card";
 import { ShopIdentityCard } from "@/components/shop/shop-identity-card";
 import { ShopTypeCard } from "@/components/shop/shop-type-card";
+import { ShopBrandingCard } from "@/components/shop/shop-branding-card";
 import { DeleteShopCard } from "@/components/shop/delete-shop-card";
 import { useSession } from "@/lib/session";
 import {
@@ -174,6 +175,7 @@ function AdminSettings() {
   return (
     <>
       <ShopTypeCard ecosystemId={ecosystemDbId} />
+      <ShopBrandingCard ecosystemId={ecosystemDbId} shopName={ecosystem.name} />
       <PageSection devSlot="settings.shop-identity" title="Shop identity" description="Your name appears throughout the app for your resellers and customers.">
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">
