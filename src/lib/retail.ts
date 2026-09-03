@@ -1126,3 +1126,107 @@ export async function fetchPendingRetailOrderCount(ecosystemId: string): Promise
   const orders = await fetchShopRetailOrders(ecosystemId, "pending");
   return orders.length;
 }
+
+/* ------------------------------------------------------------------ */
+/* Customer order history — presentation over the same R5/R6 state     */
+/* machine. Nothing here reads or exposes the seller/platform split.    */
+/* ------------------------------------------------------------------ */
+
+export type CustomerStage = "active" | "completed" | "cancelled";
+
+export const CUSTOMER_STAGES: { id: CustomerStage; label: string; hint: string }[] = [
+  { id: "active", label: "Active", hint: "Being reviewed, prepared or delivered" },
+  { id: "completed", label: "Completed", hint: "Received and closed" },
+  { id: "cancelled", label: "Cancelled", hint: "Rejected or cancelled — nothing was charged" },
+];
+
+/** Which history tab an order belongs to, from existing fields only. */
+export function customerStage(
+  o: Pick<RetailOrder, "status" | "fulfillment_status">,
+): CustomerStage {
+  if (o.status === "rejected" || o.status === "cancelled") return "cancelled";
+  if (o.status === "approved" && o.fulfillment_status === "completed") return "completed";
+  if (o.status === "approved" && o.fulfillment_status === "closed") return "cancelled";
+  return "active";
+}
+
+export const countByCustomerStage = (orders: RetailOrder[]): Record<CustomerStage, number> => {
+  const c = { active: 0, completed: 0, cancelled: 0 };
+  for (const o of orders) c[customerStage(o)] += 1;
+  return c;
+};
+
+export interface TrackingStep {
+  label: string;
+  done: boolean;
+  current: boolean;
+}
+
+const FULFILLMENT_ORDER: FulfillmentStatus[] = [
+  "awaiting",
+  "accepted",
+  "preparing",
+  "ready",
+  "out_for_delivery",
+  "delivered",
+  "completed",
+];
+
+/**
+ * Customer tracking steps: placed → accepted → preparing → ready →
+ * (out for delivery) → delivered/handed over → received. Only R5/R6 states;
+ * settlement is internal and never shown to the buyer.
+ */
+export function customerTrackingSteps(
+  o: Pick<RetailOrder, "status" | "fulfillment_status" | "fulfillment">,
+): TrackingStep[] {
+  const delivery = o.fulfillment === "delivery";
+  const labels: { s: FulfillmentStatus; label: string }[] = [
+    { s: "awaiting", label: "Order placed" },
+    { s: "accepted", label: "Accepted" },
+    { s: "preparing", label: "Preparing" },
+    { s: "ready", label: delivery ? "Ready to go out" : "Ready for pickup" },
+    ...(delivery ? [{ s: "out_for_delivery" as const, label: "Out for delivery" }] : []),
+    { s: "delivered", label: delivery ? "Delivered" : "Handed over" },
+    { s: "completed", label: "Received" },
+  ];
+  const reached =
+    o.status === "pending"
+      ? 0
+      : o.status !== "approved"
+        ? -1
+        : FULFILLMENT_ORDER.indexOf(o.fulfillment_status);
+  return labels.map((l) => {
+    const idx = FULFILLMENT_ORDER.indexOf(l.s);
+    return { label: l.label, done: reached >= idx, current: reached === idx };
+  });
+}
+
+/** The order chat exists for delivery orders that are still alive (server rule mirrored). */
+export const canOpenOrderChat = (o: Pick<RetailOrder, "status" | "fulfillment">) =>
+  o.fulfillment === "delivery" && (o.status === "pending" || o.status === "approved");
+
+/**
+ * What the customer pays: Retail Prices (fee already embedded) + delivery fee.
+ * `delivery` is 0 unless the shop charged one (COD); it is never inside the 1%.
+ */
+export function customerOrderTotals(
+  o: Pick<RetailOrder, "total" | "delivery_fee" | "fulfillment">,
+): { products: number; delivery: number; total: number } {
+  const delivery = o.fulfillment === "delivery" ? round2(o.delivery_fee ?? 0) : 0;
+  return { products: round2(o.total), delivery, total: round2(o.total + delivery) };
+}
+
+/** Customer-safe payment status line. */
+export function customerPaymentLabel(
+  o: Pick<RetailOrder, "payment_method" | "status" | "fulfillment_status" | "cod_settled_at">,
+): string {
+  if (o.status === "rejected" || o.status === "cancelled") return "Nothing charged";
+  if (o.payment_method === "credit")
+    return o.status === "pending" ? "Coins held (refunded if rejected)" : "Paid with coins";
+  if (o.payment_method === "cod")
+    return o.cod_settled_at || o.fulfillment_status === "completed"
+      ? "Cash paid on delivery"
+      : "Pay cash on delivery";
+  return o.fulfillment_status === "completed" ? "Paid in cash" : "Pay in cash";
+}

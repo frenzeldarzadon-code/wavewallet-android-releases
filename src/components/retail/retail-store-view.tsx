@@ -7,19 +7,9 @@
  * held when the order is placed and are returned in full if the admin rejects
  * it, so nothing is spent until an order is confirmed.
  */
-import {
-  Banknote,
-  Loader2,
-  MessageCircle,
-  PackageCheck,
-  ShoppingCart,
-  Star,
-  Store,
-  Truck,
-  X,
-} from "lucide-react";
+import { Banknote, ClipboardList, Loader2, PackageCheck, ShoppingCart } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,7 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
+import { EmptyState, PageSection } from "@/components/ui-kit";
 import { RatingPicker } from "@/components/rating-stars";
 import { RETAIL_VISIBLE } from "@/lib/features";
 import { useSession } from "@/lib/session";
@@ -42,16 +32,8 @@ import { fetchCreditBalance } from "@/lib/wallet";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
   DEFAULT_STORE_SETTINGS,
-  canCancelOrder,
-  canConfirmReceipt,
-  cancelRetailOrder,
-  codCashTotal,
   codCustomerTotal,
-  customerCancelBlockedReason,
-  customerNextStep,
-  fulfillmentLabel,
-  fulfillmentTone,
-  updateRetailFulfillment,
+  countByCustomerStage,
   cartCount,
   cartLines,
   cartQuote,
@@ -71,7 +53,7 @@ import {
   type RetailProduct,
   type StoreSettings,
 } from "@/lib/retail";
-import { codStageLabel, fetchCodQuote, openOrderChat } from "@/lib/retail-cod";
+import { fetchCodQuote } from "@/lib/retail-cod";
 import {
   CATALOG_PAGE_SIZE,
   DEFAULT_CATALOG_QUERY,
@@ -94,6 +76,7 @@ import {
   productGridClass,
 } from "@/components/retail/marketplace";
 import { EcosystemSwitcher } from "@/components/ecosystem-switcher";
+import { CustomerOrdersPanel } from "@/components/retail/customer-orders-panel";
 
 const credits = (n: number) => `${n.toLocaleString(undefined, { maximumFractionDigits: 2 })} coins`;
 
@@ -128,6 +111,16 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
     value: number;
   } | null>(null);
   const userId = account?.id ?? null;
+  const ordersRef = useRef<HTMLDivElement>(null);
+  const activeOrders = useMemo(() => countByCustomerStage(orders).active, [orders]);
+  const scrollToOrders = () =>
+    ordersRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  // Notifications deep-link to the store with #orders — land on the history.
+  useEffect(() => {
+    if (!loading && typeof window !== "undefined" && window.location.hash === "#orders")
+      scrollToOrders();
+  }, [loading]);
 
   const load = useCallback(async () => {
     if (!ecosystemDbId || !userId) return;
@@ -208,15 +201,6 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
   const codDeliveryFee = codQuote?.deliveryFee ?? settings.deliveryFee;
   const codTotal = codCustomerTotal(total, codDeliveryFee);
 
-  const goToChat = async (o: RetailOrder) => {
-    try {
-      const thread = await openOrderChat(o.id);
-      void navigate({ to: "/universe/messages", search: { thread } });
-    } catch (e) {
-      toast.error((e as Error).message);
-    }
-  };
-
   const submit = async () => {
     if (busy) return;
     setBusy(true);
@@ -275,6 +259,17 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
         acceptingOrders={settings.acceptingOrders}
         pausedNote={settings.pausedNote}
       />
+
+      <div className="flex justify-end">
+        <Button size="sm" variant="outline" className="rounded-full" onClick={scrollToOrders}>
+          <ClipboardList className="size-4" /> My orders
+          {activeOrders > 0 ? (
+            <span className="rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground tabular-nums">
+              {activeOrders} active
+            </span>
+          ) : null}
+        </Button>
+      </div>
 
       <section className="space-y-3" aria-label="Products">
         {loading ? (
@@ -371,161 +366,17 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
         }}
       />
 
-      <PageSection
-        devSlot="retail-store-view.my-orders"
-        title="My orders"
-        description="Track each order from review to hand-over."
-      >
-        {orders.length === 0 ? (
-          <EmptyState title="No retail orders yet" />
-        ) : (
-          <div className="space-y-2">
-            {orders.map((o) => (
-              <Card key={o.id} className="shadow-[var(--shadow-card)]">
-                <CardContent className="space-y-2">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold">{o.order_no}</p>
-                      <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                        <Store className="size-3" />
-                        {o.shop_name ?? "Shop"}
-                        {o.seller_name ? ` · sold by ${o.seller_name}` : ""}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {shortDateTime(o.created_at)} · {o.fulfillment} · {o.payment_method}
-                      </p>
-                    </div>
-                    <StatusBadge tone={fulfillmentTone(o)}>
-                      {o.status === "approved"
-                        ? fulfillmentLabel(o.fulfillment_status, o.fulfillment)
-                        : o.status}
-                    </StatusBadge>
-                  </div>
-                  <p className="rounded-lg bg-muted/60 px-2.5 py-1.5 text-xs">
-                    {customerNextStep(o)}
-                  </p>
-                  <ul className="space-y-1 text-xs text-muted-foreground">
-                    {o.items.map((i) => (
-                      <li key={i.product_id} className="flex justify-between gap-2">
-                        <span>
-                          {i.quantity} × {i.name}
-                        </span>
-                        <span>{credits(i.line_total)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  {o.fulfillment === "delivery" ? (
-                    <div className="space-y-1 rounded-xl border border-border px-3 py-2 text-[11px] text-muted-foreground">
-                      <p className="flex items-center gap-1 font-medium text-foreground">
-                        <Truck className="size-3.5 text-primary" /> Delivery details
-                      </p>
-                      {o.delivery_address ? (
-                        <p>
-                          Deliver to: {o.delivery_address}
-                          {o.delivery_notes ? ` · ${o.delivery_notes}` : ""}
-                        </p>
-                      ) : null}
-                      {o.status === "approved" ? (
-                        <p>
-                          {o.self_delivery
-                            ? "Delivered by the seller"
-                            : o.delivery_person_name
-                              ? `Delivery person: ${o.delivery_person_name}`
-                              : "Delivery person not assigned yet"}
-                          {o.payment_method === "cod" && o.collector_name
-                            ? ` · Cash collected by: ${o.collector_name}`
-                            : ""}
-                        </p>
-                      ) : null}
-                      {o.payment_method === "cod" ? (
-                        <p>
-                          Cash on delivery: {peso(o.total)} products + {peso(o.delivery_fee ?? 0)}{" "}
-                          delivery ={" "}
-                          <strong className="text-foreground">{peso(codCashTotal(o))}</strong> ·{" "}
-                          {codStageLabel(o)}
-                        </p>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-semibold">
-                      {o.payment_method === "cod"
-                        ? `Pay ${peso(codCashTotal(o))} cash`
-                        : `Total ${credits(o.total)}`}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {o.fulfillment === "delivery" && o.status === "approved" ? (
-                        <Button size="sm" variant="outline" onClick={() => void goToChat(o)}>
-                          <MessageCircle className="size-4" /> Order chat
-                        </Button>
-                      ) : null}
-                      {canConfirmReceipt(o) ? (
-                        <Button
-                          size="sm"
-                          onClick={async () => {
-                            try {
-                              await updateRetailFulfillment(o.id, "completed");
-                              toast.success("Thanks — order marked as received");
-                              await load();
-                            } catch (e) {
-                              toast.error((e as Error).message);
-                            }
-                          }}
-                        >
-                          <PackageCheck className="size-4" /> I received it
-                        </Button>
-                      ) : null}
-                      {canCancelOrder(o) ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={async () => {
-                            try {
-                              await cancelRetailOrder(o.id);
-                              toast.success("Order cancelled — nothing was charged");
-                              await load();
-                            } catch (e) {
-                              toast.error((e as Error).message);
-                            }
-                          }}
-                        >
-                          <X className="size-4" /> Cancel
-                        </Button>
-                      ) : customerCancelBlockedReason(o) ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled
-                          title={customerCancelBlockedReason(o) ?? undefined}
-                        >
-                          <X className="size-4" /> Cancel
-                        </Button>
-                      ) : null}
-                      {o.status === "approved" && o.fulfillment_status === "completed"
-                        ? o.items.map((i) => (
-                            <Button
-                              key={i.product_id}
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                setRating({ order: o, productId: i.product_id, value: 5 })
-                              }
-                            >
-                              <Star className="size-4" /> Rate {i.name}
-                            </Button>
-                          ))
-                        : null}
-                    </div>
-                  </div>
-                  {o.decision_note ? (
-                    <p className="text-[11px] text-muted-foreground">Note: {o.decision_note}</p>
-                  ) : null}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </PageSection>
+      <div ref={ordersRef} className="scroll-mt-4">
+        <CustomerOrdersPanel
+          orders={orders}
+          loading={loading}
+          error={loadError}
+          onRetry={() => void load()}
+          onChanged={load}
+          onChat={(thread) => void navigate({ to: "/universe/messages", search: { thread } })}
+          onRate={(order, productId) => setRating({ order, productId, value: 5 })}
+        />
+      </div>
 
       <Dialog open={checkout} onOpenChange={(o) => !o && setCheckout(false)}>
         <DialogContent className="max-h-[90dvh] overflow-y-auto">
@@ -677,7 +528,9 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
 
           <div className="space-y-1 rounded-2xl border border-border bg-muted/40 px-3 py-2.5 text-sm">
             <div className="flex justify-between gap-2 text-xs text-muted-foreground">
-              <span>Products ({count} item{count === 1 ? "" : "s"})</span>
+              <span>
+                Products ({count} item{count === 1 ? "" : "s"})
+              </span>
               <span>{peso(total)}</span>
             </div>
             {draft.payment === "cod" ? (
