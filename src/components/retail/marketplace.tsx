@@ -71,54 +71,107 @@ export function MarketplaceHeader({
   cartCount,
   onOpenCart,
   aside,
+  logoPath,
+  coverPath,
+  acceptingOrders = true,
+  pausedNote,
+  backLink,
 }: {
   shopName: string;
   description?: string | null | undefined;
   productCount: number;
-  search: string;
-  onSearch: (v: string) => void;
-  cartCount: number;
-  onOpenCart: () => void;
+  search?: string;
+  onSearch?: (v: string) => void;
+  cartCount?: number;
+  onOpenCart?: () => void;
   aside?: React.ReactNode;
+  /** Seller-set storefront identity (shown as-is; never edited here). */
+  logoPath?: string | null;
+  coverPath?: string | null;
+  acceptingOrders?: boolean;
+  pausedNote?: string | null;
+  /** "Back to marketplace" style navigation rendered above the title. */
+  backLink?: React.ReactNode;
 }) {
   return (
     <section className="shop-hero relative overflow-hidden rounded-3xl px-4 pb-4 pt-5 text-primary-foreground shadow-[var(--shadow-float)] sm:px-6">
+      {coverPath ? (
+        <RetailImage
+          path={coverPath}
+          alt=""
+          className="pointer-events-none absolute inset-0 aspect-auto h-full opacity-35 [&_img]:object-cover"
+        />
+      ) : null}
       <div className="shop-grid pointer-events-none absolute inset-0 opacity-60" aria-hidden />
       <div
         className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-[oklch(0.72_0.14_205_/_0.28)] blur-2xl"
         aria-hidden
       />
       <div className="relative space-y-4">
+        {backLink ? <div className="text-xs opacity-90">{backLink}</div> : null}
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-          <div className="min-w-0">
-            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] opacity-80">
-              <Store className="size-3.5 shrink-0" aria-hidden /> Retail shop
-            </p>
-            <h1 className="truncate text-2xl font-bold leading-tight sm:text-3xl">{shopName}</h1>
-            <p className="mt-1 line-clamp-2 text-xs opacity-80">
-              {description?.trim() ||
-                `${productCount} product${productCount === 1 ? "" : "s"} · pickup or delivery`}
-            </p>
+          <div className="flex min-w-0 items-start gap-3">
+            {logoPath ? (
+              <RetailImage
+                path={logoPath}
+                alt={`${shopName} logo`}
+                className="size-14 shrink-0 rounded-2xl border-2 border-background/60 shadow-[var(--shadow-card)] sm:size-16 aspect-square"
+              />
+            ) : (
+              <div
+                className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-background/20 sm:size-16"
+                aria-hidden
+              >
+                <Store className="size-7" />
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] opacity-80">
+                Retail shop
+              </p>
+              <h1 className="truncate text-2xl font-bold leading-tight sm:text-3xl">{shopName}</h1>
+              <p className="mt-1 line-clamp-2 text-xs opacity-80">
+                {description?.trim() ||
+                  `${productCount} product${productCount === 1 ? "" : "s"} · pickup or delivery`}
+              </p>
+              <p className="mt-1 text-[11px] font-medium opacity-80">
+                {productCount} product{productCount === 1 ? "" : "s"}
+              </p>
+            </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {aside}
-            <Button
-              type="button"
-              size="icon"
-              variant="secondary"
-              className="relative size-10 rounded-full"
-              aria-label={`Open cart, ${cartCount} item${cartCount === 1 ? "" : "s"}`}
-              onClick={onOpenCart}
-            >
-              <ShoppingCart className="size-5" />
-              {cartCount > 0 ? (
-                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
-                  {cartCount > 99 ? "99+" : cartCount}
-                </span>
-              ) : null}
-            </Button>
+            {onOpenCart ? (
+              <Button
+                type="button"
+                size="icon"
+                variant="secondary"
+                className="relative size-10 rounded-full"
+                aria-label={`Open cart, ${cartCount ?? 0} item${cartCount === 1 ? "" : "s"}`}
+                onClick={onOpenCart}
+              >
+                <ShoppingCart className="size-5" />
+                {(cartCount ?? 0) > 0 ? (
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                    {(cartCount ?? 0) > 99 ? "99+" : cartCount}
+                  </span>
+                ) : null}
+              </Button>
+            ) : null}
           </div>
         </div>
+        {!acceptingOrders ? (
+          <div
+            role="status"
+            className="rounded-2xl border border-warning/50 bg-warning/20 px-3 py-2 text-xs"
+          >
+            <p className="font-semibold">Temporarily closed for new orders</p>
+            <p className="opacity-90">
+              {pausedNote?.trim() || "You can still browse. Orders you already placed continue as normal."}
+            </p>
+          </div>
+        ) : null}
+        {onSearch ? (
         <label className="relative block">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
@@ -128,7 +181,7 @@ export function MarketplaceHeader({
             type="search"
             inputMode="search"
             enterKeyHint="search"
-            value={search}
+            value={search ?? ""}
             onChange={(e) => onSearch(e.target.value)}
             placeholder="Search products, brands…"
             aria-label="Search products"
@@ -145,6 +198,7 @@ export function MarketplaceHeader({
             </button>
           ) : null}
         </label>
+        ) : null}
       </div>
     </section>
   );
