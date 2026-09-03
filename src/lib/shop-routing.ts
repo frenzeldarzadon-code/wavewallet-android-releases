@@ -13,6 +13,9 @@ import type { Role } from "@/lib/wavewallet";
 
 const PENDING_KEY = "wavewallet.pendingShopCode";
 
+/** A newly created shop-free ONE WAVE account always enters through Universe. */
+export const NEW_MEMBER_DESTINATION = "/universe" as const;
+
 /** A Shop ID captured at sign-up but not yet joinable (email not confirmed). */
 export function rememberPendingShopCode(code: string) {
   if (typeof window !== "undefined") window.localStorage.setItem(PENDING_KEY, code);

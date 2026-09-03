@@ -40,3 +40,9 @@
 - [x] Preserve WaveWallet as the wallet/product function and all internal identifiers
 - [x] Verify metadata, PWA, auth, shared shells, Android labels, routes, and regressions
 - [x] Do not publish
+
+## Shop-free ONE WAVE signup — COMPLETE (UNPUBLISHED)
+- [x] Remove shop/operator choice from public signup and reuse the existing details form
+- [x] Create global profiles with zero shop memberships and land new sessions in Universe
+- [x] Preserve explicit join, invitation, later shop creation, existing login, and shop isolation flows
+- [x] Verify auth UX, membership safety, tests, and typecheck; do not publish
