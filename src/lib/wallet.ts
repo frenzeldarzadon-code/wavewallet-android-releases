@@ -73,6 +73,8 @@ export interface VoucherProductRow {
   active: boolean;
   archived: boolean;
   created_at: string;
+  /** Universe platform fee % snapshotted when the product was priced. */
+  platform_fee_percent: number;
 }
 
 export interface ShopProduct {
@@ -110,8 +112,10 @@ export const listPrice = (p: { credit_price: number; promo_price: number | null 
 
 /**
  * Credits actually charged for a voucher after the buyer's shop discount.
- * Admins get the platform-wide admin voucher discount (default 100% off),
- * resellers/subresellers their configured discount. Mirrors purchase_voucher.
+ * Admins get the platform-wide admin voucher discount (default 100% off).
+ * In Universe shops resellers/subresellers get NO purchase discount (the
+ * server returns 0 — they earn through cashback only); New Generation shops
+ * keep their configured discount. Mirrors purchase_voucher.
  */
 export const voucherCost = (list: number, discountPercent: number) => {
   const pct = Math.max(0, Math.min(100, discountPercent));
@@ -459,6 +463,7 @@ export async function fetchProducts(ecosystemId: string): Promise<VoucherProduct
     ...p,
     credit_price: Number(p.credit_price),
     promo_price: p.promo_price === null ? null : Number(p.promo_price),
+    platform_fee_percent: Number(p.platform_fee_percent ?? 0),
   }));
 }
 

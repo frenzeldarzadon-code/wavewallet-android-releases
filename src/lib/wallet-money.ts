@@ -65,6 +65,8 @@ export interface MoneySettings {
   shopTransferFee: number;
   /** Additive Retail platform fee, % of the seller amount actually charged. */
   retailFeePercent: number;
+  /** Universe voucher platform fee, contained INSIDE the customer price. */
+  voucherFeePercent: number;
 }
 
 export const MONEY_SETTINGS_FALLBACK: MoneySettings = {
@@ -76,6 +78,7 @@ export const MONEY_SETTINGS_FALLBACK: MoneySettings = {
   cashbackSubreseller: 20,
   shopTransferFee: 5,
   retailFeePercent: 0,
+  voucherFeePercent: 1,
 };
 
 
@@ -255,7 +258,7 @@ export async function fetchMoneySettings(): Promise<MoneySettings> {
   const { data } = await supabase
     .from("platform_settings")
     .select(
-      "cash_out_credits_per_unit, cash_out_php_per_unit, withdrawal_fee_percent, cash_in_fee_percent, cashback_reseller_percent, cashback_subreseller_percent, shop_transfer_fee_credits, retail_platform_fee_percent",
+      "cash_out_credits_per_unit, cash_out_php_per_unit, withdrawal_fee_percent, cash_in_fee_percent, cashback_reseller_percent, cashback_subreseller_percent, shop_transfer_fee_credits, retail_platform_fee_percent, voucher_platform_fee_percent",
     )
     .eq("id", 1)
     .maybeSingle();
@@ -269,6 +272,7 @@ export async function fetchMoneySettings(): Promise<MoneySettings> {
     cashbackSubreseller: Number(data.cashback_subreseller_percent),
     shopTransferFee: Number(data.shop_transfer_fee_credits ?? 5),
     retailFeePercent: Number(data.retail_platform_fee_percent ?? 0),
+    voucherFeePercent: Number(data.voucher_platform_fee_percent ?? 1),
   };
 }
 
@@ -282,6 +286,7 @@ export async function saveMoneySettings(s: MoneySettings): Promise<void> {
     _shop_transfer_fee: s.shopTransferFee,
     _cash_in_fee: s.cashInFeePercent,
     _retail_fee: s.retailFeePercent,
+    _voucher_fee: s.voucherFeePercent,
   }));
   if (error) throw new Error(error.message);
 }

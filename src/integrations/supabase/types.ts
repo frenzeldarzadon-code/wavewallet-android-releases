@@ -3913,6 +3913,7 @@ export type Database = {
           support_page_url: string
           updated_at: string
           updated_by: string | null
+          voucher_platform_fee_percent: number
           withdrawal_fee_percent: number
         }
         Insert: {
@@ -3946,6 +3947,7 @@ export type Database = {
           support_page_url?: string
           updated_at?: string
           updated_by?: string | null
+          voucher_platform_fee_percent?: number
           withdrawal_fee_percent?: number
         }
         Update: {
@@ -3979,6 +3981,7 @@ export type Database = {
           support_page_url?: string
           updated_at?: string
           updated_by?: string | null
+          voucher_platform_fee_percent?: number
           withdrawal_fee_percent?: number
         }
         Relationships: []
@@ -7611,6 +7614,7 @@ export type Database = {
           ecosystem_id: string
           id: string
           name: string
+          platform_fee_percent: number
           points_price: number | null
           promo_note: string | null
           promo_price: number | null
@@ -7625,6 +7629,7 @@ export type Database = {
           ecosystem_id: string
           id?: string
           name: string
+          platform_fee_percent?: number
           points_price?: number | null
           promo_note?: string | null
           promo_price?: number | null
@@ -7639,6 +7644,7 @@ export type Database = {
           ecosystem_id?: string
           id?: string
           name?: string
+          platform_fee_percent?: number
           points_price?: number | null
           promo_note?: string | null
           promo_price?: number | null
@@ -7770,6 +7776,8 @@ export type Database = {
           list_price: number
           parent_reseller_id: string | null
           payment_method: string
+          platform_fee_amount: number
+          platform_fee_percent: number
           points_earned: number
           points_price: number | null
           points_rule_version: number | null
@@ -7782,6 +7790,7 @@ export type Database = {
           refunded_at: string | null
           reseller_id: string | null
           sale_price: number
+          seller_amount: number | null
           seller_id: string | null
           tx_id: string
           unit_price: number | null
@@ -7804,6 +7813,8 @@ export type Database = {
           list_price: number
           parent_reseller_id?: string | null
           payment_method?: string
+          platform_fee_amount?: number
+          platform_fee_percent?: number
           points_earned?: number
           points_price?: number | null
           points_rule_version?: number | null
@@ -7816,6 +7827,7 @@ export type Database = {
           refunded_at?: string | null
           reseller_id?: string | null
           sale_price: number
+          seller_amount?: number | null
           seller_id?: string | null
           tx_id: string
           unit_price?: number | null
@@ -7838,6 +7850,8 @@ export type Database = {
           list_price?: number
           parent_reseller_id?: string | null
           payment_method?: string
+          platform_fee_amount?: number
+          platform_fee_percent?: number
           points_earned?: number
           points_price?: number | null
           points_rule_version?: number | null
@@ -7850,6 +7864,7 @@ export type Database = {
           refunded_at?: string | null
           reseller_id?: string | null
           sale_price?: number
+          seller_amount?: number | null
           seller_id?: string | null
           tx_id?: string
           unit_price?: number | null
@@ -11518,6 +11533,7 @@ export type Database = {
           _php_per_unit: number
           _retail_fee?: number
           _shop_transfer_fee?: number
+          _voucher_fee?: number
           _withdrawal_fee: number
         }
         Returns: {
@@ -11551,6 +11567,7 @@ export type Database = {
           support_page_url: string
           updated_at: string
           updated_by: string | null
+          voucher_platform_fee_percent: number
           withdrawal_fee_percent: number
         }
         SetofOptions: {
@@ -12691,6 +12708,7 @@ export type Database = {
               support_page_url: string
               updated_at: string
               updated_by: string | null
+              voucher_platform_fee_percent: number
               withdrawal_fee_percent: number
             }
             SetofOptions: {
@@ -12741,6 +12759,7 @@ export type Database = {
               support_page_url: string
               updated_at: string
               updated_by: string | null
+              voucher_platform_fee_percent: number
               withdrawal_fee_percent: number
             }
             SetofOptions: {
@@ -12983,6 +13002,7 @@ export type Database = {
           support_page_url: string
           updated_at: string
           updated_by: string | null
+          voucher_platform_fee_percent: number
           withdrawal_fee_percent: number
         }
         SetofOptions: {
@@ -13190,6 +13210,19 @@ export type Database = {
       voucher_discount_percent_for:
         | { Args: { _user_id: string }; Returns: number }
         | { Args: { _ecosystem_id: string; _user_id: string }; Returns: number }
+      voucher_platform_fee_amount: {
+        Args: { _customer_price: number; _fee_percent: number }
+        Returns: number
+      }
+      voucher_platform_fee_percent: { Args: never; Returns: number }
+      voucher_price_from_seller_cut: {
+        Args: { _fee_percent: number; _seller_cut: number }
+        Returns: number
+      }
+      voucher_seller_cut: {
+        Args: { _customer_price: number; _fee_percent: number }
+        Returns: number
+      }
       voucher_tracer_conflicts: {
         Args: { _ecosystem_id: string }
         Returns: {
