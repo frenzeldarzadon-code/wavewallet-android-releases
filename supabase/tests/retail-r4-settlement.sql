@@ -118,6 +118,7 @@ BEGIN
     DELETE FROM public.retail_order_items WHERE order_id = _ord.id;
     RAISE EXCEPTION 'J5 must fail';
   EXCEPTION WHEN OTHERS THEN IF SQLERRM = 'J5 must fail' THEN RAISE; END IF; END;
+  ASSERT (SELECT count(*) FROM public.retail_order_items WHERE order_id = _ord.id) = 1, 'J5 items still present';
   -- a duplicate settlement ledger row is impossible even if a caller bypassed the RPC
   BEGIN
     INSERT INTO public.credit_ledger (account_id, user_id, ecosystem_id, direction, amount, balance_after, reason, reference, tx_id, entry_kind)
