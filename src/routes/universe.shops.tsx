@@ -20,7 +20,9 @@ import {
   type Membership,
 } from "@/lib/memberships";
 import { ShopFinder } from "@/components/shop/shop-finder";
+import { ShopTypeBadge } from "@/components/shop/shop-type-card";
 import { joinShopByCode, type ShopSummary } from "@/lib/shop-directory";
+import { SHOP_TYPE_INFO, SHOP_TYPES, fetchShopTypes, type ShopTypeState } from "@/lib/shop-type";
 import { roleLabels } from "@/lib/wavewallet";
 
 export const Route = createFileRoute("/universe/shops")({
