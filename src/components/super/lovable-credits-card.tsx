@@ -68,7 +68,7 @@ export function LovableCreditsCard({ onChange }: { onChange?: () => void }) {
     if (dupes.length > 0 && !reference.trim() && !confirmDuplicate) {
       setConfirmDuplicate(true);
       toast.warning(
-        "A Lovable purchase with the same amount is already recorded for that date. Press again to confirm it is a separate purchase.",
+        "An AI service credit purchase with the same amount is already recorded for that date. Press again to confirm it is a separate purchase.",
       );
       return;
     }
@@ -79,7 +79,7 @@ export function LovableCreditsCard({ onChange }: { onChange?: () => void }) {
       setReference("");
       setNote("");
       setConfirmDuplicate(false);
-      toast.success("Lovable credit purchase recorded");
+      toast.success("AI service credit purchase recorded");
       await load();
       onChange?.();
     } catch (e) {
@@ -91,8 +91,8 @@ export function LovableCreditsCard({ onChange }: { onChange?: () => void }) {
 
   return (
     <PageSection devSlot="lovable-credits-card.lovable-ai-credits"
-      title="Lovable AI credits"
-      description="Record what you actually paid for Lovable credits. Lovable billing offers no purchase webhook to this app, so entries are added from your receipt — they are never estimated. Each one is a platform operating expense counted in total expenses and net earnings."
+      title="AI service credits"
+      description="Record what you actually paid for AI service credits. Provider billing offers no purchase webhook to this app, so entries are added from your receipt — they are never estimated. Each one is a platform operating expense counted in total expenses and net earnings."
     >
       <Card className="shadow-[var(--shadow-card)]">
         <CardContent className="space-y-3">
@@ -147,7 +147,7 @@ export function LovableCreditsCard({ onChange }: { onChange?: () => void }) {
                 ? "Recording…"
                 : confirmDuplicate
                   ? "Confirm separate purchase"
-                  : "Record Lovable credit purchase"}
+                  : "Record AI service credit purchase"}
             </Button>
             <p className="text-xs text-muted-foreground">
               Recorded so far:{" "}
