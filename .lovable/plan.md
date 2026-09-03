@@ -1,23 +1,20 @@
-# ONE WAVE branding-only rebrand
+# Shop-free ONE WAVE signup
 
 ## Scope
-- Change the overall application/ecosystem name shown to users from WaveWallet to **ONE WAVE** across browser metadata, install/PWA metadata, authentication, shared app shells, public guides/download surfaces, and native Android labels/about/offline surfaces.
-- Keep the existing visual system and wallet icon; pair it with a clean text-only **ONE WAVE** wordmark where brand text is shown.
-- Update page titles and descriptions that use WaveWallet as the platform/community owner to ONE WAVE, while keeping **WaveWallet** wherever it specifically names the wallet, Coins, wallet account/history, Payment Listener, voucher records, native bridge, release-signing identifiers, or other functional/product concepts.
-
-## Safety boundaries
-- Do not rename internal packages, Kotlin classes, application IDs, routes, files, imports, storage keys, native bridge/user-agent identifiers, API/RPC/database objects, environment variables, domains, or release-signing variables.
-- Do not change database migrations, schema, RLS, auth behavior, shop types, order/checkout/R6 state, pricing, fees, cashback, COD, settlement, permissions, or any feature logic.
-- Do not regenerate or redesign app icons: the current wallet icon remains appropriate for the WaveWallet product within ONE WAVE.
-- Do not publish.
+- Replace the public registration path selector with the existing manual account form so users join ONE WAVE directly, without choosing a shop.
+- Keep explicit shop links, invitations, and later shop creation/joining as separate intentional flows.
+- Route a newly authenticated registration to Universe; preserve email confirmation, validation, duplicate handling, profile creation, and existing-member login behavior.
 
 ## Implementation
-- Introduce/reuse one client-safe display-brand constant so shared user-facing brand text is consistent without touching internal identifiers.
-- Update the root and leaf route metadata, PWA manifest, login/signup welcome copy, shared console brand, Universe attribution, public guide/download/install/update wording, and other audited overall-app references.
-- Update Android launcher/app label, About title/content, and general offline branding to ONE WAVE; retain “WaveWallet Payment Listener” and all internal Android identifiers because they name a functional module or compatibility contract.
-- Add focused branding assertions covering the display brand, manifest, hierarchy, and protected internal identifiers.
+- Simplify `src/routes/index.tsx` signup state and UI: remove shop finder/operator-choice prerequisites, submit the existing shop-free `signUpCustomerAccount` payload, and show Universe-first success copy.
+- Preserve URL-based sign-in behavior and all standalone `/join/...`, invitation, and `/start-shop` routes.
+- Add focused regression coverage for the signup destination/zero-membership behavior where practical.
 
-## Verification
-- Run typecheck, relevant branding and existing regression tests, and production build.
-- Browser-check title, manifest, signed-out login branding, and signed-in home branding at mobile and desktop sizes; confirm routes/auth remain healthy.
-- Confirm all three shop-type labels remain intact, WaveWallet remains on wallet-specific surfaces, no financial/order files or database objects changed, and no test data/residue was created.
+## Backend and security
+- No schema, RPC, trigger, RLS, wallet, or financial change is expected: the current `handle_new_user` already creates a global profile with no role or shop membership when no ecosystem slug is supplied.
+- Verify this behavior against the current database and confirm no unauthorized membership is created.
+
+## Validation
+- Run relevant signup/routing tests, full Vitest, and typecheck.
+- Exercise signup UI on mobile and desktop, verify existing sign-in still renders, and confirm the three shop types remain available outside registration.
+- Do not publish.
