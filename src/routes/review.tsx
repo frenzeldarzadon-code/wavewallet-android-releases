@@ -44,7 +44,7 @@ import {
 
 const TITLE = "Review shop — ONE WAVE";
 const DESCRIPTION =
-  "Explore the full WaveWallet flow for 5 days with simulated Demo Coins before you subscribe.";
+  "Explore the full ONE WAVE flow for 5 days with simulated Demo Coins before you subscribe.";
 
 export const Route = createFileRoute("/review")({
   ssr: false,

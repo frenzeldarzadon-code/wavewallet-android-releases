@@ -192,7 +192,7 @@ export function VoucherShopView({
       productName,
       description,
       priceLabel,
-      shopName: ecosystem?.name ?? "WaveWallet",
+      shopName: ecosystem?.name ?? "ONE WAVE",
       customerName: name || null,
       paymentStatus: payment,
       index: i + 1,
@@ -273,7 +273,7 @@ export function VoucherShopView({
                 <Ticket className="size-3.5 shrink-0" aria-hidden /> Voucher shop
               </p>
               <h1 className="truncate text-2xl font-bold leading-tight sm:text-3xl">
-                {ecosystem?.name ?? "WaveWallet"}
+                {ecosystem?.name ?? "ONE WAVE"}
               </h1>
             </div>
             {/* Switch shop stays one tap away from the shop itself. */}

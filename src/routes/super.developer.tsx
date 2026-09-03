@@ -73,7 +73,7 @@ export const Route = createFileRoute("/super/developer")({
       { property: "og:title", content: "Developer Mode — ONE WAVE Super Admin" },
       {
         property: "og:description",
-        content: "Role-level interface layout manager for the WaveWallet platform owner.",
+        content: "Role-level interface layout manager for the ONE WAVE platform owner.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

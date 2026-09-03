@@ -24,7 +24,7 @@ export const Route = createFileRoute("/join/$slug")({
       {
         name: "description",
         content:
-          "Join your hotspot operator's WaveWallet shop to buy vouchers, hold coins, earn points and redeem rewards.",
+          "Join your hotspot operator's ONE WAVE shop to buy vouchers, hold coins, earn points and redeem rewards.",
       },
       { property: "og:title", content: "Create your customer account — ONE WAVE" },
       {

@@ -19,12 +19,12 @@ export const Route = createFileRoute("/reset-password")({
       {
         name: "description",
         content:
-          "Request a WaveWallet password reset link or set a new password after following the emailed recovery link.",
+          "Request a ONE WAVE password reset link or set a new password after following the emailed recovery link.",
       },
       { property: "og:title", content: "Reset your password — ONE WAVE" },
       {
         property: "og:description",
-        content: "Request a reset link or choose a new WaveWallet password.",
+        content: "Request a reset link or choose a new ONE WAVE password.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

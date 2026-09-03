@@ -22,9 +22,9 @@ export const Route = createFileRoute("/super/")({
   head: () => ({
     meta: [
       { title: "Platform Overview — ONE WAVE Super Admin" },
-      { name: "description", content: "Cross-tenant overview of every WaveWallet shop, member accounts and platform earnings." },
+      { name: "description", content: "Cross-tenant overview of every ONE WAVE shop, member accounts and platform earnings." },
       { property: "og:title", content: "Platform Overview — ONE WAVE Super Admin" },
-      { property: "og:description", content: "Cross-tenant overview of every WaveWallet shop, member accounts and platform earnings." },
+      { property: "og:description", content: "Cross-tenant overview of every ONE WAVE shop, member accounts and platform earnings." },
     ],
   }),
   component: SuperOverview,

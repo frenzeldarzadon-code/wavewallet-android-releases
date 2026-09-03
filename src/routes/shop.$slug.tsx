@@ -45,7 +45,7 @@ export const Route = createFileRoute("/shop/$slug")({
       {
         name: "description",
         content:
-          "Browse this WaveWallet shop's public products, prices and customer ratings, then request to join to place an order.",
+          "Browse this ONE WAVE shop's public products, prices and customer ratings, then request to join to place an order.",
       },
       { property: "og:title", content: `${params.slug} Storefront — ONE WAVE` },
       {
@@ -111,7 +111,7 @@ function PublicStorefront() {
           This shop has not published a public storefront.
         </p>
         <Button asChild className="mt-4">
-          <Link to="/">Back to WaveWallet</Link>
+          <Link to="/">Back to ONE WAVE</Link>
         </Button>
       </main>
     );

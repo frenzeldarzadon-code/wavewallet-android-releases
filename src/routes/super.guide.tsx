@@ -18,7 +18,7 @@ type Faq = Database["public"]["Tables"]["guide_faqs"]["Row"];
 type Question = Database["public"]["Tables"]["guide_questions"]["Row"];
 
 const TITLE = "Guide content — ONE WAVE Super Admin";
-const DESCRIPTION = "Edit the public WaveWallet guide, manage FAQs and answer visitor questions.";
+const DESCRIPTION = "Edit the public ONE WAVE guide, manage FAQs and answer visitor questions.";
 
 export const Route = createFileRoute("/super/guide")({
   head: () => ({

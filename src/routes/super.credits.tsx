@@ -8,7 +8,7 @@ export const Route = createFileRoute("/super/credits")({
       {
         name: "description",
         content:
-          "Mint or remove coins in any WaveWallet shop from the platform console, with a full audit trail.",
+          "Mint or remove coins in any ONE WAVE shop from the platform console, with a full audit trail.",
       },
       { property: "og:title", content: "Coin Management — ONE WAVE Super Admin" },
       {

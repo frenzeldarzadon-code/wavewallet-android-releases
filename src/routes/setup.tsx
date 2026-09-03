@@ -18,12 +18,12 @@ export const Route = createFileRoute("/setup")({
       {
         name: "description",
         content:
-          "One-time secure setup of the first WaveWallet platform owner account. Available only until a real Super Admin exists.",
+          "One-time secure setup of the first ONE WAVE platform owner account. Available only until a real Super Admin exists.",
       },
       { property: "og:title", content: "Initial Super Admin Setup — ONE WAVE" },
       {
         property: "og:description",
-        content: "One-time secure setup of the first WaveWallet platform owner account.",
+        content: "One-time secure setup of the first ONE WAVE platform owner account.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
