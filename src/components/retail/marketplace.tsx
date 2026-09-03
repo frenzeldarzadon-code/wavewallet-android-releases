@@ -329,7 +329,7 @@ export function ProductCard({
             {product.rating_count > 0 ? (
               <RatingStars avg={product.rating_avg} count={product.rating_count} />
             ) : (
-              <span>{product.sold_count > 0 ? `${product.sold_count} sold` : "New"}</span>
+              <span>{product.sold_count > 0 ? `${product.sold_count} sold` : ""}</span>
             )}
             {product.rating_count > 0 && product.sold_count > 0 ? (
               <span>{product.sold_count} sold</span>
