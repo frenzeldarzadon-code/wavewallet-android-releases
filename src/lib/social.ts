@@ -473,10 +473,11 @@ export async function fetchSocialState(): Promise<SocialState> {
   return data as unknown as SocialState;
 }
 
-export async function fetchFeed(before?: string): Promise<FeedPost[]> {
+export async function fetchFeed(before?: string, hashtag?: string | null): Promise<FeedPost[]> {
   const { data, error } = await supabase.rpc("social_feed", {
     _limit: 30,
     ...(before ? { _before: before } : {}),
+    ...(hashtag ? { _hashtag: hashtag } : {}),
   });
   if (error) fail(error.message);
   return (data ?? []) as FeedPost[];
