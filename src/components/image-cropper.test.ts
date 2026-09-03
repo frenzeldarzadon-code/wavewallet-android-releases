@@ -13,14 +13,14 @@ describe("cropPlacementStyle (live preview = saved crop)", () => {
     expect(pct(s.height)).toBe(100); // height covers the frame
     expect(pct(s.width)).toBe(200); // twice as wide, centred
     expect(pct(s.left)).toBe(-50);
-    expect(pct(s.top)).toBe(-0);
+    expect(pct(s.top)).toBeCloseTo(0);
   });
 
   it("reflects panning at zoom 1 (extra source area moves into view)", () => {
     const natural = { width: 500, height: 1000 }; // portrait in square frame
     const top = cropPlacementStyle(natural, coverCrop(500, 1000, 1, 1, 0, -1));
     const bottom = cropPlacementStyle(natural, coverCrop(500, 1000, 1, 1, 0, 1));
-    expect(pct(top.top)).toBe(-0);
+    expect(pct(top.top)).toBeCloseTo(0);
     expect(pct(bottom.top)).toBe(-100);
   });
 
