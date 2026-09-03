@@ -17,6 +17,7 @@ import { PageSection as CredentialSection } from "@/components/ui-kit";
 import { UpdateCenterCard } from "@/components/update-center-card";
 import type { CropRect } from "@/lib/image-optimize";
 import {
+  avatarUrl,
   deleteAvatar,
   fetchMyProfile,
   checkHandle,
@@ -29,7 +30,7 @@ import {
   validateHandle,
   type MyProfile,
 } from "@/lib/profile";
-import { validateImageFile } from "@/lib/image-optimize";
+import { PROFILE_COVER_ASPECT, validateImageFile } from "@/lib/image-optimize";
 import { updateOwnContact } from "@/lib/profile-contact.functions";
 import { defaultStoreName } from "@/lib/seller-storefront";
 import { useSession } from "@/lib/session";
