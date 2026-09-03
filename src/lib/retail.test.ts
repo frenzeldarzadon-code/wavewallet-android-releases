@@ -186,3 +186,25 @@ describe("admin catalog filtering", () => {
     expect(isProductReady(row({}))).toBe(true);
   });
 });
+
+describe("storefront availability", () => {
+  it("blocks new orders while the shop is paused", () => {
+    const paused = { ...DEFAULT_STORE_SETTINGS, retailEnabled: true, acceptingOrders: false };
+    expect(
+      checkoutProblem({ fulfillment: "pickup", payment: "cash", address: "", notes: "" }, 10, paused, 0, 1),
+    ).toMatch(/temporarily closed/);
+    expect(
+      checkoutProblem(
+        { fulfillment: "pickup", payment: "cash", address: "", notes: "" },
+        10,
+        { ...paused, acceptingOrders: true },
+        0,
+        1,
+      ),
+    ).toBeNull();
+  });
+  it("limits the paused note length", () => {
+    expect(storefrontProblem({ pausedNote: "x".repeat(STOREFRONT_NOTE_MAX) })).toBeNull();
+    expect(storefrontProblem({ pausedNote: "x".repeat(STOREFRONT_NOTE_MAX + 1) })).toMatch(/160/);
+  });
+});
