@@ -26,7 +26,7 @@ function SuperLayout() {
       nav={nav}
       bottomNav={superBottomNav}
       title="Platform console"
-      subtitle="WaveWallet Super Admin"
+      subtitle="ONE WAVE Super Admin"
     >
       <Outlet />
     </AppShell>

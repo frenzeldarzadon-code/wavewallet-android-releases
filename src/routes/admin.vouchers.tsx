@@ -53,13 +53,13 @@ import {
 export const Route = createFileRoute("/admin/vouchers")({
   head: () => ({
     meta: [
-      { title: "Voucher Code Inventory — WaveWallet Admin" },
+      { title: "Voucher Code Inventory — ONE WAVE Admin" },
       {
         name: "description",
         content:
           "Manually import voucher codes by paste or file, detect duplicates and track unused versus sold stock and sales history.",
       },
-      { property: "og:title", content: "Voucher Code Inventory — WaveWallet Admin" },
+      { property: "og:title", content: "Voucher Code Inventory — ONE WAVE Admin" },
       {
         property: "og:description",
         content: "Manual voucher code imports with duplicate detection and full sold-code history.",

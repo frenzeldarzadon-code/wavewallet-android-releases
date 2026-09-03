@@ -47,7 +47,7 @@ export function UpdateBanner() {
     <div className="fixed inset-x-3 bottom-20 z-40 mx-auto flex max-w-md items-center gap-3 rounded-xl border border-primary/30 bg-card/95 px-3 py-2 shadow-lg backdrop-blur sm:bottom-4">
       <RefreshCw className="size-4 shrink-0 text-primary" />
       <p className="min-w-0 flex-1 text-xs text-muted-foreground">
-        A newer WaveWallet is ready. Refresh when you finish your current sale.
+        A newer version of ONE WAVE is ready. Refresh when you finish your current sale.
       </p>
       <button
         type="button"

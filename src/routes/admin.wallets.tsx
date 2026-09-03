@@ -55,13 +55,13 @@ import { activeMembers, fetchShopMembers } from "@/lib/shop-members";
 export const Route = createFileRoute("/admin/wallets")({
   head: () => ({
     meta: [
-      { title: "Wallet Management — WaveWallet Admin" },
+      { title: "Wallet Management — ONE WAVE Admin" },
       {
         name: "description",
         content:
           "Search customers and resellers, review coin balances and add coins with a reason, reference and audited transaction ID.",
       },
-      { property: "og:title", content: "Wallet Management — WaveWallet Admin" },
+      { property: "og:title", content: "Wallet Management — ONE WAVE Admin" },
       {
         property: "og:description",
         content: "Manage member coin balances and review the full ledger for your shop.",

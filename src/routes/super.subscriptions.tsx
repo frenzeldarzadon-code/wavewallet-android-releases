@@ -68,9 +68,9 @@ const FILTERS: { value: Filter; label: string }[] = [
 export const Route = createFileRoute("/super/subscriptions")({
   head: () => ({
     meta: [
-      { title: "Subscriptions & Revenue — WaveWallet Super Admin" },
+      { title: "Subscriptions & Revenue — ONE WAVE Super Admin" },
       { name: "description", content: "Review GCash payment submissions, approve or reject tenant subscriptions and track revenue." },
-      { property: "og:title", content: "Subscriptions & Revenue — WaveWallet Super Admin" },
+      { property: "og:title", content: "Subscriptions & Revenue — ONE WAVE Super Admin" },
       { property: "og:description", content: "Review GCash payment submissions, approve or reject tenant subscriptions and track revenue." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

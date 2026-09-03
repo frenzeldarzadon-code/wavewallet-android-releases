@@ -20,9 +20,9 @@ import { useSession } from "@/lib/session";
 import { useShopStatus } from "@/lib/shop-status";
 import { reviewCountdown } from "@/lib/review-demo";
 
-const TITLE = "Go Live — WaveWallet shop subscription";
+const TITLE = "Go Live — ONE WAVE shop subscription";
 const DESCRIPTION =
-  "Manage your WaveWallet shop subscription: pick a plan, pay it and renew, extend or change plan at any time.";
+  "Manage your ONE WAVE shop subscription: pick a plan, pay it and renew, extend or change plan at any time.";
 
 export const Route = createFileRoute("/admin/go-live")({
   // Which of the three intents the operator arrived with. The card still shows
@@ -64,7 +64,7 @@ function AdminGoLivePage() {
       <PageSection devSlot="go-live.go-live" title="Go Live" description="This page is for New Generation shops.">
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="px-4 text-sm text-muted-foreground">
-            This shop keeps its existing WaveWallet subscription arrangement, so there is nothing to
+            This shop keeps its existing ONE WAVE subscription arrangement, so there is nothing to
             do here.
           </CardContent>
         </Card>

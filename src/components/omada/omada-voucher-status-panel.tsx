@@ -543,7 +543,7 @@ export function OmadaVoucherStatusPanel({
                     <p className="text-xs font-medium">Past use</p>
                     <p className="text-[11px] text-muted-foreground">
                       Devices the hotspot controller authorized on this voucher earlier, kept by
-                      WaveWallet so they stay visible after the voucher expires.
+                      ONE WAVE so they stay visible after the voucher expires.
                     </p>
                     {past.map((session, i) => (
                       <PastSessionCard

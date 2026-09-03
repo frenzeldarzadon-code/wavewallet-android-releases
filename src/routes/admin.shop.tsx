@@ -7,13 +7,13 @@ import { VoucherShopView } from "./app.shop";
 export const Route = createFileRoute("/admin/shop")({
   head: () => ({
     meta: [
-      { title: "Shop Vouchers — WaveWallet Admin" },
+      { title: "Shop Vouchers — ONE WAVE Admin" },
       {
         name: "description",
         content:
           "Use your shop wallet balance to take voucher codes from your own uploaded inventory batches — no new codes are ever generated.",
       },
-      { property: "og:title", content: "Shop Vouchers — WaveWallet Admin" },
+      { property: "og:title", content: "Shop Vouchers — ONE WAVE Admin" },
       {
         property: "og:description",
         content: "Spend your admin shop wallet on codes from the uploaded voucher inventory.",

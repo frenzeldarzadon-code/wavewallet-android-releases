@@ -19,9 +19,9 @@ import {
   type ShopType,
 } from "@/lib/shop-type";
 
-const TITLE = "Create a WaveWallet shop";
+const TITLE = "Create a ONE WAVE shop";
 const DESCRIPTION =
-  "Create a WaveWallet shop for free — choose New Generation, Universe Voucher or Universe Retail. You can run more than one shop from the same login.";
+  "Create a ONE WAVE shop for free — choose New Generation, Universe Voucher or Universe Retail. You can run more than one shop from the same login.";
 
 export const Route = createFileRoute("/start-shop")({
   ssr: false,
@@ -167,7 +167,7 @@ function StartShopPage() {
             <>
               <p className="flex items-start gap-2 text-sm text-muted-foreground">
                 <Store className="mt-0.5 size-4 shrink-0 text-primary" />
-                Creating a shop needs a WaveWallet account. Sign up or sign in first — it takes a
+                Creating a shop needs a ONE WAVE account. Sign up or sign in first — it takes a
                 minute, and the guide stays open to everyone.
               </p>
               <Button asChild className="w-full">

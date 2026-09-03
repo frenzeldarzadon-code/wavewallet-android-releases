@@ -200,9 +200,9 @@ export function ListenerDevicesCard({
               Endpoint: <span className="font-mono">{LISTENER_ENDPOINT_PATH}</span>
             </p>
             <p className="mt-1 text-muted-foreground">
-              Tap “Copy both (one paste)” and paste the single value into the WaveWallet app under
+              Tap “Copy both (one paste)” and paste the single value into the ONE WAVE app under
               “Pair device” — it fills in the Device ID and the code for you. Enter these in the
-              WaveWallet app under “Pair device”. A phone that was paired before
+              ONE WAVE app under “Pair device”. A phone that was paired before
               already knows its Device ID and only asks for this one-time code. The code cannot be
               shown again — use “Re-pair this device” to issue a new one.
             </p>

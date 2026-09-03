@@ -50,13 +50,13 @@ import { formatPoints } from "@/lib/points";
 export const Route = createFileRoute("/admin/reports")({
   head: () => ({
     meta: [
-      { title: "Earnings & Reports — WaveWallet Admin" },
+      { title: "Earnings & Reports — ONE WAVE Admin" },
       {
         name: "description",
         content:
           "Daily, monthly, quarterly, yearly and custom-range reporting on voucher sales, coins issued, reseller commission and points activity.",
       },
-      { property: "og:title", content: "Earnings & Reports — WaveWallet Admin" },
+      { property: "og:title", content: "Earnings & Reports — ONE WAVE Admin" },
       {
         property: "og:description",
         content:

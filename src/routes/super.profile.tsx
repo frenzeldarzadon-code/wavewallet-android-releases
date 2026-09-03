@@ -4,13 +4,13 @@ import { SuperProfilePage } from "@/components/super/super-profile-page";
 export const Route = createFileRoute("/super/profile")({
   head: () => ({
     meta: [
-      { title: "Platform Owner Profile — WaveWallet" },
+      { title: "Platform Owner Profile — ONE WAVE" },
       {
         name: "description",
         content:
-          "Update the platform owner display name, contact details and profile photo for the WaveWallet console.",
+          "Update the platform owner display name, contact details and profile photo for the ONE WAVE console.",
       },
-      { property: "og:title", content: "Platform Owner Profile — WaveWallet" },
+      { property: "og:title", content: "Platform Owner Profile — ONE WAVE" },
       {
         property: "og:description",
         content: "Manage the platform owner display name, contact details and photo.",

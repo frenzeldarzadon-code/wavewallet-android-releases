@@ -46,13 +46,13 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/admin/transactions")({
   head: () => ({
     meta: [
-      { title: "Transaction History — WaveWallet Admin" },
+      { title: "Transaction History — ONE WAVE Admin" },
       {
         name: "description",
         content:
           "Every coin transfer, voucher sale, earning, adjustment and reversal in your shop, with a safe one-click reversal for eligible transfers.",
       },
-      { property: "og:title", content: "Transaction History — WaveWallet Admin" },
+      { property: "og:title", content: "Transaction History — ONE WAVE Admin" },
       {
         property: "og:description",
         content:

@@ -327,7 +327,7 @@ function Brand({ ecosystem, mini }: { ecosystem?: string | undefined; mini?: boo
   return (
     <div className={cn("flex items-center gap-3", mini && "justify-center")}>
       <div className="surface-gradient flex size-9 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-primary-foreground">
-        W
+        OW
       </div>
       {mini ? null : (
         <div className="min-w-0">

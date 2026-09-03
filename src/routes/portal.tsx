@@ -41,13 +41,13 @@ export const Route = createFileRoute("/portal")({
     ) as Record<string, string>,
   head: () => ({
     meta: [
-      { title: "Get online — WaveWallet Wi-Fi" },
+      { title: "Get online — ONE WAVE Wi-Fi" },
       {
         name: "description",
         content:
           "Connect to this hotspot: enter a voucher code, or sign in to WaveWallet and buy Wi-Fi access with your coins.",
       },
-      { property: "og:title", content: "Get online — WaveWallet Wi-Fi" },
+      { property: "og:title", content: "Get online — ONE WAVE Wi-Fi" },
       {
         property: "og:description",
         content: "Enter your voucher or buy Wi-Fi access with your WaveWallet coins.",

@@ -69,12 +69,12 @@ import { activeMembers, fetchShopMembers } from "@/lib/shop-members";
 export const Route = createFileRoute("/admin/customers")({
   head: () => ({
     meta: [
-      { title: "Customers — WaveWallet Admin" },
+      { title: "Customers — ONE WAVE Admin" },
       {
         name: "description",
         content: "All customer accounts in your shop, with reseller promotion and discount control.",
       },
-      { property: "og:title", content: "Customers — WaveWallet Admin" },
+      { property: "og:title", content: "Customers — ONE WAVE Admin" },
       {
         property: "og:description",
         content: "All customer accounts in your shop, with reseller promotion and discount control.",

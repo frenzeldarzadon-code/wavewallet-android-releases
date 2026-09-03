@@ -27,13 +27,13 @@ export const Route = createFileRoute("/wifi")({
   }),
   head: () => ({
     meta: [
-      { title: "Your shop's Wi-Fi customer portal — WaveWallet" },
+      { title: "Your shop's Wi-Fi customer portal — ONE WAVE" },
       {
         name: "description",
         content:
-          "You're connected. Sign in or create your WaveWallet account for this hotspot shop to buy vouchers, hold coins and watch your voucher live.",
+          "You're connected. Sign in or create your ONE WAVE account for this hotspot shop to buy vouchers, hold coins and watch your voucher live.",
       },
-      { property: "og:title", content: "Your shop's Wi-Fi customer portal — WaveWallet" },
+      { property: "og:title", content: "Your shop's Wi-Fi customer portal — ONE WAVE" },
       {
         property: "og:description",
         content: "Sign in or sign up with the hotspot shop you just connected to.",
@@ -72,7 +72,7 @@ function WifiEntryPage() {
     };
   }, [h]);
 
-  // Already signed in? Never ask again just to see WaveWallet account data.
+  // Already signed in? Never ask again just to see ONE WAVE account data.
   useEffect(() => {
     let active = true;
     loadAuthContext()
@@ -121,7 +121,7 @@ function WifiEntryPage() {
           <p className="mt-2 text-sm opacity-90">
             {shopName
               ? `You're online through ${shopName}. This is the customer portal for that shop — sign in or create your account to buy vouchers, keep your coins and watch your voucher live.`
-              : "Sign in to WaveWallet to buy vouchers, keep your coins and watch your voucher live."}
+              : "Sign in to ONE WAVE to buy vouchers, keep your coins and watch your voucher live."}
           </p>
         </div>
       </div>

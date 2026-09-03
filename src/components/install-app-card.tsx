@@ -1,5 +1,5 @@
 /**
- * Install WaveWallet as an app. This is the same web application in a
+ * Install ONE WAVE as an app. This is the same web application in a
  * standalone window — one account, one backend, one ledger. It is not a Play
  * Store or App Store listing.
  */
@@ -20,9 +20,9 @@ export function InstallAppCard({ className }: { className?: string }) {
             <Smartphone className="size-5" />
           </span>
           <div>
-            <h3 className="text-base font-semibold">Install WaveWallet on your phone</h3>
+            <h3 className="text-base font-semibold">Install ONE WAVE on your phone</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Adds a WaveWallet icon to your home screen and opens full screen, without a browser
+              Adds a ONE WAVE icon to your home screen and opens full screen, without a browser
               bar. Same login, same shops, same Coins — nothing is stored separately on the device.
             </p>
           </div>
@@ -30,7 +30,7 @@ export function InstallAppCard({ className }: { className?: string }) {
 
         {standalone || installed ? (
           <p className="flex items-center gap-2 text-sm font-medium text-success">
-            <Check className="size-4" /> WaveWallet is installed on this device.
+            <Check className="size-4" /> ONE WAVE is installed on this device.
           </p>
         ) : canInstall ? (
           <Button onClick={() => void install()} className="w-full sm:w-auto">
@@ -52,7 +52,7 @@ export function InstallAppCard({ className }: { className?: string }) {
                 Tap <span className="font-medium text-foreground">Add to Home screen</span> or{" "}
                 <span className="font-medium text-foreground">Install app</span>.
               </li>
-              <li>Confirm — WaveWallet appears with the other apps.</li>
+              <li>Confirm — ONE WAVE appears with the other apps.</li>
             </ol>
           </div>
           <div className="space-y-1.5">

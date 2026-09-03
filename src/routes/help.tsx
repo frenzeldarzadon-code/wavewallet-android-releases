@@ -20,9 +20,9 @@ import { useHelpVisible } from "@/components/help-tip";
 import { InstallAppCard } from "@/components/install-app-card";
 import { loadGuide } from "@/lib/guide.functions";
 
-const TITLE = "Guide & Help — WaveWallet";
+const TITLE = "Guide & Help — ONE WAVE";
 const DESCRIPTION =
-  "The complete WaveWallet guide for shop owners: Coins, resellers, WiFi vouchers, cashback, points, cash in and cash out, and the subscription plans.";
+  "The complete ONE WAVE guide for shop owners: Coins, resellers, WiFi vouchers, cashback, points, cash in and cash out, and the subscription plans.";
 
 export const Route = createFileRoute("/help")({
   loader: () => loadGuide(),
@@ -63,7 +63,7 @@ function HelpPage() {
           <BookOpen className="size-5 text-primary" /> Guide &amp; Help
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Everything about how WaveWallet works, from Coins to cashback. Come back here any time.
+          Everything about how ONE WAVE works, from Coins to cashback. Come back here any time.
         </p>
       </header>
 
@@ -107,9 +107,9 @@ function HelpPage() {
         <Card className="mb-3 shadow-[var(--shadow-card)]">
           <CardContent className="flex flex-wrap items-center justify-between gap-3 px-4">
             <div>
-              <p className="text-sm font-medium">WaveWallet for Android — official app</p>
+              <p className="text-sm font-medium">ONE WAVE for Android — official app</p>
               <p className="text-xs text-muted-foreground">
-                Download the official APK straight from WaveWallet. On iPhone or iPad, keep using
+                Download the official APK straight from ONE WAVE. On iPhone or iPad, keep using
                 the web app.
               </p>
             </div>

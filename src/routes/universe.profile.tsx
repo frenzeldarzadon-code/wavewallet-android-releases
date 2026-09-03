@@ -11,13 +11,13 @@ import { useSession } from "@/lib/session";
 export const Route = createFileRoute("/universe/profile")({
   head: () => ({
     meta: [
-      { title: "My Universe Profile — WaveWallet" },
+      { title: "My Universe Profile — ONE WAVE" },
       {
         name: "description",
         content:
-          "Your global WaveWallet identity: display name, unique @handle, profile photo, links and connected sign-in methods.",
+          "Your global ONE WAVE identity: display name, unique @handle, profile photo, links and connected sign-in methods.",
       },
-      { property: "og:title", content: "My Universe Profile — WaveWallet" },
+      { property: "og:title", content: "My Universe Profile — ONE WAVE" },
       {
         property: "og:description",
         content: "Manage your global name, @handle, photo and connected logins.",

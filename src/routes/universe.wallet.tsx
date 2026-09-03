@@ -5,13 +5,13 @@ import { WalletCenter } from "@/components/wallet/wallet-center";
 export const Route = createFileRoute("/universe/wallet")({
   head: () => ({
     meta: [
-      { title: "Wallet Center — WaveWallet Universe" },
+      { title: "Wallet Center — ONE WAVE Universe" },
       {
         name: "description",
         content:
           "Your one global Universe wallet: balance, transfers and full transaction history.",
       },
-      { property: "og:title", content: "Wallet Center — WaveWallet Universe" },
+      { property: "og:title", content: "Wallet Center — ONE WAVE Universe" },
       {
         property: "og:description",
         content: "Global Universe wallet balance, transfers and history.",

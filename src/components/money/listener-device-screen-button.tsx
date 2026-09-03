@@ -5,7 +5,7 @@
  * `/super/settings` (platform owner) and on `/admin/settings`, which is behind
  * the shop-admin guard, so the phone paired for that shop can be set up by its
  * own admin. Global listener configuration stays on the Super Admin pages.
- * Inside the WaveWallet Android app the button calls the argument-less
+ * Inside the ONE WAVE Android app the button calls the argument-less
  * `WaveWalletNative.openGcashListener()` bridge, which starts the
  * `exported=false` ListenerActivity; the screen itself only reports the state
  * of the phone it runs on and the device it is paired to.
@@ -33,7 +33,7 @@ export function ListenerDeviceScreenButton() {
   const open = () => {
     if (bridge()?.openGcashListener?.() !== true) {
       toast.error("Could not open the listener screen", {
-        description: "Open it from the WaveWallet Android app, signed in as the admin of this shop.",
+        description: "Open it from the ONE WAVE Android app, signed in as the admin of this shop.",
       });
     }
   };
@@ -43,7 +43,7 @@ export function ListenerDeviceScreenButton() {
       <CardHeader>
         <CardTitle className="text-sm">Listener device screen</CardTitle>
         <p className="text-sm text-muted-foreground">
-          The payment notification listener ships inside the WaveWallet Android app. This screen
+          The payment notification listener ships inside the ONE WAVE Android app. This screen
           shows Notification Access, connection and pairing status, the last notification read, the
           parser result, the recovery sweep and the heartbeat for this phone only.
         </p>
@@ -55,7 +55,7 @@ export function ListenerDeviceScreenButton() {
         </Button>
         {inApp ? null : (
           <p className="text-xs text-muted-foreground">
-            Available inside the WaveWallet Android app. Open this page in the app on the paired
+            Available inside the ONE WAVE Android app. Open this page in the app on the paired
             phone, then tap the button.
           </p>
         )}

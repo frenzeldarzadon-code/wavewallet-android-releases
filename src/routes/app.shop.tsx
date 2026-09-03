@@ -56,13 +56,13 @@ import { pts } from "@/lib/points";
 export const Route = createFileRoute("/app/shop")({
   head: () => ({
     meta: [
-      { title: "Voucher Shop — WaveWallet" },
+      { title: "Voucher Shop — ONE WAVE" },
       {
         name: "description",
         content:
           "Buy WiFi vouchers with your shop coins or points. One unused code is issued per purchase and marked sold instantly.",
       },
-      { property: "og:title", content: "Voucher Shop — WaveWallet" },
+      { property: "og:title", content: "Voucher Shop — ONE WAVE" },
       {
         property: "og:description",
         content: "Buy WiFi vouchers with coins or points — codes are issued atomically and never reused.",
@@ -192,7 +192,7 @@ export function VoucherShopView({
       productName,
       description,
       priceLabel,
-      shopName: ecosystem?.name ?? "WaveWallet",
+      shopName: ecosystem?.name ?? "ONE WAVE",
       customerName: name || null,
       paymentStatus: payment,
       index: i + 1,
@@ -273,7 +273,7 @@ export function VoucherShopView({
                 <Ticket className="size-3.5 shrink-0" aria-hidden /> Voucher shop
               </p>
               <h1 className="truncate text-2xl font-bold leading-tight sm:text-3xl">
-                {ecosystem?.name ?? "WaveWallet"}
+                {ecosystem?.name ?? "ONE WAVE"}
               </h1>
             </div>
             {/* Switch shop stays one tap away from the shop itself. */}

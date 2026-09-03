@@ -82,7 +82,7 @@ export function AppReleaseCard() {
       <Card className="shadow-[var(--shadow-card)]">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-sm">
-            <Smartphone className="size-4 text-primary" /> WaveWallet Android
+            <Smartphone className="size-4 text-primary" /> ONE WAVE Android
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2">

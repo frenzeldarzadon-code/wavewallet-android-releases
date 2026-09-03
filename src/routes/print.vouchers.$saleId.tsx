@@ -25,16 +25,16 @@ import {
 export const Route = createFileRoute("/print/vouchers/$saleId")({
   head: () => ({
     meta: [
-      { title: "Print Vouchers — WaveWallet" },
+      { title: "Print Vouchers — ONE WAVE" },
       {
         name: "description",
         content:
-          "Print the vouchers from one WaveWallet purchase as 2in x 1.5in cards, several per sheet, using your own printer.",
+          "Print the vouchers from one ONE WAVE purchase as 2in x 1.5in cards, several per sheet, using your own printer.",
       },
-      { property: "og:title", content: "Print Vouchers — WaveWallet" },
+      { property: "og:title", content: "Print Vouchers — ONE WAVE" },
       {
         property: "og:description",
-        content: "Choose a template and print your issued WaveWallet voucher codes at actual size.",
+        content: "Choose a template and print your issued voucher codes at actual size.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -77,8 +77,8 @@ function PrintVouchersPage() {
     <div key={`${code}-${i}`} className={voucherTemplateClass(template)}>
       <span className="vp-art" aria-hidden />
       <div className="vp-head">
-        <p className="vp-brand">WaveWallet</p>
-        <p className="vp-shop">{sale?.shopName ?? "WaveWallet"}</p>
+        <p className="vp-brand">ONE WAVE</p>
+        <p className="vp-shop">{sale?.shopName ?? "ONE WAVE"}</p>
         <p className="vp-product">{sale?.productName}</p>
         {sale?.description ? <p className="vp-desc">{sale.description}</p> : null}
       </div>
@@ -145,8 +145,8 @@ function PrintVouchersPage() {
                       <div className={voucherTemplateClass(t.id)} aria-hidden>
                         <span className="vp-art" />
                         <div className="vp-head">
-                          <p className="vp-brand">WaveWallet</p>
-                          <p className="vp-shop">{sale?.shopName ?? "WaveWallet"}</p>
+                          <p className="vp-brand">ONE WAVE</p>
+                          <p className="vp-shop">{sale?.shopName ?? "ONE WAVE"}</p>
                           <p className="vp-product">{sale?.productName ?? "WiFi Voucher"}</p>
                           {sale?.description ? <p className="vp-desc">{sale.description}</p> : null}
                         </div>

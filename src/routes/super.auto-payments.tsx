@@ -43,13 +43,13 @@ const FILTERS: { value: Filter; label: string }[] = [
 export const Route = createFileRoute("/super/auto-payments")({
   head: () => ({
     meta: [
-      { title: "Auto-approved payments — WaveWallet Super Admin" },
+      { title: "Auto-approved payments — ONE WAVE Super Admin" },
       {
         name: "description",
         content:
           "Review every subscription payment the payment listener approved automatically: verify the money or mark it invalid and hold the shop's paid benefits.",
       },
-      { property: "og:title", content: "Auto-approved payments — WaveWallet Super Admin" },
+      { property: "og:title", content: "Auto-approved payments — ONE WAVE Super Admin" },
       {
         property: "og:description",
         content:

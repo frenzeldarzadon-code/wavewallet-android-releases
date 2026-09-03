@@ -28,13 +28,13 @@ import { roleLabels } from "@/lib/wavewallet";
 export const Route = createFileRoute("/universe/shops")({
   head: () => ({
     meta: [
-      { title: "Shop Directory — WaveWallet Universe" },
+      { title: "Shop Directory — ONE WAVE Universe" },
       {
         name: "description",
         content:
-          "Browse WaveWallet shops, switch between the ones you belong to and join a new hotspot shop instantly.",
+          "Browse ONE WAVE shops, switch between the ones you belong to and join a new hotspot shop instantly.",
       },
-      { property: "og:title", content: "Shop Directory — WaveWallet Universe" },
+      { property: "og:title", content: "Shop Directory — ONE WAVE Universe" },
       {
         property: "og:description",
         content: "Switch between your shops or join a new one instantly.",

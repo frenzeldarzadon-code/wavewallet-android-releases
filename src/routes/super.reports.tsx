@@ -30,13 +30,13 @@ import { WalletIntegrityCard } from "@/components/wallet-integrity-card";
 export const Route = createFileRoute("/super/reports")({
   head: () => ({
     meta: [
-      { title: "Cross-Tenant Reports — WaveWallet Super Admin" },
+      { title: "Cross-Tenant Reports — ONE WAVE Super Admin" },
       {
         name: "description",
         content:
           "Platform subscription revenue plus per-shop voucher sales, coins generated and channel earnings, across daily to yearly and custom ranges.",
       },
-      { property: "og:title", content: "Cross-Tenant Reports — WaveWallet Super Admin" },
+      { property: "og:title", content: "Cross-Tenant Reports — ONE WAVE Super Admin" },
       {
         property: "og:description",
         content: "Compare shop performance from immutable ledger records across any time range.",

@@ -14,13 +14,13 @@ import { useSession } from "@/lib/session";
 export const Route = createFileRoute("/reseller/omada")({
   head: () => ({
     meta: [
-      { title: "Status Check — WaveWallet Reseller" },
+      { title: "Status Check — ONE WAVE Reseller" },
       {
         name: "description",
         content:
           "Check a Wi-Fi voucher code, see whether it is unused, in-use or expired, and label the devices using it.",
       },
-      { property: "og:title", content: "Status Check — WaveWallet Reseller" },
+      { property: "og:title", content: "Status Check — ONE WAVE Reseller" },
       {
         property: "og:description",
         content: "Check a Wi-Fi voucher code and label the devices using it.",

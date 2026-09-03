@@ -5,13 +5,13 @@ import { useSession } from "@/lib/session";
 export const Route = createFileRoute("/admin/operator-log")({
   head: () => ({
     meta: [
-      { title: "Operator actions — WaveWallet Admin" },
+      { title: "Operator actions — ONE WAVE Admin" },
       {
         name: "description",
         content:
           "Audit trail of every action taken while accessing a member's account in your shop.",
       },
-      { property: "og:title", content: "Operator actions — WaveWallet Admin" },
+      { property: "og:title", content: "Operator actions — ONE WAVE Admin" },
       {
         property: "og:description",
         content:

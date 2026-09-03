@@ -12,13 +12,13 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/admin/signup-link")({
   head: () => ({
     meta: [
-      { title: "Customer Signup Link — WaveWallet Admin" },
+      { title: "Customer Signup Link — ONE WAVE Admin" },
       {
         name: "description",
         content:
           "Share your shop's unique customer signup link so new users join your shop automatically as customers.",
       },
-      { property: "og:title", content: "Customer Signup Link — WaveWallet Admin" },
+      { property: "og:title", content: "Customer Signup Link — ONE WAVE Admin" },
       {
         property: "og:description",
         content: "Copy, share, disable or rotate the tenant-specific signup URL for your hotspot shop.",

@@ -25,13 +25,13 @@ import {
 export const Route = createFileRoute("/super/portal-template")({
   head: () => ({
     meta: [
-      { title: "Omada Portal Template — WaveWallet Platform" },
+      { title: "Omada Portal Template — ONE WAVE Platform" },
       {
         name: "description",
         content:
           "Publish the original Omada captive-portal template once. Every shop's portal page is generated from it.",
       },
-      { property: "og:title", content: "Omada Portal Template — WaveWallet Platform" },
+      { property: "og:title", content: "Omada Portal Template — ONE WAVE Platform" },
       {
         property: "og:description",
         content: "Publish the original Omada captive-portal template used to generate every shop's portal page.",

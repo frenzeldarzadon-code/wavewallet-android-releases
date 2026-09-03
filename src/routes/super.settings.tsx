@@ -27,9 +27,9 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/super/settings")({
   head: () => ({
     meta: [
-      { title: "Platform Settings — WaveWallet Super Admin" },
+      { title: "Platform Settings — ONE WAVE Super Admin" },
       { name: "description", content: "Configure GCash collection details, support channel, coin supply and platform-wide defaults." },
-      { property: "og:title", content: "Platform Settings — WaveWallet Super Admin" },
+      { property: "og:title", content: "Platform Settings — ONE WAVE Super Admin" },
       { property: "og:description", content: "Configure GCash collection details, support channel, coin supply and platform-wide defaults." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

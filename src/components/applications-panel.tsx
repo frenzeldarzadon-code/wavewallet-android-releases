@@ -273,7 +273,7 @@ export function ApplicationsPanel({
             <DialogTitle>Remove member from this shop?</DialogTitle>
             <DialogDescription>
               {remove?.full_name || remove?.email} is removed from THIS SHOP ONLY. This does not
-              delete their WaveWallet account and does not affect their membership in any other
+              delete their ONE WAVE account and does not affect their membership in any other
               shop. All past transactions and records are kept — only the shop membership ends.
               {removeKept
                 ? " Their balance in this shop must be exactly 0.00, and the database re-checks that before removing them."

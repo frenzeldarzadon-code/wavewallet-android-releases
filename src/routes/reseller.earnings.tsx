@@ -6,13 +6,13 @@ import { roleLabel } from "@/lib/wavewallet";
 export const Route = createFileRoute("/reseller/earnings")({
   head: () => ({
     meta: [
-      { title: "Earnings History — WaveWallet Reseller" },
+      { title: "Earnings History — ONE WAVE Reseller" },
       {
         name: "description",
         content:
           "Every commission, cashback and wholesale margin you earned, with daily, monthly, quarterly and yearly totals, filters and CSV export.",
       },
-      { property: "og:title", content: "Earnings History — WaveWallet Reseller" },
+      { property: "og:title", content: "Earnings History — ONE WAVE Reseller" },
       {
         property: "og:description",
         content: "Transaction-level earnings history with period summaries and CSV export.",

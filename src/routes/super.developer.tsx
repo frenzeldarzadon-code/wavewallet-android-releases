@@ -64,16 +64,16 @@ import { homeFor } from "@/lib/session";
 export const Route = createFileRoute("/super/developer")({
   head: () => ({
     meta: [
-      { title: "Developer Mode — WaveWallet Super Admin" },
+      { title: "Developer Mode — ONE WAVE Super Admin" },
       {
         name: "description",
         content:
           "Configure tabs and content visibility, order and placement for every role. Hiding is visual only — functionality keeps running.",
       },
-      { property: "og:title", content: "Developer Mode — WaveWallet Super Admin" },
+      { property: "og:title", content: "Developer Mode — ONE WAVE Super Admin" },
       {
         property: "og:description",
-        content: "Role-level interface layout manager for the WaveWallet platform owner.",
+        content: "Role-level interface layout manager for the ONE WAVE platform owner.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

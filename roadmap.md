@@ -34,3 +34,9 @@
 - [ ] Publish only if explicitly requested
 
 - [x] Direction A — Market Pulse approved; Color A / Type A / Discover First locked
+
+## ONE WAVE branding-only rebrand — COMPLETE (UNPUBLISHED)
+- [x] Replace user-facing overall app/ecosystem branding with ONE WAVE
+- [x] Preserve WaveWallet as the wallet/product function and all internal identifiers
+- [x] Verify metadata, PWA, auth, shared shells, Android labels, routes, and regressions
+- [x] Do not publish

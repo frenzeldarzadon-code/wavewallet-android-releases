@@ -37,7 +37,7 @@ export function UpdateCenterCard({ className }: { className?: string }) {
       const next = await checkForUpdates(background ? { background: true } : {});
       if (next) setState(next);
       if (!background && next?.offline) {
-        toast.error("Could not reach the update service. You can keep using WaveWallet.");
+        toast.error("Could not reach the update service. You can keep using ONE WAVE.");
       }
     } finally {
       if (!background) setChecking(false);
@@ -58,7 +58,7 @@ export function UpdateCenterCard({ className }: { className?: string }) {
           <div>
             <h3 className="text-base font-semibold">App updates</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              The website part of WaveWallet updates with a refresh. The Android app itself only
+              The website part of ONE WAVE updates with a refresh. The Android app itself only
               changes when you install a new version from the official download page.
             </p>
           </div>
@@ -144,7 +144,7 @@ export function UpdateCenterCard({ className }: { className?: string }) {
 
         {upToDate ? (
           <p className="flex items-center gap-2 text-xs text-success">
-            <CheckCircle2 className="size-4" /> You&apos;re running the latest WaveWallet.
+            <CheckCircle2 className="size-4" /> You&apos;re running the latest ONE WAVE.
           </p>
         ) : (
           <p className="flex items-center gap-2 text-xs text-muted-foreground">

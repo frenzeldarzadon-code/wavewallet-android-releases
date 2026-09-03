@@ -14,13 +14,13 @@ import { peso, roleLabel, shortDate, type Role } from "@/lib/wavewallet";
 export const Route = createFileRoute("/admin/resellers")({
   head: () => ({
     meta: [
-      { title: "Resellers — WaveWallet Admin" },
+      { title: "Resellers — ONE WAVE Admin" },
       {
         name: "description",
         content:
           "Reseller and subreseller network inside your shop: wallets, wholesale discounts, sale cashback and sales.",
       },
-      { property: "og:title", content: "Resellers — WaveWallet Admin" },
+      { property: "og:title", content: "Resellers — ONE WAVE Admin" },
       {
         property: "og:description",
         content:

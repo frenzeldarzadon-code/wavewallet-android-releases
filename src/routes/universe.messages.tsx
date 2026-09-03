@@ -7,13 +7,13 @@ export const Route = createFileRoute("/universe/messages")({
     typeof search["thread"] === "string" && search["thread"] ? { thread: search["thread"] } : {},
   head: () => ({
     meta: [
-      { title: "Messages — WaveWallet Universe" },
+      { title: "Messages — ONE WAVE Universe" },
       {
         name: "description",
         content:
-          "Private messages and Retail order chats in the WaveWallet Universe. Only the participants can read a thread.",
+          "Private messages and Retail order chats in the ONE WAVE Universe. Only the participants can read a thread.",
       },
-      { property: "og:title", content: "Messages — WaveWallet Universe" },
+      { property: "og:title", content: "Messages — ONE WAVE Universe" },
       {
         property: "og:description",
         content: "Private direct messages and order chats between members.",

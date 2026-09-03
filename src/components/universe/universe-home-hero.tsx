@@ -15,7 +15,7 @@ export function UniverseHomeHero() {
       <div className="overflow-hidden rounded-lg border border-border bg-card shadow-[var(--shadow-card)]">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 p-4 sm:p-5">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase text-primary">WaveWallet Universe</p>
+            <p className="text-xs font-semibold uppercase text-primary">ONE WAVE Universe</p>
             <h2 className="mt-1 text-xl font-bold leading-tight sm:text-2xl">Discover. Connect. Buy with confidence.</h2>
             <p className="mt-1 max-w-xl text-sm text-muted-foreground">
               Find vouchers, choose an authorized seller, and shop with your global wallet.

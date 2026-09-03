@@ -9,13 +9,13 @@ import { useSession } from "@/lib/session";
 export const Route = createFileRoute("/admin/retail")({
   head: () => ({
     meta: [
-      { title: "Retail Products — WaveWallet Admin" },
+      { title: "Retail Products — ONE WAVE Admin" },
       {
         name: "description",
         content:
           "Manage retail products, photos, prices and stock, plus how customers pay and receive orders — all isolated to your shop.",
       },
-      { property: "og:title", content: "Retail Products — WaveWallet Admin" },
+      { property: "og:title", content: "Retail Products — ONE WAVE Admin" },
       {
         property: "og:description",
         content: "Retail inventory and fulfilment settings for your Universe Retail shop.",

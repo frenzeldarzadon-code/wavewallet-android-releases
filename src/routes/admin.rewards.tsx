@@ -42,13 +42,13 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/admin/rewards")({
   head: () => ({
     meta: [
-      { title: "Physical Rewards — WaveWallet Admin" },
+      { title: "Physical Rewards — ONE WAVE Admin" },
       {
         name: "description",
         content:
           "Manage points-priced physical rewards, track reserved stock and approve or reject redemptions by code.",
       },
-      { property: "og:title", content: "Physical Rewards — WaveWallet Admin" },
+      { property: "og:title", content: "Physical Rewards — ONE WAVE Admin" },
       {
         property: "og:description",
         content: "Reward inventory and redemption queue for your shop, verified by code.",

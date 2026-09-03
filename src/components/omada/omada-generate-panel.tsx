@@ -821,7 +821,7 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
       {batches.length > 0 ? (
         <Card className="shadow-[var(--shadow-card)]">
           <CardHeader>
-            <CardTitle className="text-sm">Generated from WaveWallet</CardTitle>
+            <CardTitle className="text-sm">Generated from ONE WAVE</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {batches.map((b) => (

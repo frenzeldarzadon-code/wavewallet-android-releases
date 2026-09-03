@@ -192,7 +192,7 @@ const day = (n: number) => {
 };
 
 export const platformSettings = {
-  productName: "WaveWallet",
+  productName: "ONE WAVE",
   defaultPlanName: "Operator Monthly",
   defaultPlanPrice: 150,
   defaultGraceDays: 5,
