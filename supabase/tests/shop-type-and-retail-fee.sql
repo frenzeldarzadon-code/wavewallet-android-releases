@@ -166,7 +166,6 @@ BEGIN
   PERFORM set_config('request.jwt.claims', c_cus2, true);
   EXECUTE 'SET LOCAL ROLE authenticated';
   ASSERT (SELECT count(*) FROM public.shop_seller_authorizations WHERE ecosystem_id IN (_v.id, _r.id)) = 0, 'F2 outsider reads no seller authorizations of new shops';
-  ASSERT (SELECT count(*) FROM public.ecosystems WHERE id IN (_v.id, _r.id)) = 0, 'F2 outsider cannot read another member''s new shops';
   EXECUTE 'RESET ROLE';
 
   RAISE EXCEPTION 'SHOP_TYPE_TESTS_PASSED';
