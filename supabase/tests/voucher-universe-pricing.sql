@@ -157,5 +157,33 @@ BEGIN
                       WHERE e.shop_kind = 'subscription' AND v.platform_fee_amount > 0),
     '9: no platform fee ever recorded in a New Generation shop';
 
+  ---------------------------------------------------------------- 10 (admin self-purchase)
+  ASSERT public.voucher_discount_percent_for(_admin, _shop) = 0, '10: Universe admin has no purchase discount';
+  PERFORM set_config('request.jwt.claims', json_build_object('sub', _super)::text, true);
+  PERFORM public.admin_load_credits(_admin, 100, 'QA fund admin', 'QA-A', _shop);
+  INSERT INTO public.voucher_codes (ecosystem_id, product_id, code, status)
+  SELECT _shop, _new_prod, 'QAN-' || g, 'unused' FROM generate_series(1, 2) g;
+  PERFORM set_config('request.jwt.claims', json_build_object('sub', _admin)::text, true);
+  SELECT sale_id INTO _sale FROM public.purchase_voucher(_new_prod, 1);   -- ₱10 product, 2% snapshot
+  SELECT sale_price, platform_fee_amount, seller_amount INTO _price, _fee, _cut FROM public.voucher_sales WHERE id = _sale;
+  ASSERT _price = 10.00 AND (SELECT discount_percent FROM public.voucher_sales WHERE id = _sale) = 0,
+    format('10: admin pays the retail price they set, got %s', _price);
+  ASSERT _fee = 0.20 AND _cut = 9.80, format('10: fee %s / seller cut %s', _fee, _cut);
+  ASSERT (SELECT amount FROM public.credit_ledger WHERE sale_id = _sale AND entry_kind = 'purchase' AND user_id = _admin) = 10.00,
+    '10: admin wallet debited the full ₱10';
+  ASSERT (SELECT coalesce(sum(commission_amount),0) FROM public.sale_commissions WHERE sale_id = _sale AND recipient_id = _admin AND kind = 'admin') = 9.80,
+    '10: shop remainder (seller cut) still flows to the shop admin — no value vanishes';
+  ASSERT (SELECT coalesce(sum(commission_amount),0) FROM public.sale_commissions WHERE sale_id = _sale) + _fee = 10.00,
+    '10: remainder + fee == price';
+  ASSERT NOT EXISTS (SELECT 1 FROM public.sale_commissions WHERE sale_id = _sale AND kind <> 'admin'), '10: no invented admin cashback kind';
+  IF _ng IS NOT NULL THEN
+    SELECT m.user_id INTO _ng_res FROM public.ecosystem_memberships m
+     WHERE m.ecosystem_id = _ng AND m.role = 'admin' AND m.membership_state = 'active' LIMIT 1;
+    IF _ng_res IS NOT NULL THEN
+      ASSERT public.voucher_discount_percent_for(_ng_res, _ng) = public.admin_voucher_discount_percent(),
+        '10: New Generation admin discount rule unchanged';
+    END IF;
+  END IF;
+
   RAISE NOTICE 'voucher-universe-pricing: all assertions passed (rate %%%, shop %)', _rate, _shop;
 END $$;
