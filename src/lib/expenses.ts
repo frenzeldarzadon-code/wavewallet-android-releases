@@ -18,6 +18,18 @@ export const LOVABLE_CREDITS_CATEGORY = "Lovable AI Coins";
 /** Provider tag stored alongside those expenses. */
 export const LOVABLE_PROVIDER = "Lovable";
 
+/** Neutral presentation labels for legacy provider-expense rows. Stored values stay unchanged. */
+export function expenseDisplayDescription(row: ExpenseRow): string {
+  if (row.category !== LOVABLE_CREDITS_CATEGORY && row.provider !== LOVABLE_PROVIDER) {
+    return row.description;
+  }
+  return row.description.replace(/Lovable(?: AI)? credit(?:s)?(?: purchase)?/gi, "AI service credit purchase");
+}
+
+export function expenseDisplayCategory(row: ExpenseRow): string | null {
+  return row.category === LOVABLE_CREDITS_CATEGORY ? "AI service credits" : row.category;
+}
+
 export interface ExpenseRow {
   id: string;
   scope: ExpenseScope;

@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   LOVABLE_CREDITS_CATEGORY,
   expensePeriodTotals,
+  expenseDisplayCategory,
+  expenseDisplayDescription,
   findLikelyDuplicates,
   lovablePurchaseDescription,
   totalExpenses,
@@ -103,5 +105,30 @@ describe("Lovable credit purchase expenses", () => {
     expect(totalLovableCredits(rows)).toBe(1500.5);
     expect(totalExpenses(rows)).toBeCloseTo(1700.5, 2);
     expect(expensePeriodTotals(rows).year).toBeGreaterThan(0);
+  });
+
+  it("neutralizes legacy provider wording for presentation without changing stored values", () => {
+    const legacy = row({
+      description: "Lovable credit purchase · ref INV-42",
+      category: LOVABLE_CREDITS_CATEGORY,
+      provider: "Lovable",
+    });
+    expect(expenseDisplayDescription(legacy)).toBe(
+      "AI service credit purchase · ref INV-42",
+    );
+    expect(expenseDisplayCategory(legacy)).toBe("AI service credits");
+    expect(legacy.description).toBe("Lovable credit purchase · ref INV-42");
+    expect(legacy.category).toBe(LOVABLE_CREDITS_CATEGORY);
+    expect(legacy.provider).toBe("Lovable");
+  });
+
+  it("leaves unrelated expense presentation unchanged", () => {
+    const hosting = row({
+      description: "Monthly hosting",
+      category: "Hosting",
+      provider: null,
+    });
+    expect(expenseDisplayDescription(hosting)).toBe("Monthly hosting");
+    expect(expenseDisplayCategory(hosting)).toBe("Hosting");
   });
 });

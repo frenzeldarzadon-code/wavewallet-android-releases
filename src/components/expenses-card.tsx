@@ -19,6 +19,8 @@ import { EmptyState, PageSection } from "@/components/ui-kit";
 import { shortDateTime } from "@/lib/wavewallet";
 import {
   deleteExpense,
+  expenseDisplayCategory,
+  expenseDisplayDescription,
   fetchExpenses,
   recordExpense,
   totalExpenses,
@@ -166,10 +168,10 @@ export function ExpensesCard({
               {rows.map((r) => (
                 <div key={r.id} className="flex items-start justify-between gap-3 px-4 py-3">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{r.description}</p>
+                    <p className="truncate text-sm font-medium">{expenseDisplayDescription(r)}</p>
                     <p className="text-[11px] text-muted-foreground">
                       {shortDateTime(r.spent_at)} · {r.created_by_name ?? "Operator"}
-                      {r.category ? ` · ${r.category}` : ""}
+                      {expenseDisplayCategory(r) ? ` · ${expenseDisplayCategory(r)}` : ""}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
