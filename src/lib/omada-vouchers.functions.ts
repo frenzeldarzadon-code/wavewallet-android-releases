@@ -436,7 +436,27 @@ export const lookupOmadaVoucherStatuses = createServerFn({ method: "POST" })
     return { ecosystemId: data.ecosystemId, codes: codes.slice(0, 200) };
   })
   .handler(async ({ data, context }): Promise<OmadaBatchStatuses> => {
-    await assertShopMember(context as unknown as AuthContext, data.ecosystemId);
+    // Read-only status: shop members see any code; a Universe buyer who is not
+    // a member of the selling shop may only check the codes they bought there
+    // (RLS-scoped read of their own sold codes).
+    try {
+      await assertShopMember(context as unknown as AuthContext, data.ecosystemId);
+    } catch {
+      const ctx = context as unknown as AuthContext & {
+        supabase: import("@supabase/supabase-js").SupabaseClient<
+          import("@/integrations/supabase/types").Database
+        >;
+      };
+      const own = await ctx.supabase
+        .from("voucher_codes")
+        .select("code")
+        .eq("ecosystem_id", data.ecosystemId)
+        .eq("sold_to", ctx.userId)
+        .in("code", data.codes);
+      const mine = new Set((own.data ?? []).map((r) => String(r.code).toUpperCase()));
+      data = { ecosystemId: data.ecosystemId, codes: data.codes.filter((c) => mine.has(c)) };
+      if (data.codes.length === 0) throw new Error("You are not a member of this shop.");
+    }
     const { cachedStatuses, rememberStatuses } = await import("./omada-status-cache.server");
     const hit = cachedStatuses(data.ecosystemId, data.codes);
     if (hit) return { configured: true, statuses: hit, error: null };
