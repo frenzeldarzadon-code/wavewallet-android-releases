@@ -7,7 +7,7 @@
  * members, wallets, orders or voucher codes.
  */
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, MapPin, Store, Ticket } from "lucide-react";
+import { ArrowLeft, ArrowRight, MapPin, Store, Ticket } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { RatingStars } from "@/components/rating-stars";
 import {
   MarketplaceEmpty,
+  MarketplaceHeader,
   ProductCard,
   ProductDetailSheet,
   productGridClass,
@@ -151,19 +152,38 @@ function PublicStorefront() {
 
   return (
     <main className="mx-auto max-w-3xl space-y-4 p-4 pb-16">
-      <header className="rounded-2xl bg-gradient-to-br from-primary/15 to-success/10 p-5">
-        <h1 className="text-2xl font-semibold">{shop.name}</h1>
-        {shop.description ? (
-          <p className="mt-1 text-sm text-muted-foreground">{shop.description}</p>
-        ) : null}
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+      {RETAIL_VISIBLE && shop.retail_enabled ? (
+        <MarketplaceHeader
+          shopName={shop.name}
+          description={shop.description}
+          productCount={retail.length}
+          logoPath={shop.logo_path}
+          coverPath={shop.cover_path}
+          acceptingOrders={shop.accepting_orders}
+          pausedNote={shop.paused_note}
+          backLink={
+            <Link to="/universe/shops" className="inline-flex items-center gap-1 hover:underline">
+              <ArrowLeft className="size-3.5" /> All shops
+            </Link>
+          }
+        />
+      ) : (
+        <header className="rounded-2xl bg-gradient-to-br from-primary/15 to-success/10 p-5">
+          <h1 className="text-2xl font-semibold">{shop.name}</h1>
+          {shop.description ? (
+            <p className="mt-1 text-sm text-muted-foreground">{shop.description}</p>
+          ) : null}
+        </header>
+      )}
+      <section className="rounded-2xl border border-border bg-card px-4 py-3 shadow-[var(--shadow-card)]">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <RatingStars avg={shop.rating_avg} count={shop.rating_count} />
           <span>
             {shop.rating_avg.toFixed(1)} ({shop.rating_count}) · {shop.member_count} members ·{" "}
             {shop.sales_count} sales
           </span>
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-2 flex flex-wrap gap-2">
           {shop.voucher_enabled ? (
             <StatusBadge tone="brand">
               <Ticket className="size-3" /> Voucher store
@@ -176,11 +196,11 @@ function PublicStorefront() {
           ) : null}
         </div>
         {cta ? (
-          <Button className="mt-4 w-full sm:w-auto" onClick={cta.onClick}>
+          <Button className="mt-3 w-full sm:w-auto" onClick={cta.onClick}>
             {cta.label} <ArrowRight className="size-4" />
           </Button>
         ) : (
-          <p className="mt-4 text-xs text-muted-foreground">
+          <p className="mt-3 text-xs text-muted-foreground">
             {action === "pending"
               ? "Your request to join is waiting for the shop to review it."
               : "This shop is not accepting new members right now."}
@@ -192,7 +212,7 @@ function PublicStorefront() {
             {[shop.contact_email, shop.contact_phone].filter(Boolean).join(" · ")}
           </p>
         ) : null}
-      </header>
+      </section>
 
       <Tabs
         defaultValue={RETAIL_VISIBLE && (retail.length || !vouchers.length) ? "retail" : "voucher"}

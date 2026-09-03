@@ -155,7 +155,7 @@ export function StorefrontSettingsCard({ ecosystemId }: { ecosystemId: string | 
                     {form.coverPath ? (
                       <Button
                         type="button"
-                        size="icon-sm"
+                        size="icon"
                         variant="secondary"
                         aria-label="Remove cover"
                         onClick={() => setForm({ ...form, coverPath: null })}
