@@ -87,11 +87,20 @@ import {
 
 const credits = (n: number) => `${n.toLocaleString(undefined, { maximumFractionDigits: 2 })} coins`;
 
+/** An irreversible action the seller must confirm before it is sent to the server. */
+interface Confirm {
+  title: string;
+  body: string;
+  action: string;
+  destructive?: boolean;
+  run: () => void;
+}
+
 export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null }) {
   const { account } = useSession();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<RetailOrder[]>([]);
-  const [status, setStatus] = useState<OrderStatus | "all">("pending");
+  const [stage, setStage] = useState<OrderStage>("new");
   const [settings, setSettings] = useState<StoreSettings | null>(null);
   const [available, setAvailable] = useState<number | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -100,7 +109,10 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
   const [assigning, setAssigning] = useState<RetailOrder | null>(null);
   const [cancelling, setCancelling] = useState<RetailOrder | null>(null);
   const [cancelNote, setCancelNote] = useState("");
+  const [confirm, setConfirm] = useState<Confirm | null>(null);
   const isAdmin = account?.role === "admin" || account?.role === "super_admin";
+  const counts = countByStage(orders);
+  const visible = orders.filter((o) => orderStage(o) === stage);
 
   const load = useCallback(async () => {
     if (!ecosystemId) return;
