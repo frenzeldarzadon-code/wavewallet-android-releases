@@ -35,12 +35,15 @@ import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { RetailImage } from "@/components/retail/retail-image";
 import {
   EMPTY_CATALOG_FILTER,
+  customerToSeller,
   fetchAllRetailProducts,
+  fetchRetailFeePercent,
   filterProducts,
   isProductReady,
   loadStarterCatalog,
   productCategories,
   saveRetailProduct,
+  sellerToCustomer,
   setRetailProductArchived,
   setRetailProductPublished,
   uploadRetailImage,
@@ -119,7 +122,23 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
   const [filter, setFilter] = useState<CatalogFilter>(EMPTY_CATALOG_FILTER);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [feePercent, setFeePercent] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetchRetailFeePercent().then(setFeePercent).catch(() => setFeePercent(0));
+  }, []);
+
+  /** Customer-facing price for a seller amount typed as text. */
+  const customerOf = (seller: string) => {
+    const n = Number(seller);
+    return n > 0 ? sellerToCustomer(n, feePercent) : 0;
+  };
+  /** Inverse: a customer price typed by the seller becomes the seller amount. */
+  const sellerOf = (customer: string) => {
+    const n = Number(customer);
+    return n > 0 ? String(customerToSeller(n, feePercent)) : "";
+  };
 
   const load = useCallback(async () => {
     if (!ecosystemId) return;
@@ -345,9 +364,11 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {p.category ?? "Uncategorised"} ·{" "}
-                    {p.price > 0 ? `${p.price.toLocaleString()} retail` : "no retail price"}
+                    {p.price > 0
+                      ? `${p.price.toLocaleString()} yours · ${sellerToCustomer(p.price, feePercent).toLocaleString()} customer`
+                      : "no retail price"}
                     {p.wholesale_price > 0
-                      ? ` · ${p.wholesale_price.toLocaleString()} wholesale${
+                      ? ` · ${p.wholesale_price.toLocaleString()} wholesale (${sellerToCustomer(p.wholesale_price, feePercent).toLocaleString()} customer)${
                           (p.wholesale_min_qty ?? 0) > 0 ? ` from ${p.wholesale_min_qty}` : ""
                         }`
                       : ""}{" "}
@@ -483,7 +504,7 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="rp-wholesale">Wholesale price (coins)</Label>
+                  <Label htmlFor="rp-wholesale">Wholesale — your amount (coins)</Label>
                   <Input
                     id="rp-wholesale"
                     type="number"
@@ -491,6 +512,9 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
                     value={draft.wholesale_price}
                     onChange={(e) => setDraft({ ...draft, wholesale_price: e.target.value })}
                   />
+                  <p className="text-[11px] text-muted-foreground">
+                    Customer pays {customerOf(draft.wholesale_price).toLocaleString()} each
+                  </p>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="rp-wholesale-min">Wholesale minimum quantity</Label>
@@ -504,7 +528,7 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="rp-price">Retail price (coins)</Label>
+                  <Label htmlFor="rp-price">Retail — your amount (coins)</Label>
                   <Input
                     id="rp-price"
                     type="number"
@@ -512,6 +536,23 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
                     value={draft.price}
                     onChange={(e) => setDraft({ ...draft, price: e.target.value })}
                   />
+                  <p className="text-[11px] text-muted-foreground">
+                    What you receive per unit. The {feePercent}% platform fee is added on top.
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="rp-customer-price">Retail — customer pays (coins)</Label>
+                  <Input
+                    id="rp-customer-price"
+                    type="number"
+                    inputMode="decimal"
+                    value={draft.price ? customerOf(draft.price) : ""}
+                    onChange={(e) => setDraft({ ...draft, price: sellerOf(e.target.value) })}
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Type either field; the other follows. The fee applies to the price actually
+                    charged (wholesale when the minimum quantity is reached).
+                  </p>
                 </div>
               </div>
               <div className="space-y-1.5">
