@@ -28,6 +28,10 @@ export interface PublicShop {
   has_admin: boolean;
   is_member: boolean;
   pending_application: boolean;
+  logo_path: string | null;
+  cover_path: string | null;
+  accepting_orders: boolean;
+  paused_note: string | null;
 }
 
 export interface PublicProduct {

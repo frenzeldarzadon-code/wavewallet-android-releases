@@ -7,6 +7,8 @@ import {
   cartTotal,
   changeQuantity,
   checkoutProblem,
+  storefrontProblem,
+  STOREFRONT_NOTE_MAX,
   enabledStores,
   filterProducts,
   isProductReady,
@@ -93,15 +95,13 @@ describe("checkoutProblem", () => {
   });
 
   it("hides cash when the admin disabled it", () => {
-    expect(
-      checkoutProblem(draft(), total, { ...settings, cashEnabled: false }, 0, 1),
-    ).toMatch(/cash/i);
+    expect(checkoutProblem(draft(), total, { ...settings, cashEnabled: false }, 0, 1)).toMatch(
+      /cash/i,
+    );
   });
 
   it("requires enough shop credits for a credit order", () => {
-    expect(checkoutProblem(draft({ payment: "credit" }), total, settings, 10, 1)).toMatch(
-      /coins/i,
-    );
+    expect(checkoutProblem(draft({ payment: "credit" }), total, settings, 10, 1)).toMatch(/coins/i);
     expect(checkoutProblem(draft({ payment: "credit" }), total, settings, 100, 1)).toBeNull();
   });
 
@@ -159,24 +159,44 @@ describe("admin catalog filtering", () => {
 
   const rows = [
     row({ id: "a", name: "Pancit Canton" }),
-    row({ id: "b", name: "Sagada Coffee", category: "Coffee", template_id: null, published: false }),
+    row({
+      id: "b",
+      name: "Sagada Coffee",
+      category: "Coffee",
+      template_id: null,
+      published: false,
+    }),
     row({ id: "c", name: "Old Stock", archived: true, published: false }),
   ];
 
   it("hides archived products unless asked for", () => {
-    expect(filterProducts(rows, { ...EMPTY_CATALOG_FILTER, status: "published" }).map((r) => r.id)).toEqual(["a"]);
-    expect(filterProducts(rows, { ...EMPTY_CATALOG_FILTER, status: "draft" }).map((r) => r.id)).toEqual(["b"]);
-    expect(filterProducts(rows, { ...EMPTY_CATALOG_FILTER, status: "archived" }).map((r) => r.id)).toEqual(["c"]);
+    expect(
+      filterProducts(rows, { ...EMPTY_CATALOG_FILTER, status: "published" }).map((r) => r.id),
+    ).toEqual(["a"]);
+    expect(
+      filterProducts(rows, { ...EMPTY_CATALOG_FILTER, status: "draft" }).map((r) => r.id),
+    ).toEqual(["b"]);
+    expect(
+      filterProducts(rows, { ...EMPTY_CATALOG_FILTER, status: "archived" }).map((r) => r.id),
+    ).toEqual(["c"]);
   });
 
   it("separates starter-catalog products from manually added ones", () => {
-    expect(filterProducts(rows, { ...EMPTY_CATALOG_FILTER, source: "manual" }).map((r) => r.id)).toEqual(["b"]);
-    expect(filterProducts(rows, { ...EMPTY_CATALOG_FILTER, source: "catalog" }).map((r) => r.id)).toEqual(["a", "c"]);
+    expect(
+      filterProducts(rows, { ...EMPTY_CATALOG_FILTER, source: "manual" }).map((r) => r.id),
+    ).toEqual(["b"]);
+    expect(
+      filterProducts(rows, { ...EMPTY_CATALOG_FILTER, source: "catalog" }).map((r) => r.id),
+    ).toEqual(["a", "c"]);
   });
 
   it("searches names, brands and sizes and filters by category", () => {
-    expect(filterProducts(rows, { ...EMPTY_CATALOG_FILTER, search: "sagada" }).map((r) => r.id)).toEqual(["b"]);
-    expect(filterProducts(rows, { ...EMPTY_CATALOG_FILTER, category: "Coffee" }).map((r) => r.id)).toEqual(["b"]);
+    expect(
+      filterProducts(rows, { ...EMPTY_CATALOG_FILTER, search: "sagada" }).map((r) => r.id),
+    ).toEqual(["b"]);
+    expect(
+      filterProducts(rows, { ...EMPTY_CATALOG_FILTER, category: "Coffee" }).map((r) => r.id),
+    ).toEqual(["b"]);
     expect(productCategories(rows)).toEqual(["Coffee", "Instant Noodles"]);
   });
 
@@ -184,5 +204,33 @@ describe("admin catalog filtering", () => {
     expect(isProductReady(row({ price: 0 }))).toBe(false);
     expect(isProductReady(row({ stock: 0 }))).toBe(false);
     expect(isProductReady(row({}))).toBe(true);
+  });
+});
+
+describe("storefront availability", () => {
+  it("blocks new orders while the shop is paused", () => {
+    const paused = { ...DEFAULT_STORE_SETTINGS, retailEnabled: true, acceptingOrders: false };
+    expect(
+      checkoutProblem(
+        { fulfillment: "pickup", payment: "cash", address: "", notes: "" },
+        10,
+        paused,
+        0,
+        1,
+      ),
+    ).toMatch(/temporarily closed/);
+    expect(
+      checkoutProblem(
+        { fulfillment: "pickup", payment: "cash", address: "", notes: "" },
+        10,
+        { ...paused, acceptingOrders: true },
+        0,
+        1,
+      ),
+    ).toBeNull();
+  });
+  it("limits the paused note length", () => {
+    expect(storefrontProblem({ pausedNote: "x".repeat(STOREFRONT_NOTE_MAX) })).toBeNull();
+    expect(storefrontProblem({ pausedNote: "x".repeat(STOREFRONT_NOTE_MAX + 1) })).toMatch(/160/);
   });
 });

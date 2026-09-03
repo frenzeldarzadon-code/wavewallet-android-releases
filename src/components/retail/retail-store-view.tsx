@@ -264,6 +264,10 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
         cartCount={count}
         onOpenCart={() => setCartOpen(true)}
         aside={<EcosystemSwitcher mini />}
+        logoPath={settings.logoPath}
+        coverPath={settings.coverPath}
+        acceptingOrders={settings.acceptingOrders}
+        pausedNote={settings.pausedNote}
       />
 
       <section className="space-y-3" aria-label="Products">

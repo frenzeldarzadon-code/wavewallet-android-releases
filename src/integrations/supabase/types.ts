@@ -1916,13 +1916,17 @@ export type Database = {
           points_rule_updated_at: string
           points_rule_version: number
           public_storefront_enabled: boolean
+          retail_accepting_orders: boolean
           retail_cash_enabled: boolean
           retail_cod_enabled: boolean
+          retail_cover_path: string | null
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
           retail_delivery_fee: number
           retail_delivery_split_collector_pct: number
           retail_delivery_split_delivery_pct: number
+          retail_logo_path: string | null
+          retail_paused_note: string | null
           retail_pickup_enabled: boolean
           review_ends_at: string | null
           reviewed_at: string | null
@@ -1982,13 +1986,17 @@ export type Database = {
           points_rule_updated_at?: string
           points_rule_version?: number
           public_storefront_enabled?: boolean
+          retail_accepting_orders?: boolean
           retail_cash_enabled?: boolean
           retail_cod_enabled?: boolean
+          retail_cover_path?: string | null
           retail_credit_enabled?: boolean
           retail_delivery_enabled?: boolean
           retail_delivery_fee?: number
           retail_delivery_split_collector_pct?: number
           retail_delivery_split_delivery_pct?: number
+          retail_logo_path?: string | null
+          retail_paused_note?: string | null
           retail_pickup_enabled?: boolean
           review_ends_at?: string | null
           reviewed_at?: string | null
@@ -2048,13 +2056,17 @@ export type Database = {
           points_rule_updated_at?: string
           points_rule_version?: number
           public_storefront_enabled?: boolean
+          retail_accepting_orders?: boolean
           retail_cash_enabled?: boolean
           retail_cod_enabled?: boolean
+          retail_cover_path?: string | null
           retail_credit_enabled?: boolean
           retail_delivery_enabled?: boolean
           retail_delivery_fee?: number
           retail_delivery_split_collector_pct?: number
           retail_delivery_split_delivery_pct?: number
+          retail_logo_path?: string | null
+          retail_paused_note?: string | null
           retail_pickup_enabled?: boolean
           review_ends_at?: string | null
           reviewed_at?: string | null
@@ -9043,13 +9055,17 @@ export type Database = {
           points_rule_updated_at: string
           points_rule_version: number
           public_storefront_enabled: boolean
+          retail_accepting_orders: boolean
           retail_cash_enabled: boolean
           retail_cod_enabled: boolean
+          retail_cover_path: string | null
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
           retail_delivery_fee: number
           retail_delivery_split_collector_pct: number
           retail_delivery_split_delivery_pct: number
+          retail_logo_path: string | null
+          retail_paused_note: string | null
           retail_pickup_enabled: boolean
           review_ends_at: string | null
           reviewed_at: string | null
@@ -9118,13 +9134,17 @@ export type Database = {
           points_rule_updated_at: string
           points_rule_version: number
           public_storefront_enabled: boolean
+          retail_accepting_orders: boolean
           retail_cash_enabled: boolean
           retail_cod_enabled: boolean
+          retail_cover_path: string | null
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
           retail_delivery_fee: number
           retail_delivery_split_collector_pct: number
           retail_delivery_split_delivery_pct: number
+          retail_logo_path: string | null
+          retail_paused_note: string | null
           retail_pickup_enabled: boolean
           review_ends_at: string | null
           reviewed_at: string | null
@@ -9193,13 +9213,17 @@ export type Database = {
           points_rule_updated_at: string
           points_rule_version: number
           public_storefront_enabled: boolean
+          retail_accepting_orders: boolean
           retail_cash_enabled: boolean
           retail_cod_enabled: boolean
+          retail_cover_path: string | null
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
           retail_delivery_fee: number
           retail_delivery_split_collector_pct: number
           retail_delivery_split_delivery_pct: number
+          retail_logo_path: string | null
+          retail_paused_note: string | null
           retail_pickup_enabled: boolean
           review_ends_at: string | null
           reviewed_at: string | null
@@ -10325,16 +10349,20 @@ export type Database = {
       public_shop_overview: {
         Args: { _slug: string }
         Returns: {
+          accepting_orders: boolean
           admin_name: string
           contact_email: string
           contact_phone: string
+          cover_path: string
           description: string
           facebook_page_url: string
           has_admin: boolean
           id: string
           is_member: boolean
+          logo_path: string
           member_count: number
           name: string
+          paused_note: string
           pending_application: boolean
           product_count: number
           rating_avg: number
@@ -11758,13 +11786,17 @@ export type Database = {
           points_rule_updated_at: string
           points_rule_version: number
           public_storefront_enabled: boolean
+          retail_accepting_orders: boolean
           retail_cash_enabled: boolean
           retail_cod_enabled: boolean
+          retail_cover_path: string | null
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
           retail_delivery_fee: number
           retail_delivery_split_collector_pct: number
           retail_delivery_split_delivery_pct: number
+          retail_logo_path: string | null
+          retail_paused_note: string | null
           retail_pickup_enabled: boolean
           review_ends_at: string | null
           reviewed_at: string | null
@@ -11833,13 +11865,17 @@ export type Database = {
           points_rule_updated_at: string
           points_rule_version: number
           public_storefront_enabled: boolean
+          retail_accepting_orders: boolean
           retail_cash_enabled: boolean
           retail_cod_enabled: boolean
+          retail_cover_path: string | null
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
           retail_delivery_fee: number
           retail_delivery_split_collector_pct: number
           retail_delivery_split_delivery_pct: number
+          retail_logo_path: string | null
+          retail_paused_note: string | null
           retail_pickup_enabled: boolean
           review_ends_at: string | null
           reviewed_at: string | null
@@ -11919,13 +11955,17 @@ export type Database = {
           points_rule_updated_at: string
           points_rule_version: number
           public_storefront_enabled: boolean
+          retail_accepting_orders: boolean
           retail_cash_enabled: boolean
           retail_cod_enabled: boolean
+          retail_cover_path: string | null
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
           retail_delivery_fee: number
           retail_delivery_split_collector_pct: number
           retail_delivery_split_delivery_pct: number
+          retail_logo_path: string | null
+          retail_paused_note: string | null
           retail_pickup_enabled: boolean
           review_ends_at: string | null
           reviewed_at: string | null
@@ -12258,14 +12298,18 @@ export type Database = {
       shop_store_settings: {
         Args: { _ecosystem_id: string }
         Returns: {
+          accepting_orders: boolean
           cash_enabled: boolean
           cod_enabled: boolean
           collector_pct: number
           contact_email: string
+          cover_path: string
           credit_enabled: boolean
           delivery_enabled: boolean
           delivery_fee: number
           delivery_pct: number
+          logo_path: string
+          paused_note: string
           pickup_enabled: boolean
           public_storefront: boolean
           retail_enabled: boolean
@@ -13298,13 +13342,17 @@ export type Database = {
           points_rule_updated_at: string
           points_rule_version: number
           public_storefront_enabled: boolean
+          retail_accepting_orders: boolean
           retail_cash_enabled: boolean
           retail_cod_enabled: boolean
+          retail_cover_path: string | null
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
           retail_delivery_fee: number
           retail_delivery_split_collector_pct: number
           retail_delivery_split_delivery_pct: number
+          retail_logo_path: string | null
+          retail_paused_note: string | null
           retail_pickup_enabled: boolean
           review_ends_at: string | null
           reviewed_at: string | null
@@ -13378,13 +13426,17 @@ export type Database = {
           points_rule_updated_at: string
           points_rule_version: number
           public_storefront_enabled: boolean
+          retail_accepting_orders: boolean
           retail_cash_enabled: boolean
           retail_cod_enabled: boolean
+          retail_cover_path: string | null
           retail_credit_enabled: boolean
           retail_delivery_enabled: boolean
           retail_delivery_fee: number
           retail_delivery_split_collector_pct: number
           retail_delivery_split_delivery_pct: number
+          retail_logo_path: string | null
+          retail_paused_note: string | null
           retail_pickup_enabled: boolean
           review_ends_at: string | null
           reviewed_at: string | null
@@ -13507,6 +13559,18 @@ export type Database = {
           _delivery_fee: number
           _delivery_pct: number
           _ecosystem_id: string
+        }
+        Returns: undefined
+      }
+      update_retail_storefront: {
+        Args: {
+          _accepting_orders?: boolean
+          _clear_cover?: boolean
+          _clear_logo?: boolean
+          _cover_path?: string
+          _ecosystem_id: string
+          _logo_path?: string
+          _paused_note?: string
         }
         Returns: undefined
       }
