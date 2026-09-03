@@ -62,6 +62,17 @@ export function ProfilePage() {
   const [removePhoto, setRemovePhoto] = useState(false);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverCrop, setCoverCrop] = useState<{ image: HTMLImageElement; crop: CropRect } | null>(null);
+  // Signed URL of the cover already saved, so the editor never shows a blank block.
+  const [currentCoverUrl, setCurrentCoverUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    void avatarUrl(profile?.cover_path).then((url) => {
+      if (active) setCurrentCoverUrl(url);
+    });
+    return () => {
+      active = false;
+    };
+  }, [profile?.cover_path]);
 
   const userId = account?.id ?? null;
   // Existing username sign-in, if the member set one. Passwords are never read back.
