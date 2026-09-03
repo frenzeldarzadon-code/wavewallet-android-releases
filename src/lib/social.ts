@@ -861,6 +861,30 @@ export async function deleteSocialImage(path?: string | null): Promise<void> {
   await supabase.storage.from(SOCIAL_IMAGE_BUCKET).remove([path]);
 }
 
+export function validateSocialVideo(file: File): string | null {
+  return validateVideoFile(file);
+}
+
+/**
+ * Uploads a short video next to the member's photos: same private bucket, same
+ * `${shop}/${member}/` folder, so the existing storage policies apply unchanged.
+ * Videos are stored as uploaded (no transcoding) and capped at 25 MB.
+ */
+export async function uploadSocialVideo(input: {
+  ecosystemId: string;
+  userId: string;
+  file: File;
+}): Promise<string> {
+  const problem = validateSocialVideo(input.file);
+  if (problem) throw new Error(problem);
+  const path = `${input.ecosystemId}/${input.userId}/${crypto.randomUUID()}.${videoExtension(input.file.type)}`;
+  const { error } = await supabase.storage
+    .from(SOCIAL_IMAGE_BUCKET)
+    .upload(path, input.file, { contentType: input.file.type, upsert: false });
+  if (error) throw new Error(error.message);
+  return path;
+}
+
 const urlCache = new Map<string, { url: string; expires: number }>();
 
 export async function socialImageUrl(path?: string | null): Promise<string | null> {
