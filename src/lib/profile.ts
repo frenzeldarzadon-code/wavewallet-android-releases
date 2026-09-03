@@ -7,7 +7,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
-import { AVATAR_TARGET, REWARD_TARGET, optimizeImage, optimizedName } from "@/lib/image-optimize";
+import { AVATAR_TARGET, PROFILE_COVER_TARGET, optimizeImage, optimizedName } from "@/lib/image-optimize";
 
 export const AVATAR_BUCKET = "avatars";
 
