@@ -7,3 +7,4 @@
 - [x] /universe/search and /universe/wallet (WalletCenter scope="universe")
 - [x] Home quick-start, profile public-identity card
 - [x] Typecheck, 1,256 tests, browser check
+- [x] Premium Universe UX/UI refinement

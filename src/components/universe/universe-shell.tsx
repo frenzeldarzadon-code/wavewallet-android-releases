@@ -181,9 +181,9 @@ export function UniverseShell({
         </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-6xl gap-6 px-0 sm:px-4 lg:gap-8">
+      <div className="mx-auto flex w-full max-w-[1400px] gap-5 px-0 sm:px-4 xl:gap-7">
         {/* Left rail — full navigation */}
-        <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col py-5 lg:flex xl:w-64">
+        <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col py-5 lg:flex xl:w-60">
           <Link to="/universe" className="mb-5 flex items-center gap-2.5 px-3">
             <span className="flex size-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-[var(--shadow-card)]">
               <Sparkles className="size-5" />
@@ -194,16 +194,16 @@ export function UniverseShell({
             </span>
           </Link>
 
-          <nav aria-label="Universe navigation" className="flex flex-col gap-1">
+          <nav aria-label="Universe navigation" className="flex flex-col gap-0.5">
             {railItems.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
                 aria-current={active(item.to) ? "page" : undefined}
                 className={cn(
-                  "group flex items-center gap-4 rounded-full px-4 py-2.5 text-[15px] transition-colors",
+                    "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] transition-colors",
                   active(item.to)
-                    ? "font-bold text-foreground"
+                    ? "bg-brand-soft font-bold text-primary"
                     : "font-medium text-muted-foreground hover:bg-accent/60 hover:text-foreground",
                 )}
               >
@@ -216,7 +216,7 @@ export function UniverseShell({
             ))}
           </nav>
 
-          <Button asChild className="mt-4 h-11 rounded-full text-[15px] font-semibold">
+          <Button asChild className="mt-4 h-11 rounded-lg text-[15px] font-semibold">
             <Link to="/universe/search">
               <Search className="size-4" /> Find vouchers & sellers
             </Link>
@@ -227,7 +227,7 @@ export function UniverseShell({
               asChild
               variant="outline"
               size="sm"
-              className="w-full justify-start gap-2 rounded-full"
+              className="w-full justify-start gap-2 rounded-lg"
             >
               <Link to={homeFor(account.role)}>
                 <Store className="size-4" /> My shop console
@@ -235,7 +235,7 @@ export function UniverseShell({
             </Button>
             <Link
               to="/universe/profile"
-              className="flex items-center gap-3 rounded-full px-3 py-2 transition-colors hover:bg-accent/60"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent/60"
             >
               <MemberAvatar path={identity.avatar} name={account.name} className="size-9" />
               <span className="min-w-0 flex-1 leading-tight">
@@ -273,10 +273,10 @@ export function UniverseShell({
         </main>
 
         {/* Right rail — primary destinations */}
-        <aside className="sticky top-0 hidden h-screen w-80 shrink-0 flex-col gap-4 overflow-y-auto py-5 lg:flex">
+        <aside className="sticky top-0 hidden h-screen w-72 shrink-0 flex-col gap-4 overflow-y-auto py-5 xl:flex">
           <section
             aria-label="Primary destinations"
-            className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--shadow-card)]"
+            className="overflow-hidden rounded-lg border border-border bg-card shadow-[var(--shadow-card)]"
           >
             <div className="border-b border-border px-4 py-3">
               <p className="text-sm font-bold tracking-tight">Start here</p>
@@ -297,7 +297,7 @@ export function UniverseShell({
                   >
                     <span
                       className={cn(
-                        "flex size-10 shrink-0 items-center justify-center rounded-xl",
+                         "flex size-10 shrink-0 items-center justify-center rounded-lg",
                         active(p.to)
                           ? "bg-primary text-primary-foreground"
                           : "bg-brand-soft text-primary",
@@ -318,7 +318,7 @@ export function UniverseShell({
             </ul>
           </section>
 
-          <section className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
+          <section className="rounded-lg border border-border bg-card p-4 shadow-[var(--shadow-card)]">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Universe wallet
             </p>
@@ -329,14 +329,14 @@ export function UniverseShell({
               One global balance for vouchers from any Universe seller. Posting, replies, likes and
               messages are always free.
             </p>
-            <Button asChild size="sm" variant="outline" className="mt-3 w-full rounded-full">
+            <Button asChild size="sm" variant="outline" className="mt-3 w-full rounded-lg">
               <Link to="/universe/wallet">
                 Open Wallet Center <ArrowRight className="size-4" />
               </Link>
             </Button>
           </section>
 
-          <section className="rounded-2xl border border-border bg-card shadow-[var(--shadow-card)]">
+          <section className="rounded-lg border border-border bg-card shadow-[var(--shadow-card)]">
             <p className="px-4 pt-3 text-sm font-bold tracking-tight">Explore</p>
             <ul className="py-1 text-sm">
               {[

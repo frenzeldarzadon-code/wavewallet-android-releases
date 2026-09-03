@@ -74,13 +74,14 @@ function UniverseMemberProfile() {
             description={`Nobody in the Universe uses ${displayHandle(handle)}.`}
           />
         ) : (
-          <Card className="shadow-[var(--shadow-card)]">
+          <Card className="overflow-hidden rounded-lg shadow-[var(--shadow-card)]">
+            <div className="h-16 bg-brand-soft" />
             <CardContent className="space-y-3 py-5">
-              <div className="flex items-center gap-3">
+              <div className="-mt-12 grid grid-cols-[auto_minmax(0,1fr)] items-end gap-3">
                 <MemberAvatar
                   path={profile.avatar_path}
                   name={profile.full_name}
-                  className="size-16"
+                  className="size-20 border-4 border-card"
                 />
                 <div className="min-w-0">
                   <h1 className="truncate text-lg font-semibold">{profile.full_name}</h1>
@@ -106,10 +107,6 @@ function UniverseMemberProfile() {
               ) : (
                 <>
                   {profile.bio ? <p className="text-sm">{profile.bio}</p> : null}
-                  <p className="text-xs text-muted-foreground">
-                    Public profiles show identity only. Wallets, coins, earnings, shop history and
-                    private messages are never shown here.
-                  </p>
                 </>
               )}
               {!profile.is_platform &&
@@ -119,7 +116,7 @@ function UniverseMemberProfile() {
                 <RelationshipActions userId={profile.user_id} />
               ) : null}
 
-              <Button asChild variant="outline" size="sm">
+               <Button asChild variant="outline" size="sm" className="rounded-md">
                 <Link to="/universe">Back to the feed</Link>
               </Button>
             </CardContent>
