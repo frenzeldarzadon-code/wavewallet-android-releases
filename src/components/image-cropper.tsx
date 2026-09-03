@@ -362,7 +362,7 @@ export function ImageCropper({
         <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/40 p-2.5">
           <CropResultPreview
             image={image}
-            src={previewUrl ?? undefined}
+            src={previewUrl ?? image.src}
             crop={crop}
             aspect={aspect}
             circular={circular}
@@ -371,7 +371,7 @@ export function ImageCropper({
           {circular ? (
             <CropResultPreview
               image={image}
-              src={previewUrl ?? undefined}
+              src={previewUrl ?? image.src}
               crop={crop}
               aspect={aspect}
               circular
