@@ -179,12 +179,6 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                     {p.description ? (
                       <p className="text-xs text-muted-foreground">{p.description}</p>
                     ) : null}
-                    {(p.wholesale_price ?? 0) > 0 && (p.wholesale_min_qty ?? 0) > 0 ? (
-                      <p className="text-[11px] font-medium text-success">
-                        {credits(p.wholesale_price ?? 0)} each from {p.wholesale_min_qty}{" "}
-                        {p.unit ?? "piece"}s
-                      </p>
-                    ) : null}
                     <RatingStars avg={p.rating_avg} count={p.rating_count} />
                     <div className="flex items-center justify-between gap-2 pt-1">
                       <p className="text-sm font-semibold text-primary">{credits(p.price)}</p>
