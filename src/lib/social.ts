@@ -16,6 +16,7 @@ import {
   type CropRect,
   type ImageTarget,
 } from "@/lib/image-optimize";
+import { validateVideoFile, videoExtension, type PostMeta } from "@/lib/post-meta";
 
 export const SOCIAL_IMAGE_BUCKET = "social-images";
 export const MAX_SOCIAL_IMAGE_BYTES = MAX_UPLOAD_BYTES;
