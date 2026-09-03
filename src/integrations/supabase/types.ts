@@ -4853,6 +4853,7 @@ export type Database = {
           cashback_recipient_id: string | null
           cashback_total: number
           chat_thread_id: string | null
+          client_ref: string | null
           cod_actual_cash: number | null
           cod_cash_received_at: string | null
           cod_discrepancy: boolean
@@ -4909,6 +4910,7 @@ export type Database = {
           cashback_recipient_id?: string | null
           cashback_total?: number
           chat_thread_id?: string | null
+          client_ref?: string | null
           cod_actual_cash?: number | null
           cod_cash_received_at?: string | null
           cod_discrepancy?: boolean
@@ -4965,6 +4967,7 @@ export type Database = {
           cashback_recipient_id?: string | null
           cashback_total?: number
           chat_thread_id?: string | null
+          client_ref?: string | null
           cod_actual_cash?: number | null
           cod_cash_received_at?: string | null
           cod_discrepancy?: boolean
@@ -11059,6 +11062,7 @@ export type Database = {
       retail_place_order: {
         Args: {
           _address?: string
+          _client_ref?: string
           _ecosystem_id: string
           _fulfillment: string
           _items: Json
