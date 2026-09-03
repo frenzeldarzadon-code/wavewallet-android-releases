@@ -110,9 +110,10 @@ BEGIN
   ASSERT (SELECT balance FROM public.credit_accounts WHERE id = _ag) = _adm_bal + 100.00, 'admin +100';
 
   -- ---------- 5. Voucher Shop chain unchanged (subreseller still participates) ----------
-  SELECT array_agg(role ORDER BY level) INTO _chain_roles
-    FROM public.cashback_chain(_sub, _u);
-  ASSERT _chain_roles IS NOT NULL AND 'subreseller' = ANY(_chain_roles), 'voucher cashback_chain still includes the subreseller';
+  ASSERT EXISTS (SELECT 1 FROM public.cashback_chain(_sub, _u) WHERE recipient_id = _sub),
+         'voucher cashback_chain still pays the subreseller';
+  ASSERT EXISTS (SELECT 1 FROM public.cashback_chain(_sub, _u) WHERE recipient_id = _res),
+         'voucher cashback_chain still pays the reseller upline';
   ASSERT (SELECT count(*) FROM public.sale_commissions) = _comm_before, 'Retail never touched sale_commissions';
 
   RAISE EXCEPTION 'RETAIL_R3_NO_SUBRESELLER_PASSED';
