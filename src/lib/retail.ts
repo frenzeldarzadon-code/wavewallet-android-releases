@@ -411,6 +411,8 @@ export async function fetchAllRetailProducts(ecosystemId: string): Promise<Retai
     price: Number(p.price),
     wholesale_price: Number(p.wholesale_price ?? 0),
     wholesale_min_qty: Number(p.wholesale_min_qty ?? 0),
+    cashback_mode: (p.cashback_mode ?? "disabled") as RetailCashbackMode,
+    cashback_value: Number(p.cashback_value ?? 0),
     rating_avg: 0,
     rating_count: 0,
   }));
