@@ -22,7 +22,7 @@
 - [x] Typecheck + Vitest 120 files / 1293 tests green; residue check clean
 - [ ] Publish (awaiting explicit instruction)
 
-## Universe home/profile/messenger/storefront UX revision — IN PROGRESS
+## Universe home/profile/messenger/storefront UX revision — COMPLETE (UNPUBLISHED)
 - [x] Discover-first Home with real ranked Voucher/Retail shops and products
 - [x] Mobile hamburger for secondary navigation; retain useful bottom navigation
 - [x] Immediately typeable inline post composer using existing post flow
@@ -30,7 +30,7 @@
 - [x] Privacy-aware member presence for Messenger
 - [x] Profile cover upload/display using existing identity storage/security pattern
 - [x] Shop-scoped Retail Storefront Design entry and theme controls
-- [ ] Mobile/desktop, security, financial regression, and residue verification
+- [x] Mobile/desktop, security, financial regression, and residue verification
 - [ ] Publish only if explicitly requested
 
 - [x] Direction A — Market Pulse approved; Color A / Type A / Discover First locked
