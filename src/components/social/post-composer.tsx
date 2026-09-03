@@ -82,6 +82,7 @@ export function PostComposer({
   userId,
   ownShopName,
   onPosted,
+  initialBody = "",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -92,6 +93,7 @@ export function PostComposer({
   pointsBalance?: number;
   ownShopName: string;
   onPosted: () => Promise<void> | void;
+  initialBody?: string;
 }) {
   const session = useSession();
   const authorName = session.account?.name ?? "You";
@@ -109,10 +111,11 @@ export function PostComposer({
 
   useEffect(() => {
     if (!open) return;
+    setBody(initialBody);
     void fetchTargetShops()
       .then(setShops)
       .catch((e: Error) => toast.error("Could not load your shops", { description: e.message }));
-  }, [open]);
+  }, [open, initialBody]);
 
   const promotionAvailable = state.promotion_enabled && tiers.length > 0;
   const tier = useMemo(() => tiers.find((t) => t.id === tierId) ?? null, [tiers, tierId]);

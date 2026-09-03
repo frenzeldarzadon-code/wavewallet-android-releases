@@ -7,7 +7,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
-import { AVATAR_TARGET, optimizeImage, optimizedName } from "@/lib/image-optimize";
+import { AVATAR_TARGET, REWARD_TARGET, optimizeImage, optimizedName } from "@/lib/image-optimize";
 
 export const AVATAR_BUCKET = "avatars";
 
@@ -75,6 +75,7 @@ export interface MyProfile {
   full_name: string;
   handle: string | null;
   avatar_path: string | null;
+  cover_path: string | null;
   email: string;
   phone: string;
   bio: string | null;
@@ -92,7 +93,7 @@ export async function fetchMyProfile(userId: string): Promise<MyProfile | null> 
   const { data, error } = await supabase
     .from("profiles")
     .select(
-      "id, full_name, handle, avatar_path, email, phone, bio, preferences, joined_at, province, city_municipality, barangay, street, house_number",
+      "id, full_name, handle, avatar_path, cover_path, email, phone, bio, preferences, joined_at, province, city_municipality, barangay, street, house_number",
     )
     .eq("id", userId)
     .maybeSingle();
@@ -139,6 +140,27 @@ export async function uploadAvatar(input: {
 export async function deleteAvatar(path?: string | null): Promise<void> {
   if (!path) return;
   await supabase.storage.from(AVATAR_BUCKET).remove([path]);
+}
+
+export async function uploadProfileCover(input: {
+  ecosystemId: string | null;
+  userId: string;
+  source: HTMLImageElement;
+  crop: { x: number; y: number; width: number; height: number };
+  previousPath?: string | null;
+}): Promise<string> {
+  const { blob, mime } = await optimizeImage(input.source, REWARD_TARGET, input.crop);
+  const folder = input.ecosystemId || PLATFORM_AVATAR_FOLDER;
+  const path = `${folder}/${input.userId}/covers/${optimizedName(crypto.randomUUID(), mime)}`;
+  const { error } = await supabase.storage.from(AVATAR_BUCKET).upload(path, blob, { contentType: mime, upsert: false });
+  if (error) throw new Error(error.message);
+  if (input.previousPath && input.previousPath !== path) await deleteAvatar(input.previousPath);
+  return path;
+}
+
+export async function updateOwnProfileCover(path?: string | null): Promise<void> {
+  const { error } = await supabase.rpc("update_own_profile_cover", path ? { _cover_path: path } : { _clear_cover: true });
+  if (error) throw new Error(error.message);
 }
 
 const urlCache = new Map<string, { url: string; expires: number }>();

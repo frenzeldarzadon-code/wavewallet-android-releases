@@ -149,6 +149,7 @@ export interface UniverseProfile {
   full_name: string;
   handle: string | null;
   avatar_path: string | null;
+  cover_path: string | null;
   bio: string | null;
   joined_at: string;
   /**
@@ -253,6 +254,7 @@ export interface DmThread {
   preview: string | null;
   unread: number;
   blocked: boolean;
+  member_online: boolean;
   /** `direct` = one-to-one; `order` = Retail order-linked group chat (R6). */
   kind: "direct" | "order";
   order_id: string | null;
@@ -734,6 +736,7 @@ export async function fetchThreads(): Promise<DmThread[]> {
     preview: (t["preview"] as string | null) ?? null,
     unread: Number(t["unread"] ?? 0),
     blocked: !!t["blocked"],
+    member_online: !!t["member_online"],
     kind: t["kind"] === "order" ? "order" : "direct",
     order_id: (t["order_id"] as string | null) ?? null,
     title: (t["title"] as string | null) ?? null,

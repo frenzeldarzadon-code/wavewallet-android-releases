@@ -22,13 +22,15 @@
 - [x] Typecheck + Vitest 120 files / 1293 tests green; residue check clean
 - [ ] Publish (awaiting explicit instruction)
 
-## Universe home/profile/messenger/storefront UX revision — IN PROGRESS
-- [ ] Discover-first Home with real ranked Voucher/Retail shops and products
-- [ ] Mobile hamburger for secondary navigation; retain useful bottom navigation
-- [ ] Immediately typeable inline post composer using existing post flow
-- [ ] Friend-request/member access from menu
-- [ ] Privacy-aware member presence for Messenger
-- [ ] Profile cover upload/display using existing identity storage/security pattern
-- [ ] Shop-scoped Retail Storefront Design entry and theme controls
-- [ ] Mobile/desktop, security, financial regression, and residue verification
+## Universe home/profile/messenger/storefront UX revision — COMPLETE (UNPUBLISHED)
+- [x] Discover-first Home with real ranked Voucher/Retail shops and products
+- [x] Mobile hamburger for secondary navigation; retain useful bottom navigation
+- [x] Immediately typeable inline post composer using existing post flow
+- [x] Friend-request/member access from menu
+- [x] Privacy-aware member presence for Messenger
+- [x] Profile cover upload/display using existing identity storage/security pattern
+- [x] Shop-scoped Retail Storefront Design entry and theme controls
+- [x] Mobile/desktop, security, financial regression, and residue verification
 - [ ] Publish only if explicitly requested
+
+- [x] Direction A — Market Pulse approved; Color A / Type A / Discover First locked

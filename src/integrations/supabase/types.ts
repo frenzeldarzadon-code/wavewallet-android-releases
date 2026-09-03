@@ -1928,6 +1928,7 @@ export type Database = {
           retail_logo_path: string | null
           retail_paused_note: string | null
           retail_pickup_enabled: boolean
+          retail_storefront_theme: string
           review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -1998,6 +1999,7 @@ export type Database = {
           retail_logo_path?: string | null
           retail_paused_note?: string | null
           retail_pickup_enabled?: boolean
+          retail_storefront_theme?: string
           review_ends_at?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -2068,6 +2070,7 @@ export type Database = {
           retail_logo_path?: string | null
           retail_paused_note?: string | null
           retail_pickup_enabled?: boolean
+          retail_storefront_theme?: string
           review_ends_at?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -2688,6 +2691,32 @@ export type Database = {
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_presence: {
+        Row: {
+          last_seen_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          last_seen_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          last_seen_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_presence_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -4551,6 +4580,7 @@ export type Database = {
           barangay: string | null
           bio: string | null
           city_municipality: string | null
+          cover_path: string | null
           created_at: string
           deleted_at: string | null
           deleted_by: string | null
@@ -4580,6 +4610,7 @@ export type Database = {
           barangay?: string | null
           bio?: string | null
           city_municipality?: string | null
+          cover_path?: string | null
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
@@ -4609,6 +4640,7 @@ export type Database = {
           barangay?: string | null
           bio?: string | null
           city_municipality?: string | null
+          cover_path?: string | null
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
@@ -9070,6 +9102,7 @@ export type Database = {
           retail_logo_path: string | null
           retail_paused_note: string | null
           retail_pickup_enabled: boolean
+          retail_storefront_theme: string
           review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -9149,6 +9182,7 @@ export type Database = {
           retail_logo_path: string | null
           retail_paused_note: string | null
           retail_pickup_enabled: boolean
+          retail_storefront_theme: string
           review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -9228,6 +9262,7 @@ export type Database = {
           retail_logo_path: string | null
           retail_paused_note: string | null
           retail_pickup_enabled: boolean
+          retail_storefront_theme: string
           review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -9351,6 +9386,7 @@ export type Database = {
           member_handle: string
           member_id: string
           member_name: string
+          member_online: boolean
           order_id: string
           participants: Json
           preview: string
@@ -10374,6 +10410,7 @@ export type Database = {
           sales_count: number
           slug: string
           storefront_public: boolean
+          storefront_theme: string
           voucher_enabled: boolean
         }[]
       }
@@ -11802,6 +11839,7 @@ export type Database = {
           retail_logo_path: string | null
           retail_paused_note: string | null
           retail_pickup_enabled: boolean
+          retail_storefront_theme: string
           review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -11881,6 +11919,7 @@ export type Database = {
           retail_logo_path: string | null
           retail_paused_note: string | null
           retail_pickup_enabled: boolean
+          retail_storefront_theme: string
           review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -11971,6 +12010,7 @@ export type Database = {
           retail_logo_path: string | null
           retail_paused_note: string | null
           retail_pickup_enabled: boolean
+          retail_storefront_theme: string
           review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -12317,6 +12357,7 @@ export type Database = {
           pickup_enabled: boolean
           public_storefront: boolean
           retail_enabled: boolean
+          storefront_theme: string
           voucher_enabled: boolean
         }[]
       }
@@ -13062,6 +13103,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      touch_member_presence: { Args: never; Returns: undefined }
       transfer_credits: {
         Args: { _amount: number; _note?: string; _recipient_id: string }
         Returns: string
@@ -13112,11 +13154,30 @@ export type Database = {
           province: string
         }[]
       }
+      universe_market_pulse: {
+        Args: { _limit?: number }
+        Returns: {
+          commerce_kind: string
+          image_path: string
+          item_id: string
+          item_name: string
+          price: number
+          rank: number
+          rating_avg: number
+          rating_count: number
+          sales_count: number
+          section: string
+          shop_id: string
+          shop_name: string
+          shop_slug: string
+        }[]
+      }
       universe_profile: {
         Args: { _handle: string }
         Returns: {
           avatar_path: string
           bio: string
+          cover_path: string
           full_name: string
           handle: string
           is_platform: boolean
@@ -13358,6 +13419,7 @@ export type Database = {
           retail_logo_path: string | null
           retail_paused_note: string | null
           retail_pickup_enabled: boolean
+          retail_storefront_theme: string
           review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -13442,6 +13504,7 @@ export type Database = {
           retail_logo_path: string | null
           retail_paused_note: string | null
           retail_pickup_enabled: boolean
+          retail_storefront_theme: string
           review_ends_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -13500,6 +13563,10 @@ export type Database = {
           _street?: string
         }
         Returns: Json
+      }
+      update_own_profile_cover: {
+        Args: { _clear_cover?: boolean; _cover_path?: string }
+        Returns: undefined
       }
       update_platform_settings: {
         Args: {
@@ -13575,6 +13642,7 @@ export type Database = {
           _ecosystem_id: string
           _logo_path?: string
           _paused_note?: string
+          _theme?: string
         }
         Returns: undefined
       }

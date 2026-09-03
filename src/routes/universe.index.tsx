@@ -3,6 +3,7 @@ import { SocialPage } from "@/components/social/social-page";
 import { UniverseShell } from "@/components/universe/universe-shell";
 import { ShopInvitationsCard } from "@/components/universe/shop-invitations-card";
 import { UniverseHomeHero } from "@/components/universe/universe-home-hero";
+import { MarketPulse } from "@/components/universe/market-pulse";
 
 export const Route = createFileRoute("/universe/")({
   head: () => ({
@@ -30,6 +31,7 @@ function UniverseFeed() {
     <UniverseShell title="Home" subtitle="Universe community feed">
       <div className="space-y-4">
         <UniverseHomeHero />
+        <MarketPulse />
         <div className="px-4 sm:px-0">
           <ShopInvitationsCard />
         </div>

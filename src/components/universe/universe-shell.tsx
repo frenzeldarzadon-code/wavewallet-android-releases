@@ -18,6 +18,7 @@ import {
   Home,
   LogOut,
   Mail,
+  Menu,
   Search,
   Sparkles,
   Store,
@@ -27,6 +28,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { MemberAvatar } from "@/components/member-avatar";
 import { cn } from "@/lib/utils";
 import { homeFor, useSession } from "@/lib/session";
@@ -156,6 +158,27 @@ export function UniverseShell({
           <Link to="/universe/profile" aria-label="Your profile">
             <MemberAvatar path={identity.avatar} name={account.name} className="size-9" />
           </Link>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Open menu"><Menu className="size-5" /></Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[86vw] max-w-sm p-0">
+              <SheetHeader className="border-b border-border p-5 text-left">
+                <SheetTitle>Universe</SheetTitle>
+              </SheetHeader>
+              <nav aria-label="Universe menu" className="space-y-1 p-3">
+                {railItems.map((item) => (
+                  <Link key={item.to} to={item.to} className={cn("flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium", active(item.to) ? "bg-brand-soft text-primary" : "text-foreground hover:bg-accent")}>
+                    <item.icon className="size-5" /> {item.label}
+                    {item.to === "/universe/notifications" ? <Badge count={unread} className="static ml-auto" /> : null}
+                  </Link>
+                ))}
+                <div className="my-3 border-t border-border" />
+                <Link to={homeFor(account.role)} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium hover:bg-accent"><Store className="size-5" /> My shop console</Link>
+                <Button variant="ghost" className="w-full justify-start text-destructive" onClick={() => session.signOut()}><LogOut className="size-5" /> Sign out</Button>
+              </nav>
+            </SheetContent>
+          </Sheet>
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-bold leading-tight tracking-tight">{title}</p>
             {subtitle ? <p className="truncate text-xs text-muted-foreground">{subtitle}</p> : null}

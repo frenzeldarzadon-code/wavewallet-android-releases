@@ -24,6 +24,8 @@ import {
   profileSaveIssue,
   updateOwnProfile,
   uploadAvatar,
+  uploadProfileCover,
+  updateOwnProfileCover,
   validateHandle,
   type MyProfile,
 } from "@/lib/profile";
@@ -58,6 +60,8 @@ export function ProfilePage() {
   const [file, setFile] = useState<File | null>(null);
   const [crop, setCrop] = useState<{ image: HTMLImageElement; crop: CropRect } | null>(null);
   const [removePhoto, setRemovePhoto] = useState(false);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverCrop, setCoverCrop] = useState<{ image: HTMLImageElement; crop: CropRect } | null>(null);
 
   const userId = account?.id ?? null;
   // Existing username sign-in, if the member set one. Passwords are never read back.
@@ -160,6 +164,7 @@ export function ProfilePage() {
     setBusy(true);
     try {
       let avatarPath: string | null | undefined;
+      let coverPath: string | null | undefined;
       if (file && crop) {
         avatarPath = await uploadAvatar({
           ecosystemId: ecosystemDbId,
@@ -168,6 +173,10 @@ export function ProfilePage() {
           crop: crop.crop,
           previousPath: profile.avatar_path,
         });
+      }
+      if (coverFile && coverCrop) {
+        coverPath = await uploadProfileCover({ ecosystemId: ecosystemDbId, userId, source: coverCrop.image, crop: coverCrop.crop, previousPath: profile.cover_path });
+        await updateOwnProfileCover(coverPath);
       }
       const storedStoreName = storefrontNameOf(profile.preferences);
       await updateOwnProfile({
@@ -192,6 +201,8 @@ export function ProfilePage() {
       setFile(null);
       setCrop(null);
       setRemovePhoto(false);
+      setCoverFile(null);
+      setCoverCrop(null);
       toast.success("Profile updated");
       await load();
       reload();
@@ -244,6 +255,12 @@ export function ProfilePage() {
       >
         <Card>
           <CardContent className="space-y-5 p-4 sm:p-5">
+            <div className="space-y-2">
+              <Label>Profile cover</Label>
+              {coverFile ? <ImageCropper file={coverFile} aspect={16 / 7} onChange={setCoverCrop} /> : <div className="h-28 rounded-lg bg-brand-soft" />}
+              <Button type="button" variant="outline" className="h-11 w-full" onClick={() => document.getElementById("cover-input")?.click()}><ImagePlus className="size-4" /> {profile?.cover_path ? "Replace cover" : "Add cover"}</Button>
+              <input id="cover-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={(e) => { const picked = e.target.files?.[0] ?? null; if (picked) { const problem = validateImageFile(picked); if (problem) toast.error(problem); else setCoverFile(picked); } e.target.value = ""; }} />
+            </div>
             <div className="space-y-2">
               <Label>Profile photo</Label>
               {file ? (

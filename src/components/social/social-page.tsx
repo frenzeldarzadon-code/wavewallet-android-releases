@@ -137,6 +137,7 @@ export function SocialPage() {
 
   // composer
   const [composerOpen, setComposerOpen] = useState(false);
+  const [quickPost, setQuickPost] = useState("");
 
   // reporting
   const [report, setReport] = useState<{ type: "post" | "comment"; id: string } | null>(null);
@@ -232,26 +233,22 @@ export function SocialPage() {
   return (
     <>
       <div className="px-4 sm:px-0">
-        <button
-          type="button"
-          disabled={!state}
-          onClick={() => setComposerOpen(true)}
-          className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-left shadow-[var(--shadow-card)] transition-colors hover:bg-muted/40 disabled:opacity-60"
-          aria-label="Create a post"
-        >
+        <div className="flex w-full items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 shadow-[var(--shadow-card)]">
           <MemberAvatar name={account.name} className="size-10" />
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-base text-muted-foreground">
-              What's happening in your area?
-            </span>
-            <span className="block text-xs text-muted-foreground/80">
-              Free to post · photos, @mentions and promotions included
-            </span>
-          </span>
-          <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground">
-            <Send className="size-4" /> Post
-          </span>
-        </button>
+          <Input
+            value={quickPost}
+            onChange={(event) => setQuickPost(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && quickPost.trim()) setComposerOpen(true);
+            }}
+            placeholder="What's happening in your area?"
+            aria-label="Write a post"
+            className="min-w-0 flex-1 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
+          />
+          <Button type="button" size="sm" disabled={!state || !quickPost.trim()} onClick={() => setComposerOpen(true)}>
+            <Send className="size-4" /> <span className="hidden sm:inline">Post</span>
+          </Button>
+        </div>
       </div>
 
       {state ? (
@@ -263,7 +260,11 @@ export function SocialPage() {
           userId={account.id}
           pointsBalance={account.pointsBalance ?? 0}
           ownShopName={session.ecosystem?.name ?? "My shop"}
-          onPosted={refresh}
+          initialBody={quickPost}
+          onPosted={async () => {
+            setQuickPost("");
+            await refresh();
+          }}
         />
       ) : null}
 

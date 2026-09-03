@@ -63,6 +63,7 @@ export interface StoreSettings {
   /** False while the seller has paused NEW orders; placed orders continue. */
   acceptingOrders: boolean;
   pausedNote: string | null;
+  theme: "clear" | "fresh" | "warm";
 }
 
 export const DEFAULT_STORE_SETTINGS: StoreSettings = {
@@ -82,6 +83,7 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   coverPath: null,
   acceptingOrders: true,
   pausedNote: null,
+  theme: "clear",
 };
 
 export interface RetailProduct {
@@ -513,6 +515,7 @@ export async function fetchStoreSettings(ecosystemId: string): Promise<StoreSett
     coverPath: (row["cover_path"] as string | null) ?? null,
     acceptingOrders: row["accepting_orders"] === undefined ? true : !!row["accepting_orders"],
     pausedNote: (row["paused_note"] as string | null) ?? null,
+    theme: (["fresh", "warm"].includes(String(row["theme"])) ? row["theme"] : "clear") as StoreSettings["theme"],
   };
 }
 
@@ -522,7 +525,7 @@ export async function fetchStoreSettings(ecosystemId: string): Promise<StoreSett
 
 export type StorefrontSettings = Pick<
   StoreSettings,
-  "logoPath" | "coverPath" | "acceptingOrders" | "pausedNote"
+  "logoPath" | "coverPath" | "acceptingOrders" | "pausedNote" | "theme"
 >;
 
 export const STOREFRONT_NOTE_MAX = 160;
@@ -582,6 +585,7 @@ export async function saveStorefrontSettings(
     _paused_note: s.pausedNote ?? "",
     _clear_logo: !s.logoPath,
     _clear_cover: !s.coverPath,
+    _theme: s.theme,
   });
   if (error) throw new Error(error.message);
   // Replaced or removed images are deleted so storage does not grow.
