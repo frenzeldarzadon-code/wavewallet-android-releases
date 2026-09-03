@@ -234,3 +234,31 @@ describe("storefront availability", () => {
     expect(storefrontProblem({ pausedNote: "x".repeat(STOREFRONT_NOTE_MAX + 1) })).toMatch(/160/);
   });
 });
+
+describe("seller workspace stages", () => {
+  const base = { payment_method: "cash" as const, cod_settled_at: null, hold_held: false };
+  it("maps the existing state machine onto workspace tabs", () => {
+    expect(orderStage({ ...base, status: "pending", fulfillment_status: "awaiting" })).toBe("new");
+    expect(orderStage({ ...base, status: "approved", fulfillment_status: "accepted" })).toBe("preparing");
+    expect(orderStage({ ...base, status: "approved", fulfillment_status: "preparing" })).toBe("preparing");
+    expect(orderStage({ ...base, status: "approved", fulfillment_status: "ready" })).toBe("ready");
+    expect(orderStage({ ...base, status: "approved", fulfillment_status: "out_for_delivery" })).toBe("in_delivery");
+    expect(orderStage({ ...base, status: "approved", fulfillment_status: "delivered" })).toBe("delivered");
+    expect(orderStage({ ...base, status: "approved", fulfillment_status: "completed" })).toBe("completed");
+    expect(orderStage({ ...base, status: "rejected", fulfillment_status: "closed" })).toBe("closed");
+    expect(orderStage({ ...base, status: "cancelled", fulfillment_status: "closed" })).toBe("closed");
+  });
+  it("keeps a COD order out of Completed until its float is settled", () => {
+    const cod = { ...base, payment_method: "cod" as const, status: "approved" as const, fulfillment_status: "completed" as const };
+    expect(orderStage({ ...cod, hold_held: true })).toBe("delivered");
+    expect(orderStage({ ...cod, cod_settled_at: "2026-09-03T00:00:00Z" })).toBe("completed");
+  });
+  it("builds a timeline from existing timestamps only", () => {
+    const t = orderTimeline({
+      created_at: "2026-09-01T00:00:00Z", status: "approved", fulfillment: "delivery", payment_method: "cod",
+      delivered_at: "2026-09-02T00:00:00Z", completed_at: "2026-09-02T01:00:00Z",
+      cod_cash_received_at: "2026-09-02T02:00:00Z", cod_settled_at: "2026-09-02T02:00:01Z",
+    });
+    expect(t.map((x) => x.label)).toEqual(["Order placed", "Delivered", "Buyer confirmed receipt", "Collector confirmed cash", "Settled"]);
+  });
+});
