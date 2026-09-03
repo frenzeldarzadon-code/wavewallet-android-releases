@@ -4,7 +4,7 @@
  * they belong inside the shop console, isolated per ecosystem.
  */
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Check, Loader2, Plus, Store } from "lucide-react";
+import { Check, Loader2, Plus, Settings2, Store } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
