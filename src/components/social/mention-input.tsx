@@ -1,10 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useImperativeHandle, useRef, useState, type KeyboardEvent, type Ref } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { MemberAvatar } from "@/components/member-avatar";
 import { applyMention, mentionDraft, type MentionDraft } from "@/lib/mentions";
 import { displayHandle } from "@/lib/profile";
 import { searchHandles, type MentionSuggestion } from "@/lib/social";
 import { cn } from "@/lib/utils";
+
+/** Imperative helpers the composer toolbar uses (insert "@" / "#", focus). */
+export interface MentionInputHandle {
+  focus: () => void;
+  /** Inserts text at the caret (adding a leading space when needed) and keeps focus. */
+  insert: (text: string) => void;
+}
 
 /**
  * Textarea with @handle autocomplete. Suggestions come from the database, so
@@ -18,7 +25,12 @@ export function MentionInput({
   rows = 3,
   maxLength,
   className,
+  textareaClassName,
   id,
+  autoFocus,
+  onFocus,
+  onKeyDown,
+  handleRef,
 }: {
   value: string;
   onChange: (next: string) => void;
@@ -26,7 +38,12 @@ export function MentionInput({
   rows?: number;
   maxLength?: number;
   className?: string;
+  textareaClassName?: string;
   id?: string;
+  autoFocus?: boolean;
+  onFocus?: () => void;
+  onKeyDown?: (e: KeyboardEvent<HTMLTextAreaElement>) => void;
+  handleRef?: Ref<MentionInputHandle>;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const [draft, setDraft] = useState<MentionDraft | null>(null);
@@ -47,10 +64,38 @@ export function MentionInput({
     };
   }, [draft]);
 
+  useEffect(() => {
+    if (autoFocus) requestAnimationFrame(() => ref.current?.focus());
+  }, [autoFocus]);
+
   const sync = (next: string, caret: number) => {
     onChange(maxLength ? next.slice(0, maxLength) : next);
     setDraft(mentionDraft(next, caret));
   };
+
+  useImperativeHandle(
+    handleRef,
+    () => ({
+      focus: () => ref.current?.focus(),
+      insert: (text: string) => {
+        const el = ref.current;
+        const start = el?.selectionStart ?? value.length;
+        const end = el?.selectionEnd ?? value.length;
+        const before = value.slice(0, start);
+        const needsSpace = before.length > 0 && !/\s$/.test(before);
+        const inserted = (needsSpace ? " " : "") + text;
+        const next = before + inserted + value.slice(end);
+        const caret = start + inserted.length;
+        sync(next, caret);
+        requestAnimationFrame(() => {
+          el?.focus();
+          el?.setSelectionRange(caret, caret);
+        });
+      },
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [value, maxLength],
+  );
 
   const pick = (handle: string) => {
     if (!draft) return;
@@ -72,13 +117,15 @@ export function MentionInput({
         rows={rows}
         value={value}
         placeholder={placeholder}
+        onFocus={onFocus}
+        onKeyDown={onKeyDown}
         onChange={(e) => sync(e.target.value, e.target.selectionStart ?? e.target.value.length)}
         onKeyUp={(e) => {
           const el = e.currentTarget;
           setDraft(mentionDraft(el.value, el.selectionStart ?? el.value.length));
         }}
         onBlur={() => setTimeout(() => setDraft(null), 150)}
-        className="min-h-11"
+        className={cn("min-h-11", textareaClassName)}
       />
       {draft && suggestions.length > 0 ? (
         <ul className="absolute inset-x-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border border-border bg-popover p-1 shadow-lg">
