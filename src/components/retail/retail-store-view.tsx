@@ -507,7 +507,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
 
           <div className="space-y-2">
             <Label>Payment</Label>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {settings.cashEnabled ? (
                 <Button
                   type="button"
@@ -528,12 +528,44 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                   Shop coins
                 </Button>
               ) : null}
+              {settings.codEnabled && settings.deliveryEnabled && draft.fulfillment === "delivery" ? (
+                <Button
+                  type="button"
+                  variant={draft.payment === "cod" ? "default" : "outline"}
+                  className="flex-1"
+                  disabled={codQuote !== null && !codQuote.available}
+                  title={codQuote && !codQuote.available ? (codQuote.reason ?? undefined) : undefined}
+                  onClick={() => setDraft({ ...draft, payment: "cod" })}
+                >
+                  <Banknote className="size-4" /> Cash on delivery
+                </Button>
+              ) : null}
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              {draft.payment === "credit"
-                ? `${credits(total)} is held from this shop's wallet and returned in full if the order is rejected.`
-                : "Cash orders stay pending until the shop admin confirms them."}
-            </p>
+            {draft.payment === "cod" ? (
+              <div className="space-y-1 rounded-xl border border-primary/30 bg-brand-soft/40 px-3 py-2 text-sm">
+                <div className="flex justify-between gap-2 text-xs text-muted-foreground">
+                  <span>Products</span>
+                  <span>{peso(total)}</span>
+                </div>
+                <div className="flex justify-between gap-2 text-xs text-muted-foreground">
+                  <span>Delivery fee</span>
+                  <span>{codQuote ? peso(codDeliveryFee) : "…"}</span>
+                </div>
+                <div className="flex justify-between gap-2 font-semibold">
+                  <span>You pay in cash</span>
+                  <span>{codQuote ? peso(codTotal) : "…"}</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  No coins are taken from your wallet. Hand the exact amount to the collector on delivery.
+                </p>
+              </div>
+            ) : (
+              <p className="text-[11px] text-muted-foreground">
+                {draft.payment === "credit"
+                  ? `${credits(total)} is held from this shop's wallet and returned in full if the order is rejected.`
+                  : "Cash orders stay pending until the shop admin confirms them."}
+              </p>
+            )}
           </div>
 
           {problem ? <p className="text-xs text-destructive">{problem}</p> : null}
