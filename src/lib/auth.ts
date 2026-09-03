@@ -19,6 +19,7 @@ export interface DbEcosystem {
   id: string;
   name: string;
   slug: string;
+  shop_kind?: string | null;
   description: string | null;
   contact_email: string | null;
   contact_phone: string | null;
@@ -156,20 +157,14 @@ export async function loadAuthContext(): Promise<AuthContext | null> {
   }
 
   const [{ data: credit }, { data: points }, { data: status }] = await Promise.all([
-    // Wallets are per shop: read only the wallet of the ACTIVE shop.
-    ecosystemId
-      ? supabase
-          .from("credit_accounts")
-          .select("balance")
-          .eq("user_id", subjectId)
-          .eq("ecosystem_id", ecosystemId)
-          .maybeSingle()
-      : supabase
-          .from("credit_accounts")
-          .select("balance")
-          .eq("user_id", subjectId)
-          .is("ecosystem_id", null)
-          .maybeSingle(),
+    // The wallet that serves the ACTIVE shop: the database decides — global
+    // Universe wallet for Universe shops, shop wallet for New Generation shops.
+    supabase
+      .rpc("wallet_view", {
+        _user_id: subjectId,
+        ...(ecosystemId ? { _ecosystem_id: ecosystemId } : {}),
+      })
+      .then((r) => ({ data: (r.data as { balance: number }[] | null)?.[0] ?? null })),
     ecosystemId
       ? supabase
           .from("points_accounts")

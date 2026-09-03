@@ -172,6 +172,24 @@ export async function fetchCreditBalance(
 }
 
 /**
+ * Balances of every member of a shop, read from the wallet that actually serves
+ * that shop: the member's global Universe wallet for Universe shops, the
+ * shop-scoped wallet for New Generation shops. Admin/Super Admin only — the
+ * database enforces it. Never read `credit_accounts` by `ecosystem_id` for a
+ * shop roster: a Universe shop's old zeroed shop wallets are not spendable.
+ */
+export async function fetchShopMemberWallets(ecosystemId: string): Promise<Map<string, number>> {
+  const { data, error } = await supabase.rpc("shop_member_wallets", { _ecosystem_id: ecosystemId });
+  if (error) throw new Error(error.message);
+  return new Map(
+    ((data ?? []) as { user_id: string; balance: number }[]).map((r) => [
+      r.user_id,
+      Number(r.balance ?? 0),
+    ]),
+  );
+}
+
+/**
  * Credit movements of the wallet serving this shop. Shop wallets are filtered by
  * shop; the global Universe wallet shows every movement on that wallet (sales
  * of any Universe shop are still tagged with the selling shop).

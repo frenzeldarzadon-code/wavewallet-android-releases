@@ -7,7 +7,7 @@ import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-
 import { CashbackRateDialog, type CashbackTarget } from "@/components/cashback-rate-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
-import { fetchMyVoucherDiscount } from "@/lib/wallet";
+import { fetchMyVoucherDiscount, fetchShopMemberWallets } from "@/lib/wallet";
 import { fetchShopMembers, resellersOf } from "@/lib/shop-members";
 import { peso, roleLabel, shortDate, type Role } from "@/lib/wavewallet";
 
@@ -56,16 +56,16 @@ function AdminResellers() {
     setLoading(true);
     // Membership — not the single profiles.ecosystem_id mirror — decides who
     // belongs to this shop, so a reseller of two shops appears in both.
-    const [members, { data: credits }, { data: sales }] = await Promise.all([
+    const [members, creditOf, { data: sales }] = await Promise.all([
       fetchShopMembers(ecosystemDbId),
-      supabase.from("credit_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
+      // Wallet that serves this shop (global for Universe, shop wallet for New Generation).
+      fetchShopMemberWallets(ecosystemDbId).catch(() => new Map<string, number>()),
       supabase
         .from("voucher_sales")
         .select("reseller_id, sale_price")
         .eq("ecosystem_id", ecosystemDbId),
     ]);
 
-    const creditOf = new Map((credits ?? []).map((c) => [c.user_id, Number(c.balance)]));
     const saleCount = new Map<string, number>();
     const saleValue = new Map<string, number>();
     for (const s of sales ?? []) {

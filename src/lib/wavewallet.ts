@@ -48,6 +48,8 @@ export interface Ecosystem {
   id: string;
   name: string;
   slug: string;
+  /** "universe" (former Legacy shops share the global wallet) or "subscription" (New Generation). */
+  shopKind?: string;
   description: string;
   contactName: string;
   contactPhone: string;

@@ -49,6 +49,7 @@ import {
 import { deleteCustomerAccount } from "@/lib/customer-cleanup.functions";
 import {
   fetchEcosystemRates,
+  fetchShopMemberWallets,
   setSubresellerParent,
   type EcosystemRates,
 } from "@/lib/wallet";
@@ -152,9 +153,10 @@ function AdminCustomers() {
     setLoading(true);
     // Membership decides who belongs to this shop; profiles.ecosystem_id only
     // remembers one shop and would hide every multi-shop member.
-    const [roster, { data: credits }, { data: points }, { data: pending }] = await Promise.all([
+    const [roster, creditOf, { data: points }, { data: pending }] = await Promise.all([
       fetchShopMembers(ecosystemDbId),
-      supabase.from("credit_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
+      // Wallet that serves this shop (global for Universe, shop wallet for New Generation).
+      fetchShopMemberWallets(ecosystemDbId).catch(() => new Map<string, number>()),
       supabase
         .from("points_accounts")
         .select("user_id, balance, held")
@@ -166,7 +168,6 @@ function AdminCustomers() {
         .in("status", ["pending", "approved"]),
     ]);
 
-    const creditOf = new Map((credits ?? []).map((c) => [c.user_id, Number(c.balance)]));
     const pointOf = new Map((points ?? []).map((p) => [p.user_id, Number(p.balance)]));
     const heldOf = new Map((points ?? []).map((p) => [p.user_id, Number(p.held)]));
     const pendingOf = new Map<string, number>();

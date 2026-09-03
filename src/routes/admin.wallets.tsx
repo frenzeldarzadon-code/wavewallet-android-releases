@@ -32,6 +32,7 @@ import {
   adminAdjustCredits,
   adminLoadCredits,
   commissionBreakdown,
+  fetchShopMemberWallets,
   LEDGER_COLUMNS,
   normalizeEntry,
   type CreditEntry,
@@ -86,7 +87,9 @@ interface Member {
 }
 
 function AdminWallets() {
-  const { ecosystemDbId, account } = useSession("admin");
+  const { ecosystemDbId, account, ecosystem } = useSession("admin");
+  /** Universe shops (former Legacy shops) spend the member's global wallet. */
+  const isUniverseShop = ecosystem?.shopKind === "universe";
   /**
    * The platform owner issues credits from the platform mint in EVERY shop:
    * no shop wallet, no source balance, no fee. The database enforces this.
@@ -117,10 +120,12 @@ function AdminWallets() {
     setLoading(true);
     // Shop membership is authoritative: multi-shop members must be loadable
     // from every shop they actually belong to.
-    const [roster, { data: accounts }, { data: pointAccounts }, { data: entries }] =
+    // Balances come from the wallet that serves THIS shop: the global Universe
+    // wallet for Universe shops, the shop wallet for New Generation shops.
+    const [roster, balBy, { data: pointAccounts }, { data: entries }] =
       await Promise.all([
         fetchShopMembers(ecosystemDbId),
-        supabase.from("credit_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
+        fetchShopMemberWallets(ecosystemDbId).catch(() => new Map<string, number>()),
         supabase.from("points_accounts").select("user_id, balance").eq("ecosystem_id", ecosystemDbId),
         supabase
           .from("credit_ledger")
@@ -129,7 +134,6 @@ function AdminWallets() {
           .order("created_at", { ascending: false })
           .limit(60),
       ]);
-    const balBy = new Map((accounts ?? []).map((a) => [a.user_id, Number(a.balance)]));
     const ptsBy = new Map((pointAccounts ?? []).map((a) => [a.user_id, Number(a.balance)]));
     setShopBalance(account?.id ? (balBy.get(account.id) ?? 0) : 0);
     setMembers(
@@ -679,7 +683,7 @@ function AdminWallets() {
                     </>
                   ) : (
                     <>
-                      A positive amount is transferred from your shop wallet ({peso(shopBalance)}) —
+                      A positive amount is transferred from your {isUniverseShop ? "Universe" : "shop"} wallet ({peso(shopBalance)}) —
                       no new credits are created and no commission is charged. {target?.full_name}{" "}
                       receives exactly {peso(Math.max(Number(amount) || 0, 0))}.
                     </>
@@ -689,8 +693,10 @@ function AdminWallets() {
                   <div className="flex gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
                     <AlertTriangle className="mt-0.5 size-4 shrink-0" />
                     <span>
-                      Not enough coins in your shop wallet. Buy a coin allocation from the
-                      platform owner first.
+                      Not enough coins in your {isUniverseShop ? "Universe" : "shop"} wallet.{" "}
+                      {isUniverseShop
+                        ? "Cash in or receive coins into your Universe wallet first."
+                        : "Buy a coin allocation from the platform owner first."}
                     </span>
                   </div>
                 ) : null}
