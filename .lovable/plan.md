@@ -1,24 +1,23 @@
-# Focused Universe UX revision
+# ONE WAVE branding-only rebrand
 
-## Build
-- Replace the Home quick-start card stack with a compact Discover First surface: real featured shops, ranked top-selling shops, and ranked top-selling products, each linked to the correct Voucher or Retail destination and with honest limited/empty states.
-- Keep the five-item mobile bottom navigation; add a polished hamburger sheet for Alerts, shops, members, friend requests/relationships, profile, wallet, shop console, and sign-out.
-- Make the Home composer immediately typeable while reusing the existing audience, photo, mention, promotion, review, and publish flow.
-- Add privacy-aware member activity for direct-message participants only; show “Online now” from a short authenticated activity window and do not expose broad member tracking.
-- Add a profile cover image using the existing private avatar storage pattern, crop/compression, own-profile authorization, and public-profile masking rules.
-- Rename and clarify the existing Retail settings area as “Storefront Design,” then add restrained, shop-scoped visual theme choices that only affect that selected Retail storefront’s public/customer header.
+## Scope
+- Change the overall application/ecosystem name shown to users from WaveWallet to **ONE WAVE** across browser metadata, install/PWA metadata, authentication, shared app shells, public guides/download surfaces, and native Android labels/about/offline surfaces.
+- Keep the existing visual system and wallet icon; pair it with a clean text-only **ONE WAVE** wordmark where brand text is shown.
+- Update page titles and descriptions that use WaveWallet as the platform/community owner to ONE WAVE, while keeping **WaveWallet** wherever it specifically names the wallet, Coins, wallet account/history, Payment Listener, voucher records, native bridge, release-signing identifiers, or other functional/product concepts.
 
-## Guardrails
-- Reuse existing routes, components, tables, permissions, and storage buckets; no parallel social, shop, messaging, or storefront systems.
-- Keep New Generation excluded from Universe discovery and preserve Voucher/Retail destination separation.
-- Do not change R4–R6 pricing, COD, cashback, delivery, collector, settlement, wallet, platform-fee, or order logic.
+## Safety boundaries
+- Do not rename internal packages, Kotlin classes, application IDs, routes, files, imports, storage keys, native bridge/user-agent identifiers, API/RPC/database objects, environment variables, domains, or release-signing variables.
+- Do not change database migrations, schema, RLS, auth behavior, shop types, order/checkout/R6 state, pricing, fees, cashback, COD, settlement, permissions, or any feature logic.
+- Do not regenerate or redesign app icons: the current wallet icon remains appropriate for the WaveWallet product within ONE WAVE.
 - Do not publish.
 
-## Technical details
-- Add narrowly scoped database fields/RPC output for profile cover, private DM presence, storefront theme, and read-only ranked discovery. Preserve existing RLS and SECURITY DEFINER caller checks.
-- Update generated backend types after migration, then wire the existing React surfaces with semantic design tokens and existing Button/Sheet/Tabs components.
-- Add focused unit/database tests for ranking, destinations, presence privacy, cover ownership, theme shop scoping, NG isolation, and financial invariants.
+## Implementation
+- Introduce/reuse one client-safe display-brand constant so shared user-facing brand text is consistent without touching internal identifiers.
+- Update the root and leaf route metadata, PWA manifest, login/signup welcome copy, shared console brand, Universe attribution, public guide/download/install/update wording, and other audited overall-app references.
+- Update Android launcher/app label, About title/content, and general offline branding to ONE WAVE; retain “WaveWallet Payment Listener” and all internal Android identifiers because they name a functional module or compatibility contract.
+- Add focused branding assertions covering the display brand, manifest, hierarchy, and protected internal identifiers.
 
 ## Verification
-- Run typecheck, full Vitest, targeted rollback SQL/security checks, financial regressions, and residue checks.
-- Verify signed-in mobile and desktop flows with browser screenshots and console/network checks.
+- Run typecheck, relevant branding and existing regression tests, and production build.
+- Browser-check title, manifest, signed-out login branding, and signed-in home branding at mobile and desktop sizes; confirm routes/auth remain healthy.
+- Confirm all three shop-type labels remain intact, WaveWallet remains on wallet-specific surfaces, no financial/order files or database objects changed, and no test data/residue was created.
