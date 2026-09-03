@@ -7,7 +7,8 @@
  * held when the order is placed and are returned in full if the admin rejects
  * it, so nothing is spent until an order is confirmed.
  */
-import { Loader2, Minus, PackageCheck, Plus, ShoppingCart, Star, Store, X } from "lucide-react";
+import { Banknote, Loader2, MessageCircle, Minus, PackageCheck, Plus, ShoppingCart, Star, Store, Truck, X } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -29,12 +30,15 @@ import { RetailImage } from "@/components/retail/retail-image";
 import { RETAIL_VISIBLE } from "@/lib/features";
 import { useSession } from "@/lib/session";
 import { fetchCreditBalance } from "@/lib/wallet";
-import { shortDateTime } from "@/lib/wavewallet";
+import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
   DEFAULT_STORE_SETTINGS,
   canCancelOrder,
   canConfirmReceipt,
   cancelRetailOrder,
+  codCashTotal,
+  codCustomerTotal,
+  customerCancelBlockedReason,
   customerNextStep,
   fulfillmentLabel,
   fulfillmentTone,
@@ -53,15 +57,18 @@ import {
   rateRetailProduct,
   type Cart,
   type CheckoutDraft,
+  type CodQuote,
   type RetailOrder,
   type RetailProduct,
   type StoreSettings,
 } from "@/lib/retail";
+import { codStageLabel, fetchCodQuote, openOrderChat } from "@/lib/retail-cod";
 
 const credits = (n: number) => `${n.toLocaleString(undefined, { maximumFractionDigits: 2 })} coins`;
 
 export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
   const { account, ecosystemDbId } = useSession(role);
+  const navigate = useNavigate();
   const [products, setProducts] = useState<RetailProduct[]>([]);
   const [settings, setSettings] = useState<StoreSettings>(DEFAULT_STORE_SETTINGS);
   const [orders, setOrders] = useState<RetailOrder[]>([]);
@@ -71,6 +78,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
   const [loading, setLoading] = useState(true);
   const [checkout, setCheckout] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [codQuote, setCodQuote] = useState<CodQuote | null>(null);
   const [draft, setDraft] = useState<CheckoutDraft>({
     fulfillment: null,
     payment: null,
@@ -109,13 +117,42 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
     void load();
   }, [load]);
 
-  if (!account || !ecosystemDbId) return null;
-
   const lines = cartLines(cart, products, feePercent);
   const quote = cartQuote(cart, products, feePercent);
   const total = quote.total;
   const count = cartCount(cart);
-  const problem = checkoutProblem(draft, total, settings, balance, count);
+
+  // Server-side COD eligibility (seller-side ₱-fee coverage, split configured, shop offers it).
+  // Re-quoted whenever the cart's seller total changes while checkout is open.
+  useEffect(() => {
+    if (!checkout || !ecosystemDbId || !settings.codEnabled || count === 0) {
+      setCodQuote(null);
+      return;
+    }
+    let live = true;
+    setCodQuote(null);
+    void fetchCodQuote(ecosystemDbId, quote.sellerTotal)
+      .then((q) => live && setCodQuote(q))
+      .catch(() => live && setCodQuote({ available: false, reason: "Cash on delivery is not available right now", deliveryFee: 0, platformFee: 0, customerTotal: total }));
+    return () => {
+      live = false;
+    };
+  }, [checkout, ecosystemDbId, settings.codEnabled, quote.sellerTotal, count, total]);
+
+  if (!account || !ecosystemDbId) return null;
+
+  const problem = checkoutProblem(draft, total, settings, balance, count, codQuote);
+  const codDeliveryFee = codQuote?.deliveryFee ?? settings.deliveryFee;
+  const codTotal = codCustomerTotal(total, codDeliveryFee);
+
+  const goToChat = async (o: RetailOrder) => {
+    try {
+      const thread = await openOrderChat(o.id);
+      void navigate({ to: "/universe/messages", search: { thread } });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
 
   const submit = async () => {
     setBusy(true);
