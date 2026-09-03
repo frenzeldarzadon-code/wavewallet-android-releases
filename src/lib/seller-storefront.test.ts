@@ -32,6 +32,7 @@ describe("groupStorefrontRows", () => {
     expect(out!.sellerHandle).toBe("ana");
     expect(out!.shops.map((s) => s.id)).toEqual(["shop-a", "shop-b"]);
     expect(out!.shops[0]!.products.map((p) => p.price)).toEqual([20, 100]);
+    expect(out!.shops[0]!.products.every((p) => p.imagePath === null)).toBe(true);
     expect(Object.keys(out!)).toEqual([
       "sellerId",
       "sellerName",
