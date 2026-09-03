@@ -333,7 +333,13 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                 <span>
                   {l.quantity} × {l.product.name}
                   {l.wholesale ? (
-                    <span className="ml-1 text-[11px] text-success">wholesale price</span>
+                    <span className="ml-1 text-[11px] text-success">
+                      wholesale {credits(sellerToCustomer(l.unitPrice, feePercent))} each
+                      {" · "}
+                      <s className="text-muted-foreground">
+                        {credits(sellerToCustomer(l.product.price, feePercent))}
+                      </s>
+                    </span>
                   ) : null}
                 </span>
                 <span>{credits(l.lineTotal)}</span>
