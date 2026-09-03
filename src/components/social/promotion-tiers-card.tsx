@@ -127,10 +127,7 @@ export function PromotionTiersCard({
                   {t.eligibility === "reseller" ? <Badge variant="outline">Resellers</Badge> : null}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {t.currency !== "points" ? `${t.price_social} social credits` : ""}
-                  {t.currency === "both" ? " or " : ""}
-                  {t.currency !== "social" ? `${t.price_points} points` : ""} ·{" "}
-                  {tierDuration(t.duration_hours)} · priority {t.priority}
+                  Free · {tierDuration(t.duration_hours)} · priority {t.priority}
                 </p>
               </div>
               <Button
@@ -176,26 +173,8 @@ export function PromotionTiersCard({
                 onChange={(e) => set("description", e.target.value)}
               />
             </div>
-            {num("price_social", "Price in social credits")}
-            {num("price_points", "Price in points")}
             <div className="space-y-1.5">
-              <Label htmlFor="tierCurrency">Payable with</Label>
-              <Select
-                value={draft.currency}
-                onValueChange={(v) => set("currency", v as Draft["currency"])}
-              >
-                <SelectTrigger id="tierCurrency">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="both">Social credits or points</SelectItem>
-                  <SelectItem value="social">Social credits only</SelectItem>
-                  <SelectItem value="points">Points only</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="tierElig">Who can buy it</Label>
+              <Label htmlFor="tierElig">Who can use it</Label>
               <Select
                 value={draft.eligibility}
                 onValueChange={(v) => set("eligibility", v as Draft["eligibility"])}

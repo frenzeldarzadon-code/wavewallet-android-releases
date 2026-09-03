@@ -68,14 +68,15 @@ export function SocialSettingsCard() {
     const { data, error } = await supabase.rpc("update_social_settings", {
       _daily_allowance: 0,
       _free_posts_per_day: Number(form.free_posts_per_day),
-      _post_cost: Number(form.post_cost),
-      _comment_cost: Number(form.comment_cost),
-      _credit_exchange_rate: Number(form.credit_exchange_rate),
-      _points_exchange_rate: Number(form.points_exchange_rate),
+      // Retired: Universe social activity is free; the database ignores these.
+      _post_cost: 0,
+      _comment_cost: 0,
+      _credit_exchange_rate: 0,
+      _points_exchange_rate: 0,
       _promotion_enabled: form.promotion_enabled,
       _promotion_currency: form.promotion_currency,
-      _promotion_cost_social: Number(form.promotion_cost_social),
-      _promotion_cost_points: Number(form.promotion_cost_points),
+      _promotion_cost_social: 0,
+      _promotion_cost_points: 0,
       _ads_enabled: form.ads_enabled,
       _ad_reward_amount: Number(form.ad_reward_amount),
       _ad_daily_limit: Number(form.ad_daily_limit),
@@ -92,12 +93,12 @@ export function SocialSettingsCard() {
   return (
     <PageSection
       devSlot="social-settings-card.community-social-credits"
-      title="Community & social credits"
+      title="Community settings"
       description="Community switches and rewarded-ad limits for every shop. Social activity itself is free."
     >
       <Card className="shadow-[var(--shadow-card)]">
         <CardHeader>
-          <CardTitle className="text-sm">Social credit economics</CardTitle>
+          <CardTitle className="text-sm">Community switches</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-xl border border-success/40 bg-success/5 px-3 py-2 text-xs text-muted-foreground sm:col-span-2">

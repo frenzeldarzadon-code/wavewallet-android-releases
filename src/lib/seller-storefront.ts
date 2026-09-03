@@ -25,6 +25,8 @@ export interface StorefrontShop {
   id: string;
   name: string;
   slug: string;
+  /** Selling shop's coins-per-point ratio; 0/null = this shop awards no points. */
+  creditsPerPoint?: number | null;
   products: StorefrontProduct[];
 }
 
@@ -58,6 +60,7 @@ type Row = {
   price: number;
   available: number;
   points_price?: number | null;
+  credits_per_point?: number | null;
 };
 
 /** Pure: groups the flat database rows by shop, keeping the database order. */
@@ -68,7 +71,13 @@ export function groupStorefrontRows(rows: Row[]): SellerStorefront | null {
   for (const r of rows) {
     let shop = shops.get(r.shop_id);
     if (!shop) {
-      shop = { id: r.shop_id, name: r.shop_name, slug: r.shop_slug, products: [] };
+      shop = {
+        id: r.shop_id,
+        name: r.shop_name,
+        slug: r.shop_slug,
+        creditsPerPoint: r.credits_per_point == null ? null : Number(r.credits_per_point),
+        products: [],
+      };
       shops.set(r.shop_id, shop);
     }
     shop.products.push({

@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   availableTiers,
-  canAfford,
-  chargeSummary,
   commentCharge,
-  exchangeGain,
   postCharge,
   giftIssue,
   canGift,
@@ -70,35 +67,6 @@ describe("post charges", () => {
 describe("comment charges", () => {
   it("is always free, on normal and promoted posts alike", () => {
     expect(commentCharge()).toBe(0);
-  });
-});
-
-describe("affordability", () => {
-  it("always allows free actions", () => {
-    expect(canAfford({ ...state, balance: 0 }, postCharge(state, true), 0)).toBe(true);
-    expect(canAfford({ ...state, balance: 0 }, { amount: 0, currency: "social" }, 0)).toBe(true);
-  });
-
-  it("still refuses a hypothetical paid charge without balance", () => {
-    expect(canAfford(state, { amount: 20, currency: "social" }, 999)).toBe(false);
-    expect(canAfford(state, { amount: 20, currency: "points" }, 10)).toBe(false);
-  });
-});
-
-describe("exchange", () => {
-  it("still computes a gain for historical display", () => {
-    expect(exchangeGain(state, "credit", 3)).toBe(6);
-    expect(exchangeGain(state, "credit", -4)).toBe(0);
-  });
-});
-
-describe("disclosure copy", () => {
-  it("states the exact deduction", () => {
-    expect(chargeSummary(20, "social")).toContain("20 social credits");
-  });
-
-  it("states free actions plainly", () => {
-    expect(chargeSummary(0, "social")).toContain("free");
   });
 });
 

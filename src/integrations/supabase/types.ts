@@ -10995,6 +10995,7 @@ export type Database = {
         Returns: {
           available: number
           avatar_path: string
+          credits_per_point: number
           description: string
           points_price: number
           price: number
