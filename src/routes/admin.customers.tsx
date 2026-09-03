@@ -49,6 +49,7 @@ import {
 import { deleteCustomerAccount } from "@/lib/customer-cleanup.functions";
 import {
   fetchEcosystemRates,
+  fetchShopMemberWallets,
   setSubresellerParent,
   type EcosystemRates,
 } from "@/lib/wallet";
