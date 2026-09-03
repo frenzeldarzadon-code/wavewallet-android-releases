@@ -71,6 +71,15 @@ describe("developer mode — role scope", () => {
     expect(groups.length).toBeGreaterThan(3);
     expect(groups.flatMap((g) => g.slots)).toHaveLength(slotsForRole("admin").length);
   });
+
+  it("uses neutral user-facing labels for provider service costs", () => {
+    const serviceCredits = SLOT_REGISTRY.find(
+      (slot) => slot.id === "super_admin.lovable-credits-card.lovable-ai-credits",
+    );
+    expect(serviceCredits?.label).toBe("AI service credits");
+    expect(serviceCredits?.group).toBe("AI Service Credits");
+    expect(`${serviceCredits?.label} ${serviceCredits?.group}`).not.toMatch(/lovable/i);
+  });
 });
 
 describe("navigation", () => {
