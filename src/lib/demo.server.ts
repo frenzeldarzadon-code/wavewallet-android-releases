@@ -316,7 +316,7 @@ export interface DemoCredentials {
 /** Provisions (or refreshes) a demo account and returns one-time sign-in credentials. */
 export async function provisionDemo(role: DemoRole, host: string | null): Promise<DemoCredentials> {
   if (!isPreviewHost(host)) {
-    throw new Error("Demo access is only available in the Lovable preview environment.");
+    throw new Error("Demo access is only available in the preview environment.");
   }
   const ecosystemId = await ensureEcosystem();
 

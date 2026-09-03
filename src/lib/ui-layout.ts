@@ -144,7 +144,7 @@ const SLOT_SOURCE: SlotSource[] = [
   { name: "history-page.all-wallet-transactions", label: "All wallet transactions", group: "History Page", roles: ["customer", "reseller", "subreseller", "admin", "super_admin"] },
   { name: "invite-member-card.invitations", label: "Invitations", group: "Invite Member", roles: ["customer", "reseller", "subreseller", "admin", "super_admin"] },
   { name: "invite-member-card.invite-a-member-from-universe", label: "Invite a member from Universe", group: "Invite Member", roles: ["customer", "reseller", "subreseller", "admin", "super_admin"] },
-  { name: "lovable-credits-card.lovable-ai-credits", label: "Lovable AI credits", group: "Lovable Credits", roles: ["super_admin"] },
+  { name: "lovable-credits-card.lovable-ai-credits", label: "AI service credits", group: "AI Service Credits", roles: ["super_admin"] },
   { name: "manual-credit-card.issue-coins", label: "Issue coins", group: "Manual Credit", roles: ["super_admin"] },
   { name: "member-inbox-panel.invites", label: "Invites", group: "Member Inbox", roles: ["customer", "reseller", "subreseller", "admin", "super_admin"] },
   { name: "member-inbox-panel.my-shops", label: "My shops", group: "Member Inbox", roles: ["customer", "reseller", "subreseller", "admin", "super_admin"] },
