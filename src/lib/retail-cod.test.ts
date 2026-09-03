@@ -226,6 +226,24 @@ describe("duty workspace helpers", () => {
     ).toMatch(/Settled/);
   });
 
+  it("never asks a plain-cash delivery for a collector float", () => {
+    const cash = {
+      ...base,
+      my_role: "delivery" as const,
+      collector_status: "none",
+      fulfillment_status: "out_for_delivery" as const,
+    };
+    expect(dutyNextStep(cash)).toEqual({
+      text: "Deliver the parcel, then mark it delivered",
+      mine: true,
+    });
+    expect(dutySteps(cash).map((s) => s.label)).toEqual([
+      "Assigned",
+      "Out for delivery",
+      "Delivered",
+    ]);
+  });
+
   it("derives the timeline from existing fields only, marking the first open step", () => {
     const steps = dutySteps({
       ...base,

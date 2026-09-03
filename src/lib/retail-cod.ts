@@ -149,6 +149,16 @@ export function dutySteps(a: DutyRow): DutyStep[] {
   const held = a.hold_held || !!a.settled_at || !!a.cash_received_at;
   const cash = !!a.cash_received_at || !!a.settled_at;
   const settled = !!a.settled_at;
+  if (a.collector_status === "none") {
+    // No cash float on this order (e.g. plain cash): only the delivery legs apply.
+    const raw = [
+      { label: "Assigned", done: true },
+      { label: "Out for delivery", done: outOrLater },
+      { label: "Delivered", done: deliveredOrLater },
+    ];
+    const firstOpen = raw.findIndex((s) => !s.done);
+    return raw.map((s, i) => ({ ...s, current: i === firstOpen }));
+  }
   const raw = [
     { label: "Assigned", done: true },
     { label: "Float held", done: held },
@@ -176,6 +186,13 @@ export function dutyNextStep(a: DutyRow): { text: string; mine: boolean } {
   if (a.discrepancy) return { text: "Cash discrepancy — the shop admin is reviewing", mine: false };
   if (a.cash_received_at) return { text: "Cash confirmed — settling", mine: false };
   const collector = a.my_role === "collector";
+  if (a.collector_status === "none") {
+    if (a.fulfillment_status === "out_for_delivery")
+      return { text: "Deliver the parcel, then mark it delivered", mine: true };
+    if (["delivered", "completed"].includes(a.fulfillment_status))
+      return { text: "Delivered — nothing left to do", mine: false };
+    return { text: "Waiting for the shop to hand the parcel over", mine: false };
+  }
   if (!a.hold_held) {
     if (a.collector_status === "proposed") {
       return collector
