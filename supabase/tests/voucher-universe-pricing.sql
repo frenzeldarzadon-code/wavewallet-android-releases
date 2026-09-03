@@ -23,6 +23,7 @@ DECLARE
   _prod uuid; _promo uuid; _sale uuid; _rate int; _hist_before text; _hist_after text;
   _rates_before text; _rates_after text; _fee numeric; _cut numeric; _price numeric;
   _res_cb numeric; _adm_cb numeric; _split numeric; _new_prod uuid; r record;
+  _sub uuid; _sub_parent uuid; _sub_rate int;
 BEGIN
   SELECT user_id INTO _super FROM public.user_roles WHERE role = 'super_admin' LIMIT 1;
   ASSERT _super IS NOT NULL, 'a super admin is required';
@@ -183,6 +184,30 @@ BEGIN
       ASSERT public.voucher_discount_percent_for(_ng_res, _ng) = public.admin_voucher_discount_percent(),
         '10: New Generation admin discount rule unchanged';
     END IF;
+  END IF;
+
+  ---------------------------------------------------------------- 11 (subreseller self-purchase)
+  SELECT m.user_id, m.reseller_id INTO _sub, _sub_parent
+    FROM public.ecosystem_memberships m JOIN public.profiles p ON p.id = m.user_id
+   WHERE m.ecosystem_id = _shop AND m.role = 'subreseller' AND m.membership_state = 'active'
+     AND p.status = 'active' AND m.reseller_id IS NOT NULL
+     AND coalesce(public.member_cashback_rate(m.user_id, _shop), 0) > 0 LIMIT 1;
+  IF _sub IS NOT NULL THEN
+    _sub_rate := public.member_cashback_rate(_sub, _shop);
+    ASSERT public.voucher_discount_percent_for(_sub, _shop) = 0, '11: Universe subreseller has no purchase discount';
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', _super)::text, true);
+    PERFORM public.admin_load_credits(_sub, 100, 'QA fund subreseller', 'QA-S', _shop);
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', _sub)::text, true);
+    SELECT sale_id INTO _sale FROM public.purchase_voucher(_new_prod, 1);
+    SELECT sale_price, platform_fee_amount INTO _price, _fee FROM public.voucher_sales WHERE id = _sale;
+    ASSERT _price = 10.00 AND (SELECT discount_percent FROM public.voucher_sales WHERE id = _sale) = 0,
+      format('11: subreseller pays the full retail price, got %s', _price);
+    ASSERT (SELECT coalesce(sum(commission_amount),0) FROM public.sale_commissions WHERE sale_id = _sale AND recipient_id = _sub AND kind = 'sale_cashback')
+           = round(10 * _sub_rate / 100.0, 2), format('11: subreseller receives own %s%% cashback on the full ₱10', _sub_rate);
+    ASSERT (SELECT count(*) FROM public.credit_ledger WHERE sale_id = _sale AND entry_kind = 'sale_commission' AND user_id = _sub) = 1,
+      '11: subreseller cashback credited to their wallet';
+    ASSERT (SELECT coalesce(sum(commission_amount),0) FROM public.sale_commissions WHERE sale_id = _sale) + _fee = 10.00,
+      '11: cashback + upline + shop remainder + fee == price';
   END IF;
 
   RAISE NOTICE 'voucher-universe-pricing: all assertions passed (rate %%%, shop %)', _rate, _shop;
