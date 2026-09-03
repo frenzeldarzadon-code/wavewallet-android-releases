@@ -6,7 +6,7 @@
  * The database refuses a second decision on the same order, so a double click
  * or two admins racing each other can never double-charge or oversell.
  */
-import { Check, Loader2, Mail, RefreshCw, X } from "lucide-react";
+import { ArrowRight, Check, Loader2, Mail, RefreshCw, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -24,8 +24,13 @@ import { shortDateTime } from "@/lib/wavewallet";
 import {
   fetchShopRetailOrders,
   fetchStoreSettings,
+  fulfillmentActionLabel,
+  fulfillmentLabel,
+  fulfillmentTone,
+  nextFulfillmentStep,
   orderTone,
   reviewRetailOrder,
+  updateRetailFulfillment,
   type OrderStatus,
   type RetailOrder,
 } from "@/lib/retail";
@@ -73,6 +78,23 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
         description: approve
           ? "Stock is finalised and the payment is confirmed."
           : "Stock is back and any held coins were returned in full.",
+      });
+      await load();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const advance = async (order: RetailOrder) => {
+    const next = nextFulfillmentStep(order.fulfillment_status, order.fulfillment);
+    if (!next || busy) return;
+    setBusy(order.id);
+    try {
+      await updateRetailFulfillment(order.id, next);
+      toast.success(`${order.order_no}: ${fulfillmentLabel(next, order.fulfillment)}`, {
+        description: "The customer has been notified. No coins moved.",
       });
       await load();
     } catch (e) {
@@ -136,8 +158,18 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                         {shortDateTime(o.created_at)} · {o.fulfillment} · paid by {o.payment_method}
                       </p>
                     </div>
-                    <StatusBadge tone={orderTone(o.status)}>{o.status}</StatusBadge>
+                    <div className="flex flex-wrap gap-1">
+                      <StatusBadge tone={orderTone(o.status)}>{o.status}</StatusBadge>
+                      {o.status === "approved" ? (
+                        <StatusBadge tone={fulfillmentTone(o)}>
+                          {fulfillmentLabel(o.fulfillment_status, o.fulfillment)}
+                        </StatusBadge>
+                      ) : null}
+                    </div>
                   </div>
+                  {o.seller_name ? (
+                    <p className="text-[11px] text-muted-foreground">Storefront seller: {o.seller_name}</p>
+                  ) : null}
                   <ul className="space-y-1 text-xs text-muted-foreground">
                     {o.items.map((i) => (
                       <li key={i.product_id} className="flex justify-between gap-2">
@@ -194,7 +226,29 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                         </Button>
                       ) : null}
                     </div>
-                  ) : o.decision_note ? (
+                  ) : null}
+                  {o.status === "approved" ? (() => {
+                    const next = nextFulfillmentStep(o.fulfillment_status, o.fulfillment);
+                    return next ? (
+                      <Button size="sm" disabled={busy === o.id} onClick={() => void advance(o)}>
+                        {busy === o.id ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <ArrowRight className="size-4" />
+                        )}
+                        {fulfillmentActionLabel(next, o.fulfillment)}
+                      </Button>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground">
+                        {o.fulfillment_status === "delivered"
+                          ? "Waiting for the customer to confirm receipt."
+                          : o.completed_at
+                            ? `Completed ${shortDateTime(o.completed_at)}`
+                            : null}
+                      </p>
+                    );
+                  })() : null}
+                  {o.status !== "pending" && o.decision_note ? (
                     <p className="text-[11px] text-muted-foreground">Note: {o.decision_note}</p>
                   ) : null}
                 </div>

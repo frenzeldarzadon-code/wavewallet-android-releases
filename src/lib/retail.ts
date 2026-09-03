@@ -25,6 +25,16 @@ export const MAX_RETAIL_IMAGE_BYTES = MAX_UPLOAD_BYTES;
 export type Fulfillment = "pickup" | "delivery";
 export type PaymentMethod = "cash" | "credit";
 export type OrderStatus = "pending" | "approved" | "rejected" | "cancelled";
+/** Non-financial fulfillment progress of an order (R5). Money state lives in `status`. */
+export type FulfillmentStatus =
+  | "awaiting"
+  | "accepted"
+  | "preparing"
+  | "ready"
+  | "out_for_delivery"
+  | "delivered"
+  | "completed"
+  | "closed";
 
 export interface StoreSettings {
   voucherEnabled: boolean;
@@ -91,6 +101,12 @@ export interface RetailOrder {
   customer_name?: string;
   status: OrderStatus;
   fulfillment: Fulfillment;
+  fulfillment_status: FulfillmentStatus;
+  delivered_at?: string | null;
+  completed_at?: string | null;
+  shop_name?: string | null;
+  seller_id?: string | null;
+  seller_name?: string | null;
   delivery_address: string | null;
   delivery_notes: string | null;
   payment_method: PaymentMethod;
@@ -265,6 +281,100 @@ export function checkoutProblem(
 
 export const orderTone = (s: OrderStatus) =>
   s === "approved" ? "success" : s === "pending" ? "warning" : s === "rejected" ? "danger" : "muted";
+
+/* ------------------------------------------------------------------ */
+/* Fulfillment (R5) — mirrors public.retail_fulfillment_step_ok         */
+/* ------------------------------------------------------------------ */
+
+/** The single legal next step for a seller, or null when there is none. */
+export function nextFulfillmentStep(
+  current: FulfillmentStatus,
+  fulfillment: Fulfillment,
+): FulfillmentStatus | null {
+  switch (current) {
+    case "accepted":
+      return "preparing";
+    case "preparing":
+      return "ready";
+    case "ready":
+      return fulfillment === "delivery" ? "out_for_delivery" : "delivered";
+    case "out_for_delivery":
+      return "delivered";
+    default:
+      return null;
+  }
+}
+
+/** True when the customer may confirm receipt. */
+export const canConfirmReceipt = (o: Pick<RetailOrder, "status" | "fulfillment_status">) =>
+  o.status === "approved" && o.fulfillment_status === "delivered";
+
+/** True when the customer may still cancel (existing rule: only while pending). */
+export const canCancelOrder = (o: Pick<RetailOrder, "status">) => o.status === "pending";
+
+export const fulfillmentLabel = (s: FulfillmentStatus, fulfillment: Fulfillment): string =>
+  ({
+    awaiting: "Awaiting shop review",
+    accepted: "Accepted",
+    preparing: "Preparing",
+    ready: fulfillment === "pickup" ? "Ready for pickup" : "Ready to go out",
+    out_for_delivery: "Out for delivery",
+    delivered: fulfillment === "pickup" ? "Handed over" : "Delivered",
+    completed: "Completed",
+    closed: "Closed",
+  })[s];
+
+/** Seller-facing label for the button that advances to `next`. */
+export const fulfillmentActionLabel = (next: FulfillmentStatus, fulfillment: Fulfillment): string =>
+  ({
+    awaiting: "",
+    accepted: "",
+    preparing: "Start preparing",
+    ready: fulfillment === "pickup" ? "Mark ready for pickup" : "Mark ready",
+    out_for_delivery: "Out for delivery",
+    delivered: fulfillment === "pickup" ? "Handed to customer" : "Mark delivered",
+    completed: "",
+    closed: "",
+  })[next];
+
+export const fulfillmentTone = (o: Pick<RetailOrder, "status" | "fulfillment_status">) =>
+  o.status === "rejected"
+    ? "danger"
+    : o.status === "cancelled" || o.fulfillment_status === "closed"
+      ? "muted"
+      : o.fulfillment_status === "completed"
+        ? "success"
+        : o.fulfillment_status === "awaiting"
+          ? "warning"
+          : "brand";
+
+/** What the customer should understand / do right now. */
+export function customerNextStep(o: Pick<RetailOrder, "status" | "fulfillment_status" | "fulfillment" | "payment_method">): string {
+  if (o.status === "pending")
+    return o.payment_method === "credit"
+      ? "Waiting for the shop to review. Your coins are held and returned in full if it is rejected. You can still cancel."
+      : "Waiting for the shop to review. Pay in cash when you receive it. You can still cancel.";
+  if (o.status === "rejected") return "The shop rejected this order. Nothing was charged.";
+  if (o.status === "cancelled") return "You cancelled this order. Nothing was charged.";
+  switch (o.fulfillment_status) {
+    case "accepted":
+      return "The shop accepted your order and will start preparing it.";
+    case "preparing":
+      return "The shop is preparing your order.";
+    case "ready":
+      return o.fulfillment === "pickup"
+        ? "Your order is ready — visit the shop to pick it up."
+        : "Your order is packed and will go out soon.";
+    case "out_for_delivery":
+      return "Your order is on its way to your address.";
+    case "delivered":
+      return "The shop marked this order as handed over. Confirm you received it.";
+    case "completed":
+      return "Order complete. You can rate the products.";
+    default:
+      return "Order accepted.";
+  }
+}
 
 /** Which store tabs a shop shows, given its settings. */
 export function enabledStores(s: StoreSettings): Array<"voucher" | "retail"> {
@@ -628,6 +738,7 @@ const toOrders = (data: unknown): RetailOrder[] =>
     seller_total: Number(o.seller_total ?? o.total),
     platform_fee_percent: Number(o.platform_fee_percent ?? 0),
     platform_fee_amount: Number(o.platform_fee_amount ?? 0),
+    fulfillment_status: (o.fulfillment_status ?? (o.status === "approved" ? "accepted" : o.status === "pending" ? "awaiting" : "closed")) as FulfillmentStatus,
     items: (o.items ?? []).map((i) => ({
       ...i,
       unit_price: Number(i.unit_price),
@@ -666,6 +777,17 @@ export async function reviewRetailOrder(
     _order_id: orderId,
     _approve: approve,
     ...(note?.trim() ? { _note: note.trim() } : {}),
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function updateRetailFulfillment(
+  orderId: string,
+  next: FulfillmentStatus,
+): Promise<void> {
+  const { error } = await supabase.rpc("retail_update_fulfillment", {
+    _order_id: orderId,
+    _next: next,
   });
   if (error) throw new Error(error.message);
 }
