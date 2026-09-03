@@ -65,6 +65,8 @@ interface Draft {
   price: string;
   wholesale_price: string;
   wholesale_min_qty: string;
+  cashback_mode: RetailCashbackMode;
+  cashback_value: string;
   stock: string;
   image_path: string | null;
   public_visible: boolean;
