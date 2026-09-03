@@ -382,6 +382,11 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
                         }`
                       : ""}{" "}
                     · {p.stock} {p.unit} in stock · {p.sold_count} sold
+                    {p.cashback_mode === "percent"
+                      ? ` · ${p.cashback_value}% seller cashback`
+                      : p.cashback_mode === "fixed"
+                        ? ` · ${p.cashback_value.toLocaleString()} coins/unit seller cashback`
+                        : ""}
                     {p.public_visible ? " · visible to visitors" : " · members only"}
                   </p>
                   <div className="flex flex-wrap gap-2">
