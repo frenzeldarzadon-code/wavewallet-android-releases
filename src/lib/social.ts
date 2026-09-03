@@ -234,16 +234,30 @@ export function threadComments(comments: FeedComment[]): FeedComment[] {
   return out;
 }
 
+export interface DmParticipant {
+  id: string;
+  name: string;
+  handle: string | null;
+  avatar: string | null;
+  role: "customer" | "seller" | "delivery" | "collector";
+}
+
 export interface DmThread {
   thread_id: string;
-  member_id: string;
-  member_name: string;
+  /** Direct threads only — the other member. Empty for order chats. */
+  member_id: string | null;
+  member_name: string | null;
   member_handle: string | null;
   member_avatar: string | null;
   last_message_at: string | null;
   preview: string | null;
   unread: number;
   blocked: boolean;
+  /** `direct` = one-to-one; `order` = Retail order-linked group chat (R6). */
+  kind: "direct" | "order";
+  order_id: string | null;
+  title: string | null;
+  participants: DmParticipant[];
 }
 
 export interface DmMessage {
@@ -253,6 +267,7 @@ export interface DmMessage {
   image_path: string | null;
   created_at: string;
   mine: boolean;
+  sender_name?: string | null;
 }
 
 export interface SocialActivityRow {
@@ -709,8 +724,26 @@ export async function claimAdReward(provider: string, eventId: string) {
 export async function fetchThreads(): Promise<DmThread[]> {
   const { data, error } = await supabase.rpc("dm_thread_list");
   if (error) fail(error.message);
-  return (data ?? []) as DmThread[];
+  return ((data ?? []) as unknown as Array<Record<string, unknown>>).map((t) => ({
+    thread_id: String(t["thread_id"]),
+    member_id: (t["member_id"] as string | null) ?? null,
+    member_name: (t["member_name"] as string | null) ?? null,
+    member_handle: (t["member_handle"] as string | null) ?? null,
+    member_avatar: (t["member_avatar"] as string | null) ?? null,
+    last_message_at: (t["last_message_at"] as string | null) ?? null,
+    preview: (t["preview"] as string | null) ?? null,
+    unread: Number(t["unread"] ?? 0),
+    blocked: !!t["blocked"],
+    kind: t["kind"] === "order" ? "order" : "direct",
+    order_id: (t["order_id"] as string | null) ?? null,
+    title: (t["title"] as string | null) ?? null,
+    participants: Array.isArray(t["participants"]) ? (t["participants"] as DmParticipant[]) : [],
+  }));
 }
+
+/** Display name of a thread: the other member for DMs, the order title for order chats. */
+export const threadTitle = (t: DmThread) =>
+  t.kind === "order" ? (t.title ?? "Order chat") : (t.member_name ?? "Member");
 
 export async function fetchMessages(threadId: string): Promise<DmMessage[]> {
   const { data, error } = await supabase.rpc("dm_messages_for", { _thread_id: threadId });
@@ -721,6 +754,17 @@ export async function fetchMessages(threadId: string): Promise<DmMessage[]> {
 export async function sendMessage(memberId: string, body: string, imagePath?: string | null) {
   const { data, error } = await supabase.rpc("dm_send", {
     _member_id: memberId,
+    _body: body.trim(),
+    ...(imagePath ? { _image_path: imagePath } : {}),
+  });
+  if (error) fail(error.message);
+  return data as unknown as { thread_id: string; message_id: string };
+}
+
+/** Order-linked group chat (R6): only active order participants may post. */
+export async function sendThreadMessage(threadId: string, body: string, imagePath?: string | null) {
+  const { data, error } = await supabase.rpc("dm_send_thread", {
+    _thread_id: threadId,
     _body: body.trim(),
     ...(imagePath ? { _image_path: imagePath } : {}),
   });

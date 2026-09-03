@@ -1,0 +1,265 @@
+/**
+ * Retail R6 — cash on delivery floated by a collector's Universe coins.
+ *
+ * Locked money model (the database is authoritative; this file only mirrors it
+ * for display and calls the RPCs):
+ *   - Retail price already contains the 1 % platform fee (Seller's Cut ₱100 →
+ *     Retail Price ₱101). The fee applies to PRODUCT pricing only.
+ *   - The seller-set delivery fee is added on top with NO platform fee.
+ *   - Customer cash = retail total + delivery fee (₱101 + ₱20 = ₱121).
+ *   - Collector must hold that same ₱121 AVAILABLE before approving; approval
+ *     is the only moment coins move (one hold). Assignment alone moves nothing.
+ *   - Seller eligibility: the shop's settlement recipient must hold the
+ *     embedded platform fee (₱1) available, or COD is simply unavailable.
+ *   - Settlement happens exactly once (collector CASH RECEIVED, seller release
+ *     3 days after buyer receipt, or admin discrepancy resolution) through one
+ *     idempotent path: seller credit after cashback, cashback once, fee record,
+ *     delivery share + collector share = 100 % of the delivery fee.
+ */
+import { requireOnline } from "@/lib/offline-guard";
+import { supabase } from "@/integrations/supabase/client";
+import { round2, type CodQuote, type RetailOrder } from "@/lib/retail";
+
+export const COD_FALLBACK_DAYS = 3;
+
+/* ------------------------------------------------------------------ */
+/* Pure helpers (unit-tested)                                          */
+/* ------------------------------------------------------------------ */
+
+/** Delivery-fee pool split — 100 % of the fee, rounded the same way as the ledger. */
+export function splitDeliveryFee(fee: number, deliveryPct: number) {
+  const delivery = round2((fee * deliveryPct) / 100);
+  return { delivery, collector: round2(fee - delivery) };
+}
+
+/** Split configuration is valid only when both parts are whole, non-negative and total exactly 100. */
+export const splitProblem = (deliveryPct: number, collectorPct: number): string | null =>
+  !Number.isInteger(deliveryPct) || !Number.isInteger(collectorPct)
+    ? "Use whole percentages"
+    : deliveryPct < 0 || collectorPct < 0
+      ? "Percentages cannot be negative"
+      : deliveryPct + collectorPct !== 100
+        ? `Delivery person + collector must total exactly 100 % (now ${deliveryPct + collectorPct} %)`
+        : null;
+
+/** When the seller may release the held float themselves (buyer receipt + 3 days). */
+export function fallbackReleaseAt(completedAt: string | null | undefined): Date | null {
+  if (!completedAt) return null;
+  return new Date(new Date(completedAt).getTime() + COD_FALLBACK_DAYS * 86_400_000);
+}
+
+/** Human countdown to the fallback release; `null` when the window has already passed. */
+export function fallbackCountdown(
+  completedAt: string | null | undefined,
+  now = new Date(),
+): string | null {
+  const at = fallbackReleaseAt(completedAt);
+  if (!at) return null;
+  const ms = at.getTime() - now.getTime();
+  if (ms <= 0) return null;
+  const h = Math.ceil(ms / 3_600_000);
+  if (h >= 48) return `${Math.ceil(h / 24)} days`;
+  if (h >= 1) return `${h} h`;
+  return `${Math.max(1, Math.ceil(ms / 60_000))} min`;
+}
+
+export type CodOrder = Pick<
+  RetailOrder,
+  | "status"
+  | "payment_method"
+  | "fulfillment_status"
+  | "collector_status"
+  | "hold_held"
+  | "cod_settled_at"
+  | "cod_discrepancy"
+  | "cod_cash_received_at"
+  | "completed_at"
+>;
+
+/** Seller may release the float only after buyer receipt + 3 days, with no discrepancy, before settlement. */
+export function canSellerRelease(o: CodOrder, now = new Date()): boolean {
+  if (o.payment_method !== "cod" || o.status !== "approved" || !o.hold_held) return false;
+  if (o.cod_settled_at || o.cod_discrepancy || o.cod_cash_received_at) return false;
+  const at = fallbackReleaseAt(o.completed_at);
+  return !!at && now.getTime() >= at.getTime();
+}
+
+/** Seller voluntary cancellation is allowed on any approved COD order before settlement. */
+export const canSellerCancel = (o: CodOrder) =>
+  o.payment_method === "cod" && o.status === "approved" && !o.cod_settled_at && !o.cod_discrepancy;
+
+/** Collector may confirm cash once the order is out for delivery and the float is held. */
+export const canCollectorConfirmCash = (o: CodOrder) =>
+  o.payment_method === "cod" &&
+  o.status === "approved" &&
+  !!o.hold_held &&
+  !o.cod_settled_at &&
+  !o.cod_cash_received_at &&
+  ["out_for_delivery", "delivered", "completed"].includes(o.fulfillment_status);
+
+/** Plain-language money state of a COD order for the seller / customer card. */
+export function codStageLabel(o: CodOrder): string {
+  if (o.payment_method !== "cod") return "";
+  if (o.status === "pending") return "Awaiting shop approval";
+  if (o.status === "cancelled") return "Cancelled — float released";
+  if (o.status === "rejected") return "Rejected";
+  if (o.cod_settled_at) return "Settled";
+  if (o.cod_discrepancy) return "Cash discrepancy — admin review";
+  if (!o.hold_held) {
+    if (o.collector_status === "proposed") return "Waiting for collector approval";
+    if (o.collector_status === "declined") return "Collector declined — assign another";
+    return "No collector yet";
+  }
+  if (o.completed_at) return "Buyer received — waiting for cash confirmation";
+  return "Float held — out with the collector";
+}
+
+/* ------------------------------------------------------------------ */
+/* RPC wrappers                                                        */
+/* ------------------------------------------------------------------ */
+
+export async function fetchCodQuote(ecosystemId: string, sellerTotal: number): Promise<CodQuote> {
+  const { data, error } = await supabase.rpc("retail_cod_quote", {
+    _ecosystem_id: ecosystemId,
+    _seller_total: sellerTotal,
+  });
+  if (error) throw new Error(error.message);
+  const row = (data as Array<Record<string, unknown>> | null)?.[0];
+  return {
+    available: !!row?.["available"],
+    reason: (row?.["reason"] as string | null) ?? null,
+    deliveryFee: Number(row?.["delivery_fee"] ?? 0),
+    platformFee: Number(row?.["platform_fee"] ?? 0),
+    customerTotal: Number(row?.["customer_total"] ?? 0),
+  };
+}
+
+export interface CodAssignee {
+  user_id: string;
+  full_name: string;
+  handle: string | null;
+  avatar_path: string | null;
+  /** Has the full customer cash total AVAILABLE (held coins never count). */
+  collector_eligible: boolean;
+}
+
+export async function fetchCodAssignees(orderId: string): Promise<CodAssignee[]> {
+  const { data, error } = await supabase.rpc("retail_cod_assignees", { _order_id: orderId });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as CodAssignee[];
+}
+
+/** Assignment never moves coins; the collector's approval does. */
+export async function assignCodOrder(
+  orderId: string,
+  input: { selfDelivery: boolean; deliveryPersonId: string | null; collectorId: string | null },
+): Promise<void> {
+  requireOnline();
+  const { error } = await supabase.rpc("retail_cod_assign", {
+    _order_id: orderId,
+    _self_delivery: input.selfDelivery,
+    _delivery_person_id: input.deliveryPersonId as string,
+    _collector_id: input.collectorId as string,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function respondToCollectorRequest(orderId: string, accept: boolean): Promise<void> {
+  requireOnline();
+  const { error } = await supabase.rpc("retail_cod_collector_respond", {
+    _order_id: orderId,
+    _accept: accept,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function confirmCashReceived(orderId: string, actualCash: number): Promise<void> {
+  requireOnline();
+  const { error } = await supabase.rpc("retail_cod_cash_received", {
+    _order_id: orderId,
+    _actual_cash: actualCash,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function sellerReleaseCod(orderId: string): Promise<void> {
+  requireOnline();
+  const { error } = await supabase.rpc("retail_cod_seller_release", { _order_id: orderId });
+  if (error) throw new Error(error.message);
+}
+
+export async function sellerCancelCod(orderId: string, note?: string): Promise<void> {
+  requireOnline();
+  const { error } = await supabase.rpc("retail_cod_seller_cancel", {
+    _order_id: orderId,
+    ...(note?.trim() ? { _note: note.trim() } : {}),
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function resolveCodDiscrepancy(
+  orderId: string,
+  action: "settle" | "cancel",
+  note?: string,
+): Promise<void> {
+  requireOnline();
+  const { error } = await supabase.rpc("retail_cod_resolve_discrepancy", {
+    _order_id: orderId,
+    _action: action,
+    ...(note?.trim() ? { _note: note.trim() } : {}),
+  });
+  if (error) throw new Error(error.message);
+}
+
+export interface CodAssignment {
+  id: string;
+  order_no: string;
+  shop_name: string;
+  customer_name: string;
+  delivery_address: string | null;
+  delivery_notes: string | null;
+  status: string;
+  fulfillment_status: string;
+  my_role: "collector" | "delivery";
+  collector_status: string;
+  self_delivery: boolean;
+  total: number;
+  delivery_fee: number;
+  expected_cash: number;
+  actual_cash: number | null;
+  hold_held: boolean;
+  cash_received_at: string | null;
+  discrepancy: boolean;
+  settled_at: string | null;
+  completed_at: string | null;
+  my_share: number;
+  chat_thread_id: string | null;
+  created_at: string;
+}
+
+export async function fetchMyCodAssignments(): Promise<CodAssignment[]> {
+  const { data, error } = await supabase.rpc("retail_my_cod_assignments");
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as CodAssignment[]).map((a) => ({
+    ...a,
+    total: Number(a.total),
+    delivery_fee: Number(a.delivery_fee),
+    expected_cash: Number(a.expected_cash),
+    actual_cash: a.actual_cash === null ? null : Number(a.actual_cash),
+    my_share: Number(a.my_share ?? 0),
+  }));
+}
+
+/** Coins currently locked in this member's active COD floats. */
+export async function fetchCodHeldTotal(): Promise<number> {
+  const { data, error } = await supabase.rpc("retail_cod_held_total");
+  if (error) return 0;
+  return Number(data ?? 0);
+}
+
+/** Opens (or syncs) the order-linked Universe chat and returns its thread id. */
+export async function openOrderChat(orderId: string): Promise<string> {
+  const { data, error } = await supabase.rpc("retail_order_chat", { _order_id: orderId });
+  if (error) throw new Error(error.message);
+  return String(data);
+}

@@ -133,7 +133,9 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetchRetailFeePercent().then(setFeePercent).catch(() => setFeePercent(0));
+    fetchRetailFeePercent()
+      .then(setFeePercent)
+      .catch(() => setFeePercent(0));
   }, []);
 
   /** Customer-facing price for a seller amount typed as text. */
@@ -262,7 +264,8 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
 
   return (
     <>
-      <PageSection devSlot="retail-products-card.retail-products"
+      <PageSection
+        devSlot="retail-products-card.retail-products"
         title="Retail products"
         description="Your shop's own listing. Starter products arrive as drafts — set your prices and stock, then go live. Archiving keeps every past order intact."
         action={
@@ -305,9 +308,7 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
             </Select>
             <Select
               value={filter.status}
-              onValueChange={(v) =>
-                setFilter({ ...filter, status: v as CatalogFilter["status"] })
-              }
+              onValueChange={(v) => setFilter({ ...filter, status: v as CatalogFilter["status"] })}
             >
               <SelectTrigger aria-label="Status">
                 <SelectValue />
@@ -321,9 +322,7 @@ export function RetailProductsCard({ ecosystemId }: { ecosystemId: string | null
             </Select>
             <Select
               value={filter.source}
-              onValueChange={(v) =>
-                setFilter({ ...filter, source: v as CatalogFilter["source"] })
-              }
+              onValueChange={(v) => setFilter({ ...filter, source: v as CatalogFilter["source"] })}
             >
               <SelectTrigger aria-label="Source">
                 <SelectValue />

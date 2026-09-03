@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { StoreSettingsCard } from "@/components/retail/store-settings-card";
+import { DeliverySettingsCard } from "@/components/retail/delivery-settings-card";
 import { RetailProductsCard } from "@/components/retail/retail-products-card";
 import { useSession } from "@/lib/session";
 
@@ -29,6 +30,7 @@ function AdminRetail() {
   return (
     <>
       <StoreSettingsCard ecosystemId={ecosystemDbId} />
+      <DeliverySettingsCard ecosystemId={ecosystemDbId} />
       <RetailProductsCard ecosystemId={ecosystemDbId} />
     </>
   );

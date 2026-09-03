@@ -23,7 +23,8 @@ export const RETAIL_IMAGE_BUCKET = "retail-images";
 export const MAX_RETAIL_IMAGE_BYTES = MAX_UPLOAD_BYTES;
 
 export type Fulfillment = "pickup" | "delivery";
-export type PaymentMethod = "cash" | "credit";
+/** `cod` = cash on delivery floated by a collector's Universe coins (R6). */
+export type PaymentMethod = "cash" | "credit" | "cod";
 export type OrderStatus = "pending" | "approved" | "rejected" | "cancelled";
 /** Non-financial fulfillment progress of an order (R5). Money state lives in `status`. */
 export type FulfillmentStatus =
@@ -35,6 +36,8 @@ export type FulfillmentStatus =
   | "delivered"
   | "completed"
   | "closed";
+/** Collector request state on a COD order (R6). Coins are only held once `approved`. */
+export type CollectorStatus = "none" | "proposed" | "approved" | "declined";
 
 export interface StoreSettings {
   voucherEnabled: boolean;
@@ -46,6 +49,13 @@ export interface StoreSettings {
   publicStorefront: boolean;
   /** Only returned to the shop admin / platform owner. */
   contactEmail: string | null;
+  /** R6 — cash on delivery (Universe shops only). */
+  codEnabled: boolean;
+  /** Seller-set flat delivery fee, outside the platform fee. */
+  deliveryFee: number;
+  /** Shop-admin split of the delivery fee; must total exactly 100. */
+  deliveryPct: number;
+  collectorPct: number;
 }
 
 export const DEFAULT_STORE_SETTINGS: StoreSettings = {
@@ -57,6 +67,10 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   deliveryEnabled: true,
   publicStorefront: true,
   contactEmail: null,
+  codEnabled: false,
+  deliveryFee: 0,
+  deliveryPct: 0,
+  collectorPct: 0,
 };
 
 export interface RetailProduct {
@@ -110,7 +124,7 @@ export interface RetailOrder {
   delivery_address: string | null;
   delivery_notes: string | null;
   payment_method: PaymentMethod;
-  /** Customer amount consumed (seller total + platform fee). */
+  /** Product amount (seller total + embedded platform fee). Delivery fee is separate. */
   total: number;
   seller_total?: number;
   platform_fee_percent?: number;
@@ -118,7 +132,34 @@ export interface RetailOrder {
   decision_note: string | null;
   created_at: string;
   items: OrderItem[];
+  /* ---- R6 delivery / cash-on-delivery (snapshotted per order) ---- */
+  delivery_fee?: number;
+  delivery_split_delivery_pct?: number | null;
+  delivery_split_collector_pct?: number | null;
+  self_delivery?: boolean;
+  delivery_person_id?: string | null;
+  delivery_person_name?: string | null;
+  collector_id?: string | null;
+  collector_name?: string | null;
+  collector_status?: CollectorStatus;
+  /** True while the collector's float is held and not yet settled/released. */
+  hold_held?: boolean;
+  cod_expected_cash?: number | null;
+  cod_actual_cash?: number | null;
+  cod_cash_received_at?: string | null;
+  cod_discrepancy?: boolean;
+  cod_settled_at?: string | null;
+  cod_settlement_kind?: string | null;
+  seller_amount?: number | null;
+  cashback_amount?: number | null;
+  delivery_share_amount?: number | null;
+  collector_share_amount?: number | null;
+  chat_thread_id?: string | null;
 }
+
+/** Cash the customer hands over for a COD order: product total + delivery fee. Nothing else. */
+export const codCashTotal = (o: Pick<RetailOrder, "total" | "delivery_fee">) =>
+  round2(o.total + (o.delivery_fee ?? 0));
 
 /* ------------------------------------------------------------------ */
 /* Pricing — presentation mirror of the database's authoritative path   */
@@ -253,6 +294,26 @@ export interface CheckoutDraft {
   notes: string;
 }
 
+/** Server-side COD eligibility answer (`retail_cod_quote`). */
+export interface CodQuote {
+  available: boolean;
+  reason: string | null;
+  /** Seller-set flat delivery fee — never carries a platform fee. */
+  deliveryFee: number;
+  /** Seller-side requirement: the fee already embedded in the product price. */
+  platformFee: number;
+  /** Cash the customer pays: product retail total + delivery fee. */
+  customerTotal: number;
+}
+
+/**
+ * Presentation mirror of the customer-facing COD amount: the product retail
+ * total (fee already inside) plus the delivery fee. The 1 % is never applied
+ * to the delivery fee and never applied a second time to the retail price.
+ */
+export const codCustomerTotal = (productTotal: number, deliveryFee: number) =>
+  round2(productTotal + deliveryFee);
+
 /** Human reason the order cannot be submitted yet, or null when it can. */
 export function checkoutProblem(
   draft: CheckoutDraft,
@@ -260,6 +321,7 @@ export function checkoutProblem(
   settings: StoreSettings,
   creditBalance: number,
   itemCount: number,
+  codQuote?: CodQuote | null,
 ): string | null {
   if (itemCount === 0) return "Your cart is empty";
   if (!draft.fulfillment) return "Choose pickup or delivery";
@@ -270,17 +332,29 @@ export function checkoutProblem(
     if (!draft.address.trim()) return "A delivery address is required";
   }
   if (!draft.payment) return "Choose a payment method";
-  if (draft.payment === "cash" && !settings.cashEnabled)
-    return "This shop does not accept cash";
+  if (draft.payment === "cash" && !settings.cashEnabled) return "This shop does not accept cash";
   if (draft.payment === "credit") {
     if (!settings.creditEnabled) return "This shop does not accept coin payment";
     if (total > creditBalance) return "Not enough coins in your wallet";
+  }
+  if (draft.payment === "cod") {
+    if (draft.fulfillment !== "delivery") return "Cash on delivery requires delivery";
+    if (!settings.codEnabled) return "This shop does not offer cash on delivery";
+    if (!codQuote) return "Checking cash-on-delivery availability…";
+    if (!codQuote.available)
+      return codQuote.reason ?? "Cash on delivery is not available right now";
   }
   return null;
 }
 
 export const orderTone = (s: OrderStatus) =>
-  s === "approved" ? "success" : s === "pending" ? "warning" : s === "rejected" ? "danger" : "muted";
+  s === "approved"
+    ? "success"
+    : s === "pending"
+      ? "warning"
+      : s === "rejected"
+        ? "danger"
+        : "muted";
 
 /* ------------------------------------------------------------------ */
 /* Fulfillment (R5) — mirrors public.retail_fulfillment_step_ok         */
@@ -348,12 +422,27 @@ export const fulfillmentTone = (o: Pick<RetailOrder, "status" | "fulfillment_sta
           ? "warning"
           : "brand";
 
+/** Why the customer can no longer cancel, or null while cancelling is still allowed. */
+export function customerCancelBlockedReason(
+  o: Pick<RetailOrder, "status" | "fulfillment_status">,
+): string | null {
+  if (o.status === "pending") return null;
+  if (o.status !== "approved") return null;
+  if (["out_for_delivery", "delivered", "completed"].includes(o.fulfillment_status))
+    return "This order was already handed to the delivery person and can no longer be cancelled.";
+  return "The shop accepted this order — ask the seller in the order chat if you need to cancel.";
+}
+
 /** What the customer should understand / do right now. */
-export function customerNextStep(o: Pick<RetailOrder, "status" | "fulfillment_status" | "fulfillment" | "payment_method">): string {
+export function customerNextStep(
+  o: Pick<RetailOrder, "status" | "fulfillment_status" | "fulfillment" | "payment_method">,
+): string {
   if (o.status === "pending")
     return o.payment_method === "credit"
       ? "Waiting for the shop to review. Your coins are held and returned in full if it is rejected. You can still cancel."
-      : "Waiting for the shop to review. Pay in cash when you receive it. You can still cancel.";
+      : o.payment_method === "cod"
+        ? "Waiting for the shop to review. You pay cash on delivery — no coins are taken from your wallet. You can still cancel."
+        : "Waiting for the shop to review. Pay in cash when you receive it. You can still cancel.";
   if (o.status === "rejected") return "The shop rejected this order. Nothing was charged.";
   if (o.status === "cancelled") return "You cancelled this order. Nothing was charged.";
   switch (o.fulfillment_status) {
@@ -404,7 +493,30 @@ export async function fetchStoreSettings(ecosystemId: string): Promise<StoreSett
     deliveryEnabled: !!row["delivery_enabled"],
     publicStorefront: !!row["public_storefront"],
     contactEmail: (row["contact_email"] as string | null) ?? null,
+    codEnabled: !!row["cod_enabled"],
+    deliveryFee: Number(row["delivery_fee"] ?? 0),
+    deliveryPct: Number(row["delivery_pct"] ?? 0),
+    collectorPct: Number(row["collector_pct"] ?? 0),
   };
+}
+
+/**
+ * R6 — cash-on-delivery configuration (shop admin only). The split must total
+ * exactly 100 %; the database re-checks it and snapshots the values onto each
+ * order at placement, so later changes never alter a historical order.
+ */
+export async function saveDeliverySettings(
+  ecosystemId: string,
+  s: Pick<StoreSettings, "codEnabled" | "deliveryFee" | "deliveryPct" | "collectorPct">,
+): Promise<void> {
+  const { error } = await supabase.rpc("update_retail_delivery_settings", {
+    _ecosystem_id: ecosystemId,
+    _cod_enabled: s.codEnabled,
+    _delivery_fee: s.deliveryFee,
+    _delivery_pct: s.deliveryPct,
+    _collector_pct: s.collectorPct,
+  });
+  if (error) throw new Error(error.message);
 }
 
 /**
@@ -434,7 +546,6 @@ export async function saveStoreSettings(
   const row = (data as Array<{ seeded?: number }> | null)?.[0];
   return { seeded: Number(row?.seeded ?? 0) };
 }
-
 
 /* ------------------------------------------------------------------ */
 /* Products                                                            */
@@ -500,8 +611,7 @@ export interface RetailProductDetails {
 }
 
 export interface RetailProductRow
-  extends Omit<RetailProduct, keyof RetailProductDetails>,
-    RetailProductDetails {
+  extends Omit<RetailProduct, keyof RetailProductDetails>, RetailProductDetails {
   active: boolean;
   archived: boolean;
 }
@@ -652,7 +762,6 @@ export function filterProducts(rows: RetailProductRow[], f: CatalogFilter): Reta
   });
 }
 
-
 export function validateRetailImage(file: File): string | null {
   return validateImageFile(file);
 }
@@ -731,6 +840,8 @@ export async function placeRetailOrder(
   };
 }
 
+const num = (v: unknown): number | null => (v === null || v === undefined ? null : Number(v));
+
 const toOrders = (data: unknown): RetailOrder[] =>
   ((data ?? []) as RetailOrder[]).map((o) => ({
     ...o,
@@ -738,7 +849,23 @@ const toOrders = (data: unknown): RetailOrder[] =>
     seller_total: Number(o.seller_total ?? o.total),
     platform_fee_percent: Number(o.platform_fee_percent ?? 0),
     platform_fee_amount: Number(o.platform_fee_amount ?? 0),
-    fulfillment_status: (o.fulfillment_status ?? (o.status === "approved" ? "accepted" : o.status === "pending" ? "awaiting" : "closed")) as FulfillmentStatus,
+    delivery_fee: Number(o.delivery_fee ?? 0),
+    collector_status: (o.collector_status ?? "none") as CollectorStatus,
+    hold_held: !!o.hold_held,
+    cod_discrepancy: !!o.cod_discrepancy,
+    self_delivery: !!o.self_delivery,
+    cod_expected_cash: num(o.cod_expected_cash),
+    cod_actual_cash: num(o.cod_actual_cash),
+    seller_amount: num(o.seller_amount),
+    cashback_amount: num(o.cashback_amount),
+    delivery_share_amount: num(o.delivery_share_amount),
+    collector_share_amount: num(o.collector_share_amount),
+    fulfillment_status: (o.fulfillment_status ??
+      (o.status === "approved"
+        ? "accepted"
+        : o.status === "pending"
+          ? "awaiting"
+          : "closed")) as FulfillmentStatus,
     items: (o.items ?? []).map((i) => ({
       ...i,
       unit_price: Number(i.unit_price),

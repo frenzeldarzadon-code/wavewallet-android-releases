@@ -15,3 +15,9 @@
 - [x] Frozen-shop checks for retail place/approve
 - [x] Remove public exposure of seller-only product fields
 - [x] SQL + unit tests; typecheck; report
+
+## R6 — Retail COD / collector float (UNPUBLISHED, Retail hidden)
+- [x] Backend RPCs + rollback matrix (supabase/tests/retail-r6-cod.sql → RETAIL_R6_TESTS_PASSED)
+- [x] Frontend: customer COD checkout, seller orders panel, collector/delivery card (Universe Wallet), admin delivery settings, order-linked chat
+- [x] Typecheck + Vitest 120 files / 1293 tests green; residue check clean
+- [ ] Publish (awaiting explicit instruction)

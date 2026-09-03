@@ -7,7 +7,20 @@
  * held when the order is placed and are returned in full if the admin rejects
  * it, so nothing is spent until an order is confirmed.
  */
-import { Loader2, Minus, PackageCheck, Plus, ShoppingCart, Star, Store, X } from "lucide-react";
+import {
+  Banknote,
+  Loader2,
+  MessageCircle,
+  Minus,
+  PackageCheck,
+  Plus,
+  ShoppingCart,
+  Star,
+  Store,
+  Truck,
+  X,
+} from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -29,12 +42,15 @@ import { RetailImage } from "@/components/retail/retail-image";
 import { RETAIL_VISIBLE } from "@/lib/features";
 import { useSession } from "@/lib/session";
 import { fetchCreditBalance } from "@/lib/wallet";
-import { shortDateTime } from "@/lib/wavewallet";
+import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
   DEFAULT_STORE_SETTINGS,
   canCancelOrder,
   canConfirmReceipt,
   cancelRetailOrder,
+  codCashTotal,
+  codCustomerTotal,
+  customerCancelBlockedReason,
   customerNextStep,
   fulfillmentLabel,
   fulfillmentTone,
@@ -53,15 +69,18 @@ import {
   rateRetailProduct,
   type Cart,
   type CheckoutDraft,
+  type CodQuote,
   type RetailOrder,
   type RetailProduct,
   type StoreSettings,
 } from "@/lib/retail";
+import { codStageLabel, fetchCodQuote, openOrderChat } from "@/lib/retail-cod";
 
 const credits = (n: number) => `${n.toLocaleString(undefined, { maximumFractionDigits: 2 })} coins`;
 
 export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
   const { account, ecosystemDbId } = useSession(role);
+  const navigate = useNavigate();
   const [products, setProducts] = useState<RetailProduct[]>([]);
   const [settings, setSettings] = useState<StoreSettings>(DEFAULT_STORE_SETTINGS);
   const [orders, setOrders] = useState<RetailOrder[]>([]);
@@ -71,15 +90,18 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
   const [loading, setLoading] = useState(true);
   const [checkout, setCheckout] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [codQuote, setCodQuote] = useState<CodQuote | null>(null);
   const [draft, setDraft] = useState<CheckoutDraft>({
     fulfillment: null,
     payment: null,
     address: "",
     notes: "",
   });
-  const [rating, setRating] = useState<{ order: RetailOrder; productId: string; value: number } | null>(
-    null,
-  );
+  const [rating, setRating] = useState<{
+    order: RetailOrder;
+    productId: string;
+    value: number;
+  } | null>(null);
   const userId = account?.id ?? null;
 
   const load = useCallback(async () => {
@@ -109,13 +131,52 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
     void load();
   }, [load]);
 
-  if (!account || !ecosystemDbId) return null;
-
   const lines = cartLines(cart, products, feePercent);
   const quote = cartQuote(cart, products, feePercent);
   const total = quote.total;
   const count = cartCount(cart);
-  const problem = checkoutProblem(draft, total, settings, balance, count);
+
+  // Server-side COD eligibility (seller-side ₱-fee coverage, split configured, shop offers it).
+  // Re-quoted whenever the cart's seller total changes while checkout is open.
+  useEffect(() => {
+    if (!checkout || !ecosystemDbId || !settings.codEnabled || count === 0) {
+      setCodQuote(null);
+      return;
+    }
+    let live = true;
+    setCodQuote(null);
+    void fetchCodQuote(ecosystemDbId, quote.sellerTotal)
+      .then((q) => live && setCodQuote(q))
+      .catch(
+        () =>
+          live &&
+          setCodQuote({
+            available: false,
+            reason: "Cash on delivery is not available right now",
+            deliveryFee: 0,
+            platformFee: 0,
+            customerTotal: total,
+          }),
+      );
+    return () => {
+      live = false;
+    };
+  }, [checkout, ecosystemDbId, settings.codEnabled, quote.sellerTotal, count, total]);
+
+  if (!account || !ecosystemDbId) return null;
+
+  const problem = checkoutProblem(draft, total, settings, balance, count, codQuote);
+  const codDeliveryFee = codQuote?.deliveryFee ?? settings.deliveryFee;
+  const codTotal = codCustomerTotal(total, codDeliveryFee);
+
+  const goToChat = async (o: RetailOrder) => {
+    try {
+      const thread = await openOrderChat(o.id);
+      void navigate({ to: "/universe/messages", search: { thread } });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
 
   const submit = async () => {
     setBusy(true);
@@ -125,7 +186,9 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
         description:
           draft.payment === "credit"
             ? "Your coins are held until the shop admin approves or rejects."
-            : "Pay in cash — the shop admin confirms the order.",
+            : draft.payment === "cod"
+              ? `Pay ${peso(codTotal)} in cash when it arrives. No coins are taken from your wallet.`
+              : "Pay in cash — the shop admin confirms the order.",
       });
       setCart({});
       setCheckout(false);
@@ -151,7 +214,8 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
 
   return (
     <>
-      <PageSection devSlot="retail-store-view.retail-store-2"
+      <PageSection
+        devSlot="retail-store-view.retail-store-2"
         title="Retail store"
         description={`Physical goods from this shop · wallet: ${credits(balance)}`}
         action={
@@ -198,8 +262,8 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                         </p>
                         {(p.wholesale_price ?? 0) > 0 && (p.wholesale_min_qty ?? 0) > 0 ? (
                           <p className="text-[11px] text-muted-foreground">
-                            {credits(sellerToCustomer(p.wholesale_price ?? 0, feePercent))} each from{" "}
-                            {p.wholesale_min_qty} {p.unit ?? "pcs"}
+                            {credits(sellerToCustomer(p.wholesale_price ?? 0, feePercent))} each
+                            from {p.wholesale_min_qty} {p.unit ?? "pcs"}
                           </p>
                         ) : null}
                       </div>
@@ -244,7 +308,11 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
         )}
       </PageSection>
 
-      <PageSection devSlot="retail-store-view.my-orders" title="My orders" description="Track each order from review to hand-over.">
+      <PageSection
+        devSlot="retail-store-view.my-orders"
+        title="My orders"
+        description="Track each order from review to hand-over."
+      >
         {orders.length === 0 ? (
           <EmptyState title="No retail orders yet" />
         ) : (
@@ -265,10 +333,14 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                       </p>
                     </div>
                     <StatusBadge tone={fulfillmentTone(o)}>
-                      {o.status === "approved" ? fulfillmentLabel(o.fulfillment_status, o.fulfillment) : o.status}
+                      {o.status === "approved"
+                        ? fulfillmentLabel(o.fulfillment_status, o.fulfillment)
+                        : o.status}
                     </StatusBadge>
                   </div>
-                  <p className="rounded-lg bg-muted/60 px-2.5 py-1.5 text-xs">{customerNextStep(o)}</p>
+                  <p className="rounded-lg bg-muted/60 px-2.5 py-1.5 text-xs">
+                    {customerNextStep(o)}
+                  </p>
                   <ul className="space-y-1 text-xs text-muted-foreground">
                     {o.items.map((i) => (
                       <li key={i.product_id} className="flex justify-between gap-2">
@@ -279,15 +351,51 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                       </li>
                     ))}
                   </ul>
-                  {o.delivery_address ? (
-                    <p className="text-[11px] text-muted-foreground">
-                      Deliver to: {o.delivery_address}
-                      {o.delivery_notes ? ` · ${o.delivery_notes}` : ""}
-                    </p>
+                  {o.fulfillment === "delivery" ? (
+                    <div className="space-y-1 rounded-xl border border-border px-3 py-2 text-[11px] text-muted-foreground">
+                      <p className="flex items-center gap-1 font-medium text-foreground">
+                        <Truck className="size-3.5 text-primary" /> Delivery details
+                      </p>
+                      {o.delivery_address ? (
+                        <p>
+                          Deliver to: {o.delivery_address}
+                          {o.delivery_notes ? ` · ${o.delivery_notes}` : ""}
+                        </p>
+                      ) : null}
+                      {o.status === "approved" ? (
+                        <p>
+                          {o.self_delivery
+                            ? "Delivered by the seller"
+                            : o.delivery_person_name
+                              ? `Delivery person: ${o.delivery_person_name}`
+                              : "Delivery person not assigned yet"}
+                          {o.payment_method === "cod" && o.collector_name
+                            ? ` · Cash collected by: ${o.collector_name}`
+                            : ""}
+                        </p>
+                      ) : null}
+                      {o.payment_method === "cod" ? (
+                        <p>
+                          Cash on delivery: {peso(o.total)} products + {peso(o.delivery_fee ?? 0)}{" "}
+                          delivery ={" "}
+                          <strong className="text-foreground">{peso(codCashTotal(o))}</strong> ·{" "}
+                          {codStageLabel(o)}
+                        </p>
+                      ) : null}
+                    </div>
                   ) : null}
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-semibold">Total {credits(o.total)}</p>
-                    <div className="flex gap-2">
+                    <p className="text-sm font-semibold">
+                      {o.payment_method === "cod"
+                        ? `Pay ${peso(codCashTotal(o))} cash`
+                        : `Total ${credits(o.total)}`}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {o.fulfillment === "delivery" && o.status === "approved" ? (
+                        <Button size="sm" variant="outline" onClick={() => void goToChat(o)}>
+                          <MessageCircle className="size-4" /> Order chat
+                        </Button>
+                      ) : null}
                       {canConfirmReceipt(o) ? (
                         <Button
                           size="sm"
@@ -317,6 +425,15 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                               toast.error((e as Error).message);
                             }
                           }}
+                        >
+                          <X className="size-4" /> Cancel
+                        </Button>
+                      ) : customerCancelBlockedReason(o) ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled
+                          title={customerCancelBlockedReason(o) ?? undefined}
                         >
                           <X className="size-4" /> Cancel
                         </Button>
@@ -434,7 +551,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
 
           <div className="space-y-2">
             <Label>Payment</Label>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {settings.cashEnabled ? (
                 <Button
                   type="button"
@@ -455,12 +572,49 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                   Shop coins
                 </Button>
               ) : null}
+              {settings.codEnabled &&
+              settings.deliveryEnabled &&
+              draft.fulfillment === "delivery" ? (
+                <Button
+                  type="button"
+                  variant={draft.payment === "cod" ? "default" : "outline"}
+                  className="flex-1"
+                  disabled={codQuote !== null && !codQuote.available}
+                  title={
+                    codQuote && !codQuote.available ? (codQuote.reason ?? undefined) : undefined
+                  }
+                  onClick={() => setDraft({ ...draft, payment: "cod" })}
+                >
+                  <Banknote className="size-4" /> Cash on delivery
+                </Button>
+              ) : null}
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              {draft.payment === "credit"
-                ? `${credits(total)} is held from this shop's wallet and returned in full if the order is rejected.`
-                : "Cash orders stay pending until the shop admin confirms them."}
-            </p>
+            {draft.payment === "cod" ? (
+              <div className="space-y-1 rounded-xl border border-primary/30 bg-brand-soft/40 px-3 py-2 text-sm">
+                <div className="flex justify-between gap-2 text-xs text-muted-foreground">
+                  <span>Products</span>
+                  <span>{peso(total)}</span>
+                </div>
+                <div className="flex justify-between gap-2 text-xs text-muted-foreground">
+                  <span>Delivery fee</span>
+                  <span>{codQuote ? peso(codDeliveryFee) : "…"}</span>
+                </div>
+                <div className="flex justify-between gap-2 font-semibold">
+                  <span>You pay in cash</span>
+                  <span>{codQuote ? peso(codTotal) : "…"}</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  No coins are taken from your wallet. Hand the exact amount to the collector on
+                  delivery.
+                </p>
+              </div>
+            ) : (
+              <p className="text-[11px] text-muted-foreground">
+                {draft.payment === "credit"
+                  ? `${credits(total)} is held from this shop's wallet and returned in full if the order is rejected.`
+                  : "Cash orders stay pending until the shop admin confirms them."}
+              </p>
+            )}
           </div>
 
           {problem ? <p className="text-xs text-destructive">{problem}</p> : null}
@@ -470,7 +624,11 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
               Keep shopping
             </Button>
             <Button onClick={() => void submit()} disabled={busy || !!problem}>
-              {busy ? <Loader2 className="size-4 animate-spin" /> : <PackageCheck className="size-4" />}
+              {busy ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <PackageCheck className="size-4" />
+              )}
               Place order
             </Button>
           </DialogFooter>
