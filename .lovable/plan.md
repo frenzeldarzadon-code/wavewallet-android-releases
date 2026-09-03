@@ -1,23 +1,24 @@
-# Universe marketplace and profile visual refinement
+# Shop and product image management
 
 ## Scope
-- Keep the existing Universe Home, seller storefront, routing, ranking queries, prices, purchase actions, permissions, and storage architecture unchanged.
-- Improve only presentation using existing uploaded assets and the bundled ONE WAVE voucher artwork as an explicit fallback.
+- Reuse the existing `retail-images` storage bucket, image optimizer/cropper, shop image columns, Retail product `image_path`, and current authorization model.
+- Add management UX only; preserve all commerce, wallet, pricing, ranking, order, voucher, and tenant-isolation behavior.
 
 ## Changes
-1. Separate profile covers from opaque identity content so only the avatar overlaps the boundary; allow long display names to wrap and keep the handle/joined date readable on mobile and desktop.
-2. Extend the existing Market Pulse result with the shop's already-stored storefront logo and cover paths, without changing ranking or sales calculations.
-3. Rework Featured and Top Selling shop cards to show those real images when available, stable image areas, shop type, and existing real rating/sales information; retain horizontal scrolling and See all.
-4. Keep real Retail product photos through the current signed-image component. Use deterministic bundled voucher artwork only when voucher products have no upload field, clearly as category artwork rather than a claimed product photo.
-5. Enrich the existing seller voucher cards with the same reusable voucher artwork while preserving titles, descriptions, prices, points, availability, and checkout behavior.
+1. Add a dedicated **Shop images** section to existing Shop Settings for every managed Universe shop, not only Retail shops. Show current logo and cover, explain where each appears, and provide upload/change/remove actions.
+2. Require a live crop step with exact final preview before upload: square for logos, wide for covers, and marketplace-shaped for Retail product photos. Upload only after the owner confirms the crop.
+3. Update the existing Retail product editor’s Photo section to use the same crop-confirm flow while retaining its current image preview, replace, remove, and product save behavior.
+4. Delete superseded files only after the related settings/product save succeeds; canceling an edit must not change the saved image.
+5. Keep voucher products on curated artwork fallback because the voucher model has no seller-controlled image field; do not change voucher financial/data logic.
+6. Ensure shop images and Retail product images continue through existing Featured Shops, Top Selling Shops, Top Selling Products, product details, and public storefront rendering, with designed fallbacks for missing images.
 
 ## Technical details
-- Add only non-financial return fields to `universe_market_pulse`; continue using its current ordering and completed-sales aggregates.
-- Reuse the existing private signed URL path for shop/retail assets and existing local voucher artwork pointers.
-- Add focused pure tests for deterministic fallbacks/data mapping where practical.
-- No schema tables, financial functions, RLS, wallet/order logic, or external imagery.
+- Add a narrowly scoped shop-image update RPC because the existing storefront RPC is Retail-only; authorize only the shop admin or platform owner, validate the shop-specific storage folder, and retain audit logging.
+- Reuse existing `retail-images` storage policies; change them only if permission testing proves a gap.
+- Add focused tests around crop-confirm state/path handling and image cleanup where practical.
 
 ## Verification
-- Run focused tests, full typecheck, and relevant test suite.
-- Inspect the live preview at 390px mobile and desktop, including long profile names and image/fallback cards.
-- Confirm no layout overlap, no browser errors, no data mutations, and no publication.
+- Test create/edit/replace/remove for Retail product photos and shop logo/cover, including crop and final preview.
+- Verify authorized persistence and rejected cross-shop writes.
+- Verify public image display across discovery/storefront surfaces and graceful fallback behavior.
+- Run typecheck, relevant/full tests, and inspect 390px mobile plus desktop layouts. Do not publish.
