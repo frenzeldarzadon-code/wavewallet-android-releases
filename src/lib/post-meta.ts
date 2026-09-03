@@ -98,7 +98,7 @@ export function postStyle(id?: string | null): PostStyle | null {
  * it remains readable.
  */
 export function styleApplies(input: {
-  style?: string | null;
+  style?: string | null | undefined;
   body: string;
   hasMedia: boolean;
 }): boolean {
