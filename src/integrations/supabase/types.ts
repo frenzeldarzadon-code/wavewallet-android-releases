@@ -10654,6 +10654,10 @@ export type Database = {
         Args: { _approve: boolean; _note?: string; _order_id: string }
         Returns: undefined
       }
+      retail_seller_allowed: {
+        Args: { _ecosystem_id: string; _seller: string }
+        Returns: boolean
+      }
       retail_settlement_recipient: {
         Args: { _ecosystem_id: string }
         Returns: string
