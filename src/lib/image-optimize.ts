@@ -38,6 +38,18 @@ export const REWARD_TARGET: ImageTarget = {
   maxBytes: 300 * 1024,
 };
 
+/**
+ * Profile cover banner — 3:1, the same proportion the profile pages render
+ * it at, so the crop preview is exactly the composition members will see.
+ */
+export const PROFILE_COVER_TARGET: ImageTarget = {
+  width: 1200,
+  height: 400,
+  quality: 0.82,
+  maxBytes: 300 * 1024,
+};
+export const PROFILE_COVER_ASPECT = PROFILE_COVER_TARGET.width / PROFILE_COVER_TARGET.height;
+
 /** Returns an error message, or null when the picked file is safe to process. */
 export function validateImageFile(file: { type: string; size: number }): string | null {
   if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) return "Use a JPG, PNG, WEBP or GIF image.";

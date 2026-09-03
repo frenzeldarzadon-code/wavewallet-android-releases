@@ -17,6 +17,7 @@ import { PageSection as CredentialSection } from "@/components/ui-kit";
 import { UpdateCenterCard } from "@/components/update-center-card";
 import type { CropRect } from "@/lib/image-optimize";
 import {
+  avatarUrl,
   deleteAvatar,
   fetchMyProfile,
   checkHandle,
@@ -29,7 +30,7 @@ import {
   validateHandle,
   type MyProfile,
 } from "@/lib/profile";
-import { validateImageFile } from "@/lib/image-optimize";
+import { PROFILE_COVER_ASPECT, validateImageFile } from "@/lib/image-optimize";
 import { updateOwnContact } from "@/lib/profile-contact.functions";
 import { defaultStoreName } from "@/lib/seller-storefront";
 import { useSession } from "@/lib/session";
@@ -62,6 +63,17 @@ export function ProfilePage() {
   const [removePhoto, setRemovePhoto] = useState(false);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverCrop, setCoverCrop] = useState<{ image: HTMLImageElement; crop: CropRect } | null>(null);
+  // Signed URL of the cover already saved, so the editor never shows a blank block.
+  const [currentCoverUrl, setCurrentCoverUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    void avatarUrl(profile?.cover_path).then((url) => {
+      if (active) setCurrentCoverUrl(url);
+    });
+    return () => {
+      active = false;
+    };
+  }, [profile?.cover_path]);
 
   const userId = account?.id ?? null;
   // Existing username sign-in, if the member set one. Passwords are never read back.
@@ -257,14 +269,35 @@ export function ProfilePage() {
           <CardContent className="space-y-5 p-4 sm:p-5">
             <div className="space-y-2">
               <Label>Profile cover</Label>
-              {coverFile ? <ImageCropper file={coverFile} aspect={16 / 7} onChange={setCoverCrop} /> : <div className="h-28 rounded-lg bg-brand-soft" />}
-              <Button type="button" variant="outline" className="h-11 w-full" onClick={() => document.getElementById("cover-input")?.click()}><ImagePlus className="size-4" /> {profile?.cover_path ? "Replace cover" : "Add cover"}</Button>
+              {coverFile ? (
+                <ImageCropper
+                  file={coverFile}
+                  aspect={PROFILE_COVER_ASPECT}
+                  onChange={setCoverCrop}
+                  resultLabel="Cover as shown on your profile"
+                />
+              ) : (
+                <div
+                  className="aspect-[3/1] w-full rounded-lg border border-border bg-brand-soft bg-cover bg-center"
+                  style={currentCoverUrl ? { backgroundImage: `url(${currentCoverUrl})` } : undefined}
+                  role="img"
+                  aria-label={currentCoverUrl ? "Current profile cover" : "No cover yet"}
+                />
+              )}
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" className="h-11 flex-1" onClick={() => document.getElementById("cover-input")?.click()}><ImagePlus className="size-4" /> {profile?.cover_path || coverFile ? "Replace cover" : "Add cover"}</Button>
+                {coverFile ? (
+                  <Button type="button" variant="ghost" className="h-11 flex-1" onClick={() => { setCoverFile(null); setCoverCrop(null); }}>
+                    <X className="size-4" /> Cancel
+                  </Button>
+                ) : null}
+              </div>
               <input id="cover-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={(e) => { const picked = e.target.files?.[0] ?? null; if (picked) { const problem = validateImageFile(picked); if (problem) toast.error(problem); else setCoverFile(picked); } e.target.value = ""; }} />
             </div>
             <div className="space-y-2">
               <Label>Profile photo</Label>
               {file ? (
-                <ImageCropper file={file} aspect={1} circular onChange={setCrop} />
+                <ImageCropper file={file} aspect={1} circular onChange={setCrop} resultLabel="Profile photo" />
               ) : (
                 <div className="flex items-center gap-4">
                   <MemberAvatar

@@ -81,7 +81,7 @@ function UniverseMemberProfile() {
           />
         ) : (
           <Card className="overflow-hidden rounded-lg shadow-[var(--shadow-card)]">
-            <div className="h-28 bg-brand-soft bg-cover bg-center" style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : undefined} />
+            <div className="aspect-[3/1] w-full bg-brand-soft bg-cover bg-center" style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : undefined} />
             <CardContent className="space-y-3 py-5">
               <div className="-mt-12 grid grid-cols-[auto_minmax(0,1fr)] items-end gap-3">
                 <MemberAvatar

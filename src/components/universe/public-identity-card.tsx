@@ -38,7 +38,7 @@ export function PublicIdentityCard({ userId }: { userId: string }) {
 
   return (
     <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--shadow-card)]">
-      <div className="h-28 bg-brand-soft bg-cover bg-center" style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : undefined} />
+      <div className="aspect-[3/1] w-full bg-brand-soft bg-cover bg-center" style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : undefined} />
       <div className="-mt-7 flex items-end gap-3 px-4">
         <MemberAvatar
           path={profile.avatar_path}

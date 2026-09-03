@@ -7,7 +7,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
-import { AVATAR_TARGET, REWARD_TARGET, optimizeImage, optimizedName } from "@/lib/image-optimize";
+import { AVATAR_TARGET, PROFILE_COVER_TARGET, optimizeImage, optimizedName } from "@/lib/image-optimize";
 
 export const AVATAR_BUCKET = "avatars";
 
@@ -149,7 +149,7 @@ export async function uploadProfileCover(input: {
   crop: { x: number; y: number; width: number; height: number };
   previousPath?: string | null;
 }): Promise<string> {
-  const { blob, mime } = await optimizeImage(input.source, REWARD_TARGET, input.crop);
+  const { blob, mime } = await optimizeImage(input.source, PROFILE_COVER_TARGET, input.crop);
   const folder = input.ecosystemId || PLATFORM_AVATAR_FOLDER;
   const path = `${folder}/${input.userId}/covers/${optimizedName(crypto.randomUUID(), mime)}`;
   const { error } = await supabase.storage.from(AVATAR_BUCKET).upload(path, blob, { contentType: mime, upsert: false });
