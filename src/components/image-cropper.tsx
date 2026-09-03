@@ -33,12 +33,15 @@ export function cropPlacementStyle(
 /** A read-only rendering of `crop` in the destination shape. */
 export function CropResultPreview({
   image,
+  src,
   crop,
   aspect,
   circular = false,
   className,
 }: {
   image: HTMLImageElement;
+  /** Display URL for the bitmap (defaults to image.src). */
+  src?: string;
   crop: CropRect;
   aspect: number;
   circular?: boolean;
@@ -55,7 +58,7 @@ export function CropResultPreview({
       aria-hidden
     >
       <img
-        src={image.src}
+        src={src ?? image.src}
         alt=""
         draggable={false}
         className="pointer-events-none select-none"
@@ -95,6 +98,9 @@ export function ImageCropper({
 }) {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // `loadImage` revokes its object URL once decoded, so the bitmap needs its
+  // own URL for as long as the editor shows it.
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const stage = useRef<HTMLDivElement | null>(null);
@@ -111,6 +117,8 @@ export function ImageCropper({
     setError(null);
     setZoom(1);
     setPan({ x: 0, y: 0 });
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
     void loadImage(file)
       .then((img) => {
         if (active) setImage(img);
@@ -120,6 +128,7 @@ export function ImageCropper({
       });
     return () => {
       active = false;
+      URL.revokeObjectURL(url);
     };
   }, [file]);
 
@@ -261,7 +270,7 @@ export function ImageCropper({
           >
             {/* The real photo, placed so the crop rectangle fills this frame. */}
             <img
-              src={image.src}
+              src={previewUrl ?? image.src}
               alt="Your photo in the crop editor"
               draggable={false}
               className="pointer-events-none select-none"
@@ -353,6 +362,7 @@ export function ImageCropper({
         <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/40 p-2.5">
           <CropResultPreview
             image={image}
+            src={previewUrl ?? undefined}
             crop={crop}
             aspect={aspect}
             circular={circular}
@@ -361,6 +371,7 @@ export function ImageCropper({
           {circular ? (
             <CropResultPreview
               image={image}
+              src={previewUrl ?? undefined}
               crop={crop}
               aspect={aspect}
               circular
