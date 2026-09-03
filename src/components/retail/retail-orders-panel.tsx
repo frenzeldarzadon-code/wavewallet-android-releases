@@ -111,6 +111,9 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
   const counts = countByStage(orders);
   const visible = orders.filter((o) => orderStage(o) === stage);
 
+  // Depend on the account *id*, not the object: the session object is re-created
+  // on every render, which previously made this refetch in a tight loop.
+  const accountId = account?.id ?? null;
   const load = useCallback(async () => {
     if (!ecosystemId) return;
     setLoading(true);
@@ -118,7 +121,7 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
       const [o, s, b] = await Promise.all([
         fetchShopRetailOrders(ecosystemId, "all"),
         fetchStoreSettings(ecosystemId),
-        account ? fetchCreditBalance(account.id, null) : Promise.resolve(null),
+        accountId ? fetchCreditBalance(accountId, null) : Promise.resolve(null),
       ]);
       setOrders(o);
       setSettings(s);
@@ -128,7 +131,7 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
     } finally {
       setLoading(false);
     }
-  }, [ecosystemId, account]);
+  }, [ecosystemId, accountId]);
 
   useEffect(() => {
     void load();
