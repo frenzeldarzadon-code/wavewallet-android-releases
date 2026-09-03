@@ -17,6 +17,7 @@ import {
   optimizedName,
   validateImageFile,
   type CropRect,
+  type ImageTarget,
 } from "@/lib/image-optimize";
 
 export const RETAIL_IMAGE_BUCKET = "retail-images";
@@ -56,6 +57,12 @@ export interface StoreSettings {
   /** Shop-admin split of the delivery fee; must total exactly 100. */
   deliveryPct: number;
   collectorPct: number;
+  /** Storefront identity (presentation only). */
+  logoPath: string | null;
+  coverPath: string | null;
+  /** False while the seller has paused NEW orders; placed orders continue. */
+  acceptingOrders: boolean;
+  pausedNote: string | null;
 }
 
 export const DEFAULT_STORE_SETTINGS: StoreSettings = {
@@ -71,6 +78,10 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   deliveryFee: 0,
   deliveryPct: 0,
   collectorPct: 0,
+  logoPath: null,
+  coverPath: null,
+  acceptingOrders: true,
+  pausedNote: null,
 };
 
 export interface RetailProduct {
@@ -324,6 +335,7 @@ export function checkoutProblem(
   codQuote?: CodQuote | null,
 ): string | null {
   if (itemCount === 0) return "Your cart is empty";
+  if (!settings.acceptingOrders) return "This shop is temporarily closed for new orders";
   if (!draft.fulfillment) return "Choose pickup or delivery";
   if (draft.fulfillment === "pickup" && !settings.pickupEnabled)
     return "This shop does not offer pickup";
@@ -497,7 +509,86 @@ export async function fetchStoreSettings(ecosystemId: string): Promise<StoreSett
     deliveryFee: Number(row["delivery_fee"] ?? 0),
     deliveryPct: Number(row["delivery_pct"] ?? 0),
     collectorPct: Number(row["collector_pct"] ?? 0),
+    logoPath: (row["logo_path"] as string | null) ?? null,
+    coverPath: (row["cover_path"] as string | null) ?? null,
+    acceptingOrders: row["accepting_orders"] === undefined ? true : !!row["accepting_orders"],
+    pausedNote: (row["paused_note"] as string | null) ?? null,
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* Storefront identity (logo, cover, open/paused)                      */
+/* ------------------------------------------------------------------ */
+
+export type StorefrontSettings = Pick<
+  StoreSettings,
+  "logoPath" | "coverPath" | "acceptingOrders" | "pausedNote"
+>;
+
+export const STOREFRONT_NOTE_MAX = 160;
+
+/** Client-side validation mirroring the database check. */
+export function storefrontProblem(s: Pick<StorefrontSettings, "pausedNote">): string | null {
+  if ((s.pausedNote ?? "").length > STOREFRONT_NOTE_MAX)
+    return `Keep the note under ${STOREFRONT_NOTE_MAX} characters.`;
+  return null;
+}
+
+/** Square logo — small and crisp; cover uses the existing 16:10 card target. */
+export const STOREFRONT_LOGO_TARGET: ImageTarget = {
+  width: 320,
+  height: 320,
+  quality: 0.85,
+  maxBytes: 150 * 1024,
+};
+
+/**
+ * Uploads a shop logo or cover into the shop's own `storefront/` folder of the
+ * existing retail-images bucket (storage RLS: shop admin only).
+ */
+export async function uploadStorefrontImage(
+  ecosystemId: string,
+  kind: "logo" | "cover",
+  file: File,
+): Promise<string> {
+  const problem = validateImageFile(file);
+  if (problem) throw new Error(problem);
+  const source = await loadImage(file);
+  const { blob, mime } = await optimizeImage(
+    source,
+    kind === "logo" ? STOREFRONT_LOGO_TARGET : REWARD_TARGET,
+  );
+  const path = `${ecosystemId}/storefront/${optimizedName(`${kind}-${crypto.randomUUID()}`, mime)}`;
+  const { error } = await supabase.storage
+    .from(RETAIL_IMAGE_BUCKET)
+    .upload(path, blob, { contentType: mime, upsert: false });
+  if (error) throw new Error(error.message);
+  return path;
+}
+
+/** Saves storefront identity through `update_retail_storefront` (server re-checks the shop admin). */
+export async function saveStorefrontSettings(
+  ecosystemId: string,
+  s: StorefrontSettings,
+  previous?: Pick<StorefrontSettings, "logoPath" | "coverPath">,
+): Promise<void> {
+  const problem = storefrontProblem(s);
+  if (problem) throw new Error(problem);
+  const { error } = await supabase.rpc("update_retail_storefront", {
+    _ecosystem_id: ecosystemId,
+    ...(s.logoPath ? { _logo_path: s.logoPath } : {}),
+    ...(s.coverPath ? { _cover_path: s.coverPath } : {}),
+    _accepting_orders: s.acceptingOrders,
+    _paused_note: s.pausedNote ?? "",
+    _clear_logo: !s.logoPath,
+    _clear_cover: !s.coverPath,
+  });
+  if (error) throw new Error(error.message);
+  // Replaced or removed images are deleted so storage does not grow.
+  const stale = [previous?.logoPath, previous?.coverPath].filter(
+    (p): p is string => !!p && p !== s.logoPath && p !== s.coverPath && p.includes("/storefront/"),
+  );
+  if (stale.length) await supabase.storage.from(RETAIL_IMAGE_BUCKET).remove(stale);
 }
 
 /**
@@ -530,7 +621,7 @@ export async function saveDeliverySettings(
  */
 export async function saveStoreSettings(
   ecosystemId: string,
-  s: Omit<StoreSettings, "contactEmail">,
+  s: Omit<StoreSettings, "contactEmail" | keyof StorefrontSettings>,
 ): Promise<{ seeded: number }> {
   const { data, error } = await supabase.rpc("update_store_settings", {
     _ecosystem_id: ecosystemId,
