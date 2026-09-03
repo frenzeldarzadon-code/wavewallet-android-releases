@@ -13648,6 +13648,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_shop_branding: {
+        Args: {
+          _clear_cover?: boolean
+          _clear_logo?: boolean
+          _cover_path?: string
+          _ecosystem_id: string
+          _logo_path?: string
+        }
+        Returns: undefined
+      }
       update_social_settings:
         | {
             Args: {
