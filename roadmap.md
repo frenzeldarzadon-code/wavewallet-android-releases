@@ -71,3 +71,10 @@
 - [x] Verify image fields flow through Universe discovery, product cards/details, and public storefront
 - [x] Verify authorization enforcement, responsive public layouts, tests, and typecheck
 - [x] Do not publish
+
+## Universe social composer upgrade — IN PROGRESS (UNPUBLISHED)
+- [ ] Inline expanding composer (tap to expand, immediate focus, Post only with valid content, discard confirm)
+- [ ] Tools: Photo/Video, Location, Feeling/Activity, Direct Message (existing chat), Aa post style with live preview, @/# tagging
+- [ ] Data: social_posts video_path/meta/hashtags; social_create_post + social_feed extended (no financial changes)
+- [ ] Feed rendering: media, location, feeling, styled text, clickable hashtags -> /universe/tag/$tag, DM opens existing thread
+- [ ] Typecheck, tests, 390px + desktop checks; do not publish
