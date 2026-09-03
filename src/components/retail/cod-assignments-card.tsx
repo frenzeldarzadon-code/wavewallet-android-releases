@@ -10,7 +10,16 @@
  * Delivery person: sees assigned deliveries, can mark them delivered, and sees
  * their delivery-fee share (Shop Admin's configured split only).
  */
-import { Banknote, Check, Loader2, Lock, MessageCircle, PackageCheck, Truck, X } from "lucide-react";
+import {
+  Banknote,
+  Check,
+  Loader2,
+  Lock,
+  MessageCircle,
+  PackageCheck,
+  Truck,
+  X,
+} from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -29,7 +38,12 @@ import { Label } from "@/components/ui/label";
 import { PageSection, StatusBadge } from "@/components/ui-kit";
 import { RETAIL_VISIBLE } from "@/lib/features";
 import { peso, shortDateTime } from "@/lib/wavewallet";
-import { fulfillmentLabel, updateRetailFulfillment, type Fulfillment, type FulfillmentStatus } from "@/lib/retail";
+import {
+  fulfillmentLabel,
+  updateRetailFulfillment,
+  type Fulfillment,
+  type FulfillmentStatus,
+} from "@/lib/retail";
 import {
   confirmCashReceived,
   fetchCodHeldTotal,
@@ -38,7 +52,13 @@ import {
   type CodAssignment,
 } from "@/lib/retail-cod";
 
-export function CodAssignmentsCard({ available, onChanged }: { available: number; onChanged?: () => void }) {
+export function CodAssignmentsCard({
+  available,
+  onChanged,
+}: {
+  available: number;
+  onChanged?: () => void;
+}) {
   const navigate = useNavigate();
   const [rows, setRows] = useState<CodAssignment[]>([]);
   const [held, setHeld] = useState(0);
@@ -119,13 +139,17 @@ export function CodAssignmentsCard({ available, onChanged }: { available: number
           {rows.map((a) => {
             const isCollector = a.my_role === "collector";
             const active = a.status === "approved" && !a.settled_at;
-            const canApprove = isCollector && a.collector_status === "proposed" && a.status === "approved";
+            const canApprove =
+              isCollector && a.collector_status === "proposed" && a.status === "approved";
             const canCash =
               isCollector &&
               a.hold_held &&
               !a.cash_received_at &&
               ["out_for_delivery", "delivered", "completed"].includes(a.fulfillment_status);
-            const canDeliver = !isCollector && a.status === "approved" && a.fulfillment_status === "out_for_delivery";
+            const canDeliver =
+              !isCollector &&
+              a.status === "approved" &&
+              a.fulfillment_status === "out_for_delivery";
             const shortBy = Math.max(0, a.expected_cash - available);
             return (
               <Card key={`${a.id}-${a.my_role}`} className="shadow-[var(--shadow-card)]">
@@ -133,7 +157,11 @@ export function CodAssignmentsCard({ available, onChanged }: { available: number
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="min-w-0">
                       <p className="flex items-center gap-1 text-sm font-semibold">
-                        {isCollector ? <Banknote className="size-4 text-primary" /> : <Truck className="size-4 text-primary" />}
+                        {isCollector ? (
+                          <Banknote className="size-4 text-primary" />
+                        ) : (
+                          <Truck className="size-4 text-primary" />
+                        )}
                         {a.order_no} · {a.shop_name}
                       </p>
                       <p className="text-[11px] text-muted-foreground">
@@ -143,10 +171,15 @@ export function CodAssignmentsCard({ available, onChanged }: { available: number
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-1">
-                      <StatusBadge tone="brand">{isCollector ? "Collector" : "Delivery"}</StatusBadge>
+                      <StatusBadge tone="brand">
+                        {isCollector ? "Collector" : "Delivery"}
+                      </StatusBadge>
                       <StatusBadge tone={a.status === "approved" ? "success" : "muted"}>
                         {a.status === "approved"
-                          ? fulfillmentLabel(a.fulfillment_status as FulfillmentStatus, "delivery" as Fulfillment)
+                          ? fulfillmentLabel(
+                              a.fulfillment_status as FulfillmentStatus,
+                              "delivery" as Fulfillment,
+                            )
                           : a.status}
                       </StatusBadge>
                     </div>
@@ -155,7 +188,9 @@ export function CodAssignmentsCard({ available, onChanged }: { available: number
                   {isCollector ? (
                     <div className="space-y-0.5 rounded-lg bg-muted/50 px-2.5 py-2 text-[11px]">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Expected cash (products + delivery)</span>
+                        <span className="text-muted-foreground">
+                          Expected cash (products + delivery)
+                        </span>
                         <span className="font-semibold">{peso(a.expected_cash)}</span>
                       </div>
                       <div className="flex justify-between">
@@ -212,26 +247,43 @@ export function CodAssignmentsCard({ available, onChanged }: { available: number
                         <Button
                           size="sm"
                           disabled={busy === a.id || shortBy > 0}
-                          title={shortBy > 0 ? `You need ${peso(shortBy)} more available` : undefined}
+                          title={
+                            shortBy > 0 ? `You need ${peso(shortBy)} more available` : undefined
+                          }
                           onClick={() =>
-                            void run(a.id, () => respondToCollectorRequest(a.id, true), "Float held",
-                              `${peso(a.expected_cash)} is now locked until the order settles or is cancelled.`)
+                            void run(
+                              a.id,
+                              () => respondToCollectorRequest(a.id, true),
+                              "Float held",
+                              `${peso(a.expected_cash)} is now locked until the order settles or is cancelled.`,
+                            )
                           }
                         >
-                          {busy === a.id ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+                          {busy === a.id ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <Check className="size-4" />
+                          )}
                           Approve &amp; hold {peso(a.expected_cash)}
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
                           disabled={busy === a.id}
-                          onClick={() => void run(a.id, () => respondToCollectorRequest(a.id, false), "Request declined")}
+                          onClick={() =>
+                            void run(
+                              a.id,
+                              () => respondToCollectorRequest(a.id, false),
+                              "Request declined",
+                            )
+                          }
                         >
                           <X className="size-4" /> Decline
                         </Button>
                         {shortBy > 0 ? (
                           <p className="w-full text-[11px] text-destructive">
-                            You have {peso(available)} available; this float needs {peso(a.expected_cash)}.
+                            You have {peso(available)} available; this float needs{" "}
+                            {peso(a.expected_cash)}.
                           </p>
                         ) : null}
                       </>
@@ -252,8 +304,14 @@ export function CodAssignmentsCard({ available, onChanged }: { available: number
                       <Button
                         size="sm"
                         disabled={busy === a.id}
-                        onClick={() => void run(a.id, () => updateRetailFulfillment(a.id, "delivered"), "Marked delivered",
-                          "The customer was asked to confirm receipt.")}
+                        onClick={() =>
+                          void run(
+                            a.id,
+                            () => updateRetailFulfillment(a.id, "delivered"),
+                            "Marked delivered",
+                            "The customer was asked to confirm receipt.",
+                          )
+                        }
                       >
                         <PackageCheck className="size-4" /> Mark delivered
                       </Button>
@@ -271,8 +329,8 @@ export function CodAssignmentsCard({ available, onChanged }: { available: number
           <DialogHeader>
             <DialogTitle>Confirm cash for {cashFor?.order_no}</DialogTitle>
             <DialogDescription>
-              Expected {cashFor ? peso(cashFor.expected_cash) : ""}. Enter exactly what you received. A different
-              amount does not settle — it is flagged for the shop admin.
+              Expected {cashFor ? peso(cashFor.expected_cash) : ""}. Enter exactly what you
+              received. A different amount does not settle — it is flagged for the shop admin.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">

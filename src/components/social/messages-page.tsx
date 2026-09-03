@@ -1,4 +1,15 @@
-import { ArrowLeft, Flag, ImagePlus, Loader2, Package, Send, ShieldOff, UserPlus, Users, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Flag,
+  ImagePlus,
+  Loader2,
+  Package,
+  Send,
+  ShieldOff,
+  UserPlus,
+  Users,
+  X,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -248,13 +259,19 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
               <Package className="size-4" />
             </span>
           ) : (
-            <MemberAvatar path={active.member_avatar} name={active.member_name ?? "Member"} className="size-9" />
+            <MemberAvatar
+              path={active.member_avatar}
+              name={active.member_name ?? "Member"}
+              className="size-9"
+            />
           )}
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{threadTitle(active)}</p>
             {isOrder ? (
               <p className="truncate text-xs text-muted-foreground">
-                {active.participants.map((p) => `${p.name} (${roleLabel[p.role] ?? p.role})`).join(" · ")}
+                {active.participants
+                  .map((p) => `${p.name} (${roleLabel[p.role] ?? p.role})`)
+                  .join(" · ")}
               </p>
             ) : active.member_handle ? (
               <p className="truncate text-xs text-muted-foreground">
@@ -264,7 +281,12 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
           </div>
           {!isOrder ? (
             <>
-              <Button variant="ghost" size="sm" className="h-10" onClick={() => setReportOpen(true)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-10"
+                onClick={() => setReportOpen(true)}
+              >
                 <Flag className="size-4" />
               </Button>
               <Button variant="ghost" size="sm" className="h-10" onClick={() => void toggleBlock()}>
@@ -287,7 +309,9 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
         <div className="flex-1 space-y-2 overflow-y-auto rounded-xl bg-muted/40 p-3">
           {messages.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              {isOrder ? "No messages yet — coordinate the delivery here." : "No messages yet — say hello."}
+              {isOrder
+                ? "No messages yet — coordinate the delivery here."
+                : "No messages yet — say hello."}
             </p>
           ) : (
             messages.map((m) => (
@@ -300,7 +324,9 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
                   }
                 >
                   {isOrder && !m.mine && m.sender_name ? (
-                    <p className="mb-0.5 text-[10px] font-semibold text-muted-foreground">{m.sender_name}</p>
+                    <p className="mb-0.5 text-[10px] font-semibold text-muted-foreground">
+                      {m.sender_name}
+                    </p>
                   ) : null}
                   {m.image_path ? <MessageImage path={m.image_path} /> : null}
                   {m.body ? <p className="whitespace-pre-wrap break-words">{m.body}</p> : null}
@@ -391,7 +417,8 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
 
   return (
     <>
-      <PageSection devSlot="messages-page.messages"
+      <PageSection
+        devSlot="messages-page.messages"
         title="Messages"
         description="Private conversations and Retail order chats. Messages are free."
       >

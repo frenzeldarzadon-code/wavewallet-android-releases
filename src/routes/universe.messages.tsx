@@ -14,7 +14,10 @@ export const Route = createFileRoute("/universe/messages")({
           "Private messages and Retail order chats in the WaveWallet Universe. Only the participants can read a thread.",
       },
       { property: "og:title", content: "Messages — WaveWallet Universe" },
-      { property: "og:description", content: "Private direct messages and order chats between members." },
+      {
+        property: "og:description",
+        content: "Private direct messages and order chats between members.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

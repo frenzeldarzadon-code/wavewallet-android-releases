@@ -7,7 +7,19 @@
  * held when the order is placed and are returned in full if the admin rejects
  * it, so nothing is spent until an order is confirmed.
  */
-import { Banknote, Loader2, MessageCircle, Minus, PackageCheck, Plus, ShoppingCart, Star, Store, Truck, X } from "lucide-react";
+import {
+  Banknote,
+  Loader2,
+  MessageCircle,
+  Minus,
+  PackageCheck,
+  Plus,
+  ShoppingCart,
+  Star,
+  Store,
+  Truck,
+  X,
+} from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -85,9 +97,11 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
     address: "",
     notes: "",
   });
-  const [rating, setRating] = useState<{ order: RetailOrder; productId: string; value: number } | null>(
-    null,
-  );
+  const [rating, setRating] = useState<{
+    order: RetailOrder;
+    productId: string;
+    value: number;
+  } | null>(null);
   const userId = account?.id ?? null;
 
   const load = useCallback(async () => {
@@ -133,7 +147,17 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
     setCodQuote(null);
     void fetchCodQuote(ecosystemDbId, quote.sellerTotal)
       .then((q) => live && setCodQuote(q))
-      .catch(() => live && setCodQuote({ available: false, reason: "Cash on delivery is not available right now", deliveryFee: 0, platformFee: 0, customerTotal: total }));
+      .catch(
+        () =>
+          live &&
+          setCodQuote({
+            available: false,
+            reason: "Cash on delivery is not available right now",
+            deliveryFee: 0,
+            platformFee: 0,
+            customerTotal: total,
+          }),
+      );
     return () => {
       live = false;
     };
@@ -190,7 +214,8 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
 
   return (
     <>
-      <PageSection devSlot="retail-store-view.retail-store-2"
+      <PageSection
+        devSlot="retail-store-view.retail-store-2"
         title="Retail store"
         description={`Physical goods from this shop · wallet: ${credits(balance)}`}
         action={
@@ -237,8 +262,8 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                         </p>
                         {(p.wholesale_price ?? 0) > 0 && (p.wholesale_min_qty ?? 0) > 0 ? (
                           <p className="text-[11px] text-muted-foreground">
-                            {credits(sellerToCustomer(p.wholesale_price ?? 0, feePercent))} each from{" "}
-                            {p.wholesale_min_qty} {p.unit ?? "pcs"}
+                            {credits(sellerToCustomer(p.wholesale_price ?? 0, feePercent))} each
+                            from {p.wholesale_min_qty} {p.unit ?? "pcs"}
                           </p>
                         ) : null}
                       </div>
@@ -283,7 +308,11 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
         )}
       </PageSection>
 
-      <PageSection devSlot="retail-store-view.my-orders" title="My orders" description="Track each order from review to hand-over.">
+      <PageSection
+        devSlot="retail-store-view.my-orders"
+        title="My orders"
+        description="Track each order from review to hand-over."
+      >
         {orders.length === 0 ? (
           <EmptyState title="No retail orders yet" />
         ) : (
@@ -304,10 +333,14 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                       </p>
                     </div>
                     <StatusBadge tone={fulfillmentTone(o)}>
-                      {o.status === "approved" ? fulfillmentLabel(o.fulfillment_status, o.fulfillment) : o.status}
+                      {o.status === "approved"
+                        ? fulfillmentLabel(o.fulfillment_status, o.fulfillment)
+                        : o.status}
                     </StatusBadge>
                   </div>
-                  <p className="rounded-lg bg-muted/60 px-2.5 py-1.5 text-xs">{customerNextStep(o)}</p>
+                  <p className="rounded-lg bg-muted/60 px-2.5 py-1.5 text-xs">
+                    {customerNextStep(o)}
+                  </p>
                   <ul className="space-y-1 text-xs text-muted-foreground">
                     {o.items.map((i) => (
                       <li key={i.product_id} className="flex justify-between gap-2">
@@ -336,20 +369,26 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                             : o.delivery_person_name
                               ? `Delivery person: ${o.delivery_person_name}`
                               : "Delivery person not assigned yet"}
-                          {o.payment_method === "cod" && o.collector_name ? ` · Cash collected by: ${o.collector_name}` : ""}
+                          {o.payment_method === "cod" && o.collector_name
+                            ? ` · Cash collected by: ${o.collector_name}`
+                            : ""}
                         </p>
                       ) : null}
                       {o.payment_method === "cod" ? (
                         <p>
-                          Cash on delivery: {peso(o.total)} products + {peso(o.delivery_fee ?? 0)} delivery ={" "}
-                          <strong className="text-foreground">{peso(codCashTotal(o))}</strong> · {codStageLabel(o)}
+                          Cash on delivery: {peso(o.total)} products + {peso(o.delivery_fee ?? 0)}{" "}
+                          delivery ={" "}
+                          <strong className="text-foreground">{peso(codCashTotal(o))}</strong> ·{" "}
+                          {codStageLabel(o)}
                         </p>
                       ) : null}
                     </div>
                   ) : null}
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-sm font-semibold">
-                      {o.payment_method === "cod" ? `Pay ${peso(codCashTotal(o))} cash` : `Total ${credits(o.total)}`}
+                      {o.payment_method === "cod"
+                        ? `Pay ${peso(codCashTotal(o))} cash`
+                        : `Total ${credits(o.total)}`}
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {o.fulfillment === "delivery" && o.status === "approved" ? (
@@ -390,7 +429,12 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                           <X className="size-4" /> Cancel
                         </Button>
                       ) : customerCancelBlockedReason(o) ? (
-                        <Button size="sm" variant="outline" disabled title={customerCancelBlockedReason(o) ?? undefined}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled
+                          title={customerCancelBlockedReason(o) ?? undefined}
+                        >
                           <X className="size-4" /> Cancel
                         </Button>
                       ) : null}
@@ -528,13 +572,17 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                   Shop coins
                 </Button>
               ) : null}
-              {settings.codEnabled && settings.deliveryEnabled && draft.fulfillment === "delivery" ? (
+              {settings.codEnabled &&
+              settings.deliveryEnabled &&
+              draft.fulfillment === "delivery" ? (
                 <Button
                   type="button"
                   variant={draft.payment === "cod" ? "default" : "outline"}
                   className="flex-1"
                   disabled={codQuote !== null && !codQuote.available}
-                  title={codQuote && !codQuote.available ? (codQuote.reason ?? undefined) : undefined}
+                  title={
+                    codQuote && !codQuote.available ? (codQuote.reason ?? undefined) : undefined
+                  }
                   onClick={() => setDraft({ ...draft, payment: "cod" })}
                 >
                   <Banknote className="size-4" /> Cash on delivery
@@ -556,7 +604,8 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                   <span>{codQuote ? peso(codTotal) : "…"}</span>
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  No coins are taken from your wallet. Hand the exact amount to the collector on delivery.
+                  No coins are taken from your wallet. Hand the exact amount to the collector on
+                  delivery.
                 </p>
               </div>
             ) : (
@@ -575,7 +624,11 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
               Keep shopping
             </Button>
             <Button onClick={() => void submit()} disabled={busy || !!problem}>
-              {busy ? <Loader2 className="size-4 animate-spin" /> : <PackageCheck className="size-4" />}
+              {busy ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <PackageCheck className="size-4" />
+              )}
               Place order
             </Button>
           </DialogFooter>

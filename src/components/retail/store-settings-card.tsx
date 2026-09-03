@@ -22,8 +22,16 @@ import {
 const rows: Array<{ key: keyof StoreSettings; label: string; hint: string }> = [
   { key: "voucherEnabled", label: "Voucher store", hint: "Sell WiFi voucher codes." },
   { key: "retailEnabled", label: "Retail store", hint: "Sell physical goods." },
-  { key: "cashEnabled", label: "Accept cash", hint: "Pay cash at pickup or hand-over. Cash on delivery is configured below." },
-  { key: "creditEnabled", label: "Accept shop coins", hint: "Pay retail orders from the shop wallet." },
+  {
+    key: "cashEnabled",
+    label: "Accept cash",
+    hint: "Pay cash at pickup or hand-over. Cash on delivery is configured below.",
+  },
+  {
+    key: "creditEnabled",
+    label: "Accept shop coins",
+    hint: "Pay retail orders from the shop wallet.",
+  },
   { key: "pickupEnabled", label: "Offer pickup", hint: "Customers collect at your shop." },
   { key: "deliveryEnabled", label: "Offer delivery", hint: "Door-to-door with an address." },
   {
@@ -76,7 +84,8 @@ export function StoreSettingsCard({ ecosystemId }: { ecosystemId: string | null 
   };
 
   return (
-    <PageSection devSlot="store-settings-card.stores"
+    <PageSection
+      devSlot="store-settings-card.stores"
       title="Stores"
       description="Choose which stores your shop offers and how customers can pay and receive orders."
     >

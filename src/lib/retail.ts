@@ -332,8 +332,7 @@ export function checkoutProblem(
     if (!draft.address.trim()) return "A delivery address is required";
   }
   if (!draft.payment) return "Choose a payment method";
-  if (draft.payment === "cash" && !settings.cashEnabled)
-    return "This shop does not accept cash";
+  if (draft.payment === "cash" && !settings.cashEnabled) return "This shop does not accept cash";
   if (draft.payment === "credit") {
     if (!settings.creditEnabled) return "This shop does not accept coin payment";
     if (total > creditBalance) return "Not enough coins in your wallet";
@@ -342,13 +341,20 @@ export function checkoutProblem(
     if (draft.fulfillment !== "delivery") return "Cash on delivery requires delivery";
     if (!settings.codEnabled) return "This shop does not offer cash on delivery";
     if (!codQuote) return "Checking cash-on-delivery availability…";
-    if (!codQuote.available) return codQuote.reason ?? "Cash on delivery is not available right now";
+    if (!codQuote.available)
+      return codQuote.reason ?? "Cash on delivery is not available right now";
   }
   return null;
 }
 
 export const orderTone = (s: OrderStatus) =>
-  s === "approved" ? "success" : s === "pending" ? "warning" : s === "rejected" ? "danger" : "muted";
+  s === "approved"
+    ? "success"
+    : s === "pending"
+      ? "warning"
+      : s === "rejected"
+        ? "danger"
+        : "muted";
 
 /* ------------------------------------------------------------------ */
 /* Fulfillment (R5) — mirrors public.retail_fulfillment_step_ok         */
@@ -428,7 +434,9 @@ export function customerCancelBlockedReason(
 }
 
 /** What the customer should understand / do right now. */
-export function customerNextStep(o: Pick<RetailOrder, "status" | "fulfillment_status" | "fulfillment" | "payment_method">): string {
+export function customerNextStep(
+  o: Pick<RetailOrder, "status" | "fulfillment_status" | "fulfillment" | "payment_method">,
+): string {
   if (o.status === "pending")
     return o.payment_method === "credit"
       ? "Waiting for the shop to review. Your coins are held and returned in full if it is rejected. You can still cancel."
@@ -539,7 +547,6 @@ export async function saveStoreSettings(
   return { seeded: Number(row?.seeded ?? 0) };
 }
 
-
 /* ------------------------------------------------------------------ */
 /* Products                                                            */
 /* ------------------------------------------------------------------ */
@@ -604,8 +611,7 @@ export interface RetailProductDetails {
 }
 
 export interface RetailProductRow
-  extends Omit<RetailProduct, keyof RetailProductDetails>,
-    RetailProductDetails {
+  extends Omit<RetailProduct, keyof RetailProductDetails>, RetailProductDetails {
   active: boolean;
   archived: boolean;
 }
@@ -756,7 +762,6 @@ export function filterProducts(rows: RetailProductRow[], f: CatalogFilter): Reta
   });
 }
 
-
 export function validateRetailImage(file: File): string | null {
   return validateImageFile(file);
 }
@@ -855,7 +860,12 @@ const toOrders = (data: unknown): RetailOrder[] =>
     cashback_amount: num(o.cashback_amount),
     delivery_share_amount: num(o.delivery_share_amount),
     collector_share_amount: num(o.collector_share_amount),
-    fulfillment_status: (o.fulfillment_status ?? (o.status === "approved" ? "accepted" : o.status === "pending" ? "awaiting" : "closed")) as FulfillmentStatus,
+    fulfillment_status: (o.fulfillment_status ??
+      (o.status === "approved"
+        ? "accepted"
+        : o.status === "pending"
+          ? "awaiting"
+          : "closed")) as FulfillmentStatus,
     items: (o.items ?? []).map((i) => ({
       ...i,
       unit_price: Number(i.unit_price),

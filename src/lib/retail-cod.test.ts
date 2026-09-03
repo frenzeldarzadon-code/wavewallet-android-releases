@@ -60,7 +60,9 @@ describe("locked ₱121 example", () => {
     expect(s.delivery + s.collector).toBeCloseTo(20.01, 2);
   });
   it("reconciles 90 + 10 + 1 + 14 + 6 = 121 with 10 % cashback", () => {
-    const seller = 100, fee = 1, cashback = 10;
+    const seller = 100,
+      fee = 1,
+      cashback = 10;
     const { delivery, collector } = splitDeliveryFee(20, 70);
     expect(seller - cashback + cashback + fee + delivery + collector).toBe(121);
   });
@@ -77,16 +79,35 @@ describe("split configuration", () => {
 
 describe("checkout with cash on delivery", () => {
   const settings = { ...DEFAULT_STORE_SETTINGS, retailEnabled: true, codEnabled: true };
-  const ok: CodQuote = { available: true, reason: null, deliveryFee: 20, platformFee: 1, customerTotal: 121 };
-  const draft = { fulfillment: "delivery" as const, payment: "cod" as const, address: "Sagada", notes: "" };
+  const ok: CodQuote = {
+    available: true,
+    reason: null,
+    deliveryFee: 20,
+    platformFee: 1,
+    customerTotal: 121,
+  };
+  const draft = {
+    fulfillment: "delivery" as const,
+    payment: "cod" as const,
+    address: "Sagada",
+    notes: "",
+  };
 
   it("allows COD only for delivery with an available server quote", () => {
     expect(checkoutProblem(draft, 101, settings, 0, 1, ok)).toBeNull();
-    expect(checkoutProblem({ ...draft, fulfillment: "pickup" }, 101, settings, 0, 1, ok)).toMatch(/delivery/);
-    expect(checkoutProblem(draft, 101, { ...settings, codEnabled: false }, 0, 1, ok)).toMatch(/cash on delivery/i);
+    expect(checkoutProblem({ ...draft, fulfillment: "pickup" }, 101, settings, 0, 1, ok)).toMatch(
+      /delivery/,
+    );
+    expect(checkoutProblem(draft, 101, { ...settings, codEnabled: false }, 0, 1, ok)).toMatch(
+      /cash on delivery/i,
+    );
     expect(checkoutProblem(draft, 101, settings, 0, 1, null)).toMatch(/Checking/);
     expect(
-      checkoutProblem(draft, 101, settings, 0, 1, { ...ok, available: false, reason: "Cash on delivery is temporarily unavailable for this shop" }),
+      checkoutProblem(draft, 101, settings, 0, 1, {
+        ...ok,
+        available: false,
+        reason: "Cash on delivery is temporarily unavailable for this shop",
+      }),
     ).toMatch(/temporarily unavailable/);
   });
   it("never requires customer coins for COD", () => {
@@ -96,10 +117,18 @@ describe("checkout with cash on delivery", () => {
 
 describe("customer cancellation", () => {
   it("is allowed while pending and blocked once handed to delivery", () => {
-    expect(customerCancelBlockedReason({ status: "pending", fulfillment_status: "awaiting" })).toBeNull();
-    expect(customerCancelBlockedReason({ status: "approved", fulfillment_status: "out_for_delivery" })).toMatch(/handed/);
-    expect(customerCancelBlockedReason({ status: "approved", fulfillment_status: "delivered" })).toMatch(/handed/);
-    expect(customerCancelBlockedReason({ status: "approved", fulfillment_status: "preparing" })).toMatch(/order chat/);
+    expect(
+      customerCancelBlockedReason({ status: "pending", fulfillment_status: "awaiting" }),
+    ).toBeNull();
+    expect(
+      customerCancelBlockedReason({ status: "approved", fulfillment_status: "out_for_delivery" }),
+    ).toMatch(/handed/);
+    expect(
+      customerCancelBlockedReason({ status: "approved", fulfillment_status: "delivered" }),
+    ).toMatch(/handed/);
+    expect(
+      customerCancelBlockedReason({ status: "approved", fulfillment_status: "preparing" }),
+    ).toMatch(/order chat/);
   });
 });
 
@@ -119,7 +148,9 @@ describe("3-day seller fallback", () => {
     expect(fallbackReleaseAt(base.completed_at)?.toISOString()).toBe("2026-09-04T10:00:00.000Z");
     expect(canSellerRelease(base, new Date("2026-09-04T09:59:59.000Z"))).toBe(false);
     expect(canSellerRelease(base, new Date("2026-09-04T10:00:00.000Z"))).toBe(true);
-    expect(fallbackCountdown(base.completed_at, new Date("2026-09-02T10:00:00.000Z"))).toBe("2 days");
+    expect(fallbackCountdown(base.completed_at, new Date("2026-09-02T10:00:00.000Z"))).toBe(
+      "2 days",
+    );
     expect(fallbackCountdown(base.completed_at, new Date("2026-09-04T10:00:01.000Z"))).toBeNull();
   });
   it("is never available without receipt, after settlement, or with a discrepancy", () => {
@@ -137,6 +168,8 @@ describe("3-day seller fallback", () => {
     expect(canCollectorConfirmCash({ ...base, hold_held: false })).toBe(false);
     expect(codStageLabel(base)).toMatch(/Buyer received/);
     expect(codStageLabel({ ...base, cod_settled_at: "x" })).toBe("Settled");
-    expect(codStageLabel({ ...base, hold_held: false, collector_status: "proposed" })).toMatch(/Waiting for collector/);
+    expect(codStageLabel({ ...base, hold_held: false, collector_status: "proposed" })).toMatch(
+      /Waiting for collector/,
+    );
   });
 });

@@ -127,7 +127,11 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
 
   if (!ecosystemId) return null;
 
-  const run = async (id: string, fn: () => Promise<void>, ok: { title: string; description?: string }) => {
+  const run = async (
+    id: string,
+    fn: () => Promise<void>,
+    ok: { title: string; description?: string },
+  ) => {
     if (busy) return;
     setBusy(id);
     try {
@@ -172,7 +176,8 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
   const shopEmail = settings?.contactEmail ?? null;
 
   return (
-    <PageSection devSlot="retail-orders-panel.retail-orders"
+    <PageSection
+      devSlot="retail-orders-panel.retail-orders"
       title="Retail orders"
       description="Every order stays pending until you approve or reject it."
       action={
@@ -201,9 +206,9 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
               <div>
                 <p className="font-medium">Cash on delivery is on</p>
                 <p className="text-muted-foreground">
-                  Delivery fee {peso(settings.deliveryFee)} · split {settings.deliveryPct}% delivery /{" "}
-                  {settings.collectorPct}% collector. Each order needs its embedded platform fee available in the
-                  settlement wallet (₱1 per ₱101 retail).
+                  Delivery fee {peso(settings.deliveryFee)} · split {settings.deliveryPct}% delivery
+                  / {settings.collectorPct}% collector. Each order needs its embedded platform fee
+                  available in the settlement wallet (₱1 per ₱101 retail).
                 </p>
               </div>
             </div>
@@ -269,7 +274,13 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                         {cod ? (
                           <StatusBadge
                             tone={
-                              o.cod_settled_at ? "success" : o.cod_discrepancy ? "danger" : o.hold_held ? "brand" : "warning"
+                              o.cod_settled_at
+                                ? "success"
+                                : o.cod_discrepancy
+                                  ? "danger"
+                                  : o.hold_held
+                                    ? "brand"
+                                    : "warning"
                             }
                           >
                             {codStageLabel(o)}
@@ -278,7 +289,9 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                       </div>
                     </div>
                     {o.seller_name ? (
-                      <p className="text-[11px] text-muted-foreground">Storefront seller: {o.seller_name}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Storefront seller: {o.seller_name}
+                      </p>
                     ) : null}
                     <ul className="space-y-1 text-xs text-muted-foreground">
                       {o.items.map((i) => (
@@ -320,18 +333,27 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                             Collector:{" "}
                             {o.collector_name
                               ? `${o.collector_name} (${o.collector_status})`
-                              : "none — assign a collector with ≥ " + peso(codCashTotal(o)) + " available coins"}
+                              : "none — assign a collector with ≥ " +
+                                peso(codCashTotal(o)) +
+                                " available coins"}
                           </p>
                         ) : null}
                         {cod && o.hold_held ? (
                           <p>
-                            Float held: <strong className="text-foreground">{peso(o.cod_expected_cash ?? codCashTotal(o))}</strong>
+                            Float held:{" "}
+                            <strong className="text-foreground">
+                              {peso(o.cod_expected_cash ?? codCashTotal(o))}
+                            </strong>
                             {o.cod_cash_received_at && !o.cod_settled_at
                               ? ` · collector reported ${peso(o.cod_actual_cash ?? 0)}`
                               : ""}
                           </p>
                         ) : null}
-                        {cod && o.hold_held && !o.cod_settled_at && o.completed_at && !o.cod_cash_received_at ? (
+                        {cod &&
+                        o.hold_held &&
+                        !o.cod_settled_at &&
+                        o.completed_at &&
+                        !o.cod_cash_received_at ? (
                           <p>
                             Buyer confirmed receipt {shortDateTime(o.completed_at)}.{" "}
                             {countdown
@@ -341,7 +363,8 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                         ) : null}
                         {cod && o.cod_settled_at ? (
                           <p>
-                            Settled {shortDateTime(o.cod_settled_at)} ({o.cod_settlement_kind?.replace(/_/g, " ")})
+                            Settled {shortDateTime(o.cod_settled_at)} (
+                            {o.cod_settlement_kind?.replace(/_/g, " ")})
                           </p>
                         ) : null}
                       </div>
@@ -355,11 +378,24 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                           onChange={(e) => setNotes({ ...notes, [o.id]: e.target.value })}
                           className="min-w-40 flex-1"
                         />
-                        <Button size="sm" disabled={busy === o.id} onClick={() => void decide(o, true)}>
-                          {busy === o.id ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+                        <Button
+                          size="sm"
+                          disabled={busy === o.id}
+                          onClick={() => void decide(o, true)}
+                        >
+                          {busy === o.id ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <Check className="size-4" />
+                          )}
                           Approve
                         </Button>
-                        <Button size="sm" variant="outline" disabled={busy === o.id} onClick={() => void decide(o, false)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={busy === o.id}
+                          onClick={() => void decide(o, false)}
+                        >
                           <X className="size-4" /> Reject
                         </Button>
                       </div>
@@ -368,9 +404,16 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                     {o.status === "approved" ? (
                       <div className="flex flex-wrap gap-2">
                         {canAssign ? (
-                          <Button size="sm" variant="outline" disabled={busy === o.id} onClick={() => setAssigning(o)}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={busy === o.id}
+                            onClick={() => setAssigning(o)}
+                          >
                             <UserCheck className="size-4" />{" "}
-                            {o.delivery_person_id || o.self_delivery ? "Change assignment" : "Assign delivery"}
+                            {o.delivery_person_id || o.self_delivery
+                              ? "Change assignment"
+                              : "Assign delivery"}
                           </Button>
                         ) : null}
                         {o.fulfillment === "delivery" ? (
@@ -382,10 +425,18 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                           <Button
                             size="sm"
                             disabled={busy === o.id || needsCollectorFirst}
-                            title={needsCollectorFirst ? "A collector must approve (coins held) before the order can go out" : undefined}
+                            title={
+                              needsCollectorFirst
+                                ? "A collector must approve (coins held) before the order can go out"
+                                : undefined
+                            }
                             onClick={() => void advance(o)}
                           >
-                            {busy === o.id ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
+                            {busy === o.id ? (
+                              <Loader2 className="size-4 animate-spin" />
+                            ) : (
+                              <ArrowRight className="size-4" />
+                            )}
                             {fulfillmentActionLabel(next, o.fulfillment)}
                           </Button>
                         ) : null}
@@ -396,7 +447,8 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                             onClick={() =>
                               void run(o.id, () => sellerReleaseCod(o.id), {
                                 title: `${o.order_no} settled`,
-                                description: "The held float was settled once through the standard settlement path.",
+                                description:
+                                  "The held float was settled once through the standard settlement path.",
                               })
                             }
                           >
@@ -411,7 +463,8 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                               onClick={() =>
                                 void run(o.id, () => resolveCodDiscrepancy(o.id, "settle"), {
                                   title: `${o.order_no} settled by admin`,
-                                  description: "Settled on the locked order economics; the actual cash reported stays on record.",
+                                  description:
+                                    "Settled on the locked order economics; the actual cash reported stays on record.",
                                 })
                               }
                             >
@@ -422,10 +475,15 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                               variant="outline"
                               disabled={busy === o.id}
                               onClick={() =>
-                                void run(o.id, () => resolveCodDiscrepancy(o.id, "cancel", "Cash discrepancy"), {
-                                  title: `${o.order_no} cancelled`,
-                                  description: "The collector's float was released in full and stock restored.",
-                                })
+                                void run(
+                                  o.id,
+                                  () => resolveCodDiscrepancy(o.id, "cancel", "Cash discrepancy"),
+                                  {
+                                    title: `${o.order_no} cancelled`,
+                                    description:
+                                      "The collector's float was released in full and stock restored.",
+                                  },
+                                )
                               }
                             >
                               <X className="size-4" /> Cancel &amp; release float
@@ -508,7 +566,9 @@ export function RetailOrdersPanel({ ecosystemId }: { ecosystemId: string | null 
                 setCancelling(null);
                 void run(o.id, () => sellerCancelCod(o.id, cancelNote), {
                   title: `${o.order_no} cancelled`,
-                  description: o.hold_held ? "Held coins were released to the collector." : "Nothing was charged.",
+                  description: o.hold_held
+                    ? "Held coins were released to the collector."
+                    : "Nothing was charged.",
                 });
               }}
             >
@@ -546,9 +606,13 @@ function CodBreakdown({ o }: { o: RetailOrder }) {
         <span>Platform fee (seller-side)</span>
         <span className="text-right">{peso(o.platform_fee_amount ?? 0)}</span>
         <span>Delivery share ({dPct}%)</span>
-        <span className="text-right">{peso(settled ? (o.delivery_share_amount ?? 0) : split.delivery)}</span>
+        <span className="text-right">
+          {peso(settled ? (o.delivery_share_amount ?? 0) : split.delivery)}
+        </span>
         <span>Collector share ({o.delivery_split_collector_pct ?? 0}%)</span>
-        <span className="text-right">{peso(settled ? (o.collector_share_amount ?? 0) : split.collector)}</span>
+        <span className="text-right">
+          {peso(settled ? (o.collector_share_amount ?? 0) : split.collector)}
+        </span>
         {settled ? (
           <>
             <span>Seller credited</span>
@@ -599,7 +663,10 @@ function AssignDialog({
   }, [order.id]);
 
   const filtered = people.filter(
-    (p) => !q.trim() || p.full_name.toLowerCase().includes(q.toLowerCase()) || (p.handle ?? "").toLowerCase().includes(q.toLowerCase()),
+    (p) =>
+      !q.trim() ||
+      p.full_name.toLowerCase().includes(q.toLowerCase()) ||
+      (p.handle ?? "").toLowerCase().includes(q.toLowerCase()),
   );
   const eligible = filtered.filter((p) => p.collector_eligible);
   const collectorPick = people.find((p) => p.user_id === collectorId);
@@ -617,9 +684,10 @@ function AssignDialog({
         collectorId: cod ? collectorId : null,
       });
       toast.success("Assignment saved", {
-        description: cod && collectorId && collectorId !== order.collector_id
-          ? `${collectorPick?.full_name ?? "The collector"} was asked to approve. Coins are held only when they approve.`
-          : "No coins moved.",
+        description:
+          cod && collectorId && collectorId !== order.collector_id
+            ? `${collectorPick?.full_name ?? "The collector"} was asked to approve. Coins are held only when they approve.`
+            : "No coins moved.",
       });
       await onDone();
     } catch (e) {
@@ -629,7 +697,17 @@ function AssignDialog({
     }
   };
 
-  const PersonRow = ({ p, selected, onPick, disabled }: { p: CodAssignee; selected: boolean; onPick: () => void; disabled?: boolean }) => (
+  const PersonRow = ({
+    p,
+    selected,
+    onPick,
+    disabled,
+  }: {
+    p: CodAssignee;
+    selected: boolean;
+    onPick: () => void;
+    disabled?: boolean;
+  }) => (
     <button
       type="button"
       disabled={disabled}
@@ -657,7 +735,10 @@ function AssignDialog({
         <DialogHeader>
           <DialogTitle>Assign {order.order_no}</DialogTitle>
           <DialogDescription>
-            Step 1 — who delivers. {cod ? `Step 2 — who collects ${peso(need)} in cash and floats it in Universe coins.` : ""}{" "}
+            Step 1 — who delivers.{" "}
+            {cod
+              ? `Step 2 — who collects ${peso(need)} in cash and floats it in Universe coins.`
+              : ""}{" "}
             Saving never moves coins.
           </DialogDescription>
         </DialogHeader>
@@ -668,13 +749,26 @@ function AssignDialog({
               I deliver this myself
             </Label>
             <p className="text-[11px] text-muted-foreground">
-              {cod ? "Self-delivery with no collector opens a seller + customer chat only." : "Opens a seller + customer chat."}
+              {cod
+                ? "Self-delivery with no collector opens a seller + customer chat only."
+                : "Opens a seller + customer chat."}
             </p>
           </div>
-          <Switch id="self-delivery" checked={selfDelivery} onCheckedChange={(v) => { setSelfDelivery(v); if (v) setDeliveryId(null); }} />
+          <Switch
+            id="self-delivery"
+            checked={selfDelivery}
+            onCheckedChange={(v) => {
+              setSelfDelivery(v);
+              if (v) setDeliveryId(null);
+            }}
+          />
         </div>
 
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search shop members…" />
+        <Input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search shop members…"
+        />
 
         {loading ? (
           <p className="text-xs text-muted-foreground">Loading members…</p>
@@ -702,28 +796,37 @@ function AssignDialog({
 
             {cod ? (
               <div className="space-y-1.5">
-                <Label>2 · Collector (needs {peso(need)} available — held coins do not count)</Label>
+                <Label>
+                  2 · Collector (needs {peso(need)} available — held coins do not count)
+                </Label>
                 {lockedCollector ? (
                   <p className="text-xs text-muted-foreground">
-                    {order.collector_name} already holds the float; the collector cannot change. Cancel the order to release it.
+                    {order.collector_name} already holds the float; the collector cannot change.
+                    Cancel the order to release it.
                   </p>
                 ) : (
                   <div className="max-h-44 space-y-1 overflow-y-auto">
                     {eligible.length === 0 ? (
-                      <p className="text-xs text-destructive">No member has {peso(need)} available right now.</p>
+                      <p className="text-xs text-destructive">
+                        No member has {peso(need)} available right now.
+                      </p>
                     ) : (
                       eligible.map((p) => (
                         <PersonRow
                           key={p.user_id}
                           p={p}
                           selected={collectorId === p.user_id}
-                          onPick={() => setCollectorId(collectorId === p.user_id ? null : p.user_id)}
+                          onPick={() =>
+                            setCollectorId(collectorId === p.user_id ? null : p.user_id)
+                          }
                         />
                       ))
                     )}
                   </div>
                 )}
-                {collectorProblem ? <p className="text-xs text-destructive">{collectorProblem}</p> : null}
+                {collectorProblem ? (
+                  <p className="text-xs text-destructive">{collectorProblem}</p>
+                ) : null}
               </div>
             ) : null}
           </>
@@ -733,7 +836,10 @@ function AssignDialog({
           <Button variant="outline" onClick={onClose} disabled={busy}>
             Close
           </Button>
-          <Button onClick={() => void save()} disabled={busy || !!collectorProblem || (!selfDelivery && !deliveryId && !collectorId)}>
+          <Button
+            onClick={() => void save()}
+            disabled={busy || !!collectorProblem || (!selfDelivery && !deliveryId && !collectorId)}
+          >
             {busy ? <Loader2 className="size-4 animate-spin" /> : <UserCheck className="size-4" />}
             Save assignment
           </Button>

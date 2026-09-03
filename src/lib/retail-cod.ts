@@ -49,7 +49,10 @@ export function fallbackReleaseAt(completedAt: string | null | undefined): Date 
 }
 
 /** Human countdown to the fallback release; `null` when the window has already passed. */
-export function fallbackCountdown(completedAt: string | null | undefined, now = new Date()): string | null {
+export function fallbackCountdown(
+  completedAt: string | null | undefined,
+  now = new Date(),
+): string | null {
   const at = fallbackReleaseAt(completedAt);
   if (!at) return null;
   const ms = at.getTime() - now.getTime();

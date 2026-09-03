@@ -18,7 +18,12 @@ import { PageSection, StatusBadge } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
 import { fetchCreditBalance } from "@/lib/wallet";
 import { peso } from "@/lib/wavewallet";
-import { DEFAULT_STORE_SETTINGS, fetchStoreSettings, saveDeliverySettings, type StoreSettings } from "@/lib/retail";
+import {
+  DEFAULT_STORE_SETTINGS,
+  fetchStoreSettings,
+  saveDeliverySettings,
+  type StoreSettings,
+} from "@/lib/retail";
 import { splitDeliveryFee, splitProblem } from "@/lib/retail-cod";
 
 export function DeliverySettingsCard({ ecosystemId }: { ecosystemId: string | null }) {
@@ -63,7 +68,8 @@ export function DeliverySettingsCard({ ecosystemId }: { ecosystemId: string | nu
     try {
       await saveDeliverySettings(ecosystemId, s);
       toast.success("Delivery settings saved", {
-        description: "New orders use these values; existing orders keep the split they were placed with.",
+        description:
+          "New orders use these values; existing orders keep the split they were placed with.",
       });
       await load();
     } catch (e) {
@@ -110,11 +116,13 @@ export function DeliverySettingsCard({ ecosystemId }: { ecosystemId: string | nu
                   min={0}
                   step="0.01"
                   value={s.deliveryFee}
-                  onChange={(e) => setS({ ...s, deliveryFee: Math.max(0, Number(e.target.value) || 0) })}
+                  onChange={(e) =>
+                    setS({ ...s, deliveryFee: Math.max(0, Number(e.target.value) || 0) })
+                  }
                 />
                 <p className="text-[11px] text-muted-foreground">
-                  Added to the customer's cash total. The 1 % platform fee applies to product prices only — never to
-                  this fee.
+                  Added to the customer's cash total. The 1 % platform fee applies to product prices
+                  only — never to this fee.
                 </p>
               </div>
 
@@ -156,7 +164,8 @@ export function DeliverySettingsCard({ ecosystemId }: { ecosystemId: string | nu
                 </StatusBadge>
                 {s.deliveryFee > 0 && !problem ? (
                   <span className="text-muted-foreground">
-                    On {peso(s.deliveryFee)}: delivery {peso(preview.delivery)} · collector {peso(preview.collector)}
+                    On {peso(s.deliveryFee)}: delivery {peso(preview.delivery)} · collector{" "}
+                    {peso(preview.collector)}
                   </span>
                 ) : null}
               </div>
@@ -166,9 +175,10 @@ export function DeliverySettingsCard({ ecosystemId }: { ecosystemId: string | nu
                   <Wallet className="size-3.5 text-primary" /> Seller-side requirement
                 </p>
                 <p className="mt-1 text-muted-foreground">
-                  COD is offered on an order only when the shop's settlement wallet holds at least that order's
-                  embedded platform fee in <strong>available</strong> Universe Coins (e.g. Seller's Cut ₱100 →
-                  Retail Price ₱101 → ₱1 required). The customer is never charged coins.
+                  COD is offered on an order only when the shop's settlement wallet holds at least
+                  that order's embedded platform fee in <strong>available</strong> Universe Coins
+                  (e.g. Seller's Cut ₱100 → Retail Price ₱101 → ₱1 required). The customer is never
+                  charged coins.
                 </p>
                 {available !== null ? (
                   <p className="mt-1 text-muted-foreground">
