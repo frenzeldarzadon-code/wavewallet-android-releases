@@ -102,6 +102,11 @@ export interface FeedPost {
   author_avatar: string | null;
   body: string;
   image_path: string | null;
+  /** Optional attached video in the same private bucket as photos. */
+  video_path?: string | null;
+  /** Structured extras: location, feeling/activity, text style, DM invite. */
+  meta?: PostMeta | null;
+  hashtags?: string[] | null;
   promoted: boolean;
   promotion_tier_name: string | null;
   promotion_expires_at: string | null;
