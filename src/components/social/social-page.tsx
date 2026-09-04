@@ -176,11 +176,14 @@ export function SocialPage({ hashtag }: { hashtag?: string } = {}) {
     }
   }, [hashtag]);
 
+  // Keyed on the member id, never the account object: a fresh object per
+  // render would re-run this after every state update refresh() itself makes.
+  const accountId = account?.id ?? null;
   useEffect(() => {
-    if (!account) return;
+    if (!accountId) return;
     setLoading(true);
     void refresh();
-  }, [account, refresh]);
+  }, [accountId, refresh]);
 
   const tiers = useMemo<PromotionTier[]>(
     () =>

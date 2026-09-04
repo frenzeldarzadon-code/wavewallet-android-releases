@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { loadAuthContext, type AuthContext, type DbEcosystem } from "@/lib/auth";
 import { endImpersonation } from "@/lib/impersonation";
@@ -256,8 +256,12 @@ export function useSession(requiredRole?: Role): ResolvedSession {
   }, [ctx, targetEcoId]);
 
   const activeEco = impersonated ?? ctx?.ecosystem ?? null;
-  const ecosystem = activeEco ? toEcosystem(activeEco) : null;
-  const account = ctx ? toAccount(ctx, ecosystem) : null;
+  // Memoised so consumers can list `account`/`ecosystem` as effect dependencies.
+  // Rebuilding these objects on every render made any effect keyed on them
+  // (e.g. the Universe feed loader) refetch after each of its own state updates —
+  // an unbounded request loop that surfaced as "TypeError: Failed to fetch".
+  const ecosystem = useMemo(() => (activeEco ? toEcosystem(activeEco) : null), [activeEco]);
+  const account = useMemo(() => (ctx ? toAccount(ctx, ecosystem) : null), [ctx, ecosystem]);
 
   useEffect(() => {
     if (!ready) return;

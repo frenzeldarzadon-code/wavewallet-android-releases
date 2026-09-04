@@ -50,8 +50,9 @@ function AdminSocial() {
   const [activity, setActivity] = useState<SocialActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const accountId = account?.id ?? null;
   const load = useCallback(async () => {
-    if (!account) return;
+    if (!accountId) return;
     try {
       const [r, a] = await Promise.all([
         fetchSocialReports(ecosystemDbId),
@@ -64,7 +65,7 @@ function AdminSocial() {
     } finally {
       setLoading(false);
     }
-  }, [account, ecosystemDbId]);
+  }, [accountId, ecosystemDbId]);
 
   useEffect(() => {
     void load();
