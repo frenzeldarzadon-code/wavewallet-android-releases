@@ -287,6 +287,10 @@ export function useSession(requiredRole?: Role): ResolvedSession {
   const signOut = useCallback(async () => {
     // Never leave a delegation open behind a sign-out.
     await endImpersonation().catch(() => undefined);
+    // A shared phone must not keep receiving the previous person's alerts.
+    await import("@/lib/financial-notifications")
+      .then((m) => m.unsubscribeThisDevice())
+      .catch(() => undefined);
     writeSession(null);
     await supabase.auth.signOut();
     navigate({ to: "/", replace: true });
