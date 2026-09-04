@@ -745,7 +745,8 @@ export function UniverseComposer({
           <AlertDialogHeader>
             <AlertDialogTitle>Discard this post?</AlertDialogTitle>
             <AlertDialogDescription>
-              Your text, attachments and linked items will be lost. Posts you already published are not affected.
+              Your text, attachments and linked items will be lost. Posts you already published are
+              not affected.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

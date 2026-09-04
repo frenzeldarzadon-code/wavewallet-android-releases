@@ -7,6 +7,8 @@ import {
   composerHasContent,
   composerIsDirty,
   feelingPhrase,
+  postLinkKey,
+  readPostLink,
   readPostMeta,
   styleApplies,
   validateLocationLabel,
@@ -114,9 +116,18 @@ describe("post links (Link / Recommend)", () => {
   it("reads a product link only with a valid kind and ids", () => {
     expect(
       readPostLink({ kind: "product", shop_id: shop, product_id: prod, product_kind: "retail" }),
-    ).toEqual({ kind: "product", shop_id: shop, product_id: prod.toLowerCase(), product_kind: "retail" });
-    expect(readPostLink({ kind: "product", shop_id: shop, product_id: "nope", product_kind: "retail" })).toBeNull();
-    expect(readPostLink({ kind: "product", shop_id: shop, product_id: prod, product_kind: "food" })).toBeNull();
+    ).toEqual({
+      kind: "product",
+      shop_id: shop,
+      product_id: prod.toLowerCase(),
+      product_kind: "retail",
+    });
+    expect(
+      readPostLink({ kind: "product", shop_id: shop, product_id: "nope", product_kind: "retail" }),
+    ).toBeNull();
+    expect(
+      readPostLink({ kind: "product", shop_id: shop, product_id: prod, product_kind: "food" }),
+    ).toBeNull();
     expect(readPostLink({ kind: "shop", shop_id: "not-a-uuid" })).toBeNull();
     expect(readPostLink("shop")).toBeNull();
   });
@@ -129,8 +140,17 @@ describe("post links (Link / Recommend)", () => {
   });
 
   it("makes the composer dirty and builds stable keys", () => {
-    expect(composerIsDirty({ body: "", hasImage: false, hasVideo: false, meta: { link: { kind: "shop", shop_id: shop } } })).toBe(true);
+    expect(
+      composerIsDirty({
+        body: "",
+        hasImage: false,
+        hasVideo: false,
+        meta: { link: { kind: "shop", shop_id: shop } },
+      }),
+    ).toBe(true);
     expect(postLinkKey({ kind: "shop", shop_id: shop })).toBe(`shop:${shop}`);
-    expect(postLinkKey({ kind: "product", shop_id: shop, product_id: prod, product_kind: "voucher" })).toBe(`product:voucher:${prod}`);
+    expect(
+      postLinkKey({ kind: "product", shop_id: shop, product_id: prod, product_kind: "voucher" }),
+    ).toBe(`product:voucher:${prod}`);
   });
 });

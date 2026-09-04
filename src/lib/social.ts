@@ -1127,9 +1127,7 @@ function normalizeLinkCard(row: Record<string, unknown>): LinkCard {
     image_path: (row["image_path"] as string | null) ?? null,
     price: row["price"] === null || row["price"] === undefined ? null : Number(row["price"]),
     available:
-      row["available"] === null || row["available"] === undefined
-        ? null
-        : Number(row["available"]),
+      row["available"] === null || row["available"] === undefined ? null : Number(row["available"]),
   };
 }
 

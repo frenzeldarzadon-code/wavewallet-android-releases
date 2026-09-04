@@ -52,7 +52,9 @@ import {
 export const Route = createFileRoute("/shop/$slug")({
   // `?product=<id>` (from Universe post links) opens that product in place.
   validateSearch: (search: Record<string, unknown>): { product?: string } =>
-    typeof search["product"] === "string" && search["product"] ? { product: search["product"] } : {},
+    typeof search["product"] === "string" && search["product"]
+      ? { product: search["product"] }
+      : {},
   head: ({ params }) => ({
     meta: [
       { title: `${params.slug} Storefront — ONE WAVE` },
@@ -284,7 +286,9 @@ function PublicStorefront() {
       </section>
 
       <Tabs
-        value={tab ?? (RETAIL_VISIBLE && (retail.length || !vouchers.length) ? "retail" : "voucher")}
+        value={
+          tab ?? (RETAIL_VISIBLE && (retail.length || !vouchers.length) ? "retail" : "voucher")
+        }
         onValueChange={setTab}
       >
         <TabsList className="w-full">

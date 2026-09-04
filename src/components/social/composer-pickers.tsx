@@ -628,8 +628,8 @@ export function LinkPicker({
         <DialogHeader>
           <DialogTitle>Link or recommend</DialogTitle>
           <DialogDescription>
-            Attach one product or one shop from the Universe. Readers open it in the shop&apos;s
-            own storefront.
+            Attach one product or one shop from the Universe. Readers open it in the shop&apos;s own
+            storefront.
           </DialogDescription>
         </DialogHeader>
         <Tabs value={kind} onValueChange={(v) => setKind(v === "shop" ? "shop" : "product")}>
