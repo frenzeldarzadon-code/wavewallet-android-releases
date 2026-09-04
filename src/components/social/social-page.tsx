@@ -152,6 +152,7 @@ function AuthorLink({ handle, children }: { handle: string | null; children: Rea
 export function SocialPage({ hashtag }: { hashtag?: string } = {}) {
   const session = useSession();
   const account = session.account;
+  const accountId = account?.id ?? null;
   const [state, setState] = useState<SocialState | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   // Linked shops/products resolved to current storefront data, keyed by reference.
@@ -187,11 +188,10 @@ export function SocialPage({ hashtag }: { hashtag?: string } = {}) {
     } finally {
       setLoading(false);
     }
-  }, [hashtag]);
+  }, [accountId, hashtag]);
 
   // Keyed on the member id, never the account object: a fresh object per
   // render would re-run this after every state update refresh() itself makes.
-  const accountId = account?.id ?? null;
   useEffect(() => {
     if (!accountId) return;
     setLoading(true);

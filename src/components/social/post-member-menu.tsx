@@ -45,7 +45,6 @@ import {
   removeFriend,
   respondFriendRequest,
   sendFriendRequest,
-  setFollowing,
   type Relationship,
 } from "@/lib/universe-social";
 
@@ -152,23 +151,23 @@ export function PostMemberMenu({
         </Button>
       ) : null}
       <DropdownMenu
-      open={open}
-      onOpenChange={(o) => {
-        setOpen(o);
-        if (o && !rel && canRelate) load();
-      }}
-    >
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-10 w-10 shrink-0 px-0"
-          aria-label={`More actions for ${authorName}'s post`}
-        >
-          <MoreHorizontal className="size-5" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60">
+        open={open}
+        onOpenChange={(o) => {
+          setOpen(o);
+          if (o && !rel && canRelate) load();
+        }}
+      >
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-10 w-10 shrink-0 px-0"
+            aria-label={`More actions for ${authorName}'s post`}
+          >
+            <MoreHorizontal className="size-5" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-60">
         <DropdownMenuLabel className="truncate text-xs font-medium text-muted-foreground">
           {isSelf ? "Your post" : authorName}
         </DropdownMenuLabel>
@@ -243,7 +242,7 @@ export function PostMemberMenu({
             <Trash2 className="size-4" /> Delete post
           </DropdownMenuItem>
         ) : null}
-      </DropdownMenuContent>
+        </DropdownMenuContent>
       </DropdownMenu>
     </div>
   );
