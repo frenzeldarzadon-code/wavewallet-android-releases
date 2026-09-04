@@ -65,7 +65,8 @@ export interface SocialState {
   free_balance: number;
   /** Purchased credits. The only balance that may be gifted. */
   purchased_balance: number;
-  ecosystem_id: string;
+  /** The member's current shop, or null — Universe members need no shop to post. */
+  ecosystem_id: string | null;
   social_enabled: boolean;
   /** Retired: the daily free-credit allowance. Always 0. */
   daily_allowance: number;
