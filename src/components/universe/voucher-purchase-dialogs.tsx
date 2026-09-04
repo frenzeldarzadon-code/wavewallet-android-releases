@@ -355,10 +355,33 @@ export function VoucherPurchaseDialogs({
                     <span className="text-muted-foreground">Unit price</span>
                     <span className="font-medium">{peso(unit)}</span>
                   </p>
-                  <p className="flex justify-between">
-                    <span className="text-muted-foreground">Total</span>
-                    <span className="font-semibold text-destructive">−{peso(total)}</span>
-                  </p>
+                  {selfPurchase && quote ? (
+                    <>
+                      <p className="flex justify-between">
+                        <span className="text-muted-foreground">Voucher price</span>
+                        <span className="font-medium">{peso(quote.total)}</span>
+                      </p>
+                      <p className="flex justify-between" data-testid="self-cashback-line">
+                        <span className="text-muted-foreground">
+                          Your cashback ({quote.cashbackPercent}% · self purchase)
+                        </span>
+                        <span className="font-medium text-success">−{peso(quote.selfCashback)}</span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span className="text-muted-foreground">Actual charge</span>
+                        <span className="font-semibold text-destructive">−{peso(charge)}</span>
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Cashback is applied at checkout — one wallet transaction, no separate
+                        cashback later.
+                      </p>
+                    </>
+                  ) : (
+                    <p className="flex justify-between">
+                      <span className="text-muted-foreground">Total</span>
+                      <span className="font-semibold text-destructive">−{peso(total)}</span>
+                    </p>
+                  )}
                   {balance !== null ? (
                     <>
                       <p className="flex justify-between">
@@ -368,7 +391,7 @@ export function VoucherPurchaseDialogs({
                       <p className="flex justify-between">
                         <span className="text-muted-foreground">Balance after</span>
                         <span className={notEnough ? "font-medium text-destructive" : "font-medium"}>
-                          {notEnough ? `−${peso(total - balance)}` : peso(balance - total)}
+                          {notEnough ? `−${peso(charge - balance)}` : peso(balance - charge)}
                         </span>
                       </p>
                     </>
