@@ -585,8 +585,14 @@ function PostCard({
           </Button>
         ) : null}
 
-        <div className="flex flex-wrap items-center gap-1">
-          <Button variant="ghost" size="sm" className="h-10 gap-1.5" onClick={onLike}>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-10 gap-1.5"
+            aria-label={post.liked_by_me ? "Unlike" : "Like"}
+            onClick={onLike}
+          >
             <Heart
               className={post.liked_by_me ? "size-4 fill-destructive text-destructive" : "size-4"}
             />
@@ -596,59 +602,33 @@ function PostCard({
             variant="ghost"
             size="sm"
             className="h-10 gap-1.5"
+            aria-label="Replies"
             onClick={() => void openComments()}
           >
             <MessageCircle className="size-4" />
             {post.comment_count}
           </Button>
-          {post.author_id !== meId ? (
-            <>
-              <Button variant="ghost" size="sm" className="h-10" onClick={() => setDmOpen(true)}>
-                <Send className="size-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-10 gap-1.5"
-                disabled={!canGift(state, false)}
-                title={
-                  canGift(state, false)
-                    ? `Gift paid social credits to ${post.author_name}`
-                    : "You have no purchased social credits. Free promotional credits cannot be gifted."
-                }
-                onClick={() => setGiftOpen(true)}
-              >
-                <Gift className="size-4" />
-              </Button>
-              <RelationshipMenu userId={post.author_id} name={post.author_name} />
-              <Button variant="ghost" size="sm" className="h-10" onClick={onReport}>
-                <Flag className="size-4" />
-              </Button>
-              <Button variant="ghost" size="sm" className="h-10" onClick={onBlock}>
-                <ShieldOff className="size-4" />
-              </Button>
-            </>
-          ) : null}
-          {post.can_hide ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-10 gap-1.5 text-xs"
-              onClick={() => setHideOpen(true)}
-            >
-              <EyeOff className="size-4" /> Hide from my shop
-            </Button>
-          ) : null}
-          {post.can_delete ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-auto h-10 text-destructive"
-              onClick={onDelete}
-            >
-              <Trash2 className="size-4" />
-            </Button>
-          ) : null}
+          <div className="ml-auto">
+            <PostMemberMenu
+              authorId={post.author_id}
+              authorName={post.author_name}
+              authorHandle={post.author_handle}
+              isSelf={post.author_id === meId}
+              onMessage={() => void openDm()}
+              onQuickMessage={() => setDmOpen(true)}
+              onSendCoins={() => void openSendCoins()}
+              onGift={() => setGiftOpen(true)}
+              giftDisabledReason={
+                canGift(state, false)
+                  ? null
+                  : "You have no purchased social credits. Free promotional credits cannot be gifted."
+              }
+              onReport={onReport}
+              onBlock={onBlock}
+              {...(post.can_hide ? { onHideForShop: () => setHideOpen(true) } : {})}
+              {...(post.can_delete ? { onDelete } : {})}
+            />
+          </div>
         </div>
 
         {open ? (
