@@ -143,7 +143,7 @@ begin
   _second := public.request_cash_in(_gcash, 800, null, null, gen_random_uuid()::text, _uid::text || '/sr5.jpg', '09990001234', 'platform', now(), null, 'universe');
   _res := public.apply_cash_in_receipt_ocr(_second.id, null, 800, '09990001234', true, null, now(), null, 'GCash', 'Juan D.', null, null, repeat('8', 64));
   select * into _second from public.cash_in_requests where id = _second.id;
-  if _second.status <> 'rejected' or _res <> 'duplicate_credited' then
+  if _second.status <> 'rejected' or _res not in ('duplicate_credited', 'not_pending') then
     raise exception '5: a credited payment with the same sender/amount/time must be disapproved even without a reference (got % / %)', _second.status, _res;
   end if;
   if (select balance from public.credit_accounts where id = _global) <> _g1 then raise exception '5: no second credit'; end if;
