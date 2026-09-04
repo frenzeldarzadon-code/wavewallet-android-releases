@@ -13,6 +13,7 @@
  * about what was actually sent.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { VAPID_PUBLIC_KEY } from "@/lib/push-config";
 
 export const FINANCIAL_CATEGORIES = [
   { kind: "cash_in", label: "Cash In updates" },
