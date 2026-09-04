@@ -6,3 +6,4 @@
 - [x] Typecheck, lint, unit tests
 - [ ] Demo-authenticated browser walkthrough (blocked: browser auth signed out; SQL console is `supabase_read_only_user` with no RPC execute)
 - [x] Remove Universe post audience system (composer selector + backend visibility filtering); all posts public in Universe; NG isolation untouched
+- [x] Retire per-shop post hiding: feed/RLS/visibility helpers ignore `social_post_shop_hides`; hide RPC refuses; UI controls removed. Verified via rolled-back simulation of 7 demo/test accounts (all saw the same posts despite a hide record).
