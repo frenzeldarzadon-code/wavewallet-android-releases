@@ -38,6 +38,7 @@ import { fetchNotifications, unreadCount } from "@/lib/notifications";
 import { fetchWalletView } from "@/lib/wallet";
 import { fetchMyProfile } from "@/lib/profile";
 import { peso } from "@/lib/wavewallet";
+import { WALLET_CHANGED_EVENT } from "@/lib/wallet-events";
 import { useVisiblePoll } from "@/hooks/use-visible-poll";
 
 /** Full navigation (desktop rail). */
