@@ -168,80 +168,80 @@ export function PostMemberMenu({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-60">
-        <DropdownMenuLabel className="truncate text-xs font-medium text-muted-foreground">
-          {isSelf ? "Your post" : authorName}
-        </DropdownMenuLabel>
+          <DropdownMenuLabel className="truncate text-xs font-medium text-muted-foreground">
+            {isSelf ? "Your post" : authorName}
+          </DropdownMenuLabel>
 
-        {authorHandle ? (
-          <DropdownMenuItem asChild>
-            <Link to="/universe/u/$handle" params={{ handle: authorHandle }} className="gap-2">
-              <UserRound className="size-4" /> View profile
-            </Link>
-          </DropdownMenuItem>
-        ) : null}
+          {authorHandle ? (
+            <DropdownMenuItem asChild>
+              <Link to="/universe/u/$handle" params={{ handle: authorHandle }} className="gap-2">
+                <UserRound className="size-4" /> View profile
+              </Link>
+            </DropdownMenuItem>
+          ) : null}
 
-        {canRelate ? (
-          <>
-            {!rel ? (
-              <DropdownMenuItem disabled className="gap-2">
-                <Loader2 className="size-4 animate-spin" /> Checking connection…
-              </DropdownMenuItem>
-            ) : (
-              <>
-                <DropdownMenuItem
-                  disabled={busy || kind === "none"}
-                  className="gap-2"
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    if (!authorId) return;
-                    if (kind === "send")
-                      return void run(() => sendFriendRequest(authorId), "Request sent");
-                    if (kind === "accept")
-                      return void run(
-                        () => respondFriendRequest(rel.friend_request_id ?? "", true),
-                        "You are now friends",
-                      );
-                    if (kind === "remove")
-                      return void run(() => removeFriend(authorId), "Friend removed");
-                  }}
-                >
-                  {friendIcon}
-                  {friendActionLabel(rel.friend_status)}
+          {canRelate ? (
+            <>
+              {!rel ? (
+                <DropdownMenuItem disabled className="gap-2">
+                  <Loader2 className="size-4 animate-spin" /> Checking connection…
                 </DropdownMenuItem>
-              </>
-            )}
-            <DropdownMenuSeparator />
-            {onQuickMessage ? (
-              <DropdownMenuItem className="gap-2" onSelect={onQuickMessage}>
-                <Send className="size-4" /> Send a quick message
-              </DropdownMenuItem>
-            ) : null}
-          </>
-        ) : null}
+              ) : (
+                <>
+                  <DropdownMenuItem
+                    disabled={busy || kind === "none"}
+                    className="gap-2"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      if (!authorId) return;
+                      if (kind === "send")
+                        return void run(() => sendFriendRequest(authorId), "Request sent");
+                      if (kind === "accept")
+                        return void run(
+                          () => respondFriendRequest(rel.friend_request_id ?? "", true),
+                          "You are now friends",
+                        );
+                      if (kind === "remove")
+                        return void run(() => removeFriend(authorId), "Friend removed");
+                    }}
+                  >
+                    {friendIcon}
+                    {friendActionLabel(rel.friend_status)}
+                  </DropdownMenuItem>
+                </>
+              )}
+              <DropdownMenuSeparator />
+              {onQuickMessage ? (
+                <DropdownMenuItem className="gap-2" onSelect={onQuickMessage}>
+                  <Send className="size-4" /> Send a quick message
+                </DropdownMenuItem>
+              ) : null}
+            </>
+          ) : null}
 
-        {(canRelate && (onReport || onBlock)) || onHideForShop || onDelete ? (
-          <DropdownMenuSeparator />
-        ) : null}
-        {canRelate && onReport ? (
-          <DropdownMenuItem className="gap-2" onSelect={onReport}>
-            <Flag className="size-4" /> Report
-          </DropdownMenuItem>
-        ) : null}
-        {canRelate && onBlock ? (
-          <DropdownMenuItem className="gap-2" onSelect={onBlock}>
-            <ShieldOff className="size-4" /> Block {authorName.split(" ")[0]}
-          </DropdownMenuItem>
-        ) : null}
-        {onHideForShop ? (
-          <DropdownMenuItem className="gap-2" onSelect={onHideForShop}>
-            <EyeOff className="size-4" /> Hide from my shop
-          </DropdownMenuItem>
-        ) : null}
-        {onDelete ? (
-          <DropdownMenuItem className="gap-2 text-destructive" onSelect={onDelete}>
-            <Trash2 className="size-4" /> Delete post
-          </DropdownMenuItem>
-        ) : null}
+          {(canRelate && (onReport || onBlock)) || onHideForShop || onDelete ? (
+            <DropdownMenuSeparator />
+          ) : null}
+          {canRelate && onReport ? (
+            <DropdownMenuItem className="gap-2" onSelect={onReport}>
+              <Flag className="size-4" /> Report
+            </DropdownMenuItem>
+          ) : null}
+          {canRelate && onBlock ? (
+            <DropdownMenuItem className="gap-2" onSelect={onBlock}>
+              <ShieldOff className="size-4" /> Block {authorName.split(" ")[0]}
+            </DropdownMenuItem>
+          ) : null}
+          {onHideForShop ? (
+            <DropdownMenuItem className="gap-2" onSelect={onHideForShop}>
+              <EyeOff className="size-4" /> Hide from my shop
+            </DropdownMenuItem>
+          ) : null}
+          {onDelete ? (
+            <DropdownMenuItem className="gap-2 text-destructive" onSelect={onDelete}>
+              <Trash2 className="size-4" /> Delete post
+            </DropdownMenuItem>
+          ) : null}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

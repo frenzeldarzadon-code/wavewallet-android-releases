@@ -314,7 +314,9 @@ export function SocialPage({ hashtag }: { hashtag?: string } = {}) {
                     else updated.delete(post.author_id);
                     return updated;
                   });
-                  toast.success(next ? `Following ${post.author_name}` : `Unfollowed ${post.author_name}`);
+                  toast.success(
+                    next ? `Following ${post.author_name}` : `Unfollowed ${post.author_name}`,
+                  );
                 } catch (error) {
                   toast.error("Could not update follow", { description: (error as Error).message });
                 }

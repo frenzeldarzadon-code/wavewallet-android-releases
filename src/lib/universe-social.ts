@@ -72,9 +72,7 @@ export function followActionLabel(following: boolean): string {
 }
 
 /** A pending request the other person sent is accepted, never duplicated. */
-export function friendActionKind(
-  status: FriendStatus,
-): "send" | "accept" | "remove" | "none" {
+export function friendActionKind(status: FriendStatus): "send" | "accept" | "remove" | "none" {
   if (status === "none") return "send";
   if (status === "incoming") return "accept";
   if (status === "friends") return "remove";

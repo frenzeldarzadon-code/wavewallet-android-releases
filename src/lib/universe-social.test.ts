@@ -66,7 +66,7 @@ describe("community post actions", () => {
 
   it("uses the existing direct-thread and Universe wallet flows", () => {
     expect(feedSource).toContain("await openThread(post.author_id)");
-    expect(feedSource).toContain('<UniverseSendCoinsSheet');
+    expect(feedSource).toContain("<UniverseSendCoinsSheet");
     expect(feedSource).toContain("initialRecipient={coinsRecipient}");
   });
 
@@ -77,9 +77,9 @@ describe("community post actions", () => {
 
 describe("notifications", () => {
   it("counts only unread rows", () => {
-    expect(
-      unreadCount([notification(), notification({ id: "n2", read_at: "2026-01-01" })]),
-    ).toBe(1);
+    expect(unreadCount([notification(), notification({ id: "n2", read_at: "2026-01-01" })])).toBe(
+      1,
+    );
   });
 
   it("covers every promised category", () => {
