@@ -9,12 +9,13 @@ export const Route = createFileRoute("/universe/wallet")({
       {
         name: "description",
         content:
-          "Your one global Universe wallet: balance, transfers and full transaction history.",
+          "Your one global Universe wallet: one balance for every Universe shop, plus full transaction history.",
       },
       { property: "og:title", content: "Wallet Center — ONE WAVE Universe" },
       {
         property: "og:description",
-        content: "Global Universe wallet balance, transfers and history.",
+        content:
+          "One global Universe wallet balance, usable across all Universe shops, with full history.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

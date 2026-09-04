@@ -70,10 +70,13 @@ export interface WalletCenterProps {
   /** Show wholesale discount + cashback totals (reseller / subreseller). */
   showSellerTotals?: boolean;
   /**
-   * `universe`: show ONLY the member's single global Universe wallet. Shop
-   * wallets of New Generation shops are filtered out entirely (the database's
-   * `wallet_view` decides which shops share the global wallet), so the two are
-   * never mixed. Transfers still go through the same shop-scoped RPCs.
+   * `universe`: show ONLY the member's single global Universe wallet. There is
+   * no per-shop Universe wallet — the one global balance pays for purchases in
+   * every Universe shop, membership or not. New Generation shop wallets never
+   * appear here; they stay isolated inside their own shop console. The
+   * shop-scoped "Send coins" area is hidden in this scope because the transfer
+   * RPCs (`wallet_shop_recipients` / `transfer_credits_in_shop`) are shop
+   * membership concepts that do not exist for the global wallet.
    */
   scope?: "shop" | "universe";
 }
@@ -109,27 +112,21 @@ export function WalletCenter({
   const online = useOnline();
 
   const loadShops = useCallback(async () => {
-    const all = await fetchWalletShops();
-    let list = all;
-    if (universe && userId) {
-      // Keep only shops whose wallet IS the global wallet. New Generation shop
-      // wallets never appear here.
-      const [global, views] = await Promise.all([
-        fetchWalletView(userId, null).catch(() => null),
-        Promise.all(all.map((s) => fetchWalletView(userId, s.ecosystemId).catch(() => null))),
-      ]);
-      const balance = global?.balance ?? 0;
-      setGlobalBalance(balance);
-      list = all.filter((_, i) => views[i]?.isGlobal === true).map((s) => ({ ...s, balance }));
+    if (universe) {
+      // Universe scope = ONE global wallet. There is no per-shop Universe
+      // wallet to list or pick, so only the global balance is loaded.
+      if (userId) {
+        const global = await fetchWalletView(userId, null).catch(() => null);
+        setGlobalBalance(global?.balance ?? 0);
+      }
+      setShops([]);
+      setSelectedId(null);
+      setLoading(false);
+      return;
     }
+    const list = await fetchWalletShops();
     setShops(list);
-    setSelectedId((cur) =>
-      universe
-        ? cur && list.some((s) => s.ecosystemId === cur)
-          ? cur
-          : (list[0]?.ecosystemId ?? null)
-        : (cur ?? ecosystemDbId ?? list[0]?.ecosystemId ?? null),
-    );
+    setSelectedId((cur) => cur ?? ecosystemDbId ?? list[0]?.ecosystemId ?? null);
     setLoading(false);
   }, [ecosystemDbId, universe, userId]);
 
@@ -143,7 +140,7 @@ export function WalletCenter({
   );
 
   const loadRecipients = useCallback(async () => {
-    if (!userId || !selectedId) {
+    if (!userId || !selectedId || universe) {
       setRecipients([]);
       setRecipientsLoading(false);
       return;
@@ -151,7 +148,7 @@ export function WalletCenter({
     setRecipientsLoading(true);
     setRecipients(await fetchShopRecipients(selectedId, search));
     setRecipientsLoading(false);
-  }, [userId, selectedId, search]);
+  }, [userId, selectedId, search, universe]);
 
   useEffect(() => {
     const t = window.setTimeout(() => {
@@ -234,84 +231,89 @@ export function WalletCenter({
         <PageSection
           devSlot="wallet-center.universe-wallet"
           title="Universe wallet"
-          description="One global wallet for everything you buy in the Universe. New Generation shop wallets stay separate inside their own shop console."
+          description="Your one global Universe wallet. The same balance pays in every Universe shop — you never move coins into a shop first, and joining a shop never creates another wallet."
         >
           <div className="grid gap-3 sm:grid-cols-2">
             <StatCard
               label="Global coin balance"
               value={globalBalance === null ? "…" : peso(globalBalance)}
-              hint="Spent on Universe vouchers and transfers — never on social activity"
+              hint="One balance for vouchers and purchases across all Universe shops"
               icon={Wallet}
               tone="positive"
             />
             <StatCard
               label="Points balance"
               value={pts(points.available)}
-              hint="Points always stay inside the shop that awarded them"
+              hint="Points are separate and always stay inside the shop that awarded them"
               icon={Sparkles}
               tone="brand"
             />
           </div>
+          <Card className="mt-3 border-dashed shadow-none">
+            <CardContent className="flex items-start gap-3 py-3">
+              <Info className="mt-0.5 size-4 shrink-0 text-primary" />
+              <p className="text-xs text-muted-foreground">
+                Spend this balance in any Universe shop — membership is not required to buy. New
+                Generation (NG) shop wallets are a separate system and stay inside their own shop
+                console.
+              </p>
+            </CardContent>
+          </Card>
         </PageSection>
       ) : null}
 
-      <PageSection
-        devSlot="wallet-center.my-wallets"
-        title={universe ? "Send coins inside a Universe shop" : "My wallets"}
-        description={
-          universe
-            ? "Transfers are always made inside one shop's community. Pick the shop whose members you want to send to — it is still your one global wallet."
-            : multiShop
+      {universe ? null : (
+        <PageSection
+          devSlot="wallet-center.my-wallets"
+          title="My wallets"
+          description={
+            multiShop
               ? `${shops.length} shop wallets · ${peso(totalWalletBalance(shops))} in total. Tap a shop to work with that wallet.`
               : "Your shop wallet balance."
-        }
-      >
-        {loading ? (
-          <EmptyState title="Loading wallets…" />
-        ) : shops.length === 0 && universe ? (
-          <EmptyState
-            title="No Universe shop community yet"
-            description="You can still buy vouchers from any seller storefront with your global wallet. Join a Universe shop to send coins to its members."
-          />
-        ) : shops.length === 0 ? (
-          <EmptyState
-            title="No shop membership yet"
-            description="You are not an approved member of any shop yet. Every shop you are approved into opens its own wallet automatically — a zero balance still shows here as ₱0.00."
-          />
-        ) : (
-          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {shops.map((s) => (
-              <button
-                key={s.ecosystemId}
-                type="button"
-                aria-pressed={s.ecosystemId === selectedId}
-                onClick={() => {
-                  setSelectedId(s.ecosystemId);
-                  resetSend();
-                }}
-                className={cn(
-                  "rounded-xl border px-4 py-3 text-left transition-colors",
-                  s.ecosystemId === selectedId
-                    ? "border-primary bg-brand-soft ring-2 ring-primary/40"
-                    : "border-border bg-card hover:bg-muted",
-                )}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="truncate text-sm font-semibold">{s.ecosystemName}</p>
-                  {s.ecosystemId === selectedId ? (
-                    <StatusBadge tone="brand">Selected</StatusBadge>
-                  ) : null}
-                </div>
-                <p className="text-lg font-bold text-success">{peso(s.balance)}</p>
-                <p className="text-[11px] text-muted-foreground">
-                  {s.role ? roleLabel(s.role) : "Member"}
-                  {s.ecosystemId === ecosystemDbId ? " · current shop" : ""}
-                </p>
-              </button>
-            ))}
-          </div>
-        )}
-      </PageSection>
+          }
+        >
+          {loading ? (
+            <EmptyState title="Loading wallets…" />
+          ) : shops.length === 0 ? (
+            <EmptyState
+              title="No shop membership yet"
+              description="You are not an approved member of any shop yet. Every shop you are approved into opens its own wallet automatically — a zero balance still shows here as ₱0.00."
+            />
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {shops.map((s) => (
+                <button
+                  key={s.ecosystemId}
+                  type="button"
+                  aria-pressed={s.ecosystemId === selectedId}
+                  onClick={() => {
+                    setSelectedId(s.ecosystemId);
+                    resetSend();
+                  }}
+                  className={cn(
+                    "rounded-xl border px-4 py-3 text-left transition-colors",
+                    s.ecosystemId === selectedId
+                      ? "border-primary bg-brand-soft ring-2 ring-primary/40"
+                      : "border-border bg-card hover:bg-muted",
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="truncate text-sm font-semibold">{s.ecosystemName}</p>
+                    {s.ecosystemId === selectedId ? (
+                      <StatusBadge tone="brand">Selected</StatusBadge>
+                    ) : null}
+                  </div>
+                  <p className="text-lg font-bold text-success">{peso(s.balance)}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {s.role ? roleLabel(s.role) : "Member"}
+                    {s.ecosystemId === ecosystemDbId ? " · current shop" : ""}
+                  </p>
+                </button>
+              ))}
+            </div>
+          )}
+        </PageSection>
+      )}
 
       {selected && !universe ? (
         <PageSection
@@ -367,8 +369,10 @@ export function WalletCenter({
         </PageSection>
       ) : null}
 
-      {/* 1. Send credits — one area, recipient type tabs. Always visible. */}
-      {selected ? (
+      {/* 1. Send credits — one area, recipient type tabs. Always visible.
+          Shop scope only: coin transfers are a shop-membership concept, so the
+          global Universe wallet never shows a per-shop "send" area. */}
+      {selected && !universe ? (
         <PageSection
           devSlot="wallet-center.send-coins"
           title="Send coins"
