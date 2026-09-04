@@ -208,6 +208,10 @@ export const Route = createFileRoute("/api/public/payments/listener")({
         if (parsed.parser_version) args["_parser_version"] = parsed.parser_version;
         if (provider) args["_provider"] = provider.id;
         if (parsed.app_label) args["_app_label"] = parsed.app_label;
+        // Source identity is recorded for EVERY notification, blocked or not,
+        // so the platform owner can see which apps the phone is reading.
+        if (parsed.channel_id) args["_channel"] = parsed.channel_id;
+        if (parsed.category) args["_category"] = parsed.category;
         // Receiver-side evidence: keep the whole text plus every field that
         // could be read (receiving account, balance, fee, time…), not only the
         // few the matcher needs today.

@@ -316,3 +316,60 @@ export async function deleteListenerSourceRule(id: string): Promise<void> {
   const { error } = await rpc("delete_listener_source_rule", { _rule: id });
   if (error) throw new Error(error.message);
 }
+
+/**
+ * Every notification source (Android app) the listener phones in a scope have
+ * seen, with counts and the effective allow/block state. Source detection
+ * happens for every notification before payment classification, so new or
+ * unknown apps show up here instead of being silently discarded. Contains no
+ * notification content.
+ */
+export type ListenerDetectedSource = {
+  package_name: string;
+  app_label: string | null;
+  channel_id: string | null;
+  category: string | null;
+  provider_id: string | null;
+  total: number;
+  payments: number;
+  non_payment: number;
+  unparsed: number;
+  blocked_count: number;
+  first_seen_at: string;
+  last_seen_at: string;
+  effective_mode: "allow" | "deny";
+  rule_id: string | null;
+  rule_mode: "allow" | "deny" | null;
+  rule_updated_at: string | null;
+  rule_by: string | null;
+};
+
+export async function fetchListenerDetectedSources(
+  ecosystemId: string | null = null,
+): Promise<ListenerDetectedSource[]> {
+  const { data, error } = await rpc("listener_detected_sources", { _ecosystem: ecosystemId });
+  if (error) throw new Error(error.message);
+  return (data as ListenerDetectedSource[] | null) ?? [];
+}
+
+/** Block one app for a scope: the listener stops reading it from the next notification on. */
+export async function blockListenerSource(
+  packageName: string,
+  ecosystemId: string | null = null,
+  note: string | null = null,
+): Promise<ListenerSourceRule> {
+  return setListenerSourceRule({ packageName, mode: "deny", ecosystemId, note });
+}
+
+/** Re-enable a blocked app. Restores the default, or saves an explicit allow when a wider rule still blocks it. */
+export async function unblockListenerSource(
+  packageName: string,
+  ecosystemId: string | null = null,
+): Promise<"restored_default" | "allowed_explicitly"> {
+  const { data, error } = await rpc("unblock_listener_source", {
+    _package: packageName,
+    _ecosystem: ecosystemId,
+  });
+  if (error) throw new Error(error.message);
+  return data as "restored_default" | "allowed_explicitly";
+}
