@@ -173,21 +173,16 @@ export function CashInAutoCard() {
                 First layer — a listener phone must confirm the payment
               </Label>
               <p className="text-xs text-muted-foreground">
-                A cash in is only settled automatically if a paired phone saw a matching
-                notification. A phone paired to one shop can only settle that shop's requests, and
-                platform phones settle Universe / platform requests; the receiving number printed in
-                the notification is informational and never blocks approval.
+                A cash in is only settled automatically if a registered phone saw a notification
+                that agrees with the uploaded receipt on at least two independent details. Phones
+                are not paired to a receiving account: a shop phone settles only that shop's
+                requests, and platform phones settle Universe / platform requests for every
+                configured collection account.
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Paired phones ready: {listenerProven} of {listenerActive} active ·{" "}
+                Registered phones ready: {listenerProven} of {listenerActive} active ·{" "}
                 {status.listener_matches_30d ?? 0} confirmed payments in the last 30 days
               </p>
-              {(status.listener_devices_unscoped ?? 0) > 0 ? (
-                <p className="mt-1 text-xs text-destructive">
-                  {status.listener_devices_unscoped} paired phone(s) have no receiving account set —
-                  they will never match anything until you set one.
-                </p>
-              ) : null}
               {(status.shared_numbers ?? []).length > 0 ? (
                 <p className="mt-1 text-xs text-muted-foreground">
                   Shared receiving numbers:{" "}
@@ -335,13 +330,6 @@ export function CashInAutoCard() {
               cannot be switched off.
             </li>
           </ul>
-          {(status.mismatched_devices ?? []).length > 0 ? (
-            <p className="text-xs text-muted-foreground">
-              For information only, {(status.mismatched_devices ?? []).length} shop receiving
-              number(s) differ from the nearest paired phone. This no longer prevents automatic
-              approval.
-            </p>
-          ) : null}
         </div>
 
         <div className="rounded-lg border border-border p-3">

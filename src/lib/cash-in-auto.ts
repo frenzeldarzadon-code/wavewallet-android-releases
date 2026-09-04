@@ -203,30 +203,30 @@ export type MatchOutcome =
 
 /** Human wording for a matching result, used in the UI and the audit trail. */
 export const MATCH_REASON: Record<MatchOutcome, string> = {
-  matched: "A real GCash notification matches this request — approved automatically.",
+  matched: "A real payment notification matches this request — approved automatically.",
   staged:
     "Every check passed, but verification is staged: nothing was settled and a person still decides.",
   disabled: "Automatic approval is switched off for this shop.",
   not_pending: "This request was already decided.",
-  no_reference: "No GCash payment reference number was submitted, so it cannot be matched.",
+  no_reference: "No payment reference number was submitted, so it cannot be matched.",
   duplicate_reference:
     "That payment reference was already used by another cash in — held for manual investigation.",
   no_proof: "No payment screenshot was attached.",
   above_auto_limit: "Above the automatic approval limit — left for manual review.",
   amount_mismatch: "The amount does not match the payment that was received.",
-  no_receiving_number: "No receiving GCash number is configured for this shop yet.",
-  no_sender_number: "No sending GCash number was submitted, so the payment cannot be traced.",
-  awaiting_listener: "No matching GCash payment has been seen yet — waiting for the notification.",
-  listener_offline: "The paired listener phone is offline, so the payment cannot be confirmed.",
+  no_receiving_number: "No receiving account is configured for this shop yet.",
+  no_sender_number: "No sending account number was submitted, so the payment cannot be traced.",
+  awaiting_listener: "No matching payment notification has been seen yet — waiting for it.",
+  listener_offline: "The listener phone is offline, so the payment cannot be confirmed.",
   wrong_shop:
-    "That notification came from a phone paired to a different shop, so it cannot settle this request.",
-  number_mismatch: "The GCash number that sent the money does not match this request.",
+    "That notification came from a phone registered to a different shop, so it cannot settle this request.",
+  number_mismatch: "The account that sent the money does not match this request.",
   receiving_mismatch:
-    "The receiving GCash account on the receipt is not this shop's account — held for manual review.",
+    "The receiving account on the receipt is not this shop's account — held for manual review.",
   awaiting_receipt_check: "The uploaded receipt has not been read yet.",
   receipt_reference_mismatch: "Reference does not match receipt — held for manual review.",
   reference_mismatch:
-    "The reference on the GCash notification does not match the reference on the receipt — held for manual review.",
+    "The reference on the payment notification does not match the reference on the receipt — held for manual review.",
   receipt_unreadable: "The reference could not be read from the receipt, so nothing is assumed.",
 };
 
@@ -345,7 +345,7 @@ export function matchingStatusLabel(status: CashInAutoStatus | null): {
       tone: "success",
       title: "Automatic matching is on",
       detail:
-        "A cash in is approved automatically only when a real GCash notification from a paired phone monitoring that shop's own receiving account matches the sending number and the exact amount, and the payment reference has never been used. The customer may pay before or after submitting. GCash itself is never contacted.",
+        "A cash in is approved automatically only when a real payment notification captured by a registered listener phone agrees with the uploaded receipt on at least two independent details (amount, reference, sending account, …) and the receipt or reference has never been credited before. The customer may pay before or after submitting. No payment provider is ever contacted.",
     };
   }
   return {
