@@ -4762,6 +4762,30 @@ export type Database = {
         }
         Relationships: []
       }
+      push_dispatch_config: {
+        Row: {
+          endpoint_url: string | null
+          id: number
+          last_wake_at: string | null
+          secret: string | null
+          updated_at: string
+        }
+        Insert: {
+          endpoint_url?: string | null
+          id: number
+          last_wake_at?: string | null
+          secret?: string | null
+          updated_at?: string
+        }
+        Update: {
+          endpoint_url?: string | null
+          id?: number
+          last_wake_at?: string | null
+          secret?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       retail_catalog_templates: {
         Row: {
           active: boolean
@@ -9141,6 +9165,24 @@ export type Database = {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: Json
       }
+      claim_push_deliveries: {
+        Args: { _limit?: number }
+        Returns: {
+          auth_secret: string
+          body: string
+          category: string
+          created_at: string
+          delivery_id: string
+          device_id: string
+          endpoint: string
+          kind: string
+          link: string
+          notification_id: string
+          p256dh: string
+          title: string
+          user_id: string
+        }[]
+      }
       claim_super_admin_bootstrap: {
         Args: { _email: string; _source: string }
         Returns: string
@@ -9665,6 +9707,15 @@ export type Database = {
           province: string
           shop_code: string
         }[]
+      }
+      finish_push_delivery: {
+        Args: {
+          _delivery_id: string
+          _device_gone?: boolean
+          _reason?: string
+          _status: string
+        }
+        Returns: undefined
       }
       follow_member: {
         Args: { _follow?: boolean; _user: string }
@@ -11947,6 +11998,7 @@ export type Database = {
         }[]
       }
       send_friend_request: { Args: { _user: string }; Returns: string }
+      send_test_notification: { Args: never; Returns: string }
       set_admin_sale_commission: {
         Args: { _ecosystem_id: string; _percent: number }
         Returns: number
@@ -14262,6 +14314,7 @@ export type Database = {
           voucher_code: string
         }[]
       }
+      wake_push_dispatcher: { Args: { _force?: boolean }; Returns: undefined }
       wallet_id_for: {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: string
