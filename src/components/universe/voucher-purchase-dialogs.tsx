@@ -466,7 +466,7 @@ export function VoucherPurchaseDialogs({
                   ? pointsOk
                     ? `Confirm & pay ${pointsPrice} pts`
                     : "Not enough points"
-                  : `Confirm & pay ${peso(total)}`}
+                  : `Confirm & pay ${peso(charge)}`}
             </Button>
           </DialogFooter>
         </DialogContent>
