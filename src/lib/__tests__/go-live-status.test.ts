@@ -25,7 +25,7 @@ describe("describeGoLiveRequest", () => {
   it("says it is waiting for the listener rather than awaiting approval", () => {
     const s = describeGoLiveRequest(base);
     expect(s.kind).toBe("waiting");
-    expect(s.badge).toMatch(/Waiting for GCash Listener/i);
+    expect(s.badge).toMatch(/Waiting for payment listener/i);
     expect(s.actionRequired).toBe(false);
   });
 

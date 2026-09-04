@@ -67,7 +67,7 @@ export function describeGoLiveRequest(r: GoLiveRequestLike): GoLiveStatus {
           badge: "Activated automatically",
           tone: "success",
           detail:
-            "The platform GCash listener verified this payment and the shop was switched to live. No Super Admin action is required.",
+            "The platform payment listener verified this payment and the shop was switched to live. No Super Admin action is required.",
           actionRequired: false,
           note,
         }
@@ -76,7 +76,7 @@ export function describeGoLiveRequest(r: GoLiveRequestLike): GoLiveStatus {
           badge: "Approved manually",
           tone: "success",
           detail:
-            "This payment was approved by the platform owner as an exception, not by the GCash listener.",
+            "This payment was approved by the platform owner as an exception, not by the payment listener.",
           actionRequired: false,
           note,
         };
@@ -168,7 +168,7 @@ export function describeGoLiveRequest(r: GoLiveRequestLike): GoLiveStatus {
       badge: "Verified — finishing activation",
       tone: "brand",
       detail:
-        "The GCash listener already confirmed this payment; the shop is being switched to live. No Super Admin action is required.",
+        "The payment listener already confirmed this payment; the shop is being switched to live. No Super Admin action is required.",
       actionRequired: false,
       note,
     };
@@ -176,11 +176,11 @@ export function describeGoLiveRequest(r: GoLiveRequestLike): GoLiveStatus {
 
   return {
     kind: "waiting",
-    badge: "Waiting for GCash Listener",
+    badge: "Waiting for payment listener",
     tone: "muted",
     detail:
       r.auto_reason?.trim() ||
-      "No matching GCash notification has arrived yet for this amount and sending number. The shop activates by itself the moment it does.",
+      "No matching payment notification has arrived yet for this amount and sending number. The shop activates by itself the moment it does.",
     actionRequired: false,
     note,
   };
