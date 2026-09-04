@@ -372,6 +372,14 @@ export async function deletePaymentMethod(id: string): Promise<void> {
  */
 export type CashOutPath = "admin" | "superadmin";
 
+/**
+ * Which wallet a money request belongs to. `shop` is the historical behaviour
+ * (the member's active shop wallet); `universe` is the ONE global Universe
+ * wallet, settled by the platform owner through the same listener, review and
+ * release rules. Stored on the request row as `wallet_scope`.
+ */
+export type WalletScope = "shop" | "universe";
+
 export const CASH_OUT_PATHS: { value: CashOutPath; label: string; hint: string }[] = [
   { value: "admin", label: "My shop admin", hint: "Settled by your shop admin. No fee." },
   { value: "superadmin", label: "Platform cash out", hint: "Paid out by the platform. A cash out fee applies." },
@@ -392,6 +400,11 @@ export async function requestWithdrawal(input: {
   notes?: string | null;
   requestKey: string;
   path?: CashOutPath;
+  /**
+   * `universe`: hold the coins from the member's ONE global Universe wallet
+   * (never the active shop / NG wallet); only the platform settles it.
+   */
+  walletScope?: WalletScope;
 }): Promise<WithdrawalRequest> {
   requireOnline();
   const { data, error } = await supabase.rpc("request_withdrawal", rpcArgs({
@@ -402,6 +415,7 @@ export async function requestWithdrawal(input: {
     _notes: input.notes ?? undefined,
     _request_key: input.requestKey,
     _cashout_path: input.path ?? "superadmin",
+    _wallet_scope: input.walletScope ?? "shop",
   }) as never);
   if (error) throw new Error(error.message);
   return data as unknown as WithdrawalRequest;
@@ -580,6 +594,8 @@ export async function requestCashIn(input: {
   proofPath: string;
   requestKey: string;
   funding?: CashInFunding;
+  /** `universe`: credit the ONE global Universe wallet when verified. */
+  walletScope?: WalletScope;
 }): Promise<CashInRequest> {
   requireOnline();
   const { data, error } = await supabase.rpc("request_cash_in", rpcArgs({
@@ -608,6 +624,7 @@ export async function requestCashIn(input: {
     _proof_path: input.proofPath,
     _request_key: input.requestKey,
     _funding_source: input.funding ?? "platform",
+    _wallet_scope: input.walletScope ?? "shop",
   }) as never);
   if (error) throw new Error(error.message);
   return data as unknown as CashInRequest;
@@ -734,24 +751,34 @@ export async function reviewCashIn(
 }
 
 
-export async function fetchMyWithdrawals(userId: string): Promise<WithdrawalRequest[]> {
-  const { data, error } = await supabase
+export async function fetchMyWithdrawals(
+  userId: string,
+  walletScope?: WalletScope,
+): Promise<WithdrawalRequest[]> {
+  let q = supabase
     .from("withdrawal_requests")
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(50);
+  if (walletScope) q = q.eq("wallet_scope", walletScope);
+  const { data, error } = await q;
   if (error) throw new Error(error.message);
   return data ?? [];
 }
 
-export async function fetchMyCashIns(userId: string): Promise<CashInRequest[]> {
-  const { data, error } = await supabase
+export async function fetchMyCashIns(
+  userId: string,
+  walletScope?: WalletScope,
+): Promise<CashInRequest[]> {
+  let q = supabase
     .from("cash_in_requests")
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(50);
+  if (walletScope) q = q.eq("wallet_scope", walletScope);
+  const { data, error } = await q;
   if (error) throw new Error(error.message);
   return data ?? [];
 }
