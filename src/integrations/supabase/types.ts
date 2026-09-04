@@ -8011,6 +8011,7 @@ export type Database = {
       }
       voucher_sales: {
         Row: {
+          buyer_charge: number | null
           buyer_id: string
           buyer_role: Database["public"]["Enums"]["app_role"]
           commission_amount: number
@@ -8039,6 +8040,7 @@ export type Database = {
           refunded_at: string | null
           reseller_id: string | null
           sale_price: number
+          self_cashback: number
           seller_amount: number | null
           seller_id: string | null
           tx_id: string
@@ -8048,6 +8050,7 @@ export type Database = {
           upline_recipient_id: string | null
         }
         Insert: {
+          buyer_charge?: number | null
           buyer_id: string
           buyer_role: Database["public"]["Enums"]["app_role"]
           commission_amount?: number
@@ -8076,6 +8079,7 @@ export type Database = {
           refunded_at?: string | null
           reseller_id?: string | null
           sale_price: number
+          self_cashback?: number
           seller_amount?: number | null
           seller_id?: string | null
           tx_id: string
@@ -8085,6 +8089,7 @@ export type Database = {
           upline_recipient_id?: string | null
         }
         Update: {
+          buyer_charge?: number | null
           buyer_id?: string
           buyer_role?: Database["public"]["Enums"]["app_role"]
           commission_amount?: number
@@ -8113,6 +8118,7 @@ export type Database = {
           refunded_at?: string | null
           reseller_id?: string | null
           sale_price?: number
+          self_cashback?: number
           seller_amount?: number | null
           seller_id?: string | null
           tx_id?: string
@@ -13276,6 +13282,7 @@ export type Database = {
           shop_slug: string
         }[]
       }
+      universe_peso: { Args: { _n: number }; Returns: string }
       universe_profile: {
         Args: { _handle: string }
         Returns: {
@@ -13301,7 +13308,39 @@ export type Database = {
           like_count: number
         }[]
       }
+      universe_purchase_debit: {
+        Args: {
+          _account: string
+          _actor: string
+          _buyer: string
+          _ecosystem_id: string
+          _entry_kind: string
+          _gross: number
+          _label: string
+          _reference: string
+          _sale_id: string
+          _self_cashback: number
+          _self_label: string
+          _tx: string
+        }
+        Returns: string
+      }
       universe_relationship: { Args: { _user: string }; Returns: Json }
+      universe_self_purchase_net: {
+        Args: {
+          _buyer: string
+          _ecosystem_id: string
+          _entitled_cashback: number
+          _entitled_recipient: string
+          _gross: number
+          _payment_method: string
+        }
+        Returns: {
+          buyer_charge: number
+          self_cashback: number
+          self_purchase: boolean
+        }[]
+      }
       universe_sellers_for_shop: {
         Args: { _slug: string }
         Returns: {
@@ -13944,6 +13983,16 @@ export type Database = {
           _tier_id?: string
         }
         Returns: string
+      }
+      voucher_checkout_quote: {
+        Args: { _product_id: string; _quantity?: number; _seller_id?: string }
+        Returns: {
+          buyer_charge: number
+          cashback_percent: number
+          self_cashback: number
+          self_purchase: boolean
+          total: number
+        }[]
       }
       voucher_discount_percent_for:
         | { Args: { _user_id: string }; Returns: number }
