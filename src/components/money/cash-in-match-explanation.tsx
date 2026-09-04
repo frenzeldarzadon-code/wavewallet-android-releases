@@ -18,6 +18,15 @@ type Signal = {
   agreed: boolean;
 };
 
+export type ReceiverAccountCheck = {
+  status: "matched" | "mismatch" | "conflict" | "absent" | "not_configured";
+  matched_source?: "receipt" | "notification" | "both" | null;
+  receipt?: { label: string; value: string | null; matches: boolean | null };
+  notification?: { label: string; value: string | null; matches: boolean | null };
+  expected: { source: string; label: string; masked: string }[];
+  note?: string;
+};
+
 export type MatchExplanation = {
   cash_in_id: string;
   status: string;
@@ -26,11 +35,22 @@ export type MatchExplanation = {
   notification:
     | (Record<string, unknown> & { raw_text?: string; details?: Record<string, unknown> | null })
     | null;
+  receiver_account_check?: ReceiverAccountCheck | null;
   signals: Signal[];
   independent_matches: number;
   auto_candidate: boolean;
   duplicate_of_credited: string | null;
   blockers: string[] | null;
+};
+
+const RECEIVER_CHECK_TEXT: Record<ReceiverAccountCheck["status"], string> = {
+  matched: "Confirmed — the evidence names the configured receiving account.",
+  mismatch: "Disapproved — the evidence names a different receiving account. The wallet is not credited.",
+  conflict:
+    "Disapproved — the receipt and the notification disagree about the receiving account. The wallet is not credited.",
+  absent:
+    "Not shown on either source — manual review. Automatic approval requires the configured receiving account to appear on the receipt or the notification.",
+  not_configured: "No receiving account is saved for this destination yet.",
 };
 
 export async function fetchMatchExplanation(cashInId: string): Promise<MatchExplanation | null> {
@@ -49,6 +69,24 @@ const show = (v: unknown): string => {
   if (typeof v === "object") return JSON.stringify(v);
   return String(v);
 };
+
+function Verdict({ v }: { v: boolean | null }) {
+  if (v === null)
+    return (
+      <span className="inline-flex items-center gap-1 text-muted-foreground">
+        <Minus className="size-3.5" /> not shown
+      </span>
+    );
+  return v ? (
+    <span className="inline-flex items-center gap-1 text-success">
+      <Check className="size-3.5" /> matches
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1 text-destructive">
+      <X className="size-3.5" /> different account
+    </span>
+  );
+}
 
 /** Flattens one side (top-level fields + nested `details`/`fields`) into label/value rows. */
 function rows(side: Record<string, unknown> | null | undefined): [string, string][] {
@@ -160,6 +198,52 @@ export function CashInMatchExplanation({ cashInId }: { cashInId: string }) {
                   side={data.notification}
                 />
               </div>
+              {data.receiver_account_check ? (
+                <div className="rounded-md border border-border bg-background p-2">
+                  <p className="font-semibold">
+                    Receiving account check ·{" "}
+                    {data.receiver_account_check.status === "matched" ? (
+                      <span className="text-success">passed</span>
+                    ) : data.receiver_account_check.status === "absent" ||
+                      data.receiver_account_check.status === "not_configured" ? (
+                      <span className="text-muted-foreground">manual review</span>
+                    ) : (
+                      <span className="text-destructive">failed</span>
+                    )}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {RECEIVER_CHECK_TEXT[data.receiver_account_check.status]}
+                  </p>
+                  <ul className="mt-1 space-y-0.5">
+                    <li>
+                      <span className="text-muted-foreground">Configured receiving account:</span>{" "}
+                      {data.receiver_account_check.expected.length === 0
+                        ? "—"
+                        : data.receiver_account_check.expected
+                            .map((e) => `${e.label} ${e.masked}`)
+                            .join(", ")}
+                    </li>
+                    <li>
+                      <span className="text-muted-foreground">
+                        Receipt · {data.receiver_account_check.receipt?.label ?? "Sent to"}:
+                      </span>{" "}
+                      {show(data.receiver_account_check.receipt?.value)}{" "}
+                      <Verdict v={data.receiver_account_check.receipt?.matches ?? null} />
+                    </li>
+                    <li>
+                      <span className="text-muted-foreground">
+                        Notification · {data.receiver_account_check.notification?.label ?? "Received by"}:
+                      </span>{" "}
+                      {show(data.receiver_account_check.notification?.value)}{" "}
+                      <Verdict v={data.receiver_account_check.notification?.matches ?? null} />
+                    </li>
+                  </ul>
+                  <p className="mt-1 text-muted-foreground">
+                    Only the payee side is compared: the customer&apos;s own &quot;Paid from&quot;
+                    account is never treated as the receiving account.
+                  </p>
+                </div>
+              ) : null}
               <div className="rounded-md border border-border bg-background p-2">
                 <p className="font-semibold">
                   Field comparison · {data.independent_matches} independent match

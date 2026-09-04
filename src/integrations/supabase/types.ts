@@ -9054,12 +9054,31 @@ export type Database = {
         Returns: string
       }
       cash_in_duplicate_indicator: { Args: { _id: string }; Returns: Json }
+      cash_in_enforce_receiver_account: {
+        Args: { _id: string }
+        Returns: string
+      }
       cash_in_established_reference_key: {
         Args: { _row: Database["public"]["Tables"]["cash_in_requests"]["Row"] }
         Returns: string
       }
+      cash_in_expected_receiving_accounts: {
+        Args: { _row: Database["public"]["Tables"]["cash_in_requests"]["Row"] }
+        Returns: {
+          account: string
+          label: string
+          source: string
+        }[]
+      }
       cash_in_match_explanation: { Args: { _id: string }; Returns: Json }
       cash_in_pending_diagnostics: { Args: { _limit?: number }; Returns: Json }
+      cash_in_receiver_account_check: {
+        Args: {
+          _ev: Database["public"]["Tables"]["listener_events"]["Row"]
+          _row: Database["public"]["Tables"]["cash_in_requests"]["Row"]
+        }
+        Returns: Json
+      }
       cash_in_receiving_number: {
         Args: { _ecosystem: string; _method: string }
         Returns: string
@@ -10472,6 +10491,10 @@ export type Database = {
       override_subscription_payment: {
         Args: { _ecosystem_id: string; _reason: string }
         Returns: Json
+      }
+      payment_account_matches: {
+        Args: { _configured: string; _evidence: string }
+        Returns: boolean
       }
       payment_account_tail: { Args: { _value: string }; Returns: string }
       payment_name_key: { Args: { _value: string }; Returns: string }
