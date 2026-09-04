@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { EmptyState, StatusBadge } from "@/components/ui-kit";
 import { CashInProofViewer } from "@/components/money/cash-in-proof";
+import { CashInMatchExplanation } from "@/components/money/cash-in-match-explanation";
 import {
   maskAccountNumber,
   verificationReason,
@@ -41,7 +42,11 @@ const FILTERS = ["pending", "approved", "released", "rejected", "all"];
 const CASH_IN_FILTERS = ["pending", "approved", "rejected", "all"];
 
 const tone = (s: string) =>
-  s === "released" || s === "approved" ? ("success" as const) : s === "pending" ? ("warning" as const) : ("danger" as const);
+  s === "released" || s === "approved"
+    ? ("success" as const)
+    : s === "pending"
+      ? ("warning" as const)
+      : ("danger" as const);
 
 export function MoneyRequestsCard() {
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
@@ -92,7 +97,12 @@ export function MoneyRequestsCard() {
           </CardTitle>
           <div className="flex flex-wrap gap-1">
             {FILTERS.map((f) => (
-              <Button key={f} size="sm" variant={wFilter === f ? "default" : "outline"} onClick={() => setWFilter(f)}>
+              <Button
+                key={f}
+                size="sm"
+                variant={wFilter === f ? "default" : "outline"}
+                onClick={() => setWFilter(f)}
+              >
                 {f}
               </Button>
             ))}
@@ -122,7 +132,8 @@ export function MoneyRequestsCard() {
                       <p className="text-muted-foreground">
                         Fee {q.feePercent}% · net payout{" "}
                         <span className="font-semibold text-foreground">
-                          {creditsAfterFee(Number(w.credits), q.feePercent).toLocaleString()} credits
+                          {creditsAfterFee(Number(w.credits), q.feePercent).toLocaleString()}{" "}
+                          credits
                         </span>
                       </p>
                       <p className="text-muted-foreground">
@@ -145,7 +156,13 @@ export function MoneyRequestsCard() {
                         <Button
                           size="sm"
                           disabled={busy === w.id}
-                          onClick={() => act(w.id, () => reviewWithdrawal(w.id, "approve", reason), "Approved for payout.")}
+                          onClick={() =>
+                            act(
+                              w.id,
+                              () => reviewWithdrawal(w.id, "approve", reason),
+                              "Approved for payout.",
+                            )
+                          }
                         >
                           Approve
                         </Button>
@@ -155,8 +172,17 @@ export function MoneyRequestsCard() {
                         variant="default"
                         disabled={busy === w.id}
                         onClick={() => {
-                          if (!window.confirm(`Confirm you have SENT ${peso(q.net)} to ${w.requester_name}.`)) return;
-                          void act(w.id, () => reviewWithdrawal(w.id, "release", reason), "Marked as released.");
+                          if (
+                            !window.confirm(
+                              `Confirm you have SENT ${peso(q.net)} to ${w.requester_name}.`,
+                            )
+                          )
+                            return;
+                          void act(
+                            w.id,
+                            () => reviewWithdrawal(w.id, "release", reason),
+                            "Marked as released.",
+                          );
                         }}
                       >
                         Mark released
@@ -166,7 +192,11 @@ export function MoneyRequestsCard() {
                         variant="outline"
                         disabled={busy === w.id}
                         onClick={() =>
-                          act(w.id, () => reviewWithdrawal(w.id, "reject", reason), "Rejected — coins returned.")
+                          act(
+                            w.id,
+                            () => reviewWithdrawal(w.id, "reject", reason),
+                            "Rejected — coins returned.",
+                          )
                         }
                       >
                         Reject
@@ -192,7 +222,12 @@ export function MoneyRequestsCard() {
           </CardTitle>
           <div className="flex flex-wrap gap-1">
             {CASH_IN_FILTERS.map((f) => (
-              <Button key={f} size="sm" variant={cFilter === f ? "default" : "outline"} onClick={() => setCFilter(f)}>
+              <Button
+                key={f}
+                size="sm"
+                variant={cFilter === f ? "default" : "outline"}
+                onClick={() => setCFilter(f)}
+              >
                 {f}
               </Button>
             ))}
@@ -214,10 +249,12 @@ export function MoneyRequestsCard() {
                     </p>
                     <p className="text-muted-foreground">
                       {c.method_name}
-                      {c.payer_reference ? ` · ref ${c.payer_reference}` : ""} · {shortDateTime(c.created_at)}
+                      {c.payer_reference ? ` · ref ${c.payer_reference}` : ""} ·{" "}
+                      {shortDateTime(c.created_at)}
                     </p>
                     <p className="text-muted-foreground">
-                      A. Customer-submitted reference: {c.payer_reference ? c.payer_reference : "not provided"}
+                      A. Customer-submitted reference:{" "}
+                      {c.payer_reference ? c.payer_reference : "not provided"}
                     </p>
                     <p className="text-muted-foreground">
                       Paid from: {maskAccountNumber(c.sender_number ?? c.payer_number)} · amount{" "}
@@ -234,15 +271,17 @@ export function MoneyRequestsCard() {
                       <p className="mt-1 text-muted-foreground">Payment screenshot: not attached</p>
                     )}
                     <p className="text-muted-foreground">
-                      B. Screenshot-extracted reference: {c.receipt_reference ? c.receipt_reference : "not read"}
+                      B. Screenshot-extracted reference:{" "}
+                      {c.receipt_reference ? c.receipt_reference : "not read"}
                     </p>
                     <p className="text-muted-foreground">
-                      C. Match result: {RECEIPT_CHECK_LABEL[(c.receipt_check as ReceiptCheck) ?? "pending"]}
+                      C. Match result:{" "}
+                      {RECEIPT_CHECK_LABEL[(c.receipt_check as ReceiptCheck) ?? "pending"]}
                     </p>
                     {c.duplicate_reference ? (
                       <p className="font-medium text-destructive">
-                        Duplicate reference — manual review required. See the duplicate reference review below; the
-                        earlier transaction was not changed.
+                        Duplicate reference — manual review required. See the duplicate reference
+                        review below; the earlier transaction was not changed.
                       </p>
                     ) : null}
                     {c.status === "pending" ? (
@@ -255,16 +294,22 @@ export function MoneyRequestsCard() {
                         : "not authenticated — a matching receipt alone is not proof of payment"}
                     </p>
                     {c.authentication_reason ? (
-                      <p className={c.payment_authenticated ? "text-muted-foreground" : "font-medium text-destructive"}>
+                      <p
+                        className={
+                          c.payment_authenticated
+                            ? "text-muted-foreground"
+                            : "font-medium text-destructive"
+                        }
+                      >
                         {c.authentication_reason}
                       </p>
                     ) : null}
                     <p className="text-muted-foreground">
                       {c.listener_event_id
-                        ? "Listener phone confirmed a matching GCash notification"
-                        : "No listener confirmation for this payment"}
+                        ? "Listener phone captured a matching payment notification (receiver view)"
+                        : "No listener notification linked to this payment yet"}
                     </p>
-
+                    <CashInMatchExplanation cashInId={c.id} />
 
                     {c.status === "approved" ? (
                       <p className="mt-1 text-muted-foreground">
@@ -277,11 +322,12 @@ export function MoneyRequestsCard() {
 
                   <div className="flex flex-col items-end gap-1">
                     <StatusBadge tone={tone(c.status)}>{statusLabel(c.status)}</StatusBadge>
-                    <StatusBadge tone={verificationStatus(c) === "VERIFIED" ? "success" : "warning"}>
+                    <StatusBadge
+                      tone={verificationStatus(c) === "VERIFIED" ? "success" : "warning"}
+                    >
                       {verificationStatus(c)}
                     </StatusBadge>
                   </div>
-
                 </div>
                 {c.status === "pending" ? (
                   <div className="mt-2 flex flex-wrap gap-2">
@@ -289,9 +335,17 @@ export function MoneyRequestsCard() {
                       size="sm"
                       disabled={busy === c.id}
                       onClick={() => {
-                        if (!window.confirm(`Confirm you RECEIVED ${peso(Number(c.amount_php))} from ${c.requester_name}.`))
+                        if (
+                          !window.confirm(
+                            `Confirm you RECEIVED ${peso(Number(c.amount_php))} from ${c.requester_name}.`,
+                          )
+                        )
                           return;
-                        void act(c.id, () => reviewCashIn(c.id, "approve", reason), "Coins issued.");
+                        void act(
+                          c.id,
+                          () => reviewCashIn(c.id, "approve", reason),
+                          "Coins issued.",
+                        );
                       }}
                     >
                       Approve & issue coins
@@ -300,7 +354,9 @@ export function MoneyRequestsCard() {
                       size="sm"
                       variant="outline"
                       disabled={busy === c.id}
-                      onClick={() => act(c.id, () => reviewCashIn(c.id, "reject", reason), "Rejected.")}
+                      onClick={() =>
+                        act(c.id, () => reviewCashIn(c.id, "reject", reason), "Rejected.")
+                      }
                     >
                       Reject
                     </Button>

@@ -47,7 +47,10 @@ const money = (s: string | undefined): number | undefined => {
 };
 
 const clean = (s: string | undefined): string | undefined => {
-  const v = (s ?? "").replace(/\s+/g, " ").trim().replace(/[.,;]+$/, "");
+  const v = (s ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/[.,;]+$/, "");
   return v ? v : undefined;
 };
 
@@ -76,15 +79,22 @@ export function extractNotificationFields(text: string | null | undefined): Noti
   out.fee_php = money(fee?.[1]);
 
   const balance = raw.match(
-    new RegExp(String.raw`(?:available|new|remaining|current)?\s*balance(?:\s+is)?[^0-9₱P]{0,20}${AMOUNT}`, "i"),
+    new RegExp(
+      String.raw`(?:available|new|remaining|current)?\s*balance(?:\s+is)?[^0-9₱P]{0,20}${AMOUNT}`,
+      "i",
+    ),
   );
   out.balance_php = money(balance?.[1]);
 
-  const ref = raw.match(/(?:ref(?:erence)?(?:\s*no)?\.?|transaction\s*(?:id|no)\.?|trace\s*no\.?)\s*[:#]?\s*([A-Z0-9][A-Z0-9-]{4,})/i);
+  const ref = raw.match(
+    /(?:ref(?:erence)?(?:\s*no)?\.?|transaction\s*(?:id|no)\.?|trace\s*no\.?)\s*[:#]?\s*([A-Z0-9][A-Z0-9-]{4,})/i,
+  );
   out.reference = clean(ref?.[1]);
 
   // "from <name> <number>" / "from <name>." — the payer as the receiver sees them.
-  const from = raw.match(/\bfrom\s+(.+?)(?=\s+(?:with|ref|reference|your|on|at|\d{1,2}[:/])|[.!]|$)/i);
+  const from = raw.match(
+    /\bfrom\s+(.+?)(?=\s+(?:with|ref|reference|your|on|at|\d{1,2}[:/])|[.!]|$)/i,
+  );
   if (from) {
     const chunk = clean(from[1]) ?? "";
     const num = chunk.match(/(?:\+?63|0)9\d{2}[\s-]?\d{3}[\s-]?\d{4}/);
@@ -111,7 +121,9 @@ export function extractNotificationFields(text: string | null | undefined): Noti
   );
   out.time_text = clean(time?.[1]);
 
-  const method = raw.match(/\b(express\s+send|send\s+money|instapay|pesonet|qr\s*ph|bank\s+transfer|cash\s*in|pay\s*bills|gcash\s*padala)\b/i);
+  const method = raw.match(
+    /\b(express\s+send|send\s+money|instapay|pesonet|qr\s*ph|bank\s+transfer|cash\s*in|pay\s*bills|gcash\s*padala)\b/i,
+  );
   out.transfer_method = clean(method?.[1]);
 
   const message = raw.match(/\b(?:message|note|memo)\s*[:\-]\s*["“]?([^"”.]{1,160})/i);
@@ -119,7 +131,9 @@ export function extractNotificationFields(text: string | null | undefined): Noti
 
   // Keep every "Label: value" pair too, so nothing readable is lost.
   const labeled: Record<string, string> = {};
-  for (const m of raw.matchAll(/([A-Za-z][A-Za-z .]{1,30}?)\s*:\s*([^:]{1,80}?)(?=\s+[A-Za-z][A-Za-z .]{1,30}?\s*:|$)/g)) {
+  for (const m of raw.matchAll(
+    /([A-Za-z][A-Za-z .]{1,30}?)\s*:\s*([^:]{1,80}?)(?=\s+[A-Za-z][A-Za-z .]{1,30}?\s*:|$)/g,
+  )) {
     const key = clean(m[1])?.toLowerCase();
     const val = clean(m[2]);
     if (key && val) labeled[key] = val;
@@ -127,5 +141,7 @@ export function extractNotificationFields(text: string | null | undefined): Noti
   if (Object.keys(labeled).length > 0) out.labeled_fields = labeled;
 
   // Drop undefined keys so the stored JSON only contains what was present.
-  return Object.fromEntries(Object.entries(out).filter(([, v]) => v !== undefined)) as NotificationDetails;
+  return Object.fromEntries(
+    Object.entries(out).filter(([, v]) => v !== undefined),
+  ) as NotificationDetails;
 }

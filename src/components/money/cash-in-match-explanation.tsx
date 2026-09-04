@@ -54,24 +54,41 @@ const show = (v: unknown): string => {
 function rows(side: Record<string, unknown> | null | undefined): [string, string][] {
   if (!side) return [];
   const out: [string, string][] = [];
-  const skip = new Set(["details", "raw_text", "proof_path", "proof_hash", "event_id", "device_id"]);
-  for (const [k, v] of Object.entries(side)) if (!skip.has(k)) out.push([k.replace(/_/g, " "), show(v)]);
+  const skip = new Set([
+    "details",
+    "raw_text",
+    "proof_path",
+    "proof_hash",
+    "event_id",
+    "device_id",
+  ]);
+  for (const [k, v] of Object.entries(side))
+    if (!skip.has(k)) out.push([k.replace(/_/g, " "), show(v)]);
   const details = side["details"] as Record<string, unknown> | null | undefined;
   if (details) {
     for (const [k, v] of Object.entries(details)) {
       if (k === "raw_text" || k === "fields" || k === "labeled_fields") continue;
       out.push([`detail · ${k.replace(/_/g, " ")}`, show(v)]);
     }
-    const printed = (details["fields"] ?? details["labeled_fields"]) as Record<string, unknown> | undefined;
-    if (printed) for (const [k, v] of Object.entries(printed)) out.push([`printed · ${k}`, show(v)]);
+    const printed = (details["fields"] ?? details["labeled_fields"]) as
+      Record<string, unknown> | undefined;
+    if (printed)
+      for (const [k, v] of Object.entries(printed)) out.push([`printed · ${k}`, show(v)]);
   }
   return out;
 }
 
-function Side({ title, subtitle, side }: { title: string; subtitle: string; side: Record<string, unknown> | null }) {
-  const raw = (side?.["raw_text"] ?? (side?.["details"] as Record<string, unknown> | undefined)?.["raw_text"]) as
-    | string
-    | undefined;
+function Side({
+  title,
+  subtitle,
+  side,
+}: {
+  title: string;
+  subtitle: string;
+  side: Record<string, unknown> | null;
+}) {
+  const raw = (side?.["raw_text"] ??
+    (side?.["details"] as Record<string, unknown> | undefined)?.["raw_text"]) as string | undefined;
   return (
     <div className="rounded-md border border-border bg-background p-2">
       <p className="font-semibold">{title}</p>
@@ -132,7 +149,11 @@ export function CashInMatchExplanation({ cashInId }: { cashInId: string }) {
             <>
               <p className="text-muted-foreground">{data.viewpoints.note}</p>
               <div className="grid gap-2 md:grid-cols-2">
-                <Side title="Customer receipt" subtitle="Sender / payer view — what the customer sent" side={data.receipt} />
+                <Side
+                  title="Customer receipt"
+                  subtitle="Sender / payer view — what the customer sent"
+                  side={data.receipt}
+                />
                 <Side
                   title="Listener notification"
                   subtitle="Receiver / payee view — what the platform account received"
@@ -143,10 +164,14 @@ export function CashInMatchExplanation({ cashInId }: { cashInId: string }) {
                 <p className="font-semibold">
                   Field comparison · {data.independent_matches} independent match
                   {data.independent_matches === 1 ? "" : "es"}
-                  {data.auto_candidate ? " · candidate for automatic approval" : " · needs at least 2"}
+                  {data.auto_candidate
+                    ? " · candidate for automatic approval"
+                    : " · needs at least 2"}
                 </p>
                 {data.signals.length === 0 ? (
-                  <p className="text-muted-foreground">No notification is linked, so nothing can be compared yet.</p>
+                  <p className="text-muted-foreground">
+                    No notification is linked, so nothing can be compared yet.
+                  </p>
                 ) : (
                   <table className="mt-1 w-full">
                     <thead className="text-muted-foreground">
@@ -162,11 +187,15 @@ export function CashInMatchExplanation({ cashInId }: { cashInId: string }) {
                         .map((s) => (
                           <tr key={s.signal} className="border-t border-border/60 align-top">
                             <td className="py-0.5 pr-2">
-                              <span className="text-muted-foreground">{s.receipt_label ?? s.signal}:</span>{" "}
+                              <span className="text-muted-foreground">
+                                {s.receipt_label ?? s.signal}:
+                              </span>{" "}
                               {show(s.receipt)}
                             </td>
                             <td className="py-0.5 pr-2">
-                              <span className="text-muted-foreground">{s.notification_label ?? s.signal}:</span>{" "}
+                              <span className="text-muted-foreground">
+                                {s.notification_label ?? s.signal}:
+                              </span>{" "}
                               {show(s.notification)}
                             </td>
                             <td className="py-0.5">
@@ -193,14 +222,14 @@ export function CashInMatchExplanation({ cashInId }: { cashInId: string }) {
                   </table>
                 )}
                 <p className="mt-1 text-muted-foreground">
-                  Supporting details (amount, recipient account, time) only count once an identity detail
-                  (reference, sending account or payer name) agrees.
+                  Supporting details (amount, recipient account, time) only count once an identity
+                  detail (reference, sending account or payer name) agrees.
                 </p>
               </div>
               {data.duplicate_of_credited ? (
                 <p className="font-medium text-destructive">
-                  Duplicate: the same receipt / reference / payment fingerprint was already credited (request{" "}
-                  {data.duplicate_of_credited.slice(0, 8)}…).
+                  Duplicate: the same receipt / reference / payment fingerprint was already credited
+                  (request {data.duplicate_of_credited.slice(0, 8)}…).
                 </p>
               ) : null}
               {data.blockers && data.blockers.length > 0 ? (
