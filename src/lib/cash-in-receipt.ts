@@ -42,6 +42,22 @@ export interface ReceiptReading {
   feePhp?: number | null;
   /** Every line of text the reader could read, in the order it appears. */
   rawText?: string | null;
+  /**
+   * Every labelled item printed on the receipt, label → value exactly as
+   * printed. Nothing is filtered out; absent items are simply not present.
+   */
+  fields?: Record<string, string> | null;
+  /** Total debited including fees, when printed. */
+  totalPhp?: number | null;
+  /** Remaining / available balance, when printed. */
+  balancePhp?: number | null;
+  /** Bank / wallet the money was sent to, when printed. */
+  receivingInstitution?: string | null;
+  merchantName?: string | null;
+  /** Note / message attached by the payer, when printed. */
+  message?: string | null;
+  /** QR / invoice / payment id other than the main reference, when printed. */
+  qrOrPaymentId?: string | null;
   /** Payment date/time printed on the receipt, ISO 8601, when it was legible. */
   paidAt?: string | null;
   /** The reader's own confidence that it read the reference correctly, 0..1. */
@@ -100,6 +116,18 @@ const text = (value: unknown): string | null => {
   return v === "" || /^(null|none|n\/a|unknown)$/i.test(v) ? null : v;
 };
 
+/** Every printed label → value pair, kept verbatim; never invented. */
+const labelled = (value: unknown): Record<string, string> | null => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    const key = k.trim();
+    const val = typeof v === "number" ? String(v) : text(v);
+    if (key && val) out[key] = val;
+  }
+  return Object.keys(out).length > 0 ? out : null;
+};
+
 /** A date/time only counts when it parses to a real instant; never guessed. */
 const isoDateTime = (value: unknown): string | null => {
   const v = text(value);
@@ -128,6 +156,13 @@ export function parseReceiptReading(raw: string): ReceiptReading {
     statusText: null,
     feePhp: null,
     rawText: null,
+    fields: null,
+    totalPhp: null,
+    balancePhp: null,
+    receivingInstitution: null,
+    merchantName: null,
+    message: null,
+    qrOrPaymentId: null,
     paidAt: null,
     confidence: 0,
     readable: false,
@@ -159,6 +194,13 @@ export function parseReceiptReading(raw: string): ReceiptReading {
     statusText: text(parsed["status"] ?? parsed["status_text"]),
     feePhp: numeric(parsed["fee_php"] ?? parsed["fee"]),
     rawText: text(parsed["raw_text"] ?? parsed["all_text"]),
+    fields: labelled(parsed["fields"] ?? parsed["all_fields"]),
+    totalPhp: numeric(parsed["total_php"] ?? parsed["total"]),
+    balancePhp: numeric(parsed["balance_php"] ?? parsed["balance"]),
+    receivingInstitution: text(parsed["receiving_institution"] ?? parsed["bank"]),
+    merchantName: text(parsed["merchant_name"] ?? parsed["merchant"]),
+    message: text(parsed["message"] ?? parsed["note"]),
+    qrOrPaymentId: text(parsed["qr_or_payment_id"] ?? parsed["payment_id"]),
     paidAt: isoDateTime(parsed["paid_at"] ?? parsed["datetime"] ?? parsed["date_time"]),
     confidence,
     readable: parsed["readable"] === false ? false : Boolean(reference),
