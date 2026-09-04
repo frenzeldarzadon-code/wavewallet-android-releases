@@ -4,3 +4,9 @@ Universe social composer upgrade — DONE (UNPUBLISHED; authenticated browser ch
 - [x] Data: social_posts video_path/meta/hashtags; social_create_post + social_feed extended (no financial changes)
 - [x] Feed rendering: media, location, feeling, styled text, clickable hashtags -> /universe/tag/$tag, DM opens existing thread
 - [x] Typecheck, tests, 390px + desktop checks; do not publish
+
+Universe as single customer portal (IN PROGRESS; do not publish)
+- [ ] Hamburger: Live Monitoring entry -> eligible shop chooser -> existing shop monitor
+- [ ] Hamburger review: My Wallet, Reward Shops, shops/buying, profile/friends/messages
+- [ ] Old /app customer portal routes redirect customers to Universe; admin/seller portals untouched
+- [ ] Typecheck, tests, 390px + desktop
