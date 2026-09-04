@@ -103,7 +103,10 @@ function PublicStorefront() {
   const debouncedSearch = useDebouncedValue(search);
 
   useEffect(() => {
-    void supabase.auth.getUser().then(({ data }) => setSignedIn(!!data.user));
+    void supabase.auth.getUser().then(({ data }) => {
+      setSignedIn(!!data.user);
+      setCurrentUserId(data.user?.id ?? null);
+    });
   }, []);
 
   useEffect(() => {
