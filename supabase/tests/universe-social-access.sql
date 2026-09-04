@@ -62,7 +62,7 @@ BEGIN
   INSERT INTO public.social_likes (post_id, user_id, ecosystem_id) VALUES (_p1, _a, NULL);
   IF (SELECT prosrc FROM pg_proc WHERE proname = 'social_create_post') LIKE '%require_operational%'
      OR (SELECT prosrc FROM pg_proc WHERE proname = 'social_create_comment') LIKE '%require_operational%'
-     OR (SELECT prosrc FROM pg_proc WHERE proname = 'social_create_post') LIKE '%not part of a shop%' THEN
+     OR (SELECT prosrc FROM pg_proc WHERE proname = 'social_create_post') LIKE '%Your account is not part of a shop%' THEN
     RAISE EXCEPTION 'FAIL E: posting still gated by shop membership / shop state';
   END IF;
   IF (SELECT pg_get_function_arguments(oid) FROM pg_proc WHERE proname = 'social_create_post') NOT LIKE '%_audience text DEFAULT ''general''%' THEN
