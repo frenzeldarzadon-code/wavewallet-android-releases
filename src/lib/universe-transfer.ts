@@ -60,7 +60,8 @@ export function validateUniverseTransfer(input: {
   if (!Number.isFinite(amount) || amount <= 0) return "Enter a positive amount.";
   if (round2(amount) !== amount) return "Amounts use at most two decimals.";
   if (amount > balance) return "That is more than your Universe wallet holds.";
-  if ((note ?? "").length > MAX_TRANSFER_NOTE) return `Keep the note under ${MAX_TRANSFER_NOTE} characters.`;
+  if ((note ?? "").length > MAX_TRANSFER_NOTE)
+    return `Keep the note under ${MAX_TRANSFER_NOTE} characters.`;
   return null;
 }
 

@@ -138,10 +138,7 @@ export function UniverseSendCoinsSheet({
     if (step === "amount") window.setTimeout(() => amountInputRef.current?.focus(), 60);
   }, [step]);
 
-  const quickAmounts = useMemo(
-    () => [20, 50, 100, 200].filter((v) => v <= balance),
-    [balance],
-  );
+  const quickAmounts = useMemo(() => [20, 50, 100, 200].filter((v) => v <= balance), [balance]);
 
   const submit = async () => {
     if (!recipient || problem || busy) return;
@@ -222,7 +219,9 @@ export function UniverseSendCoinsSheet({
                       >
                         <MemberAvatar path={m.avatar_path} name={m.full_name} />
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-semibold">{m.full_name}</span>
+                          <span className="block truncate text-sm font-semibold">
+                            {m.full_name}
+                          </span>
                           <span className="block truncate text-xs text-muted-foreground">
                             {m.handle ? `@${m.handle}` : "Universe member"}
                           </span>
@@ -243,8 +242,8 @@ export function UniverseSendCoinsSheet({
               {query.trim().length < MIN_UNIVERSE_RECIPIENT_QUERY ? (
                 <p className="flex items-start gap-2 text-xs text-muted-foreground">
                   <Info className="mt-0.5 size-3.5 shrink-0" />
-                  Type at least {MIN_UNIVERSE_RECIPIENT_QUERY} characters. Coins go straight from your
-                  Universe Wallet to theirs — this is not a purchase and earns no cashback.
+                  Type at least {MIN_UNIVERSE_RECIPIENT_QUERY} characters. Coins go straight from
+                  your Universe Wallet to theirs — this is not a purchase and earns no cashback.
                 </p>
               ) : null}
             </div>
@@ -291,9 +290,14 @@ export function UniverseSendCoinsSheet({
                     aria-describedby="usc-amount-hint"
                   />
                 </div>
-                <p id="usc-amount-hint" className="flex justify-between text-xs text-muted-foreground">
+                <p
+                  id="usc-amount-hint"
+                  className="flex justify-between text-xs text-muted-foreground"
+                >
                   <span>Available {peso(balance)}</span>
-                  {amount > 0 ? <span>After: {peso(balanceAfterTransfer(balance, amount))}</span> : null}
+                  {amount > 0 ? (
+                    <span>After: {peso(balanceAfterTransfer(balance, amount))}</span>
+                  ) : null}
                 </p>
               </div>
 
@@ -343,14 +347,18 @@ export function UniverseSendCoinsSheet({
           {step === "confirm" && recipient ? (
             <div className="space-y-4">
               <div className="rounded-2xl border border-border bg-card p-4 text-center shadow-[var(--shadow-card)]">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">You are sending</p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  You are sending
+                </p>
                 <p className="mt-1 text-3xl font-bold tabular-nums text-primary">{peso(amount)}</p>
                 <p className="mt-1 text-sm text-muted-foreground">Universe coins</p>
                 <div className="mx-auto mt-4 flex max-w-xs items-center justify-center gap-3">
                   <MemberAvatar path={recipient.avatar_path} name={recipient.full_name} />
                   <div className="min-w-0 text-left">
                     <p className="truncate text-sm font-semibold">{recipient.full_name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{recipientLabel(recipient)}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {recipientLabel(recipient)}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -361,7 +369,9 @@ export function UniverseSendCoinsSheet({
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Balance after</dt>
-                  <dd className="font-medium tabular-nums">{peso(balanceAfterTransfer(balance, amount))}</dd>
+                  <dd className="font-medium tabular-nums">
+                    {peso(balanceAfterTransfer(balance, amount))}
+                  </dd>
                 </div>
                 {note.trim() ? (
                   <div className="flex justify-between gap-4">
@@ -372,8 +382,9 @@ export function UniverseSendCoinsSheet({
               </dl>
               <p className="flex items-start gap-2 text-xs text-muted-foreground">
                 <Info className="mt-0.5 size-3.5 shrink-0" />
-                Send {peso(amount)} to {recipientLabel(recipient)}? This is a wallet-to-wallet transfer, not
-                a purchase — no cashback or rewards apply, and you cannot undo it yourself.
+                Send {peso(amount)} to {recipientLabel(recipient)}? This is a wallet-to-wallet
+                transfer, not a purchase — no cashback or rewards apply, and you cannot undo it
+                yourself.
               </p>
               {error ? <p className="text-xs text-destructive">{error}</p> : null}
             </div>
@@ -387,7 +398,8 @@ export function UniverseSendCoinsSheet({
               <div>
                 <p className="text-2xl font-bold tabular-nums">{peso(result.amount)}</p>
                 <p className="text-sm text-muted-foreground">
-                  sent to <span className="font-medium text-foreground">{recipientLabel(recipient)}</span>
+                  sent to{" "}
+                  <span className="font-medium text-foreground">{recipientLabel(recipient)}</span>
                 </p>
               </div>
               <div className="rounded-2xl border border-border bg-card px-4 py-3 text-sm">
@@ -395,7 +407,9 @@ export function UniverseSendCoinsSheet({
                   <span className="flex items-center gap-2 text-muted-foreground">
                     <Wallet className="size-4" /> Universe Wallet now
                   </span>
-                  <span className="font-semibold tabular-nums text-success">{peso(result.balanceAfter)}</span>
+                  <span className="font-semibold tabular-nums text-success">
+                    {peso(result.balanceAfter)}
+                  </span>
                 </div>
                 <p className="mt-1 text-left text-[11px] text-muted-foreground">Ref {result.tx}</p>
               </div>
