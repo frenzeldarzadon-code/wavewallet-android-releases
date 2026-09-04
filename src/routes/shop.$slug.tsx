@@ -50,6 +50,9 @@ import {
 } from "@/lib/shop-public";
 
 export const Route = createFileRoute("/shop/$slug")({
+  // `?product=<id>` (from Universe post links) opens that product in place.
+  validateSearch: (search: Record<string, unknown>): { product?: string } =>
+    typeof search["product"] === "string" && search["product"] ? { product: search["product"] } : {},
   head: ({ params }) => ({
     meta: [
       { title: `${params.slug} Storefront — ONE WAVE` },
@@ -74,6 +77,7 @@ const credits = (n: number) => `${n.toLocaleString(undefined, { maximumFractionD
 
 function PublicStorefront() {
   const { slug } = Route.useParams();
+  const { product: linkedProductId } = Route.useSearch();
   const navigate = useNavigate();
   const [shop, setShop] = useState<PublicShop | null>(null);
   const [products, setProducts] = useState<PublicProduct[]>([]);
@@ -82,6 +86,7 @@ function PublicStorefront() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [search, setSearch] = useState("");
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [tab, setTab] = useState<string | null>(null);
   // Authorized sellers of a Universe voucher shop. Buying a voucher never
   // requires shop membership: the customer picks a seller and continues into
   // the existing seller-attributed checkout. null = still loading.
@@ -105,6 +110,16 @@ function PublicStorefront() {
           if (!alive) return;
           setProducts(p);
           setReviews(r);
+          // Deep link from a Universe post: land on the linked product.
+          if (linkedProductId) {
+            const hit = p.find((x) => x.id === linkedProductId);
+            if (hit?.kind === "retail") {
+              setTab("retail");
+              setDetailId(hit.id);
+            } else if (hit?.kind === "voucher") {
+              setTab("voucher");
+            }
+          }
         }
       } finally {
         if (alive) setLoading(false);
@@ -269,7 +284,8 @@ function PublicStorefront() {
       </section>
 
       <Tabs
-        defaultValue={RETAIL_VISIBLE && (retail.length || !vouchers.length) ? "retail" : "voucher"}
+        value={tab ?? (RETAIL_VISIBLE && (retail.length || !vouchers.length) ? "retail" : "voucher")}
+        onValueChange={setTab}
       >
         <TabsList className="w-full">
           {RETAIL_VISIBLE ? (
