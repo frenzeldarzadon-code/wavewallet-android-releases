@@ -15,7 +15,6 @@ import { ListenerDeviceScreenButton } from "@/components/money/listener-device-s
 import { ListenerSourceRulesCard } from "@/components/money/listener-source-rules-card";
 import { PlatformListenerCoverageCard } from "@/components/money/platform-cash-in-status";
 
-
 import { ReceivingAccountsCard } from "@/components/money/receiving-accounts-card";
 import { AppReleaseCard } from "@/components/super/app-release-card";
 import { SocialSettingsCard } from "@/components/social/social-settings-card";
@@ -29,9 +28,17 @@ export const Route = createFileRoute("/super/settings")({
   head: () => ({
     meta: [
       { title: "Platform Settings — ONE WAVE Super Admin" },
-      { name: "description", content: "Configure platform receiving accounts, the payment notification listener, support channel, coin supply and platform-wide defaults." },
+      {
+        name: "description",
+        content:
+          "Configure platform receiving accounts, the payment notification listener, support channel, coin supply and platform-wide defaults.",
+      },
       { property: "og:title", content: "Platform Settings — ONE WAVE Super Admin" },
-      { property: "og:description", content: "Configure platform receiving accounts, the payment notification listener, support channel, coin supply and platform-wide defaults." },
+      {
+        property: "og:description",
+        content:
+          "Configure platform receiving accounts, the payment notification listener, support channel, coin supply and platform-wide defaults.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -51,7 +58,8 @@ function SuperSettings() {
     return (
       <>
         <p className="text-sm text-muted-foreground">Loading platform settings…</p>
-        <PageSection devSlot="settings.gcash-notification-listener"
+        <PageSection
+          devSlot="settings.gcash-notification-listener"
           title="Payment notification listener"
           description="Register the paired Android phone and copy its one-time Device ID and pairing secret."
         >
@@ -59,7 +67,6 @@ function SuperSettings() {
         </PageSection>
       </>
     );
-
 
   const set = <K extends keyof PlatformSettings>(key: K, value: PlatformSettings[K]) =>
     setForm((f) => (f ? { ...f, [key]: value } : f));
@@ -92,7 +99,8 @@ function SuperSettings() {
 
   return (
     <>
-      <PageSection devSlot="settings.gcash-notification-listener-2"
+      <PageSection
+        devSlot="settings.gcash-notification-listener-2"
         title="Payment notification listener (platform / Universe cash in)"
         description="The platform listener serves Universe wallet cash ins and platform payments. Members pay into the platform collection accounts below (e.g. GCash, MariBank); a paired phone watches ONE receiving number and forwards that app's payment notifications. Accounts without a paired phone stay on manual review."
       >
@@ -102,13 +110,11 @@ function SuperSettings() {
         <ListenerSourceRulesCard />
       </PageSection>
 
-
-
-      <PageSection devSlot="settings.platform-subscription-collection"
+      <PageSection
+        devSlot="settings.platform-subscription-collection"
         title="Legacy subscription GCash fallback"
         description="Older go-live and coin-allocation screens fall back to this single GCash number when no platform collection account is published. It is not what members see for cash in and it is not what the listener watches — those come from Platform collection accounts below."
       >
-
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
@@ -189,8 +195,6 @@ function SuperSettings() {
       <CreditSupplyCard />
       <AppReleaseCard />
 
-
-
       {SOCIAL_ENABLED ? (
         <>
           <SocialSettingsCard />
@@ -206,4 +210,3 @@ function SuperSettings() {
     </>
   );
 }
-

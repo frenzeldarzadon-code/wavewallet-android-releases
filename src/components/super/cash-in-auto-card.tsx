@@ -49,9 +49,7 @@ export function CashInAutoCard() {
       layer2_require_sender_match: next.platform_rule?.layer2_require_sender_match ?? true,
       layer2_require_listener_reference: false,
     });
-
   };
-
 
   useEffect(() => {
     void load().catch(() => {});
@@ -132,7 +130,6 @@ export function CashInAutoCard() {
     }
   };
 
-
   return (
     <Card>
       <CardHeader>
@@ -156,8 +153,9 @@ export function CashInAutoCard() {
           <div>
             <Label htmlFor="auto-cash-in">Approve matching cash ins automatically</Label>
             <p className="text-xs text-muted-foreground">
-              A request settles only when the amount, the receiving account the member paid (shop or platform) and a brand
-              new payment reference all match and a screenshot is attached. Anything else stays pending for you.
+              A request settles only when the amount, the receiving account the member paid (shop or
+              platform) and a brand new payment reference all match and a screenshot is attached.
+              Anything else stays pending for you.
             </p>
           </div>
           <Switch
@@ -171,11 +169,14 @@ export function CashInAutoCard() {
         <div className="rounded-lg border border-border p-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <Label htmlFor="auto-listener">First layer — a listener phone must confirm the payment</Label>
+              <Label htmlFor="auto-listener">
+                First layer — a listener phone must confirm the payment
+              </Label>
               <p className="text-xs text-muted-foreground">
-                A cash in is only settled automatically if a paired phone saw a matching notification. A phone
-                paired to one shop can only settle that shop's requests, and platform phones settle Universe / platform
-                requests; the receiving number printed in the notification is informational and never blocks approval.
+                A cash in is only settled automatically if a paired phone saw a matching
+                notification. A phone paired to one shop can only settle that shop's requests, and
+                platform phones settle Universe / platform requests; the receiving number printed in
+                the notification is informational and never blocks approval.
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Paired phones ready: {listenerProven} of {listenerActive} active ·{" "}
@@ -183,8 +184,8 @@ export function CashInAutoCard() {
               </p>
               {(status.listener_devices_unscoped ?? 0) > 0 ? (
                 <p className="mt-1 text-xs text-destructive">
-                  {status.listener_devices_unscoped} paired phone(s) have no receiving account set — they
-                  will never match anything until you set one.
+                  {status.listener_devices_unscoped} paired phone(s) have no receiving account set —
+                  they will never match anything until you set one.
                 </p>
               ) : null}
               {(status.shared_numbers ?? []).length > 0 ? (
@@ -214,11 +215,13 @@ export function CashInAutoCard() {
         <div className="rounded-lg border border-border p-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <Label htmlFor="auto-receipt">Second layer — the reference must match the receipt</Label>
+              <Label htmlFor="auto-receipt">
+                Second layer — the reference must match the receipt
+              </Label>
               <p className="text-xs text-muted-foreground">
-                The reference read from the uploaded screenshot must agree with the reference the member typed. A
-                mismatch always blocks automatic approval; switching this off only relaxes the case where the
-                receipt could not be read at all.
+                The reference read from the uploaded screenshot must agree with the reference the
+                member typed. A mismatch always blocks automatic approval; switching this off only
+                relaxes the case where the receipt could not be read at all.
               </p>
             </div>
             <Switch
@@ -234,9 +237,10 @@ export function CashInAutoCard() {
           <div>
             <p className="font-semibold">Required authentication details</p>
             <p className="text-xs text-muted-foreground">
-              Choose exactly which details each layer must confirm. The received amount is always required and a
-              payment reference can never be used twice — those two cannot be switched off. Change these only if
-              a payment app changes what its notifications show. Every change is written to the audit log.
+              Choose exactly which details each layer must confirm. The received amount is always
+              required and a payment reference can never be used twice — those two cannot be
+              switched off. Change these only if a payment app changes what its notifications show.
+              Every change is written to the audit log.
             </p>
           </div>
 
@@ -280,9 +284,12 @@ export function CashInAutoCard() {
 
           <div className="flex items-start justify-between gap-3">
             <div>
-              <Label htmlFor="l2-sender">Second layer · receipt sender must match the notification</Label>
+              <Label htmlFor="l2-sender">
+                Second layer · receipt sender must match the notification
+              </Label>
               <p className="text-xs text-muted-foreground">
-                The sending number on the payment screenshot must equal the number the phone reported.
+                The sending number on the payment screenshot must equal the number the phone
+                reported.
               </p>
             </div>
             <Switch
@@ -294,15 +301,15 @@ export function CashInAutoCard() {
           </div>
 
           <p className="rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">
-            First layer reads only what the payment app's notification actually reports (GCash today, any app allowed in the
-            notification sources): the sending number and the amount.
-            Transaction time is not used, and no reference number is expected from the notification. Second layer
-            reads the payment screenshot for the sender, the receiving account, the amount, the reference and the
-            transaction date and time. The reference and date/time are then checked against every shop on the
-            platform — any earlier use holds the cash in for manual review.
+            First layer reads only what the payment app's notification actually reports (GCash
+            today, any app allowed in the notification sources): the sending number and the amount.
+            Transaction time is not used, and no reference number is expected from the notification.
+            Second layer reads the payment screenshot for the sender, the receiving account, the
+            amount, the reference and the transaction date and time. The reference and date/time are
+            then checked against every shop on the platform — any earlier use holds the cash in for
+            manual review.
           </p>
         </div>
-
 
         <div className="rounded-lg border border-dashed border-border p-3 space-y-2">
           <div className="flex items-center justify-between gap-2">
@@ -310,52 +317,57 @@ export function CashInAutoCard() {
             <StatusBadge tone="muted">Not active</StatusBadge>
           </div>
           <p className="text-xs text-muted-foreground">
-            These rules are retired. They cannot be switched on and the backend ignores any old stored value.
+            These rules are retired. They cannot be switched on and the backend ignores any old
+            stored value.
           </p>
           <ul className="space-y-1 text-xs text-muted-foreground">
             <li>
-              <span className="font-medium text-foreground">Receiving-number (destination) match</span> — retired.
-              A masked or differently formatted receiving number is informational only. Shop isolation still
-              applies: a phone paired to one shop can only settle that shop's Cash In.
+              <span className="font-medium text-foreground">
+                Receiving-number (destination) match
+              </span>{" "}
+              — retired. A masked or differently formatted receiving number is informational only.
+              Shop isolation still applies: a phone paired to one shop can only settle that shop's
+              Cash In.
             </li>
             <li>
-              <span className="font-medium text-foreground">Require reference match flag</span> — retired.
-              Reference uniqueness and duplicate/replay protection are always enforced and cannot be switched off.
+              <span className="font-medium text-foreground">Require reference match flag</span> —
+              retired. Reference uniqueness and duplicate/replay protection are always enforced and
+              cannot be switched off.
             </li>
           </ul>
           {(status.mismatched_devices ?? []).length > 0 ? (
             <p className="text-xs text-muted-foreground">
-              For information only, {(status.mismatched_devices ?? []).length} shop receiving number(s) differ from
-              the nearest paired phone. This no longer prevents automatic approval.
+              For information only, {(status.mismatched_devices ?? []).length} shop receiving
+              number(s) differ from the nearest paired phone. This no longer prevents automatic
+              approval.
             </p>
           ) : null}
         </div>
-
-
-
 
         <div className="rounded-lg border border-border p-3">
           <div className="flex items-start justify-between gap-3">
             <div>
               <Label htmlFor="auto-active">Verification mode — active settlement</Label>
               <p className="text-xs text-muted-foreground">
-                Staged runs every check on live payments and records the result, but never settles a request.
-                Turn this on to let matching cash ins settle automatically.
+                Staged runs every check on live payments and records the result, but never settles a
+                request. Turn this on to let matching cash ins settle automatically.
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Currently {(rule.verification_mode ?? "staged") === "active" ? "active" : "staged"} ·{" "}
-                {status.staged_30d ?? 0} request(s) would have been approved while staged in the last 30 days.
+                Currently {(rule.verification_mode ?? "staged") === "active" ? "active" : "staged"}{" "}
+                · {status.staged_30d ?? 0} request(s) would have been approved while staged in the
+                last 30 days.
               </p>
             </div>
             <Switch
               id="auto-active"
               checked={(rule.verification_mode ?? "staged") === "active"}
               disabled={saving}
-              onCheckedChange={(v) => void save({ ...rule, verification_mode: v ? "active" : "staged" })}
+              onCheckedChange={(v) =>
+                void save({ ...rule, verification_mode: v ? "active" : "staged" })
+              }
             />
           </div>
         </div>
-
 
         <div className="grid gap-3 sm:grid-cols-3">
           <div>
@@ -367,10 +379,15 @@ export function CashInAutoCard() {
               step="0.01"
               value={rule.expected_amount_php ?? ""}
               onChange={(e) =>
-                setRule({ ...rule, expected_amount_php: e.target.value === "" ? null : Number(e.target.value) })
+                setRule({
+                  ...rule,
+                  expected_amount_php: e.target.value === "" ? null : Number(e.target.value),
+                })
               }
             />
-            <p className="mt-1 text-xs text-muted-foreground">Set this to auto-approve one fixed amount only.</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Set this to auto-approve one fixed amount only.
+            </p>
           </div>
           <div>
             <Label htmlFor="auto-tolerance">Amount tolerance (₱)</Label>
@@ -382,7 +399,9 @@ export function CashInAutoCard() {
               value={rule.amount_tolerance_php}
               onChange={(e) => setRule({ ...rule, amount_tolerance_php: Number(e.target.value) })}
             />
-            <p className="mt-1 text-xs text-muted-foreground">Keep at 0 to require the exact amount.</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Keep at 0 to require the exact amount.
+            </p>
           </div>
           <div>
             <Label htmlFor="auto-max">Automatic limit (₱, blank = no limit)</Label>
@@ -393,10 +412,15 @@ export function CashInAutoCard() {
               step="1"
               value={rule.max_auto_amount_php ?? ""}
               onChange={(e) =>
-                setRule({ ...rule, max_auto_amount_php: e.target.value === "" ? null : Number(e.target.value) })
+                setRule({
+                  ...rule,
+                  max_auto_amount_php: e.target.value === "" ? null : Number(e.target.value),
+                })
               }
             />
-            <p className="mt-1 text-xs text-muted-foreground">Larger payments always go to manual review.</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Larger payments always go to manual review.
+            </p>
           </div>
         </div>
 
@@ -409,8 +433,8 @@ export function CashInAutoCard() {
           </Button>
 
           <p className="text-xs text-muted-foreground">
-            Auto-approved in the last 30 days: {status.auto_approved_30d} · duplicate references blocked:{" "}
-            {status.duplicates_blocked_30d}
+            Auto-approved in the last 30 days: {status.auto_approved_30d} · duplicate references
+            blocked: {status.duplicates_blocked_30d}
           </p>
         </div>
       </CardContent>

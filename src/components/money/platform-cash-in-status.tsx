@@ -70,14 +70,19 @@ function useReadiness() {
 function MethodRows({ data }: { data: PlatformCashInReadiness }) {
   if (data.methods.length === 0)
     return (
-      <p className="text-xs text-muted-foreground">No platform receiving account is published yet.</p>
+      <p className="text-xs text-muted-foreground">
+        No platform receiving account is published yet.
+      </p>
     );
   return (
     <ul className="divide-y divide-border rounded-lg border border-border">
       {data.methods.map((m) => {
         const v = methodVerificationLabel(m, data.auto_enabled);
         return (
-          <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 p-2.5 text-sm">
+          <li
+            key={m.id}
+            className="flex flex-wrap items-center justify-between gap-2 p-2.5 text-sm"
+          >
             <span>
               <span className="font-medium">{m.name}</span>
               <span className="text-muted-foreground">
@@ -103,7 +108,8 @@ export function PlatformCashInStatus() {
   return (
     <div className="space-y-2 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
       <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-        <Radio className="size-4 text-primary" /> Platform cash in · verified by the platform listener
+        <Radio className="size-4 text-primary" /> Platform cash in · verified by the platform
+        listener
       </p>
       <p>
         This is a platform (Super Admin) cash in for your one global Universe wallet — no shop is
