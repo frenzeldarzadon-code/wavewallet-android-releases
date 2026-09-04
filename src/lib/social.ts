@@ -126,23 +126,10 @@ export interface FeedPost {
   origin_ecosystem_name: string | null;
   author_role: string | null;
   /** Shop admin may hide this post from their own shop's members. */
+  /** Always false — per-shop hiding is retired; Universe posts are public. */
   can_hide?: boolean;
 }
 
-/** A post a shop admin hid from their own members. Still public elsewhere. */
-export interface HiddenPostRow {
-  post_id: string;
-  ecosystem_id: string;
-  hidden_by_name: string;
-  reason: string | null;
-  hidden_at: string;
-  author_name: string;
-  author_handle: string | null;
-  author_avatar: string | null;
-  body: string;
-  image_path: string | null;
-  post_created_at: string;
-}
 
 /** A member suggested while typing an @mention. */
 export interface MentionSuggestion {

@@ -13,7 +13,6 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Check,
-  EyeOff,
   Flag,
   Gift,
   Loader2,
