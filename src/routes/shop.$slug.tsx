@@ -311,13 +311,55 @@ function PublicStorefront() {
           />
         </TabsContent>
 
-        <TabsContent value="voucher">
+        <TabsContent value="voucher" className="space-y-4">
+          {/* Sellers first: buying a voucher never requires joining the shop. */}
+          <section
+            id="sellers"
+            className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]"
+            aria-label="Authorized sellers"
+          >
+            <div className="mb-2 flex items-baseline justify-between gap-2">
+              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <Users className="size-3.5" /> Choose an authorized seller
+              </p>
+              {sellers && sellers.length > 0 ? (
+                <p className="text-[11px] text-muted-foreground">
+                  {sellers.length} seller{sellers.length === 1 ? "" : "s"}
+                </p>
+              ) : null}
+            </div>
+            <p className="mb-3 text-xs text-muted-foreground">
+              No shop membership needed — pick a seller and pay with your Universe coins.
+            </p>
+            {sellers === null ? (
+              <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="size-3 animate-spin" /> Loading sellers…
+              </p>
+            ) : sellers.length === 0 ? (
+              <EmptyState
+                title="No seller available right now"
+                description="This shop has no authorized seller taking Universe orders at the moment. Check back later."
+              />
+            ) : (
+              <ul className="grid gap-2 sm:grid-cols-2">
+                {sellers.map((s) => (
+                  <li key={s.sellerId}>
+                    <SellerCard seller={s} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
           {vouchers.length === 0 ? (
             <EmptyState title="No public voucher products" />
           ) : (
             <PageSection title="Voucher products">
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {vouchers.map((v) => (
+                {vouchers.map((v) => {
+                  const soldOut = v.available <= 0;
+                  const noSeller = sellers !== null && sellers.length === 0;
+                  return (
                   <Card key={v.id} className="min-w-0 overflow-hidden rounded-xl shadow-[var(--shadow-card)]">
                     {v.image_path ? (
                       <RetailImage path={v.image_path} alt={v.name} className="aspect-[16/10]" />
@@ -328,19 +370,53 @@ function PublicStorefront() {
                       <div className="min-w-0">
                         <p className="line-clamp-2 min-h-10 text-sm font-semibold leading-snug">{v.name}</p>
                         <p className="mt-0.5 text-[11px] text-muted-foreground">
-                          {v.available > 0 ? `${v.available} available` : "Sold out"}
+                          {soldOut ? "Sold out" : `${v.available} available`}
                         </p>
                       </div>
                       <p className="text-sm font-bold text-primary">{credits(v.price)}</p>
-                      <Button className="w-full" size="sm" variant="outline" onClick={cta?.onClick} disabled={!cta}>
-                        {cta?.label ?? "Members only"} <ArrowRight className="size-3.5" />
-                      </Button>
+                      {sellers && sellers.length === 1 ? (
+                        <Button asChild className="w-full" size="sm" variant="outline">
+                          <Link to="/universe/u/$handle" params={{ handle: sellers[0]!.sellerHandle }}>
+                            Buy from {sellers[0]!.sellerName.split(" ")[0]} <ArrowRight className="size-3.5" />
+                          </Link>
+                        </Button>
+                      ) : (
+                        <Button
+                          className="w-full"
+                          size="sm"
+                          variant="outline"
+                          disabled={sellers === null || noSeller}
+                          onClick={() => setSellerPickFor(v)}
+                        >
+                          {noSeller ? "No seller available" : "Choose a seller"} <ArrowRight className="size-3.5" />
+                        </Button>
+                      )}
                     </CardContent>
                   </Card>
-                ))}
+                  );
+                })}
               </div>
             </PageSection>
           )}
+
+          <Dialog open={sellerPickFor !== null} onOpenChange={(o) => { if (!o) setSellerPickFor(null); }}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Choose a seller</DialogTitle>
+                <DialogDescription>
+                  {sellerPickFor ? `Buy "${sellerPickFor.name}" from one of ${shop.name}'s authorized sellers. ` : ""}
+                  Same price, paid with your Universe coins — no membership needed.
+                </DialogDescription>
+              </DialogHeader>
+              <ul className="grid gap-2">
+                {(sellers ?? []).map((s) => (
+                  <li key={s.sellerId} onClick={() => setSellerPickFor(null)}>
+                    <SellerCard seller={s} />
+                  </li>
+                ))}
+              </ul>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         <TabsContent value="reviews">
