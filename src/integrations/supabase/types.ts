@@ -10405,6 +10405,10 @@ export type Database = {
         }[]
       }
       presence_online_window: { Args: never; Returns: string }
+      profile_media_visible: {
+        Args: { _name: string; _user: string }
+        Returns: boolean
+      }
       promote_to_reseller: {
         Args: { _discount: number; _ecosystem_id?: string; _user_id: string }
         Returns: undefined
@@ -12632,6 +12636,10 @@ export type Database = {
         }[]
       }
       social_link_visible: { Args: { _link: Json }; Returns: boolean }
+      social_media_visible: {
+        Args: { _name: string; _user: string }
+        Returns: boolean
+      }
       social_move: {
         Args: {
           _amount: number
