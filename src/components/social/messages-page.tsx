@@ -143,14 +143,7 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadThreads, initialThreadId]);
 
-  useEffect(() => {
-    const touch = () => {
-      void supabase.rpc("touch_member_presence");
-    };
-    touch();
-    const timer = window.setInterval(touch, 60_000);
-    return () => window.clearInterval(timer);
-  }, []);
+  // Presence heartbeat lives app-wide in __root (src/lib/presence.ts).
 
   const pickFile = (f: File | null) => {
     if (!f) {

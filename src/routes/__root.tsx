@@ -15,6 +15,7 @@ import { OfflineBanner } from "@/components/offline-banner";
 import { UpdateBanner } from "@/components/update-banner";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { registerAppServiceWorker } from "@/lib/sw-register";
+import { startPresenceHeartbeat } from "@/lib/presence";
 
 function NotFoundComponent() {
   return (
@@ -148,6 +149,9 @@ function RootComponent() {
   useEffect(() => {
     registerAppServiceWorker();
   }, []);
+
+  // One app-wide presence heartbeat (signed-in members only, paused when hidden).
+  useEffect(() => startPresenceHeartbeat(), []);
 
   return (
     <QueryClientProvider client={queryClient}>

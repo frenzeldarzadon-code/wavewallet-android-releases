@@ -10,6 +10,7 @@
  * wallets or private shop relationships ever reach the client.
  */
 import { supabase } from "@/integrations/supabase/client";
+import type { PresenceInfo } from "@/lib/presence";
 
 export interface StorefrontProduct {
   id: string;
@@ -109,7 +110,7 @@ export async function fetchSellerStorefront(handle: string): Promise<SellerStore
   return groupStorefrontRows((data ?? []) as Row[]);
 }
 
-export interface ShopSeller {
+export interface ShopSeller extends PresenceInfo {
   sellerId: string;
   sellerName: string;
   sellerHandle: string;
@@ -117,7 +118,11 @@ export interface ShopSeller {
   storeName: string;
 }
 
-/** Authorized sellers of a Universe shop — identity + storefront name only. */
+/**
+ * Authorized sellers of a Universe shop — identity + storefront name + coarse
+ * presence. The server already orders by presence (online → most recent →
+ * name); authorization/eligibility rules are unchanged.
+ */
 export async function fetchUniverseSellers(slug: string): Promise<ShopSeller[]> {
   const { data, error } = await supabase.rpc("universe_sellers_for_shop", { _slug: slug });
   if (error) throw new Error(error.message);
@@ -127,12 +132,16 @@ export async function fetchUniverseSellers(slug: string): Promise<ShopSeller[]> 
     seller_handle: string;
     avatar_path: string | null;
     store_name?: string | null;
+    online?: boolean | null;
+    last_seen_at?: string | null;
   }[]).map((r) => ({
     sellerId: r.seller_id,
     sellerName: r.seller_name,
     sellerHandle: r.seller_handle,
     avatarPath: r.avatar_path,
     storeName: r.store_name?.trim() || defaultStoreName(r.seller_name),
+    online: !!r.online,
+    lastSeenAt: r.last_seen_at ?? null,
   }));
 }
 
