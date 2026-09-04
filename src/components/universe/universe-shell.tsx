@@ -96,11 +96,6 @@ function useUnread() {
   return count;
 }
 
-/** Fired by wallet actions (e.g. a coin transfer) so the shell balance pill refreshes. */
-export const WALLET_CHANGED_EVENT = "wavewallet:wallet-changed";
-export const notifyWalletChanged = () => {
-  if (typeof window !== "undefined") window.dispatchEvent(new Event(WALLET_CHANGED_EVENT));
-};
 
 /** Global wallet balance + @handle for the identity card. Read-only, RLS-scoped. */
 function useIdentity(userId: string | null) {
