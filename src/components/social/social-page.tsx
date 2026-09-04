@@ -1,5 +1,4 @@
 import {
-  Gift,
   Globe2,
   Heart,
   Loader2,
