@@ -10373,10 +10373,12 @@ export type Database = {
         Returns: {
           created_at: string
           device_label: string
+          endpoint: string
           expired_at: string
           id: string
           last_error: string
           last_seen_at: string
+          push_capable: boolean
           push_enabled: boolean
           user_agent: string
         }[]
