@@ -23,7 +23,6 @@ const rpc = (
     ) => Promise<{ data: unknown; error: { message: string } | null }>
   ).call(supabase, fn, args);
 
-
 export type ListenerDevice = {
   id: string;
   label: string;
@@ -58,7 +57,6 @@ export type ListenerDevice = {
   matched_cash_ins: number;
   last_match_at: string | null;
 };
-
 
 export type ListenerEvent = {
   id: string;
@@ -110,8 +108,6 @@ export async function registerListenerDevice(input: {
   };
 }
 
-
-
 export async function revokeListenerDevice(deviceId: string) {
   const { error } = await supabase.rpc("revoke_listener_device", { _device: deviceId });
   if (error) throw error;
@@ -133,7 +129,6 @@ export async function repairListenerDevice(deviceId: string) {
     receiving_number: string | null;
   };
 }
-
 
 /** One incoming GCash payment that has not been attached to a Cash In yet. */
 export type UnmatchedListenerEvent = {
@@ -171,9 +166,7 @@ export type UnmatchedListenerEvent = {
     /** Two independent details agree, which is all automatic approval needs. */
     auto_matchable?: boolean;
   }[];
-
 };
-
 
 /** Received payments waiting for a human to attach them to a Cash In. */
 export async function fetchUnmatchedListenerEvents(): Promise<UnmatchedListenerEvent[]> {
@@ -200,7 +193,6 @@ export async function dismissListenerEvent(eventId: string, note?: string) {
   });
   if (error) throw error;
 }
-
 
 /** Plain-language state for one device. */
 export function deviceStateLabel(device: ListenerDevice) {
@@ -253,7 +245,8 @@ export function eventResultLabel(event: ListenerEvent) {
   const result = event.match_result ?? "";
   if (result.startsWith("matched:approved")) return "Matched and approved automatically";
   if (result.startsWith("matched:staged")) return "Matched — staged mode, nothing was settled";
-  if (result.startsWith("matched:")) return `Matched, not approved (${result.slice(8).replace(/_/g, " ")})`;
+  if (result.startsWith("matched:"))
+    return `Matched, not approved (${result.slice(8).replace(/_/g, " ")})`;
   if (result === "ambiguous") return "Several possible Cash Ins — left for manual review";
   if (result === "no_pending_match") return "No pending Cash In matched";
   if (result === "wrong_shop") {
@@ -270,7 +263,6 @@ export function eventResultLabel(event: ListenerEvent) {
   }
   return "Recorded";
 }
-
 
 /**
  * Configurable notification-source filtering.
