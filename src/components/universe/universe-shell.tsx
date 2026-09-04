@@ -97,7 +97,6 @@ function useUnread() {
   return count;
 }
 
-
 /** Global wallet balance + @handle for the identity card. Read-only, RLS-scoped. */
 function useIdentity(userId: string | null) {
   const [balance, setBalance] = useState<number | null>(null);
