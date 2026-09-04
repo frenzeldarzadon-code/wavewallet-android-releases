@@ -46,6 +46,8 @@ import { fetchMyProfile } from "@/lib/profile";
 import { peso } from "@/lib/wavewallet";
 import { WALLET_CHANGED_EVENT } from "@/lib/wallet-events";
 import { useVisiblePoll } from "@/hooks/use-visible-poll";
+import { useRefreshPushRegistration } from "@/hooks/use-push-setup";
+import { PushNudge } from "@/components/universe/push-nudge";
 
 /** Full navigation (desktop rail). */
 const railItems = [
