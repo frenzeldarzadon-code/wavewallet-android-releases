@@ -14,7 +14,8 @@ vi.mock("@/integrations/supabase/client", () => {
     rpc(this: unknown, fn: string) {
       // Mirrors the real client: reading `this.rest` throws when unbound.
       const self = this as { rest?: unknown } | undefined;
-      if (!self || !self.rest) throw new TypeError("Cannot read properties of undefined (reading 'rest')");
+      if (!self || !self.rest)
+        throw new TypeError("Cannot read properties of undefined (reading 'rest')");
       calls.push({ fn, self });
       return Promise.resolve({ data: [], error: null });
     },

@@ -98,7 +98,9 @@ export function ListenerDetectedSourcesCard({
         <CardTitle>Detected notification sources</CardTitle>
         <p className="text-sm text-muted-foreground">
           Every notification that reaches{" "}
-          {ecosystemId ? `${ecosystemName ?? "this shop"}'s listener phones` : "the platform listener phones"}{" "}
+          {ecosystemId
+            ? `${ecosystemName ?? "this shop"}'s listener phones`
+            : "the platform listener phones"}{" "}
           is first identified by its source app, then classified. Recognised payment apps go on to
           receipt matching; everything else is kept as “not a payment” so you can decide here
           whether to keep reading it or block it.
@@ -127,7 +129,9 @@ export function ListenerDetectedSourcesCard({
                     <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
                       <span className="truncate">{s.app_label ?? s.package_name}</span>
                       {s.provider_id ? (
-                        <StatusBadge tone="brand">{providerName(s.provider_id)} · payment app</StatusBadge>
+                        <StatusBadge tone="brand">
+                          {providerName(s.provider_id)} · payment app
+                        </StatusBadge>
                       ) : (
                         <StatusBadge tone="muted">not a payment app</StatusBadge>
                       )}
@@ -136,7 +140,8 @@ export function ListenerDetectedSourcesCard({
                     <p className="text-xs text-muted-foreground">
                       {s.total} seen · {s.payments} payments · {s.non_payment} other
                       {s.unparsed ? ` · ${s.unparsed} unreadable` : ""}
-                      {s.blocked_count ? ` · ${s.blocked_count} blocked` : ""} · last {ago(s.last_seen_at)}
+                      {s.blocked_count ? ` · ${s.blocked_count} blocked` : ""} · last{" "}
+                      {ago(s.last_seen_at)}
                       {s.channel_id ? ` · channel ${s.channel_id}` : ""}
                       {s.category ? ` · ${s.category}` : ""}
                     </p>

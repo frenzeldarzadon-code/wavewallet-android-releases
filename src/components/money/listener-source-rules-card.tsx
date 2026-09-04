@@ -110,8 +110,8 @@ export function ListenerSourceRulesCard({
         <p className="text-sm text-muted-foreground">
           The listener on {ecosystemId ? (ecosystemName ?? "this shop") : "any platform phone"}{" "}
           reads every notification and records its source app first. Use “Detected notification
-          sources” above to block or unblock apps you have already seen; add a rule here to block
-          an app in advance or to set a default with <span className="font-mono">*</span>. A blocked
+          sources” above to block or unblock apps you have already seen; add a rule here to block an
+          app in advance or to set a default with <span className="font-mono">*</span>. A blocked
           source is filtered the moment it arrives — nothing is read from it and it can never enter
           receipt matching. Every change is kept in the audit log.
         </p>
