@@ -99,3 +99,38 @@ describe("validation", () => {
     expect(validateVideoFile({ type: "video/mp4", size: 26 * 1024 * 1024 })).not.toBeNull();
   });
 });
+
+describe("post links (Link / Recommend)", () => {
+  const shop = "0f8fad5b-d9cb-469f-a165-70867728950e";
+  const prod = "7C9E6679-7425-40DE-944B-E07FC1F90AE7";
+
+  it("reads a shop link and normalises the id", () => {
+    expect(readPostLink({ kind: "shop", shop_id: shop.toUpperCase() })).toEqual({
+      kind: "shop",
+      shop_id: shop,
+    });
+  });
+
+  it("reads a product link only with a valid kind and ids", () => {
+    expect(
+      readPostLink({ kind: "product", shop_id: shop, product_id: prod, product_kind: "retail" }),
+    ).toEqual({ kind: "product", shop_id: shop, product_id: prod.toLowerCase(), product_kind: "retail" });
+    expect(readPostLink({ kind: "product", shop_id: shop, product_id: "nope", product_kind: "retail" })).toBeNull();
+    expect(readPostLink({ kind: "product", shop_id: shop, product_id: prod, product_kind: "food" })).toBeNull();
+    expect(readPostLink({ kind: "shop", shop_id: "not-a-uuid" })).toBeNull();
+    expect(readPostLink("shop")).toBeNull();
+  });
+
+  it("keeps a valid link through compactMeta and readPostMeta, dropping junk", () => {
+    const link = { kind: "shop" as const, shop_id: shop };
+    expect(compactMeta({ link })).toEqual({ link });
+    expect(compactMeta({ link: { kind: "shop", shop_id: "x" } as never })).toEqual({});
+    expect(readPostMeta({ link, extra: 1 })).toEqual({ link });
+  });
+
+  it("makes the composer dirty and builds stable keys", () => {
+    expect(composerIsDirty({ body: "", hasImage: false, hasVideo: false, meta: { link: { kind: "shop", shop_id: shop } } })).toBe(true);
+    expect(postLinkKey({ kind: "shop", shop_id: shop })).toBe(`shop:${shop}`);
+    expect(postLinkKey({ kind: "product", shop_id: shop, product_id: prod, product_kind: "voucher" })).toBe(`product:voucher:${prod}`);
+  });
+});
