@@ -207,19 +207,9 @@ export function PostMemberMenu({
                 <Send className="size-4" /> Send a quick message
               </DropdownMenuItem>
             ) : null}
-            {onSendCoins ? (
-              <DropdownMenuItem className="gap-2" onSelect={onSendCoins}>
-                <Coins className="size-4" /> Send coins
-              </DropdownMenuItem>
-            ) : null}
-            {onGift ? (
-              <DropdownMenuItem
-                className="gap-2"
-                disabled={Boolean(giftDisabledReason)}
-                title={giftDisabledReason ?? undefined}
-                onSelect={onGift}
-              >
-                <Gift className="size-4" /> Gift social credits
+            {onGiftSocialCredit ? (
+              <DropdownMenuItem className="gap-2" onSelect={onGiftSocialCredit}>
+                <Gift className="size-4" /> Gift Social Credit
               </DropdownMenuItem>
             ) : null}
           </>
