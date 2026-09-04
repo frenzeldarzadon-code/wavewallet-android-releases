@@ -191,7 +191,7 @@ function ShopResult({ shop, searching }: { shop: DiscoveredShop; searching: bool
 }
 
 /** Premium seller card: image → full name → seller shop name → View My Shop →. */
-function SellerCard({ seller }: { seller: ShopSeller }) {
+export function SellerCard({ seller }: { seller: ShopSeller }) {
   return (
     <Link
       to="/universe/u/$handle"
