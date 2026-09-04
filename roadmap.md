@@ -23,8 +23,8 @@ Shop Access cleanup — Universe is the customer portal (DONE — verified with 
 - [ ] Checkout breakdown UI + history label
 - [ ] Demo verification, tests, typecheck
 
-## Global self-purchase cashback rule (in progress — not published)
-- [ ] Shared self-purchase quote layer (`universe_self_purchase_quote`) used by Retail + Voucher
-- [ ] Voucher purchase nets self-cashback into one wallet debit
-- [ ] Transfers unchanged (zero cashback); NG wallets unchanged
-- [ ] Tests + typecheck + demo verification
+## Global self-purchase cashback rule (done — not published)
+- [x] Shared self-purchase layer (`universe_self_purchase_net` + `universe_purchase_debit`) used by Retail + Voucher
+- [x] Voucher purchase nets self-cashback into one wallet debit
+- [x] Transfers unchanged (zero cashback); NG wallets unchanged
+- [x] Tests + typecheck + demo verification (live purchase blocked: Demo Preview Shop is frozen)
