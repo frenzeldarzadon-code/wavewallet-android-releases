@@ -16,7 +16,17 @@
  * Nothing here is an authorization layer: the database re-checks every rule.
  */
 import { useOnline } from "@/lib/pwa";
-import { Gift, Info, Search, Send, ShoppingBag, Sparkles, Wallet } from "lucide-react";
+import {
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  Gift,
+  Info,
+  Search,
+  Send,
+  ShoppingBag,
+  Sparkles,
+  Wallet,
+} from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -31,6 +41,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { MoneyPage } from "@/components/money/money-page";
 import { Label } from "@/components/ui/label";
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { MemberAvatar } from "@/components/member-avatar";
@@ -113,6 +131,8 @@ export function WalletCenter({
   const [busy, setBusy] = useState(false);
   // Universe scope: member-to-member transfer from the ONE global wallet.
   const [sendOpen, setSendOpen] = useState(false);
+  // Universe scope: Cash In / Cash Out bottom sheet (shared MoneyPage).
+  const [moneyOpen, setMoneyOpen] = useState<"in" | "out" | null>(null);
   const online = useOnline();
 
   const loadShops = useCallback(async () => {
