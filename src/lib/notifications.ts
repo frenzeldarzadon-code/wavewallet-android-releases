@@ -31,6 +31,8 @@ export interface Notification {
 export interface NotificationPreferences {
   disabledKinds: string[];
   pushEnabled: boolean;
+  /** Show names/amounts/status in phone alerts (default). Off = neutral one-liners. */
+  pushShowDetails: boolean;
 }
 
 export const SOCIAL_NOTIFICATION_CATEGORIES = [
@@ -86,12 +88,18 @@ export async function markRead(ids?: string[]) {
 export async function fetchPreferences(): Promise<NotificationPreferences> {
   const { data, error } = await supabase
     .from("notification_preferences")
-    .select("disabled_kinds, push_enabled")
+    .select("disabled_kinds, push_enabled, push_show_details")
     .maybeSingle();
   if (error) fail(error.message);
+  const row = data as {
+    disabled_kinds: string[] | null;
+    push_enabled: boolean | null;
+    push_show_details?: boolean | null;
+  } | null;
   return {
-    disabledKinds: data?.disabled_kinds ?? [],
-    pushEnabled: data?.push_enabled ?? false,
+    disabledKinds: row?.disabled_kinds ?? [],
+    pushEnabled: row?.push_enabled ?? false,
+    pushShowDetails: row?.push_show_details ?? true,
   };
 }
 
@@ -99,7 +107,8 @@ export async function savePreferences(prefs: NotificationPreferences) {
   const { error } = await supabase.rpc("set_notification_preferences", {
     _disabled_kinds: prefs.disabledKinds,
     _push_enabled: prefs.pushEnabled,
-  });
+    _push_show_details: prefs.pushShowDetails,
+  } as never);
   if (error) fail(error.message);
 }
 

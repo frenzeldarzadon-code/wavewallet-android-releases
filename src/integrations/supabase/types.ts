@@ -2906,6 +2906,7 @@ export type Database = {
           created_at: string
           disabled_kinds: string[]
           push_enabled: boolean
+          push_show_details: boolean
           updated_at: string
           user_id: string
         }
@@ -2913,6 +2914,7 @@ export type Database = {
           created_at?: string
           disabled_kinds?: string[]
           push_enabled?: boolean
+          push_show_details?: boolean
           updated_at?: string
           user_id: string
         }
@@ -2920,6 +2922,7 @@ export type Database = {
           created_at?: string
           disabled_kinds?: string[]
           push_enabled?: boolean
+          push_show_details?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -9174,11 +9177,13 @@ export type Database = {
           created_at: string
           delivery_id: string
           device_id: string
+          ecosystem_id: string
           endpoint: string
           kind: string
           link: string
           notification_id: string
           p256dh: string
+          show_details: boolean
           title: string
           user_id: string
         }[]
@@ -12378,10 +12383,19 @@ export type Database = {
         }
         Returns: undefined
       }
-      set_notification_preferences: {
-        Args: { _disabled_kinds: string[]; _push_enabled: boolean }
-        Returns: undefined
-      }
+      set_notification_preferences:
+        | {
+            Args: { _disabled_kinds: string[]; _push_enabled: boolean }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              _disabled_kinds: string[]
+              _push_enabled: boolean
+              _push_show_details: boolean
+            }
+            Returns: undefined
+          }
       set_platform_money_settings: {
         Args: {
           _cash_in_fee?: number

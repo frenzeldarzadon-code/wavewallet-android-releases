@@ -25,6 +25,8 @@ interface ClaimedDelivery {
   body: string | null;
   link: string | null;
   created_at: string;
+  ecosystem_id: string | null;
+  show_details: boolean | null;
 }
 
 export interface DispatchSummary {
@@ -76,7 +78,7 @@ async function sendOne(
     title: text.title,
     body: text.body,
     tag: text.tag,
-    link: d.link && d.link.startsWith("/") ? d.link : "/universe/notifications",
+    link: text.link,
   });
   const result = await sendWebPush(
     { endpoint: d.endpoint, p256dh: d.p256dh, auth: d.auth_secret },
