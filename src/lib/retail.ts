@@ -291,6 +291,31 @@ export function cartLines(cart: Cart, products: RetailProduct[], feePercent = 0)
 export const cartCount = (cart: Cart) =>
   Object.values(cart).reduce((sum, q) => sum + (q > 0 ? q : 0), 0);
 
+/** Shown when a non-retail item (e.g. a voucher) is found in a cart. */
+export const VOUCHER_NOT_CART_MESSAGE =
+  "Vouchers cannot be added to a cart. Buy vouchers directly from the shop's voucher list.";
+
+/**
+ * Vouchers are never cart items: the cart may only hold this shop's retail
+ * products. Anything else (a voucher id, a product from another shop, a stale
+ * id) is dropped so a mixed checkout can never be submitted. The database
+ * (`retail_assert_cart_items`) enforces the same rule server-side.
+ */
+export function retailOnlyCart(
+  cart: Cart,
+  products: Pick<RetailProduct, "id">[],
+): { cart: Cart; removed: string[] } {
+  const known = new Set(products.map((p) => p.id));
+  const next: Cart = {};
+  const removed: string[] = [];
+  for (const [id, qty] of Object.entries(cart)) {
+    if (qty <= 0) continue;
+    if (known.has(id)) next[id] = qty;
+    else removed.push(id);
+  }
+  return { cart: next, removed };
+}
+
 export interface CartQuote {
   sellerTotal: number;
   fee: number;
