@@ -79,9 +79,10 @@ import { MentionText } from "@/components/social/mention-text";
 import { RoleBadge } from "@/components/role-badge";
 import { MentionInput } from "@/components/social/mention-input";
 
-/** Signed-image thumbnail for a post. */
+/** Signed-image thumbnail for a post; tapping it opens the full-size viewer. */
 function PostImage({ path }: { path: string }) {
   const [url, setUrl] = useState<string | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
   useEffect(() => {
     let active = true;
     void socialImageUrl(path).then((u) => active && setUrl(u));
@@ -91,12 +92,22 @@ function PostImage({ path }: { path: string }) {
   }, [path]);
   if (!url) return <div className="aspect-4/3 w-full animate-pulse rounded-xl bg-muted" />;
   return (
-    <img
-      src={url}
-      alt="Post attachment"
-      loading="lazy"
-      className="aspect-4/3 w-full rounded-xl object-cover"
-    />
+    <>
+      <button
+        type="button"
+        className="block w-full cursor-zoom-in overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label="View full photo"
+        onClick={() => setViewerOpen(true)}
+      >
+        <img
+          src={url}
+          alt="Post attachment"
+          loading="lazy"
+          className="aspect-4/3 w-full object-cover"
+        />
+      </button>
+      <PostImageLightbox url={url} open={viewerOpen} onOpenChange={setViewerOpen} />
+    </>
   );
 }
 
