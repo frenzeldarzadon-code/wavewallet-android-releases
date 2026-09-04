@@ -83,13 +83,16 @@ BEGIN
   ASSERT _price = 10.00, format('2: reseller pays the full ₱10, got %s', _price);
   ASSERT (SELECT discount_percent FROM public.voucher_sales WHERE id = _sale) = 0, '2: no reseller discount recorded';
   ASSERT _fee = 0.10 AND _cut = 9.90, format('2: fee %s / seller cut %s', _fee, _cut);
-  ASSERT (SELECT amount FROM public.credit_ledger WHERE sale_id = _sale AND entry_kind = 'purchase') = 10.00, '2: wallet debited exactly ₱10';
   SELECT coalesce(sum(commission_amount),0) INTO _res_cb FROM public.sale_commissions WHERE sale_id = _sale AND recipient_id = _res;
   ASSERT _res_cb = round(10 * _rate / 100.0, 2), format('3: reseller cashback %s = %s%% of ₱10', _res_cb, _rate);
+  -- GLOBAL self-purchase rule: own cashback is netted into the ONE wallet debit.
+  ASSERT (SELECT amount FROM public.credit_ledger WHERE sale_id = _sale AND entry_kind = 'purchase') = round(10.00 - _res_cb, 2),
+         format('2: self purchase debits ₱10 − %s cashback in one transaction', _res_cb);
+  ASSERT (SELECT buyer_charge FROM public.voucher_sales WHERE id = _sale) = round(10.00 - _res_cb, 2), '2: sale records buyer_charge';
   SELECT coalesce(sum(commission_amount),0) INTO _adm_cb FROM public.sale_commissions WHERE sale_id = _sale AND recipient_id = _admin;
   SELECT coalesce(sum(commission_amount),0) INTO _split FROM public.sale_commissions WHERE sale_id = _sale;
   ASSERT _split + _fee = 10.00, format('3: cashback %s + fee %s must equal ₱10 (no double fee)', _split, _fee);
-  ASSERT (SELECT count(*) FROM public.credit_ledger WHERE sale_id = _sale AND entry_kind = 'sale_commission' AND user_id = _res) = 1, '3: one cashback ledger row';
+  ASSERT (SELECT count(*) FROM public.credit_ledger WHERE sale_id = _sale AND user_id = _res) = 1, '3: exactly one wallet row for a self purchase (no separate cashback credit)';
 
   ---------------------------------------------------------------- 4
   PERFORM set_config('request.jwt.claims', json_build_object('sub', _cust)::text, true);
