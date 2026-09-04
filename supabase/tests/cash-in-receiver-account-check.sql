@@ -181,8 +181,14 @@ begin
   _res := public.apply_cash_in_receipt_ocr(_second.id, _ref, 850, _sender, true, null,
             now() - interval '2 minutes', null, 'GCash', null, null, '****' || _tail, repeat('1', 64));
   select * into _second from public.cash_in_requests where id = _second.id;
-  if _second.status <> 'rejected' or _res <> 'duplicate_credited' then
+  -- The duplicate may already be disapproved at request time (reference-less fingerprint
+  -- against the credited notification) or when the receipt is read; either way it is
+  -- rejected, recorded as a duplicate and never credited.
+  if _second.status <> 'rejected' or _res not in ('duplicate_credited', 'not_pending') then
     raise exception '7: duplicate already credited must be disapproved (got % / %)', _second.status, _res;
+  end if;
+  if not exists (select 1 from public.payment_match_records where cash_in_id = _second.id and decision = 'duplicate_rejected') then
+    raise exception '7: duplicate must be recorded as duplicate_rejected (res %)', _res;
   end if;
   if (select balance from public.credit_accounts where id = _global) <> _g0 then raise exception '7: no second credit'; end if;
 
@@ -215,25 +221,26 @@ begin
   end if;
   insert into public.payment_methods (ecosystem_id, name, method_type, account_number, account_name, active, sort_order)
   values (_eco, 'Shop GCash', 'ewallet', _shop_num, 'Shop Owner', true, 1) returning id into _shop_method;
-  insert into public.listener_devices (label, owner_role, ecosystem_id, secret_key_hash, status, last_seen_at)
-  values ('shop phone', 'admin', _eco, repeat('9', 64), 'active', now()) returning id into _shop_dev;
+  insert into public.listener_devices (label, owner_role, ecosystem_id, secret_key_hash, status, last_seen_at, last_event_at)
+  values ('shop phone', 'admin', _eco, repeat('9', 64), 'active', now(), now()) returning id into _shop_dev;
   delete from public.cash_in_auto_rules where ecosystem_id = _eco;
   insert into public.cash_in_auto_rules (ecosystem_id, enabled, amount_tolerance_php, require_listener_match, require_receipt_match, verification_mode)
   values (_eco, true, 0, true, false, 'active');
   _ref := 'RA9' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 10));
   insert into public.cash_in_requests (user_id, ecosystem_id, method_id, method_name, method_type,
                                        amount_php, credits, rate_php, rate_credits, net_php,
-                                       status, requester_name, sender_number, sender_number_key,
-                                       payer_reference, payer_reference_key, proof_path)
+                                       status, requester_name, requester_role, sender_number, sender_number_key,
+                                       payer_reference, payer_reference_key, proof_path, reference)
   values (_uid, _eco, _shop_method, 'Shop GCash', 'ewallet', 250, 250, 1000, 1000, 250,
-          'pending', 'Test Member', _sender, public.normalize_ph_mobile(_sender), _ref, _ref, 'proof9.jpg')
+          'pending', 'Test Member', 'customer', _sender, public.normalize_ph_mobile(_sender), _ref, _ref, 'proof9.jpg', 'WW-' || _ref)
   returning * into _row;
   if exists (select 1 from public.cash_in_expected_receiving_accounts(_row) a where a.account = _acct)
      or not exists (select 1 from public.cash_in_expected_receiving_accounts(_row) a where a.account = _shop_num) then
     raise exception '9: shop cash in must use only that shop''s saved receiving details';
   end if;
-  insert into public.listener_events (device_id, outcome, amount_php, sender_number, sender_number_key, posted_at, raw_text, reference_key, gcash_reference)
-  values (_shop_dev, 'accepted', 250, _sender, public.normalize_ph_mobile(_sender), now(), 'shop pay', _ref, _ref);
+  perform public.record_listener_event(_shop_dev, 'ra-evt-9', 'com.globe.gcash.android',
+      'You have received PHP 250.00 from ' || _sender || '. Ref. No. ' || _ref,
+      250, _sender, null, now(), 'v2', _ref, 'gcash', 'GCash', null);
   -- Receipt names the PLATFORM account: wrong receiver for a shop cash in.
   _res := public.apply_cash_in_receipt_ocr(_row.id, _ref, 250, _sender, true, null, now(), null, 'GCash', null, null, '****' || _tail, repeat('3', 64));
   select * into _row from public.cash_in_requests where id = _row.id;

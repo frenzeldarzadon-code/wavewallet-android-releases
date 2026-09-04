@@ -9,7 +9,7 @@
 --      different (or missing) reference must NOT block the approval;
 --   C) the amount on its own is one signal and must stay pending;
 --   D) reusing a receipt reference that already settled a cash in is declined;
---   E) reusing the same screenshot image is declined;
+--   E) reusing the same screenshot image is recorded and never auto-approves;
 --   F) a notification captured minutes (or hours) later still approves.
 begin;
 
@@ -50,19 +50,23 @@ begin
   -- reference and was captured six minutes after the payment.
   _ref := 'REF-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 10));
   insert into public.listener_events (device_id, event_uid, package_name, amount_php,
-                                      sender_number_key, posted_at, created_at, outcome)
+                                      sender_number_key, posted_at, created_at, outcome, details)
   values (_dev, 'evt-two-a', 'com.globe.gcash.android', 1500,
           public.normalize_ph_mobile(_sender),
-          now() - interval '6 minutes', now(), 'accepted');
+          now() - interval '6 minutes', now(), 'accepted', jsonb_build_object('receiving_account', (select account_number from public.payment_methods where id = _method)));
 
   _row := public.request_cash_in(_method, 1500, _ref, null, gen_random_uuid()::text,
                                  _uid::text || '/two-a.jpg', _sender, null,
                                  now() - interval '6 minutes',
                                  jsonb_build_object('provider_name', 'GCash'));
+  -- The receipt is read (as the upload pipeline does) before any automatic decision.
+  perform public.apply_cash_in_receipt_ocr(_row.id, _ref, 1500, _sender, true, null,
+                                           now() - interval '6 minutes', null, 'GCash', null, null, null, repeat('a', 64));
+  select * into _row from public.cash_in_requests where id = _row.id;
 
   if _row.status <> 'approved' or _row.approval_method <> 'automatic' then
-    raise exception 'A: amount + sender must approve without any listener reference (got % / %)',
-      _row.status, _row.approval_method;
+    raise exception 'A: amount + sender must approve without any listener reference (got % / % / %)',
+      _row.status, _row.approval_method, public.cash_in_auth_blockers(_row.id);
   end if;
 
   select * into _rec from public.payment_match_records
@@ -73,9 +77,9 @@ begin
 
   -- C: the amount alone is one signal and can never settle a cash in.
   insert into public.listener_events (device_id, event_uid, package_name, amount_php,
-                                      posted_at, created_at, outcome)
+                                      posted_at, created_at, outcome, details)
   values (_dev, 'evt-two-c', 'com.globe.gcash.android', 1500,
-          now() - interval '2 minutes', now(), 'accepted');
+          now() - interval '2 minutes', now(), 'accepted', jsonb_build_object('receiving_account', (select account_number from public.payment_methods where id = _method)));
 
   _second := public.request_cash_in(_method, 1500,
                                     'REF-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 10)),
@@ -87,12 +91,18 @@ begin
   end if;
 
   -- D: the same receipt reference may never settle a second cash in.
-  _second := public.request_cash_in(_method, 1500, _ref, null, gen_random_uuid()::text,
-                                    _uid::text || '/two-d.jpg', _sender, null, now(),
-                                    jsonb_build_object('provider_name', 'GCash'));
-  if _second.status = 'approved' then
-    raise exception 'D: a reused receipt reference must never approve again';
-  end if;
+  -- The submission guard refuses a credited reference outright; if it ever got
+  -- through it must still never approve.
+  begin
+    _second := public.request_cash_in(_method, 1500, _ref, null, gen_random_uuid()::text,
+                                      _uid::text || '/two-d.jpg', _sender, null, now(),
+                                      jsonb_build_object('provider_name', 'GCash'));
+    if _second.status = 'approved' then
+      raise exception 'D: a reused receipt reference must never approve again';
+    end if;
+  exception when others then
+    if sqlerrm not ilike '%already%' then raise; end if;
+  end;
 
   -- E: the same screenshot may never settle a second cash in.
   _row := public.request_cash_in(_method, 200,
@@ -108,8 +118,11 @@ begin
   perform public.apply_cash_in_receipt_ocr(_second.id, 'TWO-E-2', 200, null, true, null,
                                            now(), null, 'GCash', null, null, null, _hash);
 
-  if not (select duplicate_receipt from public.cash_in_requests where id = _second.id) then
-    raise exception 'E: reusing the same screenshot must be flagged as a duplicate receipt';
+  -- The first submission is still pending (not credited), so the reuse is recorded
+  -- for the reviewer (duplicate_receipt_of) while verification continues; a
+  -- CREDITED duplicate is disapproved outright (see cash-in-listener-no-pairing).
+  if (select duplicate_receipt_of from public.cash_in_requests where id = _second.id) is distinct from _row.id then
+    raise exception 'E: reusing the same screenshot must be recorded as a duplicate receipt';
   end if;
   if (select status from public.cash_in_requests where id = _second.id) = 'approved' then
     raise exception 'E: a reused screenshot must never auto-approve a second cash in';
