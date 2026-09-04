@@ -51,12 +51,18 @@ export const NOTIFICATION_CATEGORIES = [
   ...SOCIAL_NOTIFICATION_CATEGORIES,
 ] as ReadonlyArray<{ kind: string; label: string }>;
 
-/** What is still missing before real background push can be switched on. */
-export const PUSH_REQUIREMENTS = [
-  "A service worker registered for this site",
-  "A VAPID key pair stored as platform secrets",
-  "A push delivery endpoint that stores browser subscriptions",
-] as const;
+const PUSH_NUDGE_KEY = "wavewallet.push-nudge";
+
+/** Has the person dismissed the gentle "turn on phone notifications" prompt? */
+export function pushNudgeDismissed(): boolean {
+  if (typeof window === "undefined") return true;
+  return window.localStorage.getItem(PUSH_NUDGE_KEY) === "dismissed";
+}
+
+export function dismissPushNudge() {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(PUSH_NUDGE_KEY, "dismissed");
+}
 
 function fail(message: string): never {
   throw new Error(message);
