@@ -24,7 +24,6 @@ import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StartShopRouteImport } from './routes/start-shop'
 import { Route as SuperRouteImport } from './routes/super'
-import { Route as TmpLinkcardRouteImport } from './routes/tmp-linkcard'
 import { Route as UniverseRouteImport } from './routes/universe'
 import { Route as WifiRouteImport } from './routes/wifi'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -196,11 +195,6 @@ const StartShopRoute = StartShopRouteImport.update({
 const SuperRoute = SuperRouteImport.update({
   id: '/super',
   path: '/super',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TmpLinkcardRoute = TmpLinkcardRouteImport.update({
-  id: '/tmp-linkcard',
-  path: '/tmp-linkcard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UniverseRoute = UniverseRouteImport.update({
@@ -709,7 +703,6 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/start-shop': typeof StartShopRoute
   '/super': typeof SuperRouteWithChildren
-  '/tmp-linkcard': typeof TmpLinkcardRoute
   '/universe': typeof UniverseRouteWithChildren
   '/wifi': typeof WifiRoute
   '/admin/applications': typeof AdminApplicationsRoute
@@ -820,7 +813,6 @@ export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/start-shop': typeof StartShopRoute
-  '/tmp-linkcard': typeof TmpLinkcardRoute
   '/wifi': typeof WifiRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/credits': typeof AdminCreditsRoute
@@ -935,7 +927,6 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/start-shop': typeof StartShopRoute
   '/super': typeof SuperRouteWithChildren
-  '/tmp-linkcard': typeof TmpLinkcardRoute
   '/universe': typeof UniverseRouteWithChildren
   '/wifi': typeof WifiRoute
   '/admin/applications': typeof AdminApplicationsRoute
@@ -1052,7 +1043,6 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/start-shop'
     | '/super'
-    | '/tmp-linkcard'
     | '/universe'
     | '/wifi'
     | '/admin/applications'
@@ -1163,7 +1153,6 @@ export interface FileRouteTypes {
     | '/setup'
     | '/sitemap.xml'
     | '/start-shop'
-    | '/tmp-linkcard'
     | '/wifi'
     | '/admin/applications'
     | '/admin/credits'
@@ -1277,7 +1266,6 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/start-shop'
     | '/super'
-    | '/tmp-linkcard'
     | '/universe'
     | '/wifi'
     | '/admin/applications'
@@ -1393,7 +1381,6 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StartShopRoute: typeof StartShopRoute
   SuperRoute: typeof SuperRouteWithChildren
-  TmpLinkcardRoute: typeof TmpLinkcardRoute
   UniverseRoute: typeof UniverseRouteWithChildren
   WifiRoute: typeof WifiRoute
   ApiPortalTemplateDownloadRoute: typeof ApiPortalTemplateDownloadRoute
@@ -1514,13 +1501,6 @@ declare module '@tanstack/react-router' {
       path: '/super'
       fullPath: '/super'
       preLoaderRoute: typeof SuperRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tmp-linkcard': {
-      id: '/tmp-linkcard'
-      path: '/tmp-linkcard'
-      fullPath: '/tmp-linkcard'
-      preLoaderRoute: typeof TmpLinkcardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/universe': {
@@ -2433,7 +2413,6 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StartShopRoute: StartShopRoute,
   SuperRoute: SuperRouteWithChildren,
-  TmpLinkcardRoute: TmpLinkcardRoute,
   UniverseRoute: UniverseRouteWithChildren,
   WifiRoute: WifiRoute,
   ApiPortalTemplateDownloadRoute: ApiPortalTemplateDownloadRoute,
