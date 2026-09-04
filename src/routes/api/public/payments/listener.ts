@@ -51,6 +51,9 @@ const eventSchema = z.object({
   package_name: z.string().min(3).max(160),
   /** Human-readable app name, when the phone could read one. Newer builds only. */
   app_label: z.string().max(160).nullable().optional(),
+  /** Android notification channel id / category, when the phone could read them. */
+  channel_id: z.string().max(160).nullable().optional(),
+  category: z.string().max(80).nullable().optional(),
   /** Notification title/text, sent separately by newer builds. */
   title: z.string().max(1000).nullable().optional(),
   text: z.string().max(2000).nullable().optional(),
