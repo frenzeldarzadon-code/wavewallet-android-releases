@@ -762,6 +762,58 @@ export async function purchaseVoucher(
   };
 }
 
+/* ------------------------------------------------------------------ */
+/* Self-purchase quote (GLOBAL Universe rule, shared by every shop type) */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Server-computed purchase figures. The database (`universe_self_purchase_net`)
+ * decides whether the buyer is the entitled cashback recipient of their own
+ * Universe shop; when they are, the cashback is netted out of the ONE wallet
+ * debit and `buyerCharge` is what actually leaves the Universe Wallet.
+ * Transfers never produce a quote — they are not purchases.
+ */
+export interface SelfPurchaseQuote {
+  /** Price before any self-purchase cashback. */
+  total: number;
+  /** Cashback netted out at checkout (0 when not a self purchase). */
+  selfCashback: number;
+  /** Actual wallet deduction. */
+  buyerCharge: number;
+  selfPurchase: boolean;
+  /** Cashback rate that produced `selfCashback` (voucher shops only). */
+  cashbackPercent: number;
+}
+
+/** Voucher shop quote — mirrors exactly what `purchase_voucher` will charge. */
+export async function fetchVoucherCheckoutQuote(
+  productId: string,
+  quantity = 1,
+  sellerId?: string | null,
+): Promise<SelfPurchaseQuote> {
+  const { data, error } = await supabase.rpc("voucher_checkout_quote", {
+    _product_id: productId,
+    _quantity: quantity,
+    ...(sellerId ? { _seller_id: sellerId } : {}),
+  });
+  if (error) throw new Error(error.message);
+  const row = (data as Array<Record<string, unknown>> | null)?.[0];
+  return {
+    total: Number(row?.["total"] ?? 0),
+    selfCashback: Number(row?.["self_cashback"] ?? 0),
+    buyerCharge: Number(row?.["buyer_charge"] ?? 0),
+    selfPurchase: !!row?.["self_purchase"],
+    cashbackPercent: Number(row?.["cashback_percent"] ?? 0),
+  };
+}
+
+/** Actual charge for a purchase given a (possibly stale) quote. */
+export function selfPurchaseCharge(total: number, quote: SelfPurchaseQuote | null | undefined) {
+  return quote && quote.selfPurchase && Math.abs(quote.total - total) < 0.005
+    ? quote.buyerCharge
+    : total;
+}
+
 
 export function friendlyWalletError(message: string): string {
   const m = message.toLowerCase();
