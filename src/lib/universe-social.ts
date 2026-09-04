@@ -126,6 +126,71 @@ export async function fetchSocialGraph(): Promise<GraphEntry[]> {
   return (data ?? []) as GraphEntry[];
 }
 
+/** Follow + friend state for one member, as returned by the batch lookup. */
+export interface RelationshipLite {
+  following: boolean;
+  friend_status: FriendStatus;
+  friend_request_id: string | null;
+}
+
+/**
+ * One round trip for a whole search result page: the same rules as
+ * `universe_relationship`, so a "Add friend" button here and on the profile
+ * page can never disagree.
+ */
+export async function fetchRelationshipBatch(
+  userIds: string[],
+): Promise<Map<string, RelationshipLite>> {
+  const ids = [...new Set(userIds.filter(Boolean))];
+  const out = new Map<string, RelationshipLite>();
+  if (ids.length === 0) return out;
+  const { data, error } = await supabase.rpc("universe_relationship_batch", { _users: ids });
+  if (error) fail(error.message);
+  for (const row of (data ?? []) as Array<{
+    user_id: string;
+    following: boolean;
+    friend_status: string;
+    friend_request_id: string | null;
+  }>) {
+    out.set(row.user_id, {
+      following: !!row.following,
+      friend_status: (row.friend_status as FriendStatus) ?? "none",
+      friend_request_id: row.friend_request_id ?? null,
+    });
+  }
+  return out;
+}
+
+/** A Universe member with presence, from the app-wide heartbeat (member_presence). */
+export interface OnlineMember {
+  id: string;
+  full_name: string;
+  handle: string | null;
+  avatar_path: string | null;
+  /** Server-decided: seen within presence_online_window(). */
+  online: boolean;
+  /** Minute-rounded, never exact. */
+  lastSeenAt: string | null;
+}
+
+/**
+ * Members active in the last 7 days, online first then most recent. Blocked
+ * members (either direction) and deleted accounts never appear. Presence is
+ * never fabricated: a member with no heartbeat is simply absent.
+ */
+export async function fetchOnlineMembers(limit = 40): Promise<OnlineMember[]> {
+  const { data, error } = await supabase.rpc("universe_online_members", { _limit: limit });
+  if (error) fail(error.message);
+  return ((data ?? []) as Array<Record<string, unknown>>).map((r) => ({
+    id: String(r["id"]),
+    full_name: String(r["full_name"] ?? "Member"),
+    handle: (r["handle"] as string | null) ?? null,
+    avatar_path: (r["avatar_path"] as string | null) ?? null,
+    online: !!r["online"],
+    lastSeenAt: (r["last_seen_at"] as string | null) ?? null,
+  }));
+}
+
 /** Public post history for a profile. General-audience published posts only. */
 export async function fetchProfilePosts(handle: string, limit = 30): Promise<ProfilePost[]> {
   const { data, error } = await supabase.rpc("universe_profile_posts", {

@@ -104,6 +104,7 @@ import { Route as SuperShopsRouteImport } from './routes/super.shops'
 import { Route as SuperSubscriptionsRouteImport } from './routes/super.subscriptions'
 import { Route as SuperUniverseRouteImport } from './routes/super.universe'
 import { Route as UniverseIndexRouteImport } from './routes/universe.index'
+import { Route as UniverseFriendsRouteImport } from './routes/universe.friends'
 import { Route as UniverseMembersRouteImport } from './routes/universe.members'
 import { Route as UniverseMessagesRouteImport } from './routes/universe.messages'
 import { Route as UniverseNotificationsRouteImport } from './routes/universe.notifications'
@@ -603,6 +604,11 @@ const UniverseIndexRoute = UniverseIndexRouteImport.update({
   path: '/',
   getParentRoute: () => UniverseRoute,
 } as any)
+const UniverseFriendsRoute = UniverseFriendsRouteImport.update({
+  id: '/friends',
+  path: '/friends',
+  getParentRoute: () => UniverseRoute,
+} as any)
 const UniverseMembersRoute = UniverseMembersRouteImport.update({
   id: '/members',
   path: '/members',
@@ -808,6 +814,7 @@ export interface FileRoutesByFullPath {
   '/super/shops': typeof SuperShopsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
   '/super/universe': typeof SuperUniverseRoute
+  '/universe/friends': typeof UniverseFriendsRoute
   '/universe/members': typeof UniverseMembersRoute
   '/universe/messages': typeof UniverseMessagesRoute
   '/universe/notifications': typeof UniverseNotificationsRoute
@@ -922,6 +929,7 @@ export interface FileRoutesByTo {
   '/super/shops': typeof SuperShopsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
   '/super/universe': typeof SuperUniverseRoute
+  '/universe/friends': typeof UniverseFriendsRoute
   '/universe/members': typeof UniverseMembersRoute
   '/universe/messages': typeof UniverseMessagesRoute
   '/universe/notifications': typeof UniverseNotificationsRoute
@@ -1042,6 +1050,7 @@ export interface FileRoutesById {
   '/super/shops': typeof SuperShopsRoute
   '/super/subscriptions': typeof SuperSubscriptionsRoute
   '/super/universe': typeof SuperUniverseRoute
+  '/universe/friends': typeof UniverseFriendsRoute
   '/universe/members': typeof UniverseMembersRoute
   '/universe/messages': typeof UniverseMessagesRoute
   '/universe/notifications': typeof UniverseNotificationsRoute
@@ -1163,6 +1172,7 @@ export interface FileRouteTypes {
     | '/super/shops'
     | '/super/subscriptions'
     | '/super/universe'
+    | '/universe/friends'
     | '/universe/members'
     | '/universe/messages'
     | '/universe/notifications'
@@ -1277,6 +1287,7 @@ export interface FileRouteTypes {
     | '/super/shops'
     | '/super/subscriptions'
     | '/super/universe'
+    | '/universe/friends'
     | '/universe/members'
     | '/universe/messages'
     | '/universe/notifications'
@@ -1396,6 +1407,7 @@ export interface FileRouteTypes {
     | '/super/shops'
     | '/super/subscriptions'
     | '/super/universe'
+    | '/universe/friends'
     | '/universe/members'
     | '/universe/messages'
     | '/universe/notifications'
@@ -2123,6 +2135,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UniverseIndexRouteImport
       parentRoute: typeof UniverseRoute
     }
+    '/universe/friends': {
+      id: '/universe/friends'
+      path: '/friends'
+      fullPath: '/universe/friends'
+      preLoaderRoute: typeof UniverseFriendsRouteImport
+      parentRoute: typeof UniverseRoute
+    }
     '/universe/members': {
       id: '/universe/members'
       path: '/members'
@@ -2463,6 +2482,7 @@ const SuperRouteChildren: SuperRouteChildren = {
 const SuperRouteWithChildren = SuperRoute._addFileChildren(SuperRouteChildren)
 
 interface UniverseRouteChildren {
+  UniverseFriendsRoute: typeof UniverseFriendsRoute
   UniverseMembersRoute: typeof UniverseMembersRoute
   UniverseMessagesRoute: typeof UniverseMessagesRoute
   UniverseNotificationsRoute: typeof UniverseNotificationsRoute
@@ -2481,6 +2501,7 @@ interface UniverseRouteChildren {
 }
 
 const UniverseRouteChildren: UniverseRouteChildren = {
+  UniverseFriendsRoute: UniverseFriendsRoute,
   UniverseMembersRoute: UniverseMembersRoute,
   UniverseMessagesRoute: UniverseMessagesRoute,
   UniverseNotificationsRoute: UniverseNotificationsRoute,
