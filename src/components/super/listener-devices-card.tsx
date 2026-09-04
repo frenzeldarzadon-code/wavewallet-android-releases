@@ -1,7 +1,9 @@
 /**
- * Platform-owner management for the GCash notification listener devices.
+ * Management for the payment notification listener devices (platform owner
+ * and shop admin views share this card).
  *
- * The paired phone forwards GCash notification text only. It is corroborating
+ * The paired phone forwards payment-app notification text only (GCash today,
+ * any app the source rules allow). It is corroborating
  * evidence for a Cash In — never proof of payment on its own, and it can never
  * release credits by itself.
  */
@@ -13,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge, EmptyState } from "@/components/ui-kit";
 import { formatPairingCode } from "@/lib/listener-pairing-code";
+import { resolvePaymentProvider } from "@/lib/payment-providers";
 
 import {
   deviceHealthLine,
@@ -26,9 +29,18 @@ import {
   type ListenerStatus,
 } from "@/lib/listener-devices";
 
+/** Which payment app's notifications this phone forwards (recognised by package). */
+const listensTo = (packageName: string) => {
+  const provider = resolvePaymentProvider(packageName);
+  return provider
+    ? `${provider.name} notifications`
+    : `${packageName || "unknown app"} notifications`;
+};
 
 const when = (value: string | null) =>
-  value ? new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "—";
+  value
+    ? new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
+    : "—";
 
 export function ListenerDevicesCard({
   ecosystemId = null,
@@ -66,7 +78,9 @@ export function ListenerDevicesCard({
       return;
     }
     if (!receivingNumber.trim()) {
-      toast.error("Enter the receiving GCash number this phone watches, so payments cannot be matched to another shop.");
+      toast.error(
+        "Enter the receiving account number this phone watches, so payments cannot be matched to another account or shop.",
+      );
       return;
     }
     setBusy(true);
@@ -131,22 +145,24 @@ export function ListenerDevicesCard({
     }
   };
 
-
   return (
-    <Card id="gcash-listener" className="shadow-[var(--shadow-card)] scroll-mt-24">
+    <Card id="payment-listener" className="shadow-[var(--shadow-card)] scroll-mt-24">
       <CardHeader>
-        <CardTitle>GCash notification listener</CardTitle>
+        <CardTitle>Payment notification listener</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Pair an Android phone that receives the GCash notifications for{" "}
-          {shopScoped ? (ecosystemName ?? "this shop") : "a receiving account"}. It forwards the amount
-          and sender it read, which is matched only against pending Cash Ins paid into the same
-          receiving GCash account. Nothing is approved when the match is unclear, and a notification
-          alone never releases credits.
+          Pair an Android phone that receives the payment notifications for{" "}
+          {shopScoped
+            ? (ecosystemName ?? "this shop")
+            : "one of the platform receiving accounts (see Platform collection accounts below)"}
+          . Each phone watches ONE receiving number; the app it listens to (GCash, or any app
+          allowed in the notification sources) is set by the phone. It forwards the amount and
+          sender it read, which is matched only against pending Cash Ins paid into that same
+          receiving account. Nothing is approved when the match is unclear, and a notification alone
+          never releases credits.
         </p>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid gap-3 sm:grid-cols-[1fr_1fr_140px_auto] sm:items-end">
-
           <div className="space-y-1.5">
             <Label htmlFor="listener-label">Device name</Label>
             <Input
@@ -157,11 +173,11 @@ export function ListenerDevicesCard({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="listener-number">Receiving GCash number</Label>
+            <Label htmlFor="listener-number">Receiving account number</Label>
             <Input
               id="listener-number"
               inputMode="numeric"
-              placeholder="09XXXXXXXXX"
+              placeholder="09XXXXXXXXX (e-wallet) or account number"
               value={receivingNumber}
               onChange={(e) => setReceivingNumber(e.target.value)}
             />
@@ -182,10 +198,10 @@ export function ListenerDevicesCard({
         </div>
         <p className="-mt-3 text-xs text-muted-foreground">
           The receiving number is what makes matching safe: several shops may legitimately share one
-          GCash account, and a payment is only ever matched against Cash Ins for the shop it was
-          actually paid to.
+          e-wallet or bank account, and a payment is only ever matched against Cash Ins for the
+          account and shop it was actually paid to. A receiving account with no paired phone stays
+          on manual review.
         </p>
-
 
         {secret ? (
           <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm">
@@ -201,10 +217,10 @@ export function ListenerDevicesCard({
             </p>
             <p className="mt-1 text-muted-foreground">
               Tap “Copy both (one paste)” and paste the single value into the ONE WAVE app under
-              “Pair device” — it fills in the Device ID and the code for you. Enter these in the
-              ONE WAVE app under “Pair device”. A phone that was paired before
-              already knows its Device ID and only asks for this one-time code. The code cannot be
-              shown again — use “Re-pair this device” to issue a new one.
+              “Pair device” — it fills in the Device ID and the code for you. Enter these in the ONE
+              WAVE app under “Pair device”. A phone that was paired before already knows its Device
+              ID and only asks for this one-time code. The code cannot be shown again — use “Re-pair
+              this device” to issue a new one.
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               <Button size="sm" onClick={() => copy(secret.deviceId, "Device ID copied")}>
@@ -232,11 +248,10 @@ export function ListenerDevicesCard({
           </div>
         ) : null}
 
-
         {view.devices.length === 0 ? (
           <EmptyState
             title="No listener device paired"
-            description="Cash In approval keeps using the configured amount, receiving number and reference."
+            description="Until a phone is paired, every Cash In stays in manual review with the amount, receiving account and reference as evidence."
           />
         ) : (
           <div className="space-y-3">
@@ -249,16 +264,25 @@ export function ListenerDevicesCard({
                       <p className="font-medium">{device.label}</p>
                       <p className="text-xs text-muted-foreground">
                         {device.ecosystem_name ?? "Platform-owned"} ·{" "}
-                        {device.receiving_number ? `receives on ${device.receiving_number}` : "no receiving number set"}
-                        {(device.shops_served ?? 0) > 1 ? ` · serves ${device.shops_served} shops` : ""} · window{" "}
-                        {device.match_window_minutes} min
+                        {device.receiving_number
+                          ? `watches ${device.receiving_number}`
+                          : "no receiving number set"}
+                        {" · "}
+                        {listensTo(device.package_name)}
+                        {(device.shops_served ?? 0) > 1
+                          ? ` · serves ${device.shops_served} shops`
+                          : ""}{" "}
+                        · window {device.match_window_minutes} min
                       </p>
                       {!device.receiving_number ? (
                         <p className="text-xs text-destructive">
-                          Set a receiving GCash number for this phone — until then it can never confirm a payment.
+                          Set a receiving account number for this phone — until then it can never
+                          confirm a payment.
                         </p>
                       ) : null}
-                      <p className="mt-1 text-xs text-muted-foreground">{deviceHealthLine(device)}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {deviceHealthLine(device)}
+                      </p>
                       {device.notification_access === false ? (
                         <p className="text-xs text-destructive">
                           This phone lost Notification Access — re-grant it in Android settings.
@@ -269,8 +293,6 @@ export function ListenerDevicesCard({
                           “Reconnect listener”.
                         </p>
                       ) : null}
-
-
                     </div>
                     <StatusBadge tone={state.tone}>{state.label}</StatusBadge>
                   </div>
@@ -314,7 +336,6 @@ export function ListenerDevicesCard({
                       Re-pair this device
                     </Button>
                   </div>
-
                 </div>
               );
             })}
@@ -331,7 +352,9 @@ export function ListenerDevicesCard({
                 <li key={event.id} className="rounded-lg border p-2 text-sm">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-medium">
-                      {event.amount_php !== null ? `₱${Number(event.amount_php).toFixed(2)}` : "Unreadable"}
+                      {event.amount_php !== null
+                        ? `₱${Number(event.amount_php).toFixed(2)}`
+                        : "Unreadable"}
                       {event.sender_name ? ` · ${event.sender_name}` : ""}
                       {event.sender_number ? ` · ${event.sender_number}` : ""}
                     </span>

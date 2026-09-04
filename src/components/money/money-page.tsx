@@ -28,6 +28,7 @@ import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-
 import { FacebookSupportCard } from "@/components/facebook-support-card";
 import { PaymentMethodCards } from "@/components/money/payment-method-cards";
 import { fetchPlatformPaymentOption } from "@/lib/platform-payment-option";
+import { PlatformCashInStatus } from "@/components/money/platform-cash-in-status";
 import { CashInProofPicker, CashInProofViewer } from "@/components/money/cash-in-proof";
 import {
   extractCashInReceipt,
@@ -175,7 +176,7 @@ export function MoneyPage({
   /** Uploaded straight away so the receipt can be read before submitting. */
   const [proofPath, setProofPath] = useState<string | null>(null);
   const [extracting, setExtracting] = useState(false);
-  /** What the receipt reader saw — evidence, never a verification from GCash. */
+  /** What the receipt reader saw — evidence, never a verification from the payment provider. */
   const [extract, setExtract] = useState<ReceiptExtraction | null>(null);
   /** Payment date/time the member confirms, as a datetime-local value. */
   const [paidAt, setPaidAt] = useState("");
@@ -684,8 +685,13 @@ export function MoneyPage({
           <PageSection
             devSlot="money-page.where-to-send-your-payment"
             title="Where to send your payment"
-            description="Pay to one of the accounts below, then submit your cash in request with the reference number."
+            description={
+              universe
+                ? "Platform receiving accounts. Pay to one of them, then submit your cash in request with the reference number."
+                : "Pay to one of the accounts below, then submit your cash in request with the reference number."
+            }
           >
+            {universe ? <PlatformCashInStatus /> : null}
             <PaymentMethodCards methods={methods} selectedId={methodId} onSelect={setMethodId} />
           </PageSection>
 

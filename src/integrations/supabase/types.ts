@@ -10357,6 +10357,7 @@ export type Database = {
         Args: { _cash_in: string; _key: string; _provider: string }
         Returns: boolean
       }
+      platform_cash_in_readiness: { Args: never; Returns: Json }
       platform_credit_supply: {
         Args: never
         Returns: {
