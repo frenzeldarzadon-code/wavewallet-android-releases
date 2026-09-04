@@ -87,7 +87,15 @@ export function UniverseShopDiscovery({ currentUserId }: { currentUserId?: strin
   );
 }
 
-function ShopResult({ shop, searching }: { shop: DiscoveredShop; searching: boolean }) {
+function ShopResult({
+  shop,
+  searching,
+  currentUserId,
+}: {
+  shop: DiscoveredShop;
+  searching: boolean;
+  currentUserId?: string | null;
+}) {
   const [showAll, setShowAll] = useState(false);
   const [sellers, setSellers] = useState<ShopSeller[] | null>(null);
 
