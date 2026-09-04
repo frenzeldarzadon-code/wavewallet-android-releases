@@ -164,6 +164,24 @@ export function VoucherShopView({
     return list;
   }, [products, term, avail, sort]);
 
+  // GLOBAL self-purchase rule (server decides): a reseller/subreseller buying
+  // from their own Universe shop is charged price − their cashback, once.
+  const [quote, setQuote] = useState<SelfPurchaseQuote | null>(null);
+  const buyingId = buying?.method === "credits" ? buying.product.id : null;
+  useEffect(() => {
+    if (!buyingId) {
+      setQuote(null);
+      return;
+    }
+    let active = true;
+    void fetchVoucherCheckoutQuote(buyingId, qty)
+      .then((q) => active && setQuote(q))
+      .catch(() => active && setQuote(null));
+    return () => {
+      active = false;
+    };
+  }, [buyingId, qty]);
+
   if (!account) return null;
 
   /** Customer-facing retail price — the product's source of truth. */
@@ -182,26 +200,9 @@ export function VoucherShopView({
   const maxQty = buying ? Math.min(500, Math.max(1, buying.product.available)) : 1;
   const unit = buying ? priceFor(buying.product) : 0;
   const total = Math.round(unit * qty * 100) / 100;
-
-  // GLOBAL self-purchase rule (server decides): a reseller/subreseller buying
-  // from their own Universe shop is charged price − their cashback, once.
-  const [quote, setQuote] = useState<SelfPurchaseQuote | null>(null);
-  const buyingId = buying?.method === "credits" ? buying.product.id : null;
-  useEffect(() => {
-    if (!buyingId) {
-      setQuote(null);
-      return;
-    }
-    let active = true;
-    void fetchVoucherCheckoutQuote(buyingId, qty)
-      .then((q) => active && setQuote(q))
-      .catch(() => active && setQuote(null));
-    return () => {
-      active = false;
-    };
-  }, [buyingId, qty]);
   const charge = selfPurchaseCharge(total, quote);
   const selfPurchase = !!quote && charge !== total;
+
 
   const buildVouchers = (
     codes: string[],
