@@ -36,6 +36,7 @@ import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-
 import { MemberAvatar } from "@/components/member-avatar";
 import { FacebookSupportCard } from "@/components/facebook-support-card";
 import { ShopTransferCard } from "@/components/customer/shop-transfer-card";
+import { notifyWalletChanged } from "@/lib/wallet-events";
 import { UniverseSendCoinsSheet } from "@/components/wallet/universe-send-coins-sheet";
 import { CodAssignmentsCard } from "@/components/retail/cod-assignments-card";
 import { PointsEarningsPanel } from "@/components/customer/points-earnings-panel";
@@ -288,6 +289,7 @@ export function WalletCenter({
             onSent={async () => {
               setHistoryKey((k) => k + 1);
               await loadShops();
+              notifyWalletChanged();
             }}
           />
         </PageSection>

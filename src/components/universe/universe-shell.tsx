@@ -38,6 +38,7 @@ import { fetchNotifications, unreadCount } from "@/lib/notifications";
 import { fetchWalletView } from "@/lib/wallet";
 import { fetchMyProfile } from "@/lib/profile";
 import { peso } from "@/lib/wavewallet";
+import { WALLET_CHANGED_EVENT } from "@/lib/wallet-events";
 import { useVisiblePoll } from "@/hooks/use-visible-poll";
 
 /** Full navigation (desktop rail). */
@@ -104,9 +105,12 @@ function useIdentity(userId: string | null) {
   useEffect(() => {
     if (!userId) return;
     let alive = true;
-    void fetchWalletView(userId, null)
-      .then((v) => alive && setBalance(v?.balance ?? 0))
-      .catch(() => undefined);
+    const loadBalance = () => {
+      void fetchWalletView(userId, null)
+        .then((v) => alive && setBalance(v?.balance ?? 0))
+        .catch(() => undefined);
+    };
+    loadBalance();
     void fetchMyProfile(userId)
       .then((p) => {
         if (!alive || !p) return;
@@ -114,8 +118,10 @@ function useIdentity(userId: string | null) {
         setAvatar(p.avatar_path);
       })
       .catch(() => undefined);
+    window.addEventListener(WALLET_CHANGED_EVENT, loadBalance);
     return () => {
       alive = false;
+      window.removeEventListener(WALLET_CHANGED_EVENT, loadBalance);
     };
   }, [userId]);
   return { balance, handle, avatar };
@@ -166,7 +172,9 @@ export function UniverseShell({
           </Link>
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Open menu"><Menu className="size-5" /></Button>
+              <Button variant="ghost" size="icon" aria-label="Open menu">
+                <Menu className="size-5" />
+              </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[86vw] max-w-sm p-0">
               <SheetHeader className="border-b border-border p-5 text-left">
@@ -174,16 +182,38 @@ export function UniverseShell({
               </SheetHeader>
               <nav aria-label="Universe menu" className="space-y-1 p-3">
                 {railItems.map((item) => (
-                  <Link key={item.to} to={item.to} className={cn("flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium", active(item.to) ? "bg-brand-soft text-primary" : "text-foreground hover:bg-accent")}>
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={cn(
+                      "flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium",
+                      active(item.to)
+                        ? "bg-brand-soft text-primary"
+                        : "text-foreground hover:bg-accent",
+                    )}
+                  >
                     <item.icon className="size-5" /> {item.label}
-                    {item.to === "/universe/notifications" ? <Badge count={unread} className="static ml-auto" /> : null}
+                    {item.to === "/universe/notifications" ? (
+                      <Badge count={unread} className="static ml-auto" />
+                    ) : null}
                   </Link>
                 ))}
                 <div className="my-3 border-t border-border" />
                 {manages ? (
-                  <Link to={homeFor(account.role)} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium hover:bg-accent"><Store className="size-5" /> My shop console</Link>
+                  <Link
+                    to={homeFor(account.role)}
+                    className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium hover:bg-accent"
+                  >
+                    <Store className="size-5" /> My shop console
+                  </Link>
                 ) : null}
-                <Button variant="ghost" className="w-full justify-start text-destructive" onClick={() => session.signOut()}><LogOut className="size-5" /> Sign out</Button>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-destructive"
+                  onClick={() => session.signOut()}
+                >
+                  <LogOut className="size-5" /> Sign out
+                </Button>
               </nav>
             </SheetContent>
           </Sheet>
@@ -232,7 +262,7 @@ export function UniverseShell({
                 to={item.to}
                 aria-current={active(item.to) ? "page" : undefined}
                 className={cn(
-                    "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] transition-colors",
+                  "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] transition-colors",
                   active(item.to)
                     ? "bg-brand-soft font-bold text-primary"
                     : "font-medium text-muted-foreground hover:bg-accent/60 hover:text-foreground",
@@ -330,7 +360,7 @@ export function UniverseShell({
                   >
                     <span
                       className={cn(
-                         "flex size-10 shrink-0 items-center justify-center rounded-lg",
+                        "flex size-10 shrink-0 items-center justify-center rounded-lg",
                         active(p.to)
                           ? "bg-primary text-primary-foreground"
                           : "bg-brand-soft text-primary",
