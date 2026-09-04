@@ -432,7 +432,7 @@ function PublicStorefront() {
               <ul className="grid gap-2 sm:grid-cols-2">
                 {sellers.map((s) => (
                   <li key={s.sellerId}>
-                    <SellerCard seller={s} />
+                    <SellerCard seller={s} currentUserId={currentUserId} />
                   </li>
                 ))}
               </ul>
