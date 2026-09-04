@@ -46,7 +46,9 @@ import {
   DEFAULT_STORE_SETTINGS,
   codCustomerTotal,
   countByCustomerStage,
+  VOUCHER_NOT_CART_MESSAGE,
   cartCount,
+  retailOnlyCart,
   cartLines,
   cartQuote,
   changeQuantity,
@@ -200,6 +202,18 @@ export function RetailStoreView(props: RetailStoreViewProps) {
   useEffect(() => {
     setPageLimit(CATALOG_PAGE_SIZE);
   }, [debouncedSearch, catalogQuery.category, catalogQuery.sort, catalogQuery.inStockOnly]);
+
+  // Vouchers are never cart items: once the retail catalog is known, anything in
+  // the cart that is not one of this shop's retail products is removed with a
+  // clear message instead of ever reaching checkout.
+  useEffect(() => {
+    if (loading) return;
+    const { cart: clean, removed } = retailOnlyCart(cart, products);
+    if (removed.length === 0) return;
+    setCart(clean);
+    toast.error(VOUCHER_NOT_CART_MESSAGE);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, products, JSON.stringify(cart)]);
 
   const lines = cartLines(cart, products, feePercent);
   const quote = cartQuote(cart, products, feePercent);

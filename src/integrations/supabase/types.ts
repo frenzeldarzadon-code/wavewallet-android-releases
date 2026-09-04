@@ -11190,6 +11190,7 @@ export type Database = {
         }
         Returns: Json
       }
+      retail_assert_cart_items: { Args: { _items: Json }; Returns: undefined }
       retail_cashback_recipient: {
         Args: { _buyer: string; _ecosystem_id: string; _seller: string }
         Returns: string
