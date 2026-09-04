@@ -132,8 +132,9 @@ export function extractNotificationFields(text: string | null | undefined): Noti
 
   // Keep every "Label: value" pair too, so nothing readable is lost.
   const labeled: Record<string, string> = {};
+  const label = String.raw`[A-Z][A-Za-z]*(?:\s[A-Za-z]+){0,2}`;
   for (const m of raw.matchAll(
-    /([A-Za-z][A-Za-z .]{1,30}?)\s*:\s*([^:]{1,80}?)(?=\s+[A-Za-z][A-Za-z .]{1,30}?\s*:|$)/g,
+    new RegExp(String.raw`\b(${label})\s*:\s*([^:]{1,80}?)(?=\s+${label}\s*:|\.\s|$)`, "g"),
   )) {
     const key = clean(m[1])?.toLowerCase();
     const val = clean(m[2]);
