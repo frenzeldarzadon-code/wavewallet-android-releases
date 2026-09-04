@@ -7,12 +7,11 @@ import {
   Send,
   ShieldOff,
   UserPlus,
-  Users,
+  Wifi,
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,15 +27,19 @@ import {
 } from "@/components/ui/dialog";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { MemberAvatar } from "@/components/member-avatar";
-import { MemberPicker } from "@/components/member-picker";
+import { PeopleSheet } from "@/components/universe/people-sheet";
 import { ImageCropper } from "@/components/image-cropper";
+import { cn } from "@/lib/utils";
 import { displayHandle } from "@/lib/profile";
 import { useSession } from "@/lib/session";
 import type { CropRect } from "@/lib/image-optimize";
 import {
   SOCIAL_IMAGE_ASPECT,
   fetchMessages,
+  fetchOrderChatContext,
   fetchThreads,
+  filterThreads,
+  orderChatLabel,
   relativeTime,
   reportContent,
   sendMessage,
@@ -49,6 +52,8 @@ import {
   validateSocialImage,
   type DmMessage,
   type DmThread,
+  type OrderChatContext,
+  type ThreadFilter,
 } from "@/lib/social";
 
 /** Signed-url image inside a chat bubble. */
@@ -98,6 +103,9 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
   const [file, setFile] = useState<File | null>(null);
   const [crop, setCrop] = useState<{ image: HTMLImageElement; crop: CropRect } | null>(null);
   const [newOpen, setNewOpen] = useState(false);
+  const [peopleOpen, setPeopleOpen] = useState(false);
+  const [filter, setFilter] = useState<ThreadFilter>("all");
+  const [orderCtx, setOrderCtx] = useState<Map<string, OrderChatContext>>(new Map());
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [openedInitial, setOpenedInitial] = useState(false);
@@ -107,6 +115,14 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
     try {
       const list = await fetchThreads();
       setThreads(list);
+      // Order number / status / shop for order chats — the database only
+      // answers for threads the caller actually belongs to.
+      const orderIds = list.filter((t) => t.kind === "order").map((t) => t.thread_id);
+      if (orderIds.length > 0) {
+        void fetchOrderChatContext(orderIds)
+          .then(setOrderCtx)
+          .catch(() => undefined);
+      }
       return list;
     } catch (e) {
       toast.error("Could not load messages", { description: (e as Error).message });
@@ -270,12 +286,16 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
             />
           )}
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">{threadTitle(active)}</p>
+            <p className="truncate text-sm font-semibold">
+              {isOrder ? orderChatLabel(active, orderCtx.get(active.thread_id)) : threadTitle(active)}
+            </p>
             {isOrder ? (
               <p className="truncate text-xs text-muted-foreground">
-                {active.participants
-                  .map((p) => `${p.name} (${roleLabel[p.role] ?? p.role})`)
-                  .join(" · ")}
+                {orderCtx.get(active.thread_id)?.shop_name
+                  ? "Order chat · everyone on this order can read this"
+                  : active.participants
+                      .map((p) => `${p.name} (${roleLabel[p.role] ?? p.role})`)
+                      .join(" · ")}
               </p>
             ) : active.member_handle ? (
               <p className="truncate text-xs text-muted-foreground">
@@ -420,6 +440,14 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
     );
   }
 
+  const visible = filterThreads(threads, filter);
+  const orderCount = threads.filter((t) => t.kind === "order").length;
+  const filters: Array<{ id: ThreadFilter; label: string }> = [
+    { id: "all", label: "All" },
+    { id: "direct", label: "Private" },
+    { id: "order", label: orderCount ? `Orders · ${orderCount}` : "Orders" },
+  ];
+
   return (
     <>
       <PageSection
@@ -427,89 +455,138 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
         title="Messages"
         description="Private conversations and Retail order chats. Messages are free."
       >
-        <Button className="h-11" onClick={() => setNewOpen(true)}>
-          <UserPlus className="size-4" /> New message
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" className="h-11" onClick={() => setPeopleOpen(true)}>
+            <Wifi className="size-4" /> Online
+          </Button>
+          <Button className="h-11" onClick={() => setNewOpen(true)}>
+            <UserPlus className="size-4" /> New message
+          </Button>
+        </div>
       </PageSection>
+
+      <div
+        role="tablist"
+        aria-label="Filter conversations"
+        className="flex gap-1 rounded-xl bg-muted p-1"
+      >
+        {filters.map((f) => (
+          <button
+            key={f.id}
+            role="tab"
+            type="button"
+            aria-selected={filter === f.id}
+            onClick={() => setFilter(f.id)}
+            className={cn(
+              "h-9 flex-1 rounded-lg text-sm font-medium transition-colors",
+              filter === f.id
+                ? "bg-card text-foreground shadow-[var(--shadow-card)]"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
 
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading conversations…</p>
-      ) : threads.length === 0 ? (
+      ) : visible.length === 0 ? (
         <EmptyState
-          title="No conversations yet"
-          description="Start a chat from a member's post or with New message."
+          title={
+            filter === "order"
+              ? "No order chats"
+              : filter === "direct"
+                ? "No private chats yet"
+                : "No conversations yet"
+          }
+          description={
+            filter === "order"
+              ? "An order chat appears here automatically after you place or receive a Retail order."
+              : "Start a chat from a member's post, from Online, or with New message."
+          }
         />
       ) : (
         <div className="space-y-2">
-          {threads.map((t) => (
-            <Card
-              key={t.thread_id}
-              className="cursor-pointer shadow-[var(--shadow-card)]"
-              onClick={() => void openThreadView(t)}
-            >
-              <CardContent className="flex items-center gap-3 py-3">
-                {t.kind === "order" ? (
-                  <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-soft text-primary">
-                    <Users className="size-4" />
-                  </span>
-                ) : (
-                  <span className="relative">
-                    <MemberAvatar path={t.member_avatar} name={t.member_name ?? "Member"} />
-                    {t.member_online ? (
-                      <span
-                        aria-label="Online"
-                        className="absolute bottom-0 right-0 size-3 rounded-full border-2 border-card bg-success"
-                      />
-                    ) : null}
-                  </span>
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-semibold">{threadTitle(t)}</span>
-                    {t.kind === "order" ? (
-                      <StatusBadge tone="brand">Order chat</StatusBadge>
-                    ) : t.member_online ? (
-                      <span className="text-[11px] font-medium text-success">Online</span>
-                    ) : null}
-                    {t.last_message_at ? (
-                      <span className="ml-auto shrink-0 text-xs text-muted-foreground">
-                        {relativeTime(t.last_message_at)}
+          {visible.map((t) => {
+            const ctx = t.kind === "order" ? orderCtx.get(t.thread_id) : undefined;
+            return (
+              <Card
+                key={t.thread_id}
+                className="cursor-pointer shadow-[var(--shadow-card)]"
+                onClick={() => void openThreadView(t)}
+              >
+                <CardContent className="flex items-center gap-3 py-3">
+                  {t.kind === "order" ? (
+                    <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-soft text-primary">
+                      <Package className="size-4" />
+                    </span>
+                  ) : (
+                    <span className="relative">
+                      <MemberAvatar path={t.member_avatar} name={t.member_name ?? "Member"} />
+                      {t.member_online ? (
+                        <span
+                          aria-label="Online"
+                          className="absolute bottom-0 right-0 size-3 rounded-full border-2 border-card bg-success"
+                        />
+                      ) : null}
+                    </span>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-sm font-semibold">
+                        {t.kind === "order" ? orderChatLabel(t, ctx) : threadTitle(t)}
                       </span>
-                    ) : null}
+                      {t.kind === "order" ? (
+                        <StatusBadge tone="brand">Order</StatusBadge>
+                      ) : t.member_online ? (
+                        <span className="text-[11px] font-medium text-success">Online</span>
+                      ) : null}
+                      {t.last_message_at ? (
+                        <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                          {relativeTime(t.last_message_at)}
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {t.preview ??
+                        (t.kind === "order"
+                          ? t.participants
+                              .map((p) => `${p.name} (${roleLabel[p.role] ?? p.role})`)
+                              .join(", ")
+                          : "No messages yet")}
+                    </p>
                   </div>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {t.preview ??
-                      (t.kind === "order"
-                        ? t.participants.map((p) => p.name).join(", ")
-                        : "No messages yet")}
-                  </p>
-                </div>
-                {t.unread > 0 ? (
-                  <span className="ml-1 inline-flex size-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-                    {t.unread}
-                  </span>
-                ) : null}
-              </CardContent>
-            </Card>
-          ))}
+                  {t.unread > 0 ? (
+                    <span className="ml-1 inline-flex size-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                      {t.unread}
+                    </span>
+                  ) : null}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
-      <Dialog open={newOpen} onOpenChange={setNewOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>New message</DialogTitle>
-            <DialogDescription>
-              Search members of your shop by name or @handle. Contact details stay private.
-            </DialogDescription>
-          </DialogHeader>
-          <MemberPicker
-            onSelect={(m) => {
-              void startWith(m.id, m.full_name);
-            }}
-          />
-        </DialogContent>
-      </Dialog>
+      <PeopleSheet
+        open={peopleOpen}
+        onOpenChange={setPeopleOpen}
+        title="Online now"
+        description="Members online or recently active, from the same presence signal shown on posts. Tap to chat."
+        onSelect={(p) => {
+          setPeopleOpen(false);
+          void startWith(p.id, p.full_name);
+        }}
+      />
+
+      <PeopleSheet
+        open={newOpen}
+        onOpenChange={setNewOpen}
+        title="New message"
+        description="Who is online right now, then recently active. Search anyone in the Universe by name or @handle — no shop needed."
+        onSelect={(p) => void startWith(p.id, p.full_name)}
+      />
     </>
   );
 }
