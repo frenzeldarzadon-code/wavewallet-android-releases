@@ -7,7 +7,7 @@
  */
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Bell, BellRing, Check, Loader2 } from "lucide-react";
+import { Bell, BellOff, BellRing, Check, Loader2, Send, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,15 +15,13 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
+import { usePushSetup } from "@/hooks/use-push-setup";
 import {
   NOTIFICATION_CATEGORIES,
-  PUSH_REQUIREMENTS,
   fetchNotifications,
   fetchPreferences,
   markRead,
   notificationLink,
-  notificationPermission,
-  requestNotificationPermission,
   savePreferences,
   toggleCategory,
   type Notification,
@@ -32,9 +30,10 @@ import {
 import {
   deliverySummary,
   fetchPushDevices,
-  registerThisDevice,
   removeDevice,
+  sendTestNotification,
   setDeviceEnabled,
+  thisDeviceEndpoint,
   type PushDevice,
 } from "@/lib/financial-notifications";
 
@@ -56,13 +55,16 @@ export function NotificationsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [permission, setPermission] = useState(notificationPermission());
+  const [busy, setBusy] = useState(false);
   const [devices, setDevices] = useState<PushDevice[]>([]);
+  const [hereEndpoint, setHereEndpoint] = useState<string | null>(null);
+  const { support, permission, enable, disableHere } = usePushSetup();
 
   const reloadDevices = () => {
     void fetchPushDevices()
       .then(setDevices)
       .catch(() => undefined);
+    void thisDeviceEndpoint().then(setHereEndpoint);
   };
 
   useEffect(() => {
@@ -76,6 +78,7 @@ export function NotificationsPage() {
       })
       .catch((e: Error) => toast.error("Could not load notifications", { description: e.message }))
       .finally(() => active && setLoading(false));
+    void thisDeviceEndpoint().then((e) => active && setHereEndpoint(e));
     return () => {
       active = false;
     };
@@ -94,19 +97,55 @@ export function NotificationsPage() {
   };
 
   const enablePush = async () => {
-    const result = await requestNotificationPermission();
-    setPermission(result);
-    if (result === "granted") {
-      await persist({ ...prefs, pushEnabled: true });
-      await registerThisDevice().catch(() => undefined);
+    setBusy(true);
+    const { result, error } = await enable(prefs);
+    setBusy(false);
+    if (result === "enabled") {
+      setPrefs((p) => ({ ...p, pushEnabled: true }));
       reloadDevices();
-      toast.success("Alerts on", {
-        description: "You will see pop-up alerts while ONE WAVE is open in this browser.",
+      toast.success("Phone notifications are on", {
+        description: "This device will be alerted even when ONE WAVE is closed.",
       });
     } else if (result === "denied") {
-      toast.error("Your browser blocked alerts", {
-        description: "Allow notifications for this site in your browser settings.",
+      toast.error("Your browser blocked notifications", {
+        description: "Allow notifications for this site in your browser or phone settings.",
       });
+    } else if (result === "unavailable") {
+      toast.error("Phone notifications are not available here yet", {
+        description: "Open the published app (or add it to your Home Screen on iPhone).",
+      });
+    } else if (result === "error") {
+      toast.error("Could not switch on phone notifications", { description: error });
+    }
+  };
+
+  const disablePush = async () => {
+    setBusy(true);
+    try {
+      await disableHere();
+      await persist({ ...prefs, pushEnabled: false });
+      reloadDevices();
+      toast.success("Phone notifications are off", {
+        description: "Everything still shows up in your list here.",
+      });
+    } catch (e) {
+      toast.error("Could not switch off", { description: (e as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const testPush = async () => {
+    setBusy(true);
+    try {
+      await sendTestNotification();
+      toast.success("Test sent", {
+        description: "It should reach your registered devices within a few seconds.",
+      });
+    } catch (e) {
+      toast.error("Could not send a test", { description: (e as Error).message });
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -129,6 +168,10 @@ export function NotificationsPage() {
       reloadDevices();
     }
   };
+
+  const hereRegistered = !!hereEndpoint && devices.some((d) => d.endpoint === hereEndpoint);
+  const pushOnHere = prefs.pushEnabled && permission === "granted" && hereRegistered;
+  const pushDevices = devices.filter((d) => d.push_capable);
 
   const open = async (n: Notification) => {
     if (!n.read_at) {
