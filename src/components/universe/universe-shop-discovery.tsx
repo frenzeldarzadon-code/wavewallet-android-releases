@@ -249,10 +249,8 @@ export function SellerCard({ seller }: { seller: ShopSeller }) {
         <span className="mt-0.5 block truncate text-xs font-medium text-success">
           {seller.storeName}
         </span>
-        <span className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
+        <span className="mt-1 block truncate">
           <PresenceBadge seller={seller} />
-          <span aria-hidden>·</span>
-          <span className="truncate">Authorized seller</span>
         </span>
       </span>
       <span
