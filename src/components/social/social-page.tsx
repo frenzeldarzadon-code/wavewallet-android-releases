@@ -72,6 +72,7 @@ import { PostImageLightbox } from "@/components/social/post-image-lightbox";
 import { UniverseSendCoinsSheet } from "@/components/wallet/universe-send-coins-sheet";
 import { fetchWalletView } from "@/lib/wallet";
 import type { UniverseRecipient } from "@/lib/universe-transfer";
+import { fetchFollowingIds, setFollowing } from "@/lib/universe-social";
 import { MentionText } from "@/components/social/mention-text";
 import { RoleBadge } from "@/components/role-badge";
 import { MentionInput } from "@/components/social/mention-input";
@@ -156,6 +157,7 @@ export function SocialPage({ hashtag }: { hashtag?: string } = {}) {
   // Linked shops/products resolved to current storefront data, keyed by reference.
   const [linkCards, setLinkCards] = useState<Map<string, LinkCard>>(new Map());
   const [loading, setLoading] = useState(true);
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
 
   // reporting
   const [report, setReport] = useState<{ type: "post" | "comment"; id: string } | null>(null);
@@ -166,6 +168,9 @@ export function SocialPage({ hashtag }: { hashtag?: string } = {}) {
       const [s, f] = await Promise.all([fetchSocialState(), fetchFeed(undefined, hashtag ?? null)]);
       setState(s);
       setPosts(f);
+      fetchFollowingIds(f.map((post) => post.author_id).filter((id) => id !== accountId))
+        .then(setFollowingIds)
+        .catch(() => setFollowingIds(new Set()));
       const links = f
         .map((p) => readPostMeta(p.meta).link)
         .filter((l): l is PostLink => Boolean(l));
@@ -298,6 +303,22 @@ export function SocialPage({ hashtag }: { hashtag?: string } = {}) {
               onBlock={() => void block(post.author_id, post.author_name)}
               onReport={() => setReport({ type: "post", id: post.id })}
               onChanged={refresh}
+              following={followingIds.has(post.author_id)}
+              onToggleFollow={async () => {
+                const next = !followingIds.has(post.author_id);
+                try {
+                  await setFollowing(post.author_id, next);
+                  setFollowingIds((current) => {
+                    const updated = new Set(current);
+                    if (next) updated.add(post.author_id);
+                    else updated.delete(post.author_id);
+                    return updated;
+                  });
+                  toast.success(next ? `Following ${post.author_name}` : `Unfollowed ${post.author_name}`);
+                } catch (error) {
+                  toast.error("Could not update follow", { description: (error as Error).message });
+                }
+              }}
             />
           ))}
         </div>
@@ -342,6 +363,8 @@ function PostCard({
   onBlock,
   onReport,
   onChanged,
+  following,
+  onToggleFollow,
 }: {
   post: FeedPost;
   state: SocialState | null;
@@ -352,6 +375,8 @@ function PostCard({
   onBlock: () => void;
   onReport: () => void;
   onChanged: () => Promise<void>;
+  following: boolean;
+  onToggleFollow: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [comments, setComments] = useState<FeedComment[]>([]);
@@ -570,7 +595,7 @@ function PostCard({
           </Button>
         ) : null}
 
-        <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1">
           <Button
             variant="ghost"
             size="sm"
@@ -593,7 +618,7 @@ function PostCard({
             <MessageCircle className="size-4" />
             {post.comment_count}
           </Button>
-          <div className="ml-auto">
+          <div className="ml-auto max-w-full">
             <PostMemberMenu
               authorId={post.author_id}
               authorName={post.author_name}
@@ -602,6 +627,8 @@ function PostCard({
               onMessage={() => void openDm()}
               onQuickMessage={() => setDmOpen(true)}
               onGiftSocialCredit={() => void openSendCoins()}
+              following={following}
+              onToggleFollow={() => void onToggleFollow()}
               onReport={onReport}
               onBlock={onBlock}
               {...(post.can_hide ? { onHideForShop: () => setHideOpen(true) } : {})}
@@ -752,7 +779,7 @@ function PostCard({
           <DialogHeader>
             <DialogTitle>Message {post.author_name}</DialogTitle>
             <DialogDescription>
-              Private one-to-one message inside your shop. Direct messages are free.
+              Private one-to-one message in the Universe. Direct messages are free.
             </DialogDescription>
           </DialogHeader>
           <Textarea rows={3} value={dm} onChange={(e) => setDm(e.target.value)} />

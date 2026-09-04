@@ -62,6 +62,8 @@ export interface PostMemberMenuProps {
   onQuickMessage?: () => void;
   /** Opens the EXISTING global Universe Wallet social-credit/coin gifting flow. */
   onGiftSocialCredit?: () => void;
+  following?: boolean;
+  onToggleFollow?: () => void;
   onReport?: () => void;
   onBlock?: () => void;
   /** Moderation — only passed when the viewer is allowed. */
@@ -77,6 +79,8 @@ export function PostMemberMenu({
   onMessage,
   onQuickMessage,
   onGiftSocialCredit,
+  following = false,
+  onToggleFollow,
   onReport,
   onBlock,
   onHideForShop,
@@ -123,7 +127,31 @@ export function PostMemberMenu({
   if (!hasAnything) return null;
 
   return (
-    <DropdownMenu
+    <div className="flex min-w-0 items-center gap-1">
+      {canRelate && onToggleFollow ? (
+        <Button variant="ghost" size="sm" className="h-10 gap-1.5 px-2" onClick={onToggleFollow}>
+          {following ? <UserCheck className="size-4" /> : <Rss className="size-4" />}
+          <span className="text-xs">{following ? "Unfollow" : "Follow"}</span>
+        </Button>
+      ) : null}
+      {canRelate && onMessage ? (
+        <Button variant="ghost" size="sm" className="h-10 gap-1.5 px-2" onClick={onMessage}>
+          <MessageCircle className="size-4" />
+          <span className="hidden text-xs min-[360px]:inline">Message</span>
+        </Button>
+      ) : null}
+      {canRelate && onGiftSocialCredit ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-10 gap-1.5 px-2"
+          onClick={onGiftSocialCredit}
+        >
+          <Gift className="size-4" />
+          <span className="text-xs">Gift</span>
+        </Button>
+      ) : null}
+      <DropdownMenu
       open={open}
       onOpenChange={(o) => {
         setOpen(o);
@@ -162,33 +190,20 @@ export function PostMemberMenu({
             ) : (
               <>
                 <DropdownMenuItem
-                  disabled={busy}
-                  className="gap-2"
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    void run(
-                      () => setFollowing(authorId!, !rel.following),
-                      rel.following ? "Unfollowed" : "Following",
-                    );
-                  }}
-                >
-                  {rel.following ? <Check className="size-4" /> : <Rss className="size-4" />}
-                  {rel.following ? "Following" : "Follow"}
-                </DropdownMenuItem>
-                <DropdownMenuItem
                   disabled={busy || kind === "none"}
                   className="gap-2"
                   onSelect={(e) => {
                     e.preventDefault();
+                    if (!authorId) return;
                     if (kind === "send")
-                      return void run(() => sendFriendRequest(authorId!), "Request sent");
+                      return void run(() => sendFriendRequest(authorId), "Request sent");
                     if (kind === "accept")
                       return void run(
                         () => respondFriendRequest(rel.friend_request_id ?? "", true),
                         "You are now friends",
                       );
                     if (kind === "remove")
-                      return void run(() => removeFriend(authorId!), "Friend removed");
+                      return void run(() => removeFriend(authorId), "Friend removed");
                   }}
                 >
                   {friendIcon}
@@ -197,19 +212,9 @@ export function PostMemberMenu({
               </>
             )}
             <DropdownMenuSeparator />
-            {onMessage ? (
-              <DropdownMenuItem className="gap-2" onSelect={onMessage}>
-                <MessageCircle className="size-4" /> Message privately
-              </DropdownMenuItem>
-            ) : null}
             {onQuickMessage ? (
               <DropdownMenuItem className="gap-2" onSelect={onQuickMessage}>
                 <Send className="size-4" /> Send a quick message
-              </DropdownMenuItem>
-            ) : null}
-            {onGiftSocialCredit ? (
-              <DropdownMenuItem className="gap-2" onSelect={onGiftSocialCredit}>
-                <Gift className="size-4" /> Gift Social Credit
               </DropdownMenuItem>
             ) : null}
           </>
@@ -239,6 +244,7 @@ export function PostMemberMenu({
           </DropdownMenuItem>
         ) : null}
       </DropdownMenuContent>
-    </DropdownMenu>
+      </DropdownMenu>
+    </div>
   );
 }

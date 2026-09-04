@@ -92,6 +92,18 @@ export async function setFollowing(userId: string, follow: boolean) {
   if (error) fail(error.message);
 }
 
+/** Loads the viewer's follow state for every visible post author in one query. */
+export async function fetchFollowingIds(userIds: string[]): Promise<Set<string>> {
+  const uniqueIds = [...new Set(userIds.filter(Boolean))];
+  if (uniqueIds.length === 0) return new Set();
+  const { data, error } = await supabase
+    .from("social_follows")
+    .select("followee_id")
+    .in("followee_id", uniqueIds);
+  if (error) fail(error.message);
+  return new Set((data ?? []).map((row) => row.followee_id));
+}
+
 export async function sendFriendRequest(userId: string) {
   const { error } = await supabase.rpc("send_friend_request", { _user: userId });
   if (error) fail(error.message);
