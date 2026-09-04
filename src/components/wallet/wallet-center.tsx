@@ -262,24 +262,18 @@ export function WalletCenter({
         </PageSection>
       ) : null}
 
+      {universe ? null : (
       <PageSection
         devSlot="wallet-center.my-wallets"
-        title={universe ? "Send coins inside a Universe shop" : "My wallets"}
+        title="My wallets"
         description={
-          universe
-            ? "Transfers are always made inside one shop's community. Pick the shop whose members you want to send to — it is still your one global wallet."
-            : multiShop
-              ? `${shops.length} shop wallets · ${peso(totalWalletBalance(shops))} in total. Tap a shop to work with that wallet.`
-              : "Your shop wallet balance."
+          multiShop
+            ? `${shops.length} shop wallets · ${peso(totalWalletBalance(shops))} in total. Tap a shop to work with that wallet.`
+            : "Your shop wallet balance."
         }
       >
         {loading ? (
           <EmptyState title="Loading wallets…" />
-        ) : shops.length === 0 && universe ? (
-          <EmptyState
-            title="No Universe shop community yet"
-            description="You can still buy vouchers from any seller storefront with your global wallet. Join a Universe shop to send coins to its members."
-          />
         ) : shops.length === 0 ? (
           <EmptyState
             title="No shop membership yet"
