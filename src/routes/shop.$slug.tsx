@@ -128,7 +128,7 @@ function PublicStorefront() {
     return () => {
       alive = false;
     };
-  }, [slug]);
+  }, [slug, linkedProductId]);
 
   // Sellers are listed for signed-in members; guests are asked to sign in.
   useEffect(() => {
