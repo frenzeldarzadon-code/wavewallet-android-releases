@@ -68,6 +68,7 @@ export function UniverseVouchersCard() {
                     {peso(s.sale_price)} · {new Date(s.created_at).toLocaleDateString()}
                   </p>
                 </div>
+                <PurchaseShopChip labels={shopLabels} ecosystemId={s.ecosystem_id} sellerId={s.reseller_id} />
                 {s.codes.length > 0 ? (
                   <div className="flex flex-wrap items-center gap-1">
                     {s.codes.map((c) => (
