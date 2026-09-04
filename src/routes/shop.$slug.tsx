@@ -50,7 +50,7 @@ export const Route = createFileRoute("/shop/$slug")({
       {
         name: "description",
         content:
-          "Browse this ONE WAVE shop's public products, prices and customer ratings, then request to join to place an order.",
+          "Browse this ONE WAVE shop's public vouchers, products, prices and customer ratings, and buy vouchers from its authorized sellers.",
       },
       { property: "og:title", content: `${params.slug} Storefront — ONE WAVE` },
       {
