@@ -118,8 +118,7 @@ export function PostMemberMenu({
       <UserPlus className="size-4" />
     );
 
-  const hasAnything =
-    Boolean(authorHandle) || canRelate || onDelete || onReport || onBlock;
+  const hasAnything = Boolean(authorHandle) || canRelate || onDelete || onReport || onBlock;
   if (!hasAnything) return null;
 
   return (
@@ -216,9 +215,7 @@ export function PostMemberMenu({
             </>
           ) : null}
 
-          {(canRelate && (onReport || onBlock)) || onDelete ? (
-            <DropdownMenuSeparator />
-          ) : null}
+          {(canRelate && (onReport || onBlock)) || onDelete ? <DropdownMenuSeparator /> : null}
           {canRelate && onReport ? (
             <DropdownMenuItem className="gap-2" onSelect={onReport}>
               <Flag className="size-4" /> Report

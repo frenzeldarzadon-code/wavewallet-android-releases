@@ -102,7 +102,8 @@ function AdminSocial() {
         </>
       ) : null}
 
-      <PageSection devSlot="social.reported-content"
+      <PageSection
+        devSlot="social.reported-content"
         title="Reported content"
         description="Members can report posts, replies and other members. Everything here is scoped to your shop only."
       >
@@ -142,7 +143,8 @@ function AdminSocial() {
         )}
       </PageSection>
 
-      <PageSection devSlot="social.social-coin-activity"
+      <PageSection
+        devSlot="social.social-coin-activity"
         title="Social coin activity"
         description="Historical ledger of social coin movements in your shop. Posting, replies and promotions are free today, so new spending entries are no longer created."
       >

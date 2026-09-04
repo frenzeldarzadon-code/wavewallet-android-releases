@@ -466,7 +466,6 @@ function PostCard({
     }
   };
 
-
   const sendDm = async () => {
     try {
       await sendMessage(post.author_id, dm);
@@ -705,7 +704,6 @@ function PostCard({
           </div>
         ) : null}
       </CardContent>
-
 
       {coinsRecipient ? (
         <UniverseSendCoinsSheet

@@ -130,7 +130,6 @@ export interface FeedPost {
   can_hide?: boolean;
 }
 
-
 /** A member suggested while typing an @mention. */
 export interface MentionSuggestion {
   user_id: string;
@@ -571,7 +570,6 @@ export async function createComment(postId: string, body: string, parentId?: str
     depth: number;
   };
 }
-
 
 /** Handle/name autocomplete for @mentions. */
 export async function searchHandles(query: string): Promise<MentionSuggestion[]> {
