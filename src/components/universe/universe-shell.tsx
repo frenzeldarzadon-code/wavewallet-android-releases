@@ -15,6 +15,7 @@ import {
   ArrowRight,
   Bell,
   ChevronRight,
+  Gift,
   Home,
   LogOut,
   Mail,
@@ -25,6 +26,7 @@ import {
   User,
   Users,
   Wallet,
+  Wifi,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
@@ -46,7 +48,9 @@ const railItems = [
   { to: "/universe/messages", label: "Messages", icon: Mail },
   { to: "/universe/shops", label: "Shops", icon: Store },
   { to: "/universe/members", label: "Members", icon: Users },
-  { to: "/universe/wallet", label: "Wallet Center", icon: Wallet },
+  { to: "/universe/wallet", label: "My Wallet", icon: Wallet },
+  { to: "/universe/monitor", label: "Live Monitoring", icon: Wifi },
+  { to: "/universe/rewards", label: "Reward Shops", icon: Gift },
   { to: "/universe/profile", label: "Profile", icon: User },
 ] as const;
 
@@ -149,6 +153,8 @@ export function UniverseShell({
 
   const active = (to: string) =>
     to === "/universe" ? pathname === "/universe" : pathname.startsWith(to);
+  // Universe IS the customer portal; only selling/managing roles have a console.
+  const manages = account.role !== "customer";
 
   return (
     <div className="min-h-screen bg-app">
@@ -174,7 +180,9 @@ export function UniverseShell({
                   </Link>
                 ))}
                 <div className="my-3 border-t border-border" />
-                <Link to={homeFor(account.role)} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium hover:bg-accent"><Store className="size-5" /> My shop console</Link>
+                {manages ? (
+                  <Link to={homeFor(account.role)} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium hover:bg-accent"><Store className="size-5" /> My shop console</Link>
+                ) : null}
                 <Button variant="ghost" className="w-full justify-start text-destructive" onClick={() => session.signOut()}><LogOut className="size-5" /> Sign out</Button>
               </nav>
             </SheetContent>
@@ -246,16 +254,18 @@ export function UniverseShell({
           </Button>
 
           <div className="mt-auto space-y-2">
-            <Button
-              asChild
-              variant="outline"
-              size="sm"
-              className="w-full justify-start gap-2 rounded-lg"
-            >
-              <Link to={homeFor(account.role)}>
-                <Store className="size-4" /> My shop console
-              </Link>
-            </Button>
+            {manages ? (
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="w-full justify-start gap-2 rounded-lg"
+              >
+                <Link to={homeFor(account.role)}>
+                  <Store className="size-4" /> My shop console
+                </Link>
+              </Button>
+            ) : null}
             <Link
               to="/universe/profile"
               className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent/60"
@@ -364,6 +374,8 @@ export function UniverseShell({
             <ul className="py-1 text-sm">
               {[
                 { to: "/universe/shops", label: "Shops directory", icon: Store },
+                { to: "/universe/monitor", label: "Live Monitoring", icon: Wifi },
+                { to: "/universe/rewards", label: "Reward Shops", icon: Gift },
                 { to: "/universe/members", label: "Members near you", icon: Users },
                 { to: "/universe/messages", label: "Direct messages", icon: Mail },
                 { to: "/universe/notifications", label: "Alerts", icon: Bell },
