@@ -96,6 +96,12 @@ function useUnread() {
   return count;
 }
 
+/** Fired by wallet actions (e.g. a coin transfer) so the shell balance pill refreshes. */
+export const WALLET_CHANGED_EVENT = "wavewallet:wallet-changed";
+export const notifyWalletChanged = () => {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(WALLET_CHANGED_EVENT));
+};
+
 /** Global wallet balance + @handle for the identity card. Read-only, RLS-scoped. */
 function useIdentity(userId: string | null) {
   const [balance, setBalance] = useState<number | null>(null);
@@ -104,9 +110,12 @@ function useIdentity(userId: string | null) {
   useEffect(() => {
     if (!userId) return;
     let alive = true;
-    void fetchWalletView(userId, null)
-      .then((v) => alive && setBalance(v?.balance ?? 0))
-      .catch(() => undefined);
+    const loadBalance = () => {
+      void fetchWalletView(userId, null)
+        .then((v) => alive && setBalance(v?.balance ?? 0))
+        .catch(() => undefined);
+    };
+    loadBalance();
     void fetchMyProfile(userId)
       .then((p) => {
         if (!alive || !p) return;
@@ -114,8 +123,10 @@ function useIdentity(userId: string | null) {
         setAvatar(p.avatar_path);
       })
       .catch(() => undefined);
+    window.addEventListener(WALLET_CHANGED_EVENT, loadBalance);
     return () => {
       alive = false;
+      window.removeEventListener(WALLET_CHANGED_EVENT, loadBalance);
     };
   }, [userId]);
   return { balance, handle, avatar };
