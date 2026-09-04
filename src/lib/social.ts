@@ -65,7 +65,8 @@ export interface SocialState {
   free_balance: number;
   /** Purchased credits. The only balance that may be gifted. */
   purchased_balance: number;
-  ecosystem_id: string;
+  /** The member's current shop, or null — Universe members need no shop to post. */
+  ecosystem_id: string | null;
   social_enabled: boolean;
   /** Retired: the daily free-credit allowance. Always 0. */
   daily_allowance: number;
@@ -844,8 +845,18 @@ export function validateSocialImage(file: File): string | null {
  * Crops, resizes and compresses in the browser, then stores the optimised bytes
  * at `{ecosystem}/{user}/{uuid}.webp`. Originals never reach storage.
  */
+/**
+ * Storage folder for a member's community media. Members without a shop store
+ * under `universe/<user>/`; shop members keep their shop folder so shop admins
+ * can moderate media posted under their shop.
+ */
+export const UNIVERSE_MEDIA_FOLDER = "universe";
+export function socialMediaFolder(ecosystemId: string | null | undefined): string {
+  return ecosystemId ?? UNIVERSE_MEDIA_FOLDER;
+}
+
 export async function uploadSocialImage(input: {
-  ecosystemId: string;
+  ecosystemId: string | null | undefined;
   userId: string;
   file: File;
   crop?: CropRect;
@@ -855,7 +866,7 @@ export async function uploadSocialImage(input: {
   if (problem) throw new Error(problem);
   const source = input.preloaded ?? (await loadImage(input.file));
   const { blob, mime } = await optimizeImage(source, SOCIAL_IMAGE_TARGET, input.crop);
-  const path = `${input.ecosystemId}/${input.userId}/${optimizedName(crypto.randomUUID(), mime)}`;
+  const path = `${socialMediaFolder(input.ecosystemId)}/${input.userId}/${optimizedName(crypto.randomUUID(), mime)}`;
   const { error } = await supabase.storage
     .from(SOCIAL_IMAGE_BUCKET)
     .upload(path, blob, { contentType: mime, upsert: false });
@@ -878,13 +889,13 @@ export function validateSocialVideo(file: File): string | null {
  * Videos are stored as uploaded (no transcoding) and capped at 25 MB.
  */
 export async function uploadSocialVideo(input: {
-  ecosystemId: string;
+  ecosystemId: string | null | undefined;
   userId: string;
   file: File;
 }): Promise<string> {
   const problem = validateSocialVideo(input.file);
   if (problem) throw new Error(problem);
-  const path = `${input.ecosystemId}/${input.userId}/${crypto.randomUUID()}.${videoExtension(input.file.type)}`;
+  const path = `${socialMediaFolder(input.ecosystemId)}/${input.userId}/${crypto.randomUUID()}.${videoExtension(input.file.type)}`;
   const { error } = await supabase.storage
     .from(SOCIAL_IMAGE_BUCKET)
     .upload(path, input.file, { contentType: input.file.type, upsert: false });

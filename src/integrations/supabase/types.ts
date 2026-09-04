@@ -1416,7 +1416,7 @@ export type Database = {
         Row: {
           body: string
           created_at: string
-          ecosystem_id: string
+          ecosystem_id: string | null
           id: string
           image_path: string | null
           read_at: string | null
@@ -1427,7 +1427,7 @@ export type Database = {
         Insert: {
           body: string
           created_at?: string
-          ecosystem_id: string
+          ecosystem_id?: string | null
           id?: string
           image_path?: string | null
           read_at?: string | null
@@ -1438,7 +1438,7 @@ export type Database = {
         Update: {
           body?: string
           created_at?: string
-          ecosystem_id?: string
+          ecosystem_id?: string | null
           id?: string
           image_path?: string | null
           read_at?: string | null
@@ -1508,7 +1508,7 @@ export type Database = {
       dm_threads: {
         Row: {
           created_at: string
-          ecosystem_id: string
+          ecosystem_id: string | null
           id: string
           kind: string
           last_message_at: string | null
@@ -1520,7 +1520,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          ecosystem_id: string
+          ecosystem_id?: string | null
           id?: string
           kind?: string
           last_message_at?: string | null
@@ -1532,7 +1532,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          ecosystem_id?: string
+          ecosystem_id?: string | null
           id?: string
           kind?: string
           last_message_at?: string | null
@@ -5930,21 +5930,21 @@ export type Database = {
           blocked_id: string
           blocker_id: string
           created_at: string
-          ecosystem_id: string
+          ecosystem_id: string | null
           id: string
         }
         Insert: {
           blocked_id: string
           blocker_id: string
           created_at?: string
-          ecosystem_id: string
+          ecosystem_id?: string | null
           id?: string
         }
         Update: {
           blocked_id?: string
           blocker_id?: string
           created_at?: string
-          ecosystem_id?: string
+          ecosystem_id?: string | null
           id?: string
         }
         Relationships: [
@@ -5971,7 +5971,7 @@ export type Database = {
           charged: boolean
           created_at: string
           depth: number
-          ecosystem_id: string
+          ecosystem_id: string | null
           id: string
           parent_id: string | null
           post_id: string
@@ -5986,7 +5986,7 @@ export type Database = {
           charged?: boolean
           created_at?: string
           depth?: number
-          ecosystem_id: string
+          ecosystem_id?: string | null
           id?: string
           parent_id?: string | null
           post_id: string
@@ -6001,7 +6001,7 @@ export type Database = {
           charged?: boolean
           created_at?: string
           depth?: number
-          ecosystem_id?: string
+          ecosystem_id?: string | null
           id?: string
           parent_id?: string | null
           post_id?: string
@@ -6237,19 +6237,19 @@ export type Database = {
       social_likes: {
         Row: {
           created_at: string
-          ecosystem_id: string
+          ecosystem_id: string | null
           post_id: string
           user_id: string
         }
         Insert: {
           created_at?: string
-          ecosystem_id: string
+          ecosystem_id?: string | null
           post_id: string
           user_id: string
         }
         Update: {
           created_at?: string
-          ecosystem_id?: string
+          ecosystem_id?: string | null
           post_id?: string
           user_id?: string
         }
@@ -6284,7 +6284,7 @@ export type Database = {
           ecosystem_id: string
           id: string
           note: string | null
-          origin_ecosystem_id: string
+          origin_ecosystem_id: string | null
           post_id: string
           reviewed_at: string | null
           reviewed_by: string | null
@@ -6298,7 +6298,7 @@ export type Database = {
           ecosystem_id: string
           id?: string
           note?: string | null
-          origin_ecosystem_id: string
+          origin_ecosystem_id?: string | null
           post_id: string
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -6312,7 +6312,7 @@ export type Database = {
           ecosystem_id?: string
           id?: string
           note?: string | null
-          origin_ecosystem_id?: string
+          origin_ecosystem_id?: string | null
           post_id?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -6417,7 +6417,7 @@ export type Database = {
           body: string
           comment_count: number
           created_at: string
-          ecosystem_id: string
+          ecosystem_id: string | null
           hashtags: string[]
           id: string
           image_path: string | null
@@ -6447,7 +6447,7 @@ export type Database = {
           body: string
           comment_count?: number
           created_at?: string
-          ecosystem_id: string
+          ecosystem_id?: string | null
           hashtags?: string[]
           id?: string
           image_path?: string | null
@@ -6477,7 +6477,7 @@ export type Database = {
           body?: string
           comment_count?: number
           created_at?: string
-          ecosystem_id?: string
+          ecosystem_id?: string | null
           hashtags?: string[]
           id?: string
           image_path?: string | null
@@ -6594,7 +6594,7 @@ export type Database = {
       social_reports: {
         Row: {
           created_at: string
-          ecosystem_id: string
+          ecosystem_id: string | null
           handled_at: string | null
           handled_by: string | null
           id: string
@@ -6607,7 +6607,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          ecosystem_id: string
+          ecosystem_id?: string | null
           handled_at?: string | null
           handled_by?: string | null
           id?: string
@@ -6620,7 +6620,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          ecosystem_id?: string
+          ecosystem_id?: string | null
           handled_at?: string | null
           handled_by?: string | null
           id?: string
@@ -9662,6 +9662,7 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_universe_member: { Args: { _user: string }; Returns: boolean }
       is_universe_shop: { Args: { _ecosystem_id: string }; Returns: boolean }
       join_shop_by_code: { Args: { _code: string }; Returns: string }
       joinable_ecosystems: {
@@ -12640,6 +12641,7 @@ export type Database = {
         Args: { _name: string; _user: string }
         Returns: boolean
       }
+      social_member_shops: { Args: { _user: string }; Returns: string[] }
       social_move: {
         Args: {
           _amount: number
@@ -12687,6 +12689,10 @@ export type Database = {
       }
       social_post_visible_in: {
         Args: { _eco: string; _post_id: string }
+        Returns: boolean
+      }
+      social_post_visible_to: {
+        Args: { _post_id: string; _user: string }
         Returns: boolean
       }
       social_rate_limit: {
