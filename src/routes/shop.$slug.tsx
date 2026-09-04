@@ -522,7 +522,7 @@ function PublicStorefront() {
               <ul className="grid gap-2">
                 {(sellers ?? []).map((s) => (
                   <li key={s.sellerId} onClick={() => setSellerPickFor(null)}>
-                    <SellerCard seller={s} />
+                    <SellerCard seller={s} currentUserId={currentUserId} />
                   </li>
                 ))}
               </ul>
