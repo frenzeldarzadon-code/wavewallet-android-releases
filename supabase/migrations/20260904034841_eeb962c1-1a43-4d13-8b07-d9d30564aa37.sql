@@ -1,0 +1,1 @@
+alter function public.presence_online_window() set search_path = public;

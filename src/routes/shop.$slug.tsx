@@ -42,6 +42,7 @@ import { fetchMyMemberships, type Membership } from "@/lib/memberships";
 import { openShopDashboard } from "@/components/shop/shop-dashboard-switch";
 import { managedMemberships } from "@/lib/shop-dashboard";
 import { fetchUniverseSellers, type ShopSeller } from "@/lib/seller-storefront";
+import { PRESENCE_HEARTBEAT_MS } from "@/lib/presence";
 import {
   fetchPublicProducts,
   fetchPublicReviews,
@@ -158,15 +159,22 @@ function PublicStorefront() {
     }
     if (signedIn !== true) return;
     let alive = true;
-    fetchUniverseSellers(slug)
-      .then((list) => {
-        if (alive) setSellers(list);
-      })
-      .catch(() => {
-        if (alive) setSellers([]);
-      });
+    const load = () =>
+      fetchUniverseSellers(slug)
+        .then((list) => {
+          if (alive) setSellers(list);
+        })
+        .catch(() => {
+          if (alive) setSellers((prev) => prev ?? []);
+        });
+    void load();
+    // Presence ages: refresh the ordered list once a minute while visible.
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void load();
+    }, PRESENCE_HEARTBEAT_MS);
     return () => {
       alive = false;
+      window.clearInterval(timer);
     };
   }, [slug, shop?.voucher_enabled, signedIn]);
 
