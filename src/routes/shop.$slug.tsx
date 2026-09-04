@@ -79,7 +79,7 @@ function PublicStorefront() {
   const [products, setProducts] = useState<PublicProduct[]>([]);
   const [reviews, setReviews] = useState<PublicReview[]>([]);
   const [loading, setLoading] = useState(true);
-  const [signedIn, setSignedIn] = useState(false);
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [search, setSearch] = useState("");
   const [detailId, setDetailId] = useState<string | null>(null);
   // Authorized sellers of a Universe voucher shop. Buying a voucher never
@@ -105,17 +105,6 @@ function PublicStorefront() {
           if (!alive) return;
           setProducts(p);
           setReviews(r);
-          if (s.voucher_enabled) {
-            fetchUniverseSellers(slug)
-              .then((list) => {
-                if (alive) setSellers(list);
-              })
-              .catch(() => {
-                if (alive) setSellers([]);
-              });
-          } else {
-            setSellers([]);
-          }
         }
       } finally {
         if (alive) setLoading(false);
@@ -125,6 +114,26 @@ function PublicStorefront() {
       alive = false;
     };
   }, [slug]);
+
+  // Sellers are listed for signed-in members; guests are asked to sign in.
+  useEffect(() => {
+    if (!shop?.voucher_enabled) {
+      setSellers([]);
+      return;
+    }
+    if (signedIn !== true) return;
+    let alive = true;
+    fetchUniverseSellers(slug)
+      .then((list) => {
+        if (alive) setSellers(list);
+      })
+      .catch(() => {
+        if (alive) setSellers([]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [slug, shop?.voucher_enabled, signedIn]);
 
   if (loading) {
     return <p className="p-6 text-sm text-muted-foreground">Loading storefront…</p>;
@@ -144,7 +153,8 @@ function PublicStorefront() {
     );
   }
 
-  const action = visitorAction(shop, signedIn);
+  const action = visitorAction(shop, signedIn === true);
+  const guest = signedIn === false;
   // Public prices are already the customer Retail Price (fee inside, computed
   // by the database), so the cards render them with a 0 % presentation fee.
   const retail: RetailProduct[] = products
@@ -225,7 +235,7 @@ function PublicStorefront() {
         {shop.voucher_enabled ? (
           <p className="mt-3 text-xs text-muted-foreground">
             Vouchers are sold by this shop's authorized sellers — no membership needed to buy.
-            {sellers && sellers.length === 0 ? " No seller is available right now." : ""}
+            {!guest && sellers && sellers.length === 0 ? " No seller is available right now." : ""}
           </p>
         ) : null}
         {/* Membership only matters for existing members and Retail ordering. */}
@@ -358,7 +368,11 @@ function PublicStorefront() {
             <p className="mb-3 text-xs text-muted-foreground">
               No shop membership needed — pick a seller and pay with your Universe coins.
             </p>
-            {sellers === null ? (
+            {guest ? (
+              <Button asChild variant="outline" size="sm">
+                <a href="/?mode=signin">Sign in to see sellers and buy</a>
+              </Button>
+            ) : sellers === null ? (
               <p className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Loader2 className="size-3 animate-spin" /> Loading sellers…
               </p>
@@ -385,7 +399,7 @@ function PublicStorefront() {
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {vouchers.map((v) => {
                   const soldOut = v.available <= 0;
-                  const noSeller = sellers !== null && sellers.length === 0;
+                  const noSeller = !guest && sellers !== null && sellers.length === 0;
                   return (
                     <Card
                       key={v.id}
@@ -406,7 +420,13 @@ function PublicStorefront() {
                           </p>
                         </div>
                         <p className="text-sm font-bold text-primary">{credits(v.price)}</p>
-                        {sellers && sellers.length === 1 ? (
+                        {guest ? (
+                          <Button asChild className="w-full" size="sm" variant="outline">
+                            <a href="/?mode=signin">
+                              Sign in to buy <ArrowRight className="size-3.5" />
+                            </a>
+                          </Button>
+                        ) : sellers && sellers.length === 1 ? (
                           <Button asChild className="w-full" size="sm" variant="outline">
                             <Link
                               to="/universe/u/$handle"
