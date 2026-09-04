@@ -59,7 +59,7 @@ describe("listener device health", () => {
     );
     expect(line).toContain("Notification access ON");
     expect(line).toContain("Android listener connected");
-    expect(line).toContain("7 GCash notification(s) seen");
+    expect(line).toContain("7 payment notification(s) seen");
     expect(line).toContain("app 1.3.0");
   });
 });
