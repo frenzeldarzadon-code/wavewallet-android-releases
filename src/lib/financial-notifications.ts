@@ -42,6 +42,9 @@ export interface PushDevice {
   last_error: string | null;
   last_seen_at: string;
   created_at: string;
+  /** Present only for real push subscriptions (never for `local:` fallbacks). */
+  endpoint?: string | null;
+  push_capable?: boolean;
 }
 
 const DEVICE_ID_KEY = "wavewallet.device-id";
