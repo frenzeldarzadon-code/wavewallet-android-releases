@@ -117,6 +117,8 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
 
   const userId = account?.id ?? null;
   const scopeId = ecosystemId === undefined ? ecosystemDbId : ecosystemId;
+  // Originating shop/seller labels for the caller's purchases — one batched read.
+  const shopLabels = usePurchaseShopLabels(Boolean(userId));
 
   const load = useCallback(async () => {
     if (!userId) return;
