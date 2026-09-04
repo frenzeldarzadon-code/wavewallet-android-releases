@@ -60,7 +60,7 @@ function UniverseSearch() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="shops" className="mt-3">
-            <UniverseShopDiscovery />
+            <UniverseShopDiscovery currentUserId={session.account?.id} />
           </TabsContent>
           <TabsContent value="members" className="mt-3">
             <MemberDirectory />
