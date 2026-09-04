@@ -194,7 +194,7 @@ function PublicStorefront() {
 
   const cta =
     action === "open"
-      ? { label: "Open your shop", onClick: () => void navigate({ to: "/app" }) }
+      ? { label: "Open your shop", onClick: () => void navigate({ to: homeFor(account?.role ?? "customer") }) }
       : action === "join"
         ? {
             label: "Request to join",
