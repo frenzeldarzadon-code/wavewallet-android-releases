@@ -16,3 +16,9 @@ Shop Access cleanup — Universe is the customer portal (DONE — verified with 
 - [ ] Shop Access = management only (admin/reseller/subreseller); customer duplicates hidden/redirected
 - [ ] Universe <-> Shop Dashboard switch (multi-shop selector), storefront design reachable from Shop Dashboard
 - [ ] Typecheck, tests, demo-account checks 390px + desktop
+
+## Retail: membership-free Universe buying + self-purchase net cashback (done — not published)
+- [ ] Remove obsolete "join before ordering" check in retail_place_order (+ any UI)
+- [ ] Self-purchase: net wallet charge (price − entitled cashback) in ONE ledger row, audit fields on order
+- [ ] Checkout breakdown UI + history label
+- [ ] Demo verification, tests, typecheck

@@ -9,6 +9,7 @@
  */
 import { requireOnline } from "@/lib/offline-guard";
 import { supabase } from "@/integrations/supabase/client";
+import { peso } from "@/lib/wavewallet";
 import {
   MAX_UPLOAD_BYTES,
   loadImage,
@@ -167,6 +168,31 @@ export interface RetailOrder {
   delivery_share_amount?: number | null;
   collector_share_amount?: number | null;
   chat_thread_id?: string | null;
+  /* ---- Self purchase (buyer is the entitled cashback recipient) ---- */
+  /** What the buyer's wallet was actually charged (total − self_cashback). Null for cash/COD. */
+  buyer_charge?: number | null;
+  /** Cashback deducted at checkout; never paid out as a separate credit. */
+  self_cashback?: number;
+}
+
+/** Server-computed checkout figures. The client never supplies a cashback amount. */
+export interface CheckoutQuote {
+  /** Retail total (fee inside) before any self-purchase cashback. */
+  total: number;
+  /** Cashback netted out at checkout when the buyer is the entitled recipient. */
+  selfCashback: number;
+  /** Actual wallet deduction on a coin order. */
+  buyerCharge: number;
+  selfPurchase: boolean;
+}
+
+/** Actual wallet deduction for a coin order (net of self-purchase cashback). */
+export const netCharge = (total: number, quote?: CheckoutQuote | null) =>
+  quote && quote.selfPurchase && quote.total === total ? quote.buyerCharge : total;
+
+/** One-line breakdown matching the ledger description of a self purchase. */
+export function selfPurchaseSummary(total: number, cashback: number): string {
+  return `${peso(total)} − ${peso(cashback)} cashback = ${peso(round2(total - cashback))}`;
 }
 
 /** Cash the customer hands over for a COD order: product total + delivery fee. Nothing else. */
@@ -334,6 +360,8 @@ export function checkoutProblem(
   creditBalance: number,
   itemCount: number,
   codQuote?: CodQuote | null,
+  /** Server checkout quote; the balance check uses the NET charge on a self purchase. */
+  quote?: CheckoutQuote | null,
 ): string | null {
   if (itemCount === 0) return "Your cart is empty";
   if (!settings.acceptingOrders) return "This shop is temporarily closed for new orders";
@@ -348,7 +376,7 @@ export function checkoutProblem(
   if (draft.payment === "cash" && !settings.cashEnabled) return "This shop does not accept cash";
   if (draft.payment === "credit") {
     if (!settings.creditEnabled) return "This shop does not accept coin payment";
-    if (total > creditBalance) return "Not enough coins in your wallet";
+    if (netCharge(total, quote) > creditBalance) return "Not enough coins in your wallet";
   }
   if (draft.payment === "cod") {
     if (draft.fulfillment !== "delivery") return "Cash on delivery requires delivery";
@@ -955,6 +983,37 @@ export interface PlacedOrder {
   total: number;
 }
 
+/**
+ * Server-side checkout quote. Reuses the database's own cashback attribution
+ * (`retail_cashback_recipient` + per-product `retail_line_cashback`), so the
+ * breakdown the buyer sees is exactly what `retail_place_order` will hold.
+ */
+export async function fetchCheckoutQuote(
+  ecosystemId: string,
+  cart: Cart,
+  sellerId?: string | null,
+  paymentMethod: PaymentMethod = "credit",
+): Promise<CheckoutQuote> {
+  const items = Object.entries(cart)
+    .filter(([, q]) => q > 0)
+    .map(([product_id, quantity]) => ({ product_id, quantity }));
+  const { data, error } = await supabase.rpc("retail_checkout_quote", {
+    _ecosystem_id: ecosystemId,
+    _items: items,
+    _payment_method: paymentMethod,
+    ...(sellerId ? { _seller_id: sellerId } : {}),
+  });
+  if (error) throw new Error(error.message);
+  const row = (data as Array<Record<string, unknown>> | null)?.[0];
+  return {
+    total: Number(row?.["total"] ?? 0),
+    selfCashback: Number(row?.["self_cashback"] ?? 0),
+    buyerCharge: Number(row?.["buyer_charge"] ?? 0),
+    selfPurchase: !!row?.["self_purchase"],
+  };
+}
+
+
 export async function placeRetailOrder(
   ecosystemId: string,
   cart: Cart,
@@ -1007,6 +1066,8 @@ const toOrders = (data: unknown): RetailOrder[] =>
     cashback_amount: num(o.cashback_amount),
     delivery_share_amount: num(o.delivery_share_amount),
     collector_share_amount: num(o.collector_share_amount),
+    buyer_charge: num(o.buyer_charge),
+    self_cashback: Number(o.self_cashback ?? 0),
     fulfillment_status: (o.fulfillment_status ??
       (o.status === "approved"
         ? "accepted"
@@ -1264,19 +1325,36 @@ export const canOpenOrderChat = (o: Pick<RetailOrder, "status" | "fulfillment">)
  * `delivery` is 0 unless the shop charged one (COD); it is never inside the 1%.
  */
 export function customerOrderTotals(
-  o: Pick<RetailOrder, "total" | "delivery_fee" | "fulfillment">,
-): { products: number; delivery: number; total: number } {
+  o: Pick<RetailOrder, "total" | "delivery_fee" | "fulfillment"> &
+    Partial<Pick<RetailOrder, "self_cashback" | "payment_method">>,
+): { products: number; delivery: number; total: number; selfCashback: number; charged: number } {
   const delivery = o.fulfillment === "delivery" ? round2(o.delivery_fee ?? 0) : 0;
-  return { products: round2(o.total), delivery, total: round2(o.total + delivery) };
+  const selfCashback = o.payment_method === "credit" ? round2(o.self_cashback ?? 0) : 0;
+  const total = round2(o.total + delivery);
+  return {
+    products: round2(o.total),
+    delivery,
+    total,
+    selfCashback,
+    /** Actual wallet deduction on a coin order: total minus self-purchase cashback. */
+    charged: round2(total - selfCashback),
+  };
 }
 
 /** Customer-safe payment status line. */
 export function customerPaymentLabel(
-  o: Pick<RetailOrder, "payment_method" | "status" | "fulfillment_status" | "cod_settled_at">,
+  o: Pick<RetailOrder, "payment_method" | "status" | "fulfillment_status" | "cod_settled_at"> &
+    Partial<Pick<RetailOrder, "self_cashback" | "total">>,
 ): string {
   if (o.status === "rejected" || o.status === "cancelled") return "Nothing charged";
-  if (o.payment_method === "credit")
+  if (o.payment_method === "credit") {
+    const self = round2(o.self_cashback ?? 0);
+    if (self > 0 && o.total !== undefined) {
+      const line = `Self purchase — ${selfPurchaseSummary(o.total, self)}`;
+      return o.status === "pending" ? `${line} held (refunded if rejected)` : `${line} paid`;
+    }
     return o.status === "pending" ? "Coins held (refunded if rejected)" : "Paid with coins";
+  }
   if (o.payment_method === "cod")
     return o.cod_settled_at || o.fulfillment_status === "completed"
       ? "Cash paid on delivery"
