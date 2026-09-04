@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Loader2, Search, Store, Ticket, Users } from "lucide-react";
+import { Loader2, Search, Store, Ticket, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { MemberAvatar } from "@/components/member-avatar";
@@ -242,21 +242,19 @@ export function PresenceBadge({ seller, now }: { seller: ShopSeller; now?: Date 
   );
 }
 
-/** Action label/appearance for a seller card. Exported for unit testing. */
-export function sellerCardAction(own: boolean): { text: string; icon: boolean } {
-  return own ? { text: "Buy from My Shop", icon: false } : { text: "Buy", icon: true };
+/** Action label for a seller card. Exported for unit testing. */
+export function sellerCardAction(): { text: string; icon: false } {
+  return { text: "Buy from My Shop", icon: false };
 }
 
 /** Premium seller card: image → full name → seller shop name → presence → action. */
 export function SellerCard({
   seller,
-  currentUserId,
 }: {
   seller: ShopSeller;
   currentUserId?: string | null | undefined;
 }) {
-  const own = currentUserId === seller.sellerId;
-  const action = sellerCardAction(own);
+  const action = sellerCardAction();
   return (
     <Link
       to="/universe/u/$handle"
@@ -284,14 +282,10 @@ export function SellerCard({
         </span>
       </span>
       <span
-        className={`inline-flex shrink-0 items-center justify-center rounded-md bg-primary px-2 py-1 text-[11px] font-medium leading-tight text-primary-foreground ${own ? "min-w-[5.5rem]" : "size-9"}`}
+        className="inline-flex min-w-[5.5rem] shrink-0 items-center justify-center rounded-md bg-primary px-2 py-1 text-[11px] font-medium leading-tight text-primary-foreground"
         aria-label={action.text}
       >
-        {action.icon ? (
-          <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-        ) : (
-          action.text
-        )}
+        {action.text}
       </span>
     </Link>
   );
