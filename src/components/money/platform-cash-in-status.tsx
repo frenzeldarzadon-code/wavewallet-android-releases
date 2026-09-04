@@ -47,10 +47,11 @@ export function methodVerificationLabel(
   m: PlatformCashInMethod,
   autoEnabled: boolean,
 ): { label: string; tone: "success" | "warning" | "muted" } {
-  if (!m.listener_watching) return { label: "Manual review", tone: "muted" };
+  // The platform listener is not paired per account: one health state applies to every method.
+  if (!m.listener_watching) return { label: "No listener · manual review", tone: "muted" };
   if (!m.listener_online) return { label: "Listener offline · manual review", tone: "warning" };
-  if (!autoEnabled) return { label: "Listener watching · manual release", tone: "warning" };
-  return { label: "Verified automatically", tone: "success" };
+  if (!autoEnabled) return { label: "Listener on · manual release", tone: "warning" };
+  return { label: "Receipt + notification · auto", tone: "success" };
 }
 
 function useReadiness() {
@@ -114,8 +115,11 @@ export function PlatformCashInStatus() {
       <p>
         This is a platform (Super Admin) cash in for your one global Universe wallet — no shop is
         involved. Pay into one of the platform accounts below, then submit your request with the
-        reference. Coins are added only after a real payment notification, read by the platform
-        listener, confirms your payment; a screenshot alone never releases coins.
+        reference and your receipt. The platform listener captures notifications from every
+        supported payment app; coins are added automatically only when your receipt and a real
+        notification agree on at least two details (amount, reference, sending account…) and the
+        receipt was never credited before. Anything unclear is reviewed by the platform owner; a
+        screenshot alone never releases coins.
       </p>
       <MethodRows data={data} />
       <p className="flex items-start gap-1.5">
@@ -126,7 +130,7 @@ export function PlatformCashInStatus() {
         )}
         <span>
           {anyOnline && data.auto_enabled
-            ? `Accounts marked “Verified automatically” credit your wallet within moments of a matching notification${
+            ? `A matching receipt and notification credit your wallet within moments${
                 data.max_auto_amount_php
                   ? ` (up to ₱${Number(data.max_auto_amount_php).toLocaleString()} per request)`
                   : ""
@@ -138,7 +142,7 @@ export function PlatformCashInStatus() {
   );
 }
 
-/** Super Admin view: which platform accounts the paired phones actually cover. */
+/** Super Admin view: platform collection accounts and the (account-agnostic) listener health. */
 export function PlatformListenerCoverageCard() {
   const data = useReadiness();
   if (!data) return null;
@@ -148,8 +152,9 @@ export function PlatformListenerCoverageCard() {
       <CardHeader>
         <CardTitle className="text-sm">Platform accounts vs listener coverage</CardTitle>
         <p className="text-sm text-muted-foreground">
-          What members see on Universe → My Wallet → Cash In, and whether a platform phone watches
-          each account&apos;s number. Automatic approval is {data.auto_enabled ? "on" : "off"}
+          What members see on Universe → My Wallet → Cash In. Any registered platform phone captures
+          notifications for all of these accounts — no per-account pairing. Automatic approval is{" "}
+          {data.auto_enabled ? "on" : "off"}
           {data.require_listener_match ? " and requires a listener match" : ""}.
         </p>
       </CardHeader>
@@ -157,10 +162,10 @@ export function PlatformListenerCoverageCard() {
         <MethodRows data={data} />
         {uncovered.length > 0 ? (
           <p className="text-xs text-muted-foreground">
-            {uncovered.map((m) => m.name).join(", ")}: no paired phone watches this number, so its
-            cash ins are always reviewed manually. Pair a phone on that account&apos;s number to
-            change that — the listener itself is not GCash-only; it follows the receiving number and
-            the allowed notification sources.
+            No active platform listener phone is registered, so cash ins to{" "}
+            {uncovered.map((m) => m.name).join(", ")} are always reviewed manually. Register a
+            platform phone under “Payment notification listener” to enable automatic verification
+            for every account at once.
           </p>
         ) : null}
       </CardContent>

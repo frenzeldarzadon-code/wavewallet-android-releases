@@ -102,8 +102,6 @@ export const DEFAULT_AUTO_RULE: AutoApprovalRule = {
   layer2_require_listener_reference: false,
 };
 
-
-
 /** Same normalisation as `public.normalize_payment_reference`. */
 export function normalizePaymentReference(ref?: string | null): string | null {
   const key = (ref ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -261,7 +259,10 @@ export function evaluateMatch(
   }
   if (request.duplicate_reference) return "duplicate_reference";
 
-  if (rule.max_auto_amount_php != null && Number(request.amount_php) > Number(rule.max_auto_amount_php)) {
+  if (
+    rule.max_auto_amount_php != null &&
+    Number(request.amount_php) > Number(rule.max_auto_amount_php)
+  ) {
     return "above_auto_limit";
   }
   const tolerance = Number(rule.amount_tolerance_php || 0);
@@ -283,7 +284,10 @@ export function evaluateMatch(
   if (!event || (event.outcome && event.outcome !== "accepted")) {
     if (requireListener) return "awaiting_listener";
   } else {
-    if ((rule.layer2_require_sender_match ?? true) && normalizePhMobile(event.sender_number) !== sender) {
+    if (
+      (rule.layer2_require_sender_match ?? true) &&
+      normalizePhMobile(event.sender_number) !== sender
+    ) {
       return "number_mismatch";
     }
     if (
@@ -318,12 +322,9 @@ export function evaluateMatch(
     return "receiving_mismatch";
   }
 
-
   if ((rule.verification_mode ?? "active") === "staged") return "staged";
   return "matched";
 }
-
-
 
 /** Wording for the banner on the settings screen. */
 export function matchingStatusLabel(status: CashInAutoStatus | null): {
@@ -393,7 +394,6 @@ export async function setCashInAutoApproval(input: {
   if (error) throw new Error(error.message);
 }
 
-
 /** The receiving GCash number configured for a shop (admins / platform owner). */
 export async function fetchShopCashInNumber(ecosystemId: string): Promise<string | null> {
   const { data, error } = await supabase
@@ -405,7 +405,10 @@ export async function fetchShopCashInNumber(ecosystemId: string): Promise<string
   return (data as { cash_in_gcash_number?: string | null } | null)?.cash_in_gcash_number ?? null;
 }
 
-export async function setShopCashInNumber(ecosystemId: string, number: string | null): Promise<void> {
+export async function setShopCashInNumber(
+  ecosystemId: string,
+  number: string | null,
+): Promise<void> {
   const { error } = await supabase.rpc("set_ecosystem_cash_in_number", {
     _ecosystem: ecosystemId,
     _number: number,
@@ -452,5 +455,9 @@ export async function recheckPendingCashIns(): Promise<RecheckResult> {
   const { data, error } = await supabase.rpc("recheck_pending_cash_ins" as never);
   if (error) throw new Error(error.message);
   const v = (data ?? {}) as Partial<RecheckResult>;
-  return { events_checked: v.events_checked ?? 0, linked: v.linked ?? 0, approved: v.approved ?? 0 };
+  return {
+    events_checked: v.events_checked ?? 0,
+    linked: v.linked ?? 0,
+    approved: v.approved ?? 0,
+  };
 }

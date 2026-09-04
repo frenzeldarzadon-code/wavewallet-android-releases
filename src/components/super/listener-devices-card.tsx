@@ -149,8 +149,8 @@ export function ListenerDevicesCard({
           {shopScoped ? (ecosystemName ?? "this shop") : "the platform (Universe Cash In)"}. The
           phone captures every supported payment app allowed in the notification sources (GCash,
           bank apps, …) — it is not paired to one receiving account. Each notification is compared
-          with the customer&apos;s uploaded receipt; a Cash In is credited automatically only when at
-          least two independent details agree (amount, reference, sending account, …) and the
+          with the customer&apos;s uploaded receipt; a Cash In is credited automatically only when
+          at least two independent details agree (amount, reference, sending account, …) and the
           receipt was never credited before. Anything unclear waits for manual review, and a
           notification alone never releases credits.
         </p>
