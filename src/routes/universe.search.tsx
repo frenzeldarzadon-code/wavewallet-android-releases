@@ -4,6 +4,7 @@ import { UniverseShell } from "@/components/universe/universe-shell";
 import { UniverseShopDiscovery } from "@/components/universe/universe-shop-discovery";
 import { MemberDirectory } from "@/components/universe/member-directory";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSession } from "@/lib/session";
 
 export const Route = createFileRoute("/universe/search")({
   head: () => ({
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/universe/search")({
 });
 
 function UniverseSearch() {
+  const session = useSession();
   return (
     <UniverseShell title="Search" subtitle="Shops, vouchers, sellers and members">
       <div className="space-y-4 px-4 sm:px-0">
