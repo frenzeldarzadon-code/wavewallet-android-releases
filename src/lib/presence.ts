@@ -97,10 +97,15 @@ export function startPresenceHeartbeat(): () => void {
     arm();
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("focus", touch);
+    // First touch right after sign-in (client-side login happens after root mounts).
+    const { data: auth } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN") touch();
+    });
     stop = () => {
       if (timer !== null) window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("focus", touch);
+      auth.subscription.unsubscribe();
     };
   }
   return () => {
