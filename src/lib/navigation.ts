@@ -25,6 +25,7 @@ import {
   MessageSquare,
   MessagesSquare,
   Package,
+  Palette,
   PieChart,
   ReceiptText,
   Rocket,
@@ -165,10 +166,13 @@ export const customerBottomNav: NavItem[] = withCoreDestinations(
 /* ------------------------------------------------------------------ */
 
 /**
- * A subreseller sees everything a customer does plus the applications queue
- * they are already authorized to review. A reseller additionally gets the
- * downline, redemption, earnings and reporting sections. Both share the
- * /reseller workspace; the database decides what each may actually do.
+ * The Shop Dashboard of a seller. Customer-facing features (Universe wallet,
+ * live monitoring, reward shops, messages, feed) live in Universe and are
+ * reached through the "Switch to Universe" control; what stays here are the
+ * selling and business tools. A subreseller gets the selling tools plus the
+ * member review they are already authorized for; a reseller additionally gets
+ * downlines, redemptions, earnings and reports. Both share the /reseller
+ * workspace; the database decides what each may actually do.
  */
 export function resellerNav(role: Role = "reseller"): Nav {
   const isReseller = role === "reseller" || role === "super_admin" || role === "admin";
@@ -190,18 +194,19 @@ export function resellerNav(role: Role = "reseller"): Nav {
       items: [
         { to: "/reseller/profile", label: "Profile", icon: User },
         { to: "/reseller", label: "Dashboard", icon: LayoutDashboard },
-        { to: "/reseller/wallet", label: "Wallet Center", icon: Wallet },
+        // Shop wallet of this membership (NG shops keep isolated wallets;
+        // seller earnings and cash-out are settled here).
+        { to: "/reseller/wallet", label: "Shop wallet", icon: Wallet },
         { to: "/help", label: "Guide & Help", icon: BookOpen },
       ],
     },
     {
-      label: "Shop",
+      label: "Selling",
       items: [
         { to: "/reseller/shop", label: "Voucher shop", icon: ShoppingCart },
         ...(RETAIL_VISIBLE
           ? ([{ to: "/reseller/store", label: "Retail store", icon: Store }] as NavItem[])
           : []),
-        { to: "/reseller/rewards", label: "Rewards", icon: Gift },
         { to: "/reseller/omada", label: "Status Check", icon: Wifi },
       ],
     },
@@ -211,14 +216,6 @@ export function resellerNav(role: Role = "reseller"): Nav {
     },
 
     { label: "Business", items: business },
-    ...(SOCIAL_ENABLED
-      ? [
-          {
-            label: "Community",
-            items: universeNav,
-          },
-        ]
-      : []),
   ];
 }
 
@@ -312,20 +309,20 @@ export function adminNav(options?: { goLive?: boolean; shopType?: ShopTypeState 
         { to: "/admin/operator-log", label: "Operator actions", icon: UserCheck },
       ],
     },
+    // Universe itself (feed, messages) is reached through the "Switch to
+    // Universe" control in the shell — only shop-side moderation stays here.
     ...(SOCIAL_ENABLED
       ? [
           {
             label: "Community",
-            items: [
-              ...universeNav,
-              { to: "/admin/social", label: "Moderation", icon: MessagesSquare },
-            ] as NavItem[],
+            items: [{ to: "/admin/social", label: "Moderation", icon: MessagesSquare }] as NavItem[],
           },
         ]
       : []),
     {
       label: "Account",
       items: [
+        { to: "/admin/storefront", label: "Storefront design", icon: Palette },
         { to: "/admin/settings", label: "Shop settings", icon: Settings },
         { to: "/admin/profile", label: "Profile", icon: User },
         { to: "/help", label: "Guide & Help", icon: BookOpen },
@@ -401,7 +398,6 @@ export function superAdminNav(): Nav {
         { to: "/super/operator-log", label: "Operator actions", icon: UserCheck },
       ],
     },
-    ...(SOCIAL_ENABLED ? [{ label: "Community", items: universeNav }] : []),
     {
       label: "Account",
       items: [
