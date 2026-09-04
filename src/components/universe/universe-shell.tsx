@@ -40,6 +40,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useSession } from "@/lib/session";
 import { fetchNotifications, unreadCount } from "@/lib/notifications";
+import { fetchSocialGraph, pendingRequestCount } from "@/lib/universe-social";
 import { fetchWalletView } from "@/lib/wallet";
 import { fetchMyProfile } from "@/lib/profile";
 import { peso } from "@/lib/wavewallet";
@@ -103,6 +104,17 @@ function useUnread() {
   return count;
 }
 
+/** Incoming friend requests awaiting an answer — same graph the Friends page uses. */
+function usePendingFriendRequests() {
+  const [count, setCount] = useState(0);
+  useVisiblePoll(() => {
+    void fetchSocialGraph()
+      .then((rows) => setCount(pendingRequestCount(rows)))
+      .catch(() => undefined);
+  }, 60_000);
+  return count;
+}
+
 /** Global wallet balance + @handle for the identity card. Read-only, RLS-scoped. */
 function useIdentity(userId: string | null) {
   const [balance, setBalance] = useState<number | null>(null);
@@ -159,6 +171,7 @@ export function UniverseShell({
   const session = useSession();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const unread = useUnread();
+  const friendRequests = usePendingFriendRequests();
   const account = session.account;
   const identity = useIdentity(account?.id ?? null);
   // Universe IS the customer portal. A Shop Dashboard is offered only for
@@ -204,6 +217,9 @@ export function UniverseShell({
                     <item.icon className="size-5" /> {item.label}
                     {item.to === "/universe/notifications" ? (
                       <Badge count={unread} className="static ml-auto" />
+                    ) : null}
+                    {item.to === "/universe/friends" ? (
+                      <Badge count={friendRequests} className="static ml-auto" />
                     ) : null}
                   </Link>
                 ))}
@@ -282,6 +298,7 @@ export function UniverseShell({
                 <span className="relative">
                   <item.icon className={cn("size-6", active(item.to) && "stroke-[2.5]")} />
                   {item.to === "/universe/notifications" ? <Badge count={unread} /> : null}
+                  {item.to === "/universe/friends" ? <Badge count={friendRequests} /> : null}
                 </span>
                 {item.label}
               </Link>

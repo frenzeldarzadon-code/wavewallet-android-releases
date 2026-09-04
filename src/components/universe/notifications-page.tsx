@@ -137,7 +137,8 @@ export function NotificationsPage() {
         rs.map((r) => (r.id === n.id ? { ...r, read_at: new Date().toISOString() } : r)),
       );
     }
-    void navigate({ to: notificationLink(n) });
+    // Links may carry a query string (e.g. /universe/friends?tab=requests).
+    void navigate({ href: notificationLink(n) });
   };
 
   const markAll = async () => {
@@ -203,9 +204,7 @@ export function NotificationsPage() {
                   ) : null}
                   <span className="block text-[11px] text-muted-foreground">
                     {when(n.created_at)}
-                    {n.category === "financial"
-                      ? ` • ${deliverySummary(n.delivery_status)}`
-                      : ""}
+                    {n.category === "financial" ? ` • ${deliverySummary(n.delivery_status)}` : ""}
                   </span>
                 </span>
               </button>
