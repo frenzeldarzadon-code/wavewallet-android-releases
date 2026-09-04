@@ -87,13 +87,14 @@ export function extractNotificationFields(text: string | null | undefined): Noti
   out.balance_php = money(balance?.[1]);
 
   const ref = raw.match(
-    /(?:ref(?:erence)?(?:\s*no)?\.?|transaction\s*(?:id|no)\.?|trace\s*no\.?)\s*[:#]?\s*([A-Z0-9][A-Z0-9-]{4,})/i,
+    /(?:ref\.?(?:erence)?(?:\s*(?:no|number|#)\.?)?|transaction\s*(?:id|no)\.?|trace\s*no\.?)\s*[:#]?\s*([A-Z0-9][A-Z0-9-]{4,})/i,
   );
   out.reference = clean(ref?.[1]);
 
   // "from <name> <number>" / "from <name>." — the payer as the receiver sees them.
+  // Stops at a connecting word or a sentence break, not at the dot of an initial ("JUAN D.").
   const from = raw.match(
-    /\bfrom\s+(.+?)(?=\s+(?:with|ref|reference|your|on|at|\d{1,2}[:/])|[.!]|$)/i,
+    /\bfrom\s+(.+?)(?=\s+(?:with|to|via|ref|reference|your|on|at)\b|\.\s+[A-Z][a-z]|\.$|!|$)/i,
   );
   if (from) {
     const chunk = clean(from[1]) ?? "";
