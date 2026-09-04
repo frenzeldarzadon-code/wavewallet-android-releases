@@ -837,6 +837,17 @@ function PostCard({
         </DialogContent>
       </Dialog>
 
+      {coinsRecipient ? (
+        <UniverseSendCoinsSheet
+          open={coinsOpen}
+          onOpenChange={setCoinsOpen}
+          senderId={meId}
+          balance={coinsBalance}
+          initialRecipient={coinsRecipient}
+          onSent={loadCoinsBalance}
+        />
+      ) : null}
+
       <Dialog open={dmOpen} onOpenChange={setDmOpen}>
         <DialogContent>
           <DialogHeader>
