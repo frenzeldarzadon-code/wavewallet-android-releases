@@ -196,7 +196,28 @@ function ShopResult({ shop, searching }: { shop: DiscoveredShop; searching: bool
   );
 }
 
-/** Premium seller card: image → full name → seller shop name → View My Shop →. */
+/** Presence dot + coarse status ("Online", "Online 5 min ago"). */
+export function PresenceBadge({ seller, now }: { seller: ShopSeller; now?: Date }) {
+  const tone = presenceTone(seller, now);
+  const label = presenceLabel(seller, now);
+  const dot =
+    tone === "online"
+      ? "bg-success shadow-[0_0_0_3px_hsl(var(--success)/0.2)]"
+      : tone === "recent"
+        ? "bg-success/50"
+        : "bg-muted-foreground/40";
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 text-[11px] ${tone === "online" ? "font-semibold text-success" : "text-muted-foreground"}`}
+      data-presence={tone}
+    >
+      <span aria-hidden className={`size-2 shrink-0 rounded-full ${dot}`} />
+      {label}
+    </span>
+  );
+}
+
+/** Premium seller card: image → full name → seller shop name → presence → View My Shop →. */
 export function SellerCard({ seller }: { seller: ShopSeller }) {
   return (
     <Link
@@ -204,7 +225,15 @@ export function SellerCard({ seller }: { seller: ShopSeller }) {
       params={{ handle: seller.sellerHandle }}
       className="group grid h-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border bg-card p-3 text-left transition-colors hover:border-primary/40 hover:bg-brand-soft/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <MemberAvatar path={seller.avatarPath} name={seller.sellerName} className="size-12" />
+      <span className="relative shrink-0">
+        <MemberAvatar path={seller.avatarPath} name={seller.sellerName} className="size-12" />
+        {seller.online ? (
+          <span
+            aria-hidden
+            className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-card bg-success"
+          />
+        ) : null}
+      </span>
       <span className="min-w-0">
         <span className="block truncate text-sm font-semibold leading-tight">
           {seller.sellerName}
@@ -212,7 +241,11 @@ export function SellerCard({ seller }: { seller: ShopSeller }) {
         <span className="mt-0.5 block truncate text-xs font-medium text-success">
           {seller.storeName}
         </span>
-        <span className="mt-1 block text-[11px] text-muted-foreground">Authorized seller</span>
+        <span className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
+          <PresenceBadge seller={seller} />
+          <span aria-hidden>·</span>
+          <span className="truncate">Authorized seller</span>
+        </span>
       </span>
       <span
         className="inline-flex size-9 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground"
