@@ -503,6 +503,7 @@ export type Database = {
           updated_at: string
           user_id: string
           verified_payment_id: string | null
+          wallet_scope: string
         }
         Insert: {
           amount_php: number
@@ -585,6 +586,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           verified_payment_id?: string | null
+          wallet_scope?: string
         }
         Update: {
           amount_php?: number
@@ -667,6 +669,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           verified_payment_id?: string | null
+          wallet_scope?: string
         }
         Relationships: [
           {
@@ -8273,6 +8276,7 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string
+          wallet_scope: string
         }
         Insert: {
           account_id?: string | null
@@ -8307,6 +8311,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id: string
+          wallet_scope?: string
         }
         Update: {
           account_id?: string | null
@@ -8341,6 +8346,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+          wallet_scope?: string
         }
         Relationships: [
           {
@@ -8783,6 +8789,7 @@ export type Database = {
           updated_at: string
           user_id: string
           verified_payment_id: string | null
+          wallet_scope: string
         }
         SetofOptions: {
           from: "*"
@@ -8894,6 +8901,7 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string
+          wallet_scope: string
         }
         SetofOptions: {
           from: "*"
@@ -10776,6 +10784,7 @@ export type Database = {
           _payer_reference?: string
           _proof_path?: string
           _request_key?: string
+          _wallet_scope?: string
         }
         Returns: {
           amount_php: number
@@ -10858,6 +10867,7 @@ export type Database = {
           updated_at: string
           user_id: string
           verified_payment_id: string | null
+          wallet_scope: string
         }
         SetofOptions: {
           from: "*"
@@ -10890,6 +10900,7 @@ export type Database = {
           _notes?: string
           _payment_mode: string
           _request_key?: string
+          _wallet_scope?: string
         }
         Returns: {
           account_id: string | null
@@ -10924,6 +10935,7 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string
+          wallet_scope: string
         }
         SetofOptions: {
           from: "*"
@@ -11315,6 +11327,7 @@ export type Database = {
           updated_at: string
           user_id: string
           verified_payment_id: string | null
+          wallet_scope: string
         }
         SetofOptions: {
           from: "*"
@@ -11358,6 +11371,7 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string
+          wallet_scope: string
         }
         SetofOptions: {
           from: "*"
@@ -11453,6 +11467,7 @@ export type Database = {
           updated_at: string
           user_id: string
           verified_payment_id: string | null
+          wallet_scope: string
         }
         SetofOptions: {
           from: "*"
@@ -11608,6 +11623,7 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string
+          wallet_scope: string
         }
         SetofOptions: {
           from: "*"
@@ -12355,6 +12371,7 @@ export type Database = {
           updated_at: string
           user_id: string
           verified_payment_id: string | null
+          wallet_scope: string
         }
         SetofOptions: {
           from: "*"

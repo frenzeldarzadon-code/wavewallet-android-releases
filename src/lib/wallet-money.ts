@@ -21,7 +21,6 @@ import { requireOnline } from "@/lib/offline-guard";
 import { normalizePhMobile } from "@/lib/cash-in-auto";
 import { supabase } from "@/integrations/supabase/client";
 
-
 import type { Database } from "@/integrations/supabase/types";
 
 export type WithdrawalRequest = Database["public"]["Tables"]["withdrawal_requests"]["Row"];
@@ -81,9 +80,8 @@ export const MONEY_SETTINGS_FALLBACK: MoneySettings = {
   voucherFeePercent: 1,
 };
 
-
 /** Supabase RPC args are exact-optional: drop undefined keys before sending. */
-const rpcArgs = <T,>(o: Record<string, unknown>): T =>
+const rpcArgs = <T>(o: Record<string, unknown>): T =>
   Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined)) as T;
 
 const round2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
@@ -98,14 +96,16 @@ export function validateCashback(reseller: number, subreseller: number): string 
   for (const v of [reseller, subreseller]) {
     if (!Number.isInteger(v) || v < 0 || v > 100) return "Use whole percentages between 0 and 100.";
   }
-  if (reseller + subreseller > 100) return "Reseller and subreseller cashback cannot exceed 100% together.";
+  if (reseller + subreseller > 100)
+    return "Reseller and subreseller cashback cannot exceed 100% together.";
   return null;
 }
 
 export function validateValuation(credits: number, php: number, fee: number): string | null {
   if (!Number.isFinite(credits) || credits <= 0) return "Coins per unit must be greater than zero.";
   if (!Number.isFinite(php) || php <= 0) return "Peso value must be greater than zero.";
-  if (!Number.isFinite(fee) || fee < 0 || fee >= 100) return "Cash out fee must be between 0% and 99.99%.";
+  if (!Number.isFinite(fee) || fee < 0 || fee >= 100)
+    return "Cash out fee must be between 0% and 99.99%.";
   return null;
 }
 
@@ -126,9 +126,15 @@ export interface Quote {
 
 /** Credits → peso, using the CURRENT settings. Mirrors `request_withdrawal`. */
 export function quoteWithdrawal(credits: number, s: MoneySettings): Quote {
-  const gross = round2((Number(credits) || 0) * s.phpPerUnit / s.creditsPerUnit);
-  const fee = round2(gross * s.feePercent / 100);
-  return { credits: Number(credits) || 0, gross, feePercent: s.feePercent, fee, net: round2(gross - fee) };
+  const gross = round2(((Number(credits) || 0) * s.phpPerUnit) / s.creditsPerUnit);
+  const fee = round2((gross * s.feePercent) / 100);
+  return {
+    credits: Number(credits) || 0,
+    gross,
+    feePercent: s.feePercent,
+    fee,
+    net: round2(gross - fee),
+  };
 }
 
 /** Peso paid → fee → net → credits. Mirrors `request_cash_in` to the centavo. */
@@ -143,9 +149,9 @@ export interface CashInQuote {
 export function quoteCashInBreakdown(php: number, s: MoneySettings): CashInQuote {
   const gross = round2(Number(php) || 0);
   const feePercent = Number(s.cashInFeePercent) || 0;
-  const fee = round2(gross * feePercent / 100);
+  const fee = round2((gross * feePercent) / 100);
   const net = round2(gross - fee);
-  return { gross, feePercent, fee, net, credits: round2(net * s.creditsPerUnit / s.phpPerUnit) };
+  return { gross, feePercent, fee, net, credits: round2((net * s.creditsPerUnit) / s.phpPerUnit) };
 }
 
 /** Credits a member receives for a cash in. */
@@ -153,9 +159,10 @@ export function quoteCashIn(php: number, s: MoneySettings): number {
   return quoteCashInBreakdown(php, s).credits;
 }
 
-
 /** Re-derive a stored request's numbers from its own snapshot, never from live settings. */
-export function snapshotQuote(row: Pick<WithdrawalRequest, "credits" | "gross_php" | "fee_percent" | "fee_php" | "net_php">): Quote {
+export function snapshotQuote(
+  row: Pick<WithdrawalRequest, "credits" | "gross_php" | "fee_percent" | "fee_php" | "net_php">,
+): Quote {
   return {
     credits: Number(row.credits),
     gross: Number(row.gross_php),
@@ -187,7 +194,8 @@ export function validateWithdrawal(
   const { credits, mode } = input;
   if (!Number.isFinite(credits) || credits <= 0) return "Enter how many coins to cash out.";
   if (!Number.isInteger(credits)) return "Coins must be a whole number.";
-  if (credits > WITHDRAWAL_MAX_CREDITS) return "A single withdrawal is limited to 10,000,000 coins.";
+  if (credits > WITHDRAWAL_MAX_CREDITS)
+    return "A single withdrawal is limited to 10,000,000 coins.";
   if (credits > balance) return "You do not have that many coins available.";
   const spec = PAYMENT_MODES.find((m) => m.value === mode);
   if (!spec) return "Choose a payment mode.";
@@ -235,8 +243,6 @@ export function validateCashIn(
   return null;
 }
 
-
-
 export type MoneyStatus = string;
 
 export const STATUS_TONE: Record<string, "pending" | "positive" | "negative"> = {
@@ -277,20 +283,22 @@ export async function fetchMoneySettings(): Promise<MoneySettings> {
 }
 
 export async function saveMoneySettings(s: MoneySettings): Promise<void> {
-  const { error } = await supabase.rpc("set_platform_money_settings", rpcArgs({
-    _cashback_reseller: Math.round(s.cashbackReseller),
-    _cashback_subreseller: Math.round(s.cashbackSubreseller),
-    _credits_per_unit: s.creditsPerUnit,
-    _php_per_unit: s.phpPerUnit,
-    _withdrawal_fee: s.feePercent,
-    _shop_transfer_fee: s.shopTransferFee,
-    _cash_in_fee: s.cashInFeePercent,
-    _retail_fee: s.retailFeePercent,
-    _voucher_fee: s.voucherFeePercent,
-  }));
+  const { error } = await supabase.rpc(
+    "set_platform_money_settings",
+    rpcArgs({
+      _cashback_reseller: Math.round(s.cashbackReseller),
+      _cashback_subreseller: Math.round(s.cashbackSubreseller),
+      _credits_per_unit: s.creditsPerUnit,
+      _php_per_unit: s.phpPerUnit,
+      _withdrawal_fee: s.feePercent,
+      _shop_transfer_fee: s.shopTransferFee,
+      _cash_in_fee: s.cashInFeePercent,
+      _retail_fee: s.retailFeePercent,
+      _voucher_fee: s.voucherFeePercent,
+    }),
+  );
   if (error) throw new Error(error.message);
 }
-
 
 /**
  * Receiving accounts a payer may use.
@@ -337,23 +345,26 @@ export async function savePaymentMethod(input: {
   qr_content?: string | null;
   metadata?: Record<string, unknown> | null;
 }): Promise<PaymentMethod> {
-  const { data, error } = await supabase.rpc("upsert_payment_method", rpcArgs({
-    _id: input.id ?? undefined,
-    _name: input.name,
-    _method_type: input.method_type,
-    _instructions: input.instructions ?? undefined,
-    _account_name: input.account_name ?? undefined,
-    _account_number: input.account_number ?? undefined,
-    _notes: input.notes ?? undefined,
-    _active: input.active,
-    _sort_order: input.sort_order ?? 0,
-    _provider_id: input.provider_id ?? undefined,
-    _ecosystem_id: input.ecosystem_id ?? undefined,
-    _label: input.label ?? undefined,
-    _qr_path: input.qr_path ?? undefined,
-    _qr_content: input.qr_content ?? undefined,
-    _metadata: input.metadata ?? undefined,
-  }));
+  const { data, error } = await supabase.rpc(
+    "upsert_payment_method",
+    rpcArgs({
+      _id: input.id ?? undefined,
+      _name: input.name,
+      _method_type: input.method_type,
+      _instructions: input.instructions ?? undefined,
+      _account_name: input.account_name ?? undefined,
+      _account_number: input.account_number ?? undefined,
+      _notes: input.notes ?? undefined,
+      _active: input.active,
+      _sort_order: input.sort_order ?? 0,
+      _provider_id: input.provider_id ?? undefined,
+      _ecosystem_id: input.ecosystem_id ?? undefined,
+      _label: input.label ?? undefined,
+      _qr_path: input.qr_path ?? undefined,
+      _qr_content: input.qr_content ?? undefined,
+      _metadata: input.metadata ?? undefined,
+    }),
+  );
   if (error) throw new Error(error.message);
   return data as unknown as PaymentMethod;
 }
@@ -372,9 +383,21 @@ export async function deletePaymentMethod(id: string): Promise<void> {
  */
 export type CashOutPath = "admin" | "superadmin";
 
+/**
+ * Which wallet a money request belongs to. `shop` is the historical behaviour
+ * (the member's active shop wallet); `universe` is the ONE global Universe
+ * wallet, settled by the platform owner through the same listener, review and
+ * release rules. Stored on the request row as `wallet_scope`.
+ */
+export type WalletScope = "shop" | "universe";
+
 export const CASH_OUT_PATHS: { value: CashOutPath; label: string; hint: string }[] = [
   { value: "admin", label: "My shop admin", hint: "Settled by your shop admin. No fee." },
-  { value: "superadmin", label: "Platform cash out", hint: "Paid out by the platform. A cash out fee applies." },
+  {
+    value: "superadmin",
+    label: "Platform cash out",
+    hint: "Paid out by the platform. A cash out fee applies.",
+  },
 ];
 
 export const cashOutPathLabel = (p?: string | null) =>
@@ -392,17 +415,26 @@ export async function requestWithdrawal(input: {
   notes?: string | null;
   requestKey: string;
   path?: CashOutPath;
+  /**
+   * `universe`: hold the coins from the member's ONE global Universe wallet
+   * (never the active shop / NG wallet); only the platform settles it.
+   */
+  walletScope?: WalletScope;
 }): Promise<WithdrawalRequest> {
   requireOnline();
-  const { data, error } = await supabase.rpc("request_withdrawal", rpcArgs({
-    _credits: input.credits,
-    _payment_mode: input.mode,
-    _account_name: input.accountName ?? undefined,
-    _account_number: input.accountNumber ?? undefined,
-    _notes: input.notes ?? undefined,
-    _request_key: input.requestKey,
-    _cashout_path: input.path ?? "superadmin",
-  }) as never);
+  const { data, error } = await supabase.rpc(
+    "request_withdrawal",
+    rpcArgs({
+      _credits: input.credits,
+      _payment_mode: input.mode,
+      _account_name: input.accountName ?? undefined,
+      _account_number: input.accountNumber ?? undefined,
+      _notes: input.notes ?? undefined,
+      _request_key: input.requestKey,
+      _cashout_path: input.path ?? "superadmin",
+      _wallet_scope: input.walletScope ?? "shop",
+    }) as never,
+  );
   if (error) throw new Error(error.message);
   return data as unknown as WithdrawalRequest;
 }
@@ -414,11 +446,14 @@ export async function reviewAdminCashout(
   reason?: string | null,
 ): Promise<void> {
   requireOnline();
-  const { error } = await supabase.rpc("review_admin_cashout", rpcArgs({
-    _id: id,
-    _action: action,
-    _reason: reason ?? undefined,
-  }) as never);
+  const { error } = await supabase.rpc(
+    "review_admin_cashout",
+    rpcArgs({
+      _id: id,
+      _action: action,
+      _reason: reason ?? undefined,
+    }) as never,
+  );
   if (error) throw new Error(error.message);
 }
 
@@ -434,11 +469,14 @@ export async function reviewWithdrawal(
   reason?: string | null,
 ): Promise<void> {
   requireOnline();
-  const { error } = await supabase.rpc("review_withdrawal", rpcArgs({
-    _id: id,
-    _action: action,
-    _reason: reason ?? undefined,
-  }));
+  const { error } = await supabase.rpc(
+    "review_withdrawal",
+    rpcArgs({
+      _id: id,
+      _action: action,
+      _reason: reason ?? undefined,
+    }),
+  );
   if (error) throw new Error(error.message);
 }
 
@@ -456,14 +494,16 @@ export function validateCashInProof(file: { type: string; size: number }): strin
   if (!CASH_IN_PROOF_TYPES.includes((file.type || "").toLowerCase())) {
     return "Use a JPG, PNG or WEBP screenshot.";
   }
-  if (file.size > MAX_CASH_IN_PROOF_BYTES) return "That image is larger than 5 MB. Pick a smaller screenshot.";
+  if (file.size > MAX_CASH_IN_PROOF_BYTES)
+    return "That image is larger than 5 MB. Pick a smaller screenshot.";
   return null;
 }
 
 export async function uploadCashInProof(userId: string, file: File): Promise<string> {
   const problem = validateCashInProof(file);
   if (problem) throw new Error(problem);
-  const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+  const ext =
+    (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
   const path = `${userId}/${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage
     .from(CASH_IN_PROOF_BUCKET)
@@ -483,7 +523,9 @@ export async function cashInProofUrl(path?: string | null): Promise<string | nul
   if (!path) return null;
   const hit = proofUrlCache.get(path);
   if (hit && hit.expires > Date.now()) return hit.url;
-  const { data, error } = await supabase.storage.from(CASH_IN_PROOF_BUCKET).createSignedUrl(path, 3600);
+  const { data, error } = await supabase.storage
+    .from(CASH_IN_PROOF_BUCKET)
+    .createSignedUrl(path, 3600);
   if (error || !data?.signedUrl) return null;
   proofUrlCache.set(path, { url: data.signedUrl, expires: Date.now() + 55 * 60 * 1000 });
   return data.signedUrl;
@@ -498,7 +540,11 @@ export async function cashInProofUrl(path?: string | null): Promise<string | nul
 export type CashInFunding = "platform" | "admin";
 
 export const CASH_IN_FUNDINGS: { value: CashInFunding; label: string; hint: string }[] = [
-  { value: "admin", label: "My shop admin's GCash", hint: "Limited by the coins your shop admin has available." },
+  {
+    value: "admin",
+    label: "My shop admin's GCash",
+    hint: "Limited by the coins your shop admin has available.",
+  },
   { value: "platform", label: "Platform GCash", hint: "No shop limit." },
 ];
 
@@ -515,7 +561,11 @@ export interface AdminCashInCapacity {
 }
 
 export const EMPTY_CAPACITY: AdminCashInCapacity = {
-  adminId: null, adminName: null, balance: 0, reserved: 0, available: 0,
+  adminId: null,
+  adminName: null,
+  balance: 0,
+  reserved: 0,
+  available: 0,
 };
 
 /**
@@ -531,12 +581,23 @@ export function maxAdminCashInPhp(capacity: AdminCashInCapacity, s: MoneySetting
   return Math.floor(round2(gross) * 100) / 100;
 }
 
-export async function fetchAdminCashInCapacity(ecosystemId?: string | null): Promise<AdminCashInCapacity> {
+export async function fetchAdminCashInCapacity(
+  ecosystemId?: string | null,
+): Promise<AdminCashInCapacity> {
   if (!ecosystemId) return EMPTY_CAPACITY;
-  const { data, error } = await supabase.rpc("admin_cash_in_capacity", rpcArgs({ _ecosystem: ecosystemId }) as never);
+  const { data, error } = await supabase.rpc(
+    "admin_cash_in_capacity",
+    rpcArgs({ _ecosystem: ecosystemId }) as never,
+  );
   if (error) throw new Error(error.message);
   const row = (Array.isArray(data) ? data[0] : data) as
-    | { admin_id: string | null; admin_name: string | null; balance: number; reserved: number; available: number }
+    | {
+        admin_id: string | null;
+        admin_name: string | null;
+        balance: number;
+        reserved: number;
+        available: number;
+      }
     | undefined;
   if (!row) return EMPTY_CAPACITY;
   return {
@@ -580,35 +641,41 @@ export async function requestCashIn(input: {
   proofPath: string;
   requestKey: string;
   funding?: CashInFunding;
+  /** `universe`: credit the ONE global Universe wallet when verified. */
+  walletScope?: WalletScope;
 }): Promise<CashInRequest> {
   requireOnline();
-  const { data, error } = await supabase.rpc("request_cash_in", rpcArgs({
-    _method_id: input.methodId,
-    _amount_php: input.amountPhp,
-    _payer_reference: input.payerReference ?? undefined,
-    _payer_number: input.payerNumber ?? undefined,
-    _paid_at: input.paidAt ?? undefined,
-    _ocr: input.ocr
-      ? {
-          reference: input.ocr.reference ?? null,
-          provider_name: input.ocr.providerName ?? null,
-          amount_php: input.ocr.amountPhp ?? null,
-          sender_number: input.ocr.senderNumber ?? null,
-          sender_name: input.ocr.senderName ?? null,
-          sender_account_masked: input.ocr.senderAccountMasked ?? null,
-          receiving_number: input.ocr.receivingNumber ?? null,
-          receiving_account_masked: input.ocr.receivingAccountMasked ?? null,
-          paid_at: input.ocr.paidAt ?? null,
-          confidence: input.ocr.confidence ?? null,
+  const { data, error } = await supabase.rpc(
+    "request_cash_in",
+    rpcArgs({
+      _method_id: input.methodId,
+      _amount_php: input.amountPhp,
+      _payer_reference: input.payerReference ?? undefined,
+      _payer_number: input.payerNumber ?? undefined,
+      _paid_at: input.paidAt ?? undefined,
+      _ocr: input.ocr
+        ? {
+            reference: input.ocr.reference ?? null,
+            provider_name: input.ocr.providerName ?? null,
+            amount_php: input.ocr.amountPhp ?? null,
+            sender_number: input.ocr.senderNumber ?? null,
+            sender_name: input.ocr.senderName ?? null,
+            sender_account_masked: input.ocr.senderAccountMasked ?? null,
+            receiving_number: input.ocr.receivingNumber ?? null,
+            receiving_account_masked: input.ocr.receivingAccountMasked ?? null,
+            paid_at: input.ocr.paidAt ?? null,
+            confidence: input.ocr.confidence ?? null,
 
-          readable: input.ocr.readable ?? null,
-        }
-      : undefined,
-    _notes: input.notes ?? undefined,
-    _proof_path: input.proofPath,
-    _request_key: input.requestKey,
-    _funding_source: input.funding ?? "platform",
-  }) as never);
+            readable: input.ocr.readable ?? null,
+          }
+        : undefined,
+      _notes: input.notes ?? undefined,
+      _proof_path: input.proofPath,
+      _request_key: input.requestKey,
+      _funding_source: input.funding ?? "platform",
+      _wallet_scope: input.walletScope ?? "shop",
+    }) as never,
+  );
   if (error) throw new Error(error.message);
   return data as unknown as CashInRequest;
 }
@@ -620,11 +687,14 @@ export async function reviewAdminCashIn(
   reason?: string | null,
 ): Promise<void> {
   requireOnline();
-  const { error } = await supabase.rpc("review_admin_cash_in", rpcArgs({
-    _id: id,
-    _action: action,
-    _reason: reason ?? undefined,
-  }) as never);
+  const { error } = await supabase.rpc(
+    "review_admin_cash_in",
+    rpcArgs({
+      _id: id,
+      _action: action,
+      _reason: reason ?? undefined,
+    }) as never,
+  );
   if (error) throw new Error(cashInDecisionError(error.message));
 }
 
@@ -653,7 +723,8 @@ export function cashInOutcomeMessage(
       tone: "error",
       message: duplicate
         ? "Rejected as a duplicate reference — that GCash reference number was already used, so no coins were added."
-        : row.decision_reason ?? "Rejected — the submitted details did not match. No coins were added.",
+        : (row.decision_reason ??
+          "Rejected — the submitted details did not match. No coins were added."),
     };
   }
   if (row.duplicate_reference) {
@@ -682,8 +753,6 @@ export function cashInOutcomeMessage(
       "Pending manual review — your details did not meet the automatic rules, so the platform owner will check your screenshot.",
   };
 }
-
-
 
 export async function cancelCashIn(id: string): Promise<void> {
   requireOnline();
@@ -722,36 +791,47 @@ export function cashInDecisionError(message: string): string {
   return message;
 }
 
-
 export async function reviewCashIn(
   id: string,
   action: "approve" | "reject",
   reason?: string | null,
 ): Promise<void> {
   requireOnline();
-  const { error } = await supabase.rpc("review_cash_in", rpcArgs({ _id: id, _action: action, _reason: reason ?? undefined }));
+  const { error } = await supabase.rpc(
+    "review_cash_in",
+    rpcArgs({ _id: id, _action: action, _reason: reason ?? undefined }),
+  );
   if (error) throw new Error(cashInDecisionError(error.message));
 }
 
-
-export async function fetchMyWithdrawals(userId: string): Promise<WithdrawalRequest[]> {
-  const { data, error } = await supabase
+export async function fetchMyWithdrawals(
+  userId: string,
+  walletScope?: WalletScope,
+): Promise<WithdrawalRequest[]> {
+  let q = supabase
     .from("withdrawal_requests")
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(50);
+  if (walletScope) q = q.eq("wallet_scope", walletScope);
+  const { data, error } = await q;
   if (error) throw new Error(error.message);
   return data ?? [];
 }
 
-export async function fetchMyCashIns(userId: string): Promise<CashInRequest[]> {
-  const { data, error } = await supabase
+export async function fetchMyCashIns(
+  userId: string,
+  walletScope?: WalletScope,
+): Promise<CashInRequest[]> {
+  let q = supabase
     .from("cash_in_requests")
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(50);
+  if (walletScope) q = q.eq("wallet_scope", walletScope);
+  const { data, error } = await q;
   if (error) throw new Error(error.message);
   return data ?? [];
 }
@@ -806,8 +886,6 @@ export async function fetchShopCashIns(ecosystemId?: string | null): Promise<Cas
   if (error) throw new Error(error.message);
   return data ?? [];
 }
-
-
 
 export const pendingMoneyCount = (rows: { status: string }[]) =>
   rows.filter((r) => r.status === "pending").length;

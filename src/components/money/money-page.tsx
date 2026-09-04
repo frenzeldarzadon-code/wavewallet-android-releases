@@ -78,6 +78,7 @@ import {
   type MoneySettings,
   type PaymentMethod,
   type PaymentMode,
+  type WalletScope,
   type WithdrawalRequest,
 } from "@/lib/wallet-money";
 
@@ -113,9 +114,30 @@ const fromLocalInput = (value: string): string | null => {
  * `initialTab` only picks which tab opens first — the request flows,
  * accounting and approval rules are unchanged and shared by every role.
  */
-export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } = {}) {
-  const { account, ecosystemDbId } = useSession();
+export function MoneyPage({
+  initialTab = "out",
+  scope = "shop",
+  single = false,
+  onChanged,
+}: {
+  initialTab?: "in" | "out";
+  /**
+   * `universe`: the ONE global Universe wallet. Balance, history and requests
+   * come from that wallet only; receiving accounts are the platform's own
+   * (Super Admin listener) accounts; there is no shop path, no upline, no
+   * shop-admin funding. Same RPCs, same listener, same review/release rules.
+   */
+  scope?: WalletScope;
+  /** Render only `initialTab` (used when embedded in a Cash In / Cash Out sheet). */
+  single?: boolean;
+  /** Called after a request is created or cancelled so a parent can refresh. */
+  onChanged?: () => void;
+} = {}) {
+  const { account, ecosystemDbId: sessionEcosystemId } = useSession();
   const userId = account?.id ?? null;
+  const universe = scope === "universe";
+  /** Universe scope never touches a shop wallet, whatever shop is active. */
+  const ecosystemDbId = universe ? null : sessionEcosystemId;
   const [settings, setSettings] = useState<MoneySettings>(MONEY_SETTINGS_FALLBACK);
   const [platform, setPlatform] = useState<PlatformSettings | null>(null);
   const [balance, setBalance] = useState(0);
@@ -129,7 +151,8 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
    * Only members below the shop admin can be settled by their admin — an admin
    * (or the platform owner) has no upline inside the shop to hand them cash.
    */
-  const shopPathsAvailable = account?.role !== "admin" && account?.role !== "super_admin";
+  const shopPathsAvailable =
+    !universe && account?.role !== "admin" && account?.role !== "super_admin";
 
   // cash out form
   const [credits, setCredits] = useState("");
@@ -166,19 +189,25 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
       // Only the shop's own listener-associated receiving accounts are offered to
       // payers. Platform-wide accounts are WaveWallet's own collection accounts and
       // appear only for a legacy shop that explicitly opted into them.
-      ecosystemDbId
-        ? fetchPlatformPaymentOption(ecosystemDbId)
-            .then((opt) =>
-              fetchPaymentMethods(true, {
-                ecosystemId: ecosystemDbId,
-                includeGlobal: opt.enabled,
-              }),
-            )
-            .catch(() => [])
-        : Promise.resolve([]),
-      fetchMyWithdrawals(userId).catch(() => []),
-      fetchMyCashIns(userId).catch(() => []),
-      fetchAdminCashInCapacity(ecosystemDbId).catch(() => EMPTY_CAPACITY),
+      // Universe wallet: the platform's own receiving accounts (Super Admin
+      // listener) are the only destination — there is no shop in the picture.
+      universe
+        ? fetchPaymentMethods(true, { ecosystemId: null }).catch(() => [])
+        : ecosystemDbId
+          ? fetchPlatformPaymentOption(ecosystemDbId)
+              .then((opt) =>
+                fetchPaymentMethods(true, {
+                  ecosystemId: ecosystemDbId,
+                  includeGlobal: opt.enabled,
+                }),
+              )
+              .catch(() => [])
+          : Promise.resolve([]),
+      fetchMyWithdrawals(userId, universe ? "universe" : undefined).catch(() => []),
+      fetchMyCashIns(userId, universe ? "universe" : undefined).catch(() => []),
+      universe
+        ? Promise.resolve(EMPTY_CAPACITY)
+        : fetchAdminCashInCapacity(ecosystemDbId).catch(() => EMPTY_CAPACITY),
     ]);
     setSettings(s);
     setPlatform(p);
@@ -187,11 +216,16 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
     setWithdrawals(w);
     setCashIns(c);
     setCapacity(cap);
-  }, [userId, ecosystemDbId]);
+  }, [userId, ecosystemDbId, universe]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const reload = useCallback(async () => {
+    await load();
+    onChanged?.();
+  }, [load, onChanged]);
 
   const creditsNum = Number(credits);
   const feePercent = cashOutFeePercent(cashOutPath, settings);
@@ -219,7 +253,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
     const payoutLine =
       cashOutPath === "admin"
         ? `No fee · your shop admin hands you ${creditsNum.toLocaleString()} coins worth of cash.`
-        : `Cash out fee ${feePercent}% · you receive ${creditsAfterFee(creditsNum, feePercent).toLocaleString()} coins worth of payout.`;
+        : `Requested ${peso(quote.gross)} · fee ${feePercent}% (${peso(quote.fee)}) · net release ${peso(quote.net)}.`;
     if (
       !window.confirm(
         `Cash out ${creditsNum.toLocaleString()} coins via ${cashOutPathLabel(cashOutPath)}?\n\n${payoutLine}\n\n${WITHDRAWAL_SLA_NOTICE}`,
@@ -237,6 +271,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
         notes,
         requestKey: newKey(),
         path: cashOutPath,
+        walletScope: scope,
       });
       toast.success(
         cashOutPath === "admin"
@@ -245,7 +280,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
       );
       setCredits("");
       setNotes("");
-      await load();
+      await reload();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not submit that request.");
     } finally {
@@ -280,12 +315,15 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
       // receipt has no mobile number (banks usually print those instead).
       if (read.reference) setPayerRef(read.reference);
       if (read.amountPhp) setAmount(String(read.amountPhp));
-      const payerIdentity = read.senderNumber ?? read.senderAccountMasked ?? read.senderName ?? null;
+      const payerIdentity =
+        read.senderNumber ?? read.senderAccountMasked ?? read.senderName ?? null;
       if (payerIdentity) setPayerNumber(payerIdentity);
       if (read.paidAt) setPaidAt(toLocalInput(read.paidAt));
       if (read.readable) toast.success("Screenshot read — check the details before you submit.");
-      else toast.info("We could not read this screenshot clearly. You can still submit it for manual review.");
-
+      else
+        toast.info(
+          "We could not read this screenshot clearly. You can still submit it for manual review.",
+        );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not read that screenshot.");
     } finally {
@@ -339,7 +377,8 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
         notes: cashInNotes,
         proofPath: proofPath as string,
         requestKey: newKey(),
-        funding,
+        funding: universe ? "platform" : funding,
+        walletScope: scope,
       });
       // Second layer: the server reads the very same screenshot again and that
       // reading — not anything the browser sent — decides the receipt check.
@@ -347,7 +386,11 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
       if (submitted.status === "pending" && !submitted.duplicate_reference) {
         try {
           const verified = await verifyCashInReceipt({ data: { cashInId: submitted.id } });
-          decided = { ...submitted, status: verified.status, receipt_check: verified.check } as typeof submitted;
+          decided = {
+            ...submitted,
+            status: verified.status,
+            receipt_check: verified.check,
+          } as typeof submitted;
         } catch {
           // A reader outage must never approve or reject anything on its own.
           decided = { ...submitted, receipt_check: "error" } as typeof submitted;
@@ -368,7 +411,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
         setProofPath(null);
         setExtract(null);
       }
-      await load();
+      await reload();
     } catch (e) {
       // The screenshot stays uploaded so the member can correct and resubmit.
       toast.error(e instanceof Error ? e.message : "Could not submit that request.");
@@ -381,13 +424,18 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
 
   return (
     <>
-      <PageSection devSlot="money-page.cash-out-cash-in"
-        title="Cash out & cash in"
-        description={`Cash in fee ${settings.cashInFeePercent}% · cash out fee ${settings.feePercent}%. Balances and requests are shown in coins.`}
+      <PageSection
+        devSlot="money-page.cash-out-cash-in"
+        title={single ? (initialTab === "in" ? "Cash in" : "Cash out") : "Cash out & cash in"}
+        description={
+          universe
+            ? `Your one global Universe wallet. Cash in fee ${settings.cashInFeePercent}% · cash out fee ${settings.feePercent}%. Verified and released by the platform owner.`
+            : `Cash in fee ${settings.cashInFeePercent}% · cash out fee ${settings.feePercent}%. Balances and requests are shown in coins.`
+        }
       >
         <div className="grid gap-3 sm:grid-cols-3">
           <StatCard
-            label="Coin balance"
+            label={universe ? "Universe wallet balance" : "Coin balance"}
             value={`${balance.toLocaleString()} coins`}
             icon={ArrowUpFromLine}
             tone="brand"
@@ -404,10 +452,12 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
       </PageSection>
 
       <Tabs defaultValue={initialTab} className="mb-6">
-        <TabsList>
-          <TabsTrigger value="out">Cash out</TabsTrigger>
-          <TabsTrigger value="in">Cash in</TabsTrigger>
-        </TabsList>
+        {single ? null : (
+          <TabsList>
+            <TabsTrigger value="out">Cash out</TabsTrigger>
+            <TabsTrigger value="in">Cash in</TabsTrigger>
+          </TabsList>
+        )}
 
         <TabsContent value="out" className="mt-4 space-y-4">
           <Card className="shadow-[var(--shadow-card)]">
@@ -431,7 +481,11 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                         htmlFor={`wd-path-${p.value}`}
                         className="flex cursor-pointer items-start gap-2 rounded-lg border border-border p-3 text-xs"
                       >
-                        <RadioGroupItem id={`wd-path-${p.value}`} value={p.value} className="mt-0.5" />
+                        <RadioGroupItem
+                          id={`wd-path-${p.value}`}
+                          value={p.value}
+                          className="mt-0.5"
+                        />
                         <span>
                           <span className="block text-sm font-medium">{p.label}</span>
                           <span className="text-muted-foreground">{p.hint}</span>
@@ -470,12 +524,26 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                 {needsAccount ? (
                   <>
                     <div className="space-y-1.5">
-                      <Label htmlFor="wd-acct-name">Account name</Label>
-                      <Input id="wd-acct-name" value={accountName} onChange={(e) => setAccountName(e.target.value)} />
+                      <Label htmlFor="wd-acct-name">
+                        {mode === "ewallet" ? "GCash account name" : "Account name"}
+                      </Label>
+                      <Input
+                        id="wd-acct-name"
+                        value={accountName}
+                        onChange={(e) => setAccountName(e.target.value)}
+                      />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="wd-acct-no">Account number</Label>
-                      <Input id="wd-acct-no" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} />
+                      <Label htmlFor="wd-acct-no">
+                        {mode === "ewallet" ? "GCash mobile number" : "Account number"}
+                      </Label>
+                      <Input
+                        id="wd-acct-no"
+                        inputMode={mode === "ewallet" ? "tel" : "text"}
+                        placeholder={mode === "ewallet" ? "09XX XXX XXXX" : undefined}
+                        value={accountNumber}
+                        onChange={(e) => setAccountNumber(e.target.value)}
+                      />
                     </div>
                   </>
                 ) : null}
@@ -487,13 +555,18 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                   rows={2}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder={mode === "physical_cash" ? "Pickup place and preferred time" : "Anything the platform owner should know"}
+                  placeholder={
+                    mode === "physical_cash"
+                      ? "Pickup place and preferred time"
+                      : "Anything the platform owner should know"
+                  }
                 />
               </div>
 
               <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs">
                 <p className="font-medium">
-                  {(creditsNum || 0).toLocaleString()} credits requested · {cashOutPathLabel(cashOutPath)}
+                  {(creditsNum || 0).toLocaleString()} credits requested ·{" "}
+                  {cashOutPathLabel(cashOutPath)}
                 </p>
                 <p className="text-muted-foreground">
                   {cashOutPath === "admin" ? (
@@ -514,6 +587,22 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                     </>
                   )}
                 </p>
+                {cashOutPath === "admin" ? null : (
+                  <dl className="mt-2 space-y-1 border-t border-border pt-2">
+                    <div className="flex justify-between">
+                      <dt className="text-muted-foreground">Amount requested</dt>
+                      <dd className="font-medium">{peso(quote.gross)}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-muted-foreground">Cash out fee ({feePercent}%)</dt>
+                      <dd className="font-medium text-destructive">-{peso(quote.fee)}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-muted-foreground">Net amount to be released</dt>
+                      <dd className="font-semibold text-success">{peso(quote.net)}</dd>
+                    </div>
+                  </dl>
+                )}
                 <p className="mt-1 flex items-start gap-1 text-muted-foreground">
                   <Info className="mt-0.5 size-3 shrink-0" />{" "}
                   {cashOutPath === "admin"
@@ -530,7 +619,10 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
 
           <PageSection devSlot="money-page.my-withdrawal-requests" title="My withdrawal requests">
             {withdrawals.length === 0 ? (
-              <EmptyState title="No withdrawals yet" description="Your cash out history will appear here." />
+              <EmptyState
+                title="No withdrawals yet"
+                description="Your cash out history will appear here."
+              />
             ) : (
               <div className="space-y-2">
                 {withdrawals.map((w) => {
@@ -543,12 +635,13 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                             {Number(w.credits).toLocaleString()} credits
                           </p>
                           <p className="text-muted-foreground">
-                            {w.reference} · fee {q.feePercent}% · payout{" "}
-                            {creditsAfterFee(Number(w.credits), q.feePercent).toLocaleString()} credits
+                            {w.reference} · {peso(q.gross)} · fee {q.feePercent}% ({peso(q.fee)}) ·
+                            net {peso(q.net)}
                           </p>
                           <p className="text-muted-foreground">
                             {paymentModeLabel(w.payment_mode)}
-                            {w.account_name ? ` · ${w.account_name}` : ""} · {shortDateTime(w.created_at)}
+                            {w.account_name ? ` · ${w.account_name}` : ""} ·{" "}
+                            {shortDateTime(w.created_at)}
                           </p>
                           {w.decision_reason ? (
                             <p className="text-muted-foreground">Note: {w.decision_reason}</p>
@@ -566,7 +659,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                                 try {
                                   await cancelWithdrawal(w.id);
                                   toast.success("Request cancelled — your coins were returned.");
-                                  await load();
+                                  await reload();
                                 } catch (e) {
                                   toast.error(e instanceof Error ? e.message : "Could not cancel.");
                                 } finally {
@@ -588,7 +681,8 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
         </TabsContent>
 
         <TabsContent value="in" className="mt-4 space-y-4">
-          <PageSection devSlot="money-page.where-to-send-your-payment"
+          <PageSection
+            devSlot="money-page.where-to-send-your-payment"
             title="Where to send your payment"
             description="Pay to one of the accounts below, then submit your cash in request with the reference number."
           >
@@ -603,16 +697,21 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-                Start with your payment screenshot from any e-wallet or bank — we read the amount, the sending account,
-                the reference and the payment date and time from it. Check the details, correct the reference or the
-                date and time if needed, then submit. The screenshot is supporting evidence, not proof of payment:
-                coins are added only once a real payment notification confirms it.
+                Start with your payment screenshot from any e-wallet or bank — we read the amount,
+                the sending account, the reference and the payment date and time from it. Check the
+                details, correct the reference or the date and time if needed, then submit. The
+                screenshot is supporting evidence, not proof of payment: coins are added only once a
+                real payment notification confirms it.
               </p>
 
               {methods.length === 0 ? (
                 <EmptyState
                   title="No payment methods available"
-                  description="This shop has not published any receiving accounts yet. Ask the shop admin to add one in Listener payment settings."
+                  description={
+                    universe
+                      ? "The platform has not published a receiving account yet. Please try again later."
+                      : "This shop has not published any receiving accounts yet. Ask the shop admin to add one in Listener payment settings."
+                  }
                 />
               ) : (
                 <>
@@ -630,7 +729,11 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                             htmlFor={`ci-funding-${f.value}`}
                             className="flex cursor-pointer items-start gap-2 rounded-lg border border-border p-3 text-xs"
                           >
-                            <RadioGroupItem id={`ci-funding-${f.value}`} value={f.value} className="mt-0.5" />
+                            <RadioGroupItem
+                              id={`ci-funding-${f.value}`}
+                              value={f.value}
+                              className="mt-0.5"
+                            />
                             <span>
                               <span className="block text-sm font-medium">{f.label}</span>
                               <span className="text-muted-foreground">
@@ -694,7 +797,9 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                           </p>
                         </div>
                         <div className="space-y-1.5">
-                          <Label htmlFor="ci-number">Account number or mobile number you paid from</Label>
+                          <Label htmlFor="ci-number">
+                            Account number or mobile number you paid from
+                          </Label>
                           <Input
                             id="ci-number"
                             inputMode="text"
@@ -745,7 +850,10 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                               ["Payment app or bank", extract.providerName],
                               ["Payer name on receipt", extract.senderName],
                               ["Sending account", extract.senderAccountMasked],
-                              ["Received by", extract.receivingNumber ?? extract.receivingAccountMasked],
+                              [
+                                "Received by",
+                                extract.receivingNumber ?? extract.receivingAccountMasked,
+                              ],
                             ] as [string, string | null][]
                           )
                             .filter(([, value]) => Boolean(value))
@@ -760,8 +868,8 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
 
                       {extract && !extract.readable ? (
                         <p className="text-[11px] text-muted-foreground">
-                          We could not read this screenshot reliably, so nothing was guessed. You may still submit it — a
-                          person will review it.
+                          We could not read this screenshot reliably, so nothing was guessed. You
+                          may still submit it — a person will review it.
                         </p>
                       ) : null}
                     </div>
@@ -802,8 +910,8 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                       </span>
                     </div>
                     <p className="text-muted-foreground">
-                      Coins are issued only after the platform owner verifies your payment. This fee is locked
-                      in when you submit.
+                      Coins are issued only after the platform owner verifies your payment. This fee
+                      is locked in when you submit.
                     </p>
                   </div>
                   <Button onClick={submitCashIn} disabled={busy || !online}>
@@ -831,14 +939,18 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                         </p>
                         <p className="text-muted-foreground">
                           Paid {peso(Number(c.amount_php))} · fee {Number(c.fee_percent ?? 0)}% (
-                          {peso(Number(c.fee_php ?? 0))}) · net {peso(Number(c.net_php ?? c.amount_php))}
+                          {peso(Number(c.fee_php ?? 0))}) · net{" "}
+                          {peso(Number(c.net_php ?? c.amount_php))}
                         </p>
                         <p className="text-muted-foreground">
-                          From {c.sender_number ?? c.payer_number ?? "—"} · ref {c.payer_reference ?? "—"} ·{" "}
+                          From {c.sender_number ?? c.payer_number ?? "—"} · ref{" "}
+                          {c.payer_reference ?? "—"} ·{" "}
                           {c.approval_method === "automatic" ? "automatic" : "manual"} review
                         </p>
                         {c.notes ? <p className="text-muted-foreground">Notes: {c.notes}</p> : null}
-                        {c.decision_reason ? <p className="text-muted-foreground">Note: {c.decision_reason}</p> : null}
+                        {c.decision_reason ? (
+                          <p className="text-muted-foreground">Note: {c.decision_reason}</p>
+                        ) : null}
                         <CashInProofViewer path={c.proof_path} />
                       </div>
                       <div className="flex items-center gap-2">
@@ -852,7 +964,7 @@ export function MoneyPage({ initialTab = "out" }: { initialTab?: "in" | "out" } 
                               setBusy(true);
                               try {
                                 await cancelCashIn(c.id);
-                                await load();
+                                await reload();
                               } catch (e) {
                                 toast.error(e instanceof Error ? e.message : "Could not cancel.");
                               } finally {

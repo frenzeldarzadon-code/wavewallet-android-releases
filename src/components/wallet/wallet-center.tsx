@@ -16,7 +16,17 @@
  * Nothing here is an authorization layer: the database re-checks every rule.
  */
 import { useOnline } from "@/lib/pwa";
-import { Gift, Info, Search, Send, ShoppingBag, Sparkles, Wallet } from "lucide-react";
+import {
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  Gift,
+  Info,
+  Search,
+  Send,
+  ShoppingBag,
+  Sparkles,
+  Wallet,
+} from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -31,6 +41,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { MoneyPage } from "@/components/money/money-page";
 import { Label } from "@/components/ui/label";
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { MemberAvatar } from "@/components/member-avatar";
@@ -113,6 +131,8 @@ export function WalletCenter({
   const [busy, setBusy] = useState(false);
   // Universe scope: member-to-member transfer from the ONE global wallet.
   const [sendOpen, setSendOpen] = useState(false);
+  // Universe scope: Cash In / Cash Out bottom sheet (shared MoneyPage).
+  const [moneyOpen, setMoneyOpen] = useState<"in" | "out" | null>(null);
   const online = useOnline();
 
   const loadShops = useCallback(async () => {
@@ -253,24 +273,75 @@ export function WalletCenter({
               tone="brand"
             />
           </div>
-          <Card className="mt-3 shadow-[var(--shadow-card)]">
-            <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold">Send Universe coins</p>
-                <p className="text-xs text-muted-foreground">
-                  Send coins to any Universe member by name or @handle — wallet to wallet, no shop,
-                  no membership. Not a purchase; earns no cashback.
-                </p>
-              </div>
-              <Button
-                className="h-11 shrink-0 rounded-xl px-5"
-                disabled={globalBalance === null || !online}
-                onClick={() => setSendOpen(true)}
-              >
-                <Send className="size-4" /> Send coins
-              </Button>
-            </CardContent>
-          </Card>
+          {/* Wallet actions, in this order: Cash In → Cash Out → Gift. Cash In
+              and Cash Out reuse the shared MoneyPage (same RPCs, same payment
+              listener, same Super Admin review/release) scoped to the ONE
+              global Universe wallet, opened inline as bottom sheets. */}
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            <Button
+              className="h-12 rounded-xl"
+              disabled={globalBalance === null || !online}
+              onClick={() => setMoneyOpen("in")}
+            >
+              <ArrowDownToLine className="size-4" /> Cash In
+            </Button>
+            <Button
+              className="h-12 rounded-xl"
+              variant="secondary"
+              disabled={globalBalance === null || !online}
+              onClick={() => setMoneyOpen("out")}
+            >
+              <ArrowUpFromLine className="size-4" /> Cash Out
+            </Button>
+            <Button
+              className="h-12 rounded-xl"
+              variant="outline"
+              disabled={globalBalance === null || !online}
+              onClick={() => setSendOpen(true)}
+            >
+              <Gift className="size-4" /> Gift / Send coins
+            </Button>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Cash in is credited only after the platform's payment listener verifies your payment.
+            Cash out holds your coins, charges the platform fee and is released by the platform
+            owner. Gifts go wallet to wallet to any Universe member — not a purchase, no cashback.
+          </p>
+          <Sheet
+            open={moneyOpen !== null}
+            onOpenChange={(o) => {
+              if (!o) setMoneyOpen(null);
+            }}
+          >
+            <SheetContent
+              side="bottom"
+              className="h-[92dvh] overflow-y-auto rounded-t-2xl px-4 pb-8"
+            >
+              <SheetHeader className="px-0 text-left">
+                <SheetTitle>{moneyOpen === "in" ? "Cash In" : "Cash Out"}</SheetTitle>
+                <SheetDescription>
+                  {moneyOpen === "in"
+                    ? "Top up your Universe wallet through a platform receiving account."
+                    : "Convert Universe wallet coins to cash, released by the platform owner."}
+                </SheetDescription>
+              </SheetHeader>
+              {moneyOpen ? (
+                <div className="mt-2">
+                  <MoneyPage
+                    key={moneyOpen}
+                    scope="universe"
+                    single
+                    initialTab={moneyOpen}
+                    onChanged={() => {
+                      setHistoryKey((k) => k + 1);
+                      void loadShops();
+                      notifyWalletChanged();
+                    }}
+                  />
+                </div>
+              ) : null}
+            </SheetContent>
+          </Sheet>
           <Card className="mt-3 border-dashed shadow-none">
             <CardContent className="flex items-start gap-3 py-3">
               <Info className="mt-0.5 size-4 shrink-0 text-primary" />
