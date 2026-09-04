@@ -13,10 +13,11 @@ function SuperLayout() {
   const session = useSession("super_admin");
   const [pending, setPending] = useState(0);
 
+  const accountId = session.account?.id ?? null;
   useEffect(() => {
-    if (!session.account) return;
+    if (!accountId) return;
     void fetchPendingOrderCount().then(setPending);
-  }, [session.account]);
+  }, [accountId]);
 
   if (!session.account) return null;
   const nav = withBadges(superAdminNav(), { "/super/approvals": pending });

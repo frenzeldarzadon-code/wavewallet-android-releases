@@ -33,13 +33,14 @@ export function DeliverySettingsCard({ ecosystemId }: { ecosystemId: string | nu
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
+  const accountId = account?.id ?? null;
   const load = useCallback(async () => {
     if (!ecosystemId) return;
     setLoading(true);
     try {
       const [settings, bal] = await Promise.all([
         fetchStoreSettings(ecosystemId),
-        account ? fetchCreditBalance(account.id, null) : Promise.resolve(null),
+        accountId ? fetchCreditBalance(accountId, null) : Promise.resolve(null),
       ]);
       setS(settings);
       setAvailable(bal);
@@ -48,7 +49,7 @@ export function DeliverySettingsCard({ ecosystemId }: { ecosystemId: string | nu
     } finally {
       setLoading(false);
     }
-  }, [ecosystemId, account]);
+  }, [ecosystemId, accountId]);
 
   useEffect(() => {
     void load();
