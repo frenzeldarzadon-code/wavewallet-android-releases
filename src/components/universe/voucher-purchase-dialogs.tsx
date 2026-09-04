@@ -32,7 +32,12 @@ import {
 import { beginCriticalOperation } from "@/lib/app-update";
 import { useOnline } from "@/lib/pwa";
 import { peso } from "@/lib/wavewallet";
-import { purchaseVoucher } from "@/lib/wallet";
+import {
+  fetchVoucherCheckoutQuote,
+  purchaseVoucher,
+  selfPurchaseCharge,
+  type SelfPurchaseQuote,
+} from "@/lib/wallet";
 import { fetchPointsAccount, purchaseVoucherWithPoints, type PointsAccount } from "@/lib/rewards";
 import { pointsForSpend, pts } from "@/lib/points";
 import type { StorefrontProduct } from "@/lib/seller-storefront";
