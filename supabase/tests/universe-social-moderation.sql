@@ -25,15 +25,21 @@ DECLARE
   _post uuid; _memberA uuid; _c1 uuid; _c2 uuid; _c3 uuid; _n int; _h1 text; _h2 text;
 BEGIN
  BEGIN  -- rolled back at the end of this sub-block
-  SELECT id INTO _ecoA FROM public.ecosystems ORDER BY created_at LIMIT 1;
+  -- pick a shop that has an active admin AND at least one other active member
+  SELECT m.ecosystem_id, m.user_id INTO _ecoA, _admA
+    FROM public.ecosystem_memberships m
+    JOIN public.ecosystems e ON e.id = m.ecosystem_id AND e.archived_at IS NULL
+   WHERE m.role = 'admin' AND m.membership_state = 'active'
+     AND EXISTS (SELECT 1 FROM public.ecosystem_memberships o
+                  WHERE o.ecosystem_id = m.ecosystem_id AND o.membership_state = 'active' AND o.user_id <> m.user_id)
+   ORDER BY e.created_at LIMIT 1;
   SELECT id INTO _ecoB FROM public.ecosystems WHERE id <> _ecoA ORDER BY created_at LIMIT 1;
   IF _ecoA IS NULL THEN RAISE NOTICE 'SKIP: no shop available'; RETURN; END IF;
 
   SELECT user_id INTO _super FROM public.user_roles WHERE role = 'super_admin' LIMIT 1;
-  SELECT user_id INTO _admA FROM public.user_roles
-   WHERE role = 'admin' AND ecosystem_id = _ecoA LIMIT 1;
-  SELECT id INTO _author FROM public.profiles
-   WHERE ecosystem_id = _ecoA AND deleted_at IS NULL AND id IS DISTINCT FROM _admA LIMIT 1;
+  SELECT o.user_id INTO _author FROM public.ecosystem_memberships o
+    JOIN public.profiles pr ON pr.id = o.user_id AND pr.deleted_at IS NULL
+   WHERE o.ecosystem_id = _ecoA AND o.membership_state = 'active' AND o.user_id <> _admA LIMIT 1;
   IF _author IS NULL OR _admA IS NULL OR _super IS NULL THEN
     RAISE NOTICE 'SKIP: need an author, a shop admin and the platform owner'; RETURN;
   END IF;
