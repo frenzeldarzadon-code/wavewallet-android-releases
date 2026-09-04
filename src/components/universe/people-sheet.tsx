@@ -149,18 +149,19 @@ export function usePeopleSearch(query: string) {
     setBusy(true);
     const t = window.setTimeout(() => {
       void searchDirectory({ ...EMPTY_FILTERS, query: q }, 30)
-        .then((r) =>
-          alive &&
-          setRows(
-            r.map((m) => ({
-              id: m.id,
-              full_name: m.full_name,
-              handle: m.handle,
-              avatar_path: m.avatar_path,
-              online: false,
-              lastSeenAt: null,
-            })),
-          ),
+        .then(
+          (r) =>
+            alive &&
+            setRows(
+              r.map((m) => ({
+                id: m.id,
+                full_name: m.full_name,
+                handle: m.handle,
+                avatar_path: m.avatar_path,
+                online: false,
+                lastSeenAt: null,
+              })),
+            ),
         )
         .catch((e: Error) => alive && toast.error("Search failed", { description: e.message }))
         .finally(() => alive && setBusy(false));

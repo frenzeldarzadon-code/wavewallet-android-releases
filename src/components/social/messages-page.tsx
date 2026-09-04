@@ -287,7 +287,9 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
           )}
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">
-              {isOrder ? orderChatLabel(active, orderCtx.get(active.thread_id)) : threadTitle(active)}
+              {isOrder
+                ? orderChatLabel(active, orderCtx.get(active.thread_id))
+                : threadTitle(active)}
             </p>
             {isOrder ? (
               <p className="truncate text-xs text-muted-foreground">
