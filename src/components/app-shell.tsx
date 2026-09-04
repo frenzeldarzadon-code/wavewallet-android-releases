@@ -14,12 +14,14 @@ import {
   LogOut,
   Menu,
   ShieldCheck,
+  Sparkles,
   UserCheck,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EcosystemSwitcher } from "@/components/ecosystem-switcher";
+import { UniverseSwitch } from "@/components/shop/shop-dashboard-switch";
 import { SuperAdminBadge } from "@/components/role-badge";
 import { ReviewBanner } from "@/components/review-banner";
 import { NotificationBell } from "@/components/notification-bell";
@@ -223,6 +225,9 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
               <EcosystemSwitcher mini={collapsed} />
             </div>
           )}
+          <div className="mt-2">
+            <UniverseSwitch mini={collapsed} />
+          </div>
           <div className="mt-6 flex-1 overflow-y-auto">
             <NavLinks mini={collapsed} />
           </div>
@@ -261,6 +266,9 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
                     <EcosystemSwitcher />
                   </div>
                 )}
+                <div className="mt-2">
+                  <UniverseSwitch onNavigate={() => setDrawer(false)} />
+                </div>
                 <div className="mt-6">
                   <NavLinks onNavigate={() => setDrawer(false)} />
                 </div>
@@ -276,6 +284,17 @@ export function AppShell({ session, nav, bottomNav, title, subtitle, children }:
               </h1>
               {subtitle ? <p className="truncate text-xs text-muted-foreground">{subtitle}</p> : null}
             </div>
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              aria-label="Switch to Universe"
+            >
+              <Link to="/universe">
+                <Sparkles className="size-4.5 text-primary" />
+              </Link>
+            </Button>
             <NotificationBell />
             <Button
               variant="ghost"
