@@ -346,7 +346,7 @@ export function matchingStatusLabel(status: CashInAutoStatus | null): {
       tone: "success",
       title: "Automatic matching is on",
       detail:
-        "A cash in is approved automatically only when a real payment notification captured by a registered listener phone agrees with the uploaded receipt on at least two independent details (amount, reference, sending account, …) and the receipt or reference has never been credited before. The customer may pay before or after submitting. No payment provider is ever contacted.",
+        "A cash in is approved automatically only when a real payment notification captured by a registered listener phone agrees with the uploaded receipt on at least two independent details (amount, reference, sending account, …) and the receipt or reference has never been credited before. The customer may pay before or after submitting. No payment provider is ever contacted — GCash and the banks are never contacted.",
     };
   }
   return {
