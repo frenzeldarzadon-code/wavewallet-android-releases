@@ -10404,6 +10404,7 @@ export type Database = {
           social_purchased: number
         }[]
       }
+      presence_online_window: { Args: never; Returns: string }
       promote_to_reseller: {
         Args: { _discount: number; _ecosystem_id?: string; _user_id: string }
         Returns: undefined
@@ -13345,6 +13346,8 @@ export type Database = {
         Args: { _slug: string }
         Returns: {
           avatar_path: string
+          last_seen_at: string
+          online: boolean
           seller_handle: string
           seller_id: string
           seller_name: string
