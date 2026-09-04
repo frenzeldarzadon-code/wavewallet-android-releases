@@ -13,6 +13,7 @@ import {
   type DiscoveredShop,
   type ShopSeller,
 } from "@/lib/seller-storefront";
+import { presenceLabel, presenceTone } from "@/lib/presence";
 
 /**
  * Customer-facing Universe discovery. A Universe shop is the discovery
