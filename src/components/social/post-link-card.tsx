@@ -9,7 +9,7 @@ import { ArrowRight, Store, Ticket, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { RetailImage } from "@/components/retail/retail-image";
-import { VoucherArtwork } from "@/components/universe/voucher-artwork";
+import { voucherArtworkUrl } from "@/components/universe/voucher-artwork";
 import { retailImageUrl } from "@/lib/retail";
 import { shopTypeLabel, type LinkCard } from "@/lib/social";
 import { cn } from "@/lib/utils";
@@ -45,11 +45,12 @@ function ProductLinkBody({ card, compact }: { card: LinkCard; compact: boolean }
         {card.image_path ? (
           <RetailImage path={card.image_path} alt={name} className="aspect-square h-full" />
         ) : card.product_kind === "voucher" ? (
-          <VoucherArtwork
-            seed={`${card.shop_id}-${card.product_id}`}
-            name={name}
-            compact
-            className="aspect-square h-full"
+          // Small square: the curated artwork alone; its labels need more room.
+          <img
+            src={voucherArtworkUrl(`${card.shop_id}-${card.product_id}`)}
+            alt=""
+            loading="lazy"
+            className="size-full object-cover"
           />
         ) : (
           <RetailImage path={null} alt={name} className="aspect-square h-full" />
@@ -89,9 +90,12 @@ function ShopLinkBody({ card, compact }: { card: LinkCard; compact: boolean }) {
         alt=""
         className={cn(compact ? "aspect-[4/1]" : "aspect-[3/1]")}
       />
-      <div className="-mt-6 flex items-end gap-3 px-3 pb-3">
-        <ShopLogo path={card.logo_path} name={card.shop_name} />
-        <div className="min-w-0 flex-1 pb-0.5">
+      {/* Only the logo overlaps the cover; the text always sits on the card surface. */}
+      <div className="flex items-end gap-3 px-3 pb-3">
+        <span className="-mt-6">
+          <ShopLogo path={card.logo_path} name={card.shop_name} />
+        </span>
+        <div className="min-w-0 flex-1 pt-2">
           <p className="truncate text-sm font-semibold">{card.shop_name}</p>
           <p className="text-xs text-muted-foreground">{shopTypeLabel(card.shop_type)}</p>
         </div>
