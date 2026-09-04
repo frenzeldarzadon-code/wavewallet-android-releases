@@ -769,6 +769,47 @@ export async function fetchThreads(): Promise<DmThread[]> {
 export const threadTitle = (t: DmThread) =>
   t.kind === "order" ? (t.title ?? "Order chat") : (t.member_name ?? "Member");
 
+/** Order number / status / shop for an order chat the caller belongs to. */
+export interface OrderChatContext {
+  thread_id: string;
+  order_no: string;
+  status: string;
+  fulfillment_status: string | null;
+  shop_name: string | null;
+  shop_slug: string | null;
+}
+
+/** One round trip for every order chat in the list; the database only answers for active participants. */
+export async function fetchOrderChatContext(
+  threadIds: string[],
+): Promise<Map<string, OrderChatContext>> {
+  const out = new Map<string, OrderChatContext>();
+  const ids = [...new Set(threadIds.filter(Boolean))];
+  if (ids.length === 0) return out;
+  const { data, error } = await supabase.rpc("dm_order_chat_context", { _thread_ids: ids });
+  if (error) fail(error.message);
+  for (const r of (data ?? []) as OrderChatContext[]) out.set(r.thread_id, r);
+  return out;
+}
+
+/** "Order #123 · Delivering · Sari-Sari ni Aling Nena" — a glanceable label for order chats. */
+export function orderChatLabel(t: DmThread, ctx?: OrderChatContext | null): string {
+  if (!ctx) return threadTitle(t);
+  const state = (ctx.fulfillment_status && ctx.fulfillment_status !== "none"
+    ? ctx.fulfillment_status
+    : ctx.status
+  )
+    .replace(/_/g, " ")
+    .replace(/^\w/, (c) => c.toUpperCase());
+  return [`Order ${ctx.order_no}`, state, ctx.shop_name].filter(Boolean).join(" · ");
+}
+
+export type ThreadFilter = "all" | "direct" | "order";
+
+export function filterThreads(threads: DmThread[], filter: ThreadFilter): DmThread[] {
+  return filter === "all" ? threads : threads.filter((t) => t.kind === filter);
+}
+
 export async function fetchMessages(threadId: string): Promise<DmMessage[]> {
   const { data, error } = await supabase.rpc("dm_messages_for", { _thread_id: threadId });
   if (error) fail(error.message);
