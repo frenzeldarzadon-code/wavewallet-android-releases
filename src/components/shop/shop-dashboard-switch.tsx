@@ -128,7 +128,11 @@ export function ShopDashboardSwitch({
           disabled={!!busy}
           className={cn("w-full justify-start gap-2 rounded-lg", className)}
         >
-          {busy ? <Loader2 className="size-4 animate-spin" /> : <ArrowLeftRight className="size-4" />}
+          {busy ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <ArrowLeftRight className="size-4" />
+          )}
           <span className="min-w-0 flex-1 truncate text-left">
             <span className="block">{label}</span>
             <span className="block truncate text-[10px] font-normal text-muted-foreground">
@@ -161,9 +165,13 @@ export function ShopDashboardSwitch({
                       <Store className="size-5" />
                     </span>
                     <span className="min-w-0 flex-1 leading-tight">
-                      <span className="block truncate text-sm font-semibold">{m.ecosystemName}</span>
+                      <span className="block truncate text-sm font-semibold">
+                        {m.ecosystemName}
+                      </span>
                       <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                        {types[m.ecosystemId] ? <ShopTypeBadge type={types[m.ecosystemId]!} /> : null}
+                        {types[m.ecosystemId] ? (
+                          <ShopTypeBadge type={types[m.ecosystemId]!} />
+                        ) : null}
                         <span>{dashboardLabelFor(m.role)}</span>
                         {m.isActive ? <span>· current</span> : null}
                       </span>
@@ -201,7 +209,12 @@ export function UniverseSwitch({
       size="sm"
       className={cn("w-full gap-2", mini ? "justify-center px-0" : "justify-start", className)}
     >
-      <Link to="/universe" onClick={onNavigate} aria-label="Switch to Universe" title="Switch to Universe">
+      <Link
+        to="/universe"
+        onClick={onNavigate}
+        aria-label="Switch to Universe"
+        title="Switch to Universe"
+      >
         <Sparkles className="size-4 text-primary" />
         {mini ? null : (
           <span className="min-w-0 flex-1 truncate text-left">

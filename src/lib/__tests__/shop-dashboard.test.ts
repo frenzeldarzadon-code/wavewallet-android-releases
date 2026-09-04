@@ -20,8 +20,9 @@ const m = (over: Partial<Membership>): Membership => ({
 
 describe("shop dashboard entry", () => {
   it("never offers a dashboard to an ordinary customer", () => {
-    expect(shopDashboardEntry([m({ role: "customer" }), m({ ecosystemId: "e2", role: "customer" })]))
-      .toEqual({ kind: "none" });
+    expect(
+      shopDashboardEntry([m({ role: "customer" }), m({ ecosystemId: "e2", role: "customer" })]),
+    ).toEqual({ kind: "none" });
     expect(shopDashboardEntry([])).toEqual({ kind: "none" });
   });
 
@@ -39,7 +40,8 @@ describe("shop dashboard entry", () => {
       m({ ecosystemId: "c", role: "customer" }),
     ]);
     expect(entry.kind).toBe("choose");
-    if (entry.kind === "choose") expect(entry.memberships.map((x) => x.ecosystemId)).toEqual(["a", "b"]);
+    if (entry.kind === "choose")
+      expect(entry.memberships.map((x) => x.ecosystemId)).toEqual(["a", "b"]);
   });
 
   it("ignores pending, removed and suspended memberships even with a management role", () => {

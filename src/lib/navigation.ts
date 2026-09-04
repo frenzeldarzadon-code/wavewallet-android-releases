@@ -80,7 +80,6 @@ export function withCoreDestinations(items: NavItem[], core: NavItem[]): NavItem
   return [...kept, ...rest].slice(0, 5);
 }
 
-
 /** Every item in a grouped nav, in visual order. */
 export const flattenNav = (nav: Nav): NavItem[] => nav.flatMap((g) => g.items);
 
@@ -159,7 +158,6 @@ export const customerBottomNav: NavItem[] = withCoreDestinations(
   ],
   customerCoreBottomNav,
 );
-
 
 /* ------------------------------------------------------------------ */
 /* Reseller / Subreseller                                              */
@@ -299,7 +297,6 @@ export function adminNav(options?: { goLive?: boolean; shopType?: ShopTypeState 
         { to: "/admin/money", label: "Cash in & cash out", icon: Banknote },
         { to: "/admin/wallets", label: "Wallets & transfers", icon: Wallet },
         { to: "/admin/transactions", label: "Transactions", icon: ReceiptText },
-
       ],
     },
     {
@@ -315,7 +312,9 @@ export function adminNav(options?: { goLive?: boolean; shopType?: ShopTypeState 
       ? [
           {
             label: "Community",
-            items: [{ to: "/admin/social", label: "Moderation", icon: MessagesSquare }] as NavItem[],
+            items: [
+              { to: "/admin/social", label: "Moderation", icon: MessagesSquare },
+            ] as NavItem[],
           },
         ]
       : []),
@@ -343,12 +342,13 @@ export const adminBottomNav: NavItem[] = [
 export function adminBottomNavFor(shopType?: ShopTypeState | null): NavItem[] {
   if (shopType && showsRetailTools(shopType) && !showsVoucherTools(shopType)) {
     return adminBottomNav.map((i) =>
-      i.to === "/admin/vouchers" ? { to: "/admin/orders", label: "Orders", icon: ClipboardList } : i,
+      i.to === "/admin/vouchers"
+        ? { to: "/admin/orders", label: "Orders", icon: ClipboardList }
+        : i,
     );
   }
   return adminBottomNav;
 }
-
 
 /** Read-only screens a lapsed shop keeps. Subscription billing is not part of
  *  the Admin console — the database still refuses writes when a shop is locked. */

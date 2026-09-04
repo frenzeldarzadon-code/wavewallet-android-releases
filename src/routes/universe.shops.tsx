@@ -124,7 +124,10 @@ function UniverseShops() {
                     <div className="flex items-center gap-2">
                       {m.role === "admin" && m.isActive ? (
                         <Button asChild size="sm" variant="ghost">
-                          <Link to="/admin/storefront" aria-label={`Storefront design for ${m.ecosystemName}`}>
+                          <Link
+                            to="/admin/storefront"
+                            aria-label={`Storefront design for ${m.ecosystemName}`}
+                          >
                             <Settings2 className="size-4" />
                             Storefront
                           </Link>

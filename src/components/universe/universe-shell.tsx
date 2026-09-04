@@ -32,7 +32,10 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { MemberAvatar } from "@/components/member-avatar";
-import { ShopDashboardSwitch, useShopDashboardEntry } from "@/components/shop/shop-dashboard-switch";
+import {
+  ShopDashboardSwitch,
+  useShopDashboardEntry,
+} from "@/components/shop/shop-dashboard-switch";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/lib/session";
 import { fetchNotifications, unreadCount } from "@/lib/notifications";

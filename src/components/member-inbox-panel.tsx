@@ -99,10 +99,9 @@ export function MemberInboxPanel() {
         onSent={() => void reload()}
       />
 
-
-
       {/* ---------------- Invites ---------------- */}
-      <PageSection devSlot="member-inbox-panel.invites"
+      <PageSection
+        devSlot="member-inbox-panel.invites"
         title="Invites"
         description="Invitations from shop admins, resellers or the platform owner."
       >
@@ -190,7 +189,6 @@ export function MemberInboxPanel() {
           ))}
         </div>
       </PageSection>
-
     </div>
   );
 }
