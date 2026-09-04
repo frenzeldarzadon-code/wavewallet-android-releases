@@ -128,7 +128,7 @@ BEGIN
   ASSERT _before - _after = 8, format('R1: wallet held %s, expected ₱8', _before - _after);
   SELECT * INTO _ord FROM public.retail_orders WHERE id = _o.order_id;
   ASSERT _ord.total = 10 AND _ord.self_cashback = 2 AND _ord.buyer_charge = 8, 'R1: order keeps price / cashback / charge';
-  SELECT count(*) INTO _n FROM public.credit_ledger WHERE id = _ord.hold_ledger_id OR (reference = _ord.reference AND user_id = _res);
+  SELECT count(*) INTO _n FROM public.credit_ledger WHERE user_id = _res AND created_at >= _ord.created_at;
   ASSERT _n = 1, format('R1: one wallet row for the hold, got %s', _n);
   SELECT * INTO _l FROM public.credit_ledger WHERE id = _ord.hold_ledger_id;
   ASSERT _l.amount = 8 AND _l.base_amount = 10 AND _l.commission_amount = 2 AND _l.reason LIKE 'Self purchase%', 'R1: hold row breakdown';
