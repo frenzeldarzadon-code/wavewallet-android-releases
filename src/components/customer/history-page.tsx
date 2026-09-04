@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/select";
 
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
+import { PurchaseShopChip, usePurchaseShopLabels } from "@/components/universe/purchase-shop-chip";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
