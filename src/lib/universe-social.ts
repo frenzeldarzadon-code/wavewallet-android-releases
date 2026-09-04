@@ -191,7 +191,7 @@ export async function fetchOnlineMembers(limit = 40): Promise<OnlineMember[]> {
   }));
 }
 
-/** Public post history for a profile. General-audience published posts only. */
+/** Public post history for a profile. Every Universe post is public, so all active posts. */
 export async function fetchProfilePosts(handle: string, limit = 30): Promise<ProfilePost[]> {
   const { data, error } = await supabase.rpc("universe_profile_posts", {
     _handle: handle,
