@@ -8,11 +8,10 @@
  * notifications, and the stored text never carries balances or private message
  * bodies.
  *
- * Browser notifications: this app shows a system notification only while a tab
- * is open and only after the person granted permission. True background push
- * (delivery with the app closed) additionally needs a service worker with VAPID
- * keys and a push provider — see PUSH_REQUIREMENTS. Nothing here pretends to
- * deliver push when it cannot.
+ * Phone notifications: every new row is also queued for real Web Push to each
+ * of the person's registered devices (see financial-notifications.ts for the
+ * device side and push-dispatch.server.ts for the sender). The in-app list is
+ * always the history and the fallback.
  */
 import { supabase } from "@/integrations/supabase/client";
 import { FINANCIAL_CATEGORIES } from "@/lib/financial-notifications";
@@ -52,12 +51,18 @@ export const NOTIFICATION_CATEGORIES = [
   ...SOCIAL_NOTIFICATION_CATEGORIES,
 ] as ReadonlyArray<{ kind: string; label: string }>;
 
-/** What is still missing before real background push can be switched on. */
-export const PUSH_REQUIREMENTS = [
-  "A service worker registered for this site",
-  "A VAPID key pair stored as platform secrets",
-  "A push delivery endpoint that stores browser subscriptions",
-] as const;
+const PUSH_NUDGE_KEY = "wavewallet.push-nudge";
+
+/** Has the person dismissed the gentle "turn on phone notifications" prompt? */
+export function pushNudgeDismissed(): boolean {
+  if (typeof window === "undefined") return true;
+  return window.localStorage.getItem(PUSH_NUDGE_KEY) === "dismissed";
+}
+
+export function dismissPushNudge() {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(PUSH_NUDGE_KEY, "dismissed");
+}
 
 function fail(message: string): never {
   throw new Error(message);

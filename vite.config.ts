@@ -38,6 +38,8 @@ export default defineConfig({
         manifest: false,
         outDir: "dist/client",
         workbox: {
+          // Phone notification handler (push + tap-to-open) lives in public/.
+          importScripts: ["push-sw.js"],
           // Keep the first visit light on slow connections: only the shell styling,
           // fonts and icons are precached; route JS is cached as it is used.
           globPatterns: [

@@ -46,6 +46,8 @@ import { fetchMyProfile } from "@/lib/profile";
 import { peso } from "@/lib/wavewallet";
 import { WALLET_CHANGED_EVENT } from "@/lib/wallet-events";
 import { useVisiblePoll } from "@/hooks/use-visible-poll";
+import { useRefreshPushRegistration } from "@/hooks/use-push-setup";
+import { PushNudge } from "@/components/universe/push-nudge";
 
 /** Full navigation (desktop rail). */
 const railItems = [
@@ -174,6 +176,8 @@ export function UniverseShell({
   const friendRequests = usePendingFriendRequests();
   const account = session.account;
   const identity = useIdentity(account?.id ?? null);
+  // Keeps this browser's push subscription fresh; never asks for permission.
+  useRefreshPushRegistration(account?.id ?? null);
   // Universe IS the customer portal. A Shop Dashboard is offered only for
   // memberships that carry a management role — decided from the member's real
   // memberships, never from the currently active shop alone.
@@ -362,7 +366,10 @@ export function UniverseShell({
               ) : null}
             </div>
           </div>
-          <div className="pt-3 lg:px-0">{children}</div>
+          <div className="pt-3 lg:px-0">
+            {pathname.startsWith("/universe/notifications") ? null : <PushNudge />}
+            {children}
+          </div>
         </main>
 
         {/* Right rail — primary destinations */}

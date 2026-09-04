@@ -7,7 +7,7 @@
  */
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Bell, BellRing, Check, Loader2 } from "lucide-react";
+import { Bell, BellOff, BellRing, Check, Loader2, Send, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,15 +15,13 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
+import { usePushSetup } from "@/hooks/use-push-setup";
 import {
   NOTIFICATION_CATEGORIES,
-  PUSH_REQUIREMENTS,
   fetchNotifications,
   fetchPreferences,
   markRead,
   notificationLink,
-  notificationPermission,
-  requestNotificationPermission,
   savePreferences,
   toggleCategory,
   type Notification,
@@ -32,9 +30,10 @@ import {
 import {
   deliverySummary,
   fetchPushDevices,
-  registerThisDevice,
   removeDevice,
+  sendTestNotification,
   setDeviceEnabled,
+  thisDeviceEndpoint,
   type PushDevice,
 } from "@/lib/financial-notifications";
 
@@ -56,13 +55,16 @@ export function NotificationsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [permission, setPermission] = useState(notificationPermission());
+  const [busy, setBusy] = useState(false);
   const [devices, setDevices] = useState<PushDevice[]>([]);
+  const [hereEndpoint, setHereEndpoint] = useState<string | null>(null);
+  const { support, permission, enable, disableHere } = usePushSetup();
 
   const reloadDevices = () => {
     void fetchPushDevices()
       .then(setDevices)
       .catch(() => undefined);
+    void thisDeviceEndpoint().then(setHereEndpoint);
   };
 
   useEffect(() => {
@@ -76,6 +78,7 @@ export function NotificationsPage() {
       })
       .catch((e: Error) => toast.error("Could not load notifications", { description: e.message }))
       .finally(() => active && setLoading(false));
+    void thisDeviceEndpoint().then((e) => active && setHereEndpoint(e));
     return () => {
       active = false;
     };
@@ -94,19 +97,55 @@ export function NotificationsPage() {
   };
 
   const enablePush = async () => {
-    const result = await requestNotificationPermission();
-    setPermission(result);
-    if (result === "granted") {
-      await persist({ ...prefs, pushEnabled: true });
-      await registerThisDevice().catch(() => undefined);
+    setBusy(true);
+    const { result, error } = await enable(prefs);
+    setBusy(false);
+    if (result === "enabled") {
+      setPrefs((p) => ({ ...p, pushEnabled: true }));
       reloadDevices();
-      toast.success("Alerts on", {
-        description: "You will see pop-up alerts while ONE WAVE is open in this browser.",
+      toast.success("Phone notifications are on", {
+        description: "This device will be alerted even when ONE WAVE is closed.",
       });
     } else if (result === "denied") {
-      toast.error("Your browser blocked alerts", {
-        description: "Allow notifications for this site in your browser settings.",
+      toast.error("Your browser blocked notifications", {
+        description: "Allow notifications for this site in your browser or phone settings.",
       });
+    } else if (result === "unavailable") {
+      toast.error("Phone notifications are not available here yet", {
+        description: "Open the published app (or add it to your Home Screen on iPhone).",
+      });
+    } else if (result === "error") {
+      toast.error("Could not switch on phone notifications", { description: error });
+    }
+  };
+
+  const disablePush = async () => {
+    setBusy(true);
+    try {
+      await disableHere();
+      await persist({ ...prefs, pushEnabled: false });
+      reloadDevices();
+      toast.success("Phone notifications are off", {
+        description: "Everything still shows up in your list here.",
+      });
+    } catch (e) {
+      toast.error("Could not switch off", { description: (e as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const testPush = async () => {
+    setBusy(true);
+    try {
+      await sendTestNotification();
+      toast.success("Test sent", {
+        description: "It should reach your registered devices within a few seconds.",
+      });
+    } catch (e) {
+      toast.error("Could not send a test", { description: (e as Error).message });
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -129,6 +168,10 @@ export function NotificationsPage() {
       reloadDevices();
     }
   };
+
+  const hereRegistered = !!hereEndpoint && devices.some((d) => d.endpoint === hereEndpoint);
+  const pushOnHere = prefs.pushEnabled && permission === "granted" && hereRegistered;
+  const pushDevices = devices.filter((d) => d.push_capable);
 
   const open = async (n: Notification) => {
     if (!n.read_at) {
@@ -246,82 +289,91 @@ export function NotificationsPage() {
       <Card className="shadow-[var(--shadow-card)]">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <BellRing className="size-4" /> Pop-up alerts on this device
+            <BellRing className="size-4" /> Phone notifications
           </CardTitle>
           <CardDescription>
-            We never turn these on for you — your browser asks first.
+            Get alerted on this device even when ONE WAVE is closed. We never turn this on for you
+            — your browser asks first.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 pb-5 text-sm">
-          {permission === "unsupported" ? (
+          {support === "unsupported" ? (
             <p className="text-muted-foreground">
-              This browser does not support notifications. Your in-app list still works.
+              This browser cannot receive phone notifications. Your in-app list still works.
             </p>
-          ) : permission === "granted" ? (
-            <p className="flex items-center gap-2 text-success">
-              <Bell className="size-4" /> Alerts are allowed on this device.
+          ) : support === "needs-install" ? (
+            <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+              <p className="font-medium text-foreground">Add ONE WAVE to your Home Screen first</p>
+              <p className="mt-1">
+                On iPhone and iPad, notifications only work for apps added to the Home Screen:
+                tap Share, then “Add to Home Screen”, open ONE WAVE from there and come back
+                here.
+              </p>
+            </div>
+          ) : support === "unavailable" ? (
+            <p className="text-muted-foreground">
+              Phone notifications are only available in the published app, not in this preview.
+            </p>
+          ) : pushOnHere ? (
+            <div className="space-y-3">
+              <p className="flex items-center gap-2 text-success">
+                <Bell className="size-4" /> On for this device.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" className="gap-1.5" disabled={busy} onClick={() => void testPush()}>
+                  <Send className="size-4" /> Send me a test
+                </Button>
+                <Button size="sm" variant="ghost" className="gap-1.5 text-muted-foreground" disabled={busy} onClick={() => void disablePush()}>
+                  <BellOff className="size-4" /> Turn off
+                </Button>
+              </div>
+            </div>
+          ) : permission === "denied" ? (
+            <p className="text-muted-foreground">
+              Notifications are blocked for this site. Allow them in your browser or phone
+              settings, then come back here.
             </p>
           ) : (
-            <Button size="sm" onClick={() => void enablePush()} disabled={permission === "denied"}>
-              {permission === "denied" ? "Blocked in browser settings" : "Allow alerts"}
-            </Button>
+            <div className="space-y-2">
+              <Button size="sm" className="gap-1.5" disabled={busy} onClick={() => void enablePush()}>
+                {busy ? <Loader2 className="size-4 animate-spin" /> : <Smartphone className="size-4" />}
+                Turn on for this device
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                Alerts stay short — “You have a new message” — and open the app to the details.
+              </p>
+            </div>
           )}
-          <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-            <p className="font-medium text-foreground">
-              Alerts with the app closed are not switched on yet.
-            </p>
-            <p className="mt-1">Turning that on needs:</p>
-            <ul className="mt-1 list-disc pl-4">
-              {PUSH_REQUIREMENTS.map((r) => (
-                <li key={r}>{r}</li>
-              ))}
-            </ul>
-            <p className="mt-1">
-              Until then ONE WAVE only alerts you while a tab is open, and everything is always
-              waiting for you here.
-            </p>
-          </div>
         </CardContent>
       </Card>
 
       <Card className="shadow-[var(--shadow-card)]">
-        <CardHeader className="flex-row items-center justify-between gap-3 space-y-0">
-          <div>
-            <CardTitle className="text-base">Your devices</CardTitle>
-            <CardDescription>
-              Switch money alerts on or off for each phone or computer you use.
-            </CardDescription>
-          </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() =>
-              void registerThisDevice()
-                .then(() => {
-                  reloadDevices();
-                  toast.success("This device is registered");
-                })
-                .catch((e: Error) =>
-                  toast.error("Could not register this device", { description: e.message }),
-                )
-            }
-          >
-            Add this device
-          </Button>
+        <CardHeader>
+          <CardTitle className="text-base">Your devices</CardTitle>
+          <CardDescription>
+            Every phone or computer where you turned notifications on. Switch one off or remove it
+            any time.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 pb-5 text-sm">
-          {devices.length === 0 ? (
+          {pushDevices.length === 0 ? (
             <p className="text-muted-foreground">
-              No device registered yet. Your alerts still appear in the list above.
+              No device receives phone notifications yet. Your alerts still appear in the list
+              above.
             </p>
           ) : (
-            devices.map((d) => (
+            pushDevices.map((d) => (
               <div key={d.id} className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate font-medium">{d.device_label ?? "Unnamed device"}</p>
+                  <p className="truncate font-medium">
+                    {d.device_label ?? "Unnamed device"}
+                    {d.endpoint && d.endpoint === hereEndpoint ? (
+                      <span className="ml-1.5 text-xs font-normal text-muted-foreground">(this one)</span>
+                    ) : null}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {d.expired_at
-                      ? `Needs re-registering — ${d.last_error ?? "the browser dropped this device"}`
+                      ? `Needs turning on again — ${d.last_error ?? "the browser dropped this device"}`
                       : `Last seen ${when(d.last_seen_at)}`}
                   </p>
                 </div>
