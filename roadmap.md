@@ -31,3 +31,5 @@ Shop Access cleanup — Universe is the customer portal (DONE — verified with 
 - [x] Universe seller list: order by real presence (reuse member_presence), status labels, own-shop "Buy from My Shop" button — not published
 
 - [x] Universe feed: fixed unbounded refetch loop (unstable session account object) — not published
+
+- [x] Voucher history: show originating Universe shop (voucher_sales.ecosystem_id) with logo + storefront link — not published
