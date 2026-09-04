@@ -40,9 +40,7 @@ describe("PostMemberMenu action row", () => {
   });
 
   it("hides member actions on the viewer's own post but keeps the menu", () => {
-    const html = renderToStaticMarkup(
-      <PostMemberMenu {...base} isSelf onDelete={() => {}} />,
-    );
+    const html = renderToStaticMarkup(<PostMemberMenu {...base} isSelf onDelete={() => {}} />);
     expect(html).not.toContain(">Follow<");
     expect(html).not.toContain(">Gift<");
     expect(html).toContain("More actions");
