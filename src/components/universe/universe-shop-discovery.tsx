@@ -94,7 +94,7 @@ function ShopResult({
 }: {
   shop: DiscoveredShop;
   searching: boolean;
-  currentUserId?: string | null;
+  currentUserId?: string | null | undefined;
 }) {
   const [showAll, setShowAll] = useState(false);
   const [sellers, setSellers] = useState<ShopSeller[] | null>(null);
