@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState, PageSection } from "@/components/ui-kit";
-import { HiddenPostsCard } from "@/components/social/hidden-posts-card";
 import { EcosystemSocialCard } from "@/components/social/ecosystem-social-card";
 import { PromotionTiersCard } from "@/components/social/promotion-tiers-card";
 import { useSession } from "@/lib/session";
@@ -103,9 +102,8 @@ function AdminSocial() {
         </>
       ) : null}
 
-      <HiddenPostsCard ecosystemId={ecosystemDbId} />
-
-      <PageSection devSlot="social.reported-content"
+      <PageSection
+        devSlot="social.reported-content"
         title="Reported content"
         description="Members can report posts, replies and other members. Everything here is scoped to your shop only."
       >
@@ -145,7 +143,8 @@ function AdminSocial() {
         )}
       </PageSection>
 
-      <PageSection devSlot="social.social-coin-activity"
+      <PageSection
+        devSlot="social.social-coin-activity"
         title="Social coin activity"
         description="Historical ledger of social coin movements in your shop. Posting, replies and promotions are free today, so new spending entries are no longer created."
       >

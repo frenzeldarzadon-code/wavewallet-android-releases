@@ -126,22 +126,8 @@ export interface FeedPost {
   origin_ecosystem_name: string | null;
   author_role: string | null;
   /** Shop admin may hide this post from their own shop's members. */
+  /** Always false — per-shop hiding is retired; Universe posts are public. */
   can_hide?: boolean;
-}
-
-/** A post a shop admin hid from their own members. Still public elsewhere. */
-export interface HiddenPostRow {
-  post_id: string;
-  ecosystem_id: string;
-  hidden_by_name: string;
-  reason: string | null;
-  hidden_at: string;
-  author_name: string;
-  author_handle: string | null;
-  author_avatar: string | null;
-  body: string;
-  image_path: string | null;
-  post_created_at: string;
 }
 
 /** A member suggested while typing an @mention. */
@@ -583,35 +569,6 @@ export async function createComment(postId: string, body: string, parentId?: str
     balance: number;
     depth: number;
   };
-}
-
-/**
- * Shop-scoped visibility control. Hides (or restores) a post for the members of
- * one shop only — the post stays public in the Universe and in every other
- * shop. The database checks that the caller really moderates that shop and
- * records who acted, when and why.
- */
-export async function hidePostForShop(
-  postId: string,
-  hidden: boolean,
-  reason?: string,
-  ecosystemId?: string | null,
-) {
-  const { error } = await supabase.rpc("social_hide_post_for_shop", {
-    _post_id: postId,
-    _hidden: hidden,
-    ...(reason && reason.trim() ? { _reason: reason.trim() } : {}),
-    ...(ecosystemId ? { _eco: ecosystemId } : {}),
-  });
-  if (error) fail(error.message);
-}
-
-export async function fetchHiddenPosts(ecosystemId?: string | null): Promise<HiddenPostRow[]> {
-  const { data, error } = await supabase.rpc("social_hidden_posts", {
-    ...(ecosystemId ? { _eco: ecosystemId } : {}),
-  });
-  if (error) fail(error.message);
-  return (data ?? []) as HiddenPostRow[];
 }
 
 /** Handle/name autocomplete for @mentions. */

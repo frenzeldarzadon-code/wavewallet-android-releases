@@ -140,7 +140,6 @@ const SLOT_SOURCE: SlotSource[] = [
   { name: "guide.faqs", label: "FAQs", group: "Guide", roles: ["super_admin"] },
   { name: "guide.public-guide-sections", label: "Public guide sections", group: "Guide", roles: ["super_admin"] },
   { name: "guide.visitor-questions", label: "Visitor questions", group: "Guide", roles: ["super_admin"] },
-  { name: "hidden-posts-card.posts-hidden-from-my-shop", label: "Posts hidden from my shop", group: "Hidden Posts", roles: ["customer", "reseller", "subreseller", "admin", "super_admin"] },
   { name: "history-page.all-wallet-transactions", label: "All wallet transactions", group: "History Page", roles: ["customer", "reseller", "subreseller", "admin", "super_admin"] },
   { name: "invite-member-card.invitations", label: "Invitations", group: "Invite Member", roles: ["customer", "reseller", "subreseller", "admin", "super_admin"] },
   { name: "invite-member-card.invite-a-member-from-universe", label: "Invite a member from Universe", group: "Invite Member", roles: ["customer", "reseller", "subreseller", "admin", "super_admin"] },

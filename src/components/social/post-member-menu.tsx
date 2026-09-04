@@ -13,7 +13,6 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Check,
-  EyeOff,
   Flag,
   Gift,
   Loader2,
@@ -65,8 +64,7 @@ export interface PostMemberMenuProps {
   onToggleFollow?: () => void;
   onReport?: () => void;
   onBlock?: () => void;
-  /** Moderation — only passed when the viewer is allowed. */
-  onHideForShop?: () => void;
+  /** Platform-owner moderation — only passed when the viewer is allowed. */
   onDelete?: () => void;
 }
 
@@ -82,7 +80,6 @@ export function PostMemberMenu({
   onToggleFollow,
   onReport,
   onBlock,
-  onHideForShop,
   onDelete,
 }: PostMemberMenuProps) {
   const [open, setOpen] = useState(false);
@@ -121,8 +118,7 @@ export function PostMemberMenu({
       <UserPlus className="size-4" />
     );
 
-  const hasAnything =
-    Boolean(authorHandle) || canRelate || onHideForShop || onDelete || onReport || onBlock;
+  const hasAnything = Boolean(authorHandle) || canRelate || onDelete || onReport || onBlock;
   if (!hasAnything) return null;
 
   return (
@@ -219,9 +215,7 @@ export function PostMemberMenu({
             </>
           ) : null}
 
-          {(canRelate && (onReport || onBlock)) || onHideForShop || onDelete ? (
-            <DropdownMenuSeparator />
-          ) : null}
+          {(canRelate && (onReport || onBlock)) || onDelete ? <DropdownMenuSeparator /> : null}
           {canRelate && onReport ? (
             <DropdownMenuItem className="gap-2" onSelect={onReport}>
               <Flag className="size-4" /> Report
@@ -230,11 +224,6 @@ export function PostMemberMenu({
           {canRelate && onBlock ? (
             <DropdownMenuItem className="gap-2" onSelect={onBlock}>
               <ShieldOff className="size-4" /> Block {authorName.split(" ")[0]}
-            </DropdownMenuItem>
-          ) : null}
-          {onHideForShop ? (
-            <DropdownMenuItem className="gap-2" onSelect={onHideForShop}>
-              <EyeOff className="size-4" /> Hide from my shop
             </DropdownMenuItem>
           ) : null}
           {onDelete ? (
