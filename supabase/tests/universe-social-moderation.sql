@@ -126,7 +126,7 @@ BEGIN
   EXCEPTION WHEN check_violation OR raise_exception THEN NULL;
   END;
 
-  RAISE NOTICE 'PASS: Universe posting, hiding, deletion, threading and handles hold';
+  RAISE NOTICE 'PASS: Universe posting, retired hiding, deletion, threading and handles hold';
   RAISE EXCEPTION 'ROLLBACK: test complete';
  EXCEPTION WHEN OTHERS THEN
   IF SQLERRM LIKE 'ROLLBACK:%' THEN RAISE NOTICE '%', SQLERRM; ELSE RAISE; END IF;
