@@ -120,6 +120,15 @@ export async function removeFriend(userId: string) {
   if (error) fail(error.message);
 }
 
+/** Tabs of Universe → Friends; the value lives in the URL. */
+export type FriendsTab = "friends" | "find" | "following" | "requests";
+export const FRIENDS_TABS: FriendsTab[] = ["friends", "find", "following", "requests"];
+
+/** Incoming pending friend requests — the number shown on badges. */
+export function pendingRequestCount(rows: GraphEntry[] | null | undefined): number {
+  return (rows ?? []).filter((r) => r.kind === "friend" && r.status === "incoming").length;
+}
+
 export async function fetchSocialGraph(): Promise<GraphEntry[]> {
   const { data, error } = await supabase.rpc("my_social_graph");
   if (error) fail(error.message);

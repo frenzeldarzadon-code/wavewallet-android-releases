@@ -1,10 +1,11 @@
 /**
- * Universe → Friends: three tabs on top of the EXISTING social graph.
+ * Universe → Friends: four tabs on top of the EXISTING social graph.
  *
- *   Friends       – accepted friendships (+ pending requests you must answer)
- *   Find Friends  – Universe-wide search + who is online, with Add friend /
- *                   Accept / Friends and Follow controls
- *   Following     – people you follow (same follow_member RPC as the feed)
+ *   Friends         – accepted friendships
+ *   Find Friends    – Universe-wide search + who is online, with Add friend /
+ *                     Accept / Friends and Follow controls
+ *   Following       – people you follow (same follow_member RPC as the feed)
+ *   Friend Requests – incoming requests to accept/decline (+ the ones you sent)
  *
  * Single source of truth: social_friendships / social_follows through
  * my_social_graph, universe_relationship_batch, send_friend_request,
@@ -42,6 +43,7 @@ import {
   respondFriendRequest,
   sendFriendRequest,
   setFollowing,
+  type FriendsTab,
   type GraphEntry,
   type RelationshipLite,
 } from "@/lib/universe-social";
@@ -53,7 +55,7 @@ import {
   type PersonRow,
 } from "@/components/universe/people-sheet";
 
-export type FriendsTab = "friends" | "find" | "following";
+export type { FriendsTab } from "@/lib/universe-social";
 
 export function FriendsHub({
   tab,
@@ -131,20 +133,27 @@ export function FriendsHub({
 
   return (
     <Tabs value={tab} onValueChange={(v) => onTabChange(v as FriendsTab)} className="space-y-3">
-      <TabsList className="sticky top-[57px] z-20 grid h-11 w-full grid-cols-3 lg:top-[65px]">
-        <TabsTrigger value="friends" className="h-9">
+      <TabsList className="sticky top-[57px] z-20 grid h-11 w-full grid-cols-4 lg:top-[65px]">
+        <TabsTrigger value="friends" className="h-9 px-1 text-xs sm:text-sm">
           Friends{friends.length ? ` · ${friends.length}` : ""}
+        </TabsTrigger>
+        <TabsTrigger value="find" className="h-9 px-1 text-xs sm:text-sm">
+          <span className="sm:hidden">Find</span>
+          <span className="hidden sm:inline">Find Friends</span>
+        </TabsTrigger>
+        <TabsTrigger value="following" className="h-9 px-1 text-xs sm:text-sm">
+          Following{following.length ? ` · ${following.length}` : ""}
+        </TabsTrigger>
+        <TabsTrigger value="requests" className="h-9 px-1 text-xs sm:text-sm">
+          Requests
           {incoming.length ? (
-            <span className="ml-1.5 inline-flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-4 text-destructive-foreground">
+            <span
+              aria-label={`${incoming.length} pending`}
+              className="ml-1.5 inline-flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-4 text-destructive-foreground"
+            >
               {incoming.length}
             </span>
           ) : null}
-        </TabsTrigger>
-        <TabsTrigger value="find" className="h-9">
-          Find Friends
-        </TabsTrigger>
-        <TabsTrigger value="following" className="h-9">
-          Following{following.length ? ` · ${following.length}` : ""}
         </TabsTrigger>
       </TabsList>
 
@@ -154,46 +163,6 @@ export function FriendsHub({
           <Spinner />
         ) : (
           <>
-            {incoming.length > 0 ? (
-              <Panel title="Friend requests" hint="They asked to be your friend.">
-                {incoming.map((r) =>
-                  person(
-                    r,
-                    <div className="flex gap-1.5">
-                      <Button
-                        size="sm"
-                        className="h-9 gap-1.5"
-                        onClick={() =>
-                          void act(
-                            r.relation_id,
-                            () => respondFriendRequest(r.relation_id, true),
-                            "You are now friends",
-                          )
-                        }
-                      >
-                        <Check className="size-4" /> Accept
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-9 w-9 px-0"
-                        aria-label="Decline"
-                        onClick={() =>
-                          void act(
-                            r.relation_id,
-                            () => respondFriendRequest(r.relation_id, false),
-                            "Request declined",
-                          )
-                        }
-                      >
-                        <X className="size-4" />
-                      </Button>
-                    </div>,
-                  ),
-                )}
-              </Panel>
-            ) : null}
-
             <Panel title="Your friends" hint="Social links only — never your wallet or shop data.">
               {friends.length === 0 ? (
                 <EmptyState
@@ -230,30 +199,6 @@ export function FriendsHub({
                 )
               )}
             </Panel>
-
-            {sent.length > 0 ? (
-              <Panel title="Sent requests" hint="Waiting for their answer.">
-                {sent.map((r) =>
-                  person(
-                    r,
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-9"
-                      onClick={() =>
-                        void act(
-                          r.relation_id,
-                          () => respondFriendRequest(r.relation_id, false),
-                          "Request withdrawn",
-                        )
-                      }
-                    >
-                      Cancel
-                    </Button>,
-                  ),
-                )}
-              </Panel>
-            ) : null}
           </>
         )}
       </TabsContent>
@@ -292,6 +237,88 @@ export function FriendsHub({
               )
             )}
           </Panel>
+        )}
+      </TabsContent>
+
+      {/* ── Friend Requests ─────────────────────────────────── */}
+      <TabsContent value="requests" className="space-y-3">
+        {loading ? (
+          <Spinner />
+        ) : (
+          <>
+            {incoming.length === 0 ? (
+              <Panel title="Friend requests" hint="People who asked to be your friend.">
+                <EmptyState
+                  title="No pending requests"
+                  description="When someone adds you, their request appears here with Accept and Decline."
+                />
+              </Panel>
+            ) : (
+              <Panel
+                title={`Friend requests · ${incoming.length}`}
+                hint="Accept to become friends, or decline to remove the request."
+              >
+                {incoming.map((r) =>
+                  person(
+                    r,
+                    <div className="flex gap-1.5">
+                      <Button
+                        size="sm"
+                        className="h-9 gap-1.5"
+                        onClick={() =>
+                          void act(
+                            r.relation_id,
+                            () => respondFriendRequest(r.relation_id, true),
+                            "You are now friends",
+                          )
+                        }
+                      >
+                        <Check className="size-4" /> Accept
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-9 gap-1.5"
+                        onClick={() =>
+                          void act(
+                            r.relation_id,
+                            () => respondFriendRequest(r.relation_id, false),
+                            "Request declined",
+                          )
+                        }
+                      >
+                        <X className="size-4" /> Decline
+                      </Button>
+                    </div>,
+                  ),
+                )}
+              </Panel>
+            )}
+
+            {sent.length > 0 ? (
+              <Panel title="Sent requests" hint="Waiting for their answer.">
+                {sent.map((r) =>
+                  person(
+                    r,
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-9"
+                      onClick={() =>
+                        void act(
+                          r.relation_id,
+                          () => respondFriendRequest(r.relation_id, false),
+                          "Request withdrawn",
+                        )
+                      }
+                    >
+                      Cancel
+                    </Button>,
+                  ),
+                )}
+              </Panel>
+            ) : null}
+          </>
         )}
       </TabsContent>
     </Tabs>

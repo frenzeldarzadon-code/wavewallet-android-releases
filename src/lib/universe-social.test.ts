@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   EMPTY_RELATIONSHIP,
+  FRIENDS_TABS,
+  pendingRequestCount,
   followActionLabel,
   friendActionKind,
   friendActionLabel,
@@ -140,5 +142,20 @@ describe("account deletion safety", () => {
         reason: "They still hold 120 credits.",
       }),
     ).toBe("They still hold 120 credits.");
+  });
+});
+
+describe("Friend Requests tab", () => {
+  it("counts only incoming pending friend requests for the badge", () => {
+    const rows = [
+      { kind: "friend", status: "incoming", relation_id: "a" },
+      { kind: "friend", status: "incoming", relation_id: "b" },
+      { kind: "friend", status: "requested", relation_id: "c" },
+      { kind: "friend", status: "friends", relation_id: "d" },
+      { kind: "following", status: "following", relation_id: "e" },
+    ] as unknown as Parameters<typeof pendingRequestCount>[0];
+    expect(pendingRequestCount(rows)).toBe(2);
+    expect(pendingRequestCount(null)).toBe(0);
+    expect(FRIENDS_TABS).toEqual(["friends", "find", "following", "requests"]);
   });
 });
