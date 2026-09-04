@@ -134,7 +134,7 @@ export function extractNotificationFields(text: string | null | undefined): Noti
   const labeled: Record<string, string> = {};
   const label = String.raw`[A-Z][A-Za-z]*(?:\s[A-Za-z]+){0,2}`;
   for (const m of raw.matchAll(
-    new RegExp(String.raw`\b(${label})\s*:\s*([^:]{1,80}?)(?=\s+${label}\s*:|\.\s|$)`, "g"),
+    new RegExp(String.raw`\b(${label})\s*:\s*([^:]{1,80})(?=\s+${label}\s*:|\.\s|$)`, "g"),
   )) {
     const key = clean(m[1])?.toLowerCase();
     const val = clean(m[2]);
