@@ -76,7 +76,8 @@ export function startPresenceHeartbeat(): () => void {
     const touch = () => {
       if (document.visibilityState !== "visible") return;
       void supabase.auth.getSession().then(({ data }) => {
-        if (data.session) void supabase.rpc("touch_member_presence");
+        // PostgREST builders are lazy — they only run once awaited/then'd.
+        if (data.session) void supabase.rpc("touch_member_presence").then(() => undefined);
       });
     };
     const arm = () => {
