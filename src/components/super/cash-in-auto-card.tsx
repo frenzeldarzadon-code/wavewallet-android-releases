@@ -2,8 +2,8 @@
  * Platform-owner control for automatic Cash In approval.
  *
  * Automatic approval rests entirely on *configured* matching data: the amount,
- * the shop's receiving GCash number, a never-used payment reference and an
- * attached screenshot. Nothing here contacts GCash, and a screenshot is never
+ * the receiving account the member paid, a never-used payment reference and an
+ * attached screenshot. Nothing here contacts any e-wallet or bank, and a screenshot is never
  * treated as proof that a payment happened — it is kept as supporting evidence
  * for audit and manual review.
  */
@@ -148,7 +148,7 @@ export function CashInAutoCard() {
           </div>
           <p className="mt-1 text-xs text-muted-foreground">{banner.detail}</p>
           <p className="mt-2 text-xs text-muted-foreground">
-            Shops with a receiving GCash number configured: {status.shops_with_number}
+            Shops with a receiving account number configured: {status.shops_with_number}
           </p>
         </div>
 
@@ -156,8 +156,8 @@ export function CashInAutoCard() {
           <div>
             <Label htmlFor="auto-cash-in">Approve matching cash ins automatically</Label>
             <p className="text-xs text-muted-foreground">
-              A request settles only when the amount, the shop's receiving GCash number and a brand new payment
-              reference all match and a screenshot is attached. Anything else stays pending for you.
+              A request settles only when the amount, the receiving account the member paid (shop or platform) and a brand
+              new payment reference all match and a screenshot is attached. Anything else stays pending for you.
             </p>
           </div>
           <Switch
@@ -174,8 +174,8 @@ export function CashInAutoCard() {
               <Label htmlFor="auto-listener">First layer — a listener phone must confirm the payment</Label>
               <p className="text-xs text-muted-foreground">
                 A cash in is only settled automatically if a paired phone saw a matching notification. A phone
-                paired to one shop can only settle that shop's requests; the receiving number shown by GCash is
-                informational and never blocks approval.
+                paired to one shop can only settle that shop's requests, and platform phones settle Universe / platform
+                requests; the receiving number printed in the notification is informational and never blocks approval.
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Paired phones ready: {listenerProven} of {listenerActive} active ·{" "}
@@ -183,7 +183,7 @@ export function CashInAutoCard() {
               </p>
               {(status.listener_devices_unscoped ?? 0) > 0 ? (
                 <p className="mt-1 text-xs text-destructive">
-                  {status.listener_devices_unscoped} paired phone(s) have no receiving GCash account set — they
+                  {status.listener_devices_unscoped} paired phone(s) have no receiving account set — they
                   will never match anything until you set one.
                 </p>
               ) : null}
@@ -236,7 +236,7 @@ export function CashInAutoCard() {
             <p className="text-xs text-muted-foreground">
               Choose exactly which details each layer must confirm. The received amount is always required and a
               payment reference can never be used twice — those two cannot be switched off. Change these only if
-              GCash changes what its notifications show. Every change is written to the audit log.
+              a payment app changes what its notifications show. Every change is written to the audit log.
             </p>
           </div>
 
@@ -250,9 +250,9 @@ export function CashInAutoCard() {
 
           <div className="flex items-start justify-between gap-3">
             <div>
-              <Label htmlFor="l1-sender">First layer · sending GCash number</Label>
+              <Label htmlFor="l1-sender">First layer · sending number / account</Label>
               <p className="text-xs text-muted-foreground">
-                The notification must show which number sent the money.
+                The notification must show which number or account sent the money.
               </p>
             </div>
             <Switch
@@ -294,7 +294,8 @@ export function CashInAutoCard() {
           </div>
 
           <p className="rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">
-            First layer reads only what the GCash notification actually reports: the sending number and the amount.
+            First layer reads only what the payment app's notification actually reports (GCash today, any app allowed in the
+            notification sources): the sending number and the amount.
             Transaction time is not used, and no reference number is expected from the notification. Second layer
             reads the payment screenshot for the sender, the receiving account, the amount, the reference and the
             transaction date and time. The reference and date/time are then checked against every shop on the
