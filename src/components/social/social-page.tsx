@@ -74,7 +74,11 @@ import {
   type SocialState,
 } from "@/lib/social";
 import { canReplyTo, hidePostForShop, sendMessage, threadComments } from "@/lib/social";
-import { RelationshipMenu } from "@/components/universe/relationship-actions";
+import { PostMemberMenu } from "@/components/social/post-member-menu";
+import { PostImageLightbox } from "@/components/social/post-image-lightbox";
+import { UniverseSendCoinsSheet } from "@/components/wallet/universe-send-coins-sheet";
+import { fetchWalletView } from "@/lib/wallet";
+import type { UniverseRecipient } from "@/lib/universe-transfer";
 import { MentionText } from "@/components/social/mention-text";
 import { RoleBadge } from "@/components/role-badge";
 import { MentionInput } from "@/components/social/mention-input";
