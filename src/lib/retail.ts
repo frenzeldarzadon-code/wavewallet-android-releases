@@ -10,6 +10,7 @@
 import { requireOnline } from "@/lib/offline-guard";
 import { supabase } from "@/integrations/supabase/client";
 import { peso } from "@/lib/wavewallet";
+import { selfPurchaseCharge } from "@/lib/wallet";
 import {
   MAX_UPLOAD_BYTES,
   loadImage,
@@ -188,7 +189,7 @@ export interface CheckoutQuote {
 
 /** Actual wallet deduction for a coin order (net of self-purchase cashback). */
 export const netCharge = (total: number, quote?: CheckoutQuote | null) =>
-  quote && quote.selfPurchase && quote.total === total ? quote.buyerCharge : total;
+  selfPurchaseCharge(total, quote ? { ...quote, cashbackPercent: 0 } : null);
 
 /** One-line breakdown matching the ledger description of a self purchase. */
 export function selfPurchaseSummary(total: number, cashback: number): string {

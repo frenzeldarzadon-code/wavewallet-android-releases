@@ -32,7 +32,12 @@ import {
 import { beginCriticalOperation } from "@/lib/app-update";
 import { useOnline } from "@/lib/pwa";
 import { peso } from "@/lib/wavewallet";
-import { purchaseVoucher } from "@/lib/wallet";
+import {
+  fetchVoucherCheckoutQuote,
+  purchaseVoucher,
+  selfPurchaseCharge,
+  type SelfPurchaseQuote,
+} from "@/lib/wallet";
 import { fetchPointsAccount, purchaseVoucherWithPoints, type PointsAccount } from "@/lib/rewards";
 import { pointsForSpend, pts } from "@/lib/points";
 import type { StorefrontProduct } from "@/lib/seller-storefront";
@@ -122,7 +127,29 @@ export function VoucherPurchaseDialogs({
   const maxQty = target ? Math.min(MAX_QTY, Math.max(1, target.product.available)) : 1;
   const unit = target?.product.price ?? 0;
   const total = Math.round(unit * qty * 100) / 100;
-  const notEnough = balance !== null && total > balance;
+
+  // GLOBAL self-purchase rule: the server says whether this buyer is the
+  // entitled cashback recipient of their own shop and nets the cashback out.
+  const [quote, setQuote] = useState<SelfPurchaseQuote | null>(null);
+  const productId = target?.product.id ?? null;
+  const sellerId = target?.sellerId ?? null;
+  useEffect(() => {
+    if (!productId || !buyerId) {
+      setQuote(null);
+      return;
+    }
+    let active = true;
+    void fetchVoucherCheckoutQuote(productId, qty, sellerId)
+      .then((q) => active && setQuote(q))
+      .catch(() => active && setQuote(null));
+    return () => {
+      active = false;
+    };
+  }, [productId, sellerId, qty, buyerId]);
+  const charge = selfPurchaseCharge(total, quote);
+  const selfPurchase = charge !== total && !!quote;
+
+  const notEnough = balance !== null && charge > balance;
   const pointsAvailable = points?.available ?? 0;
   const pointsOk = points !== null && pointsAvailable >= pointsPrice;
   const canConfirm = usingPoints ? pointsOk : !notEnough && qty <= maxQty;
@@ -328,10 +355,33 @@ export function VoucherPurchaseDialogs({
                     <span className="text-muted-foreground">Unit price</span>
                     <span className="font-medium">{peso(unit)}</span>
                   </p>
-                  <p className="flex justify-between">
-                    <span className="text-muted-foreground">Total</span>
-                    <span className="font-semibold text-destructive">−{peso(total)}</span>
-                  </p>
+                  {selfPurchase && quote ? (
+                    <>
+                      <p className="flex justify-between">
+                        <span className="text-muted-foreground">Voucher price</span>
+                        <span className="font-medium">{peso(quote.total)}</span>
+                      </p>
+                      <p className="flex justify-between" data-testid="self-cashback-line">
+                        <span className="text-muted-foreground">
+                          Your cashback ({quote.cashbackPercent}% · self purchase)
+                        </span>
+                        <span className="font-medium text-success">−{peso(quote.selfCashback)}</span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span className="text-muted-foreground">Actual charge</span>
+                        <span className="font-semibold text-destructive">−{peso(charge)}</span>
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Cashback is applied at checkout — one wallet transaction, no separate
+                        cashback later.
+                      </p>
+                    </>
+                  ) : (
+                    <p className="flex justify-between">
+                      <span className="text-muted-foreground">Total</span>
+                      <span className="font-semibold text-destructive">−{peso(total)}</span>
+                    </p>
+                  )}
                   {balance !== null ? (
                     <>
                       <p className="flex justify-between">
@@ -341,7 +391,7 @@ export function VoucherPurchaseDialogs({
                       <p className="flex justify-between">
                         <span className="text-muted-foreground">Balance after</span>
                         <span className={notEnough ? "font-medium text-destructive" : "font-medium"}>
-                          {notEnough ? `−${peso(total - balance)}` : peso(balance - total)}
+                          {notEnough ? `−${peso(charge - balance)}` : peso(balance - charge)}
                         </span>
                       </p>
                     </>
@@ -416,7 +466,7 @@ export function VoucherPurchaseDialogs({
                   ? pointsOk
                     ? `Confirm & pay ${pointsPrice} pts`
                     : "Not enough points"
-                  : `Confirm & pay ${peso(total)}`}
+                  : `Confirm & pay ${peso(charge)}`}
             </Button>
           </DialogFooter>
         </DialogContent>
