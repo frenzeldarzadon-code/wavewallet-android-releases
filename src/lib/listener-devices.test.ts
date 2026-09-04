@@ -22,9 +22,14 @@ vi.mock("@/integrations/supabase/client", () => {
   return { supabase: client };
 });
 
-const { dismissListenerEvent, fetchUnmatchedListenerEvents, linkListenerEvent } = await import(
-  "./listener-devices"
-);
+const {
+  dismissListenerEvent,
+  fetchUnmatchedListenerEvents,
+  linkListenerEvent,
+  fetchListenerDetectedSources,
+  blockListenerSource,
+  unblockListenerSource,
+} = await import("./listener-devices");
 
 describe("listener device rpc binding", () => {
   it("loads an empty unmatched queue without throwing", async () => {
@@ -37,5 +42,16 @@ describe("listener device rpc binding", () => {
     await expect(dismissListenerEvent("event-1")).resolves.toBeUndefined();
     expect(calls.map((c) => c.fn)).toContain("link_listener_event");
     expect(calls.map((c) => c.fn)).toContain("dismiss_listener_event");
+  });
+});
+
+describe("detected notification sources", () => {
+  it("lists sources for the platform scope and blocks/unblocks through the shared rules", async () => {
+    await expect(fetchListenerDetectedSources(null)).resolves.toEqual([]);
+    expect(calls.at(-1)?.fn).toBe("listener_detected_sources");
+    await blockListenerSource("com.example.chat", null, "Chat app");
+    expect(calls.at(-1)?.fn).toBe("set_listener_source_rule");
+    await unblockListenerSource("com.example.chat", null);
+    expect(calls.at(-1)?.fn).toBe("unblock_listener_source");
   });
 });
