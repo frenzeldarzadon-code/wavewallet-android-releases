@@ -140,7 +140,7 @@ export function WalletCenter({
   );
 
   const loadRecipients = useCallback(async () => {
-    if (!userId || !selectedId) {
+    if (!userId || !selectedId || universe) {
       setRecipients([]);
       setRecipientsLoading(false);
       return;
