@@ -118,6 +118,7 @@ import { Route as ApiPublicPortalRedeemRouteImport } from './routes/api/public/p
 import { Route as ApiPublicVoucherReplenishmentSweepRouteImport } from './routes/api/public/voucher-replenishment-sweep'
 import { Route as PrintVouchersSaleIdRouteImport } from './routes/print.vouchers.$saleId'
 import { Route as UniverseMonitorIndexRouteImport } from './routes/universe.monitor.index'
+import { Route as UniverseMonitorShopIdRouteImport } from './routes/universe.monitor.$shopId'
 import { Route as UniverseRewardsShopIdRouteImport } from './routes/universe.rewards.$shopId'
 import { Route as UniverseTagTagRouteImport } from './routes/universe.tag.$tag'
 import { Route as UniverseUHandleRouteImport } from './routes/universe.u.$handle'
@@ -671,6 +672,11 @@ const UniverseMonitorIndexRoute = UniverseMonitorIndexRouteImport.update({
   path: '/monitor/',
   getParentRoute: () => UniverseRoute,
 } as any)
+const UniverseMonitorShopIdRoute = UniverseMonitorShopIdRouteImport.update({
+  id: '/monitor/$shopId',
+  path: '/monitor/$shopId',
+  getParentRoute: () => UniverseRoute,
+} as any)
 const UniverseRewardsShopIdRoute = UniverseRewardsShopIdRouteImport.update({
   id: '/rewards/$shopId',
   path: '/rewards/$shopId',
@@ -802,6 +808,7 @@ export interface FileRoutesByFullPath {
   '/api/public/portal-redeem': typeof ApiPublicPortalRedeemRoute
   '/api/public/voucher-replenishment-sweep': typeof ApiPublicVoucherReplenishmentSweepRoute
   '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
+  '/universe/monitor/$shopId': typeof UniverseMonitorShopIdRoute
   '/universe/rewards/$shopId': typeof UniverseRewardsShopIdRoute
   '/universe/tag/$tag': typeof UniverseTagTagRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
@@ -912,6 +919,7 @@ export interface FileRoutesByTo {
   '/api/public/portal-redeem': typeof ApiPublicPortalRedeemRoute
   '/api/public/voucher-replenishment-sweep': typeof ApiPublicVoucherReplenishmentSweepRoute
   '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
+  '/universe/monitor/$shopId': typeof UniverseMonitorShopIdRoute
   '/universe/rewards/$shopId': typeof UniverseRewardsShopIdRoute
   '/universe/tag/$tag': typeof UniverseTagTagRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
@@ -1028,6 +1036,7 @@ export interface FileRoutesById {
   '/api/public/portal-redeem': typeof ApiPublicPortalRedeemRoute
   '/api/public/voucher-replenishment-sweep': typeof ApiPublicVoucherReplenishmentSweepRoute
   '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
+  '/universe/monitor/$shopId': typeof UniverseMonitorShopIdRoute
   '/universe/rewards/$shopId': typeof UniverseRewardsShopIdRoute
   '/universe/tag/$tag': typeof UniverseTagTagRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
@@ -1145,6 +1154,7 @@ export interface FileRouteTypes {
     | '/api/public/portal-redeem'
     | '/api/public/voucher-replenishment-sweep'
     | '/print/vouchers/$saleId'
+    | '/universe/monitor/$shopId'
     | '/universe/rewards/$shopId'
     | '/universe/tag/$tag'
     | '/universe/u/$handle'
@@ -1255,6 +1265,7 @@ export interface FileRouteTypes {
     | '/api/public/portal-redeem'
     | '/api/public/voucher-replenishment-sweep'
     | '/print/vouchers/$saleId'
+    | '/universe/monitor/$shopId'
     | '/universe/rewards/$shopId'
     | '/universe/tag/$tag'
     | '/universe/u/$handle'
@@ -1370,6 +1381,7 @@ export interface FileRouteTypes {
     | '/api/public/portal-redeem'
     | '/api/public/voucher-replenishment-sweep'
     | '/print/vouchers/$saleId'
+    | '/universe/monitor/$shopId'
     | '/universe/rewards/$shopId'
     | '/universe/tag/$tag'
     | '/universe/u/$handle'
@@ -2173,6 +2185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UniverseMonitorIndexRouteImport
       parentRoute: typeof UniverseRoute
     }
+    '/universe/monitor/$shopId': {
+      id: '/universe/monitor/$shopId'
+      path: '/monitor/$shopId'
+      fullPath: '/universe/monitor/$shopId'
+      preLoaderRoute: typeof UniverseMonitorShopIdRouteImport
+      parentRoute: typeof UniverseRoute
+    }
     '/universe/rewards/$shopId': {
       id: '/universe/rewards/$shopId'
       path: '/rewards/$shopId'
@@ -2393,6 +2412,7 @@ interface UniverseRouteChildren {
   UniverseShopsRoute: typeof UniverseShopsRoute
   UniverseWalletRoute: typeof UniverseWalletRoute
   UniverseIndexRoute: typeof UniverseIndexRoute
+  UniverseMonitorShopIdRoute: typeof UniverseMonitorShopIdRoute
   UniverseRewardsShopIdRoute: typeof UniverseRewardsShopIdRoute
   UniverseTagTagRoute: typeof UniverseTagTagRoute
   UniverseUHandleRoute: typeof UniverseUHandleRoute
@@ -2408,6 +2428,7 @@ const UniverseRouteChildren: UniverseRouteChildren = {
   UniverseShopsRoute: UniverseShopsRoute,
   UniverseWalletRoute: UniverseWalletRoute,
   UniverseIndexRoute: UniverseIndexRoute,
+  UniverseMonitorShopIdRoute: UniverseMonitorShopIdRoute,
   UniverseRewardsShopIdRoute: UniverseRewardsShopIdRoute,
   UniverseTagTagRoute: UniverseTagTagRoute,
   UniverseUHandleRoute: UniverseUHandleRoute,
