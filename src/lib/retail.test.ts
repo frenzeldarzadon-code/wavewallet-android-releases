@@ -380,3 +380,23 @@ describe("customer order history", () => {
     expect(customerPaymentLabel(baseOrder({}))).toBe("Pay cash on delivery");
   });
 });
+
+describe("vouchers are never cart items", () => {
+  it("keeps only this shop's retail products and reports what was dropped", async () => {
+    const { retailOnlyCart } = await import("./retail");
+    const products = [{ id: "retail-a" }, { id: "retail-b" }];
+    const { cart, removed } = retailOnlyCart(
+      { "retail-a": 2, "voucher-x": 1, "retail-b": 0, "other-shop": 3 },
+      products,
+    );
+    expect(cart).toEqual({ "retail-a": 2 });
+    expect(removed.sort()).toEqual(["other-shop", "voucher-x"]);
+  });
+
+  it("leaves a pure retail cart untouched", async () => {
+    const { retailOnlyCart } = await import("./retail");
+    const { cart, removed } = retailOnlyCart({ a: 1, b: 4 }, [{ id: "a" }, { id: "b" }]);
+    expect(cart).toEqual({ a: 1, b: 4 });
+    expect(removed).toEqual([]);
+  });
+});
