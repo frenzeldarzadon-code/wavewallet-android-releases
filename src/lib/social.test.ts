@@ -15,10 +15,8 @@ import {
   validateMessageBody,
   validatePostBody,
   type PromotionTier,
-  audienceSummary,
   postReadiness,
   roleBadge,
-  selectedShopNames,
   MAX_REPLY_DEPTH,
   canReplyTo,
   threadComments,
@@ -130,38 +128,15 @@ describe("promotion tiers", () => {
 });
 
 describe("universe composer flow", () => {
-  const shops = [
-    { ecosystem_id: "a", ecosystem_name: "Sagada Wave", is_current: true },
-    { ecosystem_id: "b", ecosystem_name: "Banaue Net", is_current: false },
-  ];
-
-  it("names only shops the member is approved in", () => {
-    expect(selectedShopNames(shops, ["b", "zzz"])).toEqual(["Banaue Net"]);
-  });
-
-  it("summarises each audience for the review step", () => {
-    expect(audienceSummary("general", shops, [], "Sagada Wave")).toBe("General / All Shops");
-    expect(audienceSummary("ecosystem", shops, [], "Sagada Wave")).toBe("Sagada Wave");
-    expect(audienceSummary("shops", shops, ["a", "b"], "Sagada Wave")).toBe(
-      "Sagada Wave, Banaue Net",
-    );
-  });
-
   const ready = {
     body: "Hello universe",
-    audience: "ecosystem" as const,
-    shopIds: [],
     promote: false,
     tierChosen: true,
     affordable: true,
   };
 
-  it("allows a plain post with no promotion", () => {
+  it("allows a plain post with no promotion — no audience or shop needed", () => {
     expect(postReadiness(ready)).toBeNull();
-  });
-
-  it("blocks a shop-targeted post with no shop chosen", () => {
-    expect(postReadiness({ ...ready, audience: "shops" })).toMatch(/at least one shop/i);
   });
 
   it("blocks promotion without a chosen tier and without funds", () => {
