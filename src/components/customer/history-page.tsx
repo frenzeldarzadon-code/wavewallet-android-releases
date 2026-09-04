@@ -391,6 +391,12 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
                       <p className="text-[11px] text-muted-foreground">
                         {shortDateTime(p.created_at)} · {p.tx_id} · {p.payment_method}
                       </p>
+                      {/* Originating shop from the sale's own recorded shop id. */}
+                      <PurchaseShopChip
+                        labels={shopLabels}
+                        ecosystemId={p.ecosystem_id}
+                        sellerId={p.reseller_id}
+                      />
                     </div>
                     <p className="text-sm font-semibold text-destructive">−{peso(p.sale_price)}</p>
                   </div>
