@@ -242,6 +242,11 @@ export function PresenceBadge({ seller, now }: { seller: ShopSeller; now?: Date 
   );
 }
 
+/** Action label/appearance for a seller card. Exported for unit testing. */
+export function sellerCardAction(own: boolean): { text: string; icon: boolean } {
+  return own ? { text: "Buy from My Shop", icon: false } : { text: "Buy", icon: true };
+}
+
 /** Premium seller card: image → full name → seller shop name → presence → action. */
 export function SellerCard({
   seller,
@@ -251,6 +256,7 @@ export function SellerCard({
   currentUserId?: string | null | undefined;
 }) {
   const own = currentUserId === seller.sellerId;
+  const action = sellerCardAction(own);
   return (
     <Link
       to="/universe/u/$handle"
@@ -279,12 +285,12 @@ export function SellerCard({
       </span>
       <span
         className={`inline-flex shrink-0 items-center justify-center rounded-md bg-primary px-2 py-1 text-[11px] font-medium leading-tight text-primary-foreground ${own ? "min-w-[5.5rem]" : "size-9"}`}
-        aria-label={own ? "Buy from My Shop" : "Buy"}
+        aria-label={action.text}
       >
-        {own ? (
-          "Buy from My Shop"
-        ) : (
+        {action.icon ? (
           <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+        ) : (
+          action.text
         )}
       </span>
     </Link>
