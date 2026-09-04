@@ -14,7 +14,8 @@ export const Route = createFileRoute("/universe/wallet")({
       { property: "og:title", content: "Wallet Center — ONE WAVE Universe" },
       {
         property: "og:description",
-        content: "One global Universe wallet balance, usable across all Universe shops, with full history.",
+        content:
+          "One global Universe wallet balance, usable across all Universe shops, with full history.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

@@ -263,56 +263,56 @@ export function WalletCenter({
       ) : null}
 
       {universe ? null : (
-      <PageSection
-        devSlot="wallet-center.my-wallets"
-        title="My wallets"
-        description={
-          multiShop
-            ? `${shops.length} shop wallets · ${peso(totalWalletBalance(shops))} in total. Tap a shop to work with that wallet.`
-            : "Your shop wallet balance."
-        }
-      >
-        {loading ? (
-          <EmptyState title="Loading wallets…" />
-        ) : shops.length === 0 ? (
-          <EmptyState
-            title="No shop membership yet"
-            description="You are not an approved member of any shop yet. Every shop you are approved into opens its own wallet automatically — a zero balance still shows here as ₱0.00."
-          />
-        ) : (
-          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {shops.map((s) => (
-              <button
-                key={s.ecosystemId}
-                type="button"
-                aria-pressed={s.ecosystemId === selectedId}
-                onClick={() => {
-                  setSelectedId(s.ecosystemId);
-                  resetSend();
-                }}
-                className={cn(
-                  "rounded-xl border px-4 py-3 text-left transition-colors",
-                  s.ecosystemId === selectedId
-                    ? "border-primary bg-brand-soft ring-2 ring-primary/40"
-                    : "border-border bg-card hover:bg-muted",
-                )}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="truncate text-sm font-semibold">{s.ecosystemName}</p>
-                  {s.ecosystemId === selectedId ? (
-                    <StatusBadge tone="brand">Selected</StatusBadge>
-                  ) : null}
-                </div>
-                <p className="text-lg font-bold text-success">{peso(s.balance)}</p>
-                <p className="text-[11px] text-muted-foreground">
-                  {s.role ? roleLabel(s.role) : "Member"}
-                  {s.ecosystemId === ecosystemDbId ? " · current shop" : ""}
-                </p>
-              </button>
-            ))}
-          </div>
-        )}
-      </PageSection>
+        <PageSection
+          devSlot="wallet-center.my-wallets"
+          title="My wallets"
+          description={
+            multiShop
+              ? `${shops.length} shop wallets · ${peso(totalWalletBalance(shops))} in total. Tap a shop to work with that wallet.`
+              : "Your shop wallet balance."
+          }
+        >
+          {loading ? (
+            <EmptyState title="Loading wallets…" />
+          ) : shops.length === 0 ? (
+            <EmptyState
+              title="No shop membership yet"
+              description="You are not an approved member of any shop yet. Every shop you are approved into opens its own wallet automatically — a zero balance still shows here as ₱0.00."
+            />
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {shops.map((s) => (
+                <button
+                  key={s.ecosystemId}
+                  type="button"
+                  aria-pressed={s.ecosystemId === selectedId}
+                  onClick={() => {
+                    setSelectedId(s.ecosystemId);
+                    resetSend();
+                  }}
+                  className={cn(
+                    "rounded-xl border px-4 py-3 text-left transition-colors",
+                    s.ecosystemId === selectedId
+                      ? "border-primary bg-brand-soft ring-2 ring-primary/40"
+                      : "border-border bg-card hover:bg-muted",
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="truncate text-sm font-semibold">{s.ecosystemName}</p>
+                    {s.ecosystemId === selectedId ? (
+                      <StatusBadge tone="brand">Selected</StatusBadge>
+                    ) : null}
+                  </div>
+                  <p className="text-lg font-bold text-success">{peso(s.balance)}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {s.role ? roleLabel(s.role) : "Member"}
+                    {s.ecosystemId === ecosystemDbId ? " · current shop" : ""}
+                  </p>
+                </button>
+              ))}
+            </div>
+          )}
+        </PageSection>
       )}
 
       {selected && !universe ? (
