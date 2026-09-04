@@ -602,13 +602,7 @@ function PostCard({
               isSelf={post.author_id === meId}
               onMessage={() => void openDm()}
               onQuickMessage={() => setDmOpen(true)}
-              onSendCoins={() => void openSendCoins()}
-              onGift={() => setGiftOpen(true)}
-              giftDisabledReason={
-                canGift(state, false)
-                  ? null
-                  : "You have no purchased social credits. Free promotional credits cannot be gifted."
-              }
+              onGiftSocialCredit={() => void openSendCoins()}
               onReport={onReport}
               onBlock={onBlock}
               {...(post.can_hide ? { onHideForShop: () => setHideOpen(true) } : {})}
