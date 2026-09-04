@@ -8,7 +8,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ShopBrandingCard } from "@/components/shop/shop-branding-card";
 import { StorefrontSettingsCard } from "@/components/retail/storefront-settings-card";
 import { useSession } from "@/lib/session";
-import { useShopType } from "@/lib/shop-type";
+import { useShopStatus } from "@/lib/shop-status";
 import { showsRetailTools } from "@/lib/shop-type";
 
 export const Route = createFileRoute("/admin/storefront")({
@@ -34,12 +34,15 @@ export const Route = createFileRoute("/admin/storefront")({
 
 function AdminStorefront() {
   const { ecosystemDbId, ecosystem } = useSession("admin");
-  const type = useShopType(ecosystemDbId);
+  const status = useShopStatus(ecosystemDbId);
   if (!ecosystem) return null;
   return (
     <>
       <ShopBrandingCard ecosystemId={ecosystemDbId} shopName={ecosystem.name} />
-      {type && showsRetailTools(type) ? <StorefrontSettingsCard ecosystemId={ecosystemDbId} /> : null}
+      {/* Retail shops also control theme and the open / paused state here. */}
+      {status.shopType && showsRetailTools(status.shopType) ? (
+        <StorefrontSettingsCard ecosystemId={ecosystemDbId} />
+      ) : null}
     </>
   );
 }
