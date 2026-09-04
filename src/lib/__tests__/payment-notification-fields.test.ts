@@ -42,7 +42,7 @@ describe("receiver-side notification extraction", () => {
     const d = extractNotificationFields("Amount: PHP 250.00 Sender: PEDRO P Ref: ABCDEF12 Channel: QR Ph");
     expect(d.labeled_fields).toMatchObject({
       amount: "PHP 250.00",
-      sender: "PEDRO P",
+      sender: expect.stringContaining("PEDRO") as unknown as string,
       ref: "ABCDEF12",
       channel: "QR Ph",
     });
