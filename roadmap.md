@@ -28,3 +28,4 @@ Shop Access cleanup — Universe is the customer portal (DONE — verified with 
 - [x] Voucher purchase nets self-cashback into one wallet debit
 - [x] Transfers unchanged (zero cashback); NG wallets unchanged
 - [x] Tests + typecheck + demo verification (live purchase blocked: Demo Preview Shop is frozen)
+- [ ] Universe seller list: order by real presence (reuse member_presence), status labels
