@@ -1,10 +1,21 @@
 /**
  * Pickers used by the Universe composer: location, feeling/activity, text
- * style and @/# tagging. Each is a small dialog that returns a value to the
+ * style, @/# tagging and link/recommend. Each is a small dialog that returns a value to the
  * composer — nothing here talks to the database except the @ search, which
  * reuses the existing handle search behind mentions.
  */
-import { AtSign, Check, Hash, Loader2, LocateFixed, MapPin, Search, X } from "lucide-react";
+import {
+  AtSign,
+  Check,
+  Hash,
+  Loader2,
+  LocateFixed,
+  MapPin,
+  Package,
+  Search,
+  Store,
+  X,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -22,7 +33,15 @@ import {
 import { MemberAvatar } from "@/components/member-avatar";
 import { MentionText } from "@/components/social/mention-text";
 import { displayHandle } from "@/lib/profile";
-import { searchHandles, type MentionSuggestion } from "@/lib/social";
+import {
+  searchHandles,
+  searchLinkTargets,
+  shopTypeLabel,
+  type LinkCard,
+  type MentionSuggestion,
+} from "@/lib/social";
+import { retailImageUrl } from "@/lib/retail";
+import { voucherArtworkUrl } from "@/components/universe/voucher-artwork";
 import {
   ACTIVITIES,
   FEELINGS,
@@ -543,5 +562,206 @@ export function TagPicker({
         </Tabs>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// -------------------------------------------------------- link / recommend
+
+/**
+ * Picks exactly one public Universe shop or product to recommend. Results are
+ * live storefront data; nothing is stored until the post is published.
+ */
+export function LinkPicker({
+  open,
+  onOpenChange,
+  onPick,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onPick: (card: LinkCard) => void;
+}) {
+  const [kind, setKind] = useState<"product" | "shop">("product");
+  const [query, setQuery] = useState("");
+  const [rows, setRows] = useState<LinkCard[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setQuery("");
+      setProblem(null);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    setSearching(true);
+    const timer = setTimeout(() => {
+      searchLinkTargets(kind, query)
+        .then((r) => {
+          if (!active) return;
+          setRows(r);
+          setProblem(null);
+        })
+        .catch((e: Error) => {
+          if (!active) return;
+          setRows([]);
+          setProblem(e.message);
+        })
+        .finally(() => active && setSearching(false));
+    }, 180);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [open, kind, query]);
+
+  const pick = (card: LinkCard) => {
+    onPick(card);
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md rounded-2xl">
+        <DialogHeader>
+          <DialogTitle>Link or recommend</DialogTitle>
+          <DialogDescription>
+            Attach one product or one shop from the Universe. Readers open it in the shop&apos;s
+            own storefront.
+          </DialogDescription>
+        </DialogHeader>
+        <Tabs value={kind} onValueChange={(v) => setKind(v === "shop" ? "shop" : "product")}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="product" className="gap-1.5">
+              <Package className="size-4" /> Product
+            </TabsTrigger>
+            <TabsTrigger value="shop" className="gap-1.5">
+              <Store className="size-4" /> Shop
+            </TabsTrigger>
+          </TabsList>
+          <div className="relative mt-3">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={kind === "product" ? "Search products or shops" : "Search shops"}
+              aria-label={kind === "product" ? "Search products" : "Search shops"}
+              className="h-11 pl-9"
+            />
+          </div>
+          <TabsContent value="product" className="mt-2">
+            <LinkResults
+              rows={rows}
+              searching={searching}
+              problem={problem}
+              empty="No public product matches."
+              onPick={pick}
+            />
+          </TabsContent>
+          <TabsContent value="shop" className="mt-2">
+            <LinkResults
+              rows={rows}
+              searching={searching}
+              problem={problem}
+              empty="No public shop matches."
+              onPick={pick}
+            />
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function LinkThumb({ card }: { card: LinkCard }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const path = card.kind === "product" ? card.image_path : (card.logo_path ?? card.cover_path);
+  useEffect(() => {
+    let alive = true;
+    void retailImageUrl(path).then((u) => alive && setUrl(u));
+    return () => {
+      alive = false;
+    };
+  }, [path]);
+  if (url) {
+    return (
+      <img
+        src={url}
+        alt=""
+        loading="lazy"
+        className="size-12 shrink-0 rounded-xl border border-border object-cover"
+      />
+    );
+  }
+  if (card.kind === "product" && card.product_kind === "voucher") {
+    return (
+      <img
+        src={voucherArtworkUrl(`${card.shop_id}-${card.product_id}`)}
+        alt=""
+        loading="lazy"
+        className="size-12 shrink-0 rounded-xl border border-border object-cover"
+      />
+    );
+  }
+  return (
+    <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-primary">
+      {card.kind === "product" ? <Package className="size-5" /> : <Store className="size-5" />}
+    </span>
+  );
+}
+
+function LinkResults({
+  rows,
+  searching,
+  problem,
+  empty,
+  onPick,
+}: {
+  rows: LinkCard[];
+  searching: boolean;
+  problem: string | null;
+  empty: string;
+  onPick: (card: LinkCard) => void;
+}) {
+  const coins = (n: number) => `${n.toLocaleString(undefined, { maximumFractionDigits: 2 })} coins`;
+  return (
+    <ul className="max-h-72 space-y-1 overflow-y-auto" aria-busy={searching}>
+      {rows.map((c) => (
+        <li key={`${c.kind}-${c.product_id ?? c.shop_id}`}>
+          <button
+            type="button"
+            className="flex min-h-14 w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left hover:bg-accent"
+            onClick={() => onPick(c)}
+          >
+            <LinkThumb card={c} />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-medium">
+                {c.kind === "product" ? c.product_name : c.shop_name}
+              </span>
+              <span className="block truncate text-xs text-muted-foreground">
+                {c.kind === "product"
+                  ? `${c.product_kind === "voucher" ? "Voucher" : "Product"} · ${c.shop_name}`
+                  : shopTypeLabel(c.shop_type)}
+              </span>
+            </span>
+            {c.kind === "product" && c.price !== null ? (
+              <span className="shrink-0 text-sm font-semibold text-primary">{coins(c.price)}</span>
+            ) : null}
+          </button>
+        </li>
+      ))}
+      {problem ? <li className="px-2 py-3 text-sm text-destructive">{problem}</li> : null}
+      {!searching && !problem && rows.length === 0 ? (
+        <li className="px-2 py-3 text-sm text-muted-foreground">{empty}</li>
+      ) : null}
+      {searching ? (
+        <li className="flex items-center gap-2 px-2 py-3 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" /> Searching…
+        </li>
+      ) : null}
+    </ul>
   );
 }
