@@ -220,7 +220,7 @@ export const MATCH_REASON: Record<MatchOutcome, string> = {
     "That notification came from a phone registered to a different shop, so it cannot settle this request.",
   number_mismatch: "The account that sent the money does not match this request.",
   receiving_mismatch:
-    "The receiving account on the receipt is not this shop's account — held for manual review.",
+    "The payment was sent to an account that is not the configured receiving account — disapproved, the wallet is not credited.",
   awaiting_receipt_check: "The uploaded receipt has not been read yet.",
   receipt_reference_mismatch: "Reference does not match receipt — held for manual review.",
   reference_mismatch:
