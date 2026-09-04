@@ -13,7 +13,7 @@ import {
   type DiscoveredShop,
   type ShopSeller,
 } from "@/lib/seller-storefront";
-import { presenceLabel, presenceTone } from "@/lib/presence";
+import { PRESENCE_HEARTBEAT_MS, presenceLabel, presenceTone } from "@/lib/presence";
 
 /**
  * Customer-facing Universe discovery. A Universe shop is the discovery
@@ -92,17 +92,24 @@ function ShopResult({ shop, searching }: { shop: DiscoveredShop; searching: bool
 
   useEffect(() => {
     let active = true;
-    fetchUniverseSellers(shop.slug)
-      .then((s) => {
-        if (active) setSellers(s);
-      })
-      .catch((e: Error) => {
-        if (!active) return;
-        toast.error("Could not load sellers", { description: e.message });
-        setSellers([]);
-      });
+    const load = (first: boolean) =>
+      fetchUniverseSellers(shop.slug)
+        .then((s) => {
+          if (active) setSellers(s);
+        })
+        .catch((e: Error) => {
+          if (!active || !first) return;
+          toast.error("Could not load sellers", { description: e.message });
+          setSellers([]);
+        });
+    void load(true);
+    // Presence ages: refresh the (single) ordered list once a minute while visible.
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void load(false);
+    }, PRESENCE_HEARTBEAT_MS);
     return () => {
       active = false;
+      window.clearInterval(timer);
     };
   }, [shop.slug]);
 
