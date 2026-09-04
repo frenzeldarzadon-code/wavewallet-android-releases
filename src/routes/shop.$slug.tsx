@@ -212,17 +212,30 @@ function PublicStorefront() {
             </StatusBadge>
           ) : null}
         </div>
-        {cta ? (
+        {shop.voucher_enabled ? (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Vouchers are sold by this shop's authorized sellers — no membership needed to buy.
+            {sellers && sellers.length === 0 ? " No seller is available right now." : ""}
+          </p>
+        ) : null}
+        {/* Membership only matters for existing members and Retail ordering. */}
+        {action === "open" && cta ? (
           <Button className="mt-3 w-full sm:w-auto" onClick={cta.onClick}>
             {cta.label} <ArrowRight className="size-4" />
           </Button>
-        ) : (
-          <p className="mt-3 text-xs text-muted-foreground">
-            {action === "pending"
-              ? "Your request to join is waiting for the shop to review it."
-              : "This shop is not accepting new members right now."}
-          </p>
-        )}
+        ) : RETAIL_VISIBLE && shop.retail_enabled ? (
+          cta ? (
+            <Button className="mt-3 w-full sm:w-auto" variant={shop.voucher_enabled ? "outline" : "default"} onClick={cta.onClick}>
+              {cta.label} <ArrowRight className="size-4" />
+            </Button>
+          ) : (
+            <p className="mt-3 text-xs text-muted-foreground">
+              {action === "pending"
+                ? "Your request to join is waiting for the shop to review it."
+                : "This shop is not accepting new members right now."}
+            </p>
+          )
+        ) : null}
         {shop.contact_email || shop.contact_phone ? (
           <p className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
             <MapPin className="size-3" />{" "}
