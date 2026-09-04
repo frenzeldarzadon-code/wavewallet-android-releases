@@ -36,6 +36,11 @@ import { useSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { peso } from "@/lib/wavewallet";
 import {
+  fetchVoucherCheckoutQuote,
+  selfPurchaseCharge,
+  type SelfPurchaseQuote,
+} from "@/lib/wallet";
+import {
   fetchCreditBalance,
   fetchShopProducts,
   listPrice,
@@ -177,6 +182,26 @@ export function VoucherShopView({
   const maxQty = buying ? Math.min(500, Math.max(1, buying.product.available)) : 1;
   const unit = buying ? priceFor(buying.product) : 0;
   const total = Math.round(unit * qty * 100) / 100;
+
+  // GLOBAL self-purchase rule (server decides): a reseller/subreseller buying
+  // from their own Universe shop is charged price − their cashback, once.
+  const [quote, setQuote] = useState<SelfPurchaseQuote | null>(null);
+  const buyingId = buying?.method === "credits" ? buying.product.id : null;
+  useEffect(() => {
+    if (!buyingId) {
+      setQuote(null);
+      return;
+    }
+    let active = true;
+    void fetchVoucherCheckoutQuote(buyingId, qty)
+      .then((q) => active && setQuote(q))
+      .catch(() => active && setQuote(null));
+    return () => {
+      active = false;
+    };
+  }, [buyingId, qty]);
+  const charge = selfPurchaseCharge(total, quote);
+  const selfPurchase = !!quote && charge !== total;
 
   const buildVouchers = (
     codes: string[],
@@ -580,13 +605,32 @@ export function VoucherShopView({
                     <span className="text-muted-foreground">Unit price</span>
                     <span className="font-medium">{peso(unit)}</span>
                   </p>
-                  <p className="flex justify-between">
-                    <span className="text-muted-foreground">Total</span>
-                    <span className="font-semibold text-destructive">−{peso(total)}</span>
-                  </p>
+                  {selfPurchase && quote ? (
+                    <>
+                      <p className="flex justify-between">
+                        <span className="text-muted-foreground">Voucher price</span>
+                        <span className="font-medium">{peso(quote.total)}</span>
+                      </p>
+                      <p className="flex justify-between" data-testid="self-cashback-line">
+                        <span className="text-muted-foreground">
+                          Your cashback ({quote.cashbackPercent}% · self purchase)
+                        </span>
+                        <span className="font-medium text-success">−{peso(quote.selfCashback)}</span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span className="text-muted-foreground">Actual charge</span>
+                        <span className="font-semibold text-destructive">−{peso(charge)}</span>
+                      </p>
+                    </>
+                  ) : (
+                    <p className="flex justify-between">
+                      <span className="text-muted-foreground">Total</span>
+                      <span className="font-semibold text-destructive">−{peso(total)}</span>
+                    </p>
+                  )}
                   <p className="flex justify-between">
                     <span className="text-muted-foreground">Balance after</span>
-                    <span className="font-medium">{peso(balance - total)}</span>
+                    <span className="font-medium">{peso(balance - charge)}</span>
                   </p>
                   <p className="flex justify-between">
                     <span className="text-muted-foreground">Points earned</span>
@@ -667,7 +711,7 @@ export function VoucherShopView({
             </Button>
             <Button
               onClick={() => void confirm()}
-              disabled={busy || !online || (buying?.method === "credits" && (total > balance || qty > maxQty))}
+              disabled={busy || !online || (buying?.method === "credits" && (charge > balance || qty > maxQty))}
             >
               {busy ? "Issuing…" : "Confirm & Generate Vouchers"}
             </Button>
