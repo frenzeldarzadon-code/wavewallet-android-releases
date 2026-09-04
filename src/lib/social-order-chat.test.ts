@@ -46,7 +46,10 @@ describe("order chat helpers", () => {
   });
 
   it("filters by kind without dropping anything under All", () => {
-    const list = [base({ thread_id: "a" }), base({ thread_id: "b", kind: "direct", member_id: "u" })];
+    const list = [
+      base({ thread_id: "a" }),
+      base({ thread_id: "b", kind: "direct", member_id: "u" }),
+    ];
     expect(filterThreads(list, "all")).toHaveLength(2);
     expect(filterThreads(list, "order").map((t) => t.thread_id)).toEqual(["a"]);
     expect(filterThreads(list, "direct").map((t) => t.thread_id)).toEqual(["b"]);
