@@ -313,7 +313,10 @@ export function WalletCenter({
               if (!o) setMoneyOpen(null);
             }}
           >
-            <SheetContent side="bottom" className="h-[92dvh] overflow-y-auto rounded-t-2xl px-4 pb-8">
+            <SheetContent
+              side="bottom"
+              className="h-[92dvh] overflow-y-auto rounded-t-2xl px-4 pb-8"
+            >
               <SheetHeader className="px-0 text-left">
                 <SheetTitle>{moneyOpen === "in" ? "Cash In" : "Cash Out"}</SheetTitle>
                 <SheetDescription>

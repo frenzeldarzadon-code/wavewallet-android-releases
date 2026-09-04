@@ -315,12 +315,15 @@ export function MoneyPage({
       // receipt has no mobile number (banks usually print those instead).
       if (read.reference) setPayerRef(read.reference);
       if (read.amountPhp) setAmount(String(read.amountPhp));
-      const payerIdentity = read.senderNumber ?? read.senderAccountMasked ?? read.senderName ?? null;
+      const payerIdentity =
+        read.senderNumber ?? read.senderAccountMasked ?? read.senderName ?? null;
       if (payerIdentity) setPayerNumber(payerIdentity);
       if (read.paidAt) setPaidAt(toLocalInput(read.paidAt));
       if (read.readable) toast.success("Screenshot read — check the details before you submit.");
-      else toast.info("We could not read this screenshot clearly. You can still submit it for manual review.");
-
+      else
+        toast.info(
+          "We could not read this screenshot clearly. You can still submit it for manual review.",
+        );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not read that screenshot.");
     } finally {
@@ -383,7 +386,11 @@ export function MoneyPage({
       if (submitted.status === "pending" && !submitted.duplicate_reference) {
         try {
           const verified = await verifyCashInReceipt({ data: { cashInId: submitted.id } });
-          decided = { ...submitted, status: verified.status, receipt_check: verified.check } as typeof submitted;
+          decided = {
+            ...submitted,
+            status: verified.status,
+            receipt_check: verified.check,
+          } as typeof submitted;
         } catch {
           // A reader outage must never approve or reject anything on its own.
           decided = { ...submitted, receipt_check: "error" } as typeof submitted;
@@ -417,10 +424,9 @@ export function MoneyPage({
 
   return (
     <>
-      <PageSection devSlot="money-page.cash-out-cash-in"
-        title={
-          single ? (initialTab === "in" ? "Cash in" : "Cash out") : "Cash out & cash in"
-        }
+      <PageSection
+        devSlot="money-page.cash-out-cash-in"
+        title={single ? (initialTab === "in" ? "Cash in" : "Cash out") : "Cash out & cash in"}
         description={
           universe
             ? `Your one global Universe wallet. Cash in fee ${settings.cashInFeePercent}% · cash out fee ${settings.feePercent}%. Verified and released by the platform owner.`
@@ -475,7 +481,11 @@ export function MoneyPage({
                         htmlFor={`wd-path-${p.value}`}
                         className="flex cursor-pointer items-start gap-2 rounded-lg border border-border p-3 text-xs"
                       >
-                        <RadioGroupItem id={`wd-path-${p.value}`} value={p.value} className="mt-0.5" />
+                        <RadioGroupItem
+                          id={`wd-path-${p.value}`}
+                          value={p.value}
+                          className="mt-0.5"
+                        />
                         <span>
                           <span className="block text-sm font-medium">{p.label}</span>
                           <span className="text-muted-foreground">{p.hint}</span>
@@ -517,7 +527,11 @@ export function MoneyPage({
                       <Label htmlFor="wd-acct-name">
                         {mode === "ewallet" ? "GCash account name" : "Account name"}
                       </Label>
-                      <Input id="wd-acct-name" value={accountName} onChange={(e) => setAccountName(e.target.value)} />
+                      <Input
+                        id="wd-acct-name"
+                        value={accountName}
+                        onChange={(e) => setAccountName(e.target.value)}
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="wd-acct-no">
@@ -541,13 +555,18 @@ export function MoneyPage({
                   rows={2}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder={mode === "physical_cash" ? "Pickup place and preferred time" : "Anything the platform owner should know"}
+                  placeholder={
+                    mode === "physical_cash"
+                      ? "Pickup place and preferred time"
+                      : "Anything the platform owner should know"
+                  }
                 />
               </div>
 
               <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs">
                 <p className="font-medium">
-                  {(creditsNum || 0).toLocaleString()} credits requested · {cashOutPathLabel(cashOutPath)}
+                  {(creditsNum || 0).toLocaleString()} credits requested ·{" "}
+                  {cashOutPathLabel(cashOutPath)}
                 </p>
                 <p className="text-muted-foreground">
                   {cashOutPath === "admin" ? (
@@ -600,7 +619,10 @@ export function MoneyPage({
 
           <PageSection devSlot="money-page.my-withdrawal-requests" title="My withdrawal requests">
             {withdrawals.length === 0 ? (
-              <EmptyState title="No withdrawals yet" description="Your cash out history will appear here." />
+              <EmptyState
+                title="No withdrawals yet"
+                description="Your cash out history will appear here."
+              />
             ) : (
               <div className="space-y-2">
                 {withdrawals.map((w) => {
@@ -613,12 +635,13 @@ export function MoneyPage({
                             {Number(w.credits).toLocaleString()} credits
                           </p>
                           <p className="text-muted-foreground">
-                            {w.reference} · {peso(q.gross)} · fee {q.feePercent}% ({peso(q.fee)}) · net{" "}
-                            {peso(q.net)}
+                            {w.reference} · {peso(q.gross)} · fee {q.feePercent}% ({peso(q.fee)}) ·
+                            net {peso(q.net)}
                           </p>
                           <p className="text-muted-foreground">
                             {paymentModeLabel(w.payment_mode)}
-                            {w.account_name ? ` · ${w.account_name}` : ""} · {shortDateTime(w.created_at)}
+                            {w.account_name ? ` · ${w.account_name}` : ""} ·{" "}
+                            {shortDateTime(w.created_at)}
                           </p>
                           {w.decision_reason ? (
                             <p className="text-muted-foreground">Note: {w.decision_reason}</p>
@@ -658,7 +681,8 @@ export function MoneyPage({
         </TabsContent>
 
         <TabsContent value="in" className="mt-4 space-y-4">
-          <PageSection devSlot="money-page.where-to-send-your-payment"
+          <PageSection
+            devSlot="money-page.where-to-send-your-payment"
             title="Where to send your payment"
             description="Pay to one of the accounts below, then submit your cash in request with the reference number."
           >
@@ -673,10 +697,11 @@ export function MoneyPage({
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-                Start with your payment screenshot from any e-wallet or bank — we read the amount, the sending account,
-                the reference and the payment date and time from it. Check the details, correct the reference or the
-                date and time if needed, then submit. The screenshot is supporting evidence, not proof of payment:
-                coins are added only once a real payment notification confirms it.
+                Start with your payment screenshot from any e-wallet or bank — we read the amount,
+                the sending account, the reference and the payment date and time from it. Check the
+                details, correct the reference or the date and time if needed, then submit. The
+                screenshot is supporting evidence, not proof of payment: coins are added only once a
+                real payment notification confirms it.
               </p>
 
               {methods.length === 0 ? (
@@ -704,7 +729,11 @@ export function MoneyPage({
                             htmlFor={`ci-funding-${f.value}`}
                             className="flex cursor-pointer items-start gap-2 rounded-lg border border-border p-3 text-xs"
                           >
-                            <RadioGroupItem id={`ci-funding-${f.value}`} value={f.value} className="mt-0.5" />
+                            <RadioGroupItem
+                              id={`ci-funding-${f.value}`}
+                              value={f.value}
+                              className="mt-0.5"
+                            />
                             <span>
                               <span className="block text-sm font-medium">{f.label}</span>
                               <span className="text-muted-foreground">
@@ -768,7 +797,9 @@ export function MoneyPage({
                           </p>
                         </div>
                         <div className="space-y-1.5">
-                          <Label htmlFor="ci-number">Account number or mobile number you paid from</Label>
+                          <Label htmlFor="ci-number">
+                            Account number or mobile number you paid from
+                          </Label>
                           <Input
                             id="ci-number"
                             inputMode="text"
@@ -819,7 +850,10 @@ export function MoneyPage({
                               ["Payment app or bank", extract.providerName],
                               ["Payer name on receipt", extract.senderName],
                               ["Sending account", extract.senderAccountMasked],
-                              ["Received by", extract.receivingNumber ?? extract.receivingAccountMasked],
+                              [
+                                "Received by",
+                                extract.receivingNumber ?? extract.receivingAccountMasked,
+                              ],
                             ] as [string, string | null][]
                           )
                             .filter(([, value]) => Boolean(value))
@@ -834,8 +868,8 @@ export function MoneyPage({
 
                       {extract && !extract.readable ? (
                         <p className="text-[11px] text-muted-foreground">
-                          We could not read this screenshot reliably, so nothing was guessed. You may still submit it — a
-                          person will review it.
+                          We could not read this screenshot reliably, so nothing was guessed. You
+                          may still submit it — a person will review it.
                         </p>
                       ) : null}
                     </div>
@@ -876,8 +910,8 @@ export function MoneyPage({
                       </span>
                     </div>
                     <p className="text-muted-foreground">
-                      Coins are issued only after the platform owner verifies your payment. This fee is locked
-                      in when you submit.
+                      Coins are issued only after the platform owner verifies your payment. This fee
+                      is locked in when you submit.
                     </p>
                   </div>
                   <Button onClick={submitCashIn} disabled={busy || !online}>
@@ -905,14 +939,18 @@ export function MoneyPage({
                         </p>
                         <p className="text-muted-foreground">
                           Paid {peso(Number(c.amount_php))} · fee {Number(c.fee_percent ?? 0)}% (
-                          {peso(Number(c.fee_php ?? 0))}) · net {peso(Number(c.net_php ?? c.amount_php))}
+                          {peso(Number(c.fee_php ?? 0))}) · net{" "}
+                          {peso(Number(c.net_php ?? c.amount_php))}
                         </p>
                         <p className="text-muted-foreground">
-                          From {c.sender_number ?? c.payer_number ?? "—"} · ref {c.payer_reference ?? "—"} ·{" "}
+                          From {c.sender_number ?? c.payer_number ?? "—"} · ref{" "}
+                          {c.payer_reference ?? "—"} ·{" "}
                           {c.approval_method === "automatic" ? "automatic" : "manual"} review
                         </p>
                         {c.notes ? <p className="text-muted-foreground">Notes: {c.notes}</p> : null}
-                        {c.decision_reason ? <p className="text-muted-foreground">Note: {c.decision_reason}</p> : null}
+                        {c.decision_reason ? (
+                          <p className="text-muted-foreground">Note: {c.decision_reason}</p>
+                        ) : null}
                         <CashInProofViewer path={c.proof_path} />
                       </div>
                       <div className="flex items-center gap-2">
