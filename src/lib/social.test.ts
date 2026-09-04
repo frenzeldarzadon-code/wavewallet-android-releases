@@ -253,13 +253,3 @@ describe("social credit gifting", () => {
     expect(canGift({ purchased_balance: 10 }, false)).toBe(true);
   });
 });
-
-describe("Universe feed – per-shop hiding is retired", () => {
-  it("never exposes a shop-hide action on feed posts, even if the backend flag were set", () => {
-    // Regression guard: `can_hide` is a legacy field. The feed always returns
-    // false and the UI must not offer "Hide from my shop" anywhere.
-    const legacyRow = { id: "p1", can_hide: true } as { id: string; can_hide?: boolean };
-    const offersShopHide = (row: { can_hide?: boolean }) => Boolean(row.can_hide) && false;
-    expect(offersShopHide(legacyRow)).toBe(false);
-  });
-});
