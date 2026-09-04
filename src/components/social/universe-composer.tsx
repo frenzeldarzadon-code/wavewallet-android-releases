@@ -9,7 +9,6 @@
 import {
   AtSign,
   Check,
-  ChevronDown,
   Globe2,
   Hash,
   ImagePlus,
@@ -21,19 +20,15 @@ import {
   Palette,
   Send,
   SmilePlus,
-  Store,
-  Users,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useSession } from "@/lib/session";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -77,11 +72,7 @@ import {
 import {
   POST_MAX_CHARS,
   SOCIAL_IMAGE_ASPECT,
-  audienceHelp,
-  audienceLabel,
-  audienceSummary,
   createPost,
-  fetchTargetShops,
   linkFromCard,
   tierDuration,
   uploadSocialImage,
@@ -89,10 +80,8 @@ import {
   validateSocialImage,
   validateSocialVideo,
   type LinkCard,
-  type PostAudience,
   type PromotionTier,
   type SocialState,
-  type TargetShop,
 } from "@/lib/social";
 import { cn } from "@/lib/utils";
 
@@ -102,13 +91,11 @@ export function UniverseComposer({
   state,
   tiers,
   userId,
-  ownShopName,
   onPosted,
 }: {
   state: SocialState;
   tiers: PromotionTier[];
   userId: string;
-  ownShopName: string;
   onPosted: () => Promise<void> | void;
 }) {
   const session = useSession();
@@ -125,12 +112,8 @@ export function UniverseComposer({
   const [meta, setMeta] = useState<PostMeta>({});
   // Full card of the linked shop/product for the preview; only its reference is posted.
   const [linkCard, setLinkCard] = useState<LinkCard | null>(null);
-  // Universe is the customer portal: a post reaches every Universe member by
-  // default. Restricting to one shop stays an explicit choice.
-  const [audience, setAudience] = useState<PostAudience>("general");
-  const [shops, setShops] = useState<TargetShop[]>([]);
-  const [shopIds, setShopIds] = useState<string[]>([]);
-  const [audienceOpen, setAudienceOpen] = useState(false);
+  // Every Universe post is public to every Universe member — there is no
+  // audience to choose and no shop membership or approval involved.
   const [promote, setPromote] = useState(false);
   const [tierId, setTierId] = useState("");
   const [ackRegular, setAckRegular] = useState(false);
@@ -159,11 +142,9 @@ export function UniverseComposer({
     ? "Write something or add a photo or video"
     : body.trim().length > POST_MAX_CHARS
       ? `Posts can be at most ${POST_MAX_CHARS} characters`
-      : audience === "shops" && shopIds.length === 0
-        ? "Choose at least one shop to share with"
-        : promote && !tier
-          ? "Choose a promotion type"
-          : promotionBlocker;
+      : promote && !tier
+        ? "Choose a promotion type"
+        : promotionBlocker;
 
   useEffect(() => {
     setAckRegular(false);
@@ -173,12 +154,9 @@ export function UniverseComposer({
     if (promote && !tierId && tiers.length > 0) setTierId(tiers[0]!.id);
   }, [promote, tierId, tiers]);
 
-  // Load shops + the member's own area lazily, only once the composer opens.
+  // Load the member's own area lazily, only once the composer opens.
   useEffect(() => {
     if (!expanded) return;
-    void fetchTargetShops()
-      .then(setShops)
-      .catch((e: Error) => toast.error("Could not load your shops", { description: e.message }));
     void fetchMyProfile(userId)
       .then((p) => {
         const parts = [p?.city_municipality, p?.province].filter(Boolean);
@@ -206,8 +184,6 @@ export function UniverseComposer({
     setVideo(null);
     setMeta({});
     setLinkCard(null);
-    setAudience("ecosystem");
-    setShopIds([]);
     setPromote(false);
     setTierId("");
     setAckRegular(false);
@@ -248,9 +224,6 @@ export function UniverseComposer({
     if (fileInput.current) fileInput.current.value = "";
   };
 
-  const toggleShop = (id: string) =>
-    setShopIds((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
-
   const submit = async () => {
     if (blocker) {
       toast.error(blocker);
@@ -280,21 +253,16 @@ export function UniverseComposer({
         });
       }
       const cleanMeta = compactMeta({ ...meta, ...(hasMedia ? { style: undefined } : {}) });
-      const res = await createPost({
+      await createPost({
         body,
         imagePath,
         videoPath,
         meta: cleanMeta,
         promote,
         tierId: promote ? (tier?.id ?? null) : null,
-        audience,
-        ...(audience === "shops" ? { shopIds } : {}),
       });
       toast.success(promote ? "Promoted post published" : "Posted", {
-        description:
-          audience === "general"
-            ? `Free — published across the Universe (${res.live_shops} shop${res.live_shops === 1 ? "" : "s"}).`
-            : "Free — nothing was deducted.",
+        description: "Free — public to the whole WaveWallet Universe.",
       });
       reset();
       await onPosted();
@@ -304,8 +272,6 @@ export function UniverseComposer({
       setPosting(false);
     }
   };
-
-  const AudienceIcon = audience === "general" ? Globe2 : audience === "shops" ? Store : Users;
 
   // ------------------------------------------------------------ collapsed
   if (!expanded) {
@@ -335,7 +301,7 @@ export function UniverseComposer({
       <section
         className="rounded-2xl border border-border bg-card shadow-[var(--shadow-card)]"
         onKeyDown={(e) => {
-          if (e.key === "Escape" && !picker && !audienceOpen) {
+          if (e.key === "Escape" && !picker) {
             e.stopPropagation();
             requestClose();
           }
@@ -360,85 +326,10 @@ export function UniverseComposer({
                 </span>
               ) : null}
             </p>
-            <Popover open={audienceOpen} onOpenChange={setAudienceOpen}>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="mt-0.5 inline-flex h-7 max-w-full items-center gap-1.5 rounded-full border border-border bg-muted/60 px-2.5 text-xs font-medium text-muted-foreground"
-                >
-                  <AudienceIcon className="size-3.5" aria-hidden />
-                  <span className="truncate">
-                    {audienceSummary(audience, shops, shopIds, ownShopName)}
-                  </span>
-                  <ChevronDown className="size-3.5" aria-hidden />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-80 space-y-2 rounded-2xl p-2">
-                {(["general", "shops", "ecosystem"] as PostAudience[])
-                  // "My shop" only exists for members who currently have one.
-                  .filter((a) => a !== "ecosystem" || Boolean(state.ecosystem_id))
-                  .map((a) => {
-                  const Icon = a === "general" ? Globe2 : a === "shops" ? Store : Users;
-                  return (
-                    <button
-                      key={a}
-                      type="button"
-                      onClick={() => {
-                        setAudience(a);
-                        if (a !== "shops") setAudienceOpen(false);
-                      }}
-                      aria-pressed={audience === a}
-                      className={cn(
-                        "w-full rounded-xl border p-3 text-left",
-                        audience === a ? "border-primary bg-primary/5" : "border-border",
-                      )}
-                    >
-                      <span className="flex items-center gap-2 text-sm font-semibold">
-                        <Icon className="size-4 text-primary" aria-hidden />
-                        {a === "ecosystem" ? ownShopName : audienceLabel(a)}
-                        {audience === a ? <Check className="ml-auto size-4 text-primary" /> : null}
-                      </span>
-                      <span className="mt-0.5 block text-xs text-muted-foreground">
-                        {audienceHelp(a)}
-                      </span>
-                    </button>
-                  );
-                })}
-                {audience === "shops" ? (
-                  <div className="space-y-1 rounded-xl border border-border p-2">
-                    {shops.length === 0 ? (
-                      <p className="px-1 text-xs text-muted-foreground">
-                        You are not an approved member of any shop yet.
-                      </p>
-                    ) : (
-                      shops.map((s) => (
-                        <button
-                          key={s.ecosystem_id}
-                          type="button"
-                          onClick={() => toggleShop(s.ecosystem_id)}
-                          aria-pressed={shopIds.includes(s.ecosystem_id)}
-                          className={cn(
-                            "flex h-10 w-full items-center gap-2 rounded-lg px-2 text-left text-sm",
-                            shopIds.includes(s.ecosystem_id) ? "bg-primary/5 font-medium" : "",
-                          )}
-                        >
-                          <Store className="size-4 text-muted-foreground" aria-hidden />
-                          <span className="truncate">{s.ecosystem_name}</span>
-                          {s.is_current ? (
-                            <Badge variant="outline" className="ml-1">
-                              Current
-                            </Badge>
-                          ) : null}
-                          {shopIds.includes(s.ecosystem_id) ? (
-                            <Check className="ml-auto size-4 text-primary" />
-                          ) : null}
-                        </button>
-                      ))
-                    )}
-                  </div>
-                ) : null}
-              </PopoverContent>
-            </Popover>
+            <span className="mt-0.5 inline-flex h-7 max-w-full items-center gap-1.5 rounded-full border border-border bg-muted/60 px-2.5 text-xs font-medium text-muted-foreground">
+              <Globe2 className="size-3.5 text-primary" aria-hidden />
+              <span className="truncate">Public · WaveWallet Universe</span>
+            </span>
           </div>
           <Button
             variant="ghost"

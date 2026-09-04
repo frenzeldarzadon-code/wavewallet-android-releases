@@ -271,13 +271,7 @@ export function SocialPage({ hashtag }: { hashtag?: string } = {}) {
   return (
     <>
       {state && !hashtag ? (
-        <UniverseComposer
-          state={state}
-          tiers={tiers}
-          userId={account.id}
-          ownShopName={session.ecosystem?.name ?? "My shop"}
-          onPosted={refresh}
-        />
+        <UniverseComposer state={state} tiers={tiers} userId={account.id} onPosted={refresh} />
       ) : null}
 
       {loading ? (
@@ -528,14 +522,10 @@ function PostCard({
                   {post.promotion_tier_name ? `${post.promotion_tier_name} · Promoted` : "Promoted"}
                 </Badge>
               ) : null}
-              {post.audience === "general" ? (
-                <Badge variant="outline" className="gap-1">
-                  <Globe2 className="size-3" aria-hidden /> General
-                  {post.origin_ecosystem_name ? ` · from ${post.origin_ecosystem_name}` : ""}
-                </Badge>
-              ) : post.origin_ecosystem_name ? (
-                <Badge variant="outline">{post.origin_ecosystem_name}</Badge>
-              ) : null}
+              <Badge variant="outline" className="gap-1">
+                <Globe2 className="size-3" aria-hidden /> Public
+                {post.origin_ecosystem_name ? ` · from ${post.origin_ecosystem_name}` : ""}
+              </Badge>
               <RoleBadge role={post.author_role} />
             </div>
             {meta.feeling || meta.location ? (
@@ -568,10 +558,6 @@ function PostCard({
             ) : null}
             {styled && meta.style ? null : post.body.trim() ? (
               <MentionText body={post.body} className="mt-1" />
-            ) : null}
-
-            {post.audience === "general" && post.author_id === meId ? (
-              <GeneralStatus postId={post.id} />
             ) : null}
           </div>
         </div>
@@ -796,61 +782,5 @@ function PostCard({
         </DialogContent>
       </Dialog>
     </Card>
-  );
-}
-
-/**
- * Author-facing distribution status of their own General post.
- * Shows shop names and decisions only — private admin notes are never returned.
- */
-function GeneralStatus({ postId }: { postId: string }) {
-  const [rows, setRows] = useState<DistributionStatus[] | null>(null);
-  const [open, setOpen] = useState(false);
-
-  const load = async () => {
-    setOpen(true);
-    if (rows) return;
-    try {
-      setRows(await fetchDistributionStatus(postId));
-    } catch (e) {
-      toast.error("Could not load sharing status", { description: (e as Error).message });
-    }
-  };
-
-  if (!open) {
-    return (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="mt-1 h-8 px-0 text-xs"
-        onClick={() => void load()}
-      >
-        Where is this shared?
-      </Button>
-    );
-  }
-
-  return (
-    <div className="mt-2 rounded-xl bg-muted p-2 text-xs">
-      {rows === null ? (
-        <p className="text-muted-foreground">Loading…</p>
-      ) : (
-        <>
-          <p className="font-medium">{distributionSummary(rows)}</p>
-          <ul className="mt-1 space-y-0.5 text-muted-foreground">
-            {rows.map((r) => (
-              <li key={r.ecosystem_name}>
-                {r.ecosystem_name} —{" "}
-                {r.status === "approved"
-                  ? "approved"
-                  : r.status === "rejected"
-                    ? "not approved"
-                    : "waiting for approval"}
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-    </div>
   );
 }
