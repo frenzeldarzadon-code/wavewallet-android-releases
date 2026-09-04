@@ -60,11 +60,8 @@ export interface PostMemberMenuProps {
   onMessage?: () => void;
   /** Quick one-line message dialog (also the existing messenger). */
   onQuickMessage?: () => void;
-  /** Opens the EXISTING global Universe Wallet send-coins flow. */
-  onSendCoins?: () => void;
-  /** Social-credit gift; omitted when the viewer has nothing giftable. */
-  onGift?: () => void;
-  giftDisabledReason?: string | null;
+  /** Opens the EXISTING global Universe Wallet social-credit/coin gifting flow. */
+  onGiftSocialCredit?: () => void;
   onReport?: () => void;
   onBlock?: () => void;
   /** Moderation — only passed when the viewer is allowed. */
