@@ -1,5 +1,5 @@
--- Universe posting, shop-level hiding, global deletion, threaded replies and
--- unique handles.
+-- Universe posting, retired shop-level hiding, global deletion, threaded
+-- replies and unique handles.
 --
 -- Everything runs inside a sub-block that is ALWAYS aborted, so no production
 -- post, comment, profile or audit row survives:
@@ -8,8 +8,10 @@
 --
 -- Expectations:
 --   1. a new post is publicly visible immediately (no approval queue)
---   2. shop A's admin can hide it for shop A only
---   3. the same post stays visible to shop B
+--   2. a legacy social_post_shop_hides row for shop A has ZERO effect: a shop A
+--      member (and shop A's own admin) still sees the post via
+--      social_post_visible_to and social_post_visible_in
+--   3. the shop-scoped hide RPC refuses (per-shop invisibility is retired)
 --   4. a shop admin cannot delete another member's post globally
 --   5. the platform owner can delete any post globally, with an audit row
 --   6. replies work at level 1, 2 and 3
@@ -20,7 +22,7 @@
 DO $$
 DECLARE
   _ecoA uuid; _ecoB uuid; _admA uuid; _super uuid; _author uuid;
-  _post uuid; _c1 uuid; _c2 uuid; _c3 uuid; _n int; _h1 text; _h2 text;
+  _post uuid; _memberA uuid; _c1 uuid; _c2 uuid; _c3 uuid; _n int; _h1 text; _h2 text;
 BEGIN
  BEGIN  -- rolled back at the end of this sub-block
   SELECT id INTO _ecoA FROM public.ecosystems ORDER BY created_at LIMIT 1;
@@ -61,20 +63,45 @@ BEGIN
    WHERE post_id = _post AND status <> 'approved';
   IF _n > 0 THEN RAISE EXCEPTION 'FAIL 1: post is waiting for approval'; END IF;
 
-  -- 2 + 3. hiding is scoped to one shop
+  -- 2. a legacy per-shop hide row must not hide anything from anyone
   INSERT INTO public.social_post_shop_hides (post_id, ecosystem_id, hidden_by, reason)
-  VALUES (_post, _ecoA, _admA, 'test');
-  SELECT count(*) INTO _n FROM public.social_post_shop_hides
-   WHERE post_id = _post AND ecosystem_id = _ecoA;
-  IF _n <> 1 THEN RAISE EXCEPTION 'FAIL 2: post not hidden for shop A'; END IF;
-  IF _ecoB IS NOT NULL THEN
-    SELECT count(*) INTO _n FROM public.social_post_shop_hides
-     WHERE post_id = _post AND ecosystem_id = _ecoB;
-    IF _n <> 0 THEN RAISE EXCEPTION 'FAIL 3: hiding leaked to shop B'; END IF;
+  VALUES (_post, _ecoA, _admA, 'legacy test hide');
+  SELECT id INTO _memberA FROM public.profiles pr
+   WHERE pr.deleted_at IS NULL AND pr.id <> _author
+     AND (pr.ecosystem_id = _ecoA OR EXISTS (
+       SELECT 1 FROM public.ecosystem_memberships m
+        WHERE m.user_id = pr.id AND m.ecosystem_id = _ecoA AND m.membership_state = 'active'))
+     AND public.is_universe_member(pr.id)
+     AND NOT EXISTS (SELECT 1 FROM public.social_blocks b
+        WHERE (b.blocker_id = pr.id AND b.blocked_id = _author) OR (b.blocker_id = _author AND b.blocked_id = pr.id))
+   LIMIT 1;
+  IF _memberA IS NULL THEN RAISE EXCEPTION 'FAIL 2: no shop A member available'; END IF;
+  IF NOT public.social_post_visible_to(_post, _memberA) THEN
+    RAISE EXCEPTION 'FAIL 2: shop A member lost the post because of a per-shop hide';
   END IF;
+  IF NOT public.social_post_visible_to(_post, _admA) THEN
+    RAISE EXCEPTION 'FAIL 2: shop A admin lost the post because of a per-shop hide';
+  END IF;
+  IF NOT public.social_post_visible_in(_post, _ecoA) THEN
+    RAISE EXCEPTION 'FAIL 2: social_post_visible_in still honours per-shop hides';
+  END IF;
+  -- the feed function itself must not reference the hide table any more
+  SELECT count(*) INTO _n FROM pg_proc p JOIN pg_namespace ns ON ns.oid = p.pronamespace
+   WHERE ns.nspname = 'public'
+     AND p.proname IN ('social_feed','social_post_visible_to','social_post_visible_in','universe_profile_posts')
+     AND pg_get_functiondef(p.oid) ILIKE '%social_post_shop_hides%';
+  IF _n > 0 THEN RAISE EXCEPTION 'FAIL 2: % visibility function(s) still filter by social_post_shop_hides', _n; END IF;
+
+  -- 3. the shop-scoped hide RPC is retired
+  BEGIN
+    PERFORM public.social_hide_post_for_shop(_post, true, 'x', _ecoA);
+    RAISE EXCEPTION 'FAIL 3: social_hide_post_for_shop still hides posts';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'FAIL 3%' THEN RAISE; END IF;
+  END;
 
   -- 4. a shop admin is not the author and is not the platform owner, so global
-  --    deletion is not theirs to make: they only get the shop-scoped hide above.
+  --    deletion is not theirs to make.
   IF public.is_super_admin(_admA) OR _admA = _author THEN
     RAISE EXCEPTION 'FAIL 4: test setup picked a privileged shop admin';
   END IF;
