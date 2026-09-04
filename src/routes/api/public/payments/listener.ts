@@ -21,7 +21,7 @@ import {
   timingSafeEqualHex,
 } from "@/lib/listener-signature";
 import { resolvePaymentProvider } from "@/lib/payment-providers";
-
+import { extractNotificationFields } from "@/lib/payment-notification-fields";
 
 /**
  * A heartbeat now carries the phone's own listener health. These are operational
@@ -67,8 +67,6 @@ const eventSchema = z.object({
   provider_id: z.string().max(40).nullable().optional(),
 });
 
-
-
 const payloadSchema = z.discriminatedUnion("kind", [
   heartbeatSchema,
   eventSchema,
@@ -104,9 +102,12 @@ export const Route = createFileRoute("/api/public/payments/listener")({
         const { data: material } = await supabaseAdmin.rpc("listener_auth_material", {
           _device: deviceId,
         });
-        const device = material as
-          | { id: string; status: string; secret_key_hash: string; package_name: string }
-          | null;
+        const device = material as {
+          id: string;
+          status: string;
+          secret_key_hash: string;
+          package_name: string;
+        } | null;
         if (!device) return json({ accepted: false, error: "Unknown device" }, 401);
 
         const expected = await hmacHex(
@@ -184,7 +185,6 @@ export const Route = createFileRoute("/api/public/payments/listener")({
         const provider = resolvePaymentProvider(parsed.package_name, bodyText);
         const reread = provider && bodyText ? provider.parse(bodyText) : null;
 
-
         const args: Record<string, unknown> = {
           _device: deviceId,
           _event_uid: parsed.event_uid,
@@ -192,8 +192,7 @@ export const Route = createFileRoute("/api/public/payments/listener")({
         };
         const amount =
           typeof parsed.amount_php === "number" ? parsed.amount_php : (reread?.amountPhp ?? null);
-        const reference =
-          parsed.gcash_reference ?? parsed.reference ?? reread?.reference ?? null;
+        const reference = parsed.gcash_reference ?? parsed.reference ?? reread?.reference ?? null;
         const senderNumber = parsed.sender_number ?? reread?.senderNumber ?? null;
         const senderName = parsed.sender_name ?? reread?.senderName ?? null;
 
@@ -206,7 +205,15 @@ export const Route = createFileRoute("/api/public/payments/listener")({
         if (parsed.parser_version) args["_parser_version"] = parsed.parser_version;
         if (provider) args["_provider"] = provider.id;
         if (parsed.app_label) args["_app_label"] = parsed.app_label;
-
+        // Receiver-side evidence: keep the whole text plus every field that
+        // could be read (receiving account, balance, fee, time…), not only the
+        // few the matcher needs today.
+        if (bodyText) {
+          const details = extractNotificationFields(bodyText);
+          if (parsed.title)
+            details.labeled_fields = { ...(details.labeled_fields ?? {}), title: parsed.title };
+          args["_details"] = details;
+        }
 
         const { data, error } = await (
           supabaseAdmin.rpc as unknown as (
@@ -223,4 +230,3 @@ export const Route = createFileRoute("/api/public/payments/listener")({
     },
   },
 });
-

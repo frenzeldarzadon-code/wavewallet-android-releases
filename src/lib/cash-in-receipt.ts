@@ -42,6 +42,22 @@ export interface ReceiptReading {
   feePhp?: number | null;
   /** Every line of text the reader could read, in the order it appears. */
   rawText?: string | null;
+  /**
+   * Every labelled item printed on the receipt, label → value exactly as
+   * printed. Nothing is filtered out; absent items are simply not present.
+   */
+  fields?: Record<string, string> | null;
+  /** Total debited including fees, when printed. */
+  totalPhp?: number | null;
+  /** Remaining / available balance, when printed. */
+  balancePhp?: number | null;
+  /** Bank / wallet the money was sent to, when printed. */
+  receivingInstitution?: string | null;
+  merchantName?: string | null;
+  /** Note / message attached by the payer, when printed. */
+  message?: string | null;
+  /** QR / invoice / payment id other than the main reference, when printed. */
+  qrOrPaymentId?: string | null;
   /** Payment date/time printed on the receipt, ISO 8601, when it was legible. */
   paidAt?: string | null;
   /** The reader's own confidence that it read the reference correctly, 0..1. */
@@ -65,10 +81,14 @@ export const RECEIPT_CHECK_LABEL: Record<ReceiptCheck, string> = {
  * Turn whatever the reader returned into a decision. Anything doubtful becomes
  * `unreadable`; nothing is ever inferred from the typed value.
  */
-export function decideReceiptCheck(typedReference: string | null | undefined, reading: ReceiptReading): ReceiptCheck {
+export function decideReceiptCheck(
+  typedReference: string | null | undefined,
+  reading: ReceiptReading,
+): ReceiptCheck {
   const typed = normalizePaymentReference(typedReference);
   const read = normalizePaymentReference(reading.reference);
-  if (!reading.readable || !read || reading.confidence < RECEIPT_MIN_CONFIDENCE) return "unreadable";
+  if (!reading.readable || !read || reading.confidence < RECEIPT_MIN_CONFIDENCE)
+    return "unreadable";
   // Screenshot-first submission: when the member typed nothing, the reference
   // READ OFF the receipt is the authoritative one. Nothing is invented — the
   // request still needs a real listener notification to be approved.
@@ -100,6 +120,18 @@ const text = (value: unknown): string | null => {
   return v === "" || /^(null|none|n\/a|unknown)$/i.test(v) ? null : v;
 };
 
+/** Every printed label → value pair, kept verbatim; never invented. */
+const labelled = (value: unknown): Record<string, string> | null => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    const key = k.trim();
+    const val = typeof v === "number" ? String(v) : text(v);
+    if (key && val) out[key] = val;
+  }
+  return Object.keys(out).length > 0 ? out : null;
+};
+
 /** A date/time only counts when it parses to a real instant; never guessed. */
 const isoDateTime = (value: unknown): string | null => {
   const v = text(value);
@@ -128,11 +160,22 @@ export function parseReceiptReading(raw: string): ReceiptReading {
     statusText: null,
     feePhp: null,
     rawText: null,
+    fields: null,
+    totalPhp: null,
+    balancePhp: null,
+    receivingInstitution: null,
+    merchantName: null,
+    message: null,
+    qrOrPaymentId: null,
     paidAt: null,
     confidence: 0,
     readable: false,
   };
-  const body = raw.replace(/```json/gi, "```").split("```").find((part) => part.includes("{")) ?? raw;
+  const body =
+    raw
+      .replace(/```json/gi, "```")
+      .split("```")
+      .find((part) => part.includes("{")) ?? raw;
   const start = body.indexOf("{");
   const end = body.lastIndexOf("}");
   if (start < 0 || end <= start) return unreadable;
@@ -153,12 +196,25 @@ export function parseReceiptReading(raw: string): ReceiptReading {
     senderName: text(parsed["sender_name"] ?? parsed["payer_name"]),
     senderAccountMasked: text(parsed["sender_account_masked"] ?? parsed["sender_account"]),
     receivingAccountMasked: text(parsed["receiving_account_masked"] ?? parsed["receiving_account"]),
-    receivingNumber: text(parsed["receiving_number"] ?? parsed["receiver_number"] ?? parsed["recipient_number"]),
-    receivingName: text(parsed["receiving_name"] ?? parsed["recipient_name"] ?? parsed["receiver_name"]),
-    transferMethod: text(parsed["transfer_method"] ?? parsed["method"] ?? parsed["transaction_type"]),
+    receivingNumber: text(
+      parsed["receiving_number"] ?? parsed["receiver_number"] ?? parsed["recipient_number"],
+    ),
+    receivingName: text(
+      parsed["receiving_name"] ?? parsed["recipient_name"] ?? parsed["receiver_name"],
+    ),
+    transferMethod: text(
+      parsed["transfer_method"] ?? parsed["method"] ?? parsed["transaction_type"],
+    ),
     statusText: text(parsed["status"] ?? parsed["status_text"]),
     feePhp: numeric(parsed["fee_php"] ?? parsed["fee"]),
     rawText: text(parsed["raw_text"] ?? parsed["all_text"]),
+    fields: labelled(parsed["fields"] ?? parsed["all_fields"]),
+    totalPhp: numeric(parsed["total_php"] ?? parsed["total"]),
+    balancePhp: numeric(parsed["balance_php"] ?? parsed["balance"]),
+    receivingInstitution: text(parsed["receiving_institution"] ?? parsed["bank"]),
+    merchantName: text(parsed["merchant_name"] ?? parsed["merchant"]),
+    message: text(parsed["message"] ?? parsed["note"]),
+    qrOrPaymentId: text(parsed["qr_or_payment_id"] ?? parsed["payment_id"]),
     paidAt: isoDateTime(parsed["paid_at"] ?? parsed["datetime"] ?? parsed["date_time"]),
     confidence,
     readable: parsed["readable"] === false ? false : Boolean(reference),
@@ -232,7 +288,9 @@ export interface ReferenceConflict {
 }
 
 /** One line that says who was credited first — the heart of the comparison. */
-export function creditedFirstLabel(conflict: Pick<ReferenceConflict, "credited_first" | "credited_at">): string {
+export function creditedFirstLabel(
+  conflict: Pick<ReferenceConflict, "credited_first" | "credited_at">,
+): string {
   const when = conflict.credited_at ? new Date(conflict.credited_at).toLocaleString() : null;
   if (conflict.credited_first === "old") {
     return `The earlier transaction was credited first${when ? ` on ${when}` : ""}. It was left untouched.`;
@@ -247,7 +305,8 @@ export function creditedFirstLabel(conflict: Pick<ReferenceConflict, "credited_f
 /* Reviewer-facing verification status                                 */
 /* ------------------------------------------------------------------ */
 
-export type VerificationStatus = "VERIFIED" | "MISMATCH" | "UNREADABLE" | "DUPLICATE_REFERENCE" | "PENDING_REVIEW";
+export type VerificationStatus =
+  "VERIFIED" | "MISMATCH" | "UNREADABLE" | "DUPLICATE_REFERENCE" | "PENDING_REVIEW";
 
 export interface VerificationInput {
   status?: string | null;
@@ -293,8 +352,9 @@ export function maskAccountNumber(value: string | null | undefined): string {
   return `${digits.slice(0, 4)}••••${digits.slice(-3)}`;
 }
 
-
-export async function fetchReferenceConflicts(status: string | null = "open"): Promise<ReferenceConflict[]> {
+export async function fetchReferenceConflicts(
+  status: string | null = "open",
+): Promise<ReferenceConflict[]> {
   const { data, error } = await supabase.rpc("cash_in_reference_conflict_list", {
     _status: status,
   } as never);

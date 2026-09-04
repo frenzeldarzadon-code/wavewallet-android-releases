@@ -2367,6 +2367,7 @@ export type Database = {
           consumed_subscription_request_id: string | null
           created_at: string
           destination_note: string | null
+          details: Json | null
           device_id: string
           event_uid: string
           gcash_reference: string | null
@@ -2398,6 +2399,7 @@ export type Database = {
           consumed_subscription_request_id?: string | null
           created_at?: string
           destination_note?: string | null
+          details?: Json | null
           device_id: string
           event_uid: string
           gcash_reference?: string | null
@@ -2429,6 +2431,7 @@ export type Database = {
           consumed_subscription_request_id?: string | null
           created_at?: string
           destination_note?: string | null
+          details?: Json | null
           device_id?: string
           event_uid?: string
           gcash_reference?: string | null
@@ -9049,9 +9052,14 @@ export type Database = {
         Args: { _row: Database["public"]["Tables"]["cash_in_requests"]["Row"] }
         Returns: string
       }
+      cash_in_match_explanation: { Args: { _id: string }; Returns: Json }
       cash_in_pending_diagnostics: { Args: { _limit?: number }; Returns: Json }
       cash_in_receiving_number: {
         Args: { _ecosystem: string; _method: string }
+        Returns: string
+      }
+      cash_in_receiving_tail: {
+        Args: { _row: Database["public"]["Tables"]["cash_in_requests"]["Row"] }
         Returns: string
       }
       cash_in_reference_conflict_list: {
@@ -10031,6 +10039,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      listener_event_receiving_tail: {
+        Args: { _ev: Database["public"]["Tables"]["listener_events"]["Row"] }
+        Returns: string
+      }
       listener_has_strong_signal: {
         Args: {
           _ev: Database["public"]["Tables"]["listener_events"]["Row"]
@@ -10775,6 +10787,7 @@ export type Database = {
         Args: {
           _amount?: number
           _app_label?: string
+          _details?: Json
           _device: string
           _event_uid: string
           _gcash_reference?: string

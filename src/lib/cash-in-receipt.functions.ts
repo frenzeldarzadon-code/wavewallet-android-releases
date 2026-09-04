@@ -42,6 +42,8 @@ export interface ReceiptExtraction {
   feePhp: number | null;
   /** Everything the reader could read, kept verbatim as evidence. */
   rawText: string | null;
+  /** Every labelled item on the receipt, exactly as printed. */
+  fields: Record<string, string> | null;
   paidAt: string | null;
   confidence: number;
   readable: boolean;
@@ -89,6 +91,7 @@ export const extractCashInReceipt = createServerFn({ method: "POST" })
       statusText: reading.statusText ?? null,
       feePhp: reading.feePhp ?? null,
       rawText: reading.rawText ?? null,
+      fields: reading.fields ?? null,
       paidAt: reading.paidAt ?? null,
       confidence: reading.confidence,
       readable: reading.readable,
@@ -203,7 +206,17 @@ export const verifyCashInReceipt = createServerFn({ method: "POST" })
         transfer_method: reading.transferMethod ?? null,
         status_text: reading.statusText ?? null,
         fee_php: reading.feePhp ?? null,
+        total_php: reading.totalPhp ?? null,
+        balance_php: reading.balancePhp ?? null,
+        receiving_institution: reading.receivingInstitution ?? null,
+        merchant_name: reading.merchantName ?? null,
+        message: reading.message ?? null,
+        qr_or_payment_id: reading.qrOrPaymentId ?? null,
         raw_text: reading.rawText ?? null,
+        // Every labelled item as printed — the reviewer sees exactly what was read.
+        fields: reading.fields ?? null,
+        // The receipt is the customer's (sender) view of the transfer.
+        viewpoint: "sender",
       },
     } as never);
 
