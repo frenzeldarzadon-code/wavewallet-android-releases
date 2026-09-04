@@ -374,7 +374,10 @@ export function UniverseComposer({
                 </button>
               </PopoverTrigger>
               <PopoverContent align="start" className="w-80 space-y-2 rounded-2xl p-2">
-                {(["general", "shops", "ecosystem"] as PostAudience[]).map((a) => {
+                {(["general", "shops", "ecosystem"] as PostAudience[])
+                  // "My shop" only exists for members who currently have one.
+                  .filter((a) => a !== "ecosystem" || Boolean(state.ecosystem_id))
+                  .map((a) => {
                   const Icon = a === "general" ? Globe2 : a === "shops" ? Store : Users;
                   return (
                     <button

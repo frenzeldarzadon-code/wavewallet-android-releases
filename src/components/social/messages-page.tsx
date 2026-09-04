@@ -170,7 +170,7 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
     setSending(true);
     try {
       let imagePath: string | null = null;
-      if (file && crop && session.ecosystemDbId && session.account) {
+      if (file && crop && session.account) {
         imagePath = await uploadSocialImage({
           ecosystemId: session.ecosystemDbId,
           userId: session.account.id,
