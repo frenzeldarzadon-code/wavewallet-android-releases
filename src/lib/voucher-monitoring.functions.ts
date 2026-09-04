@@ -27,6 +27,12 @@ type AuthContext = {
   userId: string;
 };
 
+/**
+ * Monitoring entitlement — the existing rule, applied server-side:
+ * platform owner, active member of the shop, or a customer who owns a voucher
+ * this shop issued (a Universe purchase never makes the buyer a member, but it
+ * does entitle them to watch what they bought). Browsing grants nothing.
+ */
 async function assertShopMember(context: AuthContext, ecosystemId: string) {
   const owner = await context.supabase.rpc("is_super_admin", { _user_id: context.userId });
   if (owner.error) throw new Error(owner.error.message);
@@ -36,8 +42,74 @@ async function assertShopMember(context: AuthContext, ecosystemId: string) {
     _ecosystem_id: ecosystemId,
   });
   if (member.error) throw new Error(member.error.message);
-  if (member.data !== true) throw new Error("You are not a member of this shop.");
+  if (member.data === true) return;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { count, error } = await supabaseAdmin
+    .from("voucher_codes")
+    .select("id", { count: "exact", head: true })
+    .eq("ecosystem_id", ecosystemId)
+    .eq("sold_to", context.userId);
+  if (error) throw new Error(error.message);
+  if ((count ?? 0) > 0) return;
+  throw new Error("You can only monitor shops you belong to or have bought vouchers from.");
 }
+
+/**
+ * Shops this member may open in the Universe customer portal, with the facts
+ * that decide Live Monitoring and Reward Shops eligibility. Every input is the
+ * caller's own row; nothing about other members is read.
+ */
+export const listCustomerShops = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<CustomerShop[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const admin = supabaseAdmin as unknown as Admin;
+    const userId = context.userId;
+    const [memberships, vouchers, points] = await Promise.all([
+      admin
+        .from("ecosystem_memberships")
+        .select("ecosystem_id, role")
+        .eq("user_id", userId)
+        .eq("membership_state", "active"),
+      admin.from("voucher_codes").select("ecosystem_id").eq("sold_to", userId),
+      admin
+        .from("points_accounts")
+        .select("ecosystem_id, balance")
+        .eq("user_id", userId)
+        .not("ecosystem_id", "is", null),
+    ]);
+    for (const r of [memberships, vouchers, points]) {
+      if (r.error) throw new Error(r.error.message);
+    }
+    const ids = relatedShopIds({
+      memberships: memberships.data ?? [],
+      vouchers: vouchers.data ?? [],
+      points: points.data ?? [],
+    });
+    if (ids.length === 0) return [];
+    const [shops, controllers] = await Promise.all([
+      admin
+        .from("ecosystems")
+        .select("id, name, slug, retail_logo_path, archived_at")
+        .in("id", ids)
+        .is("archived_at", null),
+      admin.from("omada_connections").select("ecosystem_id").in("ecosystem_id", ids),
+    ]);
+    if (shops.error) throw new Error(shops.error.message);
+    return mergeCustomerShops({
+      memberships: memberships.data ?? [],
+      vouchers: vouchers.data ?? [],
+      points: points.data ?? [],
+      shops: ((shops.data ?? []) as Array<Record<string, unknown>>).map((s) => ({
+        id: s["id"] as string,
+        name: s["name"] as string,
+        slug: s["slug"] as string,
+        logo_path: (s["retail_logo_path"] as string | null) ?? null,
+        archived_at: (s["archived_at"] as string | null) ?? null,
+      })),
+      controllers: controllers.data ?? [],
+    });
+  });
 
 const CODE_RE = /^[A-Za-z0-9-]{4,64}$/;
 
