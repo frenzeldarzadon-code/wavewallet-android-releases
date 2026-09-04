@@ -183,6 +183,8 @@ export function compactMeta(meta: PostMeta): PostMeta {
   const style = postStyle(meta.style);
   if (style) out.style = style.id;
   if (meta.dm_invite) out.dm_invite = true;
+  const link = meta.link ? readPostLink(meta.link) : null;
+  if (link) out.link = link;
   return out;
 }
 
@@ -245,5 +247,7 @@ export function readPostMeta(raw: unknown): PostMeta {
   }
   if (typeof m["style"] === "string") out.style = m["style"];
   if (m["dm_invite"] === true) out.dm_invite = true;
+  const link = readPostLink(m["link"]);
+  if (link) out.link = link;
   return out;
 }
