@@ -33,3 +33,5 @@ Shop Access cleanup — Universe is the customer portal (DONE — verified with 
 - [x] Universe feed: fixed unbounded refetch loop (unstable session account object) — not published
 
 - [x] Voucher history: show originating Universe shop (voucher_sales.ecosystem_id) with logo + storefront link — not published
+
+- [x] Community: fix ambiguous `id` in social_post_comments, image lightbox, three-dot post menu (profile / follow / friend / message / send coins / gift / report / block)

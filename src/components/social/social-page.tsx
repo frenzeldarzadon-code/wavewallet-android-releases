@@ -1,6 +1,4 @@
 import {
-  EyeOff,
-  Flag,
   Gift,
   Globe2,
   Heart,
@@ -9,7 +7,6 @@ import {
   MessageCircle,
   Reply,
   Send,
-  ShieldOff,
   Trash2,
   X,
 } from "lucide-react";
@@ -74,14 +71,19 @@ import {
   type SocialState,
 } from "@/lib/social";
 import { canReplyTo, hidePostForShop, sendMessage, threadComments } from "@/lib/social";
-import { RelationshipMenu } from "@/components/universe/relationship-actions";
+import { PostMemberMenu } from "@/components/social/post-member-menu";
+import { PostImageLightbox } from "@/components/social/post-image-lightbox";
+import { UniverseSendCoinsSheet } from "@/components/wallet/universe-send-coins-sheet";
+import { fetchWalletView } from "@/lib/wallet";
+import type { UniverseRecipient } from "@/lib/universe-transfer";
 import { MentionText } from "@/components/social/mention-text";
 import { RoleBadge } from "@/components/role-badge";
 import { MentionInput } from "@/components/social/mention-input";
 
-/** Signed-image thumbnail for a post. */
+/** Signed-image thumbnail for a post; tapping it opens the full-size viewer. */
 function PostImage({ path }: { path: string }) {
   const [url, setUrl] = useState<string | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
   useEffect(() => {
     let active = true;
     void socialImageUrl(path).then((u) => active && setUrl(u));
@@ -91,12 +93,22 @@ function PostImage({ path }: { path: string }) {
   }, [path]);
   if (!url) return <div className="aspect-4/3 w-full animate-pulse rounded-xl bg-muted" />;
   return (
-    <img
-      src={url}
-      alt="Post attachment"
-      loading="lazy"
-      className="aspect-4/3 w-full rounded-xl object-cover"
-    />
+    <>
+      <button
+        type="button"
+        className="block w-full cursor-zoom-in overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label="View full photo"
+        onClick={() => setViewerOpen(true)}
+      >
+        <img
+          src={url}
+          alt="Post attachment"
+          loading="lazy"
+          className="aspect-4/3 w-full object-cover"
+        />
+      </button>
+      <PostImageLightbox url={url} open={viewerOpen} onOpenChange={setViewerOpen} />
+    </>
   );
 }
 
@@ -358,7 +370,31 @@ function PostCard({
   const [gifting, setGifting] = useState(false);
   const [hideReason, setHideReason] = useState("");
   const [dmOpening, setDmOpening] = useState(false);
+  // "Send coins": the EXISTING global Universe Wallet transfer, pre-addressed
+  // to the poster. No shop, no upline, no cashback — a wallet-to-wallet move.
+  const [coinsOpen, setCoinsOpen] = useState(false);
+  const [coinsBalance, setCoinsBalance] = useState(0);
   const navigate = useNavigate();
+
+  const coinsRecipient: UniverseRecipient | null = post.author_id
+    ? {
+        id: post.author_id,
+        full_name: post.author_name,
+        handle: post.author_handle,
+        avatar_path: post.author_avatar,
+      }
+    : null;
+
+  const loadCoinsBalance = async () => {
+    const view = await fetchWalletView(meId, null).catch(() => null);
+    setCoinsBalance(view?.balance ?? 0);
+  };
+
+  const openSendCoins = async () => {
+    if (!coinsRecipient) return;
+    await loadCoinsBalance();
+    setCoinsOpen(true);
+  };
 
   const thread = threadComments(comments);
   const meta = readPostMeta(post.meta);
@@ -570,8 +606,14 @@ function PostCard({
           </Button>
         ) : null}
 
-        <div className="flex flex-wrap items-center gap-1">
-          <Button variant="ghost" size="sm" className="h-10 gap-1.5" onClick={onLike}>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-10 gap-1.5"
+            aria-label={post.liked_by_me ? "Unlike" : "Like"}
+            onClick={onLike}
+          >
             <Heart
               className={post.liked_by_me ? "size-4 fill-destructive text-destructive" : "size-4"}
             />
@@ -581,59 +623,33 @@ function PostCard({
             variant="ghost"
             size="sm"
             className="h-10 gap-1.5"
+            aria-label="Replies"
             onClick={() => void openComments()}
           >
             <MessageCircle className="size-4" />
             {post.comment_count}
           </Button>
-          {post.author_id !== meId ? (
-            <>
-              <Button variant="ghost" size="sm" className="h-10" onClick={() => setDmOpen(true)}>
-                <Send className="size-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-10 gap-1.5"
-                disabled={!canGift(state, false)}
-                title={
-                  canGift(state, false)
-                    ? `Gift paid social credits to ${post.author_name}`
-                    : "You have no purchased social credits. Free promotional credits cannot be gifted."
-                }
-                onClick={() => setGiftOpen(true)}
-              >
-                <Gift className="size-4" />
-              </Button>
-              <RelationshipMenu userId={post.author_id} name={post.author_name} />
-              <Button variant="ghost" size="sm" className="h-10" onClick={onReport}>
-                <Flag className="size-4" />
-              </Button>
-              <Button variant="ghost" size="sm" className="h-10" onClick={onBlock}>
-                <ShieldOff className="size-4" />
-              </Button>
-            </>
-          ) : null}
-          {post.can_hide ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-10 gap-1.5 text-xs"
-              onClick={() => setHideOpen(true)}
-            >
-              <EyeOff className="size-4" /> Hide from my shop
-            </Button>
-          ) : null}
-          {post.can_delete ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-auto h-10 text-destructive"
-              onClick={onDelete}
-            >
-              <Trash2 className="size-4" />
-            </Button>
-          ) : null}
+          <div className="ml-auto">
+            <PostMemberMenu
+              authorId={post.author_id}
+              authorName={post.author_name}
+              authorHandle={post.author_handle}
+              isSelf={post.author_id === meId}
+              onMessage={() => void openDm()}
+              onQuickMessage={() => setDmOpen(true)}
+              onSendCoins={() => void openSendCoins()}
+              onGift={() => setGiftOpen(true)}
+              giftDisabledReason={
+                canGift(state, false)
+                  ? null
+                  : "You have no purchased social credits. Free promotional credits cannot be gifted."
+              }
+              onReport={onReport}
+              onBlock={onBlock}
+              {...(post.can_hide ? { onHideForShop: () => setHideOpen(true) } : {})}
+              {...(post.can_delete ? { onDelete } : {})}
+            />
+          </div>
         </div>
 
         {open ? (
@@ -817,6 +833,17 @@ function PostCard({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {coinsRecipient ? (
+        <UniverseSendCoinsSheet
+          open={coinsOpen}
+          onOpenChange={setCoinsOpen}
+          senderId={meId}
+          balance={coinsBalance}
+          initialRecipient={coinsRecipient}
+          onSent={loadCoinsBalance}
+        />
+      ) : null}
 
       <Dialog open={dmOpen} onOpenChange={setDmOpen}>
         <DialogContent>

@@ -46,6 +46,7 @@ export function UniverseSendCoinsSheet({
   senderId,
   balance,
   onSent,
+  initialRecipient = null,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -54,6 +55,11 @@ export function UniverseSendCoinsSheet({
   balance: number;
   /** Called after a successful transfer so the parent can refresh balance + history. */
   onSent: () => void | Promise<void>;
+  /**
+   * Pre-chosen recipient (e.g. "Send coins" from a community post). Skips the
+   * search step; the database still re-checks the recipient on submit.
+   */
+  initialRecipient?: UniverseRecipient | null;
 }) {
   const online = useOnline();
   const [step, setStep] = useState<Step>("pick");
@@ -98,8 +104,16 @@ export function UniverseSendCoinsSheet({
   };
 
   useEffect(() => {
-    if (!open) reset();
-  }, [open]);
+    if (!open) {
+      reset();
+      return;
+    }
+    if (initialRecipient && initialRecipient.id !== senderId) {
+      setRecipient(initialRecipient);
+      setStep("amount");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialRecipient?.id]);
 
   // Debounced Universe-wide search.
   useEffect(() => {
