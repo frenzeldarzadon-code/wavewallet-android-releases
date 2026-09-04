@@ -91,6 +91,17 @@ BEGIN
     RAISE EXCEPTION 'FAIL G: dm_open_thread still requires the same shop';
   END IF;
 
+  -- H. replies load and nest for a viewer from another shop (regression for
+  --    "column reference id is ambiguous" in social_post_comments)
+  PERFORM set_config('request.jwt.claims', json_build_object('sub', _b, 'role', 'authenticated')::text, true);
+  IF (SELECT count(*) FROM public.social_post_comments(_p1)) < 1 THEN
+    RAISE EXCEPTION 'FAIL H: replies did not load for a cross-shop viewer';
+  END IF;
+  PERFORM public.social_create_comment(_p1, 'nested reply', _c);
+  IF (SELECT max(depth) FROM public.social_post_comments(_p1)) <> 2 THEN
+    RAISE EXCEPTION 'FAIL H: nested reply not returned';
+  END IF;
+
   RAISE NOTICE 'PASS: Universe social access is shop-independent';
   RAISE EXCEPTION 'ROLLBACK: test complete';
  EXCEPTION WHEN OTHERS THEN
