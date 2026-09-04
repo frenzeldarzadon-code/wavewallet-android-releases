@@ -41,9 +41,6 @@ import { MemberAvatar } from "@/components/member-avatar";
 import { displayHandle } from "@/lib/profile";
 import { useSession } from "@/lib/session";
 import {
-  canGift,
-  giftIssue,
-  giftSocialCredits,
   COMMENT_MAX_CHARS,
   availableTiers,
   createComment,
