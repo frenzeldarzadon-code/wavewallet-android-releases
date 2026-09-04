@@ -15,3 +15,5 @@
 - [x] Cash In sender/receiver semantics + full receipt/notification extraction: receiver-side notifications without a payer number no longer block approval; payer-name identity signal now links events; semantic SQL test passes (rolled back).
 
 - [x] Listener source detection + Super Admin source blocklist (read all notifications, channel/category capture, detected-sources card with Block/Unblock, audited rules)
+
+- [x] Consolidated final audit of payment listener + Cash In: receiving-account gate test fixed & passing (9/9); older suites (no-pairing, two-signal, payment-first, semantics) aligned with final rules (receipt read first, receiver evidence required, credited duplicates refused at submission); provider-neutral Super Admin/go-live wording; typecheck + 1,422 unit tests pass. Not published.

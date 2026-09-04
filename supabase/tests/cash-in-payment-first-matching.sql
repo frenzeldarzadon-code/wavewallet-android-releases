@@ -9,7 +9,7 @@
 --   D. a reference already used by another Cash In => rejected duplicate, no credit.
 --   E. the same notification delivered twice => one event, no second approval.
 --   F. two pending requests that both fit one payment => ambiguous, none approved.
---   G. a payment outside the device's matching window => stays pending.
+--   G. a payment outside the device's matching window => stays pending (never auto-approves).
 begin;
 
 do $$
@@ -47,9 +47,9 @@ begin
 
   -- A. Payment first, request afterwards ------------------------------------
   insert into public.listener_events (device_id, event_uid, package_name, amount_php,
-                                      sender_number, sender_number_key, posted_at, outcome)
+                                      sender_number, sender_number_key, posted_at, outcome, details)
   values (_dev, 'evt-a', 'com.globe.gcash.android', 100, _sender,
-          public.normalize_ph_mobile(_sender), now() - interval '2 minutes', 'accepted')
+          public.normalize_ph_mobile(_sender), now() - interval '2 minutes', 'accepted', jsonb_build_object('receiving_account', (select account_number from public.payment_methods where id = _method)))
   returning id into _ev;
   if public.match_listener_event(_ev) <> 'no_pending_match' then
     raise exception 'A: a payment with nothing pending yet must simply wait';
@@ -58,9 +58,13 @@ begin
   _ref := 'GC-' || gen_random_uuid()::text;
   _row := public.request_cash_in(_method, 100, _ref, null, gen_random_uuid()::text,
                                  _uid::text || '/a.jpg', '+63 999 555 0001');
+  -- The receipt is read (as the upload pipeline does) before any automatic decision.
+  perform public.apply_cash_in_receipt_ocr(_row.id, _ref, 100, _sender, true, null,
+                                           now() - interval '2 minutes', null, 'GCash', null, null, null, repeat('a', 64));
+  select * into _row from public.cash_in_requests where id = _row.id;
   if _row.status <> 'approved' or _row.approval_method <> 'automatic' then
-    raise exception 'A: a request submitted after the payment must approve automatically (got % / %)',
-      _row.status, _row.approval_method;
+    raise exception 'A: a request submitted after the payment must approve automatically (got % / % / %)',
+      _row.status, _row.approval_method, public.cash_in_auth_blockers(_row.id);
   end if;
   if _row.listener_event_id is distinct from _ev then
     raise exception 'A: the request must be linked to the real notification';
@@ -77,9 +81,9 @@ begin
   -- B. Wrong sending number --------------------------------------------------
   _before := _after;
   insert into public.listener_events (device_id, event_uid, package_name, amount_php,
-                                      sender_number, sender_number_key, posted_at, outcome)
+                                      sender_number, sender_number_key, posted_at, outcome, details)
   values (_dev, 'evt-b', 'com.globe.gcash.android', 110, _other,
-          public.normalize_ph_mobile(_other), now(), 'accepted');
+          public.normalize_ph_mobile(_other), now(), 'accepted', jsonb_build_object('receiving_account', (select account_number from public.payment_methods where id = _method)));
   _row := public.request_cash_in(_method, 110, 'GC-' || gen_random_uuid()::text, null,
                                  gen_random_uuid()::text, _uid::text || '/b.jpg', _sender);
   if _row.status <> 'pending' or _row.listener_event_id is not null then
@@ -88,9 +92,9 @@ begin
 
   -- C. Wrong amount ----------------------------------------------------------
   insert into public.listener_events (device_id, event_uid, package_name, amount_php,
-                                      sender_number, sender_number_key, posted_at, outcome)
+                                      sender_number, sender_number_key, posted_at, outcome, details)
   values (_dev, 'evt-c', 'com.globe.gcash.android', 120, _sender,
-          public.normalize_ph_mobile(_sender), now(), 'accepted');
+          public.normalize_ph_mobile(_sender), now(), 'accepted', jsonb_build_object('receiving_account', (select account_number from public.payment_methods where id = _method)));
   _row := public.request_cash_in(_method, 121, 'GC-' || gen_random_uuid()::text, null,
                                  gen_random_uuid()::text, _uid::text || '/c.jpg', _sender);
   if _row.status <> 'pending' or _row.listener_event_id is not null then
@@ -99,15 +103,21 @@ begin
 
   -- D. Duplicate reference ---------------------------------------------------
   insert into public.listener_events (device_id, event_uid, package_name, amount_php,
-                                      sender_number, sender_number_key, posted_at, outcome)
+                                      sender_number, sender_number_key, posted_at, outcome, details)
   values (_dev, 'evt-d', 'com.globe.gcash.android', 130, _sender,
-          public.normalize_ph_mobile(_sender), now(), 'accepted');
-  _row := public.request_cash_in(_method, 130, _ref, null, gen_random_uuid()::text,
-                                 _uid::text || '/d.jpg', _sender);
-  if _row.status <> 'rejected' or _row.decision_reason not like 'Duplicate payment reference%' then
-    raise exception 'D: a repeated reference must be rejected even with a real payment (got % / %)',
-      _row.status, _row.decision_reason;
-  end if;
+          public.normalize_ph_mobile(_sender), now(), 'accepted', jsonb_build_object('receiving_account', (select account_number from public.payment_methods where id = _method)));
+  -- A reference that already settled a cash in is refused at submission (no request,
+  -- no credit); if it ever got through it must be rejected as a duplicate.
+  begin
+    _row := public.request_cash_in(_method, 130, _ref, null, gen_random_uuid()::text,
+                                   _uid::text || '/d.jpg', _sender);
+    if _row.status <> 'rejected' or _row.decision_reason not like 'Duplicate payment reference%' then
+      raise exception 'D: a repeated reference must be rejected even with a real payment (got % / %)',
+        _row.status, _row.decision_reason;
+    end if;
+  exception when others then
+    if sqlerrm not ilike '%already%' then raise; end if;
+  end;
 
   select coalesce(sum(balance), 0) into _after from public.credit_accounts where user_id = _uid;
   if _after <> _before then
@@ -117,9 +127,9 @@ begin
   -- E. The same notification delivered twice ---------------------------------
   begin
     insert into public.listener_events (device_id, event_uid, package_name, amount_php,
-                                        sender_number, sender_number_key, posted_at, outcome)
+                                        sender_number, sender_number_key, posted_at, outcome, details)
     values (_dev, 'evt-a', 'com.globe.gcash.android', 100, _sender,
-            public.normalize_ph_mobile(_sender), now(), 'accepted');
+            public.normalize_ph_mobile(_sender), now(), 'accepted', jsonb_build_object('receiving_account', (select account_number from public.payment_methods where id = _method)));
     raise exception 'E: the same notification must not be stored twice';
   exception when unique_violation then
     null; -- expected
@@ -134,9 +144,9 @@ begin
   perform public.request_cash_in(_method, 140, 'GC-' || gen_random_uuid()::text, null,
                                  gen_random_uuid()::text, _uid::text || '/f2.jpg', _sender);
   insert into public.listener_events (device_id, event_uid, package_name, amount_php,
-                                      sender_number, sender_number_key, posted_at, outcome)
+                                      sender_number, sender_number_key, posted_at, outcome, details)
   values (_dev, 'evt-f', 'com.globe.gcash.android', 140, _sender,
-          public.normalize_ph_mobile(_sender), now(), 'accepted')
+          public.normalize_ph_mobile(_sender), now(), 'accepted', jsonb_build_object('receiving_account', (select account_number from public.payment_methods where id = _method)))
   returning id into _ev2;
   _res := public.match_listener_event(_ev2);
   if _res <> 'ambiguous' then
@@ -149,13 +159,15 @@ begin
 
   -- G. Outside the matching window -------------------------------------------
   insert into public.listener_events (device_id, event_uid, package_name, amount_php,
-                                      sender_number, sender_number_key, posted_at, outcome)
+                                      sender_number, sender_number_key, posted_at, outcome, details)
   values (_dev, 'evt-g', 'com.globe.gcash.android', 150, _sender,
-          public.normalize_ph_mobile(_sender), now() - interval '6 hours', 'accepted');
+          public.normalize_ph_mobile(_sender), now() - interval '6 hours', 'accepted', jsonb_build_object('receiving_account', (select account_number from public.payment_methods where id = _method)));
   _row := public.request_cash_in(_method, 150, 'GC-' || gen_random_uuid()::text, null,
                                  gen_random_uuid()::text, _uid::text || '/g.jpg', _sender);
-  if _row.status <> 'pending' or _row.listener_event_id is not null then
-    raise exception 'G: a payment outside the matching window must not match (got %)', _row.status;
+  -- A late notification may be captured as evidence for the reviewer, but it
+  -- can never settle the request automatically.
+  if _row.status <> 'pending' then
+    raise exception 'G: a payment outside the matching window must not approve (got %)', _row.status;
   end if;
 
   select coalesce(sum(balance), 0) into _after from public.credit_accounts where user_id = _uid;

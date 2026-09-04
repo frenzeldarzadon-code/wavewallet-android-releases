@@ -105,7 +105,7 @@ begin
   -- 3) "From Juan" on the receipt vs "Received from Juan" on the notification + amount => approved.
   _res_json := public.record_listener_event(_dev, 'sr-evt-3', 'com.globe.gcash.android',
       'You have received PHP 800.00 of GCash from JUAN D.', 800, null, 'JUAN D', now(), 'v2', null, 'gcash', 'GCash',
-      jsonb_build_object('viewpoint', 'receiver', 'sender_name', 'JUAN D'));
+      jsonb_build_object('viewpoint', 'receiver', 'sender_name', 'JUAN D', 'receiving_account', '****' || _tail));
   _row := public.request_cash_in(_gcash, 800, 'SR3-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 8)),
                                  null, gen_random_uuid()::text, _uid::text || '/sr3.jpg', '09990001234', 'platform', now(), null, 'universe');
   perform public.apply_cash_in_receipt_ocr(_row.id, _row.payer_reference, 800, '09990001234', true,

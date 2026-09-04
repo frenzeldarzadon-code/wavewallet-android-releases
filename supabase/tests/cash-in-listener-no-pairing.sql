@@ -73,8 +73,9 @@ begin
 
   -- 2) exactly two independent matches: amount + sending number (no reference on the notification)
   _ref := 'NP-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 10));
-  insert into public.listener_events (device_id, event_uid, package_name, amount_php, sender_number_key, posted_at, created_at, outcome, provider_id)
-  values (_dev, 'np-evt-2', 'com.globe.gcash.android', 700, public.normalize_ph_mobile(_sender), now() - interval '3 minutes', now(), 'accepted', 'gcash')
+  insert into public.listener_events (device_id, event_uid, package_name, amount_php, sender_number_key, posted_at, created_at, outcome, provider_id, details)
+  values (_dev, 'np-evt-2', 'com.globe.gcash.android', 700, public.normalize_ph_mobile(_sender), now() - interval '3 minutes', now(), 'accepted', 'gcash',
+          jsonb_build_object('receiving_account', (select account_number from public.payment_methods where id = _gcash)))
   returning id into _ev;
   _row := public.request_cash_in(_gcash, 700, _ref, null, gen_random_uuid()::text, _uid::text || '/np2.jpg', _sender, 'platform',
                                  now() - interval '3 minutes', jsonb_build_object('provider_name', 'GCash'), 'universe');
@@ -177,9 +178,10 @@ begin
   --    reference + sending number agree, matched with no account pairing at all.
   _ref := 'BK' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 10));
   insert into public.listener_events (device_id, event_uid, package_name, amount_php, gcash_reference, reference_key, sender_number_key,
-                                      posted_at, created_at, outcome, provider_id)
+                                      posted_at, created_at, outcome, provider_id, details)
   values (_dev, 'np-evt-9', 'com.maribank.app', 1200, _ref, public.normalize_payment_reference(_ref), public.normalize_ph_mobile('09181112222'),
-          now() - interval '1 minute', now(), 'accepted', 'maribank');
+          now() - interval '1 minute', now(), 'accepted', 'maribank',
+          jsonb_build_object('receiving_account', (select account_number from public.payment_methods where id = _bank)));
   _row := public.request_cash_in(_bank, 1200, _ref, null, gen_random_uuid()::text, _uid::text || '/np9.jpg', '09181112222', 'platform',
                                  now() - interval '1 minute', jsonb_build_object('provider_name', 'MariBank'), 'universe');
   perform public.apply_cash_in_receipt_ocr(_row.id, _ref, 1200, '09181112222', true, null, now() - interval '1 minute',

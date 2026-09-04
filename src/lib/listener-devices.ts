@@ -227,7 +227,7 @@ export function deviceHealthLine(device: ListenerDevice) {
         : "Listener state unknown",
   );
   if (typeof device.received_count === "number")
-    parts.push(`${device.received_count} GCash notification(s) seen`);
+    parts.push(`${device.received_count} payment notification(s) seen`);
   if (device.app_version) parts.push(`app ${device.app_version}`);
   return parts.join(" · ");
 }

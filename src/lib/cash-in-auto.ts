@@ -74,7 +74,7 @@ export interface CashInAutoStatus {
   listener_devices_active?: number;
   /** Active listener phones that have actually delivered a notification. */
   listener_devices_proven?: number;
-  /** Paired phones with no receiving GCash account set — they can never match. */
+  /** Legacy: shop phones still carrying no receiving-number scope (platform phones are intentionally unscoped). */
   listener_devices_unscoped?: number;
   listener_matches_30d?: number;
   listener_last_event_at?: string | null;
