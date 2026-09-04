@@ -1,43 +1,42 @@
 /**
- * Shop directory — the Universe view of which ecosystems you belong to and
- * which you can ask to join. Roles, wallets and history are never shown here:
- * they belong inside the shop console, isolated per ecosystem.
+ * Shops — the Universe view of the shop world.
+ *
+ * Universe is the customer portal: a Universe member is already a customer of
+ * every Universe shop, so there is nothing to join or request. This screen is
+ * for finding shops and sellers to buy from, answering team invitations, and
+ * — only for members who hold a management role somewhere — opening the Shop
+ * Dashboard of a shop they run. Roles, wallets and history of a shop are never
+ * shown here: they belong inside that shop's dashboard.
  */
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Check, Loader2, Plus, Settings2, Store } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { EmptyState, PageSection } from "@/components/ui-kit";
+import { PageSection } from "@/components/ui-kit";
 import { ShopInvitationsCard } from "@/components/universe/shop-invitations-card";
 import { UniverseShell } from "@/components/universe/universe-shell";
 import { UniverseShopDiscovery } from "@/components/universe/universe-shop-discovery";
-import { homeFor, useSession } from "@/lib/session";
-import {
-  fetchMyMemberships,
-  switchEcosystem,
-  switchableMemberships,
-  type Membership,
-} from "@/lib/memberships";
-import { ShopFinder } from "@/components/shop/shop-finder";
+import { openShopDashboard } from "@/components/shop/shop-dashboard-switch";
+import { useSession } from "@/lib/session";
+import { fetchMyMemberships, type Membership } from "@/lib/memberships";
+import { dashboardLabelFor, managedMemberships } from "@/lib/shop-dashboard";
 import { ShopTypeBadge } from "@/components/shop/shop-type-card";
-import { joinShopByCode, type ShopSummary } from "@/lib/shop-directory";
 import { SHOP_TYPE_INFO, SHOP_TYPES, fetchShopTypes, type ShopTypeState } from "@/lib/shop-type";
-import { roleLabels } from "@/lib/wavewallet";
 
 export const Route = createFileRoute("/universe/shops")({
   head: () => ({
     meta: [
-      { title: "Shop Directory — ONE WAVE Universe" },
+      { title: "Shops — ONE WAVE Universe" },
       {
         name: "description",
         content:
-          "Browse ONE WAVE shops, switch between the ones you belong to and join a new hotspot shop instantly.",
+          "Find ONE WAVE shops and sellers, buy vouchers with your Universe wallet, and open the Shop Dashboard of any shop you manage.",
       },
-      { property: "og:title", content: "Shop Directory — ONE WAVE Universe" },
+      { property: "og:title", content: "Shops — ONE WAVE Universe" },
       {
         property: "og:description",
-        content: "Switch between your shops or join a new one instantly.",
+        content: "Find shops and sellers, or open the Shop Dashboard of a shop you manage.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -50,43 +49,39 @@ function UniverseShops() {
   const session = useSession();
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [types, setTypes] = useState<Record<string, ShopTypeState>>({});
-  const [found, setFound] = useState<ShopSummary | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const list = await fetchMyMemberships();
     setMemberships(list);
     // Type labels so several shops are told apart at a glance.
-    setTypes(await fetchShopTypes(list.map((m) => m.ecosystemId)));
+    setTypes(await fetchShopTypes(managedMemberships(list).map((m) => m.ecosystemId)));
   }, []);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  const mine = switchableMemberships(memberships);
-  const managed = mine.filter((m) => m.role === "admin").length;
+  const managed = managedMemberships(memberships);
 
-  const enter = async (ecosystemId: string, isActive: boolean) => {
+  const enter = async (m: Membership) => {
     if (busy) return;
-    setBusy(ecosystemId);
+    setBusy(m.ecosystemId);
     try {
-      if (!isActive) await switchEcosystem(ecosystemId);
-      // Reload so every wallet, list and report refetches in the new context.
-      window.location.href = homeFor(session.account?.role ?? "customer");
+      await openShopDashboard(m);
     } catch (e) {
       setBusy(null);
-      toast.error(e instanceof Error ? e.message : "Could not switch shop");
+      toast.error(e instanceof Error ? e.message : "Could not open the Shop Dashboard");
     }
   };
 
   return (
-    <UniverseShell title="Shops" subtitle="Find vouchers, your shops, and joining another one">
+    <UniverseShell title="Shops" subtitle="Find vouchers and sellers — no membership needed">
       <div className="space-y-6 px-4 sm:px-0">
         {session.account ? (
           <PageSection
             title="Find a Universe shop or seller"
-            description="Search by shop or voucher name, then pick a seller and buy from their storefront — paid from your Universe wallet, no membership needed."
+            description="Search by shop or voucher name, then pick a seller and buy from their storefront — paid from your Universe wallet. Being a Universe member is all you need."
           >
             <UniverseShopDiscovery />
           </PageSection>
@@ -94,28 +89,23 @@ function UniverseShops() {
 
         <ShopInvitationsCard onChanged={() => void load()} />
 
-        <PageSection
-          title="Your shops"
-          description={
-            managed > 1
-              ? `You manage ${managed} shops. Each keeps its own type, role, wallet and history — switching only changes which one is active.`
-              : "Each membership keeps its own role, wallet and history. Switching only changes which one is active."
-          }
-        >
-          {mine.length === 0 ? (
-            <EmptyState
-              title="No shop memberships yet"
-              description="Join a shop with its 7-digit Shop ID below, or create your own."
-            />
-          ) : (
+        {managed.length > 0 ? (
+          <PageSection
+            title="Shop Dashboard"
+            description={
+              managed.length > 1
+                ? `You manage ${managed.length} shops. Each dashboard keeps its own sellers, inventory, storefront and history.`
+                : "Shop operations, sellers, inventory and storefront design live in the Shop Dashboard."
+            }
+          >
             <div className="space-y-2">
-              {mine.map((m) => {
+              {managed.map((m) => {
                 const t = types[m.ecosystemId] ?? null;
                 const isNg = t === "new_generation";
                 return (
                   <div
                     key={m.ecosystemId}
-                    className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
+                    className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-[var(--shadow-card)]"
                   >
                     <Store className={isNg ? "size-5 text-warning" : "size-5 text-primary"} />
                     <div className="min-w-0 flex-1">
@@ -123,20 +113,23 @@ function UniverseShops() {
                       <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                         {t ? <ShopTypeBadge type={t} /> : null}
                         <span>
-                          {roleLabels[m.role]}
-                          {m.isActive ? " · active" : ""}
+                          {dashboardLabelFor(m.role)}
+                          {m.isActive ? " · current" : ""}
                         </span>
                       </div>
                     </div>
                     {m.isActive ? (
-                      <Check className="size-4 text-success" aria-label="Active shop" />
+                      <Check className="size-4 text-success" aria-label="Current shop" />
                     ) : null}
                     <div className="flex items-center gap-2">
                       {m.role === "admin" && m.isActive ? (
                         <Button asChild size="sm" variant="ghost">
-                          <Link to="/admin/settings" aria-label={`Manage ${m.ecosystemName}`}>
+                          <Link
+                            to="/admin/storefront"
+                            aria-label={`Storefront design for ${m.ecosystemName}`}
+                          >
                             <Settings2 className="size-4" />
-                            Manage
+                            Storefront
                           </Link>
                         </Button>
                       ) : null}
@@ -144,53 +137,23 @@ function UniverseShops() {
                         size="sm"
                         variant={m.isActive ? "default" : "outline"}
                         disabled={busy === m.ecosystemId}
-                        onClick={() => void enter(m.ecosystemId, m.isActive)}
+                        onClick={() => void enter(m)}
                       >
                         {busy === m.ecosystemId ? (
                           <Loader2 className="size-4 animate-spin" />
                         ) : null}
-                        {m.isActive ? "Open" : "Switch & open"}
+                        Open dashboard
                       </Button>
                     </div>
                   </div>
                 );
               })}
             </div>
-          )}
-        </PageSection>
+          </PageSection>
+        ) : null}
 
         <PageSection
-          title="Search & join an existing shop"
-          description="Enter the operator's 7-digit Shop ID, or find them by city / municipality. Shops you do not belong to stay private."
-        >
-          <div className="space-y-3 rounded-xl border border-border bg-card p-4">
-            <ShopFinder value={found} onChange={setFound} />
-            <Button
-              className="w-full"
-              disabled={!found || busy === "join"}
-              onClick={async () => {
-                if (!found) return;
-                setBusy("join");
-                try {
-                  await joinShopByCode(found.shopCode);
-                  toast.success("You joined the shop — your wallet there is ready.");
-                  setFound(null);
-                  await load();
-                } catch (err) {
-                  toast.error(err instanceof Error ? err.message : "Could not join that shop");
-                } finally {
-                  setBusy(null);
-                }
-              }}
-            >
-              {busy === "join" ? <Loader2 className="size-4 animate-spin" /> : null}
-              Join shop
-            </Button>
-          </div>
-        </PageSection>
-
-        <PageSection
-          title="Create a new shop"
+          title="Start your own shop"
           description="You can run several shops from this login. Pick the type first — it decides which tools the shop gets."
         >
           <div className="space-y-3 rounded-xl border border-border bg-card p-4">
@@ -212,17 +175,6 @@ function UniverseShops() {
             </Button>
           </div>
         </PageSection>
-
-        <p className="text-xs text-muted-foreground">
-          Looking for balances, vouchers or reports?{" "}
-          <Link
-            to={homeFor(session.account?.role ?? "customer")}
-            className="font-medium text-primary underline-offset-2 hover:underline"
-          >
-            Open your shop console
-          </Link>
-          .
-        </p>
       </div>
     </UniverseShell>
   );

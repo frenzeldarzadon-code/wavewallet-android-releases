@@ -32,8 +32,12 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { MemberAvatar } from "@/components/member-avatar";
+import {
+  ShopDashboardSwitch,
+  useShopDashboardEntry,
+} from "@/components/shop/shop-dashboard-switch";
 import { cn } from "@/lib/utils";
-import { homeFor, useSession } from "@/lib/session";
+import { useSession } from "@/lib/session";
 import { fetchNotifications, unreadCount } from "@/lib/notifications";
 import { fetchWalletView } from "@/lib/wallet";
 import { fetchMyProfile } from "@/lib/profile";
@@ -155,12 +159,15 @@ export function UniverseShell({
   const unread = useUnread();
   const account = session.account;
   const identity = useIdentity(account?.id ?? null);
+  // Universe IS the customer portal. A Shop Dashboard is offered only for
+  // memberships that carry a management role — decided from the member's real
+  // memberships, never from the currently active shop alone.
+  const dashboard = useShopDashboardEntry(!!account && account.role !== "super_admin");
   if (!account) return null;
 
   const active = (to: string) =>
     to === "/universe" ? pathname === "/universe" : pathname.startsWith(to);
-  // Universe IS the customer portal; only selling/managing roles have a console.
-  const manages = account.role !== "customer";
+  const isPlatformOwner = account.role === "super_admin";
 
   return (
     <div className="min-h-screen bg-app">
@@ -199,14 +206,16 @@ export function UniverseShell({
                   </Link>
                 ))}
                 <div className="my-3 border-t border-border" />
-                {manages ? (
+                {isPlatformOwner ? (
                   <Link
-                    to={homeFor(account.role)}
+                    to="/super"
                     className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium hover:bg-accent"
                   >
-                    <Store className="size-5" /> My shop console
+                    <Store className="size-5" /> Platform console
                   </Link>
-                ) : null}
+                ) : (
+                  <ShopDashboardSwitch entry={dashboard} variant="menu" />
+                )}
                 <Button
                   variant="ghost"
                   className="w-full justify-start text-destructive"
@@ -284,18 +293,20 @@ export function UniverseShell({
           </Button>
 
           <div className="mt-auto space-y-2">
-            {manages ? (
+            {isPlatformOwner ? (
               <Button
                 asChild
                 variant="outline"
                 size="sm"
                 className="w-full justify-start gap-2 rounded-lg"
               >
-                <Link to={homeFor(account.role)}>
-                  <Store className="size-4" /> My shop console
+                <Link to="/super">
+                  <Store className="size-4" /> Platform console
                 </Link>
               </Button>
-            ) : null}
+            ) : (
+              <ShopDashboardSwitch entry={dashboard} variant="button" />
+            )}
             <Link
               to="/universe/profile"
               className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent/60"

@@ -1,15 +1,15 @@
 /**
- * "Shops & Invites" — the member's own inbox, for every shop role.
+ * "Invites" — the member's own inbox inside a Shop Dashboard.
  *
- * Two clearly separated sections:
- *  1. Shops the member joined (joining is automatic; admins review afterwards).
- *  2. Invitations sent to the member, with Accept and Decline.
+ * Universe is the customer portal, so there is no join list here any more:
+ * the only thing a shop can ask of a member is an invitation into its team,
+ * shown with Accept and Decline.
  *
  * Accepting joins that ONE shop with the role the shop assigns; nothing moves
  * between shops — wallets, points, cashback and history stay shop-scoped. The
  * database re-checks every action, so this screen can only ever ask.
  */
-import { Check, ClipboardList, Loader2, Mailbox, RefreshCw, X } from "lucide-react";
+import { Check, Loader2, Mailbox, RefreshCw, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -25,12 +25,6 @@ import {
   type MemberInbox,
 } from "@/lib/member-inbox";
 import { MemberInviteCard } from "@/components/universe/member-invite-card";
-import {
-  heldForManualReview,
-  memberJoinLabel,
-  reviewState,
-  reviewTone,
-} from "@/lib/membership-applications";
 import { useSession } from "@/lib/session";
 import { daysLeft, respondToInvitation, type MyInvitation } from "@/lib/shop-invitations";
 import { roleLabel, shortDateTime } from "@/lib/wavewallet";
@@ -85,9 +79,9 @@ export function MemberInboxPanel() {
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold">Shops &amp; Invites</h1>
+          <h1 className="text-lg font-semibold">Invites</h1>
           <p className="text-xs text-muted-foreground">
-            Shops you joined, and shops that invited you.
+            Shops that invited you to their team, and people you invite.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -105,10 +99,9 @@ export function MemberInboxPanel() {
         onSent={() => void reload()}
       />
 
-
-
       {/* ---------------- Invites ---------------- */}
-      <PageSection devSlot="member-inbox-panel.invites"
+      <PageSection
+        devSlot="member-inbox-panel.invites"
         title="Invites"
         description="Invitations from shop admins, resellers or the platform owner."
       >
@@ -196,55 +189,6 @@ export function MemberInboxPanel() {
           ))}
         </div>
       </PageSection>
-
-      {/* ---------------- Shop memberships ---------------- */}
-      <PageSection devSlot="member-inbox-panel.my-shops"
-        title="My shops"
-        description="Shops you joined. Joining is automatic — the shop admin reviews members afterwards."
-      >
-        {inbox.applications.length === 0 ? (
-          <EmptyState
-            title="No shops joined yet"
-            description="Shops you join show up here with your membership status."
-          />
-        ) : (
-          <div className="space-y-2">
-            {inbox.applications.map((a) => (
-              <Card key={a.ecosystemId}>
-                <CardContent className="space-y-1 py-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="flex items-center gap-1.5 text-sm font-semibold">
-                        <ClipboardList className="size-4 shrink-0 text-muted-foreground" />
-                        <span className="truncate">{a.ecosystemName}</span>
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Joined {shortDateTime(a.createdAt)}
-                      </p>
-                    </div>
-                    <StatusBadge
-                      tone={reviewTone(
-                        reviewState({ status: a.status, decision_reason: a.decisionReason }),
-                      )}
-                    >
-                      {memberJoinLabel(a)}
-                    </StatusBadge>
-                  </div>
-                  {heldForManualReview(a.decisionReason) ? (
-                    <p className="text-xs text-warning-foreground">
-                      You already have coins in this shop, so a shop admin checks this join before
-                      it becomes active.
-                    </p>
-                  ) : a.decisionReason ? (
-                    <p className="text-xs text-muted-foreground">Note: {a.decisionReason}</p>
-                  ) : null}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </PageSection>
-
     </div>
   );
 }

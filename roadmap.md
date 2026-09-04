@@ -10,3 +10,9 @@ Universe as single customer portal — DONE (UNPUBLISHED; authenticated browser 
 - [x] Hamburger review: My Wallet, Reward Shops, shops/buying, profile/friends/messages
 - [x] Old /app customer portal routes redirect customers to Universe; admin/seller portals untouched
 - [x] Typecheck, tests, 390px + desktop
+
+Shop Access cleanup — Universe is the customer portal (DONE — verified with demo accounts; not published)
+- [ ] Remove customer-facing join/request-to-join workflow from Universe (My Shops, storefront, shell)
+- [ ] Shop Access = management only (admin/reseller/subreseller); customer duplicates hidden/redirected
+- [ ] Universe <-> Shop Dashboard switch (multi-shop selector), storefront design reachable from Shop Dashboard
+- [ ] Typecheck, tests, demo-account checks 390px + desktop

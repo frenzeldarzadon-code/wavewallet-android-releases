@@ -42,13 +42,12 @@ describe("role sidebar visibility", () => {
     expect(paths.some((p) => p.startsWith("/reseller"))).toBe(false);
   });
 
-  it("gives a subreseller everything a customer has plus applications only", () => {
+  it("gives a subreseller the selling tools plus member review only", () => {
     const paths = navPaths(resellerNav("subreseller"));
     expect(paths).toEqual(
       expect.arrayContaining([
         "/reseller/wallet",
         "/reseller/shop",
-        "/reseller/rewards",
         "/reseller/profile",
         "/reseller/applications",
       ]),
@@ -57,6 +56,16 @@ describe("role sidebar visibility", () => {
     expect(paths).not.toContain("/reseller/earnings");
     expect(paths).not.toContain("/reseller/redemptions");
     expect(paths).not.toContain("/reseller/reports");
+  });
+
+  it("keeps customer features out of the Shop Dashboard — Universe owns them", () => {
+    for (const nav of [resellerNav("reseller"), adminNav(), superAdminNav()]) {
+      const paths = navPaths(nav);
+      expect(paths).not.toContain("/reseller/rewards");
+      expect(paths).not.toContain("/universe");
+      expect(paths).not.toContain("/universe/messages");
+    }
+    expect(navPaths(adminNav())).toContain("/admin/storefront");
   });
 
   it("adds downlines, redemptions, earnings and reports for a reseller", () => {
