@@ -117,6 +117,7 @@ import { Route as ApiPublicOmadaHealthSweepRouteImport } from './routes/api/publ
 import { Route as ApiPublicPortalContextRouteImport } from './routes/api/public/portal-context'
 import { Route as ApiPublicPortalHandoffRouteImport } from './routes/api/public/portal-handoff'
 import { Route as ApiPublicPortalRedeemRouteImport } from './routes/api/public/portal-redeem'
+import { Route as ApiPublicPushDispatchRouteImport } from './routes/api/public/push-dispatch'
 import { Route as ApiPublicVoucherReplenishmentSweepRouteImport } from './routes/api/public/voucher-replenishment-sweep'
 import { Route as PrintVouchersSaleIdRouteImport } from './routes/print.vouchers.$saleId'
 import { Route as UniverseMonitorIndexRouteImport } from './routes/universe.monitor.index'
@@ -670,6 +671,11 @@ const ApiPublicPortalRedeemRoute = ApiPublicPortalRedeemRouteImport.update({
   path: '/api/public/portal-redeem',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPushDispatchRoute = ApiPublicPushDispatchRouteImport.update({
+  id: '/api/public/push-dispatch',
+  path: '/api/public/push-dispatch',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicVoucherReplenishmentSweepRoute =
   ApiPublicVoucherReplenishmentSweepRouteImport.update({
     id: '/api/public/voucher-replenishment-sweep',
@@ -832,6 +838,7 @@ export interface FileRoutesByFullPath {
   '/api/public/portal-context': typeof ApiPublicPortalContextRoute
   '/api/public/portal-handoff': typeof ApiPublicPortalHandoffRoute
   '/api/public/portal-redeem': typeof ApiPublicPortalRedeemRoute
+  '/api/public/push-dispatch': typeof ApiPublicPushDispatchRoute
   '/api/public/voucher-replenishment-sweep': typeof ApiPublicVoucherReplenishmentSweepRoute
   '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
   '/universe/monitor/$shopId': typeof UniverseMonitorShopIdRoute
@@ -947,6 +954,7 @@ export interface FileRoutesByTo {
   '/api/public/portal-context': typeof ApiPublicPortalContextRoute
   '/api/public/portal-handoff': typeof ApiPublicPortalHandoffRoute
   '/api/public/portal-redeem': typeof ApiPublicPortalRedeemRoute
+  '/api/public/push-dispatch': typeof ApiPublicPushDispatchRoute
   '/api/public/voucher-replenishment-sweep': typeof ApiPublicVoucherReplenishmentSweepRoute
   '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
   '/universe/monitor/$shopId': typeof UniverseMonitorShopIdRoute
@@ -1068,6 +1076,7 @@ export interface FileRoutesById {
   '/api/public/portal-context': typeof ApiPublicPortalContextRoute
   '/api/public/portal-handoff': typeof ApiPublicPortalHandoffRoute
   '/api/public/portal-redeem': typeof ApiPublicPortalRedeemRoute
+  '/api/public/push-dispatch': typeof ApiPublicPushDispatchRoute
   '/api/public/voucher-replenishment-sweep': typeof ApiPublicVoucherReplenishmentSweepRoute
   '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
   '/universe/monitor/$shopId': typeof UniverseMonitorShopIdRoute
@@ -1190,6 +1199,7 @@ export interface FileRouteTypes {
     | '/api/public/portal-context'
     | '/api/public/portal-handoff'
     | '/api/public/portal-redeem'
+    | '/api/public/push-dispatch'
     | '/api/public/voucher-replenishment-sweep'
     | '/print/vouchers/$saleId'
     | '/universe/monitor/$shopId'
@@ -1305,6 +1315,7 @@ export interface FileRouteTypes {
     | '/api/public/portal-context'
     | '/api/public/portal-handoff'
     | '/api/public/portal-redeem'
+    | '/api/public/push-dispatch'
     | '/api/public/voucher-replenishment-sweep'
     | '/print/vouchers/$saleId'
     | '/universe/monitor/$shopId'
@@ -1425,6 +1436,7 @@ export interface FileRouteTypes {
     | '/api/public/portal-context'
     | '/api/public/portal-handoff'
     | '/api/public/portal-redeem'
+    | '/api/public/push-dispatch'
     | '/api/public/voucher-replenishment-sweep'
     | '/print/vouchers/$saleId'
     | '/universe/monitor/$shopId'
@@ -1463,6 +1475,7 @@ export interface RootRouteChildren {
   ApiPublicPortalContextRoute: typeof ApiPublicPortalContextRoute
   ApiPublicPortalHandoffRoute: typeof ApiPublicPortalHandoffRoute
   ApiPublicPortalRedeemRoute: typeof ApiPublicPortalRedeemRoute
+  ApiPublicPushDispatchRoute: typeof ApiPublicPushDispatchRoute
   ApiPublicVoucherReplenishmentSweepRoute: typeof ApiPublicVoucherReplenishmentSweepRoute
   PrintVouchersSaleIdRoute: typeof PrintVouchersSaleIdRoute
   ApiPublicPaymentsListenerRoute: typeof ApiPublicPaymentsListenerRoute
@@ -2226,6 +2239,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPortalRedeemRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/push-dispatch': {
+      id: '/api/public/push-dispatch'
+      path: '/api/public/push-dispatch'
+      fullPath: '/api/public/push-dispatch'
+      preLoaderRoute: typeof ApiPublicPushDispatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/voucher-replenishment-sweep': {
       id: '/api/public/voucher-replenishment-sweep'
       path: '/api/public/voucher-replenishment-sweep'
@@ -2549,6 +2569,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPortalContextRoute: ApiPublicPortalContextRoute,
   ApiPublicPortalHandoffRoute: ApiPublicPortalHandoffRoute,
   ApiPublicPortalRedeemRoute: ApiPublicPortalRedeemRoute,
+  ApiPublicPushDispatchRoute: ApiPublicPushDispatchRoute,
   ApiPublicVoucherReplenishmentSweepRoute:
     ApiPublicVoucherReplenishmentSweepRoute,
   PrintVouchersSaleIdRoute: PrintVouchersSaleIdRoute,
