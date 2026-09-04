@@ -76,6 +76,11 @@ function PublicStorefront() {
   const [signedIn, setSignedIn] = useState(false);
   const [search, setSearch] = useState("");
   const [detailId, setDetailId] = useState<string | null>(null);
+  // Authorized sellers of a Universe voucher shop. Buying a voucher never
+  // requires shop membership: the customer picks a seller and continues into
+  // the existing seller-attributed checkout. null = still loading.
+  const [sellers, setSellers] = useState<ShopSeller[] | null>(null);
+  const [sellerPickFor, setSellerPickFor] = useState<PublicProduct | null>(null);
   const debouncedSearch = useDebouncedValue(search);
 
   useEffect(() => {
@@ -94,6 +99,13 @@ function PublicStorefront() {
           if (!alive) return;
           setProducts(p);
           setReviews(r);
+          if (s.voucher_enabled) {
+            fetchUniverseSellers(slug)
+              .then((list) => { if (alive) setSellers(list); })
+              .catch(() => { if (alive) setSellers([]); });
+          } else {
+            setSellers([]);
+          }
         }
       } finally {
         if (alive) setLoading(false);
