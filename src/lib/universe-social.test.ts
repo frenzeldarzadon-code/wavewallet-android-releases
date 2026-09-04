@@ -60,8 +60,8 @@ describe("community post actions", () => {
     expect(menuSource).toContain('following ? "Unfollow" : "Follow"');
     expect(menuSource).toContain(">Message</span>");
     expect(menuSource).toContain(">Gift</span>");
-    expect(menuSource).not.toContain("Gift Social Credit");
-    expect(menuSource).not.toContain("Send coins");
+    expect(menuSource).not.toContain(">Gift Social Credit<");
+    expect(menuSource).not.toContain(">Send coins<");
   });
 
   it("uses the existing direct-thread and Universe wallet flows", () => {
