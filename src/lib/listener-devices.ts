@@ -33,7 +33,7 @@ export type ListenerDevice = {
   package_name: string;
   /** Platform-owned phone, or a phone paired by a shop admin for their shop. */
   owner_role?: "platform" | "admin";
-  /** The receiving GCash account this phone monitors. Matching is scoped to it. */
+  /** The receiving account number (e-wallet or bank) this phone monitors. Matching is scoped to it. */
   receiving_number?: string | null;
   /** How many shops receive Cash In on that same account. */
   shops_served?: number;
@@ -48,7 +48,7 @@ export type ListenerDevice = {
   /** Notification Access still granted in the phone's system settings. */
   notification_access?: boolean | null;
   listener_state_at?: string | null;
-  /** GCash notifications the phone has seen, and when the last one arrived. */
+  /** Payment notifications the phone has seen, and when the last one arrived. */
   received_count?: number | null;
   last_received_at?: string | null;
   app_version?: string | null;
