@@ -13,6 +13,7 @@ import { ListenerDevicesCard } from "@/components/super/listener-devices-card";
 import { ReceivingAccountsCard } from "@/components/money/receiving-accounts-card";
 import { ListenerDeviceScreenButton } from "@/components/money/listener-device-screen-button";
 import { ListenerSourceRulesCard } from "@/components/money/listener-source-rules-card";
+import { ListenerDetectedSourcesCard } from "@/components/money/listener-detected-sources-card";
 import { CashInNumberCard } from "@/components/money/cash-in-number-card";
 import { PlatformPaymentOptionCard } from "@/components/money/platform-payment-option-card";
 import { ShopIdentityCard } from "@/components/shop/shop-identity-card";
@@ -429,6 +430,7 @@ function AdminSettings() {
           <CashInNumberCard ecosystemId={ecosystemDbId} />
           <ListenerDeviceScreenButton />
           <ListenerDevicesCard ecosystemId={ecosystemDbId} ecosystemName={ecosystem.name} />
+          <ListenerDetectedSourcesCard ecosystemId={ecosystemDbId} ecosystemName={ecosystem.name} />
           <ListenerSourceRulesCard ecosystemId={ecosystemDbId} ecosystemName={ecosystem.name} />
         </>
       ) : null}

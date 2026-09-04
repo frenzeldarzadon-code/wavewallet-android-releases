@@ -13,6 +13,7 @@ import { CashInAutoCard } from "@/components/super/cash-in-auto-card";
 import { ListenerDevicesCard } from "@/components/super/listener-devices-card";
 import { ListenerDeviceScreenButton } from "@/components/money/listener-device-screen-button";
 import { ListenerSourceRulesCard } from "@/components/money/listener-source-rules-card";
+import { ListenerDetectedSourcesCard } from "@/components/money/listener-detected-sources-card";
 import { PlatformListenerCoverageCard } from "@/components/money/platform-cash-in-status";
 
 import { ReceivingAccountsCard } from "@/components/money/receiving-accounts-card";
@@ -102,11 +103,12 @@ function SuperSettings() {
       <PageSection
         devSlot="settings.gcash-notification-listener-2"
         title="Payment notification listener (platform / Universe cash in)"
-        description="The platform listener serves Universe wallet cash ins and platform payments. Members pay into the platform collection accounts below (e.g. GCash, MariBank); a paired phone watches ONE receiving number and forwards that app's payment notifications. Accounts without a paired phone stay on manual review."
+        description="The platform listener serves Universe wallet cash ins and platform payments. Members pay into any platform collection account (e.g. GCash, MariBank); a registered listener phone reads ALL its notifications, records each source app, and forwards recognised payment notifications for receipt matching. Block any app you never want read below."
       >
         <PlatformListenerCoverageCard />
         <ListenerDeviceScreenButton />
         <ListenerDevicesCard />
+        <ListenerDetectedSourcesCard />
         <ListenerSourceRulesCard />
       </PageSection>
 
