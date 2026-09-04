@@ -66,7 +66,7 @@ import {
   type PromotionTier,
   type SocialState,
 } from "@/lib/social";
-import { canReplyTo, hidePostForShop, sendMessage, threadComments } from "@/lib/social";
+import { canReplyTo, sendMessage, threadComments } from "@/lib/social";
 import { PostMemberMenu } from "@/components/social/post-member-menu";
 import { PostImageLightbox } from "@/components/social/post-image-lightbox";
 import { UniverseSendCoinsSheet } from "@/components/wallet/universe-send-coins-sheet";
@@ -381,8 +381,6 @@ function PostCard({
   const [busy, setBusy] = useState(false);
   const [dm, setDm] = useState("");
   const [dmOpen, setDmOpen] = useState(false);
-  const [hideOpen, setHideOpen] = useState(false);
-  const [hideReason, setHideReason] = useState("");
   const [dmOpening, setDmOpening] = useState(false);
   // "Gift Social Credit": the EXISTING global Universe Wallet coin transfer,
   // pre-addressed to the poster. No shop, no upline, no cashback — a
@@ -468,19 +466,6 @@ function PostCard({
     }
   };
 
-  const hideForShop = async () => {
-    try {
-      await hidePostForShop(post.id, true, hideReason);
-      setHideOpen(false);
-      setHideReason("");
-      toast.success("Hidden from your shop", {
-        description: "It stays public in the Universe and visible to other shops.",
-      });
-      await onChanged();
-    } catch (e) {
-      toast.error("Could not hide that post", { description: (e as Error).message });
-    }
-  };
 
   const sendDm = async () => {
     try {
@@ -619,7 +604,6 @@ function PostCard({
               onToggleFollow={() => void onToggleFollow()}
               onReport={onReport}
               onBlock={onBlock}
-              {...(post.can_hide ? { onHideForShop: () => setHideOpen(true) } : {})}
               {...(post.can_delete ? { onDelete } : {})}
             />
           </div>
@@ -722,34 +706,6 @@ function PostCard({
         ) : null}
       </CardContent>
 
-      <Dialog open={hideOpen} onOpenChange={setHideOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Hide this post from your shop?</DialogTitle>
-            <DialogDescription>
-              Your members will no longer see it. The post stays published in the Universe and
-              visible to other shops — only the platform owner can delete it for everyone. Your name
-              and reason are recorded.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-1.5">
-            <Label htmlFor={`hide-${post.id}`}>Reason (optional)</Label>
-            <Textarea
-              id={`hide-${post.id}`}
-              rows={2}
-              value={hideReason}
-              onChange={(e) => setHideReason(e.target.value)}
-              placeholder="Why is this not suitable for your members?"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setHideOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => void hideForShop()}>Hide for my shop</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {coinsRecipient ? (
         <UniverseSendCoinsSheet

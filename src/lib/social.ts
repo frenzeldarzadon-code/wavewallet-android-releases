@@ -585,34 +585,6 @@ export async function createComment(postId: string, body: string, parentId?: str
   };
 }
 
-/**
- * Shop-scoped visibility control. Hides (or restores) a post for the members of
- * one shop only — the post stays public in the Universe and in every other
- * shop. The database checks that the caller really moderates that shop and
- * records who acted, when and why.
- */
-export async function hidePostForShop(
-  postId: string,
-  hidden: boolean,
-  reason?: string,
-  ecosystemId?: string | null,
-) {
-  const { error } = await supabase.rpc("social_hide_post_for_shop", {
-    _post_id: postId,
-    _hidden: hidden,
-    ...(reason && reason.trim() ? { _reason: reason.trim() } : {}),
-    ...(ecosystemId ? { _eco: ecosystemId } : {}),
-  });
-  if (error) fail(error.message);
-}
-
-export async function fetchHiddenPosts(ecosystemId?: string | null): Promise<HiddenPostRow[]> {
-  const { data, error } = await supabase.rpc("social_hidden_posts", {
-    ...(ecosystemId ? { _eco: ecosystemId } : {}),
-  });
-  if (error) fail(error.message);
-  return (data ?? []) as HiddenPostRow[];
-}
 
 /** Handle/name autocomplete for @mentions. */
 export async function searchHandles(query: string): Promise<MentionSuggestion[]> {

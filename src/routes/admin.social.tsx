@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState, PageSection } from "@/components/ui-kit";
-import { HiddenPostsCard } from "@/components/social/hidden-posts-card";
 import { EcosystemSocialCard } from "@/components/social/ecosystem-social-card";
 import { PromotionTiersCard } from "@/components/social/promotion-tiers-card";
 import { useSession } from "@/lib/session";
@@ -102,8 +101,6 @@ function AdminSocial() {
           />
         </>
       ) : null}
-
-      <HiddenPostsCard ecosystemId={ecosystemDbId} />
 
       <PageSection devSlot="social.reported-content"
         title="Reported content"
