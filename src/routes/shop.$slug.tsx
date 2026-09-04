@@ -38,14 +38,14 @@ import { matchesSearch, useDebouncedValue } from "@/lib/retail-catalog";
 import { RETAIL_VISIBLE } from "@/lib/features";
 import { shortDateTime } from "@/lib/wavewallet";
 import { supabase } from "@/integrations/supabase/client";
-import { homeFor } from "@/lib/session";
-import { fetchMyMemberships, switchEcosystem } from "@/lib/memberships";
+import { fetchMyMemberships, type Membership } from "@/lib/memberships";
+import { openShopDashboard } from "@/components/shop/shop-dashboard-switch";
+import { managedMemberships } from "@/lib/shop-dashboard";
 import { fetchUniverseSellers, type ShopSeller } from "@/lib/seller-storefront";
 import {
   fetchPublicProducts,
   fetchPublicReviews,
   fetchPublicShop,
-  visitorAction,
   type PublicProduct,
   type PublicReview,
   type PublicShop,
@@ -96,6 +96,8 @@ function PublicStorefront() {
   // the existing seller-attributed checkout. null = still loading.
   const [sellers, setSellers] = useState<ShopSeller[] | null>(null);
   const [sellerPickFor, setSellerPickFor] = useState<PublicProduct | null>(null);
+  // The signed-in member's management membership in THIS shop, if any.
+  const [managedHere, setManagedHere] = useState<Membership | null>(null);
   const debouncedSearch = useDebouncedValue(search);
 
   useEffect(() => {
@@ -133,6 +135,20 @@ function PublicStorefront() {
       alive = false;
     };
   }, [slug, linkedProductId]);
+
+  useEffect(() => {
+    if (signedIn !== true || !shop) return;
+    let alive = true;
+    fetchMyMemberships()
+      .then((list) => {
+        if (!alive) return;
+        setManagedHere(managedMemberships(list).find((m) => m.ecosystemId === shop.id) ?? null);
+      })
+      .catch(() => alive && setManagedHere(null));
+    return () => {
+      alive = false;
+    };
+  }, [signedIn, shop]);
 
   // Sellers are listed for signed-in members; guests are asked to sign in.
   useEffect(() => {
@@ -172,8 +188,11 @@ function PublicStorefront() {
     );
   }
 
-  const action = visitorAction(shop, signedIn === true);
   const guest = signedIn === false;
+  // Universe is the customer portal: nobody joins a Universe shop to shop
+  // here. The only shop-specific console is the Shop Dashboard of a member
+  // who manages THIS shop (admin / reseller / subreseller).
+  const managed = managedHere;
   // Public prices are already the customer Retail Price (fee inside, computed
   // by the database), so the cards render them with a 0 % presentation fee.
   const retail: RetailProduct[] = products
@@ -194,28 +213,13 @@ function PublicStorefront() {
   const detail = detailId ? (retail.find((p) => p.id === detailId) ?? null) : null;
   const vouchers = products.filter((p) => p.kind === "voucher");
 
-  const cta =
-    action === "open"
-      ? {
-          label: "Open your shop",
-          // Members open their console for this shop; customers' console is Universe.
-          onClick: () =>
-            void fetchMyMemberships()
-              .then(async (list) => {
-                const mine = list.find((m) => m.ecosystemId === shop.id);
-                if (mine && !mine.isActive && mine.role !== "customer") await switchEcosystem(shop.id);
-                await navigate({ to: homeFor(mine?.role ?? "customer") });
-              })
-              .catch(() => navigate({ to: "/universe" })),
-        }
-      : action === "join"
-        ? {
-            label: "Request to join",
-            onClick: () => void navigate({ to: "/join/$slug", params: { slug } }),
-          }
-        : action === "sign-in"
-          ? { label: "Sign in to join", onClick: () => void navigate({ to: "/" }) }
-          : null;
+  const cta = managed
+    ? {
+        label: "Open Shop Dashboard",
+        onClick: () =>
+          void openShopDashboard(managed).catch(() => navigate({ to: "/universe/shops" })),
+      }
+    : null;
 
   return (
     <main className="mx-auto max-w-3xl space-y-4 p-4 pb-16">
@@ -268,27 +272,11 @@ function PublicStorefront() {
             {!guest && sellers && sellers.length === 0 ? " No seller is available right now." : ""}
           </p>
         ) : null}
-        {/* Membership only matters for existing members and Retail ordering. */}
-        {action === "open" && cta ? (
+        {/* Shop managers get their operational workspace; customers need nothing. */}
+        {cta ? (
           <Button className="mt-3 w-full sm:w-auto" onClick={cta.onClick}>
             {cta.label} <ArrowRight className="size-4" />
           </Button>
-        ) : RETAIL_VISIBLE && shop.retail_enabled ? (
-          cta ? (
-            <Button
-              className="mt-3 w-full sm:w-auto"
-              variant={shop.voucher_enabled ? "outline" : "default"}
-              onClick={cta.onClick}
-            >
-              {cta.label} <ArrowRight className="size-4" />
-            </Button>
-          ) : (
-            <p className="mt-3 text-xs text-muted-foreground">
-              {action === "pending"
-                ? "Your request to join is waiting for the shop to review it."
-                : "This shop is not accepting new members right now."}
-            </p>
-          )
         ) : null}
         {shop.contact_email || shop.contact_phone ? (
           <p className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
@@ -369,11 +357,13 @@ function PublicStorefront() {
             footer={
               <div className="flex w-full items-center justify-between gap-3">
                 <p className="text-xs text-muted-foreground">
-                  {cta ? "Join this shop to order." : "Ordering is for shop members."}
+                  {guest
+                    ? "Sign in to order from this shop."
+                    : "Retail orders are placed through this shop's ordering flow."}
                 </p>
-                {cta ? (
-                  <Button onClick={cta.onClick}>
-                    {cta.label} <ArrowRight className="size-4" />
+                {guest ? (
+                  <Button onClick={() => void navigate({ to: "/" })}>
+                    Sign in <ArrowRight className="size-4" />
                   </Button>
                 ) : null}
               </div>
