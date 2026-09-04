@@ -52,6 +52,7 @@ export function NotificationsPage() {
   const [prefs, setPrefs] = useState<NotificationPreferences>({
     disabledKinds: [],
     pushEnabled: false,
+    pushShowDetails: true,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -292,8 +293,8 @@ export function NotificationsPage() {
             <BellRing className="size-4" /> Phone notifications
           </CardTitle>
           <CardDescription>
-            Get alerted on this device even when ONE WAVE is closed. We never turn this on for you
-            — your browser asks first.
+            Get alerted on this device even when ONE WAVE is closed. We never turn this on for you —
+            your browser asks first.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 pb-5 text-sm">
@@ -305,9 +306,8 @@ export function NotificationsPage() {
             <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
               <p className="font-medium text-foreground">Add ONE WAVE to your Home Screen first</p>
               <p className="mt-1">
-                On iPhone and iPad, notifications only work for apps added to the Home Screen:
-                tap Share, then “Add to Home Screen”, open ONE WAVE from there and come back
-                here.
+                On iPhone and iPad, notifications only work for apps added to the Home Screen: tap
+                Share, then “Add to Home Screen”, open ONE WAVE from there and come back here.
               </p>
             </div>
           ) : support === "unavailable" ? (
@@ -320,30 +320,69 @@ export function NotificationsPage() {
                 <Bell className="size-4" /> On for this device.
               </p>
               <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" className="gap-1.5" disabled={busy} onClick={() => void testPush()}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5"
+                  disabled={busy}
+                  onClick={() => void testPush()}
+                >
                   <Send className="size-4" /> Send me a test
                 </Button>
-                <Button size="sm" variant="ghost" className="gap-1.5 text-muted-foreground" disabled={busy} onClick={() => void disablePush()}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="gap-1.5 text-muted-foreground"
+                  disabled={busy}
+                  onClick={() => void disablePush()}
+                >
                   <BellOff className="size-4" /> Turn off
                 </Button>
               </div>
             </div>
           ) : permission === "denied" ? (
             <p className="text-muted-foreground">
-              Notifications are blocked for this site. Allow them in your browser or phone
-              settings, then come back here.
+              Notifications are blocked for this site. Allow them in your browser or phone settings,
+              then come back here.
             </p>
           ) : (
             <div className="space-y-2">
-              <Button size="sm" className="gap-1.5" disabled={busy} onClick={() => void enablePush()}>
-                {busy ? <Loader2 className="size-4 animate-spin" /> : <Smartphone className="size-4" />}
+              <Button
+                size="sm"
+                className="gap-1.5"
+                disabled={busy}
+                onClick={() => void enablePush()}
+              >
+                {busy ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Smartphone className="size-4" />
+                )}
                 Turn on for this device
               </Button>
               <p className="text-xs text-muted-foreground">
-                Alerts stay short — “You have a new message” — and open the app to the details.
+                Alerts say what happened — “Ana sent you a gift on your post” — and open the app to
+                the details.
               </p>
             </div>
           )}
+          {support !== "unsupported" ? (
+            <div className="flex items-start justify-between gap-3 border-t border-border pt-3">
+              <div className="min-w-0">
+                <p className="font-medium">Show details on the lock screen</p>
+                <p className="text-xs text-muted-foreground">
+                  On: names, amounts and statuses appear in the alert. Off: alerts only say the type
+                  of event. Codes, references and account numbers are never shown either way.
+                </p>
+              </div>
+              <Switch
+                checked={prefs.pushShowDetails}
+                disabled={saving}
+                onCheckedChange={(v) => void persist({ ...prefs, pushShowDetails: v })}
+                aria-label="Show details on the lock screen"
+              />
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -368,7 +407,9 @@ export function NotificationsPage() {
                   <p className="truncate font-medium">
                     {d.device_label ?? "Unnamed device"}
                     {d.endpoint && d.endpoint === hereEndpoint ? (
-                      <span className="ml-1.5 text-xs font-normal text-muted-foreground">(this one)</span>
+                      <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                        (this one)
+                      </span>
                     ) : null}
                   </p>
                   <p className="text-xs text-muted-foreground">

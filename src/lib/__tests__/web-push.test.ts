@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { createECDH, createDecipheriv, createVerify, hkdfSync, generateKeyPairSync } from "node:crypto";
+import {
+  createECDH,
+  createDecipheriv,
+  createVerify,
+  hkdfSync,
+  generateKeyPairSync,
+} from "node:crypto";
 import {
   base64UrlDecode,
   base64UrlEncode,
@@ -40,8 +46,12 @@ function decrypt(body: Uint8Array, sub: ReturnType<typeof fakeSubscription>): st
     Buffer.from(asPublic),
   ]);
   const ikm = Buffer.from(hkdfSync("sha256", shared, sub.auth, keyInfo, 32));
-  const cek = Buffer.from(hkdfSync("sha256", ikm, salt, Buffer.from("Content-Encoding: aes128gcm\0"), 16));
-  const nonce = Buffer.from(hkdfSync("sha256", ikm, salt, Buffer.from("Content-Encoding: nonce\0"), 12));
+  const cek = Buffer.from(
+    hkdfSync("sha256", ikm, salt, Buffer.from("Content-Encoding: aes128gcm\0"), 16),
+  );
+  const nonce = Buffer.from(
+    hkdfSync("sha256", ikm, salt, Buffer.from("Content-Encoding: nonce\0"), 12),
+  );
   const tag = ciphertext.slice(ciphertext.length - 16);
   const data = ciphertext.slice(0, ciphertext.length - 16);
   const d = createDecipheriv("aes-128-gcm", cek, nonce);
@@ -64,7 +74,11 @@ function vapidPair() {
     Buffer.from(pub.y!, "base64url"),
   ]);
   return {
-    config: { publicKey: base64UrlEncode(raw), privateKey: priv.d!, subject: "https://example.test" },
+    config: {
+      publicKey: base64UrlEncode(raw),
+      privateKey: priv.d!,
+      subject: "https://example.test",
+    },
     publicKeyObject: publicKey,
   };
 }
@@ -87,7 +101,9 @@ describe("web push payload encryption (RFC 8291)", () => {
   });
 
   it("rejects malformed subscription keys", async () => {
-    await expect(encryptPayload({ p256dh: "AAAA", auth: "AAAA" }, new Uint8Array())).rejects.toThrow();
+    await expect(
+      encryptPayload({ p256dh: "AAAA", auth: "AAAA" }, new Uint8Array()),
+    ).rejects.toThrow();
   });
 });
 
@@ -180,34 +196,45 @@ describe("push service responses", () => {
       { fetchImpl: failing },
     );
     expect(r.outcome).toBe("retry");
-    const g = await sendWebPush({ endpoint: "not a url", p256dh: sub.p256dh, auth: sub.authB64 }, config, "{}");
+    const g = await sendWebPush(
+      { endpoint: "not a url", p256dh: sub.p256dh, auth: sub.authB64 },
+      config,
+      "{}",
+    );
     expect(g.outcome).toBe("gone");
   });
 });
 
 describe("lock-screen text", () => {
-  it("never carries amounts or message content", () => {
+  it("says what happened, without references, codes or chat text", () => {
     const t = pushText({
       kind: "cashback",
       category: "financial",
       title: "Cashback received — 5.00 Coins",
-      body: "From a voucher sale",
+      body: "From a voucher sale • reference CB-1234ABCD",
       link: "/universe/wallet",
     });
     expect(t.title).toBe("Cashback received");
-    expect(t.body).not.toMatch(/5\.00/);
+    expect(t.body).toBe("You received 5.00 Coins cashback from From a voucher sale.");
+    expect(t.body).not.toMatch(/CB-1234/);
     const dm = pushText({
       kind: "dm_message",
       title: "New private message",
       body: "Ana sent you a message",
       link: "/universe/messages?thread=abc",
     });
-    expect(dm.title).toBe("New private message");
-    expect(dm.body).not.toMatch(/Ana/);
+    expect(dm.title).toBe("New message from Ana");
+    expect(dm.body).toBe("You have a new private message.");
     expect(dm.tag).toBe("dm_message:/universe/messages");
-    expect(pushText({ kind: "order_approved", title: "Order #12 approved", link: "/universe" }).title).toBe(
-      "Order update",
-    );
-    expect(pushText({ kind: "unknown_thing", title: "Something 42 happened" }).title).not.toMatch(/42/);
+    expect(dm.link).toBe("/universe/messages?thread=abc");
+    // privacy switch off -> neutral
+    expect(
+      pushText({
+        kind: "dm_message",
+        title: "x",
+        body: "Ana sent you a message",
+        show_details: false,
+      }).title,
+    ).toBe("New private message");
   });
 });
