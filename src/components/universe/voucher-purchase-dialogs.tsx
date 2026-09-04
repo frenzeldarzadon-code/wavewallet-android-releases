@@ -127,7 +127,29 @@ export function VoucherPurchaseDialogs({
   const maxQty = target ? Math.min(MAX_QTY, Math.max(1, target.product.available)) : 1;
   const unit = target?.product.price ?? 0;
   const total = Math.round(unit * qty * 100) / 100;
-  const notEnough = balance !== null && total > balance;
+
+  // GLOBAL self-purchase rule: the server says whether this buyer is the
+  // entitled cashback recipient of their own shop and nets the cashback out.
+  const [quote, setQuote] = useState<SelfPurchaseQuote | null>(null);
+  const productId = target?.product.id ?? null;
+  const sellerId = target?.sellerId ?? null;
+  useEffect(() => {
+    if (!productId || !buyerId) {
+      setQuote(null);
+      return;
+    }
+    let active = true;
+    void fetchVoucherCheckoutQuote(productId, qty, sellerId)
+      .then((q) => active && setQuote(q))
+      .catch(() => active && setQuote(null));
+    return () => {
+      active = false;
+    };
+  }, [productId, sellerId, qty, buyerId]);
+  const charge = selfPurchaseCharge(total, quote);
+  const selfPurchase = charge !== total && !!quote;
+
+  const notEnough = balance !== null && charge > balance;
   const pointsAvailable = points?.available ?? 0;
   const pointsOk = points !== null && pointsAvailable >= pointsPrice;
   const canConfirm = usingPoints ? pointsOk : !notEnough && qty <= maxQty;
