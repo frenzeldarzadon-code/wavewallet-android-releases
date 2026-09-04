@@ -70,10 +70,13 @@ export interface WalletCenterProps {
   /** Show wholesale discount + cashback totals (reseller / subreseller). */
   showSellerTotals?: boolean;
   /**
-   * `universe`: show ONLY the member's single global Universe wallet. Shop
-   * wallets of New Generation shops are filtered out entirely (the database's
-   * `wallet_view` decides which shops share the global wallet), so the two are
-   * never mixed. Transfers still go through the same shop-scoped RPCs.
+   * `universe`: show ONLY the member's single global Universe wallet. There is
+   * no per-shop Universe wallet — the one global balance pays for purchases in
+   * every Universe shop, membership or not. New Generation shop wallets never
+   * appear here; they stay isolated inside their own shop console. The
+   * shop-scoped "Send coins" area is hidden in this scope because the transfer
+   * RPCs (`wallet_shop_recipients` / `transfer_credits_in_shop`) are shop
+   * membership concepts that do not exist for the global wallet.
    */
   scope?: "shop" | "universe";
 }
@@ -109,27 +112,21 @@ export function WalletCenter({
   const online = useOnline();
 
   const loadShops = useCallback(async () => {
-    const all = await fetchWalletShops();
-    let list = all;
-    if (universe && userId) {
-      // Keep only shops whose wallet IS the global wallet. New Generation shop
-      // wallets never appear here.
-      const [global, views] = await Promise.all([
-        fetchWalletView(userId, null).catch(() => null),
-        Promise.all(all.map((s) => fetchWalletView(userId, s.ecosystemId).catch(() => null))),
-      ]);
-      const balance = global?.balance ?? 0;
-      setGlobalBalance(balance);
-      list = all.filter((_, i) => views[i]?.isGlobal === true).map((s) => ({ ...s, balance }));
+    if (universe) {
+      // Universe scope = ONE global wallet. There is no per-shop Universe
+      // wallet to list or pick, so only the global balance is loaded.
+      if (userId) {
+        const global = await fetchWalletView(userId, null).catch(() => null);
+        setGlobalBalance(global?.balance ?? 0);
+      }
+      setShops([]);
+      setSelectedId(null);
+      setLoading(false);
+      return;
     }
+    const list = await fetchWalletShops();
     setShops(list);
-    setSelectedId((cur) =>
-      universe
-        ? cur && list.some((s) => s.ecosystemId === cur)
-          ? cur
-          : (list[0]?.ecosystemId ?? null)
-        : (cur ?? ecosystemDbId ?? list[0]?.ecosystemId ?? null),
-    );
+    setSelectedId((cur) => cur ?? ecosystemDbId ?? list[0]?.ecosystemId ?? null);
     setLoading(false);
   }, [ecosystemDbId, universe, userId]);
 
