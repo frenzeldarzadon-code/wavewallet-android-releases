@@ -224,7 +224,6 @@ export function UniverseComposer({
     if (fileInput.current) fileInput.current.value = "";
   };
 
-
   const submit = async () => {
     if (blocker) {
       toast.error(blocker);

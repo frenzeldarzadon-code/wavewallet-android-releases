@@ -495,7 +495,6 @@ export async function fetchComments(postId: string): Promise<FeedComment[]> {
 
 // ------------------------------------------------------------------ writes
 
-
 export interface CreatePostResult {
   post_id: string;
   charged: number;
@@ -785,9 +784,10 @@ export async function fetchOrderChatContext(
 /** "Order #123 · Delivering · Sari-Sari ni Aling Nena" — a glanceable label for order chats. */
 export function orderChatLabel(t: DmThread, ctx?: OrderChatContext | null): string {
   if (!ctx) return threadTitle(t);
-  const state = (ctx.fulfillment_status && ctx.fulfillment_status !== "none"
-    ? ctx.fulfillment_status
-    : ctx.status
+  const state = (
+    ctx.fulfillment_status && ctx.fulfillment_status !== "none"
+      ? ctx.fulfillment_status
+      : ctx.status
   )
     .replace(/_/g, " ")
     .replace(/^\w/, (c) => c.toUpperCase());
