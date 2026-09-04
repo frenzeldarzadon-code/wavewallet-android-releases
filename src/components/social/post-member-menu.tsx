@@ -13,7 +13,6 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Check,
-  Coins,
   EyeOff,
   Flag,
   Gift,
@@ -61,11 +60,8 @@ export interface PostMemberMenuProps {
   onMessage?: () => void;
   /** Quick one-line message dialog (also the existing messenger). */
   onQuickMessage?: () => void;
-  /** Opens the EXISTING global Universe Wallet send-coins flow. */
-  onSendCoins?: () => void;
-  /** Social-credit gift; omitted when the viewer has nothing giftable. */
-  onGift?: () => void;
-  giftDisabledReason?: string | null;
+  /** Opens the EXISTING global Universe Wallet social-credit/coin gifting flow. */
+  onGiftSocialCredit?: () => void;
   onReport?: () => void;
   onBlock?: () => void;
   /** Moderation — only passed when the viewer is allowed. */
@@ -80,9 +76,7 @@ export function PostMemberMenu({
   isSelf,
   onMessage,
   onQuickMessage,
-  onSendCoins,
-  onGift,
-  giftDisabledReason,
+  onGiftSocialCredit,
   onReport,
   onBlock,
   onHideForShop,
@@ -213,19 +207,9 @@ export function PostMemberMenu({
                 <Send className="size-4" /> Send a quick message
               </DropdownMenuItem>
             ) : null}
-            {onSendCoins ? (
-              <DropdownMenuItem className="gap-2" onSelect={onSendCoins}>
-                <Coins className="size-4" /> Send coins
-              </DropdownMenuItem>
-            ) : null}
-            {onGift ? (
-              <DropdownMenuItem
-                className="gap-2"
-                disabled={Boolean(giftDisabledReason)}
-                title={giftDisabledReason ?? undefined}
-                onSelect={onGift}
-              >
-                <Gift className="size-4" /> Gift social credits
+            {onGiftSocialCredit ? (
+              <DropdownMenuItem className="gap-2" onSelect={onGiftSocialCredit}>
+                <Gift className="size-4" /> Gift Social Credit
               </DropdownMenuItem>
             ) : null}
           </>
