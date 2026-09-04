@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui-kit";
+import { PurchaseShopChip, usePurchaseShopLabels } from "@/components/universe/purchase-shop-chip";
 import { peso } from "@/lib/wavewallet";
 import { fetchCreditBalance, fetchMyPurchases } from "@/lib/wallet";
 import { useSession } from "@/lib/session";
@@ -22,6 +23,7 @@ export function UniverseVouchersCard() {
   const [balance, setBalance] = useState<number | null>(null);
   const [rows, setRows] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
+  const shopLabels = usePurchaseShopLabels(Boolean(userId));
 
   useEffect(() => {
     if (!userId) return;
@@ -68,6 +70,7 @@ export function UniverseVouchersCard() {
                     {peso(s.sale_price)} · {new Date(s.created_at).toLocaleDateString()}
                   </p>
                 </div>
+                <PurchaseShopChip labels={shopLabels} ecosystemId={s.ecosystem_id} sellerId={s.reseller_id} />
                 {s.codes.length > 0 ? (
                   <div className="flex flex-wrap items-center gap-1">
                     {s.codes.map((c) => (

@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/select";
 
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
+import { PurchaseShopChip, usePurchaseShopLabels } from "@/components/universe/purchase-shop-chip";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
@@ -117,6 +118,8 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
 
   const userId = account?.id ?? null;
   const scopeId = ecosystemId === undefined ? ecosystemDbId : ecosystemId;
+  // Originating shop/seller labels for the caller's purchases — one batched read.
+  const shopLabels = usePurchaseShopLabels(Boolean(userId));
 
   const load = useCallback(async () => {
     if (!userId) return;
@@ -391,6 +394,12 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
                       <p className="text-[11px] text-muted-foreground">
                         {shortDateTime(p.created_at)} · {p.tx_id} · {p.payment_method}
                       </p>
+                      {/* Originating shop from the sale's own recorded shop id. */}
+                      <PurchaseShopChip
+                        labels={shopLabels}
+                        ecosystemId={p.ecosystem_id}
+                        sellerId={p.reseller_id}
+                      />
                     </div>
                     <p className="text-sm font-semibold text-destructive">−{peso(p.sale_price)}</p>
                   </div>

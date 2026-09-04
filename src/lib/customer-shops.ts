@@ -90,3 +90,64 @@ export function monitorableShops(list: CustomerShop[]): CustomerShop[] {
 export function rewardShops(list: CustomerShop[]): CustomerShop[] {
   return list.filter((s) => s.points > 0 || canMonitor(s));
 }
+
+/* ------------------------------------------------------------------ */
+/* Purchase history — originating shop labels                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Label of the shop a purchase was made in. Resolved from the shop id the sale
+ * row recorded at purchase time (`voucher_sales.ecosystem_id`), never from the
+ * buyer's or seller's current affiliation.
+ */
+export interface PurchaseShopLabel {
+  id: string;
+  name: string;
+  slug: string;
+  logoPath: string | null;
+  /** True when the Universe storefront can still be opened. */
+  storefrontOpen: boolean;
+}
+
+export interface PurchaseShopLabels {
+  shops: Record<string, PurchaseShopLabel>;
+  /** Seller display names keyed by profile id (only sellers of the caller's own purchases). */
+  sellers: Record<string, string>;
+}
+
+export const UNAVAILABLE_SHOP_LABEL = "Shop unavailable";
+
+/** Builds the label map from raw shop rows; archived shops keep their name but lose the link. */
+export function buildPurchaseShopLabels(
+  shops: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    logo_path?: string | null;
+    archived_at?: string | null;
+    public_storefront_enabled?: boolean | null;
+  }>,
+  sellers: Array<{ id: string; full_name: string | null }>,
+): PurchaseShopLabels {
+  const out: PurchaseShopLabels = { shops: {}, sellers: {} };
+  for (const s of shops) {
+    out.shops[s.id] = {
+      id: s.id,
+      name: s.name,
+      slug: s.slug,
+      logoPath: s.logo_path ?? null,
+      storefrontOpen: !s.archived_at && s.public_storefront_enabled !== false,
+    };
+  }
+  for (const p of sellers) if (p.full_name) out.sellers[p.id] = p.full_name;
+  return out;
+}
+
+/** Shop label for a purchase, or a graceful placeholder when it cannot be resolved. */
+export function purchaseShopFor(
+  labels: PurchaseShopLabels | null | undefined,
+  ecosystemId: string | null | undefined,
+): PurchaseShopLabel | null {
+  if (!labels || !ecosystemId) return null;
+  return labels.shops[ecosystemId] ?? null;
+}

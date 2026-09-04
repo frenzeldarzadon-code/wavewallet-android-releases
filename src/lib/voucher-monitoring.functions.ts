@@ -19,7 +19,13 @@ import {
   type MonitorRecord,
   type OwnedCode,
 } from "./voucher-monitoring";
-import { mergeCustomerShops, relatedShopIds, type CustomerShop } from "./customer-shops";
+import {
+  buildPurchaseShopLabels,
+  mergeCustomerShops,
+  relatedShopIds,
+  type CustomerShop,
+  type PurchaseShopLabels,
+} from "./customer-shops";
 
 type AuthContext = {
   supabase: {
@@ -110,6 +116,52 @@ export const listCustomerShops = createServerFn({ method: "POST" })
       })),
       controllers: controllers.data ?? [],
     });
+  });
+
+/**
+ * Originating shop (and seller) labels for the caller's own voucher purchases.
+ *
+ * Source of truth is `voucher_sales.ecosystem_id` / `reseller_id` as recorded
+ * at purchase time. Archived or closed shops still return their name so old
+ * history stays identifiable — only the storefront link is withheld. Nothing
+ * about other members' purchases is read.
+ */
+export const listPurchaseShopLabels = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<PurchaseShopLabels> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const admin = supabaseAdmin as unknown as Admin;
+    const sales = await admin
+      .from("voucher_sales")
+      .select("ecosystem_id, reseller_id")
+      .eq("buyer_id", context.userId);
+    if (sales.error) throw new Error(sales.error.message);
+    const rows = (sales.data ?? []) as Array<{ ecosystem_id: string | null; reseller_id: string | null }>;
+    const shopIds = [...new Set(rows.map((r) => r.ecosystem_id).filter(Boolean))] as string[];
+    const sellerIds = [...new Set(rows.map((r) => r.reseller_id).filter(Boolean))] as string[];
+    if (shopIds.length === 0) return { shops: {}, sellers: {} };
+    const [shops, sellers] = await Promise.all([
+      admin
+        .from("ecosystems")
+        .select("id, name, slug, retail_logo_path, archived_at, public_storefront_enabled")
+        .in("id", shopIds),
+      sellerIds.length
+        ? admin.from("profiles").select("id, full_name").in("id", sellerIds)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+    if (shops.error) throw new Error(shops.error.message);
+    if (sellers.error) throw new Error(sellers.error.message);
+    return buildPurchaseShopLabels(
+      ((shops.data ?? []) as Array<Record<string, unknown>>).map((s) => ({
+        id: s["id"] as string,
+        name: s["name"] as string,
+        slug: s["slug"] as string,
+        logo_path: (s["retail_logo_path"] as string | null) ?? null,
+        archived_at: (s["archived_at"] as string | null) ?? null,
+        public_storefront_enabled: (s["public_storefront_enabled"] as boolean | null) ?? null,
+      })),
+      (sellers.data ?? []) as Array<{ id: string; full_name: string | null }>,
+    );
   });
 
 const CODE_RE = /^[A-Za-z0-9-]{4,64}$/;
