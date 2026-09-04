@@ -238,8 +238,15 @@ export function PresenceBadge({ seller, now }: { seller: ShopSeller; now?: Date 
   );
 }
 
-/** Premium seller card: image → full name → seller shop name → presence → View My Shop →. */
-export function SellerCard({ seller }: { seller: ShopSeller }) {
+/** Premium seller card: image → full name → seller shop name → presence → action. */
+export function SellerCard({
+  seller,
+  currentUserId,
+}: {
+  seller: ShopSeller;
+  currentUserId?: string | null | undefined;
+}) {
+  const own = currentUserId === seller.sellerId;
   return (
     <Link
       to="/universe/u/$handle"
@@ -267,10 +274,14 @@ export function SellerCard({ seller }: { seller: ShopSeller }) {
         </span>
       </span>
       <span
-        className="inline-flex size-9 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground"
-        aria-label="View My Shop"
+        className={`inline-flex shrink-0 items-center justify-center rounded-md bg-primary px-2 py-1 text-[11px] font-medium leading-tight text-primary-foreground ${own ? "min-w-[5.5rem]" : "size-9"}`}
+        aria-label={own ? "Buy from My Shop" : "Buy"}
       >
-        <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+        {own ? (
+          "Buy from My Shop"
+        ) : (
+          <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+        )}
       </span>
     </Link>
   );
