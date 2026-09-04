@@ -7,15 +7,17 @@
  * members, wallets, orders or voucher codes.
  */
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, MapPin, Store, Ticket } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, MapPin, Store, Ticket, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { RatingStars } from "@/components/rating-stars";
 import { RetailImage } from "@/components/retail/retail-image";
 import { VoucherArtwork } from "@/components/universe/voucher-artwork";
+import { SellerCard } from "@/components/universe/universe-shop-discovery";
 import {
   MarketplaceEmpty,
   MarketplaceHeader,
@@ -30,6 +32,7 @@ import { matchesSearch, useDebouncedValue } from "@/lib/retail-catalog";
 import { RETAIL_VISIBLE } from "@/lib/features";
 import { shortDateTime } from "@/lib/wavewallet";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchUniverseSellers, type ShopSeller } from "@/lib/seller-storefront";
 import {
   fetchPublicProducts,
   fetchPublicReviews,
