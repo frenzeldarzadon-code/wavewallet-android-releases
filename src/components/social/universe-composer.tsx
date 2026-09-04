@@ -13,6 +13,7 @@ import {
   Globe2,
   Hash,
   ImagePlus,
+  Link2,
   Loader2,
   MapPin,
   Megaphone,
@@ -45,9 +46,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ImageCropper } from "@/components/image-cropper";
 import { MemberAvatar } from "@/components/member-avatar";
+import { PostLinkCard } from "@/components/social/post-link-card";
 import { MentionInput, type MentionInputHandle } from "@/components/social/mention-input";
 import {
   FeelingPicker,
+  LinkPicker,
   LocationPicker,
   StylePicker,
   StyledPostBody,
@@ -79,11 +82,13 @@ import {
   audienceSummary,
   createPost,
   fetchTargetShops,
+  linkFromCard,
   tierDuration,
   uploadSocialImage,
   uploadSocialVideo,
   validateSocialImage,
   validateSocialVideo,
+  type LinkCard,
   type PostAudience,
   type PromotionTier,
   type SocialState,
@@ -91,7 +96,7 @@ import {
 } from "@/lib/social";
 import { cn } from "@/lib/utils";
 
-type Picker = "location" | "feeling" | "style" | "tags" | null;
+type Picker = "location" | "feeling" | "style" | "tags" | "link" | null;
 
 export function UniverseComposer({
   state,
@@ -118,6 +123,8 @@ export function UniverseComposer({
   const [video, setVideo] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [meta, setMeta] = useState<PostMeta>({});
+  // Full card of the linked shop/product for the preview; only its reference is posted.
+  const [linkCard, setLinkCard] = useState<LinkCard | null>(null);
   const [audience, setAudience] = useState<PostAudience>("ecosystem");
   const [shops, setShops] = useState<TargetShop[]>([]);
   const [shopIds, setShopIds] = useState<string[]>([]);
@@ -196,6 +203,7 @@ export function UniverseComposer({
     setCrop(null);
     setVideo(null);
     setMeta({});
+    setLinkCard(null);
     setAudience("ecosystem");
     setShopIds([]);
     setPromote(false);
@@ -510,6 +518,21 @@ export function UniverseComposer({
           </div>
         ) : null}
 
+        {/* Linked shop / product */}
+        {linkCard ? (
+          <div className="px-4 pt-3">
+            <PostLinkCard
+              card={linkCard}
+              compact
+              onChange={() => setPicker("link")}
+              onRemove={() => {
+                setLinkCard(null);
+                setMeta((m) => ({ ...m, link: undefined }));
+              }}
+            />
+          </div>
+        ) : null}
+
         {/* Extras chips */}
         {meta.location || meta.feeling || meta.dm_invite ? (
           <div className="flex flex-wrap gap-1.5 px-4 pt-3">
@@ -536,7 +559,7 @@ export function UniverseComposer({
           <p className="px-3 pt-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Add to your post
           </p>
-          <div className="grid grid-cols-3 gap-1 p-2 sm:grid-cols-6">
+          <div className="grid grid-cols-4 gap-1 p-2 sm:grid-cols-7">
             <Tool
               icon={<ImagePlus className="size-5 text-success" />}
               label="Photo / Video"
@@ -577,6 +600,12 @@ export function UniverseComposer({
               }
               label="Tag"
               onClick={() => setPicker("tags")}
+            />
+            <Tool
+              icon={<Link2 className="size-5 text-success" />}
+              label="Link / Recommend"
+              active={!!meta.link}
+              onClick={() => setPicker("link")}
             />
           </div>
           <Input
@@ -696,6 +725,14 @@ export function UniverseComposer({
         value={meta.style ?? "plain"}
         onChange={(s) => setMeta((m) => ({ ...m, style: s === "plain" ? undefined : s }))}
       />
+      <LinkPicker
+        open={picker === "link"}
+        onOpenChange={(o) => setPicker(o ? "link" : null)}
+        onPick={(card) => {
+          setLinkCard(card);
+          setMeta((m) => ({ ...m, link: linkFromCard(card) }));
+        }}
+      />
       <TagPicker
         open={picker === "tags"}
         onOpenChange={(o) => setPicker(o ? "tags" : null)}
@@ -708,7 +745,8 @@ export function UniverseComposer({
           <AlertDialogHeader>
             <AlertDialogTitle>Discard this post?</AlertDialogTitle>
             <AlertDialogDescription>
-              Your text and attachments will be lost. Posts you already published are not affected.
+              Your text, attachments and linked items will be lost. Posts you already published are
+              not affected.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

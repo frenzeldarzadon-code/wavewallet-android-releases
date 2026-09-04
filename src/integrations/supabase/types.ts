@@ -12565,6 +12565,25 @@ export type Database = {
         }
         Returns: Json
       }
+      social_link_cards: {
+        Args: { _links: Json }
+        Returns: {
+          available: number
+          cover_path: string
+          image_path: string
+          kind: string
+          logo_path: string
+          price: number
+          product_id: string
+          product_kind: string
+          product_name: string
+          shop_id: string
+          shop_name: string
+          shop_slug: string
+          shop_type: string
+        }[]
+      }
+      social_link_visible: { Args: { _link: Json }; Returns: boolean }
       social_move: {
         Args: {
           _amount: number
@@ -13168,6 +13187,23 @@ export type Database = {
           handle: string
           id: string
           province: string
+        }[]
+      }
+      universe_link_search: {
+        Args: { _kind?: string; _limit?: number; _q?: string }
+        Returns: {
+          cover_path: string
+          image_path: string
+          kind: string
+          logo_path: string
+          price: number
+          product_id: string
+          product_kind: string
+          product_name: string
+          shop_id: string
+          shop_name: string
+          shop_slug: string
+          shop_type: string
         }[]
       }
       universe_market_pulse: {

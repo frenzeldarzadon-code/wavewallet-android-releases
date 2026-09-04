@@ -16,7 +16,13 @@ import {
   type CropRect,
   type ImageTarget,
 } from "@/lib/image-optimize";
-import { validateVideoFile, videoExtension, type PostMeta } from "@/lib/post-meta";
+import {
+  postLinkKey,
+  validateVideoFile,
+  videoExtension,
+  type PostLink,
+  type PostMeta,
+} from "@/lib/post-meta";
 
 export const SOCIAL_IMAGE_BUCKET = "social-images";
 export const MAX_SOCIAL_IMAGE_BYTES = MAX_UPLOAD_BYTES;
@@ -1079,4 +1085,103 @@ export function distributionSummary(rows: DistributionStatus[]): string {
   if (n("pending") > 0) parts.push(`${n("pending")} pending`);
   if (n("rejected") > 0) parts.push(`${n("rejected")} declined`);
   return parts.join(" · ");
+}
+
+// ------------------------------------------------------- link / recommend
+
+/** A shop or product a member may recommend inside a post, or the resolved card of one. */
+export interface LinkCard {
+  kind: "shop" | "product";
+  shop_id: string;
+  shop_name: string;
+  shop_slug: string;
+  /** "retail", "voucher" or "retail+voucher" — what the shop sells in the Universe. */
+  shop_type: string;
+  logo_path: string | null;
+  cover_path: string | null;
+  product_id: string | null;
+  product_kind: "retail" | "voucher" | null;
+  product_name: string | null;
+  image_path: string | null;
+  /** Current customer price (coins); Retail already includes the platform fee. */
+  price: number | null;
+  /** Stock / unused vouchers when known (resolver only). */
+  available?: number | null;
+}
+
+function normalizeLinkCard(row: Record<string, unknown>): LinkCard {
+  return {
+    kind: row["kind"] === "product" ? "product" : "shop",
+    shop_id: String(row["shop_id"]),
+    shop_name: String(row["shop_name"] ?? ""),
+    shop_slug: String(row["shop_slug"] ?? ""),
+    shop_type: String(row["shop_type"] ?? "voucher"),
+    logo_path: (row["logo_path"] as string | null) ?? null,
+    cover_path: (row["cover_path"] as string | null) ?? null,
+    product_id: (row["product_id"] as string | null) ?? null,
+    product_kind:
+      row["product_kind"] === "retail" || row["product_kind"] === "voucher"
+        ? row["product_kind"]
+        : null,
+    product_name: (row["product_name"] as string | null) ?? null,
+    image_path: (row["image_path"] as string | null) ?? null,
+    price: row["price"] === null || row["price"] === undefined ? null : Number(row["price"]),
+    available:
+      row["available"] === null || row["available"] === undefined ? null : Number(row["available"]),
+  };
+}
+
+/** Picker search — publicly visible Universe shops or their published products. */
+export async function searchLinkTargets(
+  kind: "shop" | "product",
+  query: string,
+  limit = 20,
+): Promise<LinkCard[]> {
+  const { data, error } = await supabase.rpc("universe_link_search", {
+    _kind: kind,
+    _limit: limit,
+    ...(query.trim() ? { _q: query.trim() } : {}),
+  });
+  if (error) fail(error.message);
+  return ((data ?? []) as Record<string, unknown>[]).map(normalizeLinkCard);
+}
+
+/** The reference a picked card stores in the post's extras. */
+export function linkFromCard(card: LinkCard): PostLink {
+  if (card.kind === "product" && card.product_id && card.product_kind) {
+    return {
+      kind: "product",
+      shop_id: card.shop_id,
+      product_id: card.product_id,
+      product_kind: card.product_kind,
+    };
+  }
+  return { kind: "shop", shop_id: card.shop_id };
+}
+
+/**
+ * Resolves linked references to current card data. Items that are no longer
+ * publicly visible are simply absent, so callers hide the card.
+ */
+export async function fetchLinkCards(links: PostLink[]): Promise<Map<string, LinkCard>> {
+  const out = new Map<string, LinkCard>();
+  const unique = new Map<string, PostLink>();
+  for (const l of links) unique.set(postLinkKey(l), l);
+  if (unique.size === 0) return out;
+  const { data, error } = await supabase.rpc("social_link_cards", {
+    _links: [...unique.values()] as unknown as Record<string, never>[],
+  });
+  if (error) fail(error.message);
+  for (const raw of (data ?? []) as Record<string, unknown>[]) {
+    const card = normalizeLinkCard(raw);
+    out.set(postLinkKey(linkFromCard(card)), card);
+  }
+  return out;
+}
+
+/** "Voucher shop" / "Retail shop" / "Retail & voucher shop". */
+export function shopTypeLabel(shopType: string): string {
+  if (shopType === "retail+voucher") return "Retail & voucher shop";
+  if (shopType === "retail") return "Retail shop";
+  return "Voucher shop";
 }

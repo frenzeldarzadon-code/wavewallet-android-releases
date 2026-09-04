@@ -18,7 +18,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { UniverseComposer } from "@/components/social/universe-composer";
 import { StyledPostBody } from "@/components/social/composer-pickers";
-import { feelingPhrase, readPostMeta, styleApplies } from "@/lib/post-meta";
+import { PostLinkCard } from "@/components/social/post-link-card";
+import {
+  feelingPhrase,
+  postLinkKey,
+  readPostMeta,
+  styleApplies,
+  type PostLink,
+} from "@/lib/post-meta";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +57,7 @@ import {
   fetchComments,
   fetchDistributionStatus,
   fetchFeed,
+  fetchLinkCards,
   fetchSocialState,
   openThread,
   relativeTime,
@@ -60,6 +68,7 @@ import {
   validateCommentBody,
   type FeedComment,
   type FeedPost,
+  type LinkCard,
   type DistributionStatus,
   type PromotionTier,
   type SocialState,
@@ -136,6 +145,8 @@ export function SocialPage({ hashtag }: { hashtag?: string } = {}) {
   const account = session.account;
   const [state, setState] = useState<SocialState | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
+  // Linked shops/products resolved to current storefront data, keyed by reference.
+  const [linkCards, setLinkCards] = useState<Map<string, LinkCard>>(new Map());
   const [loading, setLoading] = useState(true);
 
   // reporting
@@ -147,6 +158,17 @@ export function SocialPage({ hashtag }: { hashtag?: string } = {}) {
       const [s, f] = await Promise.all([fetchSocialState(), fetchFeed(undefined, hashtag ?? null)]);
       setState(s);
       setPosts(f);
+      const links = f
+        .map((p) => readPostMeta(p.meta).link)
+        .filter((l): l is PostLink => Boolean(l));
+      if (links.length > 0) {
+        // Cards are a nice-to-have: a lookup failure never blocks the feed.
+        fetchLinkCards(links)
+          .then(setLinkCards)
+          .catch(() => setLinkCards(new Map()));
+      } else {
+        setLinkCards(new Map());
+      }
     } catch (e) {
       toast.error("Could not load the community feed", { description: (e as Error).message });
     } finally {
@@ -259,6 +281,7 @@ export function SocialPage({ hashtag }: { hashtag?: string } = {}) {
               post={post}
               state={state}
               meId={account.id}
+              linkCards={linkCards}
               onLike={() => void like(post)}
               onDelete={() => void remove(post.id)}
               onBlock={() => void block(post.author_id, post.author_name)}
@@ -302,6 +325,7 @@ function PostCard({
   post,
   state,
   meId,
+  linkCards,
   onLike,
   onDelete,
   onBlock,
@@ -311,6 +335,7 @@ function PostCard({
   post: FeedPost;
   state: SocialState | null;
   meId: string;
+  linkCards?: Map<string, LinkCard>;
   onLike: () => void;
   onDelete: () => void;
   onBlock: () => void;
@@ -334,6 +359,7 @@ function PostCard({
 
   const thread = threadComments(comments);
   const meta = readPostMeta(post.meta);
+  const linkCard = meta.link ? (linkCards?.get(postLinkKey(meta.link)) ?? null) : null;
   const styled = styleApplies({
     style: meta.style,
     body: post.body,
@@ -523,6 +549,7 @@ function PostCard({
         {styled && meta.style ? <StyledPostBody body={post.body} styleId={meta.style} /> : null}
         {post.image_path ? <PostImage path={post.image_path} /> : null}
         {post.video_path ? <PostVideo path={post.video_path} /> : null}
+        {linkCard ? <PostLinkCard card={linkCard} /> : null}
 
         {meta.dm_invite && post.author_id !== meId ? (
           <Button
