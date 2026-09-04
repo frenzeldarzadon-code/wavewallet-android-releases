@@ -148,7 +148,7 @@ export function WalletCenter({
     setRecipientsLoading(true);
     setRecipients(await fetchShopRecipients(selectedId, search));
     setRecipientsLoading(false);
-  }, [userId, selectedId, search]);
+  }, [userId, selectedId, search, universe]);
 
   useEffect(() => {
     const t = window.setTimeout(() => {
@@ -231,24 +231,34 @@ export function WalletCenter({
         <PageSection
           devSlot="wallet-center.universe-wallet"
           title="Universe wallet"
-          description="One global wallet for everything you buy in the Universe. New Generation shop wallets stay separate inside their own shop console."
+          description="Your one global Universe wallet. The same balance pays in every Universe shop — you never move coins into a shop first, and joining a shop never creates another wallet."
         >
           <div className="grid gap-3 sm:grid-cols-2">
             <StatCard
               label="Global coin balance"
               value={globalBalance === null ? "…" : peso(globalBalance)}
-              hint="Spent on Universe vouchers and transfers — never on social activity"
+              hint="One balance for vouchers and purchases across all Universe shops"
               icon={Wallet}
               tone="positive"
             />
             <StatCard
               label="Points balance"
               value={pts(points.available)}
-              hint="Points always stay inside the shop that awarded them"
+              hint="Points are separate and always stay inside the shop that awarded them"
               icon={Sparkles}
               tone="brand"
             />
           </div>
+          <Card className="mt-3 border-dashed shadow-none">
+            <CardContent className="flex items-start gap-3 py-3">
+              <Info className="mt-0.5 size-4 shrink-0 text-primary" />
+              <p className="text-xs text-muted-foreground">
+                Spend this balance in any Universe shop — membership is not required to buy. New
+                Generation (NG) shop wallets are a separate system and stay inside their own shop
+                console.
+              </p>
+            </CardContent>
+          </Card>
         </PageSection>
       ) : null}
 
