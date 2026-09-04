@@ -13,6 +13,7 @@ import { ListenerDevicesCard } from "@/components/super/listener-devices-card";
 import { ReceivingAccountsCard } from "@/components/money/receiving-accounts-card";
 import { ListenerDeviceScreenButton } from "@/components/money/listener-device-screen-button";
 import { ListenerSourceRulesCard } from "@/components/money/listener-source-rules-card";
+import { ListenerDetectedSourcesCard } from "@/components/money/listener-detected-sources-card";
 import { CashInNumberCard } from "@/components/money/cash-in-number-card";
 import { PlatformPaymentOptionCard } from "@/components/money/platform-payment-option-card";
 import { ShopIdentityCard } from "@/components/shop/shop-identity-card";
@@ -32,9 +33,17 @@ export const Route = createFileRoute("/admin/settings")({
   head: () => ({
     meta: [
       { title: "Shop Settings — ONE WAVE Admin" },
-      { name: "description", content: "Name your shop, set contact details, Facebook support channel and points earning rules." },
+      {
+        name: "description",
+        content:
+          "Name your shop, set contact details, Facebook support channel and points earning rules.",
+      },
       { property: "og:title", content: "Shop Settings — ONE WAVE Admin" },
-      { property: "og:description", content: "Name your shop, set contact details, Facebook support channel and points earning rules." },
+      {
+        property: "og:description",
+        content:
+          "Name your shop, set contact details, Facebook support channel and points earning rules.",
+      },
     ],
   }),
   component: AdminSettings,
@@ -132,7 +141,6 @@ function AdminSettings() {
   const rawFacebook = (ecosystem.facebookPageUrl ?? "").trim();
   const facebookUrl = isFacebookUrl(rawFacebook) ? rawFacebook : "";
 
-
   const save = async () => {
     if (!ecosystemDbId) {
       toast.error("Your shop is still loading — try again in a moment.");
@@ -174,7 +182,11 @@ function AdminSettings() {
   return (
     <>
       <ShopTypeCard ecosystemId={ecosystemDbId} />
-      <PageSection devSlot="settings.shop-identity" title="Shop identity" description="Your name appears throughout the app for your resellers and customers.">
+      <PageSection
+        devSlot="settings.shop-identity"
+        title="Shop identity"
+        description="Your name appears throughout the app for your resellers and customers."
+      >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
@@ -196,9 +208,9 @@ function AdminSettings() {
                 className="font-mono text-xs"
               />
               <p className="text-[11px] text-muted-foreground">
-                The slug is fixed by the platform owner because it powers your permanent
-                /join/{ecosystem.slug} link — changing it would break links already shared with
-                members. Ask the platform owner if it must change.
+                The slug is fixed by the platform owner because it powers your permanent /join/
+                {ecosystem.slug} link — changing it would break links already shared with members.
+                Ask the platform owner if it must change.
               </p>
             </div>
             <div className="space-y-1.5 sm:col-span-2">
@@ -231,8 +243,8 @@ function AdminSettings() {
         </Card>
       </PageSection>
 
-
-      <PageSection devSlot="settings.shop-id-sign-up-link-address"
+      <PageSection
+        devSlot="settings.shop-id-sign-up-link-address"
         title="Shop ID, sign-up link & address"
         description="New members join with your 7-digit Shop ID. The optional shop address decides where your shop appears in municipality discovery."
       >
@@ -270,7 +282,8 @@ function AdminSettings() {
         </Card>
       </PageSection>
 
-      <PageSection devSlot="settings.facebook-support"
+      <PageSection
+        devSlot="settings.facebook-support"
         title="Facebook support"
         description="Your own shop's support page. Your resellers and subresellers see this link on their dashboard. Leave it empty to remove the link."
       >
@@ -326,18 +339,18 @@ function AdminSettings() {
         </Card>
       </PageSection>
 
-
-      <PageSection devSlot="settings.voucher-sale-earnings"
+      <PageSection
+        devSlot="settings.voucher-sale-earnings"
         title="Voucher sale earnings"
         description="Each reseller and subreseller has ONE Discount, set on that member only. It is both their share of a purchase and their voucher shop discount — the shop keeps the remainder."
       >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>
-              A member's Discount is their percentage of the coins they supplied to a purchase
-              and, automatically, the discount they pay when buying vouchers. A subreseller's
-              Discount comes out of their parent reseller's Discount, and you receive everything
-              that is left. Changes apply to future purchases only — history never changes.
+              A member's Discount is their percentage of the coins they supplied to a purchase and,
+              automatically, the discount they pay when buying vouchers. A subreseller's Discount
+              comes out of their parent reseller's Discount, and you receive everything that is
+              left. Changes apply to future purchases only — history never changes.
             </p>
             <Button size="sm" variant="outline" asChild>
               <Link to="/admin/resellers">Set individual member discounts</Link>
@@ -346,8 +359,11 @@ function AdminSettings() {
         </Card>
       </PageSection>
 
-      <PageSection devSlot="settings.points-rule" title="Points rule" description="Points are earned on coin-funded voucher purchases only — never on coin loads or transfers.">
-
+      <PageSection
+        devSlot="settings.points-rule"
+        title="Points rule"
+        description="Points are earned on coin-funded voucher purchases only — never on coin loads or transfers."
+      >
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
@@ -382,7 +398,9 @@ function AdminSettings() {
                     // never shows a value that was not persisted.
                     const fresh = await fetchPointsRule(ecosystemDbId);
                     setRule(String(fresh || saved || v));
-                    toast.success(`From now on, ${fresh || v} Coins = 1 Point. Past purchases are unchanged.`);
+                    toast.success(
+                      `From now on, ${fresh || v} Coins = 1 Point. Past purchases are unchanged.`,
+                    );
                   } catch (e) {
                     toast.error("Could not save the points rule", {
                       description: (e as Error).message,
@@ -396,14 +414,14 @@ function AdminSettings() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground sm:col-span-2">
-              Changing this ratio affects <span className="font-medium text-foreground">future qualifying purchases only</span>.
-              Points already earned keep the ratio that was active at the time of the purchase and are never recalculated.
+              Changing this ratio affects{" "}
+              <span className="font-medium text-foreground">future qualifying purchases only</span>.
+              Points already earned keep the ratio that was active at the time of the purchase and
+              are never recalculated.
             </p>
           </CardContent>
         </Card>
       </PageSection>
-
-
 
       <div className="space-y-2">
         <Button onClick={save} disabled={saving || !ecosystemDbId}>
@@ -429,6 +447,7 @@ function AdminSettings() {
           <CashInNumberCard ecosystemId={ecosystemDbId} />
           <ListenerDeviceScreenButton />
           <ListenerDevicesCard ecosystemId={ecosystemDbId} ecosystemName={ecosystem.name} />
+          <ListenerDetectedSourcesCard ecosystemId={ecosystemDbId} ecosystemName={ecosystem.name} />
           <ListenerSourceRulesCard ecosystemId={ecosystemDbId} ecosystemName={ecosystem.name} />
         </>
       ) : null}
@@ -455,6 +474,5 @@ function AdminSettings() {
         <DeleteShopCard ecosystemId={ecosystemDbId} shopName={ecosystem.name} />
       ) : null}
     </>
-
   );
 }

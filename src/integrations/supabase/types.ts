@@ -2363,6 +2363,8 @@ export type Database = {
         Row: {
           amount_php: number | null
           app_label: string | null
+          category: string | null
+          channel_id: string | null
           consumed_cash_in_id: string | null
           consumed_subscription_request_id: string | null
           created_at: string
@@ -2395,6 +2397,8 @@ export type Database = {
         Insert: {
           amount_php?: number | null
           app_label?: string | null
+          category?: string | null
+          channel_id?: string | null
           consumed_cash_in_id?: string | null
           consumed_subscription_request_id?: string | null
           created_at?: string
@@ -2427,6 +2431,8 @@ export type Database = {
         Update: {
           amount_php?: number | null
           app_label?: string | null
+          category?: string | null
+          channel_id?: string | null
           consumed_cash_in_id?: string | null
           consumed_subscription_request_id?: string | null
           created_at?: string
@@ -10026,6 +10032,10 @@ export type Database = {
         Args: { _device: string; _nonce: string }
         Returns: boolean
       }
+      listener_detected_sources: {
+        Args: { _ecosystem?: string }
+        Returns: Json
+      }
       listener_device_source_rules: { Args: { _device: string }; Returns: Json }
       listener_device_status: { Args: never; Returns: Json }
       listener_event_account_tail: {
@@ -10116,6 +10126,10 @@ export type Database = {
       listener_source_allowed: {
         Args: { _device: string; _package: string }
         Returns: boolean
+      }
+      listener_source_effective_mode: {
+        Args: { _device?: string; _ecosystem?: string; _package: string }
+        Returns: string
       }
       listener_source_rules_list: {
         Args: { _ecosystem?: string }
@@ -10787,6 +10801,8 @@ export type Database = {
         Args: {
           _amount?: number
           _app_label?: string
+          _category?: string
+          _channel?: string
           _details?: Json
           _device: string
           _event_uid: string
@@ -13386,6 +13402,10 @@ export type Database = {
         Returns: string
       }
       try_auto_approve_cash_in: { Args: { _id: string }; Returns: string }
+      unblock_listener_source: {
+        Args: { _device?: string; _ecosystem?: string; _package: string }
+        Returns: string
+      }
       unique_handle: {
         Args: { _base: string; _exclude?: string }
         Returns: string

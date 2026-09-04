@@ -106,13 +106,14 @@ export function ListenerSourceRulesCard({
   return (
     <Card id="listener-sources" className="shadow-[var(--shadow-card)] scroll-mt-24">
       <CardHeader>
-        <CardTitle>Notification sources</CardTitle>
+        <CardTitle>Source rules (advanced)</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Choose which apps the listener on{" "}
-          {ecosystemId ? (ecosystemName ?? "this shop") : "any paired phone"} may read. With no
-          rules saved every source is allowed, so existing phones keep working exactly as before. A
-          disabled source is filtered the moment it arrives — nothing is read from it and it can
-          never settle a Cash In.
+          The listener on {ecosystemId ? (ecosystemName ?? "this shop") : "any platform phone"}{" "}
+          reads every notification and records its source app first. Use “Detected notification
+          sources” above to block or unblock apps you have already seen; add a rule here to block an
+          app in advance or to set a default with <span className="font-mono">*</span>. A blocked
+          source is filtered the moment it arrives — nothing is read from it and it can never enter
+          receipt matching. Every change is kept in the audit log.
         </p>
       </CardHeader>
       <CardContent className="space-y-5">
