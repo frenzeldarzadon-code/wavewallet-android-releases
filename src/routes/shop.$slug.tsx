@@ -7,15 +7,23 @@
  * members, wallets, orders or voucher codes.
  */
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, MapPin, Store, Ticket } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, MapPin, Store, Ticket, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { RatingStars } from "@/components/rating-stars";
 import { RetailImage } from "@/components/retail/retail-image";
 import { VoucherArtwork } from "@/components/universe/voucher-artwork";
+import { SellerCard } from "@/components/universe/universe-shop-discovery";
 import {
   MarketplaceEmpty,
   MarketplaceHeader,
@@ -30,6 +38,7 @@ import { matchesSearch, useDebouncedValue } from "@/lib/retail-catalog";
 import { RETAIL_VISIBLE } from "@/lib/features";
 import { shortDateTime } from "@/lib/wavewallet";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchUniverseSellers, type ShopSeller } from "@/lib/seller-storefront";
 import {
   fetchPublicProducts,
   fetchPublicReviews,
@@ -47,7 +56,7 @@ export const Route = createFileRoute("/shop/$slug")({
       {
         name: "description",
         content:
-          "Browse this ONE WAVE shop's public products, prices and customer ratings, then request to join to place an order.",
+          "Browse this ONE WAVE shop's public vouchers, products, prices and customer ratings, and buy vouchers from its authorized sellers.",
       },
       { property: "og:title", content: `${params.slug} Storefront — ONE WAVE` },
       {
@@ -70,9 +79,14 @@ function PublicStorefront() {
   const [products, setProducts] = useState<PublicProduct[]>([]);
   const [reviews, setReviews] = useState<PublicReview[]>([]);
   const [loading, setLoading] = useState(true);
-  const [signedIn, setSignedIn] = useState(false);
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [search, setSearch] = useState("");
   const [detailId, setDetailId] = useState<string | null>(null);
+  // Authorized sellers of a Universe voucher shop. Buying a voucher never
+  // requires shop membership: the customer picks a seller and continues into
+  // the existing seller-attributed checkout. null = still loading.
+  const [sellers, setSellers] = useState<ShopSeller[] | null>(null);
+  const [sellerPickFor, setSellerPickFor] = useState<PublicProduct | null>(null);
   const debouncedSearch = useDebouncedValue(search);
 
   useEffect(() => {
@@ -101,6 +115,26 @@ function PublicStorefront() {
     };
   }, [slug]);
 
+  // Sellers are listed for signed-in members; guests are asked to sign in.
+  useEffect(() => {
+    if (!shop?.voucher_enabled) {
+      setSellers([]);
+      return;
+    }
+    if (signedIn !== true) return;
+    let alive = true;
+    fetchUniverseSellers(slug)
+      .then((list) => {
+        if (alive) setSellers(list);
+      })
+      .catch(() => {
+        if (alive) setSellers([]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [slug, shop?.voucher_enabled, signedIn]);
+
   if (loading) {
     return <p className="p-6 text-sm text-muted-foreground">Loading storefront…</p>;
   }
@@ -119,7 +153,8 @@ function PublicStorefront() {
     );
   }
 
-  const action = visitorAction(shop, signedIn);
+  const action = visitorAction(shop, signedIn === true);
+  const guest = signedIn === false;
   // Public prices are already the customer Retail Price (fee inside, computed
   // by the database), so the cards render them with a 0 % presentation fee.
   const retail: RetailProduct[] = products
@@ -197,17 +232,34 @@ function PublicStorefront() {
             </StatusBadge>
           ) : null}
         </div>
-        {cta ? (
+        {shop.voucher_enabled ? (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Vouchers are sold by this shop's authorized sellers — no membership needed to buy.
+            {!guest && sellers && sellers.length === 0 ? " No seller is available right now." : ""}
+          </p>
+        ) : null}
+        {/* Membership only matters for existing members and Retail ordering. */}
+        {action === "open" && cta ? (
           <Button className="mt-3 w-full sm:w-auto" onClick={cta.onClick}>
             {cta.label} <ArrowRight className="size-4" />
           </Button>
-        ) : (
-          <p className="mt-3 text-xs text-muted-foreground">
-            {action === "pending"
-              ? "Your request to join is waiting for the shop to review it."
-              : "This shop is not accepting new members right now."}
-          </p>
-        )}
+        ) : RETAIL_VISIBLE && shop.retail_enabled ? (
+          cta ? (
+            <Button
+              className="mt-3 w-full sm:w-auto"
+              variant={shop.voucher_enabled ? "outline" : "default"}
+              onClick={cta.onClick}
+            >
+              {cta.label} <ArrowRight className="size-4" />
+            </Button>
+          ) : (
+            <p className="mt-3 text-xs text-muted-foreground">
+              {action === "pending"
+                ? "Your request to join is waiting for the shop to review it."
+                : "This shop is not accepting new members right now."}
+            </p>
+          )
+        ) : null}
         {shop.contact_email || shop.contact_phone ? (
           <p className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
             <MapPin className="size-3" />{" "}
@@ -296,36 +348,139 @@ function PublicStorefront() {
           />
         </TabsContent>
 
-        <TabsContent value="voucher">
+        <TabsContent value="voucher" className="space-y-4">
+          {/* Sellers first: buying a voucher never requires joining the shop. */}
+          <section
+            id="sellers"
+            className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]"
+            aria-label="Authorized sellers"
+          >
+            <div className="mb-2 flex items-baseline justify-between gap-2">
+              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <Users className="size-3.5" /> Choose an authorized seller
+              </p>
+              {sellers && sellers.length > 0 ? (
+                <p className="text-[11px] text-muted-foreground">
+                  {sellers.length} seller{sellers.length === 1 ? "" : "s"}
+                </p>
+              ) : null}
+            </div>
+            <p className="mb-3 text-xs text-muted-foreground">
+              No shop membership needed — pick a seller and pay with your Universe coins.
+            </p>
+            {guest ? (
+              <Button asChild variant="outline" size="sm">
+                <a href="/?mode=signin">Sign in to see sellers and buy</a>
+              </Button>
+            ) : sellers === null ? (
+              <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="size-3 animate-spin" /> Loading sellers…
+              </p>
+            ) : sellers.length === 0 ? (
+              <EmptyState
+                title="No seller available right now"
+                description="This shop has no authorized seller taking Universe orders at the moment. Check back later."
+              />
+            ) : (
+              <ul className="grid gap-2 sm:grid-cols-2">
+                {sellers.map((s) => (
+                  <li key={s.sellerId}>
+                    <SellerCard seller={s} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
           {vouchers.length === 0 ? (
             <EmptyState title="No public voucher products" />
           ) : (
             <PageSection title="Voucher products">
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {vouchers.map((v) => (
-                  <Card key={v.id} className="min-w-0 overflow-hidden rounded-xl shadow-[var(--shadow-card)]">
-                    {v.image_path ? (
-                      <RetailImage path={v.image_path} alt={v.name} className="aspect-[16/10]" />
-                    ) : (
-                      <VoucherArtwork seed={`${shop.id}-${v.id}`} name={v.name} compact />
-                    )}
-                    <CardContent className="space-y-2 p-3">
-                      <div className="min-w-0">
-                        <p className="line-clamp-2 min-h-10 text-sm font-semibold leading-snug">{v.name}</p>
-                        <p className="mt-0.5 text-[11px] text-muted-foreground">
-                          {v.available > 0 ? `${v.available} available` : "Sold out"}
-                        </p>
-                      </div>
-                      <p className="text-sm font-bold text-primary">{credits(v.price)}</p>
-                      <Button className="w-full" size="sm" variant="outline" onClick={cta?.onClick} disabled={!cta}>
-                        {cta?.label ?? "Members only"} <ArrowRight className="size-3.5" />
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
+                {vouchers.map((v) => {
+                  const soldOut = v.available <= 0;
+                  const noSeller = !guest && sellers !== null && sellers.length === 0;
+                  return (
+                    <Card
+                      key={v.id}
+                      className="min-w-0 overflow-hidden rounded-xl shadow-[var(--shadow-card)]"
+                    >
+                      {v.image_path ? (
+                        <RetailImage path={v.image_path} alt={v.name} className="aspect-[16/10]" />
+                      ) : (
+                        <VoucherArtwork seed={`${shop.id}-${v.id}`} name={v.name} compact />
+                      )}
+                      <CardContent className="space-y-2 p-3">
+                        <div className="min-w-0">
+                          <p className="line-clamp-2 min-h-10 text-sm font-semibold leading-snug">
+                            {v.name}
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-muted-foreground">
+                            {soldOut ? "Sold out" : `${v.available} available`}
+                          </p>
+                        </div>
+                        <p className="text-sm font-bold text-primary">{credits(v.price)}</p>
+                        {guest ? (
+                          <Button asChild className="w-full" size="sm" variant="outline">
+                            <a href="/?mode=signin">
+                              Sign in to buy <ArrowRight className="size-3.5" />
+                            </a>
+                          </Button>
+                        ) : sellers && sellers.length === 1 ? (
+                          <Button asChild className="w-full" size="sm" variant="outline">
+                            <Link
+                              to="/universe/u/$handle"
+                              params={{ handle: sellers[0]!.sellerHandle }}
+                            >
+                              Buy from {sellers[0]!.sellerName.split(" ")[0]}{" "}
+                              <ArrowRight className="size-3.5" />
+                            </Link>
+                          </Button>
+                        ) : (
+                          <Button
+                            className="w-full"
+                            size="sm"
+                            variant="outline"
+                            disabled={sellers === null || noSeller}
+                            onClick={() => setSellerPickFor(v)}
+                          >
+                            {noSeller ? "No seller available" : "Choose a seller"}{" "}
+                            <ArrowRight className="size-3.5" />
+                          </Button>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </PageSection>
           )}
+
+          <Dialog
+            open={sellerPickFor !== null}
+            onOpenChange={(o) => {
+              if (!o) setSellerPickFor(null);
+            }}
+          >
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Choose a seller</DialogTitle>
+                <DialogDescription>
+                  {sellerPickFor
+                    ? `Buy "${sellerPickFor.name}" from one of ${shop.name}'s authorized sellers. `
+                    : ""}
+                  Same price, paid with your Universe coins — no membership needed.
+                </DialogDescription>
+              </DialogHeader>
+              <ul className="grid gap-2">
+                {(sellers ?? []).map((s) => (
+                  <li key={s.sellerId} onClick={() => setSellerPickFor(null)}>
+                    <SellerCard seller={s} />
+                  </li>
+                ))}
+              </ul>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         <TabsContent value="reviews">
