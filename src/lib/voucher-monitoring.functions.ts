@@ -19,7 +19,13 @@ import {
   type MonitorRecord,
   type OwnedCode,
 } from "./voucher-monitoring";
-import { mergeCustomerShops, relatedShopIds, type CustomerShop } from "./customer-shops";
+import {
+  buildPurchaseShopLabels,
+  mergeCustomerShops,
+  relatedShopIds,
+  type CustomerShop,
+  type PurchaseShopLabels,
+} from "./customer-shops";
 
 type AuthContext = {
   supabase: {
