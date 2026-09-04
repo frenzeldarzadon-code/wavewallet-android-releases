@@ -266,7 +266,17 @@ export function useSession(requiredRole?: Role): ResolvedSession {
   useEffect(() => {
     if (!ready) return;
     if (!account) {
-      navigate({ to: "/", replace: true });
+      // Remember where the person was heading (e.g. a tapped phone notification)
+      // so sign-in can continue there instead of the default home.
+      const here =
+        typeof window !== "undefined"
+          ? `${window.location.pathname}${window.location.search}`
+          : "/";
+      if (here !== "/" && here.startsWith("/") && !here.startsWith("//")) {
+        navigate({ href: `/?next=${encodeURIComponent(here)}`, replace: true });
+      } else {
+        navigate({ to: "/", replace: true });
+      }
       return;
     }
     if (requiredRole && !roleSatisfies(account.role, requiredRole)) {
