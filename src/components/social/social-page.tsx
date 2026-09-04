@@ -472,7 +472,6 @@ function PostCard({
     }
   };
 
-
   return (
     <Card className="shadow-[var(--shadow-card)]">
       <CardContent className="space-y-3">
@@ -736,7 +735,6 @@ function PostCard({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
 
       {coinsRecipient ? (
         <UniverseSendCoinsSheet
