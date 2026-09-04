@@ -9387,6 +9387,17 @@ export type Database = {
         }[]
       }
       dm_open_thread: { Args: { _member_id: string }; Returns: string }
+      dm_order_chat_context: {
+        Args: { _thread_ids: string[] }
+        Returns: {
+          fulfillment_status: string
+          order_no: string
+          shop_name: string
+          shop_slug: string
+          status: string
+          thread_id: string
+        }[]
+      }
       dm_send:
         | { Args: { _body: string; _member_id: string }; Returns: Json }
         | {
@@ -13297,6 +13308,17 @@ export type Database = {
           shop_slug: string
         }[]
       }
+      universe_online_members: {
+        Args: { _limit?: number }
+        Returns: {
+          avatar_path: string
+          full_name: string
+          handle: string
+          id: string
+          last_seen_at: string
+          online: boolean
+        }[]
+      }
       universe_peso: { Args: { _n: number }; Returns: string }
       universe_profile: {
         Args: { _handle: string }
@@ -13341,6 +13363,15 @@ export type Database = {
         Returns: string
       }
       universe_relationship: { Args: { _user: string }; Returns: Json }
+      universe_relationship_batch: {
+        Args: { _users: string[] }
+        Returns: {
+          following: boolean
+          friend_request_id: string
+          friend_status: string
+          user_id: string
+        }[]
+      }
       universe_self_purchase_net: {
         Args: {
           _buyer: string
