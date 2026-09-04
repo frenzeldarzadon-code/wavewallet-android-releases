@@ -126,7 +126,7 @@ export function extractNotificationFields(text: string | null | undefined): Noti
   );
   out.transfer_method = clean(method?.[1]);
 
-  const message = raw.match(/\b(?:message|note|memo)\s*[:\-]\s*["“]?([^"”.]{1,160})/i);
+  const message = raw.match(/\b(?:message|note|memo)\s*[:-]\s*["“]?([^"”.]{1,160})/i);
   out.message = clean(message?.[1]);
 
   // Keep every "Label: value" pair too, so nothing readable is lost.
