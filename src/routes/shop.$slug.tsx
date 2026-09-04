@@ -38,6 +38,8 @@ import { matchesSearch, useDebouncedValue } from "@/lib/retail-catalog";
 import { RETAIL_VISIBLE } from "@/lib/features";
 import { shortDateTime } from "@/lib/wavewallet";
 import { supabase } from "@/integrations/supabase/client";
+import { homeFor } from "@/lib/session";
+import { fetchMyMemberships, switchEcosystem } from "@/lib/memberships";
 import { fetchUniverseSellers, type ShopSeller } from "@/lib/seller-storefront";
 import {
   fetchPublicProducts,
@@ -194,7 +196,18 @@ function PublicStorefront() {
 
   const cta =
     action === "open"
-      ? { label: "Open your shop", onClick: () => void navigate({ to: homeFor(account?.role ?? "customer") }) }
+      ? {
+          label: "Open your shop",
+          // Members open their console for this shop; customers' console is Universe.
+          onClick: () =>
+            void fetchMyMemberships()
+              .then(async (list) => {
+                const mine = list.find((m) => m.ecosystemId === shop.id);
+                if (mine && !mine.isActive && mine.role !== "customer") await switchEcosystem(shop.id);
+                await navigate({ to: homeFor(mine?.role ?? "customer") });
+              })
+              .catch(() => navigate({ to: "/universe" })),
+        }
       : action === "join"
         ? {
             label: "Request to join",
