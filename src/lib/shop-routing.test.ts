@@ -14,7 +14,7 @@ describe("landing after sign-in", () => {
   it("opens the only shop, switching to it when needed", () => {
     expect(
       landingForMemberships([{ ecosystemId: "a", role: "customer", isActive: false }]),
-    ).toEqual({ to: "/app/shop", switchTo: "a" });
+    ).toEqual({ to: "/universe", switchTo: "a" });
     expect(landingForMemberships([{ ecosystemId: "a", role: "admin", isActive: true }])).toEqual({
       to: "/admin",
       switchTo: null,

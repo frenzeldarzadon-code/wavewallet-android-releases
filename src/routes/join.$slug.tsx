@@ -140,7 +140,7 @@ function JoinPage() {
         setSent(true);
       } else {
         toast.success(`Welcome to ${eco.name}!`);
-        await navigate({ to: "/app" });
+        await navigate({ to: "/universe" });
       }
 
     } catch (e) {

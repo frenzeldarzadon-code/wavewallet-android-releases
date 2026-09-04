@@ -89,10 +89,15 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
         await navigate({ to: "/reseller/omada", search: { code, tab: "voucher" } });
         return;
       }
-      // Customers monitor their vouchers live instead of the Status Check tab.
-      await navigate({ to: "/app/monitor", search: { code } });
+      // Customers monitor their vouchers live in Universe (the customer portal).
+      const shopId = ecosystemId ?? ecosystemDbId;
+      if (shopId) {
+        await navigate({ to: "/universe/monitor/$shopId", params: { shopId }, search: { code } });
+      } else {
+        await navigate({ to: "/universe/monitor" });
+      }
     },
-    [account?.role, navigate],
+    [account?.role, navigate, ecosystemId, ecosystemDbId],
   );
   const [filter, setFilter] = useState("all");
   const [direction, setDirection] = useState<"all" | "credit" | "debit">("all");

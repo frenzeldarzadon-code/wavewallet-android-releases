@@ -31,6 +31,10 @@ export function writeSession(s: Session | null) {
   window.dispatchEvent(new Event("wavewallet:session"));
 }
 
+/**
+ * Home per role. Universe is the customer portal for the whole ecosystem: the
+ * per-shop customer console (/app) is no longer a customer destination.
+ */
 export const homeFor = (role: Role) =>
   role === "super_admin"
     ? "/super"
@@ -38,16 +42,17 @@ export const homeFor = (role: Role) =>
       ? "/admin"
       : role === "reseller" || role === "subreseller"
         ? "/reseller"
-        : "/app";
+        : "/universe";
 
 /**
  * Where a member lands right after signing in. Their last valid active shop is
  * remembered by the database (`profiles.active_ecosystem_id`, re-authorized on
- * every load), and selling members open straight in that shop's Voucher Shop.
+ * every load); selling members open straight in that shop's Voucher Shop and
+ * customers open Universe.
  */
 export const shopHomeFor = (role: Role) =>
   role === "customer"
-    ? "/app/shop"
+    ? "/universe"
     : role === "reseller" || role === "subreseller"
       ? "/reseller/shop"
       : homeFor(role);
