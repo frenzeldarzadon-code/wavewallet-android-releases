@@ -173,17 +173,17 @@ begin
     raise exception '7: a merely pending duplicate must not block verification';
   end if;
 
-  -- 9) a bank-account payment through the same unpaired phone (reference + sender account tail agree,
-  --    no mobile number) — matched exactly like the shop bank test, but on the platform phone.
+  -- 9) a bank-account payment (different provider) through the same unpaired phone:
+  --    reference + sending number agree, matched with no account pairing at all.
   _ref := 'BK' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 10));
-  insert into public.listener_events (device_id, event_uid, package_name, amount_php, reference, sender_account_masked,
+  insert into public.listener_events (device_id, event_uid, package_name, amount_php, gcash_reference, reference_key, sender_number_key,
                                       posted_at, created_at, outcome, provider_id)
-  values (_dev, 'np-evt-9', 'com.maribank.app', 1200, _ref, '****4321', now() - interval '1 minute', now(), 'accepted', null);
-  _row := public.request_cash_in(_bank, 1200, _ref, null, gen_random_uuid()::text, _uid::text || '/np9.jpg', null, 'platform',
-                                 now() - interval '1 minute',
-                                 jsonb_build_object('provider_name', 'MariBank', 'sender_account_masked', '****4321'), 'universe');
-  perform public.apply_cash_in_receipt_ocr(_row.id, _ref, 1200, null, true, null, now() - interval '1 minute',
-                                           null, 'MariBank', null, '****4321', null, repeat('d', 64));
+  values (_dev, 'np-evt-9', 'com.maribank.app', 1200, _ref, public.normalize_payment_reference(_ref), public.normalize_ph_mobile('09181112222'),
+          now() - interval '1 minute', now(), 'accepted', 'maribank');
+  _row := public.request_cash_in(_bank, 1200, _ref, null, gen_random_uuid()::text, _uid::text || '/np9.jpg', '09181112222', 'platform',
+                                 now() - interval '1 minute', jsonb_build_object('provider_name', 'MariBank'), 'universe');
+  perform public.apply_cash_in_receipt_ocr(_row.id, _ref, 1200, '09181112222', true, null, now() - interval '1 minute',
+                                           null, 'MariBank', null, null, null, repeat('d', 64));
   select * into _row from public.cash_in_requests where id = _row.id;
   if _row.listener_event_id is null or _row.status <> 'approved' then
     raise exception '9: the bank notification must match and approve through the unpaired platform phone (got % / %)',
