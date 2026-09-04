@@ -208,11 +208,6 @@ describe("lock-screen text", () => {
     expect(pushText({ kind: "order_approved", title: "Order #12 approved", link: "/universe" }).title).toBe(
       "Order update",
     );
-    expect(pushText({ kind: "unknown_thing", title: "Something 42 happened" }).title).toBe(
-      "Something  happened".replace(/\s+/g, " ").trim() === "Something happened"
-        ? pushText({ kind: "unknown_thing", title: "Something 42 happened" }).title
-        : "",
-    );
     expect(pushText({ kind: "unknown_thing", title: "Something 42 happened" }).title).not.toMatch(/42/);
   });
 });
