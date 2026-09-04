@@ -1,6 +1,4 @@
 import {
-  EyeOff,
-  Flag,
   Gift,
   Globe2,
   Heart,
@@ -9,7 +7,6 @@ import {
   MessageCircle,
   Reply,
   Send,
-  ShieldOff,
   Trash2,
   X,
 } from "lucide-react";
