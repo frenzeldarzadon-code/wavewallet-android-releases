@@ -3,7 +3,7 @@
 begin;
 
 do $$
-declare _super uuid; _dev uuid; _reg jsonb; _res jsonb; _src jsonb; _row record; _n int;
+declare _super uuid; _dev uuid; _reg jsonb; _res jsonb; _src jsonb; _row record;
 begin
   select p.id into _super from public.profiles p where public.is_super_admin(p.id) and p.status = 'active' limit 1;
   if _super is null then raise notice 'skipped: no super admin'; return; end if;
@@ -96,7 +96,6 @@ begin
     if sqlerrm not ilike '%cannot configure notification sources%' then raise; end if;
   end;
 
-  get diagnostics _n = row_count;
   raise exception 'PASS';
 end $$;
 
