@@ -11,7 +11,13 @@ import { ArrowLeft, ArrowRight, Loader2, MapPin, Store, Ticket, Users } from "lu
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { RatingStars } from "@/components/rating-stars";
@@ -101,8 +107,12 @@ function PublicStorefront() {
           setReviews(r);
           if (s.voucher_enabled) {
             fetchUniverseSellers(slug)
-              .then((list) => { if (alive) setSellers(list); })
-              .catch(() => { if (alive) setSellers([]); });
+              .then((list) => {
+                if (alive) setSellers(list);
+              })
+              .catch(() => {
+                if (alive) setSellers([]);
+              });
           } else {
             setSellers([]);
           }
@@ -225,7 +235,11 @@ function PublicStorefront() {
           </Button>
         ) : RETAIL_VISIBLE && shop.retail_enabled ? (
           cta ? (
-            <Button className="mt-3 w-full sm:w-auto" variant={shop.voucher_enabled ? "outline" : "default"} onClick={cta.onClick}>
+            <Button
+              className="mt-3 w-full sm:w-auto"
+              variant={shop.voucher_enabled ? "outline" : "default"}
+              onClick={cta.onClick}
+            >
               {cta.label} <ArrowRight className="size-4" />
             </Button>
           ) : (
@@ -373,51 +387,68 @@ function PublicStorefront() {
                   const soldOut = v.available <= 0;
                   const noSeller = sellers !== null && sellers.length === 0;
                   return (
-                  <Card key={v.id} className="min-w-0 overflow-hidden rounded-xl shadow-[var(--shadow-card)]">
-                    {v.image_path ? (
-                      <RetailImage path={v.image_path} alt={v.name} className="aspect-[16/10]" />
-                    ) : (
-                      <VoucherArtwork seed={`${shop.id}-${v.id}`} name={v.name} compact />
-                    )}
-                    <CardContent className="space-y-2 p-3">
-                      <div className="min-w-0">
-                        <p className="line-clamp-2 min-h-10 text-sm font-semibold leading-snug">{v.name}</p>
-                        <p className="mt-0.5 text-[11px] text-muted-foreground">
-                          {soldOut ? "Sold out" : `${v.available} available`}
-                        </p>
-                      </div>
-                      <p className="text-sm font-bold text-primary">{credits(v.price)}</p>
-                      {sellers && sellers.length === 1 ? (
-                        <Button asChild className="w-full" size="sm" variant="outline">
-                          <Link to="/universe/u/$handle" params={{ handle: sellers[0]!.sellerHandle }}>
-                            Buy from {sellers[0]!.sellerName.split(" ")[0]} <ArrowRight className="size-3.5" />
-                          </Link>
-                        </Button>
+                    <Card
+                      key={v.id}
+                      className="min-w-0 overflow-hidden rounded-xl shadow-[var(--shadow-card)]"
+                    >
+                      {v.image_path ? (
+                        <RetailImage path={v.image_path} alt={v.name} className="aspect-[16/10]" />
                       ) : (
-                        <Button
-                          className="w-full"
-                          size="sm"
-                          variant="outline"
-                          disabled={sellers === null || noSeller}
-                          onClick={() => setSellerPickFor(v)}
-                        >
-                          {noSeller ? "No seller available" : "Choose a seller"} <ArrowRight className="size-3.5" />
-                        </Button>
+                        <VoucherArtwork seed={`${shop.id}-${v.id}`} name={v.name} compact />
                       )}
-                    </CardContent>
-                  </Card>
+                      <CardContent className="space-y-2 p-3">
+                        <div className="min-w-0">
+                          <p className="line-clamp-2 min-h-10 text-sm font-semibold leading-snug">
+                            {v.name}
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-muted-foreground">
+                            {soldOut ? "Sold out" : `${v.available} available`}
+                          </p>
+                        </div>
+                        <p className="text-sm font-bold text-primary">{credits(v.price)}</p>
+                        {sellers && sellers.length === 1 ? (
+                          <Button asChild className="w-full" size="sm" variant="outline">
+                            <Link
+                              to="/universe/u/$handle"
+                              params={{ handle: sellers[0]!.sellerHandle }}
+                            >
+                              Buy from {sellers[0]!.sellerName.split(" ")[0]}{" "}
+                              <ArrowRight className="size-3.5" />
+                            </Link>
+                          </Button>
+                        ) : (
+                          <Button
+                            className="w-full"
+                            size="sm"
+                            variant="outline"
+                            disabled={sellers === null || noSeller}
+                            onClick={() => setSellerPickFor(v)}
+                          >
+                            {noSeller ? "No seller available" : "Choose a seller"}{" "}
+                            <ArrowRight className="size-3.5" />
+                          </Button>
+                        )}
+                      </CardContent>
+                    </Card>
                   );
                 })}
               </div>
             </PageSection>
           )}
 
-          <Dialog open={sellerPickFor !== null} onOpenChange={(o) => { if (!o) setSellerPickFor(null); }}>
+          <Dialog
+            open={sellerPickFor !== null}
+            onOpenChange={(o) => {
+              if (!o) setSellerPickFor(null);
+            }}
+          >
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Choose a seller</DialogTitle>
                 <DialogDescription>
-                  {sellerPickFor ? `Buy "${sellerPickFor.name}" from one of ${shop.name}'s authorized sellers. ` : ""}
+                  {sellerPickFor
+                    ? `Buy "${sellerPickFor.name}" from one of ${shop.name}'s authorized sellers. `
+                    : ""}
                   Same price, paid with your Universe coins — no membership needed.
                 </DialogDescription>
               </DialogHeader>

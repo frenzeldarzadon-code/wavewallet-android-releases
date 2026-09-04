@@ -49,7 +49,7 @@ export function UniverseShopDiscovery() {
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-        className="h-12 rounded-lg border-border bg-card pl-10 text-base shadow-[var(--shadow-card)]"
+          className="h-12 rounded-lg border-border bg-card pl-10 text-base shadow-[var(--shadow-card)]"
           placeholder="Search a shop or voucher, e.g. Sagada Wave or 1 Day"
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -58,7 +58,12 @@ export function UniverseShopDiscovery() {
       </div>
       {loading && shops.length === 0 ? (
         <div className="space-y-3" aria-label="Loading shops">
-          {[0, 1].map((item) => <div key={item} className="h-48 animate-pulse rounded-lg border border-border bg-card" />)}
+          {[0, 1].map((item) => (
+            <div
+              key={item}
+              className="h-48 animate-pulse rounded-lg border border-border bg-card"
+            />
+          ))}
         </div>
       ) : shops.length === 0 ? (
         <EmptyState
@@ -135,7 +140,8 @@ function ShopResult({ shop, searching }: { shop: DiscoveredShop; searching: bool
                 >
                   <span className="min-w-0 truncate font-semibold">{p.name}</span>
                   <span className="shrink-0 text-right font-medium text-foreground">
-                    {peso(p.price)}<span className="mx-1 text-muted-foreground">·</span>
+                    {peso(p.price)}
+                    <span className="mx-1 text-muted-foreground">·</span>
                     {p.available > 0 ? (
                       <span className="text-success">{p.available} available</span>
                     ) : (
@@ -200,11 +206,18 @@ export function SellerCard({ seller }: { seller: ShopSeller }) {
     >
       <MemberAvatar path={seller.avatarPath} name={seller.sellerName} className="size-12" />
       <span className="min-w-0">
-        <span className="block truncate text-sm font-semibold leading-tight">{seller.sellerName}</span>
-        <span className="mt-0.5 block truncate text-xs font-medium text-success">{seller.storeName}</span>
+        <span className="block truncate text-sm font-semibold leading-tight">
+          {seller.sellerName}
+        </span>
+        <span className="mt-0.5 block truncate text-xs font-medium text-success">
+          {seller.storeName}
+        </span>
         <span className="mt-1 block text-[11px] text-muted-foreground">Authorized seller</span>
       </span>
-      <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground" aria-label="View My Shop">
+      <span
+        className="inline-flex size-9 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground"
+        aria-label="View My Shop"
+      >
         <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
       </span>
     </Link>
