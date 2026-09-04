@@ -4881,6 +4881,7 @@ export type Database = {
       }
       retail_orders: {
         Row: {
+          buyer_charge: number | null
           cashback_ledger_id: string | null
           cashback_recipient_id: string | null
           cashback_total: number
@@ -4927,6 +4928,7 @@ export type Database = {
           platform_fee_amount: number | null
           platform_fee_percent: number | null
           refund_ledger_id: string | null
+          self_cashback: number
           self_delivery: boolean
           seller_id: string | null
           seller_total: number | null
@@ -4938,6 +4940,7 @@ export type Database = {
           wallet_account_id: string | null
         }
         Insert: {
+          buyer_charge?: number | null
           cashback_ledger_id?: string | null
           cashback_recipient_id?: string | null
           cashback_total?: number
@@ -4984,6 +4987,7 @@ export type Database = {
           platform_fee_amount?: number | null
           platform_fee_percent?: number | null
           refund_ledger_id?: string | null
+          self_cashback?: number
           self_delivery?: boolean
           seller_id?: string | null
           seller_total?: number | null
@@ -4995,6 +4999,7 @@ export type Database = {
           wallet_account_id?: string | null
         }
         Update: {
+          buyer_charge?: number | null
           cashback_ledger_id?: string | null
           cashback_recipient_id?: string | null
           cashback_total?: number
@@ -5041,6 +5046,7 @@ export type Database = {
           platform_fee_amount?: number | null
           platform_fee_percent?: number | null
           refund_ledger_id?: string | null
+          self_cashback?: number
           self_delivery?: boolean
           seller_id?: string | null
           seller_total?: number | null
@@ -10161,6 +10167,7 @@ export type Database = {
       my_retail_orders: {
         Args: { _ecosystem_id: string }
         Returns: {
+          buyer_charge: number
           chat_thread_id: string
           cod_settled_at: string
           collector_name: string
@@ -10182,6 +10189,7 @@ export type Database = {
           payment_method: string
           platform_fee_amount: number
           platform_fee_percent: number
+          self_cashback: number
           self_delivery: boolean
           seller_name: string
           seller_total: number
@@ -10992,6 +11000,20 @@ export type Database = {
         Args: { _buyer: string; _ecosystem_id: string; _seller: string }
         Returns: string
       }
+      retail_checkout_quote: {
+        Args: {
+          _ecosystem_id: string
+          _items: Json
+          _payment_method?: string
+          _seller_id?: string
+        }
+        Returns: {
+          buyer_charge: number
+          self_cashback: number
+          self_purchase: boolean
+          total: number
+        }[]
+      }
       retail_cod_assign: {
         Args: {
           _collector_id: string
@@ -11076,6 +11098,15 @@ export type Database = {
         Args: { _from: string; _fulfillment: string; _to: string }
         Returns: boolean
       }
+      retail_is_self_purchase: {
+        Args: {
+          _buyer: string
+          _ecosystem_id: string
+          _payment_method: string
+          _seller: string
+        }
+        Returns: boolean
+      }
       retail_line_cashback: {
         Args: {
           _mode: string
@@ -11114,6 +11145,7 @@ export type Database = {
         }[]
       }
       retail_order_chat: { Args: { _order_id: string }; Returns: string }
+      retail_peso: { Args: { _amount: number }; Returns: string }
       retail_place_order: {
         Args: {
           _address?: string

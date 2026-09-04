@@ -462,11 +462,35 @@ function OrderDetail({
               <span className="tabular-nums">{t.delivery > 0 ? peso(t.delivery) : "None"}</span>
             </div>
           ) : null}
+          {t.selfCashback > 0 ? (
+            <>
+              <div className="flex justify-between">
+                <span>Retail price</span>
+                <span className="tabular-nums">{peso(t.total)}</span>
+              </div>
+              <div className="flex justify-between text-success">
+                <span>Your cashback (self purchase)</span>
+                <span className="tabular-nums">− {peso(t.selfCashback)}</span>
+              </div>
+            </>
+          ) : null}
           <div className="flex justify-between text-sm font-semibold text-foreground">
-            <span>{o.payment_method === "cod" ? "Cash to pay" : "Total"}</span>
-            <span className="tabular-nums">{peso(t.total)}</span>
+            <span>
+              {o.payment_method === "cod"
+                ? "Cash to pay"
+                : t.selfCashback > 0
+                  ? "Actual charge"
+                  : "Total"}
+            </span>
+            <span className="tabular-nums">
+              {peso(t.selfCashback > 0 ? t.charged : t.total)}
+            </span>
           </div>
-          <p className="text-[10px]">Prices shown already include everything — no extra fees.</p>
+          <p className="text-[10px]">
+            {t.selfCashback > 0
+              ? "Cashback was applied at checkout — no separate cashback credit is paid for this order."
+              : "Prices shown already include everything — no extra fees."}
+          </p>
         </div>
       </div>
 

@@ -122,6 +122,7 @@ import { Route as UniverseMonitorIndexRouteImport } from './routes/universe.moni
 import { Route as UniverseMonitorShopIdRouteImport } from './routes/universe.monitor.$shopId'
 import { Route as UniverseRewardsIndexRouteImport } from './routes/universe.rewards.index'
 import { Route as UniverseRewardsShopIdRouteImport } from './routes/universe.rewards.$shopId'
+import { Route as UniverseStoreSlugRouteImport } from './routes/universe.store.$slug'
 import { Route as UniverseTagTagRouteImport } from './routes/universe.tag.$tag'
 import { Route as UniverseUHandleRouteImport } from './routes/universe.u.$handle'
 import { Route as ApiPublicPaymentsListenerRouteImport } from './routes/api/public/payments/listener'
@@ -694,6 +695,11 @@ const UniverseRewardsShopIdRoute = UniverseRewardsShopIdRouteImport.update({
   path: '/rewards/$shopId',
   getParentRoute: () => UniverseRoute,
 } as any)
+const UniverseStoreSlugRoute = UniverseStoreSlugRouteImport.update({
+  id: '/store/$slug',
+  path: '/store/$slug',
+  getParentRoute: () => UniverseRoute,
+} as any)
 const UniverseTagTagRoute = UniverseTagTagRouteImport.update({
   id: '/tag/$tag',
   path: '/tag/$tag',
@@ -823,6 +829,7 @@ export interface FileRoutesByFullPath {
   '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
   '/universe/monitor/$shopId': typeof UniverseMonitorShopIdRoute
   '/universe/rewards/$shopId': typeof UniverseRewardsShopIdRoute
+  '/universe/store/$slug': typeof UniverseStoreSlugRoute
   '/universe/tag/$tag': typeof UniverseTagTagRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
   '/universe/monitor/': typeof UniverseMonitorIndexRoute
@@ -936,6 +943,7 @@ export interface FileRoutesByTo {
   '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
   '/universe/monitor/$shopId': typeof UniverseMonitorShopIdRoute
   '/universe/rewards/$shopId': typeof UniverseRewardsShopIdRoute
+  '/universe/store/$slug': typeof UniverseStoreSlugRoute
   '/universe/tag/$tag': typeof UniverseTagTagRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
   '/universe/monitor': typeof UniverseMonitorIndexRoute
@@ -1055,6 +1063,7 @@ export interface FileRoutesById {
   '/print/vouchers/$saleId': typeof PrintVouchersSaleIdRoute
   '/universe/monitor/$shopId': typeof UniverseMonitorShopIdRoute
   '/universe/rewards/$shopId': typeof UniverseRewardsShopIdRoute
+  '/universe/store/$slug': typeof UniverseStoreSlugRoute
   '/universe/tag/$tag': typeof UniverseTagTagRoute
   '/universe/u/$handle': typeof UniverseUHandleRoute
   '/universe/monitor/': typeof UniverseMonitorIndexRoute
@@ -1175,6 +1184,7 @@ export interface FileRouteTypes {
     | '/print/vouchers/$saleId'
     | '/universe/monitor/$shopId'
     | '/universe/rewards/$shopId'
+    | '/universe/store/$slug'
     | '/universe/tag/$tag'
     | '/universe/u/$handle'
     | '/universe/monitor/'
@@ -1288,6 +1298,7 @@ export interface FileRouteTypes {
     | '/print/vouchers/$saleId'
     | '/universe/monitor/$shopId'
     | '/universe/rewards/$shopId'
+    | '/universe/store/$slug'
     | '/universe/tag/$tag'
     | '/universe/u/$handle'
     | '/universe/monitor'
@@ -1406,6 +1417,7 @@ export interface FileRouteTypes {
     | '/print/vouchers/$saleId'
     | '/universe/monitor/$shopId'
     | '/universe/rewards/$shopId'
+    | '/universe/store/$slug'
     | '/universe/tag/$tag'
     | '/universe/u/$handle'
     | '/universe/monitor/'
@@ -2237,6 +2249,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UniverseRewardsShopIdRouteImport
       parentRoute: typeof UniverseRoute
     }
+    '/universe/store/$slug': {
+      id: '/universe/store/$slug'
+      path: '/store/$slug'
+      fullPath: '/universe/store/$slug'
+      preLoaderRoute: typeof UniverseStoreSlugRouteImport
+      parentRoute: typeof UniverseRoute
+    }
     '/universe/tag/$tag': {
       id: '/universe/tag/$tag'
       path: '/tag/$tag'
@@ -2454,6 +2473,7 @@ interface UniverseRouteChildren {
   UniverseIndexRoute: typeof UniverseIndexRoute
   UniverseMonitorShopIdRoute: typeof UniverseMonitorShopIdRoute
   UniverseRewardsShopIdRoute: typeof UniverseRewardsShopIdRoute
+  UniverseStoreSlugRoute: typeof UniverseStoreSlugRoute
   UniverseTagTagRoute: typeof UniverseTagTagRoute
   UniverseUHandleRoute: typeof UniverseUHandleRoute
   UniverseMonitorIndexRoute: typeof UniverseMonitorIndexRoute
@@ -2471,6 +2491,7 @@ const UniverseRouteChildren: UniverseRouteChildren = {
   UniverseIndexRoute: UniverseIndexRoute,
   UniverseMonitorShopIdRoute: UniverseMonitorShopIdRoute,
   UniverseRewardsShopIdRoute: UniverseRewardsShopIdRoute,
+  UniverseStoreSlugRoute: UniverseStoreSlugRoute,
   UniverseTagTagRoute: UniverseTagTagRoute,
   UniverseUHandleRoute: UniverseUHandleRoute,
   UniverseMonitorIndexRoute: UniverseMonitorIndexRoute,

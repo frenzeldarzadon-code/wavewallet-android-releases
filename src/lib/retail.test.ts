@@ -341,7 +341,7 @@ describe("customer order history", () => {
   });
 
   it("shows ₱101 + ₱20 = ₱121 with no second fee line", () => {
-    expect(customerOrderTotals(baseOrder({}))).toEqual({ products: 101, delivery: 20, total: 121 });
+    expect(customerOrderTotals(baseOrder({}))).toMatchObject({ products: 101, delivery: 20, total: 121 });
     // Pickup never charges delivery; coin-paid delivery carries no delivery fee.
     expect(customerOrderTotals(baseOrder({ fulfillment: "pickup" })).total).toBe(101);
     expect(

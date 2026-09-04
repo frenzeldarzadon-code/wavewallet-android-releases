@@ -1,11 +1,23 @@
 /**
- * Retail store for members of one shop.
+ * Retail store of one shop.
  *
  * Visually a sibling of the voucher shop, but for physical goods: many
  * products and quantities go into one cart, and checkout asks for pickup or
  * delivery and the payment method the shop admin enabled. Credits are only
  * held when the order is placed and are returned in full if the admin rejects
  * it, so nothing is spent until an order is confirmed.
+ *
+ * Two entry points share this view:
+ *  - `role`: the legacy shop console (`/app/store`, `/reseller/store`) scoped
+ *    by the active membership;
+ *  - `shop`: the Universe customer portal (`/universe/store/$slug`). Universe
+ *    is the customer portal — no shop membership is needed to buy, and the
+ *    coins come from the buyer's ONE global Universe Wallet.
+ *
+ * Self purchase: when the buyer is the entitled cashback recipient of their
+ * own shop (an authorized reseller buying from their shop), the database nets
+ * the cashback out of the single wallet hold. The checkout shows that server
+ * quote — Retail Price, cashback, Actual Charge — before confirmation.
  */
 import { Banknote, ClipboardList, Loader2, PackageCheck, ShoppingCart } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
@@ -39,15 +51,18 @@ import {
   cartQuote,
   changeQuantity,
   checkoutProblem,
+  fetchCheckoutQuote,
   fetchMyRetailOrders,
   fetchRetailFeePercent,
   fetchRetailProducts,
+  netCharge,
   sellerToCustomer,
   fetchStoreSettings,
   placeRetailOrder,
   rateRetailProduct,
   type Cart,
   type CheckoutDraft,
+  type CheckoutQuote,
   type CodQuote,
   type RetailOrder,
   type RetailProduct,
@@ -80,8 +95,28 @@ import { CustomerOrdersPanel } from "@/components/retail/customer-orders-panel";
 
 const credits = (n: number) => `${n.toLocaleString(undefined, { maximumFractionDigits: 2 })} coins`;
 
-export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
-  const { account, ecosystem, ecosystemDbId } = useSession(role);
+/** A Universe shop opened from the customer portal (no membership required). */
+export interface UniverseStoreTarget {
+  id: string;
+  name: string;
+  description?: string | null;
+  /** Product to open on arrival (deep link from a post or the public storefront). */
+  productId?: string | null;
+}
+
+type RetailStoreViewProps =
+  | { role: "customer" | "reseller"; shop?: undefined }
+  | { role?: undefined; shop: UniverseStoreTarget };
+
+export function RetailStoreView(props: RetailStoreViewProps) {
+  const session = useSession(props.role);
+  const account = session.account;
+  const universeShop = props.shop ?? null;
+  const ecosystemDbId = universeShop ? universeShop.id : session.ecosystemDbId;
+  const shopName = universeShop ? universeShop.name : (session.ecosystem?.name ?? "Retail shop");
+  const shopDescription = universeShop
+    ? (universeShop.description ?? null)
+    : (session.ecosystem?.description ?? null);
   const navigate = useNavigate();
   const [products, setProducts] = useState<RetailProduct[]>([]);
   const [settings, setSettings] = useState<StoreSettings>(DEFAULT_STORE_SETTINGS);
@@ -93,12 +128,14 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [checkout, setCheckout] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
-  const [detailId, setDetailId] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(universeShop?.productId ?? null);
   const [catalogQuery, setCatalogQuery] = useState<CatalogQuery>(DEFAULT_CATALOG_QUERY);
   const [pageLimit, setPageLimit] = useState(CATALOG_PAGE_SIZE);
   const [busy, setBusy] = useState(false);
   const [checkoutRef, setCheckoutRef] = useState<string | null>(null);
   const [codQuote, setCodQuote] = useState<CodQuote | null>(null);
+  // Server checkout quote: retail total / self-purchase cashback / actual charge.
+  const [quoteInfo, setQuoteInfo] = useState<CheckoutQuote | null>(null);
   const [draft, setDraft] = useState<CheckoutDraft>({
     fulfillment: null,
     payment: null,
@@ -131,7 +168,8 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
         fetchRetailProducts(ecosystemDbId),
         fetchStoreSettings(ecosystemDbId),
         fetchMyRetailOrders(ecosystemDbId),
-        fetchCreditBalance(userId, ecosystemDbId),
+        // Universe shops charge the buyer's single global Universe Wallet.
+        fetchCreditBalance(userId, universeShop ? null : ecosystemDbId),
         fetchRetailFeePercent(),
       ]);
       setProducts(p);
@@ -144,7 +182,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
     } finally {
       setLoading(false);
     }
-  }, [ecosystemDbId, userId]);
+  }, [ecosystemDbId, userId, universeShop]);
 
   useEffect(() => {
     void load();
@@ -195,9 +233,29 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
     };
   }, [checkout, ecosystemDbId, settings.codEnabled, quote.sellerTotal, count, total]);
 
+  // Server checkout quote for coin orders: the database decides whether this is
+  // a self purchase and how much cashback is netted out. Never client-computed.
+  const cartKey = JSON.stringify(cart);
+  useEffect(() => {
+    if (!checkout || !ecosystemDbId || count === 0) {
+      setQuoteInfo(null);
+      return;
+    }
+    let live = true;
+    void fetchCheckoutQuote(ecosystemDbId, cart, undefined, "credit")
+      .then((q) => live && setQuoteInfo(q))
+      .catch(() => live && setQuoteInfo(null));
+    return () => {
+      live = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkout, ecosystemDbId, cartKey, count]);
+
   if (!account || !ecosystemDbId) return null;
 
-  const problem = checkoutProblem(draft, total, settings, balance, count, codQuote);
+  const selfPurchase = !!quoteInfo?.selfPurchase && quoteInfo.selfCashback > 0;
+  const charge = netCharge(total, quoteInfo);
+  const problem = checkoutProblem(draft, total, settings, balance, count, codQuote, quoteInfo);
   const codDeliveryFee = codQuote?.deliveryFee ?? settings.deliveryFee;
   const codTotal = codCustomerTotal(total, codDeliveryFee);
 
@@ -213,7 +271,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
       toast.success(`Order ${placed.orderNo} sent for approval`, {
         description:
           draft.payment === "credit"
-            ? "Your coins are held until the shop admin approves or rejects."
+            ? `${peso(charge)} in coins is held until the shop admin approves or rejects.`
             : draft.payment === "cod"
               ? `Pay ${peso(codTotal)} in cash when it arrives. No coins are taken from your wallet.`
               : "Pay in cash — the shop admin confirms the order.",
@@ -240,20 +298,19 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
     );
   }
 
-  const shopName = ecosystem?.name ?? "Retail shop";
   const detailProduct = detailId ? (products.find((p) => p.id === detailId) ?? null) : null;
 
   return (
     <>
       <MarketplaceHeader
         shopName={shopName}
-        description={ecosystem?.description ?? null}
+        description={shopDescription}
         productCount={products.length}
         search={catalogQuery.search}
         onSearch={(search) => setCatalogQuery((q) => ({ ...q, search }))}
         cartCount={count}
         onOpenCart={() => setCartOpen(true)}
-        aside={<EcosystemSwitcher mini />}
+        aside={universeShop ? undefined : <EcosystemSwitcher mini />}
         logoPath={settings.logoPath}
         coverPath={settings.coverPath}
         acceptingOrders={settings.acceptingOrders}
@@ -478,7 +535,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                   className="flex-1"
                   onClick={() => setDraft({ ...draft, payment: "credit" })}
                 >
-                  Shop coins
+                  {universeShop ? "Universe Wallet" : "Shop coins"}
                 </Button>
               ) : null}
               {settings.codEnabled &&
@@ -520,7 +577,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
             ) : (
               <p className="text-[11px] text-muted-foreground">
                 {draft.payment === "credit"
-                  ? `${credits(total)} is held from this shop's wallet and returned in full if the order is rejected.`
+                  ? `${credits(charge)} is held from your ${universeShop ? "Universe Wallet" : "wallet"} and returned in full if the order is rejected.`
                   : "Cash orders stay pending until the shop admin confirms them."}
               </p>
             )}
@@ -539,14 +596,33 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
                 <span>{codQuote ? peso(codDeliveryFee) : "…"}</span>
               </div>
             ) : null}
+            {draft.payment === "credit" && selfPurchase && quoteInfo ? (
+              <>
+                <div className="flex justify-between gap-2 text-xs text-muted-foreground">
+                  <span>Retail price</span>
+                  <span>{peso(quoteInfo.total)}</span>
+                </div>
+                <div
+                  className="flex justify-between gap-2 text-xs text-success"
+                  data-testid="self-cashback-line"
+                >
+                  <span>Your cashback (self purchase)</span>
+                  <span>− {peso(quoteInfo.selfCashback)}</span>
+                </div>
+              </>
+            ) : null}
             <div className="flex items-baseline justify-between gap-2 border-t border-border pt-1.5">
-              <span className="font-semibold">Total to pay</span>
-              <span className="text-lg font-bold tabular-nums">
-                {draft.payment === "cod" ? (codQuote ? peso(codTotal) : "…") : peso(total)}
+              <span className="font-semibold">
+                {draft.payment === "credit" && selfPurchase ? "Actual charge" : "Total to pay"}
+              </span>
+              <span className="text-lg font-bold tabular-nums" data-testid="checkout-charge">
+                {draft.payment === "cod" ? (codQuote ? peso(codTotal) : "…") : peso(charge)}
               </span>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Prices, stock and fees are confirmed by the shop's system when you place the order.
+              {draft.payment === "credit" && selfPurchase
+                ? "Your cashback is applied at checkout, so only the actual charge leaves your wallet. No separate cashback is paid later."
+                : "Prices, stock and fees are confirmed by the shop's system when you place the order."}
             </p>
           </div>
 
@@ -568,7 +644,7 @@ export function RetailStoreView({ role }: { role: "customer" | "reseller" }) {
               )}
               {busy
                 ? "Placing order…"
-                : `Place order · ${draft.payment === "cod" ? (codQuote ? peso(codTotal) : peso(total)) : peso(total)}`}
+                : `Place order · ${draft.payment === "cod" ? (codQuote ? peso(codTotal) : peso(total)) : peso(charge)}`}
             </Button>
           </DialogFooter>
         </DialogContent>

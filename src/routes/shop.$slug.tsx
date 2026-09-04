@@ -359,13 +359,25 @@ function PublicStorefront() {
                 <p className="text-xs text-muted-foreground">
                   {guest
                     ? "Sign in to order from this shop."
-                    : "Retail orders are placed through this shop's ordering flow."}
+                    : "Buy with your Universe Wallet — no shop membership needed."}
                 </p>
                 {guest ? (
                   <Button onClick={() => void navigate({ to: "/" })}>
                     Sign in <ArrowRight className="size-4" />
                   </Button>
-                ) : null}
+                ) : (
+                  <Button
+                    onClick={() =>
+                      void navigate({
+                        to: "/universe/store/$slug",
+                        params: { slug },
+                        search: { product: detail?.id },
+                      })
+                    }
+                  >
+                    Buy now <ArrowRight className="size-4" />
+                  </Button>
+                )}
               </div>
             }
           />
