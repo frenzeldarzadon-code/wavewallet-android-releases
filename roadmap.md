@@ -22,3 +22,9 @@ Shop Access cleanup — Universe is the customer portal (DONE — verified with 
 - [ ] Self-purchase: net wallet charge (price − entitled cashback) in ONE ledger row, audit fields on order
 - [ ] Checkout breakdown UI + history label
 - [ ] Demo verification, tests, typecheck
+
+## Global self-purchase cashback rule (in progress — not published)
+- [ ] Shared self-purchase quote layer (`universe_self_purchase_quote`) used by Retail + Voucher
+- [ ] Voucher purchase nets self-cashback into one wallet debit
+- [ ] Transfers unchanged (zero cashback); NG wallets unchanged
+- [ ] Tests + typecheck + demo verification
