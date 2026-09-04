@@ -373,7 +373,31 @@ function PostCard({
   const [gifting, setGifting] = useState(false);
   const [hideReason, setHideReason] = useState("");
   const [dmOpening, setDmOpening] = useState(false);
+  // "Send coins": the EXISTING global Universe Wallet transfer, pre-addressed
+  // to the poster. No shop, no upline, no cashback — a wallet-to-wallet move.
+  const [coinsOpen, setCoinsOpen] = useState(false);
+  const [coinsBalance, setCoinsBalance] = useState(0);
   const navigate = useNavigate();
+
+  const coinsRecipient: UniverseRecipient | null = post.author_id
+    ? {
+        id: post.author_id,
+        full_name: post.author_name,
+        handle: post.author_handle,
+        avatar_path: post.author_avatar,
+      }
+    : null;
+
+  const loadCoinsBalance = async () => {
+    const view = await fetchWalletView(meId, null).catch(() => null);
+    setCoinsBalance(view?.balance ?? 0);
+  };
+
+  const openSendCoins = async () => {
+    if (!coinsRecipient) return;
+    await loadCoinsBalance();
+    setCoinsOpen(true);
+  };
 
   const thread = threadComments(comments);
   const meta = readPostMeta(post.meta);
