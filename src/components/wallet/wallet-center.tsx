@@ -313,6 +313,7 @@ export function WalletCenter({
           </div>
         )}
       </PageSection>
+      )}
 
       {selected && !universe ? (
         <PageSection
