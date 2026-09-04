@@ -369,8 +369,10 @@ export function WalletCenter({
         </PageSection>
       ) : null}
 
-      {/* 1. Send credits — one area, recipient type tabs. Always visible. */}
-      {selected ? (
+      {/* 1. Send credits — one area, recipient type tabs. Always visible.
+          Shop scope only: coin transfers are a shop-membership concept, so the
+          global Universe wallet never shows a per-shop "send" area. */}
+      {selected && !universe ? (
         <PageSection
           devSlot="wallet-center.send-coins"
           title="Send coins"
