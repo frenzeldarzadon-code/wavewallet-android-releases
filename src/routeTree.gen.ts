@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteImport } from './routes/app'
-import { Route as DevSendSheetRouteImport } from './routes/dev-send-sheet'
 import { Route as DownloadRouteImport } from './routes/download'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as HelpRouteImport } from './routes/help'
@@ -139,11 +138,6 @@ const AdminRoute = AdminRouteImport.update({
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DevSendSheetRoute = DevSendSheetRouteImport.update({
-  id: '/dev-send-sheet',
-  path: '/dev-send-sheet',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DownloadRoute = DownloadRouteImport.update({
@@ -715,7 +709,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
-  '/dev-send-sheet': typeof DevSendSheetRoute
   '/download': typeof DownloadRoute
   '/guide': typeof GuideRoute
   '/help': typeof HelpRoute
@@ -831,7 +824,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dev-send-sheet': typeof DevSendSheetRoute
   '/download': typeof DownloadRoute
   '/guide': typeof GuideRoute
   '/help': typeof HelpRoute
@@ -947,7 +939,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
-  '/dev-send-sheet': typeof DevSendSheetRoute
   '/download': typeof DownloadRoute
   '/guide': typeof GuideRoute
   '/help': typeof HelpRoute
@@ -1067,7 +1058,6 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/app'
-    | '/dev-send-sheet'
     | '/download'
     | '/guide'
     | '/help'
@@ -1183,7 +1173,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/dev-send-sheet'
     | '/download'
     | '/guide'
     | '/help'
@@ -1298,7 +1287,6 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/app'
-    | '/dev-send-sheet'
     | '/download'
     | '/guide'
     | '/help'
@@ -1417,7 +1405,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   AppRoute: typeof AppRouteWithChildren
-  DevSendSheetRoute: typeof DevSendSheetRoute
   DownloadRoute: typeof DownloadRoute
   GuideRoute: typeof GuideRoute
   HelpRoute: typeof HelpRoute
@@ -1466,13 +1453,6 @@ declare module '@tanstack/react-router' {
       path: '/app'
       fullPath: '/app'
       preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dev-send-sheet': {
-      id: '/dev-send-sheet'
-      path: '/dev-send-sheet'
-      fullPath: '/dev-send-sheet'
-      preLoaderRoute: typeof DevSendSheetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/download': {
@@ -2484,7 +2464,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AppRoute: AppRouteWithChildren,
-  DevSendSheetRoute: DevSendSheetRoute,
   DownloadRoute: DownloadRoute,
   GuideRoute: GuideRoute,
   HelpRoute: HelpRoute,
