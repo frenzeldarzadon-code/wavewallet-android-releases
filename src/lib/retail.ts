@@ -568,7 +568,9 @@ export async function fetchStoreSettings(ecosystemId: string): Promise<StoreSett
     coverPath: (row["cover_path"] as string | null) ?? null,
     acceptingOrders: row["accepting_orders"] === undefined ? true : !!row["accepting_orders"],
     pausedNote: (row["paused_note"] as string | null) ?? null,
-    theme: (["fresh", "warm"].includes(String(row["theme"])) ? row["theme"] : "clear") as StoreSettings["theme"],
+    theme: (["fresh", "warm"].includes(String(row["theme"]))
+      ? row["theme"]
+      : "clear") as StoreSettings["theme"],
   };
 }
 
@@ -638,10 +640,18 @@ export async function uploadStorefrontImage(
 }
 
 /** Removes only images inside the active shop's own folder; storage RLS re-checks ownership. */
-export async function removeRetailImages(ecosystemId: string, paths: Array<string | null | undefined>) {
-  const own = [...new Set(paths.filter(
-    (path): path is string => !!path && path.startsWith(`${ecosystemId}/`) && !path.startsWith("catalog/"),
-  ))];
+export async function removeRetailImages(
+  ecosystemId: string,
+  paths: Array<string | null | undefined>,
+) {
+  const own = [
+    ...new Set(
+      paths.filter(
+        (path): path is string =>
+          !!path && path.startsWith(`${ecosystemId}/`) && !path.startsWith("catalog/"),
+      ),
+    ),
+  ];
   if (!own.length) return;
   const { error } = await supabase.storage.from(RETAIL_IMAGE_BUCKET).remove(own);
   if (error) throw new Error(error.message);
@@ -689,7 +699,10 @@ export async function saveShopBranding(
   if (error) throw new Error(error.message);
   const stale = [previous?.logoPath, previous?.coverPath].filter(
     (path): path is string =>
-      !!path && path !== images.logoPath && path !== images.coverPath && path.includes("/storefront/"),
+      !!path &&
+      path !== images.logoPath &&
+      path !== images.coverPath &&
+      path.includes("/storefront/"),
   );
   await removeRetailImages(ecosystemId, stale);
 }
@@ -1038,7 +1051,6 @@ export async function fetchCheckoutQuote(
     selfPurchase: !!row?.["self_purchase"],
   };
 }
-
 
 export async function placeRetailOrder(
   ecosystemId: string,
