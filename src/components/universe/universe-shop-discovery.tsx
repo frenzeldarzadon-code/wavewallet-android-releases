@@ -26,7 +26,11 @@ import { PRESENCE_HEARTBEAT_MS, presenceLabel, presenceTone } from "@/lib/presen
  * Seller cards show public identity only: photo, name and storefront name.
  * Roles, hierarchy, rates and wallets never reach this surface.
  */
-export function UniverseShopDiscovery({ currentUserId }: { currentUserId?: string | null }) {
+export function UniverseShopDiscovery({
+  currentUserId,
+}: {
+  currentUserId?: string | null | undefined;
+}) {
   const [q, setQ] = useState("");
   const [shops, setShops] = useState<DiscoveredShop[]>([]);
   const [loading, setLoading] = useState(true);
