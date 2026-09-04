@@ -8669,6 +8669,103 @@ export type Database = {
           submitted_at: string
         }[]
       }
+      auto_disapprove_cash_in: {
+        Args: {
+          _duplicate_of?: string
+          _id: string
+          _kind?: string
+          _reason: string
+        }
+        Returns: {
+          amount_php: number
+          approval_method: string
+          authentication_checked_at: string | null
+          authentication_reason: string | null
+          auto_match_note: string | null
+          created_at: string
+          credits: number
+          decision_reason: string | null
+          duplicate_of: string | null
+          duplicate_receipt: boolean
+          duplicate_receipt_of: string | null
+          duplicate_reference: boolean
+          ecosystem_id: string | null
+          fee_percent: number
+          fee_php: number
+          funding_account_id: string | null
+          funding_admin_id: string | null
+          funding_ledger_id: string | null
+          funding_source: string
+          id: string
+          ledger_id: string | null
+          listener_event_id: string | null
+          method_details: Json
+          method_id: string | null
+          method_name: string
+          method_type: string
+          net_php: number | null
+          notes: string | null
+          ocr_amount_php: number | null
+          ocr_details: Json | null
+          ocr_paid_at: string | null
+          ocr_reference: string | null
+          ocr_reference_key: string | null
+          ocr_sender_number: string | null
+          ocr_sender_number_key: string | null
+          paid_at: string | null
+          paid_at_edited: boolean
+          payer_number: string | null
+          payer_number_key: string | null
+          payer_reference: string | null
+          payer_reference_key: string | null
+          payment_authenticated: boolean
+          proof_hash: string | null
+          proof_path: string | null
+          provider_id: string | null
+          provider_source: string | null
+          rate_credits: number
+          rate_php: number
+          receipt_amount_php: number | null
+          receipt_check: string
+          receipt_checked_at: string | null
+          receipt_details: Json | null
+          receipt_paid_at: string | null
+          receipt_receiving_account_masked: string | null
+          receipt_receiving_number: string | null
+          receipt_receiving_number_key: string | null
+          receipt_reference: string | null
+          receipt_reference_key: string | null
+          receipt_sender_account_masked: string | null
+          receipt_sender_name: string | null
+          receipt_sender_number: string | null
+          receipt_sender_number_key: string | null
+          receipt_verified: boolean
+          reference: string
+          reference_edited: boolean
+          reference_source: string | null
+          request_key: string | null
+          requester_name: string
+          requester_role: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_name: string | null
+          sender_number: string | null
+          sender_number_key: string | null
+          staged_at: string | null
+          staged_result: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          verified_payment_id: string | null
+          wallet_scope: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cash_in_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       auto_process_membership_application: {
         Args: { _application_id: string }
         Returns: boolean
@@ -8938,6 +9035,15 @@ export type Database = {
       }
       cash_in_auto_status: { Args: never; Returns: Json }
       cash_in_conflict_snapshot: { Args: { _id: string }; Returns: Json }
+      cash_in_credited_duplicate: {
+        Args: {
+          _id: string
+          _proof_hash: string
+          _provider: string
+          _refkey: string
+        }
+        Returns: string
+      }
       cash_in_duplicate_indicator: { Args: { _id: string }; Returns: Json }
       cash_in_established_reference_key: {
         Args: { _row: Database["public"]["Tables"]["cash_in_requests"]["Row"] }

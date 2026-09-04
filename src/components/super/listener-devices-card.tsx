@@ -2,8 +2,9 @@
  * Management for the payment notification listener devices (platform owner
  * and shop admin views share this card).
  *
- * The paired phone forwards payment-app notification text only (GCash today,
- * any app the source rules allow). It is corroborating
+ * A registered phone forwards the text of every supported payment-app
+ * notification it receives (GCash, banks, any app the source rules allow). It
+ * is never tied to one receiving account. A notification is corroborating
  * evidence for a Cash In — never proof of payment on its own, and it can never
  * release credits by itself.
  */
@@ -77,19 +78,13 @@ export function ListenerDevicesCard({
       toast.error("Give the phone a name so you can recognise it later.");
       return;
     }
-    if (!receivingNumber.trim()) {
-      toast.error(
-        "Enter the receiving account number this phone watches, so payments cannot be matched to another account or shop.",
-      );
-      return;
-    }
     setBusy(true);
     try {
       const created = await registerListenerDevice({
         label: label.trim(),
         windowMinutes,
         ecosystemId,
-        receivingNumber: receivingNumber.trim(),
+        receivingNumber: receivingNumber.trim() || null,
       });
       setSecret({ deviceId: created.device_id, secret: created.pairing_secret });
       setLabel("");
@@ -150,15 +145,14 @@ export function ListenerDevicesCard({
       <CardHeader>
         <CardTitle>Payment notification listener</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Pair an Android phone that receives the payment notifications for{" "}
-          {shopScoped
-            ? (ecosystemName ?? "this shop")
-            : "one of the platform receiving accounts (see Platform collection accounts below)"}
-          . Each phone watches ONE receiving number; the app it listens to (GCash, or any app
-          allowed in the notification sources) is set by the phone. It forwards the amount and
-          sender it read, which is matched only against pending Cash Ins paid into that same
-          receiving account. Nothing is approved when the match is unclear, and a notification alone
-          never releases credits.
+          Register an Android phone that receives the payment notifications for{" "}
+          {shopScoped ? (ecosystemName ?? "this shop") : "the platform (Universe Cash In)"}. The
+          phone captures every supported payment app allowed in the notification sources (GCash,
+          bank apps, …) — it is not paired to one receiving account. Each notification is compared
+          with the customer&apos;s uploaded receipt; a Cash In is credited automatically only when
+          at least two independent details agree (amount, reference, sending account, …) and the
+          receipt was never credited before. Anything unclear waits for manual review, and a
+          notification alone never releases credits.
         </p>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -173,7 +167,7 @@ export function ListenerDevicesCard({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="listener-number">Receiving account number</Label>
+            <Label htmlFor="listener-number">Receiving account (optional note)</Label>
             <Input
               id="listener-number"
               inputMode="numeric"
@@ -197,10 +191,11 @@ export function ListenerDevicesCard({
           </Button>
         </div>
         <p className="-mt-3 text-xs text-muted-foreground">
-          The receiving number is what makes matching safe: several shops may legitimately share one
-          e-wallet or bank account, and a payment is only ever matched against Cash Ins for the
-          account and shop it was actually paid to. A receiving account with no paired phone stays
-          on manual review.
+          The receiving account is informational only — it helps you recognise which SIM or account
+          the phone carries. Matching does not depend on it: a shop phone only ever matches that
+          shop&apos;s Cash Ins, and a platform phone matches platform / Universe Cash Ins for any
+          configured collection account. Without any registered phone, Cash Ins stay on manual
+          review.
         </p>
 
         {secret ? (
@@ -250,8 +245,8 @@ export function ListenerDevicesCard({
 
         {view.devices.length === 0 ? (
           <EmptyState
-            title="No listener device paired"
-            description="Until a phone is paired, every Cash In stays in manual review with the amount, receiving account and reference as evidence."
+            title="No listener device registered"
+            description="Until a phone is registered, every Cash In stays in manual review with the receipt (amount, receiving account and reference) as evidence."
           />
         ) : (
           <div className="space-y-3">
@@ -265,8 +260,8 @@ export function ListenerDevicesCard({
                       <p className="text-xs text-muted-foreground">
                         {device.ecosystem_name ?? "Platform-owned"} ·{" "}
                         {device.receiving_number
-                          ? `watches ${device.receiving_number}`
-                          : "no receiving number set"}
+                          ? `on ${device.receiving_number}`
+                          : "all supported payment apps"}
                         {" · "}
                         {listensTo(device.package_name)}
                         {(device.shops_served ?? 0) > 1
@@ -274,12 +269,6 @@ export function ListenerDevicesCard({
                           : ""}{" "}
                         · window {device.match_window_minutes} min
                       </p>
-                      {!device.receiving_number ? (
-                        <p className="text-xs text-destructive">
-                          Set a receiving account number for this phone — until then it can never
-                          confirm a payment.
-                        </p>
-                      ) : null}
                       <p className="mt-1 text-xs text-muted-foreground">
                         {deviceHealthLine(device)}
                       </p>
