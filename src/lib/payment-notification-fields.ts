@@ -60,8 +60,11 @@ const AMOUNT = String.raw`(?:PHP|Php|₱|P)\s?([0-9][0-9,]*(?:\.[0-9]{1,2})?)`;
  */
 export function extractNotificationFields(text: string | null | undefined): NotificationDetails {
   const raw = (text ?? "").replace(/\s+/g, " ").trim();
-  const out: NotificationDetails = { viewpoint: "receiver", raw_text: raw };
-  if (!raw) return out;
+  const out: { [K in keyof NotificationDetails]: NotificationDetails[K] | undefined } & {
+    viewpoint: "receiver";
+    raw_text: string;
+  } = { viewpoint: "receiver", raw_text: raw };
+  if (!raw) return { viewpoint: "receiver", raw_text: raw };
 
   // Amount received: the first money value that follows "received" / "receive",
   // else the first money value at all.
