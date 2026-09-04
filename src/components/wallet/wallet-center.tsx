@@ -36,6 +36,7 @@ import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-
 import { MemberAvatar } from "@/components/member-avatar";
 import { FacebookSupportCard } from "@/components/facebook-support-card";
 import { ShopTransferCard } from "@/components/customer/shop-transfer-card";
+import { UniverseSendCoinsSheet } from "@/components/wallet/universe-send-coins-sheet";
 import { CodAssignmentsCard } from "@/components/retail/cod-assignments-card";
 import { PointsEarningsPanel } from "@/components/customer/points-earnings-panel";
 import { HistoryPage } from "@/components/customer/history-page";
@@ -73,10 +74,10 @@ export interface WalletCenterProps {
    * `universe`: show ONLY the member's single global Universe wallet. There is
    * no per-shop Universe wallet — the one global balance pays for purchases in
    * every Universe shop, membership or not. New Generation shop wallets never
-   * appear here; they stay isolated inside their own shop console. The
-   * shop-scoped "Send coins" area is hidden in this scope because the transfer
-   * RPCs (`wallet_shop_recipients` / `transfer_credits_in_shop`) are shop
-   * membership concepts that do not exist for the global wallet.
+   * appear here; they stay isolated inside their own shop console. Sending
+   * coins in this scope goes member-to-member through `transfer_universe_coins`
+   * (global wallet → global wallet); the shop-scoped RPCs
+   * (`wallet_shop_recipients` / `transfer_credits_in_shop`) are never used here.
    */
   scope?: "shop" | "universe";
 }
@@ -109,6 +110,8 @@ export function WalletCenter({
   const [note, setNote] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Universe scope: member-to-member transfer from the ONE global wallet.
+  const [sendOpen, setSendOpen] = useState(false);
   const online = useOnline();
 
   const loadShops = useCallback(async () => {
@@ -249,6 +252,24 @@ export function WalletCenter({
               tone="brand"
             />
           </div>
+          <Card className="mt-3 shadow-[var(--shadow-card)]">
+            <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">Send Universe coins</p>
+                <p className="text-xs text-muted-foreground">
+                  Send coins to any Universe member by name or @handle — wallet to wallet, no shop,
+                  no membership. Not a purchase; earns no cashback.
+                </p>
+              </div>
+              <Button
+                className="h-11 shrink-0 rounded-xl px-5"
+                disabled={globalBalance === null || !online}
+                onClick={() => setSendOpen(true)}
+              >
+                <Send className="size-4" /> Send coins
+              </Button>
+            </CardContent>
+          </Card>
           <Card className="mt-3 border-dashed shadow-none">
             <CardContent className="flex items-start gap-3 py-3">
               <Info className="mt-0.5 size-4 shrink-0 text-primary" />
@@ -259,6 +280,16 @@ export function WalletCenter({
               </p>
             </CardContent>
           </Card>
+          <UniverseSendCoinsSheet
+            open={sendOpen}
+            onOpenChange={setSendOpen}
+            senderId={account.id}
+            balance={globalBalance ?? 0}
+            onSent={async () => {
+              setHistoryKey((k) => k + 1);
+              await loadShops();
+            }}
+          />
         </PageSection>
       ) : null}
 

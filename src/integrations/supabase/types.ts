@@ -10008,6 +10008,15 @@ export type Database = {
           phone: string
         }[]
       }
+      lookup_universe_recipient: {
+        Args: { _limit?: number; _query: string }
+        Returns: {
+          avatar_path: string
+          full_name: string
+          handle: string
+          id: string
+        }[]
+      }
       mark_notifications_read: { Args: { _ids?: string[] }; Returns: undefined }
       match_listener_event: { Args: { _event: string }; Returns: string }
       member_cashback_rate: {
@@ -13166,6 +13175,15 @@ export type Database = {
         Returns: string
       }
       transfer_reversal_info: { Args: { _tx_id: string }; Returns: Json }
+      transfer_universe_coins: {
+        Args: {
+          _amount: number
+          _client_key?: string
+          _note?: string
+          _recipient_id: string
+        }
+        Returns: string
+      }
       try_auto_approve_cash_in: { Args: { _id: string }; Returns: string }
       unique_handle: {
         Args: { _base: string; _exclude?: string }
