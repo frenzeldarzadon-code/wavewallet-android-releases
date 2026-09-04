@@ -20,6 +20,16 @@ export interface PostFeeling {
   emoji: string;
 }
 
+/**
+ * A recommended shop or product. Only references are stored — names, images
+ * and prices are resolved at render time through `social_link_cards`, so a
+ * card always shows the current storefront data and disappears if the item
+ * stops being publicly visible.
+ */
+export type PostLink =
+  | { kind: "shop"; shop_id: string }
+  | { kind: "product"; shop_id: string; product_id: string; product_kind: "retail" | "voucher" };
+
 export interface PostMeta {
   location?: PostLocation | undefined;
   feeling?: PostFeeling | undefined;
@@ -27,6 +37,40 @@ export interface PostMeta {
   style?: string | undefined;
   /** Author invites readers to continue privately in the existing messenger. */
   dm_invite?: boolean | undefined;
+  /** One linked shop or product (Link / Recommend). */
+  link?: PostLink | undefined;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Accepts only a well-formed link reference; anything else is dropped. */
+export function readPostLink(raw: unknown): PostLink | null {
+  if (!raw || typeof raw !== "object") return null;
+  const l = raw as Record<string, unknown>;
+  if (typeof l["shop_id"] !== "string" || !UUID_RE.test(l["shop_id"])) return null;
+  const shopId = l["shop_id"].toLowerCase();
+  if (l["kind"] === "shop") return { kind: "shop", shop_id: shopId };
+  if (
+    l["kind"] === "product" &&
+    typeof l["product_id"] === "string" &&
+    UUID_RE.test(l["product_id"]) &&
+    (l["product_kind"] === "retail" || l["product_kind"] === "voucher")
+  ) {
+    return {
+      kind: "product",
+      shop_id: shopId,
+      product_id: l["product_id"].toLowerCase(),
+      product_kind: l["product_kind"],
+    };
+  }
+  return null;
+}
+
+/** Stable key so one lookup serves every post linking the same item. */
+export function postLinkKey(link: PostLink): string {
+  return link.kind === "shop"
+    ? `shop:${link.shop_id}`
+    : `product:${link.product_kind}:${link.product_id}`;
 }
 
 export const LOCATION_LABEL_MAX = 80;
