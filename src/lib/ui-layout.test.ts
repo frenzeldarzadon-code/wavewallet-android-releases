@@ -47,7 +47,7 @@ describe("developer mode — role scope", () => {
   it("keeps a configuration per role, never per account", () => {
     const layout = setTabHidden({}, "/app/rewards", true);
     expect(paths("customer", layout)).not.toContain("/app/rewards");
-    expect(paths("reseller", {})).toContain("/reseller/rewards");
+    expect(paths("reseller", {})).toContain("/reseller/shop");
     expect(JSON.stringify(layout)).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}/);
   });
 
