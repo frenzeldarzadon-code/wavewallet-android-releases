@@ -5,6 +5,7 @@ import {
   friendActionKind,
   friendActionLabel,
 } from "@/lib/universe-social";
+import { readFileSync } from "node:fs";
 import {
   NOTIFICATION_CATEGORIES,
   notificationLink,
@@ -48,6 +49,29 @@ describe("friend and follow states", () => {
     expect(friendActionKind("requested")).toBe("none");
     expect(friendActionKind("incoming")).toBe("accept");
     expect(friendActionKind("friends")).toBe("remove");
+  });
+});
+
+describe("community post actions", () => {
+  const menuSource = readFileSync("src/components/social/post-member-menu.tsx", "utf8");
+  const feedSource = readFileSync("src/components/social/social-page.tsx", "utf8");
+
+  it("keeps other-member Follow, Message, and Gift actions visible", () => {
+    expect(menuSource).toContain('following ? "Unfollow" : "Follow"');
+    expect(menuSource).toContain(">Message</span>");
+    expect(menuSource).toContain(">Gift</span>");
+    expect(menuSource).not.toContain("Gift Social Credit");
+    expect(menuSource).not.toContain("Send coins");
+  });
+
+  it("uses the existing direct-thread and Universe wallet flows", () => {
+    expect(feedSource).toContain("await openThread(post.author_id)");
+    expect(feedSource).toContain('<UniverseSendCoinsSheet');
+    expect(feedSource).toContain("initialRecipient={coinsRecipient}");
+  });
+
+  it("keeps Delete post permission-driven", () => {
+    expect(feedSource).toContain("post.can_delete ? { onDelete }");
   });
 });
 
