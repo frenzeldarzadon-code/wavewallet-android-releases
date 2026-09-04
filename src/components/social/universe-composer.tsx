@@ -125,7 +125,9 @@ export function UniverseComposer({
   const [meta, setMeta] = useState<PostMeta>({});
   // Full card of the linked shop/product for the preview; only its reference is posted.
   const [linkCard, setLinkCard] = useState<LinkCard | null>(null);
-  const [audience, setAudience] = useState<PostAudience>("ecosystem");
+  // Universe is the customer portal: a post reaches every Universe member by
+  // default. Restricting to one shop stays an explicit choice.
+  const [audience, setAudience] = useState<PostAudience>("general");
   const [shops, setShops] = useState<TargetShop[]>([]);
   const [shopIds, setShopIds] = useState<string[]>([]);
   const [audienceOpen, setAudienceOpen] = useState(false);

@@ -527,7 +527,8 @@ export async function createPost(input: {
   audience?: PostAudience;
   shopIds?: string[];
 }): Promise<CreatePostResult> {
-  const audience = input.audience ?? "ecosystem";
+  // Universe-wide by default; "ecosystem" (own shop only) must be chosen explicitly.
+  const audience = input.audience ?? "general";
   const { data, error } = await supabase.rpc("social_create_post", {
     _body: input.body.trim(),
     ...(input.imagePath ? { _image_path: input.imagePath } : {}),
