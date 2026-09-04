@@ -5,6 +5,7 @@ import {
   friendActionKind,
   friendActionLabel,
 } from "@/lib/universe-social";
+import { readFileSync } from "node:fs";
 import {
   NOTIFICATION_CATEGORIES,
   notificationLink,
@@ -51,11 +52,34 @@ describe("friend and follow states", () => {
   });
 });
 
+describe("community post actions", () => {
+  const menuSource = readFileSync("src/components/social/post-member-menu.tsx", "utf8");
+  const feedSource = readFileSync("src/components/social/social-page.tsx", "utf8");
+
+  it("keeps other-member Follow, Message, and Gift actions visible", () => {
+    expect(menuSource).toContain('following ? "Unfollow" : "Follow"');
+    expect(menuSource).toContain(">Message</span>");
+    expect(menuSource).toContain(">Gift</span>");
+    expect(menuSource).not.toContain(">Gift Social Credit<");
+    expect(menuSource).not.toContain(">Send coins<");
+  });
+
+  it("uses the existing direct-thread and Universe wallet flows", () => {
+    expect(feedSource).toContain("await openThread(post.author_id)");
+    expect(feedSource).toContain("<UniverseSendCoinsSheet");
+    expect(feedSource).toContain("initialRecipient={coinsRecipient}");
+  });
+
+  it("keeps Delete post permission-driven", () => {
+    expect(feedSource).toContain("post.can_delete ? { onDelete }");
+  });
+});
+
 describe("notifications", () => {
   it("counts only unread rows", () => {
-    expect(
-      unreadCount([notification(), notification({ id: "n2", read_at: "2026-01-01" })]),
-    ).toBe(1);
+    expect(unreadCount([notification(), notification({ id: "n2", read_at: "2026-01-01" })])).toBe(
+      1,
+    );
   });
 
   it("covers every promised category", () => {

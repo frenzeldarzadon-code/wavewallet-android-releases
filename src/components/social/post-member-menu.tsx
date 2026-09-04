@@ -45,7 +45,6 @@ import {
   removeFriend,
   respondFriendRequest,
   sendFriendRequest,
-  setFollowing,
   type Relationship,
 } from "@/lib/universe-social";
 
@@ -62,6 +61,8 @@ export interface PostMemberMenuProps {
   onQuickMessage?: () => void;
   /** Opens the EXISTING global Universe Wallet social-credit/coin gifting flow. */
   onGiftSocialCredit?: () => void;
+  following?: boolean;
+  onToggleFollow?: () => void;
   onReport?: () => void;
   onBlock?: () => void;
   /** Moderation — only passed when the viewer is allowed. */
@@ -77,6 +78,8 @@ export function PostMemberMenu({
   onMessage,
   onQuickMessage,
   onGiftSocialCredit,
+  following = false,
+  onToggleFollow,
   onReport,
   onBlock,
   onHideForShop,
@@ -123,122 +126,124 @@ export function PostMemberMenu({
   if (!hasAnything) return null;
 
   return (
-    <DropdownMenu
-      open={open}
-      onOpenChange={(o) => {
-        setOpen(o);
-        if (o && !rel && canRelate) load();
-      }}
-    >
-      <DropdownMenuTrigger asChild>
+    <div className="flex min-w-0 items-center gap-1">
+      {canRelate && onToggleFollow ? (
+        <Button variant="ghost" size="sm" className="h-10 gap-1.5 px-2" onClick={onToggleFollow}>
+          {following ? <UserCheck className="size-4" /> : <Rss className="size-4" />}
+          <span className="text-xs">{following ? "Unfollow" : "Follow"}</span>
+        </Button>
+      ) : null}
+      {canRelate && onMessage ? (
+        <Button variant="ghost" size="sm" className="h-10 gap-1.5 px-2" onClick={onMessage}>
+          <MessageCircle className="size-4" />
+          <span className="hidden text-xs min-[360px]:inline">Message</span>
+        </Button>
+      ) : null}
+      {canRelate && onGiftSocialCredit ? (
         <Button
           variant="ghost"
           size="sm"
-          className="h-10 w-10 shrink-0 px-0"
-          aria-label={`More actions for ${authorName}'s post`}
+          className="h-10 gap-1.5 px-2"
+          onClick={onGiftSocialCredit}
         >
-          <MoreHorizontal className="size-5" />
+          <Gift className="size-4" />
+          <span className="text-xs">Gift</span>
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60">
-        <DropdownMenuLabel className="truncate text-xs font-medium text-muted-foreground">
-          {isSelf ? "Your post" : authorName}
-        </DropdownMenuLabel>
+      ) : null}
+      <DropdownMenu
+        open={open}
+        onOpenChange={(o) => {
+          setOpen(o);
+          if (o && !rel && canRelate) load();
+        }}
+      >
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-10 w-10 shrink-0 px-0"
+            aria-label={`More actions for ${authorName}'s post`}
+          >
+            <MoreHorizontal className="size-5" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-60">
+          <DropdownMenuLabel className="truncate text-xs font-medium text-muted-foreground">
+            {isSelf ? "Your post" : authorName}
+          </DropdownMenuLabel>
 
-        {authorHandle ? (
-          <DropdownMenuItem asChild>
-            <Link to="/universe/u/$handle" params={{ handle: authorHandle }} className="gap-2">
-              <UserRound className="size-4" /> View profile
-            </Link>
-          </DropdownMenuItem>
-        ) : null}
+          {authorHandle ? (
+            <DropdownMenuItem asChild>
+              <Link to="/universe/u/$handle" params={{ handle: authorHandle }} className="gap-2">
+                <UserRound className="size-4" /> View profile
+              </Link>
+            </DropdownMenuItem>
+          ) : null}
 
-        {canRelate ? (
-          <>
-            {!rel ? (
-              <DropdownMenuItem disabled className="gap-2">
-                <Loader2 className="size-4 animate-spin" /> Checking connection…
-              </DropdownMenuItem>
-            ) : (
-              <>
-                <DropdownMenuItem
-                  disabled={busy}
-                  className="gap-2"
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    void run(
-                      () => setFollowing(authorId!, !rel.following),
-                      rel.following ? "Unfollowed" : "Following",
-                    );
-                  }}
-                >
-                  {rel.following ? <Check className="size-4" /> : <Rss className="size-4" />}
-                  {rel.following ? "Following" : "Follow"}
+          {canRelate ? (
+            <>
+              {!rel ? (
+                <DropdownMenuItem disabled className="gap-2">
+                  <Loader2 className="size-4 animate-spin" /> Checking connection…
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  disabled={busy || kind === "none"}
-                  className="gap-2"
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    if (kind === "send")
-                      return void run(() => sendFriendRequest(authorId!), "Request sent");
-                    if (kind === "accept")
-                      return void run(
-                        () => respondFriendRequest(rel.friend_request_id ?? "", true),
-                        "You are now friends",
-                      );
-                    if (kind === "remove")
-                      return void run(() => removeFriend(authorId!), "Friend removed");
-                  }}
-                >
-                  {friendIcon}
-                  {friendActionLabel(rel.friend_status)}
+              ) : (
+                <>
+                  <DropdownMenuItem
+                    disabled={busy || kind === "none"}
+                    className="gap-2"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      if (!authorId) return;
+                      if (kind === "send")
+                        return void run(() => sendFriendRequest(authorId), "Request sent");
+                      if (kind === "accept")
+                        return void run(
+                          () => respondFriendRequest(rel.friend_request_id ?? "", true),
+                          "You are now friends",
+                        );
+                      if (kind === "remove")
+                        return void run(() => removeFriend(authorId), "Friend removed");
+                    }}
+                  >
+                    {friendIcon}
+                    {friendActionLabel(rel.friend_status)}
+                  </DropdownMenuItem>
+                </>
+              )}
+              <DropdownMenuSeparator />
+              {onQuickMessage ? (
+                <DropdownMenuItem className="gap-2" onSelect={onQuickMessage}>
+                  <Send className="size-4" /> Send a quick message
                 </DropdownMenuItem>
-              </>
-            )}
+              ) : null}
+            </>
+          ) : null}
+
+          {(canRelate && (onReport || onBlock)) || onHideForShop || onDelete ? (
             <DropdownMenuSeparator />
-            {onMessage ? (
-              <DropdownMenuItem className="gap-2" onSelect={onMessage}>
-                <MessageCircle className="size-4" /> Message privately
-              </DropdownMenuItem>
-            ) : null}
-            {onQuickMessage ? (
-              <DropdownMenuItem className="gap-2" onSelect={onQuickMessage}>
-                <Send className="size-4" /> Send a quick message
-              </DropdownMenuItem>
-            ) : null}
-            {onGiftSocialCredit ? (
-              <DropdownMenuItem className="gap-2" onSelect={onGiftSocialCredit}>
-                <Gift className="size-4" /> Gift Social Credit
-              </DropdownMenuItem>
-            ) : null}
-          </>
-        ) : null}
-
-        {(canRelate && (onReport || onBlock)) || onHideForShop || onDelete ? (
-          <DropdownMenuSeparator />
-        ) : null}
-        {canRelate && onReport ? (
-          <DropdownMenuItem className="gap-2" onSelect={onReport}>
-            <Flag className="size-4" /> Report
-          </DropdownMenuItem>
-        ) : null}
-        {canRelate && onBlock ? (
-          <DropdownMenuItem className="gap-2" onSelect={onBlock}>
-            <ShieldOff className="size-4" /> Block {authorName.split(" ")[0]}
-          </DropdownMenuItem>
-        ) : null}
-        {onHideForShop ? (
-          <DropdownMenuItem className="gap-2" onSelect={onHideForShop}>
-            <EyeOff className="size-4" /> Hide from my shop
-          </DropdownMenuItem>
-        ) : null}
-        {onDelete ? (
-          <DropdownMenuItem className="gap-2 text-destructive" onSelect={onDelete}>
-            <Trash2 className="size-4" /> Delete post
-          </DropdownMenuItem>
-        ) : null}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          ) : null}
+          {canRelate && onReport ? (
+            <DropdownMenuItem className="gap-2" onSelect={onReport}>
+              <Flag className="size-4" /> Report
+            </DropdownMenuItem>
+          ) : null}
+          {canRelate && onBlock ? (
+            <DropdownMenuItem className="gap-2" onSelect={onBlock}>
+              <ShieldOff className="size-4" /> Block {authorName.split(" ")[0]}
+            </DropdownMenuItem>
+          ) : null}
+          {onHideForShop ? (
+            <DropdownMenuItem className="gap-2" onSelect={onHideForShop}>
+              <EyeOff className="size-4" /> Hide from my shop
+            </DropdownMenuItem>
+          ) : null}
+          {onDelete ? (
+            <DropdownMenuItem className="gap-2 text-destructive" onSelect={onDelete}>
+              <Trash2 className="size-4" /> Delete post
+            </DropdownMenuItem>
+          ) : null}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

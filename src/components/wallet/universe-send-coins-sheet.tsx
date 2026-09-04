@@ -56,7 +56,7 @@ export function UniverseSendCoinsSheet({
   /** Called after a successful transfer so the parent can refresh balance + history. */
   onSent: () => void | Promise<void>;
   /**
-   * Pre-chosen recipient (e.g. "Send coins" from a community post). Skips the
+   * Pre-chosen recipient (e.g. "Gift" from a community post). Skips the
    * search step; the database still re-checks the recipient on submit.
    */
   initialRecipient?: UniverseRecipient | null;
