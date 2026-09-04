@@ -737,61 +737,6 @@ function PostCard({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={giftOpen} onOpenChange={setGiftOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Gift social credits to {post.author_name}</DialogTitle>
-            <DialogDescription>
-              Only purchased social credits can be gifted. Free promotional credits can never be
-              sent to anyone. This does not touch any shop wallet, cashback or earnings.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-1.5">
-            <Label htmlFor={`gift-${post.id}`}>Amount</Label>
-            <Input
-              id={`gift-${post.id}`}
-              inputMode="numeric"
-              value={giftAmount}
-              onChange={(e) => setGiftAmount(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              You have {state?.purchased_balance ?? 0} purchased social credits.
-            </p>
-            {giftIssue({
-              purchased_balance: state?.purchased_balance ?? 0,
-              amount: Number(giftAmount),
-              isSelf: false,
-            }) ? (
-              <p className="text-xs font-medium text-destructive">
-                {giftIssue({
-                  purchased_balance: state?.purchased_balance ?? 0,
-                  amount: Number(giftAmount),
-                  isSelf: false,
-                })}
-              </p>
-            ) : null}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setGiftOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              disabled={
-                gifting ||
-                giftIssue({
-                  purchased_balance: state?.purchased_balance ?? 0,
-                  amount: Number(giftAmount),
-                  isSelf: false,
-                }) !== null
-              }
-              onClick={() => void sendGift()}
-            >
-              {gifting ? <Loader2 className="size-4 animate-spin" /> : <Gift className="size-4" />}
-              Send gift
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {coinsRecipient ? (
         <UniverseSendCoinsSheet
