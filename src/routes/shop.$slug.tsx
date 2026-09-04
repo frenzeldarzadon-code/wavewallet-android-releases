@@ -89,6 +89,7 @@ function PublicStorefront() {
   const [reviews, setReviews] = useState<PublicReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [detailId, setDetailId] = useState<string | null>(null);
   const [tab, setTab] = useState<string | null>(null);
@@ -102,7 +103,10 @@ function PublicStorefront() {
   const debouncedSearch = useDebouncedValue(search);
 
   useEffect(() => {
-    void supabase.auth.getUser().then(({ data }) => setSignedIn(!!data.user));
+    void supabase.auth.getUser().then(({ data }) => {
+      setSignedIn(!!data.user);
+      setCurrentUserId(data.user?.id ?? null);
+    });
   }, []);
 
   useEffect(() => {
@@ -428,7 +432,7 @@ function PublicStorefront() {
               <ul className="grid gap-2 sm:grid-cols-2">
                 {sellers.map((s) => (
                   <li key={s.sellerId}>
-                    <SellerCard seller={s} />
+                    <SellerCard seller={s} currentUserId={currentUserId} />
                   </li>
                 ))}
               </ul>
@@ -518,7 +522,7 @@ function PublicStorefront() {
               <ul className="grid gap-2">
                 {(sellers ?? []).map((s) => (
                   <li key={s.sellerId} onClick={() => setSellerPickFor(null)}>
-                    <SellerCard seller={s} />
+                    <SellerCard seller={s} currentUserId={currentUserId} />
                   </li>
                 ))}
               </ul>

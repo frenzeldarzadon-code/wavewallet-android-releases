@@ -26,7 +26,11 @@ import { PRESENCE_HEARTBEAT_MS, presenceLabel, presenceTone } from "@/lib/presen
  * Seller cards show public identity only: photo, name and storefront name.
  * Roles, hierarchy, rates and wallets never reach this surface.
  */
-export function UniverseShopDiscovery() {
+export function UniverseShopDiscovery({
+  currentUserId,
+}: {
+  currentUserId?: string | null | undefined;
+}) {
   const [q, setQ] = useState("");
   const [shops, setShops] = useState<DiscoveredShop[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,7 +78,12 @@ export function UniverseShopDiscovery() {
       ) : (
         <div className="space-y-5">
           {shops.map((shop) => (
-            <ShopResult key={shop.id} shop={shop} searching={q.trim().length > 0} />
+            <ShopResult
+              key={shop.id}
+              shop={shop}
+              searching={q.trim().length > 0}
+              currentUserId={currentUserId}
+            />
           ))}
         </div>
       )}
@@ -82,7 +91,15 @@ export function UniverseShopDiscovery() {
   );
 }
 
-function ShopResult({ shop, searching }: { shop: DiscoveredShop; searching: boolean }) {
+function ShopResult({
+  shop,
+  searching,
+  currentUserId,
+}: {
+  shop: DiscoveredShop;
+  searching: boolean;
+  currentUserId?: string | null | undefined;
+}) {
   const [showAll, setShowAll] = useState(false);
   const [sellers, setSellers] = useState<ShopSeller[] | null>(null);
 
@@ -193,7 +210,7 @@ function ShopResult({ shop, searching }: { shop: DiscoveredShop; searching: bool
             <ul className="grid gap-2 sm:grid-cols-2">
               {sellers.map((s) => (
                 <li key={s.sellerId}>
-                  <SellerCard seller={s} />
+                  <SellerCard seller={s} currentUserId={currentUserId} />
                 </li>
               ))}
             </ul>
@@ -225,8 +242,21 @@ export function PresenceBadge({ seller, now }: { seller: ShopSeller; now?: Date 
   );
 }
 
-/** Premium seller card: image → full name → seller shop name → presence → View My Shop →. */
-export function SellerCard({ seller }: { seller: ShopSeller }) {
+/** Action label/appearance for a seller card. Exported for unit testing. */
+export function sellerCardAction(own: boolean): { text: string; icon: boolean } {
+  return own ? { text: "Buy from My Shop", icon: false } : { text: "Buy", icon: true };
+}
+
+/** Premium seller card: image → full name → seller shop name → presence → action. */
+export function SellerCard({
+  seller,
+  currentUserId,
+}: {
+  seller: ShopSeller;
+  currentUserId?: string | null | undefined;
+}) {
+  const own = currentUserId === seller.sellerId;
+  const action = sellerCardAction(own);
   return (
     <Link
       to="/universe/u/$handle"
@@ -254,10 +284,14 @@ export function SellerCard({ seller }: { seller: ShopSeller }) {
         </span>
       </span>
       <span
-        className="inline-flex size-9 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground"
-        aria-label="View My Shop"
+        className={`inline-flex shrink-0 items-center justify-center rounded-md bg-primary px-2 py-1 text-[11px] font-medium leading-tight text-primary-foreground ${own ? "min-w-[5.5rem]" : "size-9"}`}
+        aria-label={action.text}
       >
-        <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+        {action.icon ? (
+          <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+        ) : (
+          action.text
+        )}
       </span>
     </Link>
   );
