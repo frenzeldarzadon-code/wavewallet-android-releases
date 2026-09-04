@@ -362,7 +362,10 @@ export function UniverseShell({
               ) : null}
             </div>
           </div>
-          <div className="pt-3 lg:px-0">{children}</div>
+          <div className="pt-3 lg:px-0">
+            {pathname.startsWith("/universe/notifications") ? null : <PushNudge />}
+            {children}
+          </div>
         </main>
 
         {/* Right rail — primary destinations */}
