@@ -361,13 +361,11 @@ function PostCard({
   const [dm, setDm] = useState("");
   const [dmOpen, setDmOpen] = useState(false);
   const [hideOpen, setHideOpen] = useState(false);
-  const [giftOpen, setGiftOpen] = useState(false);
-  const [giftAmount, setGiftAmount] = useState("5");
-  const [gifting, setGifting] = useState(false);
   const [hideReason, setHideReason] = useState("");
   const [dmOpening, setDmOpening] = useState(false);
-  // "Send coins": the EXISTING global Universe Wallet transfer, pre-addressed
-  // to the poster. No shop, no upline, no cashback — a wallet-to-wallet move.
+  // "Gift Social Credit": the EXISTING global Universe Wallet coin transfer,
+  // pre-addressed to the poster. No shop, no upline, no cashback — a
+  // wallet-to-wallet move.
   const [coinsOpen, setCoinsOpen] = useState(false);
   const [coinsBalance, setCoinsBalance] = useState(0);
   const navigate = useNavigate();
