@@ -176,6 +176,8 @@ export function UniverseShell({
   const friendRequests = usePendingFriendRequests();
   const account = session.account;
   const identity = useIdentity(account?.id ?? null);
+  // Keeps this browser's push subscription fresh; never asks for permission.
+  useRefreshPushRegistration(account?.id ?? null);
   // Universe IS the customer portal. A Shop Dashboard is offered only for
   // memberships that carry a management role — decided from the member's real
   // memberships, never from the currently active shop alone.
