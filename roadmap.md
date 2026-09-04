@@ -13,3 +13,5 @@
 - [x] Payment listener redesign: listener devices capture ALL supported payment notifications (no per-account pairing); receipt vs notification ≥2 independent matches; duplicate-credited receipt → disapproved; blurry/mismatch → manual review; Super Admin UI wording; tests
 
 - [x] Cash In sender/receiver semantics + full receipt/notification extraction: receiver-side notifications without a payer number no longer block approval; payer-name identity signal now links events; semantic SQL test passes (rolled back).
+
+- [ ] Listener source detection + Super Admin source blocklist (read all notifications, source-level block/unblock, audit)
