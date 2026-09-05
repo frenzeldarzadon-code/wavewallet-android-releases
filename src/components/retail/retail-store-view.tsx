@@ -104,6 +104,8 @@ export interface UniverseStoreTarget {
   description?: string | null;
   /** Product to open on arrival (deep link from a post or the public storefront). */
   productId?: string | null;
+  /** Authorized seller the store was opened through (profile storefront); server re-checks. */
+  sellerId?: string | null;
 }
 
 type RetailStoreViewProps =
@@ -114,6 +116,7 @@ export function RetailStoreView(props: RetailStoreViewProps) {
   const session = useSession(props.role);
   const account = session.account;
   const universeShop = props.shop ?? null;
+  const sellerId = universeShop?.sellerId ?? null;
   const ecosystemDbId = universeShop ? universeShop.id : session.ecosystemDbId;
   const shopName = universeShop ? universeShop.name : (session.ecosystem?.name ?? "Retail shop");
   const shopDescription = universeShop
@@ -256,14 +259,14 @@ export function RetailStoreView(props: RetailStoreViewProps) {
       return;
     }
     let live = true;
-    void fetchCheckoutQuote(ecosystemDbId, cart, undefined, "credit")
+    void fetchCheckoutQuote(ecosystemDbId, cart, sellerId, "credit")
       .then((q) => live && setQuoteInfo(q))
       .catch(() => live && setQuoteInfo(null));
     return () => {
       live = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [checkout, ecosystemDbId, cartKey, count]);
+  }, [checkout, ecosystemDbId, cartKey, count, sellerId]);
 
   if (!account || !ecosystemDbId) return null;
 
@@ -280,7 +283,7 @@ export function RetailStoreView(props: RetailStoreViewProps) {
       // One ref per checkout attempt: a double tap or network retry replays the same order.
       const ref = checkoutRef ?? crypto.randomUUID();
       setCheckoutRef(ref);
-      const placed = await placeRetailOrder(ecosystemDbId, cart, draft, undefined, ref);
+      const placed = await placeRetailOrder(ecosystemDbId, cart, draft, sellerId, ref);
       setCheckoutRef(null);
       toast.success(`Order ${placed.orderNo} sent for approval`, {
         description:

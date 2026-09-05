@@ -13,12 +13,18 @@ import { useEffect, useState } from "react";
 import { RetailStoreView } from "@/components/retail/retail-store-view";
 import { EmptyState } from "@/components/ui-kit";
 import { UniverseShell } from "@/components/universe/universe-shell";
+import { fetchSellerStorefront } from "@/lib/seller-storefront";
 import { fetchPublicShop, type PublicShop } from "@/lib/shop-public";
 
 export const Route = createFileRoute("/universe/store/$slug")({
-  validateSearch: (search: Record<string, unknown>): { product?: string | undefined } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { product?: string | undefined; seller?: string | undefined } => ({
     product:
       typeof search["product"] === "string" && search["product"] ? search["product"] : undefined,
+    // Authorized seller (@handle) this store was opened through; the database
+    // re-checks the authorization before attributing any order.
+    seller: typeof search["seller"] === "string" && search["seller"] ? search["seller"] : undefined,
   }),
   head: () => ({
     meta: [
@@ -42,8 +48,11 @@ export const Route = createFileRoute("/universe/store/$slug")({
 
 function UniverseStore() {
   const { slug } = useParams({ from: "/universe/store/$slug" });
-  const { product } = Route.useSearch();
+  const { product, seller } = Route.useSearch();
   const [shop, setShop] = useState<PublicShop | null | undefined>(undefined);
+  // Seller attribution: resolved from the seller's own public storefront, and
+  // only kept when this shop is one of their authorized Retail shops.
+  const [sellerId, setSellerId] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -55,6 +64,21 @@ function UniverseStore() {
       alive = false;
     };
   }, [slug]);
+
+  useEffect(() => {
+    let alive = true;
+    setSellerId(null);
+    if (!seller) return;
+    fetchSellerStorefront(seller)
+      .then((s) => {
+        if (!alive || !s) return;
+        if (s.retailShops.some((r) => r.slug === slug)) setSellerId(s.sellerId);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [seller, slug]);
 
   const open = !!shop && shop.retail_enabled && shop.storefront_public;
 
@@ -83,6 +107,7 @@ function UniverseStore() {
               name: shop.name,
               description: shop.description,
               productId: product ?? null,
+              sellerId,
             }}
           />
         )}
