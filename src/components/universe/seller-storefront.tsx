@@ -60,9 +60,13 @@ export function SellerStorefrontSection({
       <div className="h-44 animate-pulse rounded-lg border border-border bg-card" />
     </div>
   );
-  if (!store || store.shops.length === 0) return null;
+  if (!hasStorefront(store)) return null;
 
   const isSelf = viewerId !== null && viewerId === store.sellerId;
+  const kinds = [
+    store.shops.length > 0 ? "Vouchers" : null,
+    store.retailShops.length > 0 ? "Retail goods" : null,
+  ].filter(Boolean);
 
   return (
     <section className="space-y-4">
@@ -71,7 +75,7 @@ export function SellerStorefrontSection({
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-xs font-semibold text-success"><ShieldCheck className="size-3.5" /> Authorized Universe seller</p>
           <h2 className="mt-1 truncate text-xl font-bold">{store.storeName}</h2>
-          <p className="text-sm text-muted-foreground">Vouchers sold by {store.sellerName}</p>
+          <p className="text-sm text-muted-foreground">{kinds.join(" and ")} sold by {store.sellerName}</p>
         </div>
         {viewerId && balance !== null ? (
           <Link to="/universe/wallet" className="shrink-0 rounded-md bg-success-soft px-3 py-2 text-right">
@@ -81,6 +85,43 @@ export function SellerStorefrontSection({
         ) : null}
         </div>
       </div>
+      {/* Retail shops keep their own cart/checkout flow on the shop's retail store. */}
+      {store.retailShops.map((shop) => (
+        <Card key={`retail-${shop.id}`} className="overflow-hidden rounded-lg shadow-[var(--shadow-card)]">
+          <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 border-b border-border bg-success-soft/50 px-4 py-3">
+            <span className="flex size-9 items-center justify-center rounded-md bg-success text-success-foreground"><Package className="size-4" /></span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold">{shop.name}</p>
+              <p className="text-xs text-muted-foreground">Retail store · add products to your cart and check out</p>
+            </div>
+          </div>
+          <CardContent className="py-4">
+            <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
+              <RetailImage path={shop.logoPath} alt={shop.name} className="size-16 rounded-lg" />
+              <div className="min-w-0">
+                {shop.description ? (
+                  <p className="line-clamp-2 text-sm text-muted-foreground">{shop.description}</p>
+                ) : null}
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {shop.productCount > 0
+                    ? `${shop.productCount} product${shop.productCount === 1 ? "" : "s"} on sale`
+                    : "No products published yet"}
+                  {!shop.acceptingOrders ? " · not taking orders right now" : ""}
+                </p>
+              </div>
+            </div>
+            <Button asChild size="sm" className="mt-3 w-full">
+              <Link
+                to="/universe/store/$slug"
+                params={{ slug: shop.slug }}
+                search={isSelf ? {} : { seller: store.sellerHandle }}
+              >
+                Open retail store <ArrowRight className="size-3.5" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ))}
       {store.shops.map((shop) => (
         <Card key={shop.id} className="overflow-hidden rounded-lg shadow-[var(--shadow-card)]">
           <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 border-b border-border bg-brand-soft/40 px-4 py-3">
