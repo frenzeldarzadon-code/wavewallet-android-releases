@@ -113,7 +113,11 @@ export async function pushSupport(): Promise<PushSupport> {
   const standalone =
     window.matchMedia?.("(display-mode: standalone)").matches ||
     (navigator as unknown as { standalone?: boolean }).standalone === true;
-  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+  if (
+    !("serviceWorker" in navigator) ||
+    !("PushManager" in window) ||
+    !("Notification" in window)
+  ) {
     return isIOS && !standalone ? "needs-install" : "unsupported";
   }
   if (isIOS && !standalone) return "needs-install";
@@ -142,10 +146,15 @@ async function browserSubscription(
   }
   if (!sub) return null;
   const json = sub.toJSON();
+  // Only keep keys the sender can actually decode; otherwise record the
+  // device without a push subscription rather than poisoning the queue.
+  const ok = (v: string | undefined) => !!v && /^[A-Za-z0-9_-]{16,}$/.test(v);
+  const p256dh = json.keys?.["p256dh"];
+  const auth = json.keys?.["auth"];
   return {
     endpoint: sub.endpoint,
-    p256dh: json.keys?.["p256dh"] ?? null,
-    auth: json.keys?.["auth"] ?? null,
+    p256dh: ok(p256dh) && ok(auth) ? p256dh! : null,
+    auth: ok(p256dh) && ok(auth) ? auth! : null,
   };
 }
 

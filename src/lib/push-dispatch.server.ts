@@ -9,7 +9,7 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { pushText } from "@/lib/push-text";
-import { sendWebPush, type VapidConfig } from "@/lib/web-push.server";
+import { base64UrlDecode, sendWebPush, type VapidConfig } from "@/lib/web-push.server";
 
 interface ClaimedDelivery {
   delivery_id: string;
@@ -62,6 +62,16 @@ async function finish(
   if (error) console.error("finish_push_delivery failed", error.message);
 }
 
+/** True when a stored subscription key is not valid base64url of a plausible length. */
+function validKey(value: string, minBytes: number): boolean {
+  if (!/^[A-Za-z0-9_-]+$/.test(value)) return false;
+  try {
+    return base64UrlDecode(value).length >= minBytes;
+  } catch {
+    return false;
+  }
+}
+
 async function sendOne(
   admin: SupabaseClient,
   vapid: VapidConfig,
@@ -72,6 +82,13 @@ async function sendOne(
     await finish(admin, d.delivery_id, "skipped", "no_push_subscription");
     return;
   }
+  // A malformed stored key can never be encrypted for; retire the device so it
+  // stops failing every run instead of blocking everyone else's batch.
+  if (!validKey(d.p256dh, 65) || !validKey(d.auth_secret, 16)) {
+    summary.expired += 1;
+    await finish(admin, d.delivery_id, "failed", "invalid_subscription_keys", true);
+    return;
+  }
   const text = pushText(d);
   const payload = JSON.stringify({
     id: d.notification_id,
@@ -80,12 +97,22 @@ async function sendOne(
     tag: text.tag,
     link: text.link,
   });
-  const result = await sendWebPush(
-    { endpoint: d.endpoint, p256dh: d.p256dh, auth: d.auth_secret },
-    vapid,
-    payload,
-    { topic: text.tag, urgency: d.category === "financial" ? "high" : "normal" },
-  );
+  let result: Awaited<ReturnType<typeof sendWebPush>>;
+  try {
+    result = await sendWebPush(
+      { endpoint: d.endpoint, p256dh: d.p256dh, auth: d.auth_secret },
+      vapid,
+      payload,
+      { topic: text.tag, urgency: d.category === "financial" ? "high" : "normal" },
+    );
+  } catch (e) {
+    // One device's failure must never abort the batch; record it and move on.
+    const reason = e instanceof Error ? e.message : String(e);
+    console.error("push send threw", d.delivery_id, reason);
+    summary.failed += 1;
+    await finish(admin, d.delivery_id, "failed", reason.slice(0, 200));
+    return;
+  }
   switch (result.outcome) {
     case "sent":
       summary.sent += 1;
