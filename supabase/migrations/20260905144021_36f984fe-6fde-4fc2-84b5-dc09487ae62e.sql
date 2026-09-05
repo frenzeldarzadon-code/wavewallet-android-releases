@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.seller_storefront_retail(text) FROM anon;
