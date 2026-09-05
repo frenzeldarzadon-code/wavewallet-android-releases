@@ -116,6 +116,7 @@ export function RetailStoreView(props: RetailStoreViewProps) {
   const session = useSession(props.role);
   const account = session.account;
   const universeShop = props.shop ?? null;
+  const sellerId = universeShop?.sellerId ?? null;
   const ecosystemDbId = universeShop ? universeShop.id : session.ecosystemDbId;
   const shopName = universeShop ? universeShop.name : (session.ecosystem?.name ?? "Retail shop");
   const shopDescription = universeShop
@@ -258,7 +259,7 @@ export function RetailStoreView(props: RetailStoreViewProps) {
       return;
     }
     let live = true;
-    void fetchCheckoutQuote(ecosystemDbId, cart, undefined, "credit")
+    void fetchCheckoutQuote(ecosystemDbId, cart, sellerId, "credit")
       .then((q) => live && setQuoteInfo(q))
       .catch(() => live && setQuoteInfo(null));
     return () => {
@@ -282,7 +283,7 @@ export function RetailStoreView(props: RetailStoreViewProps) {
       // One ref per checkout attempt: a double tap or network retry replays the same order.
       const ref = checkoutRef ?? crypto.randomUUID();
       setCheckoutRef(ref);
-      const placed = await placeRetailOrder(ecosystemDbId, cart, draft, undefined, ref);
+      const placed = await placeRetailOrder(ecosystemDbId, cart, draft, sellerId, ref);
       setCheckoutRef(null);
       toast.success(`Order ${placed.orderNo} sent for approval`, {
         description:
