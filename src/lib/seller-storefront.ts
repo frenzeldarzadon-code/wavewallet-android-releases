@@ -33,6 +33,21 @@ export interface StorefrontShop {
   products: StorefrontProduct[];
 }
 
+/**
+ * A Universe RETAIL shop the seller is authorized for. Retail goods use the
+ * existing cart/checkout flow on the shop's retail store page, so the profile
+ * only shows the shop card and links there (with this seller attributed).
+ */
+export interface RetailStorefrontShop {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  logoPath: string | null;
+  productCount: number;
+  acceptingOrders: boolean;
+}
+
 export interface SellerStorefront {
   sellerId: string;
   sellerName: string;
@@ -40,7 +55,10 @@ export interface SellerStorefront {
   avatarPath: string | null;
   /** Customer-facing storefront name; defaults to "<Name>'s Store" until customised. */
   storeName: string;
+  /** Universe Voucher shops (immediate purchase). */
   shops: StorefrontShop[];
+  /** Universe Retail shops (cart/checkout on the shop's retail store). */
+  retailShops: RetailStorefrontShop[];
 }
 
 /** Default storefront name used when a seller has not customised theirs. */
@@ -48,12 +66,15 @@ export function defaultStoreName(fullName: string): string {
   return `${fullName.trim()}'s Store`;
 }
 
-type Row = {
+type SellerIdentity = {
   seller_id: string;
   seller_name: string;
   seller_handle: string;
   avatar_path: string | null;
   store_name?: string | null;
+};
+
+type Row = SellerIdentity & {
   shop_id: string;
   shop_name: string;
   shop_slug: string;
@@ -66,9 +87,34 @@ type Row = {
   credits_per_point?: number | null;
 };
 
-/** Pure: groups the flat database rows by shop, keeping the database order. */
-export function groupStorefrontRows(rows: Row[]): SellerStorefront | null {
-  const first = rows[0];
+type RetailRow = SellerIdentity & {
+  shop_id: string;
+  shop_name: string;
+  shop_slug: string;
+  shop_description: string | null;
+  logo_path: string | null;
+  product_count: number | null;
+  accepting_orders: boolean | null;
+};
+
+function identityOf(first: SellerIdentity): Omit<SellerStorefront, "shops" | "retailShops"> {
+  return {
+    sellerId: first.seller_id,
+    sellerName: first.seller_name,
+    sellerHandle: first.seller_handle,
+    avatarPath: first.avatar_path,
+    storeName: first.store_name?.trim() || defaultStoreName(first.seller_name),
+  };
+}
+
+/**
+ * Pure: groups the flat voucher rows by shop (database order) and attaches the
+ * seller's Retail shops. A shop never appears twice: voucher rows and retail
+ * rows come from mutually exclusive store flags, and a legacy "mixed" shop is
+ * kept once in each list only because it genuinely offers both kinds.
+ */
+export function groupStorefrontRows(rows: Row[], retailRows: RetailRow[] = []): SellerStorefront | null {
+  const first: SellerIdentity | undefined = rows[0] ?? retailRows[0];
   if (!first) return null;
   const shops = new Map<string, StorefrontShop>();
   for (const r of rows) {
@@ -93,21 +139,43 @@ export function groupStorefrontRows(rows: Row[]): SellerStorefront | null {
       imagePath: null,
     });
   }
+  const retail = new Map<string, RetailStorefrontShop>();
+  for (const r of retailRows) {
+    if (retail.has(r.shop_id)) continue;
+    retail.set(r.shop_id, {
+      id: r.shop_id,
+      name: r.shop_name,
+      slug: r.shop_slug,
+      description: r.shop_description,
+      logoPath: r.logo_path,
+      productCount: Number(r.product_count ?? 0),
+      acceptingOrders: r.accepting_orders !== false,
+    });
+  }
   return {
-    sellerId: first.seller_id,
-    sellerName: first.seller_name,
-    sellerHandle: first.seller_handle,
-    avatarPath: first.avatar_path,
-    storeName: first.store_name?.trim() || defaultStoreName(first.seller_name),
+    ...identityOf(first),
     shops: [...shops.values()],
+    retailShops: [...retail.values()],
   };
 }
 
-/** Public storefront of one seller (by @handle). Null when they sell nothing. */
+/** True when the seller has at least one shop of any kind to show. */
+export function hasStorefront(store: SellerStorefront | null): store is SellerStorefront {
+  return !!store && (store.shops.length > 0 || store.retailShops.length > 0);
+}
+
+/**
+ * Public storefront of one seller (by @handle): every Universe shop — Voucher
+ * and Retail — they are an authorized seller of. Null when they sell nothing.
+ */
 export async function fetchSellerStorefront(handle: string): Promise<SellerStorefront | null> {
-  const { data, error } = await supabase.rpc("seller_storefront", { _handle: handle });
-  if (error) throw new Error(error.message);
-  return groupStorefrontRows((data ?? []) as Row[]);
+  const [voucher, retail] = await Promise.all([
+    supabase.rpc("seller_storefront", { _handle: handle }),
+    supabase.rpc("seller_storefront_retail", { _handle: handle }),
+  ]);
+  if (voucher.error) throw new Error(voucher.error.message);
+  if (retail.error) throw new Error(retail.error.message);
+  return groupStorefrontRows((voucher.data ?? []) as Row[], (retail.data ?? []) as RetailRow[]);
 }
 
 export interface ShopSeller extends PresenceInfo {
