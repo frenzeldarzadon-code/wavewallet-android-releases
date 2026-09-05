@@ -43,7 +43,7 @@ const SECTIONS: Array<{ id: FeedSection; label: string; icon: typeof Flame }> = 
   { id: "new", label: "New", icon: Package },
 ];
 
-export function UniverseProductFeed({ currentUserId }: { currentUserId?: string | null }) {
+export function UniverseProductFeed({ currentUserId }: { currentUserId?: string | null | undefined }) {
   const [section, setSection] = useState<FeedSection>("all");
   const [category, setCategory] = useState<string | null>(null);
   const [categories, setCategories] = useState<Array<{ category: string; count: number }>>([]);
