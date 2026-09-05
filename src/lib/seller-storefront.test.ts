@@ -44,7 +44,7 @@ describe("groupStorefrontRows", () => {
     ]);
   });
 
-  const retailRow = (over: Partial<Parameters<typeof groupStorefrontRows>[1][number]> = {}) => ({
+  const retailRow = (over: Partial<NonNullable<Parameters<typeof groupStorefrontRows>[1]>[number]> = {}) => ({
     seller_id: "s1",
     seller_name: "Ana",
     seller_handle: "ana",
