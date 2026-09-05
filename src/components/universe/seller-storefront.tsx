@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Gift, ShieldCheck, ShoppingBag } from "lucide-react";
+import { ArrowRight, Gift, Package, ShieldCheck, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui-kit";
+import { RetailImage } from "@/components/retail/retail-image";
 import { peso } from "@/lib/wavewallet";
 import { fetchCreditBalance } from "@/lib/wallet";
-import { fetchSellerStorefront, type SellerStorefront } from "@/lib/seller-storefront";
+import {
+  fetchSellerStorefront,
+  hasStorefront,
+  type SellerStorefront,
+} from "@/lib/seller-storefront";
 import { VoucherPurchaseDialogs, type PurchaseTarget } from "./voucher-purchase-dialogs";
 import { VoucherArtwork } from "./voucher-artwork";
 
