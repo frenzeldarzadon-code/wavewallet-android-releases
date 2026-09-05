@@ -104,6 +104,8 @@ export interface UniverseStoreTarget {
   description?: string | null;
   /** Product to open on arrival (deep link from a post or the public storefront). */
   productId?: string | null;
+  /** Authorized seller the store was opened through (profile storefront); server re-checks. */
+  sellerId?: string | null;
 }
 
 type RetailStoreViewProps =
