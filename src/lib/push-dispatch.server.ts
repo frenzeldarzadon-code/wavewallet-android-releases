@@ -9,7 +9,7 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { pushText } from "@/lib/push-text";
-import { sendWebPush, type VapidConfig } from "@/lib/web-push.server";
+import { base64UrlDecode, sendWebPush, type VapidConfig } from "@/lib/web-push.server";
 
 interface ClaimedDelivery {
   delivery_id: string;
