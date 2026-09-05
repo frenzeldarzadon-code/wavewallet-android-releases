@@ -12004,6 +12004,19 @@ export type Database = {
           store_name: string
         }[]
       }
+      seller_storefront_retail: {
+        Args: { _handle: string }
+        Returns: {
+          accepting_orders: boolean
+          logo_path: string
+          product_count: number
+          seller_id: string
+          shop_description: string
+          shop_id: string
+          shop_name: string
+          shop_slug: string
+        }[]
+      }
       send_friend_request: { Args: { _user: string }; Returns: string }
       send_test_notification: { Args: never; Returns: string }
       set_admin_sale_commission: {
