@@ -12008,13 +12008,17 @@ export type Database = {
         Args: { _handle: string }
         Returns: {
           accepting_orders: boolean
+          avatar_path: string
           logo_path: string
           product_count: number
+          seller_handle: string
           seller_id: string
+          seller_name: string
           shop_description: string
           shop_id: string
           shop_name: string
           shop_slug: string
+          store_name: string
         }[]
       }
       send_friend_request: { Args: { _user: string }; Returns: string }
