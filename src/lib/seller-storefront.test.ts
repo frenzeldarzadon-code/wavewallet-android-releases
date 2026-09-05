@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultStoreName, groupShopSearchRows, groupStorefrontRows } from "./seller-storefront";
+import { defaultStoreName, groupShopSearchRows, groupStorefrontRows, hasStorefront } from "./seller-storefront";
 
 const row = (over: Partial<Parameters<typeof groupStorefrontRows>[0][number]> = {}) => ({
   seller_id: "s1",
@@ -40,7 +40,42 @@ describe("groupStorefrontRows", () => {
       "avatarPath",
       "storeName",
       "shops",
+      "retailShops",
     ]);
+  });
+
+  const retailRow = (over: Partial<Parameters<typeof groupStorefrontRows>[1][number]> = {}) => ({
+    seller_id: "s1",
+    seller_name: "Ana",
+    seller_handle: "ana",
+    avatar_path: null,
+    shop_id: "shop-r",
+    shop_name: "Ana Sari-sari",
+    shop_slug: "ana-sari",
+    shop_description: "Snacks",
+    logo_path: null,
+    product_count: 3,
+    accepting_orders: true,
+    ...over,
+  });
+
+  it("lists a Retail-only seller with a proper identity header", () => {
+    const out = groupStorefrontRows([], [retailRow()]);
+    expect(out).not.toBeNull();
+    expect(out!.storeName).toBe("Ana's Store");
+    expect(out!.shops).toEqual([]);
+    expect(out!.retailShops).toEqual([
+      { id: "shop-r", name: "Ana Sari-sari", slug: "ana-sari", description: "Snacks", logoPath: null, productCount: 3, acceptingOrders: true },
+    ]);
+    expect(hasStorefront(out)).toBe(true);
+  });
+
+  it("shows Voucher and Retail shops side by side without duplicating a shop", () => {
+    const out = groupStorefrontRows([row()], [retailRow(), retailRow({ product_count: 9 })]);
+    expect(out!.shops.map((s) => s.id)).toEqual(["shop-a"]);
+    expect(out!.retailShops.map((s) => s.id)).toEqual(["shop-r"]);
+    expect(out!.retailShops[0]!.productCount).toBe(3);
+    expect(hasStorefront(groupStorefrontRows([], []))).toBe(false);
   });
 
   it("falls back to a default storefront name and honours a customised one", () => {
