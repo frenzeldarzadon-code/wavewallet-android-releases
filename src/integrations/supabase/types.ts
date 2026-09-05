@@ -11397,6 +11397,7 @@ export type Database = {
         Args: { _from: string; _fulfillment: string; _to: string }
         Returns: boolean
       }
+      retail_image_visible: { Args: { _name: string }; Returns: boolean }
       retail_is_self_purchase: {
         Args: {
           _buyer: string
