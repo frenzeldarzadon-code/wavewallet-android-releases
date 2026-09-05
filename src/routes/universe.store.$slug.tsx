@@ -16,9 +16,14 @@ import { UniverseShell } from "@/components/universe/universe-shell";
 import { fetchPublicShop, type PublicShop } from "@/lib/shop-public";
 
 export const Route = createFileRoute("/universe/store/$slug")({
-  validateSearch: (search: Record<string, unknown>): { product?: string | undefined } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { product?: string | undefined; seller?: string | undefined } => ({
     product:
       typeof search["product"] === "string" && search["product"] ? search["product"] : undefined,
+    // Authorized seller (@handle) this store was opened through; the database
+    // re-checks the authorization before attributing any order.
+    seller: typeof search["seller"] === "string" && search["seller"] ? search["seller"] : undefined,
   }),
   head: () => ({
     meta: [
