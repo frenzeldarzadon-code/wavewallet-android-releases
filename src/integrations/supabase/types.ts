@@ -7428,6 +7428,48 @@ export type Database = {
           },
         ]
       }
+      universe_product_views: {
+        Row: {
+          ecosystem_id: string
+          id: string
+          product_id: string
+          product_kind: string
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          ecosystem_id: string
+          id?: string
+          product_id: string
+          product_kind: string
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          ecosystem_id?: string
+          id?: string
+          product_id?: string
+          product_kind?: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "universe_product_views_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "universe_product_views_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       universe_wallet_consolidations: {
         Row: {
           amount: number
@@ -10920,6 +10962,10 @@ export type Database = {
         }
         Returns: string
       }
+      record_universe_product_view: {
+        Args: { _kind: string; _product_id: string }
+        Returns: undefined
+      }
       record_verified_payment: {
         Args: {
           _account_ref?: string
@@ -13574,6 +13620,86 @@ export type Database = {
           shop_slug: string
         }[]
       }
+      universe_marketplace_shops: {
+        Args: never
+        Returns: {
+          admin_assigned_at: string | null
+          admin_assigned_by: string | null
+          admin_sale_commission_percent: number
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          cash_in_gcash_number: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          credits_per_point: number
+          current_period_end: string | null
+          default_commission_percent: number
+          default_reseller_discount_percent: number
+          default_sale_commission_percent: number
+          default_subreseller_discount_percent: number
+          default_subreseller_sale_commission_percent: number
+          default_upline_commission_percent: number
+          description: string | null
+          facebook_page_name: string | null
+          facebook_page_url: string | null
+          frozen_at: string | null
+          frozen_by: string | null
+          frozen_reason: string | null
+          grace_period_days: number
+          id: string
+          is_review: boolean
+          is_test: boolean
+          last_activity_at: string | null
+          name: string
+          operations_frozen: boolean
+          payment_reference: string | null
+          plan_name: string
+          plan_price: number
+          points_rule_updated_at: string
+          points_rule_version: number
+          public_storefront_enabled: boolean
+          retail_accepting_orders: boolean
+          retail_cash_enabled: boolean
+          retail_cod_enabled: boolean
+          retail_cover_path: string | null
+          retail_credit_enabled: boolean
+          retail_delivery_enabled: boolean
+          retail_delivery_fee: number
+          retail_delivery_split_collector_pct: number
+          retail_delivery_split_delivery_pct: number
+          retail_logo_path: string | null
+          retail_paused_note: string | null
+          retail_pickup_enabled: boolean
+          retail_storefront_theme: string
+          review_ends_at: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shop_barangay: string | null
+          shop_city_municipality: string | null
+          shop_code: string | null
+          shop_kind: string
+          shop_province: string | null
+          shop_street: string | null
+          signup_enabled: boolean
+          signup_token: string
+          slug: string
+          store_retail_enabled: boolean
+          store_voucher_enabled: boolean
+          submitted_at: string | null
+          subscription_state: Database["public"]["Enums"]["subscription_state"]
+          updated_at: string
+          use_platform_payment_methods: boolean
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "ecosystems"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       universe_online_members: {
         Args: { _limit?: number }
         Returns: {
@@ -13586,6 +13712,46 @@ export type Database = {
         }[]
       }
       universe_peso: { Args: { _n: number }; Returns: string }
+      universe_product_categories: {
+        Args: never
+        Returns: {
+          category: string
+          product_count: number
+        }[]
+      }
+      universe_product_feed: {
+        Args: {
+          _category?: string
+          _limit?: number
+          _offset?: number
+          _section?: string
+          _seed?: number
+        }
+        Returns: {
+          available: number
+          brand: string
+          category: string
+          created_at: string
+          description: string
+          id: string
+          image_path: string
+          is_new: boolean
+          is_trending: boolean
+          kind: string
+          name: string
+          price: number
+          rating_avg: number
+          rating_count: number
+          score: number
+          shop_id: string
+          shop_logo_path: string
+          shop_name: string
+          shop_slug: string
+          size_label: string
+          sold_30d: number
+          views_30d: number
+        }[]
+      }
       universe_profile: {
         Args: { _handle: string }
         Returns: {

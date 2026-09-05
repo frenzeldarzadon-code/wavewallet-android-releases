@@ -28,6 +28,7 @@ import {
   Users,
   Wallet,
   Wifi,
+  ShoppingBag,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ const railItems = [
   { to: "/universe/messages", label: "Messages", icon: Mail },
   { to: "/universe/friends", label: "Friends", icon: Heart },
   { to: "/universe/shops", label: "Shops", icon: Store },
+  { to: "/universe/products", label: "All Products", icon: ShoppingBag },
   { to: "/universe/members", label: "Members", icon: Users },
   { to: "/universe/wallet", label: "My Wallet", icon: Wallet },
   { to: "/universe/monitor", label: "Live Monitoring", icon: Wifi },
@@ -441,6 +443,7 @@ export function UniverseShell({
             <ul className="py-1 text-sm">
               {[
                 { to: "/universe/shops", label: "Shops directory", icon: Store },
+                { to: "/universe/products", label: "All Products", icon: ShoppingBag },
                 { to: "/universe/monitor", label: "Live Monitoring", icon: Wifi },
                 { to: "/universe/rewards", label: "Reward Shops", icon: Gift },
                 { to: "/universe/members", label: "Members near you", icon: Users },

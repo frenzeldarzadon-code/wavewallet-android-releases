@@ -108,6 +108,7 @@ import { Route as UniverseFriendsRouteImport } from './routes/universe.friends'
 import { Route as UniverseMembersRouteImport } from './routes/universe.members'
 import { Route as UniverseMessagesRouteImport } from './routes/universe.messages'
 import { Route as UniverseNotificationsRouteImport } from './routes/universe.notifications'
+import { Route as UniverseProductsRouteImport } from './routes/universe.products'
 import { Route as UniverseProfileRouteImport } from './routes/universe.profile'
 import { Route as UniverseSearchRouteImport } from './routes/universe.search'
 import { Route as UniverseShopsRouteImport } from './routes/universe.shops'
@@ -625,6 +626,11 @@ const UniverseNotificationsRoute = UniverseNotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => UniverseRoute,
 } as any)
+const UniverseProductsRoute = UniverseProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => UniverseRoute,
+} as any)
 const UniverseProfileRoute = UniverseProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -824,6 +830,7 @@ export interface FileRoutesByFullPath {
   '/universe/members': typeof UniverseMembersRoute
   '/universe/messages': typeof UniverseMessagesRoute
   '/universe/notifications': typeof UniverseNotificationsRoute
+  '/universe/products': typeof UniverseProductsRoute
   '/universe/profile': typeof UniverseProfileRoute
   '/universe/search': typeof UniverseSearchRoute
   '/universe/shops': typeof UniverseShopsRoute
@@ -940,6 +947,7 @@ export interface FileRoutesByTo {
   '/universe/members': typeof UniverseMembersRoute
   '/universe/messages': typeof UniverseMessagesRoute
   '/universe/notifications': typeof UniverseNotificationsRoute
+  '/universe/products': typeof UniverseProductsRoute
   '/universe/profile': typeof UniverseProfileRoute
   '/universe/search': typeof UniverseSearchRoute
   '/universe/shops': typeof UniverseShopsRoute
@@ -1062,6 +1070,7 @@ export interface FileRoutesById {
   '/universe/members': typeof UniverseMembersRoute
   '/universe/messages': typeof UniverseMessagesRoute
   '/universe/notifications': typeof UniverseNotificationsRoute
+  '/universe/products': typeof UniverseProductsRoute
   '/universe/profile': typeof UniverseProfileRoute
   '/universe/search': typeof UniverseSearchRoute
   '/universe/shops': typeof UniverseShopsRoute
@@ -1185,6 +1194,7 @@ export interface FileRouteTypes {
     | '/universe/members'
     | '/universe/messages'
     | '/universe/notifications'
+    | '/universe/products'
     | '/universe/profile'
     | '/universe/search'
     | '/universe/shops'
@@ -1301,6 +1311,7 @@ export interface FileRouteTypes {
     | '/universe/members'
     | '/universe/messages'
     | '/universe/notifications'
+    | '/universe/products'
     | '/universe/profile'
     | '/universe/search'
     | '/universe/shops'
@@ -1422,6 +1433,7 @@ export interface FileRouteTypes {
     | '/universe/members'
     | '/universe/messages'
     | '/universe/notifications'
+    | '/universe/products'
     | '/universe/profile'
     | '/universe/search'
     | '/universe/shops'
@@ -2176,6 +2188,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UniverseNotificationsRouteImport
       parentRoute: typeof UniverseRoute
     }
+    '/universe/products': {
+      id: '/universe/products'
+      path: '/products'
+      fullPath: '/universe/products'
+      preLoaderRoute: typeof UniverseProductsRouteImport
+      parentRoute: typeof UniverseRoute
+    }
     '/universe/profile': {
       id: '/universe/profile'
       path: '/profile'
@@ -2506,6 +2525,7 @@ interface UniverseRouteChildren {
   UniverseMembersRoute: typeof UniverseMembersRoute
   UniverseMessagesRoute: typeof UniverseMessagesRoute
   UniverseNotificationsRoute: typeof UniverseNotificationsRoute
+  UniverseProductsRoute: typeof UniverseProductsRoute
   UniverseProfileRoute: typeof UniverseProfileRoute
   UniverseSearchRoute: typeof UniverseSearchRoute
   UniverseShopsRoute: typeof UniverseShopsRoute
@@ -2525,6 +2545,7 @@ const UniverseRouteChildren: UniverseRouteChildren = {
   UniverseMembersRoute: UniverseMembersRoute,
   UniverseMessagesRoute: UniverseMessagesRoute,
   UniverseNotificationsRoute: UniverseNotificationsRoute,
+  UniverseProductsRoute: UniverseProductsRoute,
   UniverseProfileRoute: UniverseProfileRoute,
   UniverseSearchRoute: UniverseSearchRoute,
   UniverseShopsRoute: UniverseShopsRoute,
