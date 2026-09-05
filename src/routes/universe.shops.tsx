@@ -78,7 +78,7 @@ function UniverseShops() {
   return (
     <UniverseShell title="Shops" subtitle="Find vouchers and sellers — no membership needed">
       <div className="space-y-6 px-4 sm:px-0">
-      {session.account ? (
+        {session.account ? (
           <PageSection
             title="Find a Universe shop or seller"
             description="Search by shop or voucher name, then pick a seller and buy from their storefront — paid from your Universe wallet. Being a Universe member is all you need."

@@ -141,7 +141,9 @@ export async function fetchProductFeed(input: {
   return ((data ?? []) as Row[]).map(mapFeedRow);
 }
 
-export async function fetchProductCategories(): Promise<Array<{ category: string; count: number }>> {
+export async function fetchProductCategories(): Promise<
+  Array<{ category: string; count: number }>
+> {
   const { data, error } = await supabase.rpc("universe_product_categories" as never);
   if (error) throw new Error(error.message);
   return ((data ?? []) as Array<{ category: string; product_count: number }>).map((c) => ({
@@ -154,5 +156,8 @@ export async function fetchProductCategories(): Promise<Array<{ category: string
 export function recordProductView(kind: "voucher" | "retail", productId: string): void {
   void supabase
     .rpc("record_universe_product_view", { _kind: kind, _product_id: productId } as never)
-    .then(() => undefined, () => undefined);
+    .then(
+      () => undefined,
+      () => undefined,
+    );
 }

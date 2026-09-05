@@ -11,7 +11,13 @@ import { Flame, Loader2, Package, Sparkles, Star, Store, Ticket, Users } from "l
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { EmptyState } from "@/components/ui-kit";
 import { RetailImage } from "@/components/retail/retail-image";
 import { SellerCard } from "@/components/universe/universe-shop-discovery";
@@ -50,7 +56,9 @@ export function UniverseProductFeed({ currentUserId }: { currentUserId?: string 
 
   useEffect(() => {
     seed.current = sessionSeed();
-    fetchProductCategories().then(setCategories).catch(() => undefined);
+    fetchProductCategories()
+      .then(setCategories)
+      .catch(() => undefined);
   }, []);
 
   const load = useCallback(
@@ -114,9 +122,11 @@ export function UniverseProductFeed({ currentUserId }: { currentUserId?: string 
 
       {/* Categories (only ones that actually have products on sale) */}
       <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Categories">
-        {[{ category: null as string | null, count: 0, label: "Everything" },
+        {[
+          { category: null as string | null, count: 0, label: "Everything" },
           { category: "Vouchers", count: 0, label: "WiFi vouchers" },
-          ...categories.map((c) => ({ ...c, label: c.category }))].map((c) => (
+          ...categories.map((c) => ({ ...c, label: c.category })),
+        ].map((c) => (
           <button
             key={c.label}
             type="button"
@@ -141,7 +151,10 @@ export function UniverseProductFeed({ currentUserId }: { currentUserId?: string 
           ))}
         </div>
       ) : items.length === 0 ? (
-        <EmptyState title="Nothing on sale here yet" description="Try another section or category." />
+        <EmptyState
+          title="Nothing on sale here yet"
+          description="Try another section or category."
+        />
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {items.map((p) => (
@@ -195,20 +208,33 @@ function ProductCard({
         {p.kind === "voucher" ? (
           <VoucherArtwork seed={p.id} name={p.name} compact />
         ) : (
-          <RetailImage path={p.imagePath} alt={p.name} className="aspect-[16/10] w-full rounded-none" />
+          <RetailImage
+            path={p.imagePath}
+            alt={p.name}
+            className="aspect-[16/10] w-full rounded-none"
+          />
         )}
         {badge ? (
           <span
             className={cn(
               "absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide shadow-sm",
-              p.isTrending ? "bg-destructive text-destructive-foreground" : "bg-card text-foreground",
+              p.isTrending
+                ? "bg-destructive text-destructive-foreground"
+                : "bg-card text-foreground",
             )}
           >
             {badge}
           </span>
         ) : null}
-        <span className="absolute right-2 top-2 rounded-full bg-card/90 p-1 text-muted-foreground" aria-hidden>
-          {p.kind === "voucher" ? <Ticket className="size-3.5" /> : <Package className="size-3.5" />}
+        <span
+          className="absolute right-2 top-2 rounded-full bg-card/90 p-1 text-muted-foreground"
+          aria-hidden
+        >
+          {p.kind === "voucher" ? (
+            <Ticket className="size-3.5" />
+          ) : (
+            <Package className="size-3.5" />
+          )}
         </span>
       </div>
       <div className="space-y-1 p-3">
@@ -229,7 +255,9 @@ function ProductCard({
         <span
           className={cn(
             "mt-1 block rounded-md py-1.5 text-center text-xs font-semibold",
-            p.kind === "voucher" ? "bg-primary text-primary-foreground" : "bg-success text-success-foreground",
+            p.kind === "voucher"
+              ? "bg-primary text-primary-foreground"
+              : "bg-success text-success-foreground",
           )}
         >
           {p.kind === "voucher" ? "Buy voucher" : "View in store"}
@@ -241,7 +269,13 @@ function ProductCard({
     "group block overflow-hidden rounded-lg border border-border bg-card text-left shadow-[var(--shadow-card)] transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
   if (p.kind === "retail") {
     return (
-      <Link to="/universe/store/$slug" params={{ slug: p.shopSlug }} search={{ product: p.id }} className={cls} onClick={onRetail}>
+      <Link
+        to="/universe/store/$slug"
+        params={{ slug: p.shopSlug }}
+        search={{ product: p.id }}
+        className={cls}
+        onClick={onRetail}
+      >
         {body}
       </Link>
     );
@@ -288,8 +322,8 @@ function VoucherSellerSheet({
             <SheetHeader className="text-left">
               <SheetTitle>{product.name}</SheetTitle>
               <SheetDescription>
-                {peso(product.price)} · {product.shopName}. Pick an authorized seller — the voucher is bought
-                immediately on their storefront with your Universe wallet.
+                {peso(product.price)} · {product.shopName}. Pick an authorized seller — the voucher
+                is bought immediately on their storefront with your Universe wallet.
               </SheetDescription>
             </SheetHeader>
             <p className="mt-4 mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
