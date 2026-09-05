@@ -113,7 +113,11 @@ export async function pushSupport(): Promise<PushSupport> {
   const standalone =
     window.matchMedia?.("(display-mode: standalone)").matches ||
     (navigator as unknown as { standalone?: boolean }).standalone === true;
-  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+  if (
+    !("serviceWorker" in navigator) ||
+    !("PushManager" in window) ||
+    !("Notification" in window)
+  ) {
     return isIOS && !standalone ? "needs-install" : "unsupported";
   }
   if (isIOS && !standalone) return "needs-install";
