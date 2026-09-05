@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { RetailStoreView } from "@/components/retail/retail-store-view";
 import { EmptyState } from "@/components/ui-kit";
 import { UniverseShell } from "@/components/universe/universe-shell";
+import { fetchSellerStorefront } from "@/lib/seller-storefront";
 import { fetchPublicShop, type PublicShop } from "@/lib/shop-public";
 
 export const Route = createFileRoute("/universe/store/$slug")({
