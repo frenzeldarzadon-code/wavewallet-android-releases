@@ -113,7 +113,10 @@ function identityOf(first: SellerIdentity): Omit<SellerStorefront, "shops" | "re
  * rows come from mutually exclusive store flags, and a legacy "mixed" shop is
  * kept once in each list only because it genuinely offers both kinds.
  */
-export function groupStorefrontRows(rows: Row[], retailRows: RetailRow[] = []): SellerStorefront | null {
+export function groupStorefrontRows(
+  rows: Row[],
+  retailRows: RetailRow[] = [],
+): SellerStorefront | null {
   const first: SellerIdentity | undefined = rows[0] ?? retailRows[0];
   if (!first) return null;
   const shops = new Map<string, StorefrontShop>();
@@ -194,15 +197,17 @@ export interface ShopSeller extends PresenceInfo {
 export async function fetchUniverseSellers(slug: string): Promise<ShopSeller[]> {
   const { data, error } = await supabase.rpc("universe_sellers_for_shop", { _slug: slug });
   if (error) throw new Error(error.message);
-  return ((data ?? []) as {
-    seller_id: string;
-    seller_name: string;
-    seller_handle: string;
-    avatar_path: string | null;
-    store_name?: string | null;
-    online?: boolean | null;
-    last_seen_at?: string | null;
-  }[]).map((r) => ({
+  return (
+    (data ?? []) as {
+      seller_id: string;
+      seller_name: string;
+      seller_handle: string;
+      avatar_path: string | null;
+      store_name?: string | null;
+      online?: boolean | null;
+      last_seen_at?: string | null;
+    }[]
+  ).map((r) => ({
     sellerId: r.seller_id,
     sellerName: r.seller_name,
     sellerHandle: r.seller_handle,
