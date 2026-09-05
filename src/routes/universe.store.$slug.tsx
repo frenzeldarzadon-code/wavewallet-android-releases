@@ -107,6 +107,7 @@ function UniverseStore() {
               name: shop.name,
               description: shop.description,
               productId: product ?? null,
+              sellerId,
             }}
           />
         )}
