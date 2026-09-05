@@ -47,8 +47,11 @@ export const Route = createFileRoute("/universe/store/$slug")({
 
 function UniverseStore() {
   const { slug } = useParams({ from: "/universe/store/$slug" });
-  const { product } = Route.useSearch();
+  const { product, seller } = Route.useSearch();
   const [shop, setShop] = useState<PublicShop | null | undefined>(undefined);
+  // Seller attribution: resolved from the seller's own public storefront, and
+  // only kept when this shop is one of their authorized Retail shops.
+  const [sellerId, setSellerId] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -60,6 +63,21 @@ function UniverseStore() {
       alive = false;
     };
   }, [slug]);
+
+  useEffect(() => {
+    let alive = true;
+    setSellerId(null);
+    if (!seller) return;
+    fetchSellerStorefront(seller)
+      .then((s) => {
+        if (!alive || !s) return;
+        if (s.retailShops.some((r) => r.slug === slug)) setSellerId(s.sellerId);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [seller, slug]);
 
   const open = !!shop && shop.retail_enabled && shop.storefront_public;
 
