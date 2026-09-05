@@ -261,7 +261,7 @@ function VoucherSellerSheet({
 }: {
   product: FeedProduct | null;
   onClose: () => void;
-  currentUserId?: string | null;
+  currentUserId?: string | null | undefined;
 }) {
   const [sellers, setSellers] = useState<ShopSeller[] | null>(null);
   useEffect(() => {

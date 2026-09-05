@@ -9,7 +9,7 @@
  * shown here: they belong inside that shop's dashboard.
  */
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Check, Loader2, Plus, Settings2, Store } from "lucide-react";
+import { Check, Loader2, Plus, Settings2, ShoppingBag, Store } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -83,6 +83,11 @@ function UniverseShops() {
             title="Find a Universe shop or seller"
             description="Search by shop or voucher name, then pick a seller and buy from their storefront — paid from your Universe wallet. Being a Universe member is all you need."
           >
+            <Button asChild variant="outline" className="mb-4 w-full justify-between rounded-lg">
+              <Link to="/universe/products">
+                Browse all products across the Universe <ShoppingBag className="size-4" />
+              </Link>
+            </Button>
             <UniverseShopDiscovery currentUserId={session.account.id} />
           </PageSection>
         ) : null}
