@@ -266,7 +266,7 @@ export function RetailStoreView(props: RetailStoreViewProps) {
       live = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [checkout, ecosystemDbId, cartKey, count]);
+  }, [checkout, ecosystemDbId, cartKey, count, sellerId]);
 
   if (!account || !ecosystemDbId) return null;
 

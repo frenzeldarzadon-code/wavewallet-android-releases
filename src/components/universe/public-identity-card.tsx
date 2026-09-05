@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MemberAvatar } from "@/components/member-avatar";
 import { avatarUrl, fetchMyProfile, type MyProfile } from "@/lib/profile";
-import { fetchSellerStorefront } from "@/lib/seller-storefront";
+import { fetchSellerStorefront, hasStorefront } from "@/lib/seller-storefront";
 
 export function PublicIdentityCard({ userId }: { userId: string }) {
   const [profile, setProfile] = useState<MyProfile | null>(null);
@@ -25,7 +25,7 @@ export function PublicIdentityCard({ userId }: { userId: string }) {
         void avatarUrl(p.cover_path).then((url) => alive && setCoverUrl(url));
         if (p.handle) {
           const store = await fetchSellerStorefront(p.handle).catch(() => null);
-          if (alive) setStoreName(store && store.shops.length > 0 ? store.storeName : null);
+          if (alive) setStoreName(hasStorefront(store) ? store.storeName : null);
         }
       })
       .catch(() => undefined);
