@@ -22,7 +22,7 @@
   Investigation so far: `cancel_retail_order` is customer-only + pending-only; `retail_review_order` settles credit orders at approval (settlement/cashback ledger rows exist post-approval, so `retail_refund_hold` returns null once `settlement_ledger_id` is set → post-approval refund needs reversal entries of settlement + cashback, not a hold refund); need to read `retail_update_fulfillment`, `retail_cod_seller_cancel`, `retail_cod_cancel_internal`, `retail_orders_guard` next.
 
 ## Points from actual net spend (Universe)
-- [ ] Voucher purchase points from buyer_charge; credits_basis = net
-- [ ] Universe retail orders award points at settlement, idempotent
-- [ ] Reversals remove exactly awarded points
-- [ ] Tests
+- [x] Voucher purchase points from buyer_charge; credits_basis = net
+- [x] Universe retail orders award points at settlement, idempotent
+- [x] Reversals remove exactly awarded points
+- [x] Tests (supabase/tests/points-net-spend.sql)
