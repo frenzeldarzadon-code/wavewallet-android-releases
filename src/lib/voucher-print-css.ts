@@ -7,12 +7,17 @@
  * every template renders the identical voucher data at the identical size.
  */
 import { VOUCHER_PRINT_HEIGHT_IN, VOUCHER_PRINT_WIDTH_IN } from "./voucher-print";
-import mistArt from "@/assets/voucher-art/mist.jpg.asset.json";
-import terracesArt from "@/assets/voucher-art/terraces.jpg.asset.json";
-import pinesArt from "@/assets/voucher-art/pines.jpg.asset.json";
-import fallsArt from "@/assets/voucher-art/falls.jpg.asset.json";
-import caveArt from "@/assets/voucher-art/cave.jpg.asset.json";
-import sunriseArt from "@/assets/voucher-art/sunrise.jpg.asset.json";
+// Print-grade artwork. These files carry the SAME imagery at a much higher
+// pixel count, with the former CSS saturate()/contrast() adjustments baked in.
+// A CSS filter forces the browser to flatten the whole card into a ~300 DPI
+// bitmap when printing; without it the artwork prints at its own resolution and
+// all text/borders above it stay vector.
+import mistArt from "@/assets/voucher-art/print/mist.jpg";
+import terracesArt from "@/assets/voucher-art/print/terraces.jpg";
+import pinesArt from "@/assets/voucher-art/print/pines.jpg";
+import fallsArt from "@/assets/voucher-art/print/falls.jpg";
+import caveArt from "@/assets/voucher-art/print/cave.jpg";
+import sunriseArt from "@/assets/voucher-art/print/sunrise.jpg";
 
 const W = `${VOUCHER_PRINT_WIDTH_IN}in`;
 const H = `${VOUCHER_PRINT_HEIGHT_IN}in`;
@@ -229,6 +234,7 @@ export const voucherPrintCss = `
 /* ------------------------------------------------------------------ */
 .vp-nature .vp-art {
   background-repeat: no-repeat;
+  image-rendering: high-quality;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
@@ -238,7 +244,6 @@ export const voucherPrintCss = `
   border: 1px solid rgba(255,255,255,.95);
   border-radius: .04in;
   padding: .012in .018in;
-  box-shadow: 0 0 .03in rgba(255,255,255,.9);
 }
 
 /* 13. SAGADA MIST — full-bleed ridges, frosted column of text. */
@@ -246,7 +251,7 @@ export const voucherPrintCss = `
 .vp-t-mist .vp-art {
   background-image:
     linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,.08) 45%, rgba(255,255,255,.35) 100%),
-    url("${mistArt.url}");
+    url("${mistArt}");
   background-size: cover, cover;
   background-position: center, center bottom;
 }
@@ -259,11 +264,10 @@ export const voucherPrintCss = `
 /* 14. RICE TERRACES — artwork as a grounded band under the price. */
 .vp-t-terraces { border: 1px solid #d9cba4; background: #fdfaf0; color: #3a3320; }
 .vp-t-terraces .vp-art {
-  background-image: url("${terracesArt.url}");
+  background-image: url("${terracesArt}");
   background-size: 100% 0.5in;
   background-position: left bottom;
   opacity: 1;
-  filter: saturate(1.5) contrast(1.12);
 }
 .vp-t-terraces .vp-body {
   background: rgba(253,250,240,.9);
@@ -278,11 +282,10 @@ export const voucherPrintCss = `
 /* 15. PINE FOREST — vertical forest strip, ink column beside it. */
 .vp-t-pines { border: 1px solid #cbd5d1; background: #f7faf8; color: #16241f; }
 .vp-t-pines .vp-art {
-  background-image: url("${pinesArt.url}");
+  background-image: url("${pinesArt}");
   background-size: 0.42in 100%;
   background-position: left top;
   opacity: .95;
-  filter: saturate(1.2) contrast(1.08);
 }
 .vp-t-pines .vp-head,
 .vp-t-pines .vp-body,
@@ -298,10 +301,9 @@ export const voucherPrintCss = `
 .vp-t-falls .vp-art {
   background-image:
     linear-gradient(90deg, rgba(232,245,243,.85) 0%, rgba(232,245,243,0) 50%, rgba(232,245,243,.85) 100%),
-    url("${fallsArt.url}");
+    url("${fallsArt}");
   background-size: cover, auto 230%;
   background-position: center, center bottom;
-  filter: saturate(1.9) contrast(1.2);
 }
 .vp-t-falls .vp-head { text-align: center; }
 .vp-t-falls .vp-shop { color: #0f6b6b; letter-spacing: .14em; }
@@ -314,11 +316,10 @@ export const voucherPrintCss = `
 /* 17. LIMESTONE — cliffs in the corner over warm paper stock. */
 .vp-t-cave { border: 1px solid #ded2bd; background: #fbf7ef; color: #33291c; }
 .vp-t-cave .vp-art {
-  background-image: url("${caveArt.url}");
+  background-image: url("${caveArt}");
   background-size: 0.95in auto;
   background-position: right bottom;
   opacity: .95;
-  filter: saturate(1.15);
 }
 .vp-t-cave .vp-head { padding-right: .1in; }
 .vp-t-cave .vp-shop { color: #8a6a2f; letter-spacing: .12em; }
@@ -337,7 +338,7 @@ export const voucherPrintCss = `
 .vp-t-sunrise .vp-art {
   background-image:
     linear-gradient(180deg, rgba(255,246,239,.05) 0%, rgba(255,246,239,.72) 38%, rgba(255,246,239,.25) 100%),
-    url("${sunriseArt.url}");
+    url("${sunriseArt}");
   background-size: cover, cover;
   background-position: center, center top;
 }
