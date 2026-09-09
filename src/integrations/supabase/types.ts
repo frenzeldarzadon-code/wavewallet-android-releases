@@ -4167,6 +4167,7 @@ export type Database = {
           reason: string
           redemption_id: string | null
           reference: string | null
+          retail_order_id: string | null
           sale_id: string | null
           tx_id: string | null
           user_id: string
@@ -4187,6 +4188,7 @@ export type Database = {
           reason: string
           redemption_id?: string | null
           reference?: string | null
+          retail_order_id?: string | null
           sale_id?: string | null
           tx_id?: string | null
           user_id: string
@@ -4207,6 +4209,7 @@ export type Database = {
           reason?: string
           redemption_id?: string | null
           reference?: string | null
+          retail_order_id?: string | null
           sale_id?: string | null
           tx_id?: string | null
           user_id?: string
@@ -4231,6 +4234,13 @@ export type Database = {
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "points_ledger_retail_order_id_fkey"
+            columns: ["retail_order_id"]
+            isOneToOne: false
+            referencedRelation: "retail_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -11295,6 +11305,10 @@ export type Database = {
         Returns: Json
       }
       retail_assert_cart_items: { Args: { _items: Json }; Returns: undefined }
+      retail_award_order_points: {
+        Args: { _order_id: string }
+        Returns: number
+      }
       retail_cashback_recipient: {
         Args: { _buyer: string; _ecosystem_id: string; _seller: string }
         Returns: string
@@ -11470,6 +11484,10 @@ export type Database = {
           _order: Database["public"]["Tables"]["retail_orders"]["Row"]
         }
         Returns: string
+      }
+      retail_reverse_order_points: {
+        Args: { _order_id: string; _reason: string }
+        Returns: number
       }
       retail_review_order: {
         Args: { _approve: boolean; _note?: string; _order_id: string }

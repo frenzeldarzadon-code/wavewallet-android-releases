@@ -20,3 +20,9 @@
 
 - [ ] Admin Cancel Order before customer receipt (retail): new RPC `admin_cancel_retail_order(_order_id, _reason)` reusing `retail_refund_hold` (idempotent hold refund), stock restore, COD hold release via `retail_cod_cancel_internal`, notification to customer; allowed for status=pending or approved with fulfillment_status in (accepted, preparing, ready, out_for_delivery, delivered); refused once fulfillment_status='completed' (customer received) or already rejected/cancelled/closed. Record decided_by/decided_at/decision_note + previous status. Block `retail_update_fulfillment` on cancelled orders. UI: Cancel Order + confirm dialog in `retail-orders-panel.tsx`; customer wording "The shop cancelled this order" in `retail.ts`. Tests: SQL per stage (new/prepare/ready/in delivery/delivered/completed) + cancelled→delivered/completed blocked.
   Investigation so far: `cancel_retail_order` is customer-only + pending-only; `retail_review_order` settles credit orders at approval (settlement/cashback ledger rows exist post-approval, so `retail_refund_hold` returns null once `settlement_ledger_id` is set → post-approval refund needs reversal entries of settlement + cashback, not a hold refund); need to read `retail_update_fulfillment`, `retail_cod_seller_cancel`, `retail_cod_cancel_internal`, `retail_orders_guard` next.
+
+## Points from actual net spend (Universe)
+- [x] Voucher purchase points from buyer_charge; credits_basis = net
+- [x] Universe retail orders award points at settlement, idempotent
+- [x] Reversals remove exactly awarded points
+- [x] Tests (supabase/tests/points-net-spend.sql)
