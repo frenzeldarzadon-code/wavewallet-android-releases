@@ -9748,6 +9748,10 @@ export type Database = {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: undefined
       }
+      ensure_universe_membership: {
+        Args: { _ecosystem_id: string; _user_id: string }
+        Returns: undefined
+      }
       expire_push_device: {
         Args: { _id: string; _reason?: string }
         Returns: undefined
@@ -12738,6 +12742,10 @@ export type Database = {
           sale_commission_percent: number
           status: string
         }[]
+      }
+      shop_requires_membership_approval: {
+        Args: { _ecosystem_id: string }
+        Returns: boolean
       }
       shop_store_settings: {
         Args: { _ecosystem_id: string }
