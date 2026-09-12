@@ -142,7 +142,8 @@ BEGIN
          'the refund is restricted again, got '
          || (SELECT restricted_balance FROM public.credit_accounts WHERE id = _acct);
   BEGIN
-    PERFORM public.transfer_universe_coins(_cust, 100, 'gift', gen_random_uuid()::text);
+    PERFORM public.transfer_universe_coins(_cust, public.free_coin_balance(_res) + 100, 'gift',
+                                           gen_random_uuid()::text);
     RAISE EXCEPTION 'refunded loan coins must still not be transferable';
   EXCEPTION WHEN others THEN
     GET STACKED DIAGNOSTICS _err = MESSAGE_TEXT;
