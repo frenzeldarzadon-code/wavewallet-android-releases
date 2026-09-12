@@ -32,14 +32,12 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             val outcome = client.sendEvent(event)
             LastStatus.recordServerResponse(applicationContext, "${outcome.code} ${outcome.body}")
             if (isRevoked(outcome)) { store.revokedByServer = true; return Result.success() }
-            when {
-                outcome.ok -> {
-                    dao.mark(event.id, "sent", null, outcome.body)
+            when (deliveryStatusFor(outcome.ok, outcome.code)) {
+                "sent" -> {
+                    dao.mark(event.id, "sent", outcome.body.takeIf { !outcome.ok }, outcome.body)
                     LastStatus.recordSent(applicationContext, event.eventUid)
                 }
-                // 409 replay / 4xx contract errors will never succeed on retry.
-                outcome.code in 400..499 && outcome.code != 429 ->
-                    dao.mark(event.id, "rejected", "HTTP ${outcome.code}", outcome.body)
+                "rejected" -> dao.mark(event.id, "rejected", "HTTP ${outcome.code}", outcome.body)
                 else -> {
                     dao.mark(event.id, "queued", outcome.body, null)
                     retry = true
@@ -153,4 +151,21 @@ object ListenerScheduler {
                 .build(),
         )
     }
+}
+
+/**
+ * How one delivery attempt is recorded locally.
+ *
+ * A payment notification may only be given up on when the server can never
+ * accept it: a malformed payload (400), an over-long body (413) or a rejected
+ * shape (422). A 409 means WaveWallet already holds this exact event, so it
+ * counts as delivered. EVERYTHING else — including 401, which is normally a
+ * clock skew or a signature race — stays queued and is retried, so a real
+ * payment is never lost to a temporary failure.
+ */
+fun deliveryStatusFor(ok: Boolean, code: Int): String = when {
+    ok -> "sent"
+    code == 409 -> "sent"
+    code == 400 || code == 413 || code == 422 -> "rejected"
+    else -> "queued"
 }

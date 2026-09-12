@@ -156,11 +156,15 @@ class GcashNotificationListener : NotificationListenerService() {
         }
         is GcashParser.Result.Unparsed -> {
             LastStatus.recordCandidate(this, sbn.packageName, "gcash")
-            LastStatus.recordParseResult(this, "UNPARSED — ${result.reason} (never credited)")
+            LastStatus.recordParseResult(this, "UNPARSED — ${result.reason} (sent for re-reading)")
             LastStatus.recordNotification(this, "Unreadable GCash payment notification (${result.reason})")
+            // An incoming payment this build could not read is still uploaded:
+            // WaveWallet keeps a newer mirror of the same parser and re-reads
+            // the raw text. It is queued like any other event so it is retried
+            // until the server confirms it — never left on the phone.
             enqueue(
                 sbn, raw, title, body, label, "gcash",
-                null, null, null, null, GcashParser.VERSION, status = "unparsed",
+                null, null, null, null, GcashParser.VERSION, status = "queued",
             )
             true
         }
