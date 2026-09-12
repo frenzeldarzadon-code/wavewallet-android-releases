@@ -180,6 +180,10 @@ export type Database = {
           notes: string | null
           provider: string | null
           provider_reference: string | null
+          recurrence_day: number | null
+          recurrence_month: string | null
+          recurrence_source_id: string | null
+          recurring: boolean
           scope: string
           spent_at: string
           updated_at: string
@@ -199,6 +203,10 @@ export type Database = {
           notes?: string | null
           provider?: string | null
           provider_reference?: string | null
+          recurrence_day?: number | null
+          recurrence_month?: string | null
+          recurrence_source_id?: string | null
+          recurring?: boolean
           scope: string
           spent_at?: string
           updated_at?: string
@@ -218,6 +226,10 @@ export type Database = {
           notes?: string | null
           provider?: string | null
           provider_reference?: string | null
+          recurrence_day?: number | null
+          recurrence_month?: string | null
+          recurrence_source_id?: string | null
+          recurring?: boolean
           scope?: string
           spent_at?: string
           updated_at?: string
@@ -242,6 +254,13 @@ export type Database = {
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_expenses_recurrence_source_id_fkey"
+            columns: ["recurrence_source_id"]
+            isOneToOne: false
+            referencedRelation: "business_expenses"
             referencedColumns: ["id"]
           },
         ]
@@ -6843,6 +6862,10 @@ export type Database = {
           id: string
           notes: string | null
           occurred_at: string
+          recurrence_day: number | null
+          recurrence_month: string | null
+          recurrence_source_id: string | null
+          recurring: boolean
           updated_at: string
         }
         Insert: {
@@ -6857,6 +6880,10 @@ export type Database = {
           id?: string
           notes?: string | null
           occurred_at?: string
+          recurrence_day?: number | null
+          recurrence_month?: string | null
+          recurrence_source_id?: string | null
+          recurring?: boolean
           updated_at?: string
         }
         Update: {
@@ -6871,6 +6898,10 @@ export type Database = {
           id?: string
           notes?: string | null
           occurred_at?: string
+          recurrence_day?: number | null
+          recurrence_month?: string | null
+          recurrence_source_id?: string | null
+          recurring?: boolean
           updated_at?: string
         }
         Relationships: [
@@ -6893,6 +6924,13 @@ export type Database = {
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spending_income_entries_recurrence_source_id_fkey"
+            columns: ["recurrence_source_id"]
+            isOneToOne: false
+            referencedRelation: "spending_income_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -10886,6 +10924,10 @@ export type Database = {
               notes: string | null
               provider: string | null
               provider_reference: string | null
+              recurrence_day: number | null
+              recurrence_month: string | null
+              recurrence_source_id: string | null
+              recurring: boolean
               scope: string
               spent_at: string
               updated_at: string
@@ -10923,6 +10965,10 @@ export type Database = {
               notes: string | null
               provider: string | null
               provider_reference: string | null
+              recurrence_day: number | null
+              recurrence_month: string | null
+              recurrence_source_id: string | null
+              recurring: boolean
               scope: string
               spent_at: string
               updated_at: string
@@ -13130,6 +13176,7 @@ export type Database = {
         }[]
       }
       spending_delete_income: { Args: { _id: string }; Returns: boolean }
+      spending_generate_recurring: { Args: { _now?: string }; Returns: number }
       spending_record_expense: {
         Args: {
           _amount: number
@@ -13155,6 +13202,10 @@ export type Database = {
           notes: string | null
           provider: string | null
           provider_reference: string | null
+          recurrence_day: number | null
+          recurrence_month: string | null
+          recurrence_source_id: string | null
+          recurring: boolean
           scope: string
           spent_at: string
           updated_at: string
@@ -13188,6 +13239,10 @@ export type Database = {
           id: string
           notes: string | null
           occurred_at: string
+          recurrence_day: number | null
+          recurrence_month: string | null
+          recurrence_source_id: string | null
+          recurring: boolean
           updated_at: string
         }
         SetofOptions: {
@@ -13196,6 +13251,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      spending_set_recurring: {
+        Args: { _id: string; _kind: string; _on: boolean }
+        Returns: boolean
       }
       spending_sync_categories: {
         Args: { _ecosystem: string }
@@ -13225,6 +13284,10 @@ export type Database = {
           notes: string | null
           provider: string | null
           provider_reference: string | null
+          recurrence_day: number | null
+          recurrence_month: string | null
+          recurrence_source_id: string | null
+          recurring: boolean
           scope: string
           spent_at: string
           updated_at: string
@@ -13257,6 +13320,10 @@ export type Database = {
           id: string
           notes: string | null
           occurred_at: string
+          recurrence_day: number | null
+          recurrence_month: string | null
+          recurrence_source_id: string | null
+          recurring: boolean
           updated_at: string
         }
         SetofOptions: {
