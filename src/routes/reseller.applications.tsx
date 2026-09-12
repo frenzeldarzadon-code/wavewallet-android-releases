@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ApplicationsPanel } from "@/components/applications-panel";
 import { MemberInboxPanel } from "@/components/member-inbox-panel";
+import { NoMembershipApprovalNotice } from "@/components/no-membership-approval-notice";
 import { LeaveShopCard } from "@/components/leave-shop-card";
 import { useSession } from "@/lib/session";
+import { useShopStatus } from "@/lib/shop-status";
+import { usesMembershipApproval } from "@/lib/shop-type";
 
 export const Route = createFileRoute("/reseller/applications")({
   head: () => ({
@@ -27,13 +30,18 @@ export const Route = createFileRoute("/reseller/applications")({
 
 function ResellerApplications() {
   const { ecosystem, ecosystemDbId } = useSession("reseller");
+  const { shopType } = useShopStatus(ecosystemDbId);
   return (
     <>
       <MemberInboxPanel />
-      <ApplicationsPanel
-        ecosystemId={ecosystemDbId}
-        description="Members who joined this shop automatically. They are already active — keep or remove them."
-      />
+      {usesMembershipApproval(shopType) ? (
+        <ApplicationsPanel
+          ecosystemId={ecosystemDbId}
+          description="Members who joined this shop automatically. They are already active — keep or remove them."
+        />
+      ) : (
+        <NoMembershipApprovalNotice />
+      )}
       <LeaveShopCard ecosystemId={ecosystemDbId} ecosystemName={ecosystem?.name ?? "this shop"} />
     </>
   );
