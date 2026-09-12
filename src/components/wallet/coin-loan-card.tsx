@@ -216,6 +216,12 @@ export function CoinLoanCard({ onChanged }: { onChanged?: () => void }) {
             </Button>
           </CardContent>
         </Card>
+      ) : !summary.loansEnabled ? (
+        <Card className="mt-3 shadow-none">
+          <CardContent className="py-4 text-xs text-muted-foreground">
+            New coin loans are paused by the platform owner right now.
+          </CardContent>
+        </Card>
       ) : (
         <Card className="mt-3 shadow-none">
           <CardContent className="space-y-3 py-4">
