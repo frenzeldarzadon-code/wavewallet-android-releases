@@ -20,11 +20,11 @@ DECLARE
   _before numeric; _restricted numeric; _bal numeric; _sum numeric;
 BEGIN
   INSERT INTO public.ecosystems (name, slug, signup_token, plan_name, plan_price,
-                                 credits_per_point, subscription_state, shop_kind, voucher_store_enabled)
+                                 credits_per_point, subscription_state, shop_kind, store_voucher_enabled)
   VALUES ('Loan Home Shop', 'loan-home-shop', 'tok-lh', 'Test', 0, 10, 'active', 'universe', true)
   RETURNING id INTO _mine;
   INSERT INTO public.ecosystems (name, slug, signup_token, plan_name, plan_price,
-                                 credits_per_point, subscription_state, shop_kind, voucher_store_enabled)
+                                 credits_per_point, subscription_state, shop_kind, store_voucher_enabled)
   VALUES ('Loan Away Shop', 'loan-away-shop', 'tok-la', 'Test', 0, 10, 'active', 'universe', true)
   RETURNING id INTO _other;
 
