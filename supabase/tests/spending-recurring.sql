@@ -14,7 +14,7 @@ DECLARE
   _days int[];
 BEGIN
   SELECT id INTO _eco FROM public.ecosystems ORDER BY created_at LIMIT 1;
-  SELECT id INTO _admin FROM public.profiles LIMIT 1;
+  SELECT id INTO _admin FROM auth.users LIMIT 1;
   IF _eco IS NULL OR _admin IS NULL THEN RAISE NOTICE 'no fixture data'; RETURN; END IF;
 
   -- Source income entry on the 31st, six months ago.
