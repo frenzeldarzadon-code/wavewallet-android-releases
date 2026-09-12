@@ -33,18 +33,21 @@ export function DeliverySettingsCard({ ecosystemId }: { ecosystemId: string | nu
   const [available, setAvailable] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [feePercent, setFeePercent] = useState(0);
 
   const accountId = account?.id ?? null;
   const load = useCallback(async () => {
     if (!ecosystemId) return;
     setLoading(true);
     try {
-      const [settings, bal] = await Promise.all([
+      const [settings, bal, fee] = await Promise.all([
         fetchStoreSettings(ecosystemId),
         accountId ? fetchCreditBalance(accountId, null) : Promise.resolve(null),
+        fetchRetailFeePercent().catch(() => 0),
       ]);
       setS(settings);
       setAvailable(bal);
+      setFeePercent(fee);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
