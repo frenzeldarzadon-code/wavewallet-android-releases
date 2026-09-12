@@ -37,8 +37,16 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                     dao.mark(event.id, "sent", null, outcome.body)
                     LastStatus.recordSent(applicationContext, event.eventUid)
                 }
-                // 409 replay / 4xx contract errors will never succeed on retry.
-                outcome.code in 400..499 && outcome.code != 429 ->
+                // 409 replay: WaveWallet already holds this exact event. The
+                // ingest call is idempotent, so this is a success, not a loss.
+                outcome.code == 409 -> {
+                    dao.mark(event.id, "sent", "HTTP 409 replay", outcome.body)
+                    LastStatus.recordSent(applicationContext, event.eventUid)
+                }
+                // Only a contract error can never succeed on retry. A 401 is
+                // usually a clock skew or a signature race and MUST be retried,
+                // otherwise a real payment would be dropped for good.
+                outcome.code == 400 || outcome.code == 413 || outcome.code == 422 ->
                     dao.mark(event.id, "rejected", "HTTP ${outcome.code}", outcome.body)
                 else -> {
                     dao.mark(event.id, "queued", outcome.body, null)
