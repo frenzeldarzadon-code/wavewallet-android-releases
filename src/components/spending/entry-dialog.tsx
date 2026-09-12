@@ -86,7 +86,19 @@ export function EntryDialog({
     clientRef.current = editing?.sync ? editing.id : newClientRef();
   }, [open, editing]);
 
-  const options = categories.filter((c) => c.kind === kind && !c.auto_key);
+  /**
+   * Every category of this side is selectable: the premade ones the shop is
+   * given (Admin Discount, Direct sales, Admin Purchases and one per top-level
+   * reseller) as well as any the admin created. Premade categories are also
+   * used by DERIVED entries, but choosing one here only labels this manual,
+   * reporting-only row — it never creates or changes a transaction.
+   */
+  const options = categories
+    .filter((c) => c.kind === kind)
+    .sort((a, b) => {
+      const byGroup = Number(!!b.auto_key) - Number(!!a.auto_key);
+      return byGroup !== 0 ? byGroup : a.name.localeCompare(b.name);
+    });
 
   async function submit() {
     const problem = validateManualEntry({ amount, description, date });
