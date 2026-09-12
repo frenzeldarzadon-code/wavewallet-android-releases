@@ -122,7 +122,6 @@ export function DeliverySettingsCard({ ecosystemId }: { ecosystemId: string | nu
                   }
                 />
                 <p className="text-[11px] text-muted-foreground">
-                <p className="text-[11px] text-muted-foreground">
                   Added to the customer's cash total. The {feePercent}% platform fee applies to
                   product prices only — never to this fee.
                 </p>
