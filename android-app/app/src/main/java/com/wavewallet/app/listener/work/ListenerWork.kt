@@ -152,3 +152,20 @@ object ListenerScheduler {
         )
     }
 }
+
+/**
+ * How one delivery attempt is recorded locally.
+ *
+ * A payment notification may only be given up on when the server can never
+ * accept it: a malformed payload (400), an over-long body (413) or a rejected
+ * shape (422). A 409 means WaveWallet already holds this exact event, so it
+ * counts as delivered. EVERYTHING else — including 401, which is normally a
+ * clock skew or a signature race — stays queued and is retried, so a real
+ * payment is never lost to a temporary failure.
+ */
+fun deliveryStatusFor(ok: Boolean, code: Int): String = when {
+    ok -> "sent"
+    code == 409 -> "sent"
+    code == 400 || code == 413 || code == 422 -> "rejected"
+    else -> "queued"
+}
