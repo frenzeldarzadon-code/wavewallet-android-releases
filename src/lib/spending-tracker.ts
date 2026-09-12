@@ -56,6 +56,13 @@ export interface SpendingEntry {
   /** Manual entries only: automatic ones are derived and can never be edited. */
   editable: boolean;
   /**
+   * True when this manual entry repeats monthly. The monthly job copies it —
+   * as a reporting row only — on the same calendar day of every later month.
+   */
+  recurring?: boolean;
+  /** Set on a copy the monthly job created, pointing at the original entry. */
+  recurrenceSourceId?: string | null;
+  /**
    * Set only for entries saved on this device that the server has not
    * confirmed yet. Absent means the row came back from the server.
    */
