@@ -181,6 +181,8 @@ BEGIN
   -- 10. Loan tables are not directly writable by app users --------------------
   ASSERT NOT has_table_privilege('authenticated', 'public.coin_loans', 'UPDATE'),
          'members cannot write loans directly';
+  ASSERT NOT has_table_privilege('authenticated', 'public.coin_loan_entries', 'INSERT'),
+         'members cannot write loan events directly';
   ASSERT NOT has_table_privilege('authenticated', 'public.credit_accounts', 'UPDATE'),
          'members cannot write wallets directly';
   ASSERT NOT has_function_privilege('authenticated', 'public.release_coin_loan(uuid)', 'EXECUTE'),
