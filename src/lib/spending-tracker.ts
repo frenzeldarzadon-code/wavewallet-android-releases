@@ -553,3 +553,46 @@ export function categoryHighlights(entries: SpendingEntry[]): CategoryHighlight 
     topExpense: expense[0] ?? null,
   };
 }
+
+/* ------------------------------------------------------------------ */
+/* Monthly recurrence (mirror of the database generator)               */
+/* ------------------------------------------------------------------ */
+
+/** Last calendar day of the month that `year`/`monthIndex` points at. */
+export const lastDayOfMonth = (year: number, monthIndex: number) =>
+  new Date(year, monthIndex + 1, 0).getDate();
+
+/**
+ * The date of the Nth monthly repeat of an entry. Months that are too short
+ * (a 31st in February) fall back to their own last day instead of skipping.
+ */
+export function occurrenceDate(source: Date, monthsAhead: number): Date {
+  const year = source.getFullYear();
+  const month = source.getMonth() + monthsAhead;
+  const target = new Date(year, month, 1);
+  const day = Math.min(
+    source.getDate(),
+    lastDayOfMonth(target.getFullYear(), target.getMonth()),
+  );
+  return new Date(
+    target.getFullYear(),
+    target.getMonth(),
+    day,
+    source.getHours(),
+    source.getMinutes(),
+    source.getSeconds(),
+  );
+}
+
+/**
+ * Every repeat due between the month AFTER the original entry and the month
+ * `now` falls in. The original entry is the first occurrence and is never
+ * repeated, which is what keeps the generator from duplicating it.
+ */
+export function dueOccurrences(source: Date, now = new Date()): Date[] {
+  const months =
+    (now.getFullYear() - source.getFullYear()) * 12 + (now.getMonth() - source.getMonth());
+  const out: Date[] = [];
+  for (let i = 1; i <= months; i += 1) out.push(occurrenceDate(source, i));
+  return out;
+}
