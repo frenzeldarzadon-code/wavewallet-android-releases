@@ -137,7 +137,8 @@ BEGIN
                                     reason, entry_kind, actor_id)
   VALUES (_acct, _res, _mine, 'credit', 100, 'retail order refunded', 'retail_refund', _res);
   ASSERT (SELECT balance FROM public.credit_accounts WHERE id = _acct) = _bal + 100, 'refund credited';
-  ASSERT (SELECT restricted_balance FROM public.credit_accounts WHERE id = _acct) = _restricted + 100,
+  ASSERT (SELECT restricted_balance FROM public.credit_accounts WHERE id = _acct)
+         = least(_restricted + 100, (SELECT outstanding FROM public.coin_loans WHERE id = _loan.id)),
          'the refund is restricted again, got '
          || (SELECT restricted_balance FROM public.credit_accounts WHERE id = _acct);
   BEGIN
