@@ -249,7 +249,9 @@ export async function fetchSpendingEntries(
       .order("occurred_at", { ascending: false }),
     supabase
       .from("business_expenses")
-      .select("id, amount, description, category, category_id, notes, spent_at")
+      .select(
+        "id, amount, description, category, category_id, notes, spent_at, recurring, recurrence_source_id",
+      )
       .eq("scope", "ecosystem")
       .eq("ecosystem_id", ecosystemId)
       .gte("spent_at", fromIso)
