@@ -353,6 +353,13 @@ export interface ManualEntryInput {
    * makes replaying the offline queue safe.
    */
   clientRef?: string | null;
+  /**
+   * Monthly repeat. Left undefined the entry keeps whatever it already had, so
+   * existing entries and callers that know nothing about recurrence are never
+   * converted. The saved entry itself is the first occurrence — the monthly
+   * job only ever adds LATER months.
+   */
+  recurring?: boolean;
 }
 
 export function validateManualEntry(input: {
