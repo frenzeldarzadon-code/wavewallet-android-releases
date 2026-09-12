@@ -9,6 +9,7 @@ import { PageSection } from "@/components/ui-kit";
 import { RetentionPolicyCard } from "@/components/retention-policy-card";
 import { CreditSupplyCard } from "@/components/super/credit-supply-card";
 import { MoneySettingsCard } from "@/components/super/money-settings-card";
+import { CoinLoansCard } from "@/components/super/coin-loans-card";
 import { CashInAutoCard } from "@/components/super/cash-in-auto-card";
 import { ListenerDevicesCard } from "@/components/super/listener-devices-card";
 import { ListenerDeviceScreenButton } from "@/components/money/listener-device-screen-button";
@@ -188,6 +189,7 @@ function SuperSettings() {
       </Button>
 
       <MoneySettingsCard />
+      <CoinLoansCard />
       <CashInAutoCard />
       <ReceivingAccountsCard
         ecosystemId={null}

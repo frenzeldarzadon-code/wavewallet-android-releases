@@ -26,3 +26,15 @@
 - [x] Universe retail orders award points at settlement, idempotent
 - [x] Reversals remove exactly awarded points
 - [x] Tests (supabase/tests/points-net-spend.sql)
+
+## Centralized My Wallet + Coin Loans
+- [x] Coin loan settings in Super Admin money/platform settings (enabled, base 1000, 3x multiplier, 2% monthly, first-month-upfront)
+- [x] `coin_loans` / `coin_loan_entries` + restricted portion on `credit_accounts`; RLS, grants, integrity constraint
+- [x] Server-side restriction guard on every ledger debit (transfers/gifts/cash out blocked; affiliated purchases allowed)
+- [x] Auto limit = greater of base and multiplier x free balance, computed server-side
+- [x] Upfront first-month interest, manual approval above the limit, one active loan, idempotent monthly accrual
+- [x] Top-up repayment priority via ledger trigger
+- [x] Loan section in Universe → My Wallet; Super Admin settings + approval queue
+- [x] Legacy /app, /app/money, /reseller/wallet, /reseller/money, /admin/wallet redirect to /universe/wallet (NG shops keep their isolated screen)
+- [x] Tests: `src/lib/coin-loans.test.ts`, `supabase/tests/coin-loans.sql` (rolled back), typecheck, 1479 unit tests
+- [x] Daily scheduled interest run (`coin-loan-interest`, 02:20)

@@ -56,6 +56,7 @@ import { FacebookSupportCard } from "@/components/facebook-support-card";
 import { ShopTransferCard } from "@/components/customer/shop-transfer-card";
 import { notifyWalletChanged } from "@/lib/wallet-events";
 import { UniverseSendCoinsSheet } from "@/components/wallet/universe-send-coins-sheet";
+import { CoinLoanCard } from "@/components/wallet/coin-loan-card";
 import { CodAssignmentsCard } from "@/components/retail/cod-assignments-card";
 import { PointsEarningsPanel } from "@/components/customer/points-earnings-panel";
 import { HistoryPage } from "@/components/customer/history-page";
@@ -352,6 +353,12 @@ export function WalletCenter({
               </p>
             </CardContent>
           </Card>
+          <CoinLoanCard
+            onChanged={() => {
+              setHistoryKey((k) => k + 1);
+              void loadShops();
+            }}
+          />
           <UniverseSendCoinsSheet
             open={sendOpen}
             onOpenChange={setSendOpen}
