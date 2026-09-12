@@ -24,14 +24,16 @@ export const WEB_BUILD_ID: string =
   typeof __WW_BUILD__ === "string" && __WW_BUILD__ ? __WW_BUILD__ : "dev";
 
 /** Latest published native Android release. Must match android-app/app/build.gradle.kts. */
-// NOTE: these describe the APK actually published at ANDROID_UPDATE_URL below.
-// Bump them to 6 / "1.4.0" only once CI has published the signed v1.4.0 asset
-// (together with ANDROID_UPDATE_URL and ANDROID_SHA256).
-export const ANDROID_VERSION_CODE = 3;
-export const ANDROID_VERSION_NAME = "1.1.1";
+// These describe the APK published at ANDROID_UPDATE_URL below: the signed
+// 1.5.0 build (versionCode 7) produced by the "Build WaveWallet APK" workflow
+// and attached to the v1.5.0 GitHub Release.
+export const ANDROID_VERSION_CODE = 7;
+export const ANDROID_VERSION_NAME = "1.5.0";
 /**
  * Oldest native build still considered compatible. Anything below this is
  * missing native capabilities the web layer relies on (voucher image saving).
+ * 1.1.1 (code 3) stays supported, so those users are offered — not forced —
+ * the 1.5.0 update.
  */
 export const ANDROID_MIN_VERSION_CODE = 2;
 
@@ -41,14 +43,17 @@ export const ANDROID_MIN_VERSION_CODE = 2;
  * release repository.
  */
 export const ANDROID_UPDATE_URL =
-  "https://github.com/frenzeldarzadon-code/wavewallet-android-releases/releases/download/v1.1.1/WaveWallet-1.1.1.apk";
+  "https://github.com/frenzeldarzadon-code/wavewallet-android-releases/releases/download/v1.5.0/WaveWallet-1.5.0.apk";
 
-/** SHA-256 of the published 1.1.1 APK, for verification on the download page. */
-export const ANDROID_SHA256 =
-  "4af79779ce316190b3afd4c796d87bd542c358d8d8b6966c5a4853c75f7f284d";
+/**
+ * SHA-256 of the published APK, shown for verification. Left empty until the
+ * checksum of the exact published 1.5.0 asset is confirmed — an unverified
+ * checksum is worse than none.
+ */
+export const ANDROID_SHA256 = "";
 
 export const RELEASE_NOTES =
-  "Voucher images now save reliably to Downloads inside the Android app, and WaveWallet can check for web and app updates from Profile.";
+  "ONE WAVE 1.5.0: integrated payment listener, in-app update centre and reliable voucher image saving.";
 
 export interface UpdateManifest {
   web: { version: string; buildId: string };
