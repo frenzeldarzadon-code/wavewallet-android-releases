@@ -392,10 +392,35 @@ export async function saveManualEntry(input: ManualEntryInput, id?: string): Pro
       : id
         ? { fn: "spending_update_expense", args: { _id: id, ...shared, _spent_at: input.occurredAt.toISOString() } }
         : { fn: "spending_record_expense", args: { _ecosystem: input.ecosystemId, ...shared, _spent_at: input.occurredAt.toISOString(), _client_ref: ref } };
-  const { error } = await supabase.rpc(
+  const { data, error } = await supabase.rpc(
     rpc.fn as "spending_record_income",
     rpc.args as never,
   );
+  if (error) throw new Error(error.message);
+
+  if (input.recurring !== undefined) {
+    const savedId = id ?? (data as { id?: string } | null)?.id ?? null;
+    // A generated occurrence never becomes a source, and an entry that is
+    // already in the wanted state is left untouched.
+    if (savedId) await setEntryRecurring(input.kind, savedId, input.recurring);
+  }
+}
+
+/**
+ * Turns the monthly repeat on or off for one manual entry. Switching it off
+ * only stops FUTURE occurrences; everything already recorded stays exactly as
+ * it is. Reporting only — no wallet, coin ledger or transaction is involved.
+ */
+export async function setEntryRecurring(
+  kind: EntryKind,
+  id: string,
+  on: boolean,
+): Promise<void> {
+  const { error } = await supabase.rpc("spending_set_recurring", {
+    _kind: kind,
+    _id: id,
+    _on: on,
+  });
   if (error) throw new Error(error.message);
 }
 
