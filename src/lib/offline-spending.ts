@@ -32,6 +32,8 @@ export interface QueuedEntry {
   categoryName: string | null;
   occurredAt: string;
   notes: string | null;
+  /** Monthly repeat requested for this entry; applied when it syncs. */
+  recurring?: boolean;
   queuedAt: string;
   attempts: number;
   lastError: string | null;
@@ -222,6 +224,7 @@ export async function flushQueue(
         occurredAt: new Date(r.occurredAt),
         notes: r.notes,
         clientRef: r.clientRef,
+        ...(r.recurring ? { recurring: true } : {}),
       });
       removeQueuedEntry(r.clientRef);
       synced += 1;
@@ -254,6 +257,8 @@ export interface SubmitInput {
   categoryName: string | null;
   occurredAt: Date;
   notes: string | null;
+  /** Monthly repeat requested in the form. */
+  recurring?: boolean;
 }
 
 /**
@@ -281,6 +286,7 @@ export async function submitNewEntry(
     categoryName: input.categoryName,
     occurredAt: input.occurredAt.toISOString(),
     notes: input.notes,
+    ...(input.recurring ? { recurring: true } : {}),
   };
 
   if (isOffline()) {
@@ -298,6 +304,7 @@ export async function submitNewEntry(
       occurredAt: input.occurredAt,
       notes: input.notes,
       clientRef: input.clientRef,
+      ...(input.recurring ? { recurring: true } : {}),
     });
     return "saved";
   } catch (e) {
