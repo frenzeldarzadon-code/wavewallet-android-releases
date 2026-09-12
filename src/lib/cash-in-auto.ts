@@ -273,33 +273,30 @@ export function evaluateMatch(
     return "amount_mismatch";
   }
   if (!normalizePhMobile(receivingNumber)) return "no_receiving_number";
-  const sender = normalizePhMobile(request.sender_number ?? request.payer_number);
-  if ((rule.layer2_require_sender_match ?? true) && !sender) return "no_sender_number";
 
-  // First layer — the real GCash notification. It reports only the sending
-  // number and the amount: transaction time is not a factor and no reference
-  // is expected from it.
+  // The number the member typed is SUPPORTING evidence. It is kept and shown,
+  // it may add one agreeing fact, but on its own it never rejects a payment.
+  const typedSender = normalizePhMobile(request.sender_number ?? request.payer_number);
+  const receiptSender = normalizePhMobile(request.receipt_sender_number);
+  const senderEvidence = receiptSender ?? typedSender;
+
+  // First layer — the real receiver-side notification. The exact amount is the
+  // core fact; at least one further independent detail must agree with it.
   const requireListener = rule.require_listener_match ?? true;
   const event = request.listener_event;
   if (!event || (event.outcome && event.outcome !== "accepted")) {
     if (requireListener) return "awaiting_listener";
   } else {
-    if (
-      (rule.layer2_require_sender_match ?? true) &&
-      normalizePhMobile(event.sender_number) !== sender
-    ) {
-      return "number_mismatch";
-    }
-    if (
-      (rule.layer2_require_amount_match ?? true) &&
-      Math.abs(Number(event.amount_php) - Number(request.amount_php)) > tolerance
-    ) {
+    if (Math.abs(Number(event.amount_php) - Number(request.amount_php)) > tolerance) {
       return "amount_mismatch";
     }
     // Shop isolation is the only routing rule. A differing / masked receiving
     // number is informational and must never block a valid approval.
     if (event.serves_shop === false) return "wrong_shop";
     if (event.device_online === false) return "listener_offline";
+    if (countIndependentFacts(request, event, tolerance) < 2) {
+      return "insufficient_match_signals";
+    }
   }
 
   // Second layer: the receipt evidence. A conflicting reference always blocks;
@@ -315,8 +312,7 @@ export function evaluateMatch(
   ) {
     return "amount_mismatch";
   }
-  const receiptSender = normalizePhMobile(request.receipt_sender_number);
-  if (receiptSender && sender && receiptSender !== sender) return "number_mismatch";
+  void senderEvidence;
   const receiptReceiving = normalizePhMobile(request.receipt_receiving_number);
   if (receiptReceiving && receiptReceiving !== normalizePhMobile(receivingNumber)) {
     return "receiving_mismatch";
@@ -324,6 +320,40 @@ export function evaluateMatch(
 
   if ((rule.verification_mode ?? "active") === "staged") return "staged";
   return "matched";
+}
+
+/**
+ * How many INDEPENDENT details agree between the receiver-side notification and
+ * the sender-side receipt. Each field counts at most once: the exact amount,
+ * the reference, the sending account. A difference in the receiving number is
+ * informational (providers mask it) and never counts against the payment.
+ *
+ * Mirrors `public.listener_match_signals`.
+ */
+export function countIndependentFacts(
+  request: MatchableRequest,
+  event: MatchableListenerEvent,
+  tolerance = 0,
+): number {
+  let facts = 0;
+  if (
+    event.amount_php != null &&
+    Math.abs(Number(event.amount_php) - Number(request.amount_php)) <= tolerance
+  ) {
+    facts += 1;
+  }
+  const requestRef =
+    normalizePaymentReference(request.receipt_reference) ??
+    normalizePaymentReference(request.payer_reference);
+  const eventRef = normalizePaymentReference(event.reference);
+  if (requestRef && eventRef && requestRef === eventRef) facts += 1;
+
+  const eventSender = normalizePhMobile(event.sender_number);
+  const requestSender =
+    normalizePhMobile(request.receipt_sender_number) ??
+    normalizePhMobile(request.sender_number ?? request.payer_number);
+  if (eventSender && requestSender && eventSender === requestSender) facts += 1;
+  return facts;
 }
 
 /** Wording for the banner on the settings screen. */
