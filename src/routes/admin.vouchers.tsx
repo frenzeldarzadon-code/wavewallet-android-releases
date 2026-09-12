@@ -265,9 +265,23 @@ function AdminVouchers() {
         }
       >
         <div className="grid gap-3 sm:grid-cols-3">
-          <StatCard label="Total codes" value={String(totals.total)} />
-          <StatCard label="Unused" value={String(totals.unused)} tone="positive" />
-          <StatCard label="Sold" value={String(totals.sold)} tone="negative" />
+          <StatCard
+            label="Uploaded codes"
+            value={String(totals.total)}
+            hint="Every voucher code record ever imported into this shop and not deleted."
+          />
+          <StatCard
+            label="Available (unused)"
+            value={String(totals.unused)}
+            tone="positive"
+            hint="Codes still in stock and ready to be sold."
+          />
+          <StatCard
+            label="Sold"
+            value={String(totals.sold)}
+            tone="negative"
+            hint="Codes already issued to a buyer. Sold codes can never be deleted."
+          />
         </div>
       </PageSection>
 
