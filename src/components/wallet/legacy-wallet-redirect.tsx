@@ -21,7 +21,10 @@ export function LegacyWalletRedirect({
   const { ecosystem, ready } = useSession();
   // Only Universe members have a global wallet; anything else (New Generation
   // or an unresolved shop) keeps its existing isolated screen.
-  const isolated = ecosystem?.shopKind !== "universe";
+  // Only New Generation (or any other non-Universe) shop keeps its isolated
+  // screen. Members with no active shop at all belong to the Universe wallet,
+  // so they are redirected like every other Universe member.
+  const isolated = !!ecosystem && ecosystem.shopKind !== "universe";
 
   useEffect(() => {
     if (!ready || isolated) return;
