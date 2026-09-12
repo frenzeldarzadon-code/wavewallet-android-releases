@@ -168,7 +168,7 @@ export function CoinLoanCard({ onChanged }: { onChanged?: () => void }) {
 
       <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <StatusBadge
-          tone={active ? "warning" : pending ? "info" : "neutral"}
+          tone={active ? "warning" : pending ? "brand" : "muted"}
           label={loanStatusLabel(summary.status)}
         />
         <span>
