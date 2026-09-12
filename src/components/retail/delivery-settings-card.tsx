@@ -2,7 +2,7 @@
  * R6 — cash-on-delivery configuration for one shop's admin.
  *
  * The delivery fee is a flat amount added to the customer's cash total and is
- * never subject to the 1 % platform fee. The split between delivery person and
+ * never subject to the configured platform fee. The split between delivery person and
  * collector must total exactly 100 %. Both values are snapshotted onto each
  * order when it is placed, so changing them here never alters a past order.
  */
@@ -20,6 +20,7 @@ import { fetchCreditBalance } from "@/lib/wallet";
 import { peso } from "@/lib/wavewallet";
 import {
   DEFAULT_STORE_SETTINGS,
+  fetchRetailFeePercent,
   fetchStoreSettings,
   saveDeliverySettings,
   type StoreSettings,
@@ -32,18 +33,21 @@ export function DeliverySettingsCard({ ecosystemId }: { ecosystemId: string | nu
   const [available, setAvailable] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [feePercent, setFeePercent] = useState(0);
 
   const accountId = account?.id ?? null;
   const load = useCallback(async () => {
     if (!ecosystemId) return;
     setLoading(true);
     try {
-      const [settings, bal] = await Promise.all([
+      const [settings, bal, fee] = await Promise.all([
         fetchStoreSettings(ecosystemId),
         accountId ? fetchCreditBalance(accountId, null) : Promise.resolve(null),
+        fetchRetailFeePercent().catch(() => 0),
       ]);
       setS(settings);
       setAvailable(bal);
+      setFeePercent(fee);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -122,8 +126,8 @@ export function DeliverySettingsCard({ ecosystemId }: { ecosystemId: string | nu
                   }
                 />
                 <p className="text-[11px] text-muted-foreground">
-                  Added to the customer's cash total. The 1 % platform fee applies to product prices
-                  only — never to this fee.
+                  Added to the customer's cash total. The {feePercent}% platform fee applies to
+                  product prices only — never to this fee.
                 </p>
               </div>
 

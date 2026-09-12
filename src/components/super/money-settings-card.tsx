@@ -178,8 +178,10 @@ export function MoneySettingsCard() {
             onChange={(e) => set("voucherFeePercent", Number(e.target.value))}
           />
           <p className="text-xs text-muted-foreground">
-            Contained inside the customer price of Universe vouchers (a ₱10 voucher stays ₱10; at 1% the
-            seller's cut is ₱9.90). Each product keeps the rate in force when it was priced and each sale
+            Contained inside the customer price of Universe vouchers (a ₱10 voucher stays ₱10; at{" "}
+            {Number(form.voucherFeePercent) || 0}% the seller's cut is{" "}
+            {peso(10 - (10 * (Number(form.voucherFeePercent) || 0)) / 100)}). Each product keeps the rate in
+            force when it was priced and each sale
             stores its own rate and amount, so changing this never reprices existing products or sales.
             Cashback is calculated separately on the full sale amount. New Generation shops carry no fee.
           </p>
