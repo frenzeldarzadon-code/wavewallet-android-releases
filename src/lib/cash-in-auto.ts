@@ -193,6 +193,7 @@ export type MatchOutcome =
   | "listener_offline"
   | "wrong_shop"
   | "number_mismatch"
+  | "insufficient_match_signals"
   | "receiving_mismatch"
   | "awaiting_receipt_check"
   | "receipt_reference_mismatch"
@@ -219,6 +220,8 @@ export const MATCH_REASON: Record<MatchOutcome, string> = {
   wrong_shop:
     "That notification came from a phone registered to a different shop, so it cannot settle this request.",
   number_mismatch: "The account that sent the money does not match this request.",
+  insufficient_match_signals:
+    "Only one detail agrees between the payment notification and the receipt — two independent details are needed, so a person decides.",
   receiving_mismatch:
     "The payment was sent to an account that is not the configured receiving account — disapproved, the wallet is not credited.",
   awaiting_receipt_check: "The uploaded receipt has not been read yet.",
