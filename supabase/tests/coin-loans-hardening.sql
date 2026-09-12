@@ -103,7 +103,7 @@ BEGIN
 
   -- 4. Cash out is refused while coins are loaned -----------------------------
   BEGIN
-    PERFORM public.request_withdrawal(500, 'gcash', 'Res', '09171234567', NULL,
+    PERFORM public.request_withdrawal(500, 'ewallet', 'Res', '09171234567', NULL,
                                       gen_random_uuid()::text, NULL, 'universe');
     RAISE EXCEPTION 'loaned coins must not be cashed out';
   EXCEPTION WHEN others THEN
