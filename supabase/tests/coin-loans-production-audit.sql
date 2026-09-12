@@ -194,7 +194,7 @@ BEGIN
   ASSERT _out = 840.40, 'top up repaid 200: ' || _out;
   SELECT balance, restricted_balance INTO _bal, _restricted FROM public.credit_accounts WHERE id = _acct;
   ASSERT _bal = 880, 'repayment leaves the wallet: ' || _bal;
-  ASSERT _restricted = 880, 'restriction follows the balance: ' || _restricted;
+  ASSERT _restricted = 840.40, 'the repaid coins are released: ' || _restricted;
 
   -- a large top up settles the loan and leaves the excess free
   INSERT INTO public.credit_ledger (account_id, user_id, ecosystem_id, direction, amount, reason, entry_kind, actor_id)
