@@ -137,10 +137,24 @@ describe("automatic approval matching", () => {
     expect(evaluateMatch({ ...req, listener_event: null }, on, RECEIVING)).toBe("awaiting_listener");
   });
 
-  it("rejects a payment sent from a different GCash number", () => {
+  it("does not reject on the typed sending number alone, but needs a second agreeing detail", () => {
     expect(
       evaluateMatch({ ...req, listener_event: { ...seen, sender_number: "09181234567" } }, on, RECEIVING),
-    ).toBe("number_mismatch");
+    ).toBe("insufficient_match_signals");
+  });
+
+  it("approves when the notification's sender differs but amount and reference agree", () => {
+    expect(
+      evaluateMatch(
+        {
+          ...req,
+          receipt_reference: "GC-1234",
+          listener_event: { ...seen, sender_number: "09181234567", reference: "gc 1234" },
+        },
+        on,
+        RECEIVING,
+      ),
+    ).toBe("matched");
   });
 
   it("rejects a payment whose amount differs from the request", () => {
@@ -149,8 +163,10 @@ describe("automatic approval matching", () => {
     ).toBe("amount_mismatch");
   });
 
-  it("requires the sending number on the request", () => {
-    expect(evaluateMatch({ ...req, sender_number: null }, on, RECEIVING)).toBe("no_sender_number");
+  it("holds for review when only the amount agrees", () => {
+    expect(evaluateMatch({ ...req, sender_number: null }, on, RECEIVING)).toBe(
+      "insufficient_match_signals",
+    );
   });
 
   it("cannot approve when no receiving number is configured", () => {
@@ -334,7 +350,7 @@ describe("a masked receiving number never blocks a valid Cash In", () => {
         rule,
         RECEIVING,
       ),
-    ).toBe("number_mismatch");
+    ).toBe("insufficient_match_signals");
     expect(evaluateMatch({ ...base, duplicate_reference: true }, rule, RECEIVING)).toBe("duplicate_reference");
   });
 });
@@ -391,7 +407,7 @@ describe("two agreeing details are enough (corrected rule)", () => {
       status: "pending",
       listener_event: { amount_php: 1500, outcome: "accepted", device_online: true },
     };
-    expect(evaluateMatch(request, rule, RECEIVING)).toBe("no_sender_number");
+    expect(evaluateMatch(request, rule, RECEIVING)).toBe("insufficient_match_signals");
   });
 
   it("D: a reference already used by an earlier cash in is declined", () => {
