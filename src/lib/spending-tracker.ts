@@ -325,6 +325,8 @@ export async function fetchSpendingEntries(
       memberName: null,
       notes: r.notes,
       editable: true,
+      recurring: !!r.recurring,
+      recurrenceSourceId: r.recurrence_source_id ?? null,
     };
   });
 
