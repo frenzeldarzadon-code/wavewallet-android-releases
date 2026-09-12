@@ -65,6 +65,9 @@ export function CoinLoanCard({ onChanged }: { onChanged?: () => void }) {
 
   if (!summary || !settings) return null;
   if (!summary.hasPosition && !summary.loanId) return null;
+  // Loans switched off by the platform owner: nothing to show unless this
+  // member still has a loan to repay or a request awaiting a decision.
+  if (!summary.loansEnabled && !summary.loanId) return null;
 
   const requested = Number(amount) || 0;
   const manual = needsManualApproval(requested, summary.autoLimit);
