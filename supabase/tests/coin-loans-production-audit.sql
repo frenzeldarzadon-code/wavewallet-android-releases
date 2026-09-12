@@ -51,15 +51,15 @@ BEGIN
   INSERT INTO public.voucher_products (ecosystem_id, name, description, credit_price, active)
   VALUES (_mine, 'Home 10', 'test', 10, true) RETURNING id INTO _p_mine;
   INSERT INTO public.voucher_codes (ecosystem_id, product_id, code, status)
-  SELECT _mine, _p_mine, 'AH-' || g, 'unused' FROM generate_series(1, 20) g;
+  SELECT _mine, _p_mine, 'AH-' || g, 'unused' FROM generate_series(1, 100) g;
   INSERT INTO public.voucher_products (ecosystem_id, name, description, credit_price, active)
   VALUES (_frozen, 'Frozen 10', 'test', 10, true) RETURNING id INTO _p_frozen;
   INSERT INTO public.voucher_codes (ecosystem_id, product_id, code, status)
-  SELECT _frozen, _p_frozen, 'AF-' || g, 'unused' FROM generate_series(1, 20) g;
+  SELECT _frozen, _p_frozen, 'AF-' || g, 'unused' FROM generate_series(1, 100) g;
   INSERT INTO public.voucher_products (ecosystem_id, name, description, credit_price, active)
   VALUES (_away, 'Away 10', 'test', 10, true) RETURNING id INTO _p_away;
   INSERT INTO public.voucher_codes (ecosystem_id, product_id, code, status)
-  SELECT _away, _p_away, 'AW-' || g, 'unused' FROM generate_series(1, 20) g;
+  SELECT _away, _p_away, 'AW-' || g, 'unused' FROM generate_series(1, 100) g;
 
   PERFORM public.ensure_global_wallet(_res);
   PERFORM public.ensure_global_wallet(_peer);
@@ -116,7 +116,7 @@ BEGIN
 
   -- 4. Loaned coins cannot leave the wallet ----------------------------------
   BEGIN
-    PERFORM public.transfer_universe_coins(_peer, 800, 'gift');
+    PERFORM public.transfer_universe_coins(_peer, 800, 'gift', NULL);
     RAISE EXCEPTION 'loaned coins were gifted';
   EXCEPTION WHEN others THEN
     _err := SQLERRM;
@@ -142,7 +142,7 @@ BEGIN
   END;
 
   -- free coins still move freely
-  PERFORM public.transfer_universe_coins(_peer, 100, 'free coins');
+  PERFORM public.transfer_universe_coins(_peer, 100, 'free coins', NULL);
   ASSERT public.free_coin_balance(_res) = 400, 'free coins are still spendable';
   ASSERT (SELECT restricted_balance FROM public.credit_accounts WHERE id = _acct) = 980, 'restriction untouched';
 
