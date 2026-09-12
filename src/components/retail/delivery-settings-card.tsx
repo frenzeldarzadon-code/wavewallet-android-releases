@@ -20,6 +20,7 @@ import { fetchCreditBalance } from "@/lib/wallet";
 import { peso } from "@/lib/wavewallet";
 import {
   DEFAULT_STORE_SETTINGS,
+  fetchRetailFeePercent,
   fetchStoreSettings,
   saveDeliverySettings,
   type StoreSettings,
