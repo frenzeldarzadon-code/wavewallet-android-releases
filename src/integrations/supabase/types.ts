@@ -8684,6 +8684,7 @@ export type Database = {
       }
     }
     Functions: {
+      accrue_coin_loan_interest: { Args: never; Returns: number }
       acting_as: { Args: never; Returns: string }
       activate_free_subscription: {
         Args: { _ecosystem_id: string; _months?: number; _plan_id: string }
@@ -8792,6 +8793,29 @@ export type Database = {
           available: number
           balance: number
           reserved: number
+        }[]
+      }
+      admin_coin_loans: {
+        Args: { _status?: string }
+        Returns: {
+          approval_mode: string
+          auto_limit_snapshot: number
+          created_at: string
+          decided_at: string
+          decided_by: string
+          decision_note: string
+          first_month_interest: number
+          free_balance_snapshot: number
+          full_name: string
+          handle: string
+          id: string
+          interest_percent: number
+          outstanding: number
+          principal: number
+          released_amount: number
+          released_at: string
+          status: string
+          user_id: string
         }[]
       }
       admin_load_credits: {
@@ -9165,6 +9189,39 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "cash_in_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      cancel_coin_loan: {
+        Args: { _loan_id: string }
+        Returns: {
+          accrued_interest: number
+          approval_mode: string
+          auto_limit_snapshot: number
+          base_snapshot: number
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          first_month_interest: number
+          free_balance_snapshot: number
+          id: string
+          interest_percent: number
+          multiplier_snapshot: number
+          outstanding: number
+          principal: number
+          released_amount: number
+          released_at: string | null
+          settled_at: string | null
+          status: string
+          total_owed: number
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "coin_loans"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -10574,6 +10631,49 @@ export type Database = {
           status: string
         }[]
       }
+      my_coin_loan_history: {
+        Args: never
+        Returns: {
+          amount: number
+          created_at: string
+          id: string
+          kind: string
+          ledger_id: string | null
+          loan_id: string
+          note: string | null
+          outstanding_after: number
+          period_index: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "coin_loan_entries"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      my_coin_loan_summary: {
+        Args: never
+        Returns: {
+          accrued_interest: number
+          approval_mode: string
+          auto_limit: number
+          balance: number
+          first_month_interest: number
+          free_balance: number
+          has_position: boolean
+          interest_percent: number
+          loan_id: string
+          loans_enabled: boolean
+          outstanding: number
+          principal: number
+          released_amount: number
+          released_at: string
+          requested_at: string
+          restricted_balance: number
+          status: string
+          total_owed: number
+        }[]
+      }
       my_impersonation: {
         Args: never
         Returns: {
@@ -11240,6 +11340,39 @@ export type Database = {
         }
         Returns: string
       }
+      release_coin_loan: {
+        Args: { _loan_id: string }
+        Returns: {
+          accrued_interest: number
+          approval_mode: string
+          auto_limit_snapshot: number
+          base_snapshot: number
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          first_month_interest: number
+          free_balance_snapshot: number
+          id: string
+          interest_percent: number
+          multiplier_snapshot: number
+          outstanding: number
+          principal: number
+          released_amount: number
+          released_at: string | null
+          settled_at: string | null
+          status: string
+          total_owed: number
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "coin_loans"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       release_super_admin_bootstrap: {
         Args: { _email: string }
         Returns: undefined
@@ -11260,6 +11393,7 @@ export type Database = {
       }
       remove_push_device: { Args: { _id: string }; Returns: undefined }
       repair_listener_device: { Args: { _device: string }; Returns: Json }
+      repay_coin_loan: { Args: { _amount: number }; Returns: number }
       request_cash_in: {
         Args: {
           _amount_php: number
@@ -11360,6 +11494,39 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "cash_in_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      request_coin_loan: {
+        Args: { _amount: number }
+        Returns: {
+          accrued_interest: number
+          approval_mode: string
+          auto_limit_snapshot: number
+          base_snapshot: number
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          first_month_interest: number
+          free_balance_snapshot: number
+          id: string
+          interest_percent: number
+          multiplier_snapshot: number
+          outstanding: number
+          principal: number
+          released_amount: number
+          released_at: string | null
+          settled_at: string | null
+          status: string
+          total_owed: number
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "coin_loans"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -11974,6 +12141,39 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      review_coin_loan: {
+        Args: { _approve: boolean; _loan_id: string; _note?: string }
+        Returns: {
+          accrued_interest: number
+          approval_mode: string
+          auto_limit_snapshot: number
+          base_snapshot: number
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          first_month_interest: number
+          free_balance_snapshot: number
+          id: string
+          interest_percent: number
+          multiplier_snapshot: number
+          outstanding: number
+          principal: number
+          released_amount: number
+          released_at: string | null
+          settled_at: string | null
+          status: string
+          total_owed: number
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "coin_loans"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       review_credit_purchase_order: {
         Args: { _approve: boolean; _order_id: string; _reason?: string }
         Returns: {
@@ -12382,6 +12582,16 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      set_coin_loan_settings: {
+        Args: {
+          _base: number
+          _enabled: boolean
+          _first_month_upfront: boolean
+          _monthly_interest: number
+          _multiplier: number
+        }
+        Returns: undefined
       }
       set_ecosystem_cash_in_number: {
         Args: { _ecosystem: string; _number: string }
