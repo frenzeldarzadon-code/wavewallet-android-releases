@@ -698,7 +698,9 @@ function CodBreakdown({ o }: { o: RetailOrder }) {
   return (
     <div className="space-y-0.5 rounded-lg border border-border px-2.5 py-2 text-[11px]">
       <div className="flex justify-between gap-2">
-        <span className="text-muted-foreground">Products (retail price, 1% fee inside)</span>
+        <span className="text-muted-foreground">
+          Products (retail price, {o.platform_fee_percent ?? 0}% fee inside)
+        </span>
         <span>{peso(o.total)}</span>
       </div>
       <div className="flex justify-between gap-2">
