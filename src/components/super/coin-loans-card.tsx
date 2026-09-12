@@ -196,8 +196,9 @@ export function CoinLoansCard() {
                   owed {peso(l.outstanding)}
                   <StatusBadge
                     tone={l.status === "active" ? "warning" : l.status === "settled" ? "success" : "muted"}
-                    label={loanStatusLabel(l.status)}
-                  />
+                  >
+                    {loanStatusLabel(l.status)}
+                  </StatusBadge>
                 </span>
               </div>
             ))}

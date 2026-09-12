@@ -167,10 +167,9 @@ export function CoinLoanCard({ onChanged }: { onChanged?: () => void }) {
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <StatusBadge
-          tone={active ? "warning" : pending ? "brand" : "muted"}
-          label={loanStatusLabel(summary.status)}
-        />
+        <StatusBadge tone={active ? "warning" : pending ? "brand" : "muted"}>
+          {loanStatusLabel(summary.status)}
+        </StatusBadge>
         <span>
           Approved instantly up to {peso(summary.autoLimit)} — the greater of{" "}
           {peso(settings.baseCredits)} and {settings.multiplier}× your free balance.
