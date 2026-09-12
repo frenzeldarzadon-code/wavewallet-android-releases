@@ -2,7 +2,7 @@
  * R6 — cash-on-delivery configuration for one shop's admin.
  *
  * The delivery fee is a flat amount added to the customer's cash total and is
- * never subject to the 1 % platform fee. The split between delivery person and
+ * never subject to the configured platform fee. The split between delivery person and
  * collector must total exactly 100 %. Both values are snapshotted onto each
  * order when it is placed, so changing them here never alters a past order.
  */
