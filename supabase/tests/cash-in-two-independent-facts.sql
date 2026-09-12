@@ -17,8 +17,7 @@ begin;
 do $$
 declare _uid uuid; _eco uuid; _method uuid; _dev uuid; _acct text;
         _row public.cash_in_requests; _evt uuid;
-        _recv constant text := '09541230074';
-        _typed constant text := '09171234567';
+              _typed constant text := '09171234567';
         _other constant text := '09998887777';
         _ref text;
 begin
@@ -32,7 +31,7 @@ begin
     return;
   end if;
 
-  update public.ecosystems set cash_in_gcash_number = _recv where id = _eco;
+  update public.ecosystems set cash_in_gcash_number = _acct where id = _eco;
   delete from public.cash_in_auto_rules where ecosystem_id is not distinct from _eco;
   insert into public.cash_in_auto_rules (ecosystem_id, enabled, require_reference_match,
                                          amount_tolerance_php, expected_amount_php,
@@ -66,7 +65,7 @@ begin
   -- The receipt is read exactly as the upload pipeline does it: the receiving
   -- account on the sender-side receipt is MASKED.
   perform public.apply_cash_in_receipt_ocr(_row.id, _ref, 750, _typed, true, null,
-                                           now() - interval '4 minutes', '····0074', 'GCash',
+                                           now() - interval '4 minutes', '····' || right(_acct, 4), 'GCash',
                                            null, null, null, repeat('1', 64));
   select * into _row from public.cash_in_requests where id = _row.id;
   if _row.status <> 'approved' or _row.approval_method <> 'automatic' then
