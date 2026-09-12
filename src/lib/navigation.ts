@@ -48,7 +48,12 @@ import {
   Wifi,
 } from "lucide-react";
 import { RETAIL_VISIBLE, SOCIAL_ENABLED } from "@/lib/features";
-import { showsRetailTools, showsVoucherTools, type ShopTypeState } from "@/lib/shop-type";
+import {
+  showsRetailTools,
+  showsVoucherTools,
+  usesMembershipApproval,
+  type ShopTypeState,
+} from "@/lib/shop-type";
 import type { Role } from "@/lib/wavewallet";
 
 export interface NavItem {
@@ -172,10 +177,12 @@ export const customerBottomNav: NavItem[] = withCoreDestinations(
  * downlines, redemptions, earnings and reports. Both share the /reseller
  * workspace; the database decides what each may actually do.
  */
-export function resellerNav(role: Role = "reseller"): Nav {
+export function resellerNav(role: Role = "reseller", shopType?: ShopTypeState | null): Nav {
   const isReseller = role === "reseller" || role === "super_admin" || role === "admin";
   const business: NavItem[] = [
-    { to: "/reseller/applications", label: "New Members", icon: UserPlus },
+    ...(usesMembershipApproval(shopType)
+      ? ([{ to: "/reseller/applications", label: "New Members", icon: UserPlus }] as NavItem[])
+      : []),
     ...(isReseller
       ? ([
           { to: "/reseller/customers", label: "Downlines", icon: Users },
