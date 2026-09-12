@@ -18,7 +18,12 @@ const RECEIVING = "09541230072";
 const SENDER = "09171234567";
 
 /** A real GCash notification seen by the paired phone on the receiving account. */
-const seen = { sender_number: "+639171234567", amount_php: 500, outcome: "accepted", device_online: true };
+const seen = {
+  sender_number: "+639171234567",
+  amount_php: 500,
+  outcome: "accepted",
+  device_online: true,
+};
 
 const req: MatchableRequest = {
   amount_php: 500,
@@ -68,9 +73,9 @@ describe("automatic approval matching", () => {
   });
 
   it("compares equivalent phone formats", () => {
-    expect(
-      evaluateMatch({ ...req, sender_number: "+639171234567" }, on, "+63 954 123 0072"),
-    ).toBe("matched");
+    expect(evaluateMatch({ ...req, sender_number: "+639171234567" }, on, "+63 954 123 0072")).toBe(
+      "matched",
+    );
   });
 
   it("never approves while the feature is off", () => {
@@ -78,20 +83,26 @@ describe("automatic approval matching", () => {
   });
 
   it("never approves a duplicate reference", () => {
-    expect(evaluateMatch({ ...req, duplicate_reference: true }, on, RECEIVING)).toBe("duplicate_reference");
+    expect(evaluateMatch({ ...req, duplicate_reference: true }, on, RECEIVING)).toBe(
+      "duplicate_reference",
+    );
   });
 
   it("uses the receipt reference when the member typed none", () => {
     // Screenshot-first submissions carry no typed reference at all.
     expect(
-      evaluateMatch({ ...req, payer_reference: "", receipt_reference: "9044011942642" }, on, RECEIVING),
+      evaluateMatch(
+        { ...req, payer_reference: "", receipt_reference: "9044011942642" },
+        on,
+        RECEIVING,
+      ),
     ).toBe("matched");
   });
 
   it("waits for the receipt reading when there is no reference anywhere", () => {
-    expect(evaluateMatch({ ...req, payer_reference: "", receipt_reference: null }, on, RECEIVING)).toBe(
-      "awaiting_receipt_check",
-    );
+    expect(
+      evaluateMatch({ ...req, payer_reference: "", receipt_reference: null }, on, RECEIVING),
+    ).toBe("awaiting_receipt_check");
   });
 
   it("holds an unreadable screenshot that produced no reference", () => {
@@ -121,12 +132,15 @@ describe("automatic approval matching", () => {
   });
 
   it("accepts a receipt whose receiving account is this shop's account", () => {
-    expect(evaluateMatch({ ...req, receipt_receiving_number: RECEIVING }, on, RECEIVING)).toBe("matched");
+    expect(evaluateMatch({ ...req, receipt_receiving_number: RECEIVING }, on, RECEIVING)).toBe(
+      "matched",
+    );
   });
 
-
   it("holds when the receipt amount contradicts the request", () => {
-    expect(evaluateMatch({ ...req, receipt_amount_php: 999 }, on, RECEIVING)).toBe("amount_mismatch");
+    expect(evaluateMatch({ ...req, receipt_amount_php: 999 }, on, RECEIVING)).toBe(
+      "amount_mismatch",
+    );
   });
 
   it("requires the payment screenshot as supporting evidence", () => {
@@ -134,12 +148,18 @@ describe("automatic approval matching", () => {
   });
 
   it("never approves on the screenshot alone, without a real notification", () => {
-    expect(evaluateMatch({ ...req, listener_event: null }, on, RECEIVING)).toBe("awaiting_listener");
+    expect(evaluateMatch({ ...req, listener_event: null }, on, RECEIVING)).toBe(
+      "awaiting_listener",
+    );
   });
 
   it("does not reject on the typed sending number alone, but needs a second agreeing detail", () => {
     expect(
-      evaluateMatch({ ...req, listener_event: { ...seen, sender_number: "09181234567" } }, on, RECEIVING),
+      evaluateMatch(
+        { ...req, listener_event: { ...seen, sender_number: "09181234567" } },
+        on,
+        RECEIVING,
+      ),
     ).toBe("insufficient_match_signals");
   });
 
@@ -183,22 +203,36 @@ describe("automatic approval matching", () => {
     const exact = { ...on, expected_amount_php: 500 };
     expect(evaluateMatch(req, exact, RECEIVING)).toBe("matched");
     expect(
-      evaluateMatch({ ...req, amount_php: 499, listener_event: { ...seen, amount_php: 499 } }, exact, RECEIVING),
+      evaluateMatch(
+        { ...req, amount_php: 499, listener_event: { ...seen, amount_php: 499 } },
+        exact,
+        RECEIVING,
+      ),
     ).toBe("amount_mismatch");
   });
 
   it("accepts a small difference only within the configured tolerance", () => {
     const lenient = { ...on, expected_amount_php: 500, amount_tolerance_php: 1 };
     expect(
-      evaluateMatch({ ...req, amount_php: 499, listener_event: { ...seen, amount_php: 499 } }, lenient, RECEIVING),
+      evaluateMatch(
+        { ...req, amount_php: 499, listener_event: { ...seen, amount_php: 499 } },
+        lenient,
+        RECEIVING,
+      ),
     ).toBe("matched");
     expect(
-      evaluateMatch({ ...req, amount_php: 497, listener_event: { ...seen, amount_php: 497 } }, lenient, RECEIVING),
+      evaluateMatch(
+        { ...req, amount_php: 497, listener_event: { ...seen, amount_php: 497 } },
+        lenient,
+        RECEIVING,
+      ),
     ).toBe("amount_mismatch");
   });
 
   it("leaves amounts above the automatic limit for manual review", () => {
-    expect(evaluateMatch(req, { ...on, max_auto_amount_php: 400 }, RECEIVING)).toBe("above_auto_limit");
+    expect(evaluateMatch(req, { ...on, max_auto_amount_php: 400 }, RECEIVING)).toBe(
+      "above_auto_limit",
+    );
   });
 
   it("never re-decides a settled request", () => {
@@ -255,11 +289,15 @@ describe("destination-aware and configurable verification layers", () => {
   const RECEIVING = "09541230072";
 
   it("approves when both layers pass and verification is active", () => {
-    expect(evaluateMatch(request, { ...on, verification_mode: "active" }, RECEIVING)).toBe("matched");
+    expect(evaluateMatch(request, { ...on, verification_mode: "active" }, RECEIVING)).toBe(
+      "matched",
+    );
   });
 
   it("never settles while staged, even when every check passes", () => {
-    expect(evaluateMatch(request, { ...on, verification_mode: "staged" }, RECEIVING)).toBe("staged");
+    expect(evaluateMatch(request, { ...on, verification_mode: "staged" }, RECEIVING)).toBe(
+      "staged",
+    );
   });
 
   it("refuses a notification seen on another shop's receiving account", () => {
@@ -267,15 +305,23 @@ describe("destination-aware and configurable verification layers", () => {
       ...request,
       listener_event: { ...request.listener_event!, serves_shop: false },
     };
-    expect(evaluateMatch(other, { ...on, verification_mode: "active" }, RECEIVING)).toBe("wrong_shop");
+    expect(evaluateMatch(other, { ...on, verification_mode: "active" }, RECEIVING)).toBe(
+      "wrong_shop",
+    );
   });
 
   it("can run without the listener layer but still blocks a wrong sender when one is linked", () => {
     const noEvent = { ...request, listener_event: null };
     expect(
-      evaluateMatch(noEvent, { ...on, require_listener_match: false, verification_mode: "active" }, RECEIVING),
+      evaluateMatch(
+        noEvent,
+        { ...on, require_listener_match: false, verification_mode: "active" },
+        RECEIVING,
+      ),
     ).toBe("matched");
-    expect(evaluateMatch(noEvent, { ...on, require_listener_match: true }, RECEIVING)).toBe("awaiting_listener");
+    expect(evaluateMatch(noEvent, { ...on, require_listener_match: true }, RECEIVING)).toBe(
+      "awaiting_listener",
+    );
   });
 
   it("always blocks a receipt mismatch, even with the second layer relaxed", () => {
@@ -284,9 +330,15 @@ describe("destination-aware and configurable verification layers", () => {
       "receipt_reference_mismatch",
     );
     const unreadable = { ...request, receipt_check: "unreadable" };
-    expect(evaluateMatch(unreadable, { ...on, require_receipt_match: true }, RECEIVING)).toBe("receipt_unreadable");
+    expect(evaluateMatch(unreadable, { ...on, require_receipt_match: true }, RECEIVING)).toBe(
+      "receipt_unreadable",
+    );
     expect(
-      evaluateMatch(unreadable, { ...on, require_receipt_match: false, verification_mode: "active" }, RECEIVING),
+      evaluateMatch(
+        unreadable,
+        { ...on, require_receipt_match: false, verification_mode: "active" },
+        RECEIVING,
+      ),
     ).toBe("matched");
   });
 });
@@ -339,10 +391,18 @@ describe("a masked receiving number never blocks a valid Cash In", () => {
       },
     };
     expect(
-      evaluateMatch({ ...base, listener_event: { ...base.listener_event, serves_shop: false } }, rule, RECEIVING),
+      evaluateMatch(
+        { ...base, listener_event: { ...base.listener_event, serves_shop: false } },
+        rule,
+        RECEIVING,
+      ),
     ).toBe("wrong_shop");
     expect(
-      evaluateMatch({ ...base, listener_event: { ...base.listener_event, amount_php: 250 } }, rule, RECEIVING),
+      evaluateMatch(
+        { ...base, listener_event: { ...base.listener_event, amount_php: 250 } },
+        rule,
+        RECEIVING,
+      ),
     ).toBe("amount_mismatch");
     expect(
       evaluateMatch(
@@ -351,7 +411,9 @@ describe("a masked receiving number never blocks a valid Cash In", () => {
         RECEIVING,
       ),
     ).toBe("insufficient_match_signals");
-    expect(evaluateMatch({ ...base, duplicate_reference: true }, rule, RECEIVING)).toBe("duplicate_reference");
+    expect(evaluateMatch({ ...base, duplicate_reference: true }, rule, RECEIVING)).toBe(
+      "duplicate_reference",
+    );
   });
 });
 

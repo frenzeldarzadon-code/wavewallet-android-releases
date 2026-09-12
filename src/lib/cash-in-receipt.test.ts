@@ -30,7 +30,9 @@ describe("receipt reference check", () => {
   });
 
   it("never guesses when the receipt cannot be read", () => {
-    expect(decideReceiptCheck("9044011942642", reading({ readable: false, reference: null }))).toBe("unreadable");
+    expect(decideReceiptCheck("9044011942642", reading({ readable: false, reference: null }))).toBe(
+      "unreadable",
+    );
     expect(decideReceiptCheck("9044011942642", reading({ confidence: 0.2 }))).toBe("unreadable");
   });
 
@@ -57,7 +59,9 @@ describe("parsing what the reader returned", () => {
   });
 
   it("reads an answer wrapped in a code fence and prose", () => {
-    const parsed = parseReceiptReading('Here you go:\n```json\n{"reference":"123","readable":true}\n```');
+    const parsed = parseReceiptReading(
+      'Here you go:\n```json\n{"reference":"123","readable":true}\n```',
+    );
     expect(parsed.reference).toBe("123");
     expect(parsed.readable).toBe(true);
   });
@@ -113,22 +117,32 @@ describe("automatic approval gate", () => {
   });
 
   it("holds an unreadable receipt for manual review", () => {
-    expect(evaluateMatch(request({ receipt_check: "unreadable" }), rule, RECEIVING)).toBe("receipt_unreadable");
-    expect(evaluateMatch(request({ receipt_check: "error" }), rule, RECEIVING)).toBe("receipt_unreadable");
+    expect(evaluateMatch(request({ receipt_check: "unreadable" }), rule, RECEIVING)).toBe(
+      "receipt_unreadable",
+    );
+    expect(evaluateMatch(request({ receipt_check: "error" }), rule, RECEIVING)).toBe(
+      "receipt_unreadable",
+    );
   });
 
   it("waits while the receipt has not been read yet", () => {
-    expect(evaluateMatch(request({ receipt_check: "pending" }), rule, RECEIVING)).toBe("awaiting_receipt_check");
+    expect(evaluateMatch(request({ receipt_check: "pending" }), rule, RECEIVING)).toBe(
+      "awaiting_receipt_check",
+    );
   });
 
   it("holds a reused reference regardless of a clean receipt", () => {
-    expect(evaluateMatch(request({ duplicate_reference: true }), rule, RECEIVING)).toBe("duplicate_reference");
+    expect(evaluateMatch(request({ duplicate_reference: true }), rule, RECEIVING)).toBe(
+      "duplicate_reference",
+    );
   });
 
   it("sends a differing sender to a person instead of approving on the amount alone", () => {
     expect(
       evaluateMatch(
-        request({ listener_event: { sender_number: "09171234567", amount_php: 200, outcome: "accepted" } }),
+        request({
+          listener_event: { sender_number: "09171234567", amount_php: 200, outcome: "accepted" },
+        }),
         rule,
         RECEIVING,
       ),
@@ -138,7 +152,9 @@ describe("automatic approval gate", () => {
   it("still refuses a wrong amount even with a matched receipt", () => {
     expect(
       evaluateMatch(
-        request({ listener_event: { sender_number: "09541230072", amount_php: 150, outcome: "accepted" } }),
+        request({
+          listener_event: { sender_number: "09541230072", amount_php: 150, outcome: "accepted" },
+        }),
         rule,
         RECEIVING,
       ),
@@ -148,7 +164,9 @@ describe("automatic approval gate", () => {
 
 describe("duplicate reference comparison", () => {
   it("says plainly which transaction was credited first", () => {
-    expect(creditedFirstLabel({ credited_first: "old", credited_at: null })).toContain("earlier transaction");
+    expect(creditedFirstLabel({ credited_first: "old", credited_at: null })).toContain(
+      "earlier transaction",
+    );
     expect(creditedFirstLabel({ credited_first: "none", credited_at: null })).toContain("Neither");
   });
 });
@@ -160,7 +178,9 @@ describe("reviewer verification status", () => {
 
   it("flags a mismatch and explains why it is pending", () => {
     expect(verificationStatus({ receipt_check: "mismatch" })).toBe("MISMATCH");
-    expect(verificationReason({ receipt_check: "mismatch" })).toBe("Reference does not match receipt.");
+    expect(verificationReason({ receipt_check: "mismatch" })).toBe(
+      "Reference does not match receipt.",
+    );
   });
 
   it("flags an unreadable receipt without guessing", () => {
@@ -169,7 +189,9 @@ describe("reviewer verification status", () => {
   });
 
   it("lets a duplicate reference outrank a matched receipt", () => {
-    expect(verificationStatus({ receipt_check: "matched", duplicate_reference: true })).toBe("DUPLICATE_REFERENCE");
+    expect(verificationStatus({ receipt_check: "matched", duplicate_reference: true })).toBe(
+      "DUPLICATE_REFERENCE",
+    );
     expect(verificationReason({ duplicate_reference: true })).toContain("Duplicate reference");
   });
 
@@ -185,31 +207,61 @@ describe("reviewer verification status", () => {
 
 describe("reference normalization boundaries", () => {
   it("ignores spaces, punctuation and case when comparing", () => {
-    const reading = { reference: "9044-011 942642", amountPhp: 200, senderNumber: null, confidence: 0.95, readable: true };
+    const reading = {
+      reference: "9044-011 942642",
+      amountPhp: 200,
+      senderNumber: null,
+      confidence: 0.95,
+      readable: true,
+    };
     expect(decideReceiptCheck("9044 011 942642", reading)).toBe("matched");
     expect(decideReceiptCheck("9044011942642", reading)).toBe("matched");
     expect(decideReceiptCheck("  9044.011.942642  ", reading)).toBe("matched");
   });
 
   it("still treats genuinely different references as different", () => {
-    const reading = { reference: "9044 011 942642", amountPhp: 200, senderNumber: null, confidence: 0.95, readable: true };
+    const reading = {
+      reference: "9044 011 942642",
+      amountPhp: 200,
+      senderNumber: null,
+      confidence: 0.95,
+      readable: true,
+    };
     expect(decideReceiptCheck("9044 011 942643", reading)).toBe("mismatch");
     expect(decideReceiptCheck("904401194264", reading)).toBe("mismatch");
     expect(decideReceiptCheck("19044011942642", reading)).toBe("mismatch");
   });
 
   it("uses the receipt reference when the member typed nothing", () => {
-    const reading = { reference: "9044011942642", amountPhp: 200, senderNumber: null, confidence: 0.95, readable: true };
+    const reading = {
+      reference: "9044011942642",
+      amountPhp: 200,
+      senderNumber: null,
+      confidence: 0.95,
+      readable: true,
+    };
     expect(decideReceiptCheck("", reading)).toBe("matched");
   });
 
   it("still holds a reference the member changed to something else", () => {
-    const reading = { reference: "9044011942642", amountPhp: 200, senderNumber: null, confidence: 0.95, readable: true };
+    const reading = {
+      reference: "9044011942642",
+      amountPhp: 200,
+      senderNumber: null,
+      confidence: 0.95,
+      readable: true,
+    };
     expect(decideReceiptCheck("9044011942643", reading)).toBe("mismatch");
   });
 
   it("never guesses from a low-confidence read", () => {
-    const reading = { reference: "9044011942642", amountPhp: null, senderNumber: null, confidence: 0.4, readable: true };
+    const reading = {
+      reference: "9044011942642",
+      amountPhp: null,
+      senderNumber: null,
+      confidence: 0.4,
+      readable: true,
+    };
     expect(decideReceiptCheck("9044011942642", reading)).toBe("unreadable");
   });
 });
@@ -239,7 +291,12 @@ describe("provider-agnostic receipt reading", () => {
 
   it("leaves the new fields null when the receipt does not print them", () => {
     const read = parseReceiptReading(
-      JSON.stringify({ reference: "9044011942642", amount_php: 200, readable: true, confidence: 0.95 }),
+      JSON.stringify({
+        reference: "9044011942642",
+        amount_php: 200,
+        readable: true,
+        confidence: 0.95,
+      }),
     );
     expect(read.providerName).toBeNull();
     expect(read.senderName).toBeNull();
