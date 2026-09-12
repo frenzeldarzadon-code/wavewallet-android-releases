@@ -770,12 +770,139 @@ export type Database = {
           },
         ]
       }
+      coin_loan_entries: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          kind: string
+          ledger_id: string | null
+          loan_id: string
+          note: string | null
+          outstanding_after: number
+          period_index: number | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          kind: string
+          ledger_id?: string | null
+          loan_id: string
+          note?: string | null
+          outstanding_after: number
+          period_index?: number | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          ledger_id?: string | null
+          loan_id?: string
+          note?: string | null
+          outstanding_after?: number
+          period_index?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coin_loan_entries_ledger_id_fkey"
+            columns: ["ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coin_loan_entries_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "coin_loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coin_loans: {
+        Row: {
+          accrued_interest: number
+          approval_mode: string
+          auto_limit_snapshot: number
+          base_snapshot: number
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          first_month_interest: number
+          free_balance_snapshot: number
+          id: string
+          interest_percent: number
+          multiplier_snapshot: number
+          outstanding: number
+          principal: number
+          released_amount: number
+          released_at: string | null
+          settled_at: string | null
+          status: string
+          total_owed: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accrued_interest?: number
+          approval_mode: string
+          auto_limit_snapshot: number
+          base_snapshot: number
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          first_month_interest?: number
+          free_balance_snapshot: number
+          id?: string
+          interest_percent: number
+          multiplier_snapshot: number
+          outstanding?: number
+          principal: number
+          released_amount?: number
+          released_at?: string | null
+          settled_at?: string | null
+          status?: string
+          total_owed?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accrued_interest?: number
+          approval_mode?: string
+          auto_limit_snapshot?: number
+          base_snapshot?: number
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          first_month_interest?: number
+          free_balance_snapshot?: number
+          id?: string
+          interest_percent?: number
+          multiplier_snapshot?: number
+          outstanding?: number
+          principal?: number
+          released_amount?: number
+          released_at?: string | null
+          settled_at?: string | null
+          status?: string
+          total_owed?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       credit_accounts: {
         Row: {
           balance: number
           created_at: string
           ecosystem_id: string | null
           id: string
+          restricted_balance: number
           updated_at: string
           user_id: string
         }
@@ -784,6 +911,7 @@ export type Database = {
           created_at?: string
           ecosystem_id?: string | null
           id?: string
+          restricted_balance?: number
           updated_at?: string
           user_id: string
         }
@@ -792,6 +920,7 @@ export type Database = {
           created_at?: string
           ecosystem_id?: string | null
           id?: string
+          restricted_balance?: number
           updated_at?: string
           user_id?: string
         }
@@ -4040,6 +4169,11 @@ export type Database = {
           gcash_number: string
           grace_period_days: number
           id: number
+          loan_auto_base_credits: number
+          loan_first_month_upfront: boolean
+          loan_free_balance_multiplier: number
+          loan_monthly_interest_percent: number
+          loans_enabled: boolean
           member_invitation_expiry_days: number
           payment_instructions: string
           plan_name: string
@@ -4074,6 +4208,11 @@ export type Database = {
           gcash_number?: string
           grace_period_days?: number
           id?: number
+          loan_auto_base_credits?: number
+          loan_first_month_upfront?: boolean
+          loan_free_balance_multiplier?: number
+          loan_monthly_interest_percent?: number
+          loans_enabled?: boolean
           member_invitation_expiry_days?: number
           payment_instructions?: string
           plan_name?: string
@@ -4108,6 +4247,11 @@ export type Database = {
           gcash_number?: string
           grace_period_days?: number
           id?: number
+          loan_auto_base_credits?: number
+          loan_first_month_upfront?: boolean
+          loan_free_balance_multiplier?: number
+          loan_monthly_interest_percent?: number
+          loans_enabled?: boolean
           member_invitation_expiry_days?: number
           payment_instructions?: string
           plan_name?: string
@@ -8721,6 +8865,10 @@ export type Database = {
         }
         Returns: string
       }
+      apply_loan_repayment: {
+        Args: { _amount: number; _reason: string; _user_id: string }
+        Returns: number
+      }
       apply_subscription_plan: {
         Args: {
           _amount_php?: number
@@ -9283,6 +9431,17 @@ export type Database = {
         Returns: string
       }
       clear_login_username: { Args: { _target: string }; Returns: boolean }
+      coin_loan_auto_limit: { Args: { _user_id: string }; Returns: number }
+      coin_loan_settings: {
+        Args: never
+        Returns: {
+          base_credits: number
+          enabled: boolean
+          first_month_upfront: boolean
+          monthly_interest_percent: number
+          multiplier: number
+        }[]
+      }
       commission_rate_for: {
         Args: { _recipient: string; _sender: string }
         Returns: number
@@ -9820,6 +9979,7 @@ export type Database = {
         Args: { _follow?: boolean; _user: string }
         Returns: undefined
       }
+      free_coin_balance: { Args: { _user_id: string }; Returns: number }
       freeze_credit_purchase_order: {
         Args: { _order_id: string; _reason: string }
         Returns: {
@@ -9928,6 +10088,7 @@ export type Database = {
         Args: { _email?: string; _name: string }
         Returns: string
       }
+      has_loan_position: { Args: { _user_id: string }; Returns: boolean }
       has_membership: {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: boolean
@@ -10306,6 +10467,10 @@ export type Database = {
       }
       listener_unmatched_events: { Args: { _limit?: number }; Returns: Json }
       live_shop_name: { Args: { _name: string }; Returns: string }
+      loan_spend_allowed_in: {
+        Args: { _ecosystem_id: string; _user_id: string }
+        Returns: boolean
+      }
       log_operator_action: {
         Args: {
           _action: string
@@ -12560,6 +12725,11 @@ export type Database = {
           gcash_number: string
           grace_period_days: number
           id: number
+          loan_auto_base_credits: number
+          loan_first_month_upfront: boolean
+          loan_free_balance_multiplier: number
+          loan_monthly_interest_percent: number
+          loans_enabled: boolean
           member_invitation_expiry_days: number
           payment_instructions: string
           plan_name: string
@@ -14003,6 +14173,11 @@ export type Database = {
               gcash_number: string
               grace_period_days: number
               id: number
+              loan_auto_base_credits: number
+              loan_first_month_upfront: boolean
+              loan_free_balance_multiplier: number
+              loan_monthly_interest_percent: number
+              loans_enabled: boolean
               member_invitation_expiry_days: number
               payment_instructions: string
               plan_name: string
@@ -14054,6 +14229,11 @@ export type Database = {
               gcash_number: string
               grace_period_days: number
               id: number
+              loan_auto_base_credits: number
+              loan_first_month_upfront: boolean
+              loan_free_balance_multiplier: number
+              loan_monthly_interest_percent: number
+              loans_enabled: boolean
               member_invitation_expiry_days: number
               payment_instructions: string
               plan_name: string
@@ -14319,6 +14499,11 @@ export type Database = {
           gcash_number: string
           grace_period_days: number
           id: number
+          loan_auto_base_credits: number
+          loan_first_month_upfront: boolean
+          loan_free_balance_multiplier: number
+          loan_monthly_interest_percent: number
+          loans_enabled: boolean
           member_invitation_expiry_days: number
           payment_instructions: string
           plan_name: string
