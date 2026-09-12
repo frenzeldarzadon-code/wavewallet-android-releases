@@ -19,8 +19,6 @@ export function LegacyWalletRedirect({
 }: WalletCenterProps & { fallback?: "wallet" | "money" }) {
   const navigate = useNavigate();
   const { ecosystem, ready } = useSession();
-  // Only Universe members have a global wallet; anything else (New Generation
-  // or an unresolved shop) keeps its existing isolated screen.
   // Only New Generation (or any other non-Universe) shop keeps its isolated
   // screen. Members with no active shop at all belong to the Universe wallet,
   // so they are redirected like every other Universe member.
