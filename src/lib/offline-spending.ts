@@ -118,6 +118,8 @@ export function queuedAsEntries(rows: QueuedEntry[]): SpendingEntry[] {
     memberName: null,
     notes: r.notes,
     editable: true,
+    recurring: !!r.recurring,
+    recurrenceSourceId: null,
     sync: r.lastError ? ("failed" as const) : ("pending" as const),
   }));
 }

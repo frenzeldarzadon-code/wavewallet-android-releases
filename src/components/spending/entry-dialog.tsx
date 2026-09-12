@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -64,6 +65,7 @@ export function EntryDialog({
   const [categoryId, setCategoryId] = useState<string>(NONE);
   const [date, setDate] = useState(dayKey(new Date()));
   const [notes, setNotes] = useState("");
+  const [recurring, setRecurring] = useState(false);
   const [busy, setBusy] = useState(false);
   /**
    * Idempotency key for the entry being written. Minted once when the form is
@@ -82,9 +84,13 @@ export function EntryDialog({
       ? editing.categoryKey.slice(4)
       : NONE;
     setCategoryId(cat);
+    setRecurring(!!editing?.recurring);
     // A queued entry keeps the key it was created with; a new form gets one.
     clientRef.current = editing?.sync ? editing.id : newClientRef();
   }, [open, editing]);
+
+  /** A copy the monthly job created: the original owns the repeat setting. */
+  const isOccurrence = !!editing?.recurrenceSourceId;
 
   /**
    * Every category of this side is selectable: the premade ones the shop is
@@ -116,6 +122,7 @@ export function EntryDialog({
       categoryName: categories.find((c) => c.id === chosen)?.name ?? null,
       occurredAt: new Date(`${date}T12:00:00`),
       notes: notes.trim() || null,
+      ...(isOccurrence ? {} : { recurring }),
     };
     setBusy(true);
     try {
@@ -129,6 +136,7 @@ export function EntryDialog({
           categoryName: payload.categoryName,
           occurredAt: payload.occurredAt.toISOString(),
           notes: payload.notes,
+          recurring,
           lastError: null,
         });
         toast.success("Saved on this device. It will sync when you are back online.");
@@ -220,6 +228,29 @@ export function EntryDialog({
               </Select>
             </div>
           </div>
+          {isOccurrence ? (
+            <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+              This is a monthly repeat of an earlier entry. Change the repeat
+              setting on the original entry.
+            </p>
+          ) : (
+            <label className="flex items-start gap-3 rounded-md border border-border px-3 py-2.5">
+              <Checkbox
+                id="entryRecurring"
+                checked={recurring}
+                onCheckedChange={(v) => setRecurring(v === true)}
+                className="mt-0.5"
+              />
+              <span className="text-sm">
+                Recurring — repeat every month on the same day
+                <span className="mt-0.5 block text-xs text-muted-foreground">
+                  Adds the same {kind === "income" ? "income" : "expense"} record
+                  automatically each month. Short months use their last day. You can
+                  switch this off later; entries already recorded stay.
+                </span>
+              </span>
+            </label>
+          )}
           <div className="space-y-1.5">
             <Label htmlFor="entryNotes">Notes (optional)</Label>
             <Textarea
