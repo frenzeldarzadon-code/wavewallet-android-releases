@@ -10,7 +10,8 @@
 --      notification is informational and must never block;
 --   3) the notification arriving BEFORE the cash in is submitted still links;
 --   4) the notification arriving AFTER the cash in is submitted still links;
---   5) only one agreeing fact keeps the cash in pending for a person;
+--   5) only one agreeing fact keeps the cash in pending for a person — the
+--      receiving account is the same on every payment and never counts;
 --   6) a reference that already settled a cash in never credits again.
 begin;
 
@@ -110,10 +111,12 @@ begin
           public.normalize_ph_mobile(_other), now(), now(), 'accepted',
           jsonb_build_object('receiving_account', _acct));
   _row := public.request_cash_in(_method, 310, _ref, null, gen_random_uuid()::text,
-                                 _uid::text || '/ind-3.jpg', _typed, null, now(),
+                                 _uid::text || '/ind-3.jpg', _typed, null,
+                                 now() - interval '40 minutes',
                                  jsonb_build_object('provider_name', 'GCash'));
   perform public.apply_cash_in_receipt_ocr(_row.id, _ref, 310, _typed, true, null,
-                                           now(), _acct, 'GCash', null, null, null, repeat('3', 64));
+                                           now() - interval '40 minutes', _acct, 'GCash',
+                                           null, null, null, repeat('3', 64));
   select * into _row from public.cash_in_requests where id = _row.id;
   if _row.status <> 'pending' then
     raise exception '5: one agreeing fact must stay pending for a person (got %)', _row.status;
