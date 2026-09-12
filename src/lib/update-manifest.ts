@@ -46,11 +46,10 @@ export const ANDROID_UPDATE_URL =
   "https://github.com/frenzeldarzadon-code/wavewallet-android-releases/releases/download/v1.5.0/WaveWallet-1.5.0.apk";
 
 /**
- * SHA-256 of the published APK, shown for verification. Left empty until the
- * checksum of the exact published 1.5.0 asset is confirmed — an unverified
- * checksum is worse than none.
+ * SHA-256 of the published APK, shown for verification.
  */
-export const ANDROID_SHA256 = "";
+export const ANDROID_SHA256 =
+  "b203c4459ecf63b02d8da06a9fdf18deece4439f3dc5c282a85f04d26da10730";
 
 export const RELEASE_NOTES =
   "ONE WAVE 1.5.0: integrated payment listener, in-app update centre and reliable voucher image saving.";
