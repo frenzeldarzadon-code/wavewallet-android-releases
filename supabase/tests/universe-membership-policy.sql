@@ -37,13 +37,15 @@ begin
   end if;
 end $$;
 
--- Universe memberships are never left inactive/pending by the join path.
+-- Universe memberships are never left waiting for approval. A member the shop
+-- deliberately removed ('removed') and a suspended account are legitimate
+-- states and stay out of this check.
 do $$
 declare _blocked int;
 begin
   select count(*) into _blocked
     from public.ecosystem_memberships m
-   where m.membership_state <> 'active'
+   where m.membership_state not in ('active', 'removed')
      and m.status <> 'suspended'
      and not public.shop_requires_membership_approval(m.ecosystem_id);
   if _blocked > 0 then
