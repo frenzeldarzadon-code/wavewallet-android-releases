@@ -240,9 +240,10 @@ export async function cancelCoinLoan(loanId: string) {
 }
 
 export async function fetchAdminCoinLoans(status?: string): Promise<AdminCoinLoan[]> {
-  const { data, error } = await supabase.rpc("admin_coin_loans", {
-    _status: status ?? undefined,
-  });
+  const { data, error } = await supabase.rpc(
+    "admin_coin_loans",
+    status ? { _status: status } : {},
+  );
   if (error) throw error;
   return (data ?? []) as unknown as AdminCoinLoan[];
 }
@@ -252,7 +253,7 @@ export async function reviewCoinLoan(loanId: string, approve: boolean, note?: st
   const { error } = await supabase.rpc("review_coin_loan", {
     _loan_id: loanId,
     _approve: approve,
-    _note: note ?? undefined,
+    ...(note ? { _note: note } : {}),
   });
   if (error) throw error;
 }
