@@ -48,7 +48,12 @@ import {
   Wifi,
 } from "lucide-react";
 import { RETAIL_VISIBLE, SOCIAL_ENABLED } from "@/lib/features";
-import { showsRetailTools, showsVoucherTools, type ShopTypeState } from "@/lib/shop-type";
+import {
+  showsRetailTools,
+  showsVoucherTools,
+  usesMembershipApproval,
+  type ShopTypeState,
+} from "@/lib/shop-type";
 import type { Role } from "@/lib/wavewallet";
 
 export interface NavItem {
@@ -172,10 +177,12 @@ export const customerBottomNav: NavItem[] = withCoreDestinations(
  * downlines, redemptions, earnings and reports. Both share the /reseller
  * workspace; the database decides what each may actually do.
  */
-export function resellerNav(role: Role = "reseller"): Nav {
+export function resellerNav(role: Role = "reseller", shopType?: ShopTypeState | null): Nav {
   const isReseller = role === "reseller" || role === "super_admin" || role === "admin";
   const business: NavItem[] = [
-    { to: "/reseller/applications", label: "New Members", icon: UserPlus },
+    ...(usesMembershipApproval(shopType)
+      ? ([{ to: "/reseller/applications", label: "New Members", icon: UserPlus }] as NavItem[])
+      : []),
     ...(isReseller
       ? ([
           { to: "/reseller/customers", label: "Downlines", icon: Users },
@@ -263,7 +270,11 @@ export function adminNav(options?: { goLive?: boolean; shopType?: ShopTypeState 
       items: [
         { to: "/admin/resellers", label: "Resellers", icon: Users },
         { to: "/admin/customers", label: "Customers", icon: UserSquare2 },
-        { to: "/admin/applications", label: "New Members", icon: UserPlus },
+        // Membership approval is a New Generation rule only; Universe shops
+        // have no application, pending queue or approval step.
+        ...(usesMembershipApproval(t)
+          ? ([{ to: "/admin/applications", label: "New Members", icon: UserPlus }] as NavItem[])
+          : []),
         { to: "/admin/signup-link", label: "Signup link", icon: Link2 },
       ],
     },
@@ -340,14 +351,35 @@ export const adminBottomNav: NavItem[] = [
 
 /** Phone tab bar per shop type: a Retail shop's second tab is its orders, not voucher codes. */
 export function adminBottomNavFor(shopType?: ShopTypeState | null): NavItem[] {
+  let items = adminBottomNav;
   if (shopType && showsRetailTools(shopType) && !showsVoucherTools(shopType)) {
-    return adminBottomNav.map((i) =>
+    items = items.map((i) =>
       i.to === "/admin/vouchers"
         ? { to: "/admin/orders", label: "Orders", icon: ClipboardList }
         : i,
     );
   }
-  return adminBottomNav;
+  // Universe shops never review members — the tab becomes the member list.
+  if (!usesMembershipApproval(shopType)) {
+    items = items.map((i) =>
+      i.to === "/admin/applications"
+        ? { to: "/admin/customers", label: "Members", icon: UserSquare2 }
+        : i,
+    );
+  }
+  return items;
+}
+
+/** Phone tab bar of a seller: Universe shops drop the member review tab. */
+export function resellerBottomNavFor(shopType?: ShopTypeState | null): NavItem[] {
+  if (usesMembershipApproval(shopType)) return resellerBottomNav;
+  return withCoreDestinations(
+    [
+      { to: "/reseller", label: "Home", icon: LayoutDashboard },
+      { to: "/reseller/profile", label: "Profile", icon: User },
+    ],
+    resellerCoreBottomNav,
+  );
 }
 
 /** Read-only screens a lapsed shop keeps. Subscription billing is not part of

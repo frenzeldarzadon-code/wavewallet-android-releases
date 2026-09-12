@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ApplicationsPanel } from "@/components/applications-panel";
 import { MemberInboxPanel } from "@/components/member-inbox-panel";
+import { NoMembershipApprovalNotice } from "@/components/no-membership-approval-notice";
 import { useSession } from "@/lib/session";
+import { useShopStatus } from "@/lib/shop-status";
+import { usesMembershipApproval } from "@/lib/shop-type";
 
 export const Route = createFileRoute("/admin/applications")({
   head: () => ({
@@ -9,8 +12,7 @@ export const Route = createFileRoute("/admin/applications")({
       { title: "New Members — ONE WAVE Admin" },
       {
         name: "description",
-        content:
-          "Review members who just joined your shop and keep or remove them.",
+        content: "Review members who just joined your shop and keep or remove them.",
       },
       { property: "og:title", content: "New Members — ONE WAVE Admin" },
       {
@@ -26,13 +28,18 @@ export const Route = createFileRoute("/admin/applications")({
 
 function AdminApplications() {
   const { ecosystemDbId } = useSession("admin");
+  const { shopType } = useShopStatus(ecosystemDbId);
   return (
     <>
       <MemberInboxPanel />
-      <ApplicationsPanel
-        ecosystemId={ecosystemDbId}
-        description="Members who joined your shop automatically. They are already active — keep or remove them."
-      />
+      {usesMembershipApproval(shopType) ? (
+        <ApplicationsPanel
+          ecosystemId={ecosystemDbId}
+          description="Members who joined your shop automatically. They are already active — keep or remove them."
+        />
+      ) : (
+        <NoMembershipApprovalNotice />
+      )}
     </>
   );
 }

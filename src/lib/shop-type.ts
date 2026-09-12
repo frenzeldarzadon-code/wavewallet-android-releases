@@ -93,6 +93,19 @@ export function showsRetailTools(t: ShopTypeState | null | undefined): boolean {
   return t === "universe_retail" || t === "universe_mixed";
 }
 
+/**
+ * Membership approval is a New Generation rule only. Universe shops have no
+ * membership application, pending queue or approval step — the database
+ * (`shop_requires_membership_approval`) is authoritative and this mirror only
+ * decides whether the review screens are worth showing.
+ *
+ * Unknown / still loading keeps the review surfaces visible so a New
+ * Generation console never loses them while the shop type resolves.
+ */
+export function usesMembershipApproval(t: ShopTypeState | null | undefined): boolean {
+  return t == null || t === "new_generation";
+}
+
 /** Where a freshly created shop lands. */
 export function homeRouteFor(t: ShopType): "/admin" | "/admin/retail" | "/admin/products" {
   if (t === "universe_retail") return "/admin/retail";
