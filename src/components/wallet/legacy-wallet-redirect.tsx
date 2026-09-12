@@ -18,15 +18,15 @@ export function LegacyWalletRedirect({
   ...props
 }: WalletCenterProps & { fallback?: "wallet" | "money" }) {
   const navigate = useNavigate();
-  const { ecosystem, loading } = useSession();
+  const { ecosystem, ready } = useSession();
   const isolated = ecosystem?.shopKind === "subscription";
 
   useEffect(() => {
-    if (loading || isolated) return;
+    if (!ready || isolated) return;
     void navigate({ to: "/universe/wallet", replace: true });
-  }, [loading, isolated, navigate]);
+  }, [ready, isolated, navigate]);
 
-  if (loading) return null;
+  if (!ready) return null;
   if (!isolated) return null;
   return fallback === "money" ? <MoneyPage /> : <WalletCenter {...props} />;
 }

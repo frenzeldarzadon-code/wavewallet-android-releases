@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { MoneyPage } from "@/components/money/money-page";
+import { LegacyWalletRedirect } from "@/components/wallet/legacy-wallet-redirect";
 
 export const Route = createFileRoute("/reseller/money")({
   head: () => ({
@@ -12,5 +12,5 @@ export const Route = createFileRoute("/reseller/money")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: () => <MoneyPage />,
+  component: () => <LegacyWalletRedirect base="/reseller" fallback="money" />,
 });
