@@ -307,6 +307,8 @@ export async function fetchSpendingEntries(
       category_id: string | null;
       notes: string | null;
       spent_at: string;
+      recurring?: boolean | null;
+      recurrence_source_id?: string | null;
     }[]
   ).map((r) => {
     const cat = r.category_id ? byId.get(r.category_id) : undefined;
