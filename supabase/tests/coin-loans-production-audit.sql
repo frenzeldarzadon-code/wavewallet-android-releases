@@ -131,12 +131,14 @@ BEGIN
     ASSERT _err LIKE '%Loaned coins%' OR _err LIKE '%Insufficient%', 'cash out blocked: ' || _err;
   END;
 
+  -- loaned coins cannot be pushed into a shop wallet either
   BEGIN
-    PERFORM public.social_move(_res, 'debit', 800, 'social', 'buy social credits', 'aud-soc');
-    RAISE EXCEPTION 'loaned coins bought social credits';
+    INSERT INTO public.credit_ledger (account_id, user_id, ecosystem_id, direction, amount, reason, entry_kind, actor_id)
+    VALUES (_acct, _res, NULL, 'debit', 800, 'shop transfer', 'shop_transfer_out', _res);
+    RAISE EXCEPTION 'loaned coins moved to a shop wallet';
   EXCEPTION WHEN others THEN
     _err := SQLERRM;
-    ASSERT _err LIKE '%Loaned coins%' OR _err LIKE '%Insufficient%', 'social purchase blocked: ' || _err;
+    ASSERT _err LIKE '%Loaned coins%' OR _err LIKE '%Insufficient%', 'shop transfer blocked: ' || _err;
   END;
 
   -- free coins still move freely
