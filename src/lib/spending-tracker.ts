@@ -56,6 +56,13 @@ export interface SpendingEntry {
   /** Manual entries only: automatic ones are derived and can never be edited. */
   editable: boolean;
   /**
+   * True when this manual entry repeats monthly. The monthly job copies it —
+   * as a reporting row only — on the same calendar day of every later month.
+   */
+  recurring?: boolean;
+  /** Set on a copy the monthly job created, pointing at the original entry. */
+  recurrenceSourceId?: string | null;
+  /**
    * Set only for entries saved on this device that the server has not
    * confirmed yet. Absent means the row came back from the server.
    */
@@ -233,14 +240,18 @@ export async function fetchSpendingEntries(
     }),
     supabase
       .from("spending_income_entries")
-      .select("id, amount, description, category_id, notes, occurred_at")
+      .select(
+        "id, amount, description, category_id, notes, occurred_at, recurring, recurrence_source_id",
+      )
       .eq("ecosystem_id", ecosystemId)
       .gte("occurred_at", fromIso)
       .lte("occurred_at", toIso)
       .order("occurred_at", { ascending: false }),
     supabase
       .from("business_expenses")
-      .select("id, amount, description, category, category_id, notes, spent_at")
+      .select(
+        "id, amount, description, category, category_id, notes, spent_at, recurring, recurrence_source_id",
+      )
       .eq("scope", "ecosystem")
       .eq("ecosystem_id", ecosystemId)
       .gte("spent_at", fromIso)
@@ -264,6 +275,8 @@ export async function fetchSpendingEntries(
       category_id: string | null;
       notes: string | null;
       occurred_at: string;
+      recurring?: boolean | null;
+      recurrence_source_id?: string | null;
     }[]
   ).map((r) => {
     const cat = r.category_id ? byId.get(r.category_id) : undefined;
@@ -280,6 +293,8 @@ export async function fetchSpendingEntries(
       memberName: null,
       notes: r.notes,
       editable: true,
+      recurring: !!r.recurring,
+      recurrenceSourceId: r.recurrence_source_id ?? null,
     };
   });
 
@@ -292,6 +307,8 @@ export async function fetchSpendingEntries(
       category_id: string | null;
       notes: string | null;
       spent_at: string;
+      recurring?: boolean | null;
+      recurrence_source_id?: string | null;
     }[]
   ).map((r) => {
     const cat = r.category_id ? byId.get(r.category_id) : undefined;
@@ -308,6 +325,8 @@ export async function fetchSpendingEntries(
       memberName: null,
       notes: r.notes,
       editable: true,
+      recurring: !!r.recurring,
+      recurrenceSourceId: r.recurrence_source_id ?? null,
     };
   });
 
@@ -334,6 +353,13 @@ export interface ManualEntryInput {
    * makes replaying the offline queue safe.
    */
   clientRef?: string | null;
+  /**
+   * Monthly repeat. Left undefined the entry keeps whatever it already had, so
+   * existing entries and callers that know nothing about recurrence are never
+   * converted. The saved entry itself is the first occurrence — the monthly
+   * job only ever adds LATER months.
+   */
+  recurring?: boolean;
 }
 
 export function validateManualEntry(input: {
@@ -366,10 +392,35 @@ export async function saveManualEntry(input: ManualEntryInput, id?: string): Pro
       : id
         ? { fn: "spending_update_expense", args: { _id: id, ...shared, _spent_at: input.occurredAt.toISOString() } }
         : { fn: "spending_record_expense", args: { _ecosystem: input.ecosystemId, ...shared, _spent_at: input.occurredAt.toISOString(), _client_ref: ref } };
-  const { error } = await supabase.rpc(
+  const { data, error } = await supabase.rpc(
     rpc.fn as "spending_record_income",
     rpc.args as never,
   );
+  if (error) throw new Error(error.message);
+
+  if (input.recurring !== undefined) {
+    const savedId = id ?? (data as { id?: string } | null)?.id ?? null;
+    // A generated occurrence never becomes a source, and an entry that is
+    // already in the wanted state is left untouched.
+    if (savedId) await setEntryRecurring(input.kind, savedId, input.recurring);
+  }
+}
+
+/**
+ * Turns the monthly repeat on or off for one manual entry. Switching it off
+ * only stops FUTURE occurrences; everything already recorded stays exactly as
+ * it is. Reporting only — no wallet, coin ledger or transaction is involved.
+ */
+export async function setEntryRecurring(
+  kind: EntryKind,
+  id: string,
+  on: boolean,
+): Promise<void> {
+  const { error } = await supabase.rpc("spending_set_recurring", {
+    _kind: kind,
+    _id: id,
+    _on: on,
+  });
   if (error) throw new Error(error.message);
 }
 
@@ -501,4 +552,47 @@ export function categoryHighlights(entries: SpendingEntry[]): CategoryHighlight 
     topIncome: income[0] ?? null,
     topExpense: expense[0] ?? null,
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* Monthly recurrence (mirror of the database generator)               */
+/* ------------------------------------------------------------------ */
+
+/** Last calendar day of the month that `year`/`monthIndex` points at. */
+export const lastDayOfMonth = (year: number, monthIndex: number) =>
+  new Date(year, monthIndex + 1, 0).getDate();
+
+/**
+ * The date of the Nth monthly repeat of an entry. Months that are too short
+ * (a 31st in February) fall back to their own last day instead of skipping.
+ */
+export function occurrenceDate(source: Date, monthsAhead: number): Date {
+  const year = source.getFullYear();
+  const month = source.getMonth() + monthsAhead;
+  const target = new Date(year, month, 1);
+  const day = Math.min(
+    source.getDate(),
+    lastDayOfMonth(target.getFullYear(), target.getMonth()),
+  );
+  return new Date(
+    target.getFullYear(),
+    target.getMonth(),
+    day,
+    source.getHours(),
+    source.getMinutes(),
+    source.getSeconds(),
+  );
+}
+
+/**
+ * Every repeat due between the month AFTER the original entry and the month
+ * `now` falls in. The original entry is the first occurrence and is never
+ * repeated, which is what keeps the generator from duplicating it.
+ */
+export function dueOccurrences(source: Date, now = new Date()): Date[] {
+  const months =
+    (now.getFullYear() - source.getFullYear()) * 12 + (now.getMonth() - source.getMonth());
+  const out: Date[] = [];
+  for (let i = 1; i <= months; i += 1) out.push(occurrenceDate(source, i));
+  return out;
 }

@@ -482,6 +482,11 @@ export function SpendingTrackerPage({ ecosystemId }: { ecosystemId: string | nul
                       {e.categoryName} · {shortDate(e.occurredAt)}
                       {e.source === "automatic" ? " · automatic" : ""}
                     </p>
+                    {e.recurring ? (
+                      <StatusBadge tone="brand">Repeats monthly</StatusBadge>
+                    ) : e.recurrenceSourceId ? (
+                      <StatusBadge tone="muted">Monthly repeat</StatusBadge>
+                    ) : null}
                     {e.sync ? (
                       <StatusBadge tone={e.sync === "failed" ? "danger" : "warning"}>
                         {e.sync === "failed" ? "Sync failed — will retry" : "Saved on this device · not synced"}
