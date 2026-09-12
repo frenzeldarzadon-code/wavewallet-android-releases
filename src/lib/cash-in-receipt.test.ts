@@ -125,14 +125,14 @@ describe("automatic approval gate", () => {
     expect(evaluateMatch(request({ duplicate_reference: true }), rule, RECEIVING)).toBe("duplicate_reference");
   });
 
-  it("still refuses a wrong sender even with a matched receipt", () => {
+  it("sends a differing sender to a person instead of approving on the amount alone", () => {
     expect(
       evaluateMatch(
         request({ listener_event: { sender_number: "09171234567", amount_php: 200, outcome: "accepted" } }),
         rule,
         RECEIVING,
       ),
-    ).toBe("number_mismatch");
+    ).toBe("insufficient_match_signals");
   });
 
   it("still refuses a wrong amount even with a matched receipt", () => {
