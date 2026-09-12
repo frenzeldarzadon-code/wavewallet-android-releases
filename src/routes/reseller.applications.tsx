@@ -13,8 +13,7 @@ export const Route = createFileRoute("/reseller/applications")({
       { title: "New Members — ONE WAVE Reseller" },
       {
         name: "description",
-        content:
-          "Review members who just joined your shop and keep or remove them.",
+        content: "Review members who just joined your shop and keep or remove them.",
       },
       { property: "og:title", content: "New Members — ONE WAVE Reseller" },
       {
