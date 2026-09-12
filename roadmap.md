@@ -37,4 +37,4 @@
 - [x] Loan section in Universe → My Wallet; Super Admin settings + approval queue
 - [x] Legacy /app, /app/money, /reseller/wallet, /reseller/money, /admin/wallet redirect to /universe/wallet (NG shops keep their isolated screen)
 - [x] Tests: `src/lib/coin-loans.test.ts`, `supabase/tests/coin-loans.sql` (rolled back), typecheck, 1479 unit tests
-- [ ] Schedule `accrue_coin_loan_interest()` on the daily cron (needs a cron entry alongside the existing retention job)
+- [x] Daily scheduled interest run (`coin-loan-interest`, 02:20)
