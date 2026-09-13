@@ -5143,6 +5143,7 @@ export type Database = {
           platform_fee_amount: number | null
           platform_fee_percent: number | null
           refund_ledger_id: string | null
+          reversed_at: string | null
           self_cashback: number
           self_delivery: boolean
           seller_id: string | null
@@ -5202,6 +5203,7 @@ export type Database = {
           platform_fee_amount?: number | null
           platform_fee_percent?: number | null
           refund_ledger_id?: string | null
+          reversed_at?: string | null
           self_cashback?: number
           self_delivery?: boolean
           seller_id?: string | null
@@ -5261,6 +5263,7 @@ export type Database = {
           platform_fee_amount?: number | null
           platform_fee_percent?: number | null
           refund_ledger_id?: string | null
+          reversed_at?: string | null
           self_cashback?: number
           self_delivery?: boolean
           seller_id?: string | null
@@ -5353,6 +5356,7 @@ export type Database = {
           fee_percent: number
           id: string
           order_id: string
+          reversed_at: string | null
           seller_credits: number
           tx_id: string
         }
@@ -5363,6 +5367,7 @@ export type Database = {
           fee_percent: number
           id?: string
           order_id: string
+          reversed_at?: string | null
           seller_credits: number
           tx_id: string
         }
@@ -5373,6 +5378,7 @@ export type Database = {
           fee_percent?: number
           id?: string
           order_id?: string
+          reversed_at?: string | null
           seller_credits?: number
           tx_id?: string
         }
@@ -11844,6 +11850,7 @@ export type Database = {
         }[]
       }
       retail_order_chat: { Args: { _order_id: string }; Returns: string }
+      retail_order_workspace: { Args: { _thread_id: string }; Returns: Json }
       retail_peso: { Args: { _amount: number }; Returns: string }
       retail_place_order: {
         Args: {
@@ -11881,6 +11888,10 @@ export type Database = {
       retail_seller_allowed: {
         Args: { _ecosystem_id: string; _seller: string }
         Returns: boolean
+      }
+      retail_seller_cancel_order: {
+        Args: { _note?: string; _order_id: string }
+        Returns: undefined
       }
       retail_settlement_recipient: {
         Args: { _ecosystem_id: string }

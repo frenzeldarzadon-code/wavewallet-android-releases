@@ -373,10 +373,10 @@ describe("customer order history", () => {
     expect(done.every((s) => s.done)).toBe(true);
   });
 
-  it("chat only for live delivery orders; payment label never exposes internals", () => {
+  it("chat for every live order (pickup included); payment label never exposes internals", () => {
     expect(canOpenOrderChat(baseOrder({ status: "pending" }))).toBe(true);
     expect(canOpenOrderChat(baseOrder({ status: "cancelled" }))).toBe(false);
-    expect(canOpenOrderChat(baseOrder({ fulfillment: "pickup" }))).toBe(false);
+    expect(canOpenOrderChat(baseOrder({ fulfillment: "pickup" }))).toBe(true);
     expect(customerPaymentLabel(baseOrder({ status: "rejected" }))).toBe("Nothing charged");
     expect(
       customerPaymentLabel(baseOrder({ payment_method: "credit", status: "pending" })),
