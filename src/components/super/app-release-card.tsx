@@ -24,6 +24,7 @@ const EMPTY: AppReleaseInput = {
   enabled: false,
   downloadUrl: "",
   version: "",
+  versionCode: 0,
   releaseDate: "",
   sizeBytes: 0,
   minOs: "Android 7.0+",
@@ -44,6 +45,7 @@ export function AppReleaseCard() {
         enabled: r.android_enabled,
         downloadUrl: r.android_download_url,
         version: r.android_version,
+        versionCode: Number((r as { android_version_code?: number }).android_version_code ?? 0),
         releaseDate: r.android_release_date ?? "",
         sizeBytes: Number(r.android_size_bytes ?? 0),
         minOs: r.android_min_os || "Android 7.0+",
@@ -107,6 +109,19 @@ export function AppReleaseCard() {
               value={form.version}
               onChange={(e) => set("version", e.target.value)}
             />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="apkBuild">Build number (versionCode)</Label>
+            <Input
+              id="apkBuild"
+              inputMode="numeric"
+              placeholder="8"
+              value={form.versionCode ? String(form.versionCode) : ""}
+              onChange={(e) => set("versionCode", Number(e.target.value.replace(/\D/g, "")) || 0)}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Must match the installed app&apos;s build number, so update checks work.
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="apkDate">Release date</Label>
