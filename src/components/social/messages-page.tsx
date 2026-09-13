@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { MemberAvatar } from "@/components/member-avatar";
+import { OrderWorkspacePanel } from "@/components/social/order-workspace-panel";
 import { PeopleSheet } from "@/components/universe/people-sheet";
 import { ImageCropper } from "@/components/image-cropper";
 import { cn } from "@/lib/utils";
@@ -322,6 +323,8 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
             </>
           ) : null}
         </div>
+
+        {isOrder ? <OrderWorkspacePanel key={active.thread_id} threadId={active.thread_id} /> : null}
 
         {isOrder ? (
           <div className="flex flex-wrap gap-1">

@@ -86,7 +86,7 @@ export function OrderWorkspacePanel({ threadId }: { threadId: string }) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">
-            {ws.order_no} · {peso(ws.buyer_charge + (ws.payment_method === "cod" ? 0 : 0))}
+            {ws.order_no} · {peso(ws.buyer_charge + ws.delivery_fee)}
           </p>
           <p className="truncate text-[11px] text-muted-foreground">
             {roleTitle[ws.role]} · {ws.items.reduce((s, i) => s + i.quantity, 0)} item(s) ·{" "}
