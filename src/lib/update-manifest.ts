@@ -25,15 +25,15 @@ export const WEB_BUILD_ID: string =
 
 /** Latest published native Android release. Must match android-app/app/build.gradle.kts. */
 // These describe the APK published at ANDROID_UPDATE_URL below: the signed
-// 1.5.0 build (versionCode 7) produced by the "Build WaveWallet APK" workflow
-// and attached to the v1.5.0 GitHub Release.
-export const ANDROID_VERSION_CODE = 7;
-export const ANDROID_VERSION_NAME = "1.5.0";
+// 1.5.1 build (versionCode 8) produced by the "Build WaveWallet APK" workflow
+// and attached to the v1.5.1 GitHub Release.
+export const ANDROID_VERSION_CODE = 8;
+export const ANDROID_VERSION_NAME = "1.5.1";
 /**
  * Oldest native build still considered compatible. Anything below this is
  * missing native capabilities the web layer relies on (voucher image saving).
  * 1.1.1 (code 3) stays supported, so those users are offered — not forced —
- * the 1.5.0 update.
+ * the 1.5.1 update.
  */
 export const ANDROID_MIN_VERSION_CODE = 2;
 
@@ -43,16 +43,16 @@ export const ANDROID_MIN_VERSION_CODE = 2;
  * release repository.
  */
 export const ANDROID_UPDATE_URL =
-  "https://github.com/frenzeldarzadon-code/wavewallet-android-releases/releases/download/v1.5.0/WaveWallet-1.5.0.apk";
+  "https://github.com/frenzeldarzadon-code/onewave-android-releases/releases/download/v1.5.1/app-release.apk";
 
 /**
  * SHA-256 of the published APK, shown for verification.
  */
 export const ANDROID_SHA256 =
-  "b203c4459ecf63b02d8da06a9fdf18deece4439f3dc5c282a85f04d26da10730";
+  "292bbbdd900b2719ad9e0046138b9b87c2d4ec9846ba31c056e0ef648b31cbc7";
 
 export const RELEASE_NOTES =
-  "ONE WAVE 1.5.0: integrated payment listener, in-app update centre and reliable voucher image saving.";
+  "ONE WAVE 1.5.1: integrated payment listener, in-app update center, improved voucher image saving, coin loan and repayment functionality, and improved update compatibility for existing Android users.";
 
 export interface UpdateManifest {
   web: { version: string; buildId: string };
