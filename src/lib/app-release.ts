@@ -15,6 +15,8 @@ export interface AppReleaseInput {
   enabled: boolean;
   downloadUrl: string;
   version: string;
+  /** Android build number (versionCode) of the published APK. */
+  versionCode: number;
   releaseDate: string; // yyyy-mm-dd or ""
   sizeBytes: number;
   minOs: string;
@@ -43,6 +45,9 @@ export function validateRelease(input: AppReleaseInput): string | null {
   const sha = normalizeSha256(input.sha256);
   if (sha && sha.length !== 64) return "SHA-256 must be 64 hexadecimal characters.";
   if (input.sizeBytes < 0) return "File size cannot be negative.";
+  if (input.versionCode < 0) return "Build number cannot be negative.";
+  if (input.enabled && !input.versionCode)
+    return "Add the build number (versionCode) of this APK before publishing the download.";
   return null;
 }
 
@@ -63,6 +68,7 @@ export async function updateAppRelease(input: AppReleaseInput): Promise<AppRelea
     _android_enabled: input.enabled,
     _android_download_url: input.downloadUrl.trim(),
     _android_version: input.version.trim(),
+    _android_version_code: Math.max(0, Math.round(input.versionCode || 0)),
     // A blank date must reach Postgres as NULL, which the generated types type as string.
     _android_release_date: (input.releaseDate.trim() || null) as unknown as string,
     _android_size_bytes: Math.max(0, Math.round(input.sizeBytes)),

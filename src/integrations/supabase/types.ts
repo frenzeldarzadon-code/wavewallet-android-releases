@@ -79,6 +79,7 @@ export type Database = {
           android_sha256: string
           android_size_bytes: number
           android_version: string
+          android_version_code: number
           created_at: string
           id: number
           updated_at: string
@@ -94,6 +95,7 @@ export type Database = {
           android_sha256?: string
           android_size_bytes?: number
           android_version?: string
+          android_version_code?: number
           created_at?: string
           id?: number
           updated_at?: string
@@ -109,6 +111,7 @@ export type Database = {
           android_sha256?: string
           android_size_bytes?: number
           android_version?: string
+          android_version_code?: number
           created_at?: string
           id?: number
           updated_at?: string
@@ -14330,6 +14333,7 @@ export type Database = {
           _android_sha256: string
           _android_size_bytes: number
           _android_version: string
+          _android_version_code?: number
         }
         Returns: {
           android_download_count: number
@@ -14341,6 +14345,7 @@ export type Database = {
           android_sha256: string
           android_size_bytes: number
           android_version: string
+          android_version_code: number
           created_at: string
           id: number
           updated_at: string
