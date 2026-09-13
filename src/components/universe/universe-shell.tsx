@@ -204,11 +204,17 @@ export function UniverseShell({
                 <Menu className="size-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-[86vw] max-w-sm p-0">
-              <SheetHeader className="border-b border-border p-5 text-left">
+            <SheetContent
+              side="left"
+              className="flex h-[100dvh] max-h-[100dvh] w-[86vw] max-w-sm flex-col gap-0 overflow-hidden p-0 overscroll-none [&>button]:top-[max(1rem,env(safe-area-inset-top))]"
+            >
+              <SheetHeader className="shrink-0 border-b border-border px-5 pb-5 pt-[max(1.25rem,env(safe-area-inset-top))] text-left">
                 <SheetTitle>Universe</SheetTitle>
               </SheetHeader>
-              <nav aria-label="Universe menu" className="space-y-1 p-3">
+              <nav
+                aria-label="Universe menu"
+                className="min-h-0 flex-1 touch-pan-y space-y-1 overflow-y-auto overscroll-contain px-3 pt-3 [padding-bottom:max(1rem,env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]"
+              >
                 {railItems.map((item) => (
                   <Link
                     key={item.to}
