@@ -38,3 +38,7 @@
 - [x] Legacy /app, /app/money, /reseller/wallet, /reseller/money, /admin/wallet redirect to /universe/wallet (NG shops keep their isolated screen)
 - [x] Tests: `src/lib/coin-loans.test.ts`, `supabase/tests/coin-loans.sql` (rolled back), typecheck, 1479 unit tests
 - [x] Daily scheduled interest run (`coin-loan-interest`, 02:20)
+
+## Mobile usability
+- [x] Universe mobile menu uses a viewport-bound scroll area with safe-area padding, keeping Sign out reachable.
+- [x] Universe voucher checkout keeps its confirmation actions visible above the mobile keyboard.
