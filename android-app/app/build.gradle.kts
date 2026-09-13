@@ -15,8 +15,8 @@ android {
         // Native release containing the voucher ImageSaver bridge, the update
         // centre and the integrated WaveWallet Payment Listener.
         // Must match ANDROID_VERSION_* in src/lib/update-manifest.ts.
-        versionCode = 7
-        versionName = "1.5.0"
+        versionCode = 8
+        versionName = "1.5.1"
 
         // The one and only backend: the published WaveWallet web app.
         buildConfigField("String", "APP_URL", "\"https://wallet.sagadawave.com\"")
