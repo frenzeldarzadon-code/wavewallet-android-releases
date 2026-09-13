@@ -31,7 +31,7 @@ import {
   reviewRetailOrder,
   updateRetailFulfillment,
 } from "@/lib/retail";
-import { confirmCodCashReceived } from "@/lib/retail-cod";
+import { confirmCashReceived } from "@/lib/retail-cod";
 import {
   fetchOrderWorkspace,
   roleTitle,
@@ -174,7 +174,7 @@ export function OrderWorkspacePanel({ threadId }: { threadId: string }) {
             onClick={() =>
               void run(
                 "cash",
-                () => confirmCodCashReceived(ws.order_id, ws.buyer_charge + ws.delivery_fee),
+                () => confirmCashReceived(ws.order_id, ws.buyer_charge + ws.delivery_fee),
                 "Cash confirmed",
               )
             }
