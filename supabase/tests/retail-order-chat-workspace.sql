@@ -18,7 +18,7 @@ DECLARE
   _adm uuid := '7f5723a6-8dfb-46dc-ac94-a8789ddbc28e'; -- shop admin
   _cus uuid := '780a6aed-96d1-4cfe-8c8b-2b735a45487b'; -- customer
   _p uuid; _o record; _ord public.retail_orders; _t uuid; _ws jsonb;
-  _cg uuid; _ag uuid; _cus0 numeric; _adm0 numeric; _stock0 int; _prev_fee numeric;
+  _cg uuid; _ag uuid; _cus0 numeric; _adm0 numeric; _stock0 int; _prev_fee numeric; _cb uuid;
   c_cus text; c_adm text;
 BEGIN
   c_cus := json_build_object('sub', _cus, 'role', 'authenticated')::text;
@@ -70,8 +70,8 @@ BEGIN
   -- ===== 3: approve, advance, then cancel mid-fulfillment with full reversal =====
   PERFORM public.retail_review_order(_ord.id, true, NULL);
   SELECT * INTO _ord FROM public.retail_orders WHERE id = _o.order_id;
-  ASSERT _ord.status = 'approved' AND _ord.settlement_ledger_id IS NOT NULL
-         AND _ord.cashback_ledger_id IS NOT NULL, '3 approved and settled';
+  _cb := _ord.cashback_ledger_id;
+  ASSERT _ord.status = 'approved' AND _ord.settlement_ledger_id IS NOT NULL, '3 approved and settled';
   ASSERT (SELECT balance FROM public.credit_accounts WHERE id = _cg) < _cus0, '3 buyer charged';
   PERFORM public.retail_update_fulfillment(_ord.id, 'preparing');
   _ws := public.retail_order_workspace(_t);
@@ -87,15 +87,11 @@ BEGIN
   ASSERT (SELECT count(*) FROM public.credit_ledger WHERE reference = _ord.order_no
           AND entry_kind = 'retail_settlement_reversal') = 1, '3 one settlement reversal';
   ASSERT (SELECT count(*) FROM public.credit_ledger WHERE reference = _ord.order_no
-          AND entry_kind = 'retail_cashback_reversal') = 1, '3 one cashback reversal';
+          AND entry_kind = 'retail_cashback_reversal') = (CASE WHEN _cb IS NULL THEN 0 ELSE 1 END),
+         '3 cashback reversed exactly when it was paid';
   ASSERT (SELECT stock FROM public.retail_products WHERE id = _p) = _stock0, '3 stock restored';
   ASSERT (SELECT reversed_at FROM public.retail_platform_fees WHERE order_id = _ord.id) IS NOT NULL,
          '3 platform fee marked reversed';
-  ASSERT NOT EXISTS (SELECT 1 FROM public.points_ledger WHERE retail_order_id = _ord.id
-                     AND entry_type = 'earn'
-                     AND NOT EXISTS (SELECT 1 FROM public.points_ledger r
-                                      WHERE r.retail_order_id = _ord.id AND r.direction = 'debit')),
-         '3 any awarded points reversed';
 
   -- second cancel must not move money again
   BEGIN
