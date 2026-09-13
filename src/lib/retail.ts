@@ -1356,7 +1356,7 @@ export function customerTrackingSteps(
 
 /** The order chat exists for delivery orders that are still alive (server rule mirrored). */
 export const canOpenOrderChat = (o: Pick<RetailOrder, "status" | "fulfillment">) =>
-  o.fulfillment === "delivery" && (o.status === "pending" || o.status === "approved");
+  o.status === "pending" || o.status === "approved";
 
 /**
  * What the customer pays: Retail Prices (fee already embedded) + delivery fee.
