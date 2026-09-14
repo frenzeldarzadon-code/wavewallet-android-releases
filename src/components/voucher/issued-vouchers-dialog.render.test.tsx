@@ -1,13 +1,16 @@
 /**
  * The post-purchase screen is the SAME component for Shop Access and Universe.
- * It must state plainly that the purchase succeeded and offer the code plus the
- * save / share / print actions without sending the buyer to history first.
+ * It must state plainly that the purchase succeeded and show the code plus the
+ * save / share / print actions, without sending the buyer to history first.
  */
-import { render, screen, cleanup } from "@testing-library/react";
-import { afterEach, expect, test } from "vitest";
-import { IssuedVouchersDialog } from "./issued-vouchers-dialog";
+import { describe, expect, it, vi } from "vitest";
+import { renderToStaticMarkup } from "react-dom/server";
 
-afterEach(cleanup);
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children }: { children: unknown }) => children as never,
+}));
+
+import { IssuedVouchersDialog } from "./issued-vouchers-dialog";
 
 const voucher = {
   code: "ABC123",
@@ -23,19 +26,21 @@ const voucher = {
   issuedAt: new Date("2026-01-01T00:00:00Z"),
 };
 
-test("shows a clear success state with the code and all actions", () => {
-  render(
-    <IssuedVouchersDialog
-      vouchers={[voucher]}
-      summary="1 Day WiFi · P20.00 · TX-1"
-      pointsEarned={0}
-      saleId="sale-1"
-      onClose={() => {}}
-    />,
-  );
-  expect(screen.getByText(/Purchase successful/i)).toBeTruthy();
-  expect(screen.getByText("ABC123")).toBeTruthy();
-  expect(screen.getByText(/Download Picture/i)).toBeTruthy();
-  expect(screen.getByText(/Share/i)).toBeTruthy();
-  expect(screen.getByText(/Print/i)).toBeTruthy();
+describe("issued vouchers success screen", () => {
+  it("shows the success state, the code and every post-purchase action", () => {
+    const html = renderToStaticMarkup(
+      <IssuedVouchersDialog
+        vouchers={[voucher]}
+        summary="1 Day WiFi · P20.00 · TX-1"
+        pointsEarned={0}
+        saleId="sale-1"
+        onClose={() => {}}
+      />,
+    );
+    expect(html).toContain("Purchase successful");
+    expect(html).toContain("ABC123");
+    expect(html).toContain("Download Picture");
+    expect(html).toContain("Share");
+    expect(html).toContain("Print");
+  });
 });
