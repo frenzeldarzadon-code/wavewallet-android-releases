@@ -54,7 +54,10 @@ export function SellerStorefrontSection({
     void load();
   }, [load]);
 
-  if (loading)
+  // Only the FIRST load shows the skeleton. A refresh after a purchase must
+  // never unmount this section: the issued-voucher success screen lives in
+  // <VoucherPurchaseDialogs> below and would otherwise disappear instantly.
+  if (loading && store === null)
     return (
       <div className="space-y-3" aria-label="Loading storefront">
         <div className="h-24 animate-pulse rounded-lg border border-border bg-card" />
