@@ -110,9 +110,18 @@ export function IssuedVouchersDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{many ? "Vouchers issued" : "Voucher issued"}</DialogTitle>
+          <DialogTitle>
+            {many ? "Purchase successful — your vouchers" : "Purchase successful — your voucher"}
+          </DialogTitle>
           <DialogDescription className="break-words">{summary}</DialogDescription>
         </DialogHeader>
+
+        <p className="rounded-lg bg-success-soft px-3 py-2 text-center text-xs font-medium text-success">
+          Payment complete. {many ? "These codes are yours" : "This code is yours"} — copy{" "}
+          {many ? "them" : "it"} below, or save, share or print{" "}
+          {many ? "the voucher pictures" : "the voucher picture"}.
+        </p>
+
 
         {pointsEarned > 0 ? (
           <p className="rounded-lg bg-success-soft px-3 py-2 text-center text-xs font-medium text-points">
