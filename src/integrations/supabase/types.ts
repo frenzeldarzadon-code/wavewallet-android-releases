@@ -11173,87 +11173,47 @@ export type Database = {
         Args: { _new: string }
         Returns: string
       }
-      record_expense:
-        | {
-            Args: {
-              _amount: number
-              _category?: string
-              _description: string
-              _ecosystem_id?: string
-              _scope?: string
-              _spent_at?: string
-            }
-            Returns: {
-              amount: number
-              category: string | null
-              category_id: string | null
-              client_ref: string | null
-              created_at: string
-              created_by: string
-              created_by_name: string | null
-              currency: string
-              description: string
-              ecosystem_id: string | null
-              id: string
-              notes: string | null
-              provider: string | null
-              provider_reference: string | null
-              recurrence_day: number | null
-              recurrence_month: string | null
-              recurrence_source_id: string | null
-              recurring: boolean
-              scope: string
-              spent_at: string
-              updated_at: string
-            }
-            SetofOptions: {
-              from: "*"
-              to: "business_expenses"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: {
-              _amount: number
-              _category?: string
-              _description: string
-              _ecosystem_id?: string
-              _provider?: string
-              _provider_reference?: string
-              _scope?: string
-              _spent_at?: string
-            }
-            Returns: {
-              amount: number
-              category: string | null
-              category_id: string | null
-              client_ref: string | null
-              created_at: string
-              created_by: string
-              created_by_name: string | null
-              currency: string
-              description: string
-              ecosystem_id: string | null
-              id: string
-              notes: string | null
-              provider: string | null
-              provider_reference: string | null
-              recurrence_day: number | null
-              recurrence_month: string | null
-              recurrence_source_id: string | null
-              recurring: boolean
-              scope: string
-              spent_at: string
-              updated_at: string
-            }
-            SetofOptions: {
-              from: "*"
-              to: "business_expenses"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
+      record_expense: {
+        Args: {
+          _amount: number
+          _category?: string
+          _description: string
+          _ecosystem_id?: string
+          _provider?: string
+          _provider_reference?: string
+          _scope?: string
+          _spent_at?: string
+        }
+        Returns: {
+          amount: number
+          category: string | null
+          category_id: string | null
+          client_ref: string | null
+          created_at: string
+          created_by: string
+          created_by_name: string | null
+          currency: string
+          description: string
+          ecosystem_id: string | null
+          id: string
+          notes: string | null
+          provider: string | null
+          provider_reference: string | null
+          recurrence_day: number | null
+          recurrence_month: string | null
+          recurrence_source_id: string | null
+          recurring: boolean
+          scope: string
+          spent_at: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "business_expenses"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       record_listener_event: {
         Args: {
           _amount?: number
