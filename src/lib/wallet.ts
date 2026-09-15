@@ -783,6 +783,10 @@ export interface SelfPurchaseQuote {
   selfPurchase: boolean;
   /** Cashback rate that produced `selfCashback` (voucher shops only). */
   cashbackPercent: number;
+  /** Universe platform fee contained in the price (0 in New Generation shops). */
+  platformFee?: number;
+  /** Points this purchase will earn, computed from the actual charge. */
+  pointsEarned?: number;
 }
 
 /** Voucher shop quote — mirrors exactly what `purchase_voucher` will charge. */
