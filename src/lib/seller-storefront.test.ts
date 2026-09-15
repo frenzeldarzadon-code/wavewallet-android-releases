@@ -4,6 +4,7 @@ import {
   groupShopSearchRows,
   groupStorefrontRows,
   hasStorefront,
+  orderedStorefrontSections,
 } from "./seller-storefront";
 
 const row = (over: Partial<Parameters<typeof groupStorefrontRows>[0][number]> = {}) => ({
@@ -19,6 +20,7 @@ const row = (over: Partial<Parameters<typeof groupStorefrontRows>[0][number]> = 
   description: null,
   price: 20,
   available: 5,
+  display_position: 2,
   ...over,
 });
 
@@ -63,6 +65,7 @@ describe("groupStorefrontRows", () => {
     logo_path: null,
     product_count: 3,
     accepting_orders: true,
+    display_position: 1,
     ...over,
   });
 
@@ -80,9 +83,18 @@ describe("groupStorefrontRows", () => {
         logoPath: null,
         productCount: 3,
         acceptingOrders: true,
+        displayPosition: 1,
       },
     ]);
     expect(hasStorefront(out)).toBe(true);
+  });
+
+  it("combines Voucher and Retail sections in the owner's saved order", () => {
+    const store = groupStorefrontRows([row()], [retailRow()]);
+    expect(store && orderedStorefrontSections(store).map((section) => section.key)).toEqual([
+      "retail:shop-r",
+      "voucher:shop-a",
+    ]);
   });
 
   it("shows Voucher and Retail shops side by side without duplicating a shop", () => {

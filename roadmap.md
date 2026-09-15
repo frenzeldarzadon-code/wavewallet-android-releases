@@ -42,3 +42,8 @@
 ## Mobile usability
 - [x] Universe mobile menu uses a viewport-bound scroll area with safe-area padding, keeping Sign out reachable.
 - [x] Universe voucher checkout keeps its confirmation actions visible above the mobile keyboard.
+
+## Profile storefront
+- [x] Show each Retail Shop’s actual products and cart/checkout directly on the public Profile; remove the intermediate “Open retail store” card/button.
+- [x] Let storefront owners save the display order of all Profile shop sections, and apply it for visitors.
+- [x] Verify saved ordering, mobile Profile shopping, tests, typecheck, untouched Android workflow, and no deployment.
