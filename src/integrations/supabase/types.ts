@@ -12487,6 +12487,7 @@ export type Database = {
           avatar_path: string
           credits_per_point: number
           description: string
+          display_position: number
           points_price: number
           price: number
           product_id: string
@@ -12505,6 +12506,7 @@ export type Database = {
         Returns: {
           accepting_orders: boolean
           avatar_path: string
+          display_position: number
           logo_path: string
           product_count: number
           seller_handle: string
