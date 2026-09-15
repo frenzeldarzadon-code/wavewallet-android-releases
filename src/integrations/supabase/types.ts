@@ -843,6 +843,8 @@ export type Database = {
           principal: number
           released_amount: number
           released_at: string | null
+          secured_admin_id: string | null
+          secured_ecosystem_id: string | null
           settled_at: string | null
           status: string
           total_owed: number
@@ -867,6 +869,8 @@ export type Database = {
           principal: number
           released_amount?: number
           released_at?: string | null
+          secured_admin_id?: string | null
+          secured_ecosystem_id?: string | null
           settled_at?: string | null
           status?: string
           total_owed?: number
@@ -891,13 +895,30 @@ export type Database = {
           principal?: number
           released_amount?: number
           released_at?: string | null
+          secured_admin_id?: string | null
+          secured_ecosystem_id?: string | null
           settled_at?: string | null
           status?: string
           total_owed?: number
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "coin_loans_secured_ecosystem_id_fkey"
+            columns: ["secured_ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coin_loans_secured_ecosystem_id_fkey"
+            columns: ["secured_ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       credit_accounts: {
         Row: {
@@ -8850,10 +8871,22 @@ export type Database = {
         Args: { _eco: string }
         Returns: number
       }
+      admin_secured_loan_exposure: { Args: { _admin: string }; Returns: number }
+      admin_secured_shops: {
+        Args: { _admin: string }
+        Returns: {
+          ecosystem_id: string
+        }[]
+      }
+      admin_security_covers_shop: {
+        Args: { _admin: string; _ecosystem_id: string }
+        Returns: boolean
+      }
       admin_set_member_handle: {
         Args: { _handle: string; _target: string }
         Returns: string
       }
+      admin_unsecured_balance: { Args: { _admin: string }; Returns: number }
       admin_update_member_profile: {
         Args: {
           _email?: string
@@ -9222,6 +9255,8 @@ export type Database = {
           principal: number
           released_amount: number
           released_at: string | null
+          secured_admin_id: string | null
+          secured_ecosystem_id: string | null
           settled_at: string | null
           status: string
           total_owed: number
@@ -10533,6 +10568,7 @@ export type Database = {
       }
       listener_unmatched_events: { Args: { _limit?: number }; Returns: Json }
       live_shop_name: { Args: { _name: string }; Returns: string }
+      loan_security_shop: { Args: { _user_id: string }; Returns: string }
       loan_spend_allowed_in: {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: boolean
@@ -11329,6 +11365,8 @@ export type Database = {
           principal: number
           released_amount: number
           released_at: string | null
+          secured_admin_id: string | null
+          secured_ecosystem_id: string | null
           settled_at: string | null
           status: string
           total_owed: number
@@ -11487,6 +11525,8 @@ export type Database = {
           principal: number
           released_amount: number
           released_at: string | null
+          secured_admin_id: string | null
+          secured_ecosystem_id: string | null
           settled_at: string | null
           status: string
           total_owed: number
@@ -12135,6 +12175,8 @@ export type Database = {
           principal: number
           released_amount: number
           released_at: string | null
+          secured_admin_id: string | null
+          secured_ecosystem_id: string | null
           settled_at: string | null
           status: string
           total_owed: number
