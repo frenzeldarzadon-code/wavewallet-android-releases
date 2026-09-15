@@ -1,5 +1,6 @@
 -- Profile shop ordering is owner-controlled but only exposes currently visible,
 -- authorized Universe storefront sections. Read-only test; transaction rolls back.
+SET LOCAL ROLE service_role;
 DO $$
 DECLARE
   _seller uuid; _handle text; _first text; _second text;
@@ -35,3 +36,4 @@ BEGIN
   ASSERT NOT has_function_privilege('authenticated', 'public.seller_storefront_section_order(text)', 'EXECUTE');
 END;
 $$;
+RESET ROLE;
