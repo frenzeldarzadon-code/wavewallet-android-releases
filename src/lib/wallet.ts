@@ -808,7 +808,26 @@ export async function fetchVoucherCheckoutQuote(
     buyerCharge: Number(row?.["buyer_charge"] ?? 0),
     selfPurchase: !!row?.["self_purchase"],
     cashbackPercent: Number(row?.["cashback_percent"] ?? 0),
+    platformFee: Number(row?.["platform_fee"] ?? 0),
+    pointsEarned: Number(row?.["points_earned"] ?? 0),
   };
+}
+
+/**
+ * Points the checkout should display: the server figure when the quote still
+ * matches the price on screen, otherwise the local actual-charge estimate.
+ */
+export function quotePointsEarned(
+  total: number,
+  creditsPerPoint: number,
+  quote: SelfPurchaseQuote | null | undefined,
+): number {
+  if (quote && Math.abs(quote.total - total) < 0.005 && quote.pointsEarned !== undefined) {
+    return quote.pointsEarned;
+  }
+  const charge = selfPurchaseCharge(total, quote);
+  if (!Number.isFinite(creditsPerPoint) || creditsPerPoint <= 0) return 0;
+  return Math.round((charge / creditsPerPoint) * 100) / 100;
 }
 
 /** Actual charge for a purchase given a (possibly stale) quote. */

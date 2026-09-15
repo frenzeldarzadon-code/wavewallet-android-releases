@@ -38,6 +38,7 @@ import { peso } from "@/lib/wavewallet";
 import {
   fetchVoucherCheckoutQuote,
   selfPurchaseCharge,
+  quotePointsEarned,
   type SelfPurchaseQuote,
 } from "@/lib/wallet";
 import {
@@ -618,6 +619,12 @@ export function VoucherShopView({
                         </span>
                         <span className="font-medium text-success">−{peso(quote.selfCashback)}</span>
                       </p>
+                      {(quote.platformFee ?? 0) > 0 ? (
+                        <p className="flex justify-between" data-testid="platform-fee-line">
+                          <span className="text-muted-foreground">Platform fee</span>
+                          <span className="font-medium">{peso(quote.platformFee ?? 0)}</span>
+                        </p>
+                      ) : null}
                       <p className="flex justify-between">
                         <span className="text-muted-foreground">Actual charge</span>
                         <span className="font-semibold text-destructive">−{peso(charge)}</span>
@@ -634,9 +641,11 @@ export function VoucherShopView({
                     <span className="font-medium">{peso(balance - charge)}</span>
                   </p>
                   <p className="flex justify-between">
-                    <span className="text-muted-foreground">Points earned</span>
+                    <span className="text-muted-foreground">
+                      Points earned{selfPurchase ? " (1 pt = 1 coin)" : ""}
+                    </span>
                     <span className="font-medium text-points">
-                      +{ratio > 0 ? Math.floor(total / ratio) : 0}
+                      +{pts(quotePointsEarned(total, ratio, quote))}
                     </span>
                   </p>
                   {role === "customer" ? (

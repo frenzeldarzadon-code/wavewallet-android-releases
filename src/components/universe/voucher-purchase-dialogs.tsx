@@ -36,10 +36,11 @@ import {
   fetchVoucherCheckoutQuote,
   purchaseVoucher,
   selfPurchaseCharge,
+  quotePointsEarned,
   type SelfPurchaseQuote,
 } from "@/lib/wallet";
 import { fetchPointsAccount, purchaseVoucherWithPoints, type PointsAccount } from "@/lib/rewards";
-import { pointsForSpend, pts } from "@/lib/points";
+import { pts } from "@/lib/points";
 import type { StorefrontProduct } from "@/lib/seller-storefront";
 
 export const MAX_QTY = 500;
@@ -368,6 +369,20 @@ export function VoucherPurchaseDialogs({
                         </span>
                         <span className="font-medium text-success">−{peso(quote.selfCashback)}</span>
                       </p>
+                      {(quote.platformFee ?? 0) > 0 ? (
+                        <p className="flex justify-between" data-testid="platform-fee-line">
+                          <span className="text-muted-foreground">Platform fee</span>
+                          <span className="font-medium">{peso(quote.platformFee ?? 0)}</span>
+                        </p>
+                      ) : null}
+                      {(quote.pointsEarned ?? 0) > 0 ? (
+                        <p className="flex justify-between">
+                          <span className="text-muted-foreground">Points earned (1 pt = 1 coin)</span>
+                          <span className="font-medium text-points">
+                            +{pts(quote.pointsEarned ?? 0)}
+                          </span>
+                        </p>
+                      ) : null}
                       <p className="flex justify-between">
                         <span className="text-muted-foreground">Actual charge</span>
                         <span className="font-semibold text-destructive">−{peso(charge)}</span>
@@ -397,11 +412,11 @@ export function VoucherPurchaseDialogs({
                       </p>
                     </>
                   ) : null}
-                  {(target.creditsPerPoint ?? 0) > 0 ? (
+                  {(target.creditsPerPoint ?? 0) > 0 && !selfPurchase ? (
                     <p className="flex justify-between">
                       <span className="text-muted-foreground">{target.shopName} points earned</span>
                       <span className="font-medium text-points">
-                        +{pts(pointsForSpend(total, target.creditsPerPoint ?? 0))}
+                        +{pts(quotePointsEarned(total, target.creditsPerPoint ?? 0, quote))}
                       </span>
                     </p>
                   ) : null}
