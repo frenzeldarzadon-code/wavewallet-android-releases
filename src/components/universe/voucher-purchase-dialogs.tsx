@@ -36,10 +36,11 @@ import {
   fetchVoucherCheckoutQuote,
   purchaseVoucher,
   selfPurchaseCharge,
+  quotePointsEarned,
   type SelfPurchaseQuote,
 } from "@/lib/wallet";
 import { fetchPointsAccount, purchaseVoucherWithPoints, type PointsAccount } from "@/lib/rewards";
-import { pointsForSpend, pts } from "@/lib/points";
+import { pts } from "@/lib/points";
 import type { StorefrontProduct } from "@/lib/seller-storefront";
 
 export const MAX_QTY = 500;
