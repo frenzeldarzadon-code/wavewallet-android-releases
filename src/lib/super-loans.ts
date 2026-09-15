@@ -198,10 +198,12 @@ function mapLoan(row: Record<string, unknown>): SuperLoan {
 }
 
 export async function fetchSuperLoans(status?: string, search?: string): Promise<SuperLoan[]> {
-  const { data, error } = await supabase.rpc("super_coin_loans", {
-    _status: status && status !== "all" ? status : undefined,
-    _search: search?.trim() || undefined,
-  });
+  const args: { _status?: string; _search?: string } = {};
+  if (status && status !== "all") args._status = status;
+  const q = search?.trim();
+  if (q) args._search = q;
+  const { data, error } = await supabase.rpc("super_coin_loans", args);
+
   if (error) throw error;
   return ((data ?? []) as Record<string, unknown>[]).map(mapLoan);
 }
