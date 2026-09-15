@@ -106,20 +106,23 @@ export function roleLabel(role: string | null): string {
   }
 }
 
-export function loanTone(status: string): "success" | "warning" | "danger" | "muted" {
+export function loanTone(
+  status: string,
+): "brand" | "success" | "warning" | "danger" | "muted" {
   switch (status) {
     case "active":
       return "warning";
     case "settled":
       return "success";
     case "pending":
-      return "brand" as never;
+      return "brand";
     case "rejected":
       return "danger";
     default:
       return "muted";
   }
 }
+
 
 export function borrowerName(loan: { fullName: string | null; handle: string | null }): string {
   if (loan.fullName) return loan.fullName;
