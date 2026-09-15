@@ -38,6 +38,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, PageSection } from "@/components/ui-kit";
 import { RatingPicker } from "@/components/rating-stars";
+import { RetailImage } from "@/components/retail/retail-image";
 import { RETAIL_VISIBLE } from "@/lib/features";
 import { useSession } from "@/lib/session";
 import { fetchCreditBalance } from "@/lib/wallet";

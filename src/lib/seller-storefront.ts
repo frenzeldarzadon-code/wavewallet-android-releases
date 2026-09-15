@@ -258,7 +258,7 @@ export interface DiscoveredProduct extends StorefrontProduct {
   matches: boolean;
 }
 
-export interface DiscoveredShop extends Omit<StorefrontShop, "products"> {
+export interface DiscoveredShop extends Omit<StorefrontShop, "products" | "displayPosition"> {
   description: string | null;
   products: DiscoveredProduct[];
 }

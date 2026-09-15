@@ -54,7 +54,11 @@ export function ProfileStorefrontOrderCard({ userId }: { userId: string }) {
     const target = index + direction;
     if (target < 0 || target >= items.length) return;
     const next = [...items];
-    [next[index], next[target]] = [next[target], next[index]];
+    const currentItem = next[index];
+    const targetItem = next[target];
+    if (!currentItem || !targetItem) return;
+    next[index] = targetItem;
+    next[target] = currentItem;
     setItems(next);
   };
 
