@@ -411,11 +411,11 @@ export function VoucherPurchaseDialogs({
                       </p>
                     </>
                   ) : null}
-                  {(target.creditsPerPoint ?? 0) > 0 ? (
+                  {(target.creditsPerPoint ?? 0) > 0 && !selfPurchase ? (
                     <p className="flex justify-between">
                       <span className="text-muted-foreground">{target.shopName} points earned</span>
                       <span className="font-medium text-points">
-                        +{pts(pointsForSpend(total, target.creditsPerPoint ?? 0))}
+                        +{pts(quotePointsEarned(total, target.creditsPerPoint ?? 0, quote))}
                       </span>
                     </p>
                   ) : null}
