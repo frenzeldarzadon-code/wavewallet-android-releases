@@ -100,22 +100,25 @@ export function SellerStorefrontSection({
           ) : null}
         </div>
       </div>
-      {sections.map((section) => section.kind === "retail" ? (
-        <div key={section.key} className="space-y-3 rounded-lg border border-border bg-card p-3 shadow-[var(--shadow-card)] sm:p-4">
-          <RetailStoreView
-            profileEmbedded
-            shop={{
-              id: section.shop.id,
-              name: section.shop.name,
-              description: section.shop.description,
-              sellerId: isSelf ? null : store.sellerId,
-            }}
-          />
-        </div>
-      ) : (() => {
+      {sections.map((section) => {
+        if (section.kind === "retail") {
+          return (
+            <div key={section.key} className="space-y-3 rounded-lg border border-border bg-card p-3 shadow-[var(--shadow-card)] sm:p-4">
+              <RetailStoreView
+                profileEmbedded
+                shop={{
+                  id: section.shop.id,
+                  name: section.shop.name,
+                  description: section.shop.description,
+                  sellerId: isSelf ? null : store.sellerId,
+                }}
+              />
+            </div>
+          );
+        }
         const shop = section.shop;
         return (
-        <Card key={shop.id} className="overflow-hidden rounded-lg shadow-[var(--shadow-card)]">
+        <Card key={section.key} className="overflow-hidden rounded-lg shadow-[var(--shadow-card)]">
           <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 border-b border-border bg-brand-soft/40 px-4 py-3">
             <span className="flex size-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <ShoppingBag className="size-4" />
@@ -234,7 +237,7 @@ export function SellerStorefrontSection({
           </CardContent>
         </Card>
         );
-      })())}
+      })}
 
       <VoucherPurchaseDialogs
         target={buying}
