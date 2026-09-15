@@ -13143,6 +13143,7 @@ export type Database = {
           status: string
         }[]
       }
+      shop_primary_admin: { Args: { _eco: string }; Returns: string }
       shop_requires_membership_approval: {
         Args: { _ecosystem_id: string }
         Returns: boolean
@@ -14929,11 +14930,22 @@ export type Database = {
         }
         Returns: string
       }
+      voucher_admin_self_net: {
+        Args: { _fee: number; _other: number; _ratio: number; _total: number }
+        Returns: {
+          admin_benefit: number
+          buyer_charge: number
+          points_earned: number
+          self_cashback: number
+        }[]
+      }
       voucher_checkout_quote: {
         Args: { _product_id: string; _quantity?: number; _seller_id?: string }
         Returns: {
           buyer_charge: number
           cashback_percent: number
+          platform_fee: number
+          points_earned: number
           self_cashback: number
           self_purchase: boolean
           total: number
