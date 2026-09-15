@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Gift, Package, ShieldCheck, ShoppingBag } from "lucide-react";
+import { ArrowRight, Gift, ShieldCheck, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui-kit";
-import { RetailImage } from "@/components/retail/retail-image";
+import { RetailStoreView } from "@/components/retail/retail-store-view";
 import { peso } from "@/lib/wavewallet";
 import { fetchCreditBalance } from "@/lib/wallet";
 import {
   fetchSellerStorefront,
   hasStorefront,
+  orderedStorefrontSections,
   type SellerStorefront,
 } from "@/lib/seller-storefront";
 import { VoucherPurchaseDialogs, type PurchaseTarget } from "./voucher-purchase-dialogs";
@@ -71,6 +72,7 @@ export function SellerStorefrontSection({
     store.shops.length > 0 ? "Vouchers" : null,
     store.retailShops.length > 0 ? "Retail goods" : null,
   ].filter(Boolean);
+  const sections = orderedStorefrontSections(store);
 
   return (
     <section className="space-y-4">
@@ -98,51 +100,21 @@ export function SellerStorefrontSection({
           ) : null}
         </div>
       </div>
-      {/* Retail shops keep their own cart/checkout flow on the shop's retail store. */}
-      {store.retailShops.map((shop) => (
-        <Card
-          key={`retail-${shop.id}`}
-          className="overflow-hidden rounded-lg shadow-[var(--shadow-card)]"
-        >
-          <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 border-b border-border bg-success-soft/50 px-4 py-3">
-            <span className="flex size-9 items-center justify-center rounded-md bg-success text-success-foreground">
-              <Package className="size-4" />
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold">{shop.name}</p>
-              <p className="text-xs text-muted-foreground">
-                Retail store · add products to your cart and check out
-              </p>
-            </div>
-          </div>
-          <CardContent className="py-4">
-            <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
-              <RetailImage path={shop.logoPath} alt={shop.name} className="size-16 rounded-lg" />
-              <div className="min-w-0">
-                {shop.description ? (
-                  <p className="line-clamp-2 text-sm text-muted-foreground">{shop.description}</p>
-                ) : null}
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {shop.productCount > 0
-                    ? `${shop.productCount} product${shop.productCount === 1 ? "" : "s"} on sale`
-                    : "No products published yet"}
-                  {!shop.acceptingOrders ? " · not taking orders right now" : ""}
-                </p>
-              </div>
-            </div>
-            <Button asChild size="sm" className="mt-3 w-full">
-              <Link
-                to="/universe/store/$slug"
-                params={{ slug: shop.slug }}
-                search={isSelf ? {} : { seller: store.sellerHandle }}
-              >
-                Open retail store <ArrowRight className="size-3.5" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ))}
-      {store.shops.map((shop) => (
+      {sections.map((section) => section.kind === "retail" ? (
+        <div key={section.key} className="space-y-3 rounded-lg border border-border bg-card p-3 shadow-[var(--shadow-card)] sm:p-4">
+          <RetailStoreView
+            profileEmbedded
+            shop={{
+              id: section.shop.id,
+              name: section.shop.name,
+              description: section.shop.description,
+              sellerId: isSelf ? null : store.sellerId,
+            }}
+          />
+        </div>
+      ) : (() => {
+        const shop = section.shop;
+        return (
         <Card key={shop.id} className="overflow-hidden rounded-lg shadow-[var(--shadow-card)]">
           <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 border-b border-border bg-brand-soft/40 px-4 py-3">
             <span className="flex size-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
@@ -261,7 +233,8 @@ export function SellerStorefrontSection({
             </Link>
           </CardContent>
         </Card>
-      ))}
+        );
+      })())}
 
       <VoucherPurchaseDialogs
         target={buying}

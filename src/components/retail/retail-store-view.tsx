@@ -110,12 +110,13 @@ export interface UniverseStoreTarget {
 
 type RetailStoreViewProps =
   | { role: "customer" | "reseller"; shop?: undefined }
-  | { role?: undefined; shop: UniverseStoreTarget };
+  | { role?: undefined; shop: UniverseStoreTarget; profileEmbedded?: boolean };
 
 export function RetailStoreView(props: RetailStoreViewProps) {
   const session = useSession(props.role);
   const account = session.account;
   const universeShop = props.shop ?? null;
+  const profileEmbedded = "profileEmbedded" in props && props.profileEmbedded === true;
   const sellerId = universeShop?.sellerId ?? null;
   const ecosystemDbId = universeShop ? universeShop.id : session.ecosystemDbId;
   const shopName = universeShop ? universeShop.name : (session.ecosystem?.name ?? "Retail shop");
@@ -319,22 +320,38 @@ export function RetailStoreView(props: RetailStoreViewProps) {
 
   return (
     <>
-      <MarketplaceHeader
-        shopName={shopName}
-        description={shopDescription}
-        productCount={products.length}
-        search={catalogQuery.search}
-        onSearch={(search) => setCatalogQuery((q) => ({ ...q, search }))}
-        cartCount={count}
-        onOpenCart={() => setCartOpen(true)}
-        aside={universeShop ? undefined : <EcosystemSwitcher mini />}
-        logoPath={settings.logoPath}
-        coverPath={settings.coverPath}
-        acceptingOrders={settings.acceptingOrders}
-        pausedNote={settings.pausedNote}
-      />
+      {profileEmbedded ? (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-success-soft/50 p-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <RetailImage path={settings.logoPath} alt={`${shopName} logo`} className="size-12 shrink-0 rounded-lg aspect-square" />
+            <div className="min-w-0">
+              <h2 className="truncate text-sm font-bold">{shopName}</h2>
+              <p className="text-xs text-muted-foreground">Retail Shop · {products.length} product{products.length === 1 ? "" : "s"}</p>
+            </div>
+          </div>
+          <Button type="button" size="icon" variant="outline" className="relative shrink-0" aria-label={`Open ${shopName} cart, ${count} items`} onClick={() => setCartOpen(true)}>
+            <ShoppingCart className="size-4" />
+            {count > 0 ? <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">{count}</span> : null}
+          </Button>
+        </div>
+      ) : (
+        <MarketplaceHeader
+          shopName={shopName}
+          description={shopDescription}
+          productCount={products.length}
+          search={catalogQuery.search}
+          onSearch={(search) => setCatalogQuery((q) => ({ ...q, search }))}
+          cartCount={count}
+          onOpenCart={() => setCartOpen(true)}
+          aside={universeShop ? undefined : <EcosystemSwitcher mini />}
+          logoPath={settings.logoPath}
+          coverPath={settings.coverPath}
+          acceptingOrders={settings.acceptingOrders}
+          pausedNote={settings.pausedNote}
+        />
+      )}
 
-      <div className="flex justify-end">
+      {!profileEmbedded ? <div className="flex justify-end">
         <Button size="sm" variant="outline" className="rounded-full" onClick={scrollToOrders}>
           <ClipboardList className="size-4" /> My orders
           {activeOrders > 0 ? (
@@ -343,7 +360,7 @@ export function RetailStoreView(props: RetailStoreViewProps) {
             </span>
           ) : null}
         </Button>
-      </div>
+      </div> : null}
 
       <section className="space-y-3" aria-label="Products">
         {loading ? (
@@ -354,19 +371,19 @@ export function RetailStoreView(props: RetailStoreViewProps) {
           <MarketplaceEmpty filtered={false} />
         ) : (
           <>
-            <CategoryTiles
+            {!profileEmbedded ? <CategoryTiles
               categories={categories}
               active={catalogQuery.category}
               total={products.length}
               onSelect={(category) => setCatalogQuery((q) => ({ ...q, category }))}
-            />
-            <CatalogToolbar
+            /> : null}
+            {!profileEmbedded ? <CatalogToolbar
               query={catalogQuery}
               count={visibleProducts.length}
               active={filtersActive}
               onChange={setCatalogQuery}
               onReset={() => setCatalogQuery(DEFAULT_CATALOG_QUERY)}
-            />
+            /> : null}
             {visibleProducts.length === 0 ? (
               <MarketplaceEmpty filtered onClear={() => setCatalogQuery(DEFAULT_CATALOG_QUERY)} />
             ) : (
@@ -440,7 +457,7 @@ export function RetailStoreView(props: RetailStoreViewProps) {
         }}
       />
 
-      <div ref={ordersRef} className="scroll-mt-4">
+      {!profileEmbedded ? <div ref={ordersRef} className="scroll-mt-4">
         <CustomerOrdersPanel
           orders={orders}
           loading={loading}
@@ -450,7 +467,7 @@ export function RetailStoreView(props: RetailStoreViewProps) {
           onChat={(thread) => void navigate({ to: "/universe/messages", search: { thread } })}
           onRate={(order, productId) => setRating({ order, productId, value: 5 })}
         />
-      </div>
+      </div> : null}
 
       <Dialog open={checkout} onOpenChange={(o) => !o && setCheckout(false)}>
         <DialogContent className="max-h-[90dvh] overflow-y-auto">

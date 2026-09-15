@@ -31,12 +31,13 @@ export interface StorefrontShop {
   /** Selling shop's coins-per-point ratio; 0/null = this shop awards no points. */
   creditsPerPoint?: number | null;
   products: StorefrontProduct[];
+  /** Owner-selected position among every shop section on their Profile. */
+  displayPosition: number;
 }
 
 /**
  * A Universe RETAIL shop the seller is authorized for. Retail goods use the
- * existing cart/checkout flow on the shop's retail store page, so the profile
- * only shows the shop card and links there (with this seller attributed).
+ * existing cart/checkout flow, embedded directly in the seller's Profile.
  */
 export interface RetailStorefrontShop {
   id: string;
@@ -46,6 +47,7 @@ export interface RetailStorefrontShop {
   logoPath: string | null;
   productCount: number;
   acceptingOrders: boolean;
+  displayPosition: number;
 }
 
 export interface SellerStorefront {
@@ -85,6 +87,7 @@ type Row = SellerIdentity & {
   available: number;
   points_price?: number | null;
   credits_per_point?: number | null;
+  display_position?: number | null;
 };
 
 type RetailRow = SellerIdentity & {
@@ -95,6 +98,7 @@ type RetailRow = SellerIdentity & {
   logo_path: string | null;
   product_count: number | null;
   accepting_orders: boolean | null;
+  display_position?: number | null;
 };
 
 function identityOf(first: SellerIdentity): Omit<SellerStorefront, "shops" | "retailShops"> {
@@ -129,6 +133,7 @@ export function groupStorefrontRows(
         slug: r.shop_slug,
         creditsPerPoint: r.credits_per_point == null ? null : Number(r.credits_per_point),
         products: [],
+        displayPosition: Number(r.display_position ?? Number.MAX_SAFE_INTEGER),
       };
       shops.set(r.shop_id, shop);
     }
@@ -153,6 +158,7 @@ export function groupStorefrontRows(
       logoPath: r.logo_path,
       productCount: Number(r.product_count ?? 0),
       acceptingOrders: r.accepting_orders !== false,
+      displayPosition: Number(r.display_position ?? Number.MAX_SAFE_INTEGER),
     });
   }
   return {
@@ -160,6 +166,31 @@ export function groupStorefrontRows(
     shops: [...shops.values()],
     retailShops: [...retail.values()],
   };
+}
+
+export type StorefrontSection =
+  | { key: string; kind: "voucher"; shop: StorefrontShop }
+  | { key: string; kind: "retail"; shop: RetailStorefrontShop };
+
+/** Combines every supported shop type into the owner's saved Profile order. */
+export function orderedStorefrontSections(store: SellerStorefront): StorefrontSection[] {
+  return [
+    ...store.shops.map((shop) => ({
+      key: `voucher:${shop.id}`,
+      kind: "voucher" as const,
+      shop,
+    })),
+    ...store.retailShops.map((shop) => ({
+      key: `retail:${shop.id}`,
+      kind: "retail" as const,
+      shop,
+    })),
+  ].sort(
+    (a, b) =>
+      a.shop.displayPosition - b.shop.displayPosition ||
+      a.shop.name.localeCompare(b.shop.name) ||
+      a.kind.localeCompare(b.kind),
+  );
 }
 
 /** True when the seller has at least one shop of any kind to show. */

@@ -6,6 +6,7 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { ShopBrandingCard } from "@/components/shop/shop-branding-card";
+import { ProfileStorefrontOrderCard } from "@/components/shop/profile-storefront-order-card";
 import { StorefrontSettingsCard } from "@/components/retail/storefront-settings-card";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageSection } from "@/components/ui-kit";
@@ -35,7 +36,7 @@ export const Route = createFileRoute("/admin/storefront")({
 });
 
 function AdminStorefront() {
-  const { ecosystemDbId, ecosystem } = useSession("admin");
+  const { ecosystemDbId, ecosystem, account } = useSession("admin");
   const status = useShopStatus(ecosystemDbId);
   if (!ecosystem) return null;
   // Logo / cover are saved through `update_retail_storefront`, which only
@@ -65,6 +66,7 @@ function AdminStorefront() {
       {status.shopType && showsRetailTools(status.shopType) ? (
         <StorefrontSettingsCard ecosystemId={ecosystemDbId} />
       ) : null}
+      {account ? <ProfileStorefrontOrderCard userId={account.id} /> : null}
     </>
   );
 }
