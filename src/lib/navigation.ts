@@ -19,7 +19,9 @@ import {
   Coins,
   DatabaseBackup,
   Gift,
+  HandCoins,
   History,
+
   LayoutDashboard,
   Link2,
   MessageSquare,
