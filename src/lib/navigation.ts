@@ -418,8 +418,12 @@ export function superAdminNav(): Nav {
     },
     {
       label: "Money",
-      items: [{ to: "/super/credits", label: "Coin management", icon: Coins }],
+      items: [
+        { to: "/super/credits", label: "Coin management", icon: Coins },
+        { to: "/super/loans", label: "Loans", icon: HandCoins },
+      ],
     },
+
 
     {
       label: "Insights",
