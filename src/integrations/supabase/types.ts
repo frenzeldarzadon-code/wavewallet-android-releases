@@ -13860,6 +13860,87 @@ export type Database = {
         }[]
       }
       super_admin_bootstrap_available: { Args: never; Returns: boolean }
+      super_coin_loan_entries: {
+        Args: { _loan_id: string }
+        Returns: {
+          amount: number
+          created_at: string
+          id: string
+          kind: string
+          ledger_id: string
+          loan_id: string
+          note: string
+          outstanding_after: number
+          period_index: number
+        }[]
+      }
+      super_coin_loan_stats: {
+        Args: never
+        Returns: {
+          active_count: number
+          borrower_count: number
+          pending_count: number
+          settled_count: number
+          total_interest: number
+          total_outstanding: number
+          total_principal: number
+          total_released: number
+          total_repaid: number
+        }[]
+      }
+      super_coin_loan_transactions: {
+        Args: {
+          _from?: string
+          _kind?: string
+          _limit?: number
+          _search?: string
+          _status?: string
+          _to?: string
+        }
+        Returns: {
+          amount: number
+          created_at: string
+          full_name: string
+          handle: string
+          id: string
+          kind: string
+          loan_id: string
+          loan_status: string
+          note: string
+          outstanding_after: number
+          period_index: number
+          role: string
+          user_id: string
+        }[]
+      }
+      super_coin_loans: {
+        Args: { _search?: string; _status?: string }
+        Returns: {
+          accrued_interest: number
+          approval_mode: string
+          auto_limit_snapshot: number
+          created_at: string
+          decided_at: string
+          decided_by: string
+          decision_note: string
+          first_month_interest: number
+          free_balance_snapshot: number
+          full_name: string
+          handle: string
+          id: string
+          interest_percent: number
+          outstanding: number
+          principal: number
+          released_amount: number
+          released_at: string
+          repaid: number
+          role: string
+          settled_at: string
+          status: string
+          total_owed: number
+          user_id: string
+        }[]
+      }
       super_list_members: {
         Args: {
           _ecosystem_id?: string

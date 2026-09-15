@@ -94,6 +94,7 @@ import { Route as SuperCreditsRouteImport } from './routes/super.credits'
 import { Route as SuperDeveloperRouteImport } from './routes/super.developer'
 import { Route as SuperExportRouteImport } from './routes/super.export'
 import { Route as SuperGuideRouteImport } from './routes/super.guide'
+import { Route as SuperLoansRouteImport } from './routes/super.loans'
 import { Route as SuperMembersRouteImport } from './routes/super.members'
 import { Route as SuperOperatorLogRouteImport } from './routes/super.operator-log'
 import { Route as SuperPortalTemplateRouteImport } from './routes/super.portal-template'
@@ -556,6 +557,11 @@ const SuperGuideRoute = SuperGuideRouteImport.update({
   path: '/guide',
   getParentRoute: () => SuperRoute,
 } as any)
+const SuperLoansRoute = SuperLoansRouteImport.update({
+  id: '/loans',
+  path: '/loans',
+  getParentRoute: () => SuperRoute,
+} as any)
 const SuperMembersRoute = SuperMembersRouteImport.update({
   id: '/members',
   path: '/members',
@@ -817,6 +823,7 @@ export interface FileRoutesByFullPath {
   '/super/developer': typeof SuperDeveloperRoute
   '/super/export': typeof SuperExportRoute
   '/super/guide': typeof SuperGuideRoute
+  '/super/loans': typeof SuperLoansRoute
   '/super/members': typeof SuperMembersRoute
   '/super/operator-log': typeof SuperOperatorLogRoute
   '/super/portal-template': typeof SuperPortalTemplateRoute
@@ -934,6 +941,7 @@ export interface FileRoutesByTo {
   '/super/developer': typeof SuperDeveloperRoute
   '/super/export': typeof SuperExportRoute
   '/super/guide': typeof SuperGuideRoute
+  '/super/loans': typeof SuperLoansRoute
   '/super/members': typeof SuperMembersRoute
   '/super/operator-log': typeof SuperOperatorLogRoute
   '/super/portal-template': typeof SuperPortalTemplateRoute
@@ -1057,6 +1065,7 @@ export interface FileRoutesById {
   '/super/developer': typeof SuperDeveloperRoute
   '/super/export': typeof SuperExportRoute
   '/super/guide': typeof SuperGuideRoute
+  '/super/loans': typeof SuperLoansRoute
   '/super/members': typeof SuperMembersRoute
   '/super/operator-log': typeof SuperOperatorLogRoute
   '/super/portal-template': typeof SuperPortalTemplateRoute
@@ -1181,6 +1190,7 @@ export interface FileRouteTypes {
     | '/super/developer'
     | '/super/export'
     | '/super/guide'
+    | '/super/loans'
     | '/super/members'
     | '/super/operator-log'
     | '/super/portal-template'
@@ -1298,6 +1308,7 @@ export interface FileRouteTypes {
     | '/super/developer'
     | '/super/export'
     | '/super/guide'
+    | '/super/loans'
     | '/super/members'
     | '/super/operator-log'
     | '/super/portal-template'
@@ -1420,6 +1431,7 @@ export interface FileRouteTypes {
     | '/super/developer'
     | '/super/export'
     | '/super/guide'
+    | '/super/loans'
     | '/super/members'
     | '/super/operator-log'
     | '/super/portal-template'
@@ -2090,6 +2102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperGuideRouteImport
       parentRoute: typeof SuperRoute
     }
+    '/super/loans': {
+      id: '/super/loans'
+      path: '/loans'
+      fullPath: '/super/loans'
+      preLoaderRoute: typeof SuperLoansRouteImport
+      parentRoute: typeof SuperRoute
+    }
     '/super/members': {
       id: '/super/members'
       path: '/members'
@@ -2484,6 +2503,7 @@ interface SuperRouteChildren {
   SuperDeveloperRoute: typeof SuperDeveloperRoute
   SuperExportRoute: typeof SuperExportRoute
   SuperGuideRoute: typeof SuperGuideRoute
+  SuperLoansRoute: typeof SuperLoansRoute
   SuperMembersRoute: typeof SuperMembersRoute
   SuperOperatorLogRoute: typeof SuperOperatorLogRoute
   SuperPortalTemplateRoute: typeof SuperPortalTemplateRoute
@@ -2506,6 +2526,7 @@ const SuperRouteChildren: SuperRouteChildren = {
   SuperDeveloperRoute: SuperDeveloperRoute,
   SuperExportRoute: SuperExportRoute,
   SuperGuideRoute: SuperGuideRoute,
+  SuperLoansRoute: SuperLoansRoute,
   SuperMembersRoute: SuperMembersRoute,
   SuperOperatorLogRoute: SuperOperatorLogRoute,
   SuperPortalTemplateRoute: SuperPortalTemplateRoute,
