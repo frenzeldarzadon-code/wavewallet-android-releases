@@ -230,14 +230,22 @@ export async function fetchLoanEntries(loanId: string): Promise<SuperLoanEntry[]
 export async function fetchLoanTransactions(
   filters: LoanTransactionFilters = {},
 ): Promise<SuperLoanTransaction[]> {
-  const { data, error } = await supabase.rpc("super_coin_loan_transactions", {
-    _kind: filters.kind && filters.kind !== "all" ? filters.kind : undefined,
-    _status: filters.status && filters.status !== "all" ? filters.status : undefined,
-    _search: filters.search?.trim() || undefined,
-    _from: filters.from ? new Date(filters.from).toISOString() : undefined,
-    _to: filters.to ? new Date(`${filters.to}T23:59:59`).toISOString() : undefined,
-    _limit: 500,
-  });
+  const args: {
+    _kind?: string;
+    _status?: string;
+    _search?: string;
+    _from?: string;
+    _to?: string;
+    _limit?: number;
+  } = { _limit: 500 };
+  if (filters.kind && filters.kind !== "all") args._kind = filters.kind;
+  if (filters.status && filters.status !== "all") args._status = filters.status;
+  const q = filters.search?.trim();
+  if (q) args._search = q;
+  if (filters.from) args._from = new Date(filters.from).toISOString();
+  if (filters.to) args._to = new Date(`${filters.to}T23:59:59`).toISOString();
+  const { data, error } = await supabase.rpc("super_coin_loan_transactions", args);
+
   if (error) throw error;
   return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
     ...mapEntry(row),
