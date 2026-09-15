@@ -12517,6 +12517,15 @@ export type Database = {
           store_name: string
         }[]
       }
+      seller_storefront_section_order: {
+        Args: { _handle: string }
+        Returns: {
+          display_position: number
+          section_key: string
+          section_kind: string
+          shop_id: string
+        }[]
+      }
       send_friend_request: { Args: { _user: string }; Returns: string }
       send_test_notification: { Args: never; Returns: string }
       set_admin_sale_commission: {
