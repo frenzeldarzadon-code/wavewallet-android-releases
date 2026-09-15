@@ -38,6 +38,7 @@ import { peso } from "@/lib/wavewallet";
 import {
   fetchVoucherCheckoutQuote,
   selfPurchaseCharge,
+  quotePointsEarned,
   type SelfPurchaseQuote,
 } from "@/lib/wallet";
 import {
