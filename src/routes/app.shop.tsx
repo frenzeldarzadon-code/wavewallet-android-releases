@@ -522,8 +522,8 @@ export function VoucherShopView({
 
 
       <Dialog open={!!buying} onOpenChange={(o) => !o && setBuying(null)}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
+        <KeyboardAwareDialogContent open={!!buying}>
+          <DialogHeader className="shrink-0 border-b border-border px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))] pr-12 sm:p-6 sm:pb-4">
             <DialogTitle>Confirm purchase</DialogTitle>
             <DialogDescription>
               {buying?.method === "credits"
@@ -531,6 +531,7 @@ export function VoucherShopView({
                 : "One unused code will be assigned to you and marked sold immediately."}
             </DialogDescription>
           </DialogHeader>
+          <KeyboardAwareDialogBody>
           {buying ? (
             <div className="space-y-1 rounded-xl border border-border px-3 py-3 text-sm">
               <p className="flex justify-between">
