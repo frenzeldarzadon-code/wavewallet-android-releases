@@ -34,6 +34,8 @@ export function SellerStorefrontSection({
   const [loading, setLoading] = useState(true);
   const [balance, setBalance] = useState<number | null>(null);
   const [buying, setBuying] = useState<PurchaseTarget | null>(null);
+  // Shops that switched reward points off have no Rewards Shop to open.
+  const [rewardsOff, setRewardsOff] = useState<Record<string, boolean>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
