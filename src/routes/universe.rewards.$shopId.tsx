@@ -1,8 +1,9 @@
 import { createFileRoute, useParams } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { EmptyState } from "@/components/ui-kit";
 import { RewardsPage } from "@/components/customer/rewards-page";
 import { UniverseShell } from "@/components/universe/universe-shell";
+import { fetchPointsEnabled } from "@/lib/rewards";
 import { useSession } from "@/lib/session";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
