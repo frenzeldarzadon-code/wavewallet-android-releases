@@ -132,6 +132,7 @@ function AdminSettings() {
   useEffect(() => {
     if (!ecosystemDbId) return;
     void fetchPointsRule(ecosystemDbId).then((v) => setRule(String(v)));
+    void fetchPointsEnabled(ecosystemDbId).then(setPointsOn);
   }, [ecosystemDbId]);
 
   // Warn before losing unsaved shop-identity/contact edits.
