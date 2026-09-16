@@ -383,12 +383,12 @@ function AdminSettings() {
               </Label>
               <p className="max-w-lg text-xs text-muted-foreground">
                 {pointsOn
-                  ? "Members earn points on qualifying purchases and your Rewards Shop is open to them."
-                  : "Members earn no new points here and your Rewards Shop is hidden. Instead, every point a purchase would have earned is charged to you as 1 Coin. Points members already earned stay in their balance."}
+                  ? "Members earn points on qualifying purchases and your Rewards Shop is open to them. If you turn this off, the points members hold for this shop are paid out to them as Coins at 1 point = 1 Coin."
+                  : "Members earn no new points here and your Rewards Shop is hidden. The points they held when you turned this off were already paid out as Coins at 1 point = 1 Coin. New purchases earn no points and no Coins in their place."}
               </p>
               <p className="max-w-lg text-[11px] text-muted-foreground">
-                Turning this back on starts a fresh earning period — past coin charges are never
-                refunded and the skipped points are never given out later.
+                Turning this back on starts a fresh earning period — Coins already paid out are
+                never turned back into points or refunded.
               </p>
             </div>
             <Switch
@@ -404,7 +404,7 @@ function AdminSettings() {
                   toast.success(
                     saved
                       ? "Reward points are ON. New purchases earn points again."
-                      : "Reward points are OFF. New purchases earn no points and cost you 1 Coin per point instead.",
+                      : "Reward points are OFF. Points members held here were paid out as Coins at 1 point = 1 Coin, and new purchases earn no points.",
                   );
                 } catch (e) {
                   toast.error("Could not change reward points", {
