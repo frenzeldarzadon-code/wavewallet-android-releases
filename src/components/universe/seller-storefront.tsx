@@ -233,26 +233,29 @@ export function SellerStorefrontSection({
                 })}
               </ul>
             )}
-            {/* Rewards belong to the SELLING shop, never to this seller. */}
-            <Link
-              to="/universe/rewards/$shopId"
-              params={{ shopId: shop.id }}
-              search={{ name: shop.name }}
-              className="flex items-center justify-between gap-3 rounded-lg border border-points/40 bg-points/8 px-3 py-3 text-sm transition-colors hover:bg-points/15"
-            >
-              <span className="flex min-w-0 items-center gap-2">
-                <Gift className="size-4 shrink-0 text-points" />
-                <span className="min-w-0">
-                  <span className="block truncate font-semibold text-points">
-                    {shop.name} Rewards
-                  </span>
-                  <span className="block text-[11px] text-muted-foreground">
-                    Redeem the points you earn buying {shop.name} vouchers
+            {/* Rewards belong to the SELLING shop, never to this seller.
+                A shop with reward points switched off has no Rewards Shop. */}
+            {rewardsOff[shop.id] ? null : (
+              <Link
+                to="/universe/rewards/$shopId"
+                params={{ shopId: shop.id }}
+                search={{ name: shop.name }}
+                className="flex items-center justify-between gap-3 rounded-lg border border-points/40 bg-points/8 px-3 py-3 text-sm transition-colors hover:bg-points/15"
+              >
+                <span className="flex min-w-0 items-center gap-2">
+                  <Gift className="size-4 shrink-0 text-points" />
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold text-points">
+                      {shop.name} Rewards
+                    </span>
+                    <span className="block text-[11px] text-muted-foreground">
+                      Redeem the points you earn buying {shop.name} vouchers
+                    </span>
                   </span>
                 </span>
-              </span>
-              <ArrowRight className="size-4 shrink-0 text-points" />
-            </Link>
+                <ArrowRight className="size-4 shrink-0 text-points" />
+              </Link>
+            )}
           </CardContent>
         </Card>
         );
