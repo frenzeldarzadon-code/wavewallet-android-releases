@@ -16,12 +16,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  KeyboardAwareDialogBody,
+  KeyboardAwareDialogContent,
+} from "@/components/ui/keyboard-aware-dialog";
 import { IssuedVouchersDialog } from "@/components/voucher/issued-vouchers-dialog";
 import type { PaymentStatus, VoucherImageData } from "@/lib/voucher-image";
 import {
@@ -210,7 +213,7 @@ export function VoucherPurchaseDialogs({
   return (
     <>
       <Dialog open={Boolean(target)} onOpenChange={(o) => !o && !busy && onClose()}>
-        <DialogContent className="bottom-0 left-0 top-auto flex max-h-[100dvh] w-full translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-t-xl p-0 sm:bottom-auto sm:left-[50%] sm:top-[50%] sm:max-h-[92dvh] sm:max-w-sm sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-lg [&>button]:top-[max(1rem,env(safe-area-inset-top))] sm:[&>button]:top-4">
+        <KeyboardAwareDialogContent open={Boolean(target)}>
           <DialogHeader className="shrink-0 border-b border-border px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))] pr-12 sm:p-6 sm:pb-4">
             <DialogTitle>Confirm purchase</DialogTitle>
             <DialogDescription>
@@ -220,7 +223,7 @@ export function VoucherPurchaseDialogs({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="min-h-0 flex-1 touch-pan-y space-y-4 overflow-y-auto overscroll-contain px-4 py-3 scroll-pb-24 [-webkit-overflow-scrolling:touch] sm:px-6">
+          <KeyboardAwareDialogBody>
             {target ? (
               <div className="space-y-1 rounded-xl border border-border px-3 py-3 text-sm">
               <p className="flex justify-between">
@@ -476,7 +479,7 @@ export function VoucherPurchaseDialogs({
                 </p>
               </div>
             </div>
-          </div>
+          </KeyboardAwareDialogBody>
 
           <DialogFooter className="grid shrink-0 grid-cols-[auto_minmax(0,1fr)] gap-2 border-t border-border bg-background px-4 pt-3 [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))] sm:flex sm:px-6 sm:pb-6">
             <Button className="shrink-0" variant="outline" disabled={busy} onClick={onClose}>
@@ -496,7 +499,7 @@ export function VoucherPurchaseDialogs({
                   : `Confirm & pay ${peso(charge)}`}
             </Button>
           </DialogFooter>
-        </DialogContent>
+        </KeyboardAwareDialogContent>
       </Dialog>
 
       <IssuedVouchersDialog
