@@ -20,6 +20,7 @@ import {
   DatabaseBackup,
   Gift,
   HandCoins,
+  Sparkles,
   History,
 
   LayoutDashboard,
@@ -423,6 +424,7 @@ export function superAdminNav(): Nav {
       items: [
         { to: "/super/credits", label: "Coin management", icon: Coins },
         { to: "/super/loans", label: "Loans", icon: HandCoins },
+        { to: "/super/points-cost", label: "Points cost", icon: Sparkles },
       ],
     },
 

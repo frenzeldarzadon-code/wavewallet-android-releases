@@ -97,6 +97,7 @@ import { Route as SuperGuideRouteImport } from './routes/super.guide'
 import { Route as SuperLoansRouteImport } from './routes/super.loans'
 import { Route as SuperMembersRouteImport } from './routes/super.members'
 import { Route as SuperOperatorLogRouteImport } from './routes/super.operator-log'
+import { Route as SuperPointsCostRouteImport } from './routes/super.points-cost'
 import { Route as SuperPortalTemplateRouteImport } from './routes/super.portal-template'
 import { Route as SuperProfileRouteImport } from './routes/super.profile'
 import { Route as SuperReportsRouteImport } from './routes/super.reports'
@@ -572,6 +573,11 @@ const SuperOperatorLogRoute = SuperOperatorLogRouteImport.update({
   path: '/operator-log',
   getParentRoute: () => SuperRoute,
 } as any)
+const SuperPointsCostRoute = SuperPointsCostRouteImport.update({
+  id: '/points-cost',
+  path: '/points-cost',
+  getParentRoute: () => SuperRoute,
+} as any)
 const SuperPortalTemplateRoute = SuperPortalTemplateRouteImport.update({
   id: '/portal-template',
   path: '/portal-template',
@@ -826,6 +832,7 @@ export interface FileRoutesByFullPath {
   '/super/loans': typeof SuperLoansRoute
   '/super/members': typeof SuperMembersRoute
   '/super/operator-log': typeof SuperOperatorLogRoute
+  '/super/points-cost': typeof SuperPointsCostRoute
   '/super/portal-template': typeof SuperPortalTemplateRoute
   '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
@@ -944,6 +951,7 @@ export interface FileRoutesByTo {
   '/super/loans': typeof SuperLoansRoute
   '/super/members': typeof SuperMembersRoute
   '/super/operator-log': typeof SuperOperatorLogRoute
+  '/super/points-cost': typeof SuperPointsCostRoute
   '/super/portal-template': typeof SuperPortalTemplateRoute
   '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
@@ -1068,6 +1076,7 @@ export interface FileRoutesById {
   '/super/loans': typeof SuperLoansRoute
   '/super/members': typeof SuperMembersRoute
   '/super/operator-log': typeof SuperOperatorLogRoute
+  '/super/points-cost': typeof SuperPointsCostRoute
   '/super/portal-template': typeof SuperPortalTemplateRoute
   '/super/profile': typeof SuperProfileRoute
   '/super/reports': typeof SuperReportsRoute
@@ -1193,6 +1202,7 @@ export interface FileRouteTypes {
     | '/super/loans'
     | '/super/members'
     | '/super/operator-log'
+    | '/super/points-cost'
     | '/super/portal-template'
     | '/super/profile'
     | '/super/reports'
@@ -1311,6 +1321,7 @@ export interface FileRouteTypes {
     | '/super/loans'
     | '/super/members'
     | '/super/operator-log'
+    | '/super/points-cost'
     | '/super/portal-template'
     | '/super/profile'
     | '/super/reports'
@@ -1434,6 +1445,7 @@ export interface FileRouteTypes {
     | '/super/loans'
     | '/super/members'
     | '/super/operator-log'
+    | '/super/points-cost'
     | '/super/portal-template'
     | '/super/profile'
     | '/super/reports'
@@ -2123,6 +2135,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperOperatorLogRouteImport
       parentRoute: typeof SuperRoute
     }
+    '/super/points-cost': {
+      id: '/super/points-cost'
+      path: '/points-cost'
+      fullPath: '/super/points-cost'
+      preLoaderRoute: typeof SuperPointsCostRouteImport
+      parentRoute: typeof SuperRoute
+    }
     '/super/portal-template': {
       id: '/super/portal-template'
       path: '/portal-template'
@@ -2506,6 +2525,7 @@ interface SuperRouteChildren {
   SuperLoansRoute: typeof SuperLoansRoute
   SuperMembersRoute: typeof SuperMembersRoute
   SuperOperatorLogRoute: typeof SuperOperatorLogRoute
+  SuperPointsCostRoute: typeof SuperPointsCostRoute
   SuperPortalTemplateRoute: typeof SuperPortalTemplateRoute
   SuperProfileRoute: typeof SuperProfileRoute
   SuperReportsRoute: typeof SuperReportsRoute
@@ -2529,6 +2549,7 @@ const SuperRouteChildren: SuperRouteChildren = {
   SuperLoansRoute: SuperLoansRoute,
   SuperMembersRoute: SuperMembersRoute,
   SuperOperatorLogRoute: SuperOperatorLogRoute,
+  SuperPointsCostRoute: SuperPointsCostRoute,
   SuperPortalTemplateRoute: SuperPortalTemplateRoute,
   SuperProfileRoute: SuperProfileRoute,
   SuperReportsRoute: SuperReportsRoute,

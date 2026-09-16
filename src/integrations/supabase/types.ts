@@ -4337,6 +4337,138 @@ export type Database = {
           },
         ]
       }
+      points_cost_reconciliation_items: {
+        Row: {
+          created_at: string
+          ecosystem_id: string
+          id: string
+          points: number
+          points_ledger_id: string
+          reconciliation_id: string
+        }
+        Insert: {
+          created_at?: string
+          ecosystem_id: string
+          id?: string
+          points: number
+          points_ledger_id: string
+          reconciliation_id: string
+        }
+        Update: {
+          created_at?: string
+          ecosystem_id?: string
+          id?: string
+          points?: number
+          points_ledger_id?: string
+          reconciliation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "points_cost_reconciliation_items_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "points_cost_reconciliation_items_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "points_cost_reconciliation_items_points_ledger_id_fkey"
+            columns: ["points_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "points_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "points_cost_reconciliation_items_reconciliation_id_fkey"
+            columns: ["reconciliation_id"]
+            isOneToOne: false
+            referencedRelation: "points_cost_reconciliations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      points_cost_reconciliations: {
+        Row: {
+          actor_id: string | null
+          admin_id: string | null
+          amount_debited: number
+          coin_equivalent: number
+          created_at: string
+          ecosystem_id: string
+          entries_count: number
+          id: string
+          ledger_id: string | null
+          note: string | null
+          points_total: number
+          shortfall: number
+          status: string
+          tx_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          actor_id?: string | null
+          admin_id?: string | null
+          amount_debited?: number
+          coin_equivalent?: number
+          created_at?: string
+          ecosystem_id: string
+          entries_count?: number
+          id?: string
+          ledger_id?: string | null
+          note?: string | null
+          points_total?: number
+          shortfall?: number
+          status: string
+          tx_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actor_id?: string | null
+          admin_id?: string | null
+          amount_debited?: number
+          coin_equivalent?: number
+          created_at?: string
+          ecosystem_id?: string
+          entries_count?: number
+          id?: string
+          ledger_id?: string | null
+          note?: string | null
+          points_total?: number
+          shortfall?: number
+          status?: string
+          tx_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "points_cost_reconciliations_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "points_cost_reconciliations_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "points_cost_reconciliations_ledger_id_fkey"
+            columns: ["ledger_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       points_ledger: {
         Row: {
           account_id: string
@@ -11042,6 +11174,15 @@ export type Database = {
           social_purchased: number
         }[]
       }
+      points_cost_pending_entries: {
+        Args: { _eco?: string }
+        Returns: {
+          created_at: string
+          ecosystem_id: string
+          entry_id: string
+          points: number
+        }[]
+      }
       presence_online_window: { Args: never; Returns: string }
       profile_media_visible: {
         Args: { _name: string; _user: string }
@@ -14029,6 +14170,65 @@ export type Database = {
           membership_state: string
           points_balance: number
           role: string
+        }[]
+      }
+      super_points_cost_report: {
+        Args: never
+        Returns: {
+          admin_available: number
+          admin_id: string
+          admin_name: string
+          charged_coins: number
+          charged_points: number
+          ecosystem_id: string
+          historical_points: number
+          pending_points: number
+          shop_name: string
+          shortfall_coins: number
+          status: string
+        }[]
+      }
+      super_points_cost_runs: {
+        Args: { _limit?: number }
+        Returns: {
+          admin_id: string
+          admin_name: string
+          amount_debited: number
+          coin_equivalent: number
+          created_at: string
+          ecosystem_id: string
+          entries_count: number
+          id: string
+          note: string
+          points_total: number
+          shop_name: string
+          shortfall: number
+          status: string
+          tx_id: string
+        }[]
+      }
+      super_points_cost_unresolved: {
+        Args: never
+        Returns: {
+          bucket: string
+          detail: string
+          entries: number
+          points: number
+        }[]
+      }
+      super_reconcile_points_cost: {
+        Args: { _dry_run?: boolean; _eco?: string }
+        Returns: {
+          admin_id: string
+          admin_name: string
+          amount_debited: number
+          coin_equivalent: number
+          ecosystem_id: string
+          entries_count: number
+          points_total: number
+          shop_name: string
+          shortfall: number
+          status: string
         }[]
       }
       superadmin_assign_member_to_shop: {
