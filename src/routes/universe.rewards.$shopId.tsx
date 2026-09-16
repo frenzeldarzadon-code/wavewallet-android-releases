@@ -1,8 +1,9 @@
 import { createFileRoute, useParams } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { EmptyState } from "@/components/ui-kit";
 import { RewardsPage } from "@/components/customer/rewards-page";
 import { UniverseShell } from "@/components/universe/universe-shell";
+import { fetchPointsEnabled } from "@/lib/rewards";
 import { useSession } from "@/lib/session";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -46,6 +47,14 @@ function UniverseShopRewards() {
   const shopName = name ?? "Shop";
   const shop = useMemo(() => ({ id: shopId, name: shopName }), [shopId, shopName]);
   const valid = UUID.test(shopId);
+  // The database already refuses to list or redeem rewards while this shop has
+  // reward points switched off; this only shows the reason instead of a blank
+  // page when someone opens the link directly.
+  const [pointsOn, setPointsOn] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!valid) return;
+    void fetchPointsEnabled(shopId).then(setPointsOn);
+  }, [shopId, valid]);
 
   return (
     <UniverseShell title={`${shopName} Rewards`} subtitle="Points earned in this shop only">
@@ -56,6 +65,11 @@ function UniverseShopRewards() {
           <EmptyState
             title="Sign in to see your points"
             description="Points are earned per shop when you buy its vouchers with coins."
+          />
+        ) : pointsOn === false ? (
+          <EmptyState
+            title="Rewards are turned off in this shop"
+            description="This shop has switched reward points off, so its Rewards Shop is closed and new purchases here earn no points. Points you already earned stay in your balance."
           />
         ) : (
           <RewardsPage shop={shop} />

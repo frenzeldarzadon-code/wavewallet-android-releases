@@ -326,3 +326,31 @@ export async function fetchPointsRule(ecosystemId: string): Promise<number> {
     .maybeSingle();
   return Number(data?.credits_per_point ?? 10);
 }
+
+/**
+ * Reward points switch for one shop.
+ *
+ * When a shop turns reward points OFF the database awards no new points and
+ * charges the shop admin the would-be points as coins (1 point = 1 coin), and
+ * the shop's Rewards Shop returns nothing. The UI only mirrors that state.
+ */
+export async function fetchPointsEnabled(ecosystemId: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc("shop_points_enabled", {
+    _ecosystem_id: ecosystemId,
+  });
+  if (error) return true;
+  return data !== false;
+}
+
+export async function setPointsEnabled(
+  ecosystemId: string,
+  enabled: boolean,
+): Promise<boolean> {
+  const { data, error } = await supabase.rpc("set_points_enabled", {
+    _ecosystem_id: ecosystemId,
+    _enabled: enabled,
+  });
+  if (error) throw new Error(friendlyWalletError(error.message));
+  return data !== false;
+}
+

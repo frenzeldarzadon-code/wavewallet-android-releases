@@ -2088,6 +2088,8 @@ export type Database = {
           payment_reference: string | null
           plan_name: string
           plan_price: number
+          points_enabled: boolean
+          points_enabled_changed_at: string | null
           points_rule_updated_at: string
           points_rule_version: number
           public_storefront_enabled: boolean
@@ -2159,6 +2161,8 @@ export type Database = {
           payment_reference?: string | null
           plan_name?: string
           plan_price?: number
+          points_enabled?: boolean
+          points_enabled_changed_at?: string | null
           points_rule_updated_at?: string
           points_rule_version?: number
           public_storefront_enabled?: boolean
@@ -2230,6 +2234,8 @@ export type Database = {
           payment_reference?: string | null
           plan_name?: string
           plan_price?: number
+          points_enabled?: boolean
+          points_enabled_changed_at?: string | null
           points_rule_updated_at?: string
           points_rule_version?: number
           public_storefront_enabled?: boolean
@@ -4465,6 +4471,84 @@ export type Database = {
             columns: ["ledger_id"]
             isOneToOne: false
             referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      points_disabled_conversions: {
+        Row: {
+          admin_id: string | null
+          amount_debited: number
+          coin_equivalent: number
+          created_at: string
+          ecosystem_id: string
+          id: string
+          ledger_id: string | null
+          retail_order_id: string | null
+          reversal_ledger_id: string | null
+          reversed_at: string | null
+          sale_id: string | null
+          shortfall: number
+          source_kind: string
+          status: string
+          tx_id: string | null
+          updated_at: string
+          user_id: string | null
+          would_be_points: number
+        }
+        Insert: {
+          admin_id?: string | null
+          amount_debited?: number
+          coin_equivalent: number
+          created_at?: string
+          ecosystem_id: string
+          id?: string
+          ledger_id?: string | null
+          retail_order_id?: string | null
+          reversal_ledger_id?: string | null
+          reversed_at?: string | null
+          sale_id?: string | null
+          shortfall?: number
+          source_kind: string
+          status: string
+          tx_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+          would_be_points: number
+        }
+        Update: {
+          admin_id?: string | null
+          amount_debited?: number
+          coin_equivalent?: number
+          created_at?: string
+          ecosystem_id?: string
+          id?: string
+          ledger_id?: string | null
+          retail_order_id?: string | null
+          reversal_ledger_id?: string | null
+          reversed_at?: string | null
+          sale_id?: string | null
+          shortfall?: number
+          source_kind?: string
+          status?: string
+          tx_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+          would_be_points?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "points_disabled_conversions_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "points_disabled_conversions_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
             referencedColumns: ["id"]
           },
         ]
@@ -9784,6 +9868,8 @@ export type Database = {
           payment_reference: string | null
           plan_name: string
           plan_price: number
+          points_enabled: boolean
+          points_enabled_changed_at: string | null
           points_rule_updated_at: string
           points_rule_version: number
           public_storefront_enabled: boolean
@@ -9864,6 +9950,8 @@ export type Database = {
           payment_reference: string | null
           plan_name: string
           plan_price: number
+          points_enabled: boolean
+          points_enabled_changed_at: string | null
           points_rule_updated_at: string
           points_rule_version: number
           public_storefront_enabled: boolean
@@ -9944,6 +10032,8 @@ export type Database = {
           payment_reference: string | null
           plan_name: string
           plan_price: number
+          points_enabled: boolean
+          points_enabled_changed_at: string | null
           points_rule_updated_at: string
           points_rule_version: number
           public_storefront_enabled: boolean
@@ -11182,6 +11272,20 @@ export type Database = {
           entry_id: string
           points: number
         }[]
+      }
+      points_disabled_reverse: {
+        Args: { _order_id: string; _reason: string; _sale_id: string }
+        Returns: number
+      }
+      points_disabled_settlement: {
+        Args: {
+          _eco: string
+          _order_id: string
+          _points: number
+          _sale_id: string
+          _user: string
+        }
+        Returns: number
       }
       presence_online_window: { Args: never; Returns: string }
       profile_media_visible: {
@@ -12807,6 +12911,8 @@ export type Database = {
           payment_reference: string | null
           plan_name: string
           plan_price: number
+          points_enabled: boolean
+          points_enabled_changed_at: string | null
           points_rule_updated_at: string
           points_rule_version: number
           public_storefront_enabled: boolean
@@ -12887,6 +12993,8 @@ export type Database = {
           payment_reference: string | null
           plan_name: string
           plan_price: number
+          points_enabled: boolean
+          points_enabled_changed_at: string | null
           points_rule_updated_at: string
           points_rule_version: number
           public_storefront_enabled: boolean
@@ -12978,6 +13086,8 @@ export type Database = {
           payment_reference: string | null
           plan_name: string
           plan_price: number
+          points_enabled: boolean
+          points_enabled_changed_at: string | null
           points_rule_updated_at: string
           points_rule_version: number
           public_storefront_enabled: boolean
@@ -13128,6 +13238,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      set_points_enabled: {
+        Args: { _ecosystem_id: string; _enabled: boolean }
+        Returns: boolean
       }
       set_points_rule: {
         Args: { _credits_per_point: number; _ecosystem_id: string }
@@ -13337,6 +13451,7 @@ export type Database = {
           status: string
         }[]
       }
+      shop_points_enabled: { Args: { _ecosystem_id: string }; Returns: boolean }
       shop_primary_admin: { Args: { _eco: string }; Returns: string }
       shop_requires_membership_approval: {
         Args: { _ecosystem_id: string }
@@ -14441,6 +14556,8 @@ export type Database = {
           payment_reference: string | null
           plan_name: string
           plan_price: number
+          points_enabled: boolean
+          points_enabled_changed_at: string | null
           points_rule_updated_at: string
           points_rule_version: number
           public_storefront_enabled: boolean
@@ -14822,6 +14939,8 @@ export type Database = {
           payment_reference: string | null
           plan_name: string
           plan_price: number
+          points_enabled: boolean
+          points_enabled_changed_at: string | null
           points_rule_updated_at: string
           points_rule_version: number
           public_storefront_enabled: boolean
@@ -14907,6 +15026,8 @@ export type Database = {
           payment_reference: string | null
           plan_name: string
           plan_price: number
+          points_enabled: boolean
+          points_enabled_changed_at: string | null
           points_rule_updated_at: string
           points_rule_version: number
           public_storefront_enabled: boolean
