@@ -57,6 +57,22 @@ export function SellerStorefrontSection({
     void load();
   }, [load]);
 
+  useEffect(() => {
+    const ids = (store?.shops ?? []).map((s) => s.id);
+    if (ids.length === 0) return;
+    let live = true;
+    void Promise.all(ids.map((id) => fetchPointsEnabled(id).then((on) => [id, on] as const))).then(
+      (pairs) => {
+        if (!live) return;
+        setRewardsOff(Object.fromEntries(pairs.filter(([, on]) => !on).map(([id]) => [id, true])));
+      },
+    );
+    return () => {
+      live = false;
+    };
+  }, [store]);
+
+
   // Only the FIRST load shows the skeleton. A refresh after a purchase must
   // never unmount this section: the issued-voucher success screen lives in
   // <VoucherPurchaseDialogs> below and would otherwise disappear instantly.
