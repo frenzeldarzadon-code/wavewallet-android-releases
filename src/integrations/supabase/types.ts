@@ -4475,77 +4475,53 @@ export type Database = {
           },
         ]
       }
-      points_disabled_conversions: {
+      points_disable_conversions: {
         Row: {
-          admin_id: string | null
-          amount_debited: number
-          coin_equivalent: number
+          coins_credited: number
           created_at: string
+          credit_ledger_id: string | null
           ecosystem_id: string
+          generation: number
           id: string
-          ledger_id: string | null
-          retail_order_id: string | null
-          reversal_ledger_id: string | null
-          reversed_at: string | null
-          sale_id: string | null
-          shortfall: number
-          source_kind: string
-          status: string
-          tx_id: string | null
+          points_converted: number
+          points_ledger_id: string | null
           updated_at: string
-          user_id: string | null
-          would_be_points: number
+          user_id: string
         }
         Insert: {
-          admin_id?: string | null
-          amount_debited?: number
-          coin_equivalent: number
+          coins_credited: number
           created_at?: string
+          credit_ledger_id?: string | null
           ecosystem_id: string
+          generation: number
           id?: string
-          ledger_id?: string | null
-          retail_order_id?: string | null
-          reversal_ledger_id?: string | null
-          reversed_at?: string | null
-          sale_id?: string | null
-          shortfall?: number
-          source_kind: string
-          status: string
-          tx_id?: string | null
+          points_converted: number
+          points_ledger_id?: string | null
           updated_at?: string
-          user_id?: string | null
-          would_be_points: number
+          user_id: string
         }
         Update: {
-          admin_id?: string | null
-          amount_debited?: number
-          coin_equivalent?: number
+          coins_credited?: number
           created_at?: string
+          credit_ledger_id?: string | null
           ecosystem_id?: string
+          generation?: number
           id?: string
-          ledger_id?: string | null
-          retail_order_id?: string | null
-          reversal_ledger_id?: string | null
-          reversed_at?: string | null
-          sale_id?: string | null
-          shortfall?: number
-          source_kind?: string
-          status?: string
-          tx_id?: string | null
+          points_converted?: number
+          points_ledger_id?: string | null
           updated_at?: string
-          user_id?: string | null
-          would_be_points?: number
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "points_disabled_conversions_ecosystem_id_fkey"
+            foreignKeyName: "points_disable_conversions_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "discoverable_shops"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "points_disabled_conversions_ecosystem_id_fkey"
+            foreignKeyName: "points_disable_conversions_ecosystem_id_fkey"
             columns: ["ecosystem_id"]
             isOneToOne: false
             referencedRelation: "ecosystems"
@@ -9773,6 +9749,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      convert_shop_points_to_coins: {
+        Args: { _eco: string; _generation: number }
+        Returns: number
+      }
       countable_members: {
         Args: { _ecosystem_id: string }
         Returns: {
@@ -11272,20 +11252,6 @@ export type Database = {
           entry_id: string
           points: number
         }[]
-      }
-      points_disabled_reverse: {
-        Args: { _order_id: string; _reason: string; _sale_id: string }
-        Returns: number
-      }
-      points_disabled_settlement: {
-        Args: {
-          _eco: string
-          _order_id: string
-          _points: number
-          _sale_id: string
-          _user: string
-        }
-        Returns: number
       }
       presence_online_window: { Args: never; Returns: string }
       profile_media_visible: {
@@ -13449,6 +13415,19 @@ export type Database = {
           role: string
           sale_commission_percent: number
           status: string
+        }[]
+      }
+      shop_points_conversions: {
+        Args: { _eco: string }
+        Returns: {
+          coins_credited: number
+          created_at: string
+          generation: number
+          id: string
+          member_handle: string
+          member_name: string
+          points_converted: number
+          user_id: string
         }[]
       }
       shop_points_enabled: { Args: { _ecosystem_id: string }; Returns: boolean }
