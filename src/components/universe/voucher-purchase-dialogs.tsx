@@ -42,7 +42,12 @@ import {
   quotePointsEarned,
   type SelfPurchaseQuote,
 } from "@/lib/wallet";
-import { fetchPointsAccount, purchaseVoucherWithPoints, type PointsAccount } from "@/lib/rewards";
+import {
+  fetchPointsAccount,
+  fetchPointsEnabled,
+  purchaseVoucherWithPoints,
+  type PointsAccount,
+} from "@/lib/rewards";
 import { pts } from "@/lib/points";
 import type { StorefrontProduct } from "@/lib/seller-storefront";
 
