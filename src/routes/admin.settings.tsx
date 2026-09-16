@@ -375,8 +375,52 @@ function AdminSettings() {
         title="Points rule"
         description="Points are earned on coin-funded voucher purchases only — never on coin loads or transfers."
       >
+        <Card className="mb-3 shadow-[var(--shadow-card)]">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0 space-y-1">
+              <Label htmlFor="points-enabled" className="text-sm font-semibold">
+                Reward points
+              </Label>
+              <p className="max-w-lg text-xs text-muted-foreground">
+                {pointsOn
+                  ? "Members earn points on qualifying purchases and your Rewards Shop is open to them."
+                  : "Members earn no new points here and your Rewards Shop is hidden. Instead, every point a purchase would have earned is charged to you as 1 Coin. Points members already earned stay in their balance."}
+              </p>
+              <p className="max-w-lg text-[11px] text-muted-foreground">
+                Turning this back on starts a fresh earning period — past coin charges are never
+                refunded and the skipped points are never given out later.
+              </p>
+            </div>
+            <Switch
+              id="points-enabled"
+              checked={pointsOn}
+              disabled={savingPointsOn || !ecosystemDbId}
+              onCheckedChange={async (next) => {
+                if (!ecosystemDbId) return;
+                setSavingPointsOn(true);
+                try {
+                  const saved = await setPointsEnabled(ecosystemDbId, next);
+                  setPointsOn(saved);
+                  toast.success(
+                    saved
+                      ? "Reward points are ON. New purchases earn points again."
+                      : "Reward points are OFF. New purchases earn no points and cost you 1 Coin per point instead.",
+                  );
+                } catch (e) {
+                  toast.error("Could not change reward points", {
+                    description: (e as Error).message,
+                  });
+                  setPointsOn(await fetchPointsEnabled(ecosystemDbId));
+                } finally {
+                  setSavingPointsOn(false);
+                }
+              }}
+            />
+          </CardContent>
+        </Card>
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="grid gap-3 sm:grid-cols-2">
+
             <div className="space-y-1.5">
               <Label htmlFor="rate">Coins required per 1 point</Label>
               <Input
