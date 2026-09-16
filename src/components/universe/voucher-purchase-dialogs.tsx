@@ -407,6 +407,12 @@ export function VoucherPurchaseDialogs({
                           </span>
                         </p>
                       ) : null}
+                      {rewardsOff ? (
+                        <p className="text-[11px] text-muted-foreground" data-testid="rewards-off-note">
+                          Reward points are turned off in this shop — this purchase earns no reward
+                          points.
+                        </p>
+                      ) : null}
                       <p className="flex justify-between">
                         <span className="text-muted-foreground">Actual charge</span>
                         <span className="font-semibold text-destructive">−{peso(charge)}</span>
