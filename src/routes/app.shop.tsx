@@ -13,12 +13,15 @@ import {
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  KeyboardAwareDialogBody,
+  KeyboardAwareDialogContent,
+} from "@/components/ui/keyboard-aware-dialog";
 import {
   Select,
   SelectContent,
