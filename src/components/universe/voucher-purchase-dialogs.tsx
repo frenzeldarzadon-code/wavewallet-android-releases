@@ -42,7 +42,12 @@ import {
   quotePointsEarned,
   type SelfPurchaseQuote,
 } from "@/lib/wallet";
-import { fetchPointsAccount, purchaseVoucherWithPoints, type PointsAccount } from "@/lib/rewards";
+import {
+  fetchPointsAccount,
+  fetchPointsEnabled,
+  purchaseVoucherWithPoints,
+  type PointsAccount,
+} from "@/lib/rewards";
 import { pts } from "@/lib/points";
 import type { StorefrontProduct } from "@/lib/seller-storefront";
 
@@ -126,6 +131,22 @@ export function VoucherPurchaseDialogs({
       active = false;
     };
   }, [buyerId, shopId, pointsOffered]);
+
+  // Reward points can be switched off per shop; checkout says so plainly.
+  const [rewardsOff, setRewardsOff] = useState(false);
+  useEffect(() => {
+    if (!shopId) {
+      setRewardsOff(false);
+      return;
+    }
+    let active = true;
+    void fetchPointsEnabled(shopId)
+      .then((on) => active && setRewardsOff(!on))
+      .catch(() => active && setRewardsOff(false));
+    return () => {
+      active = false;
+    };
+  }, [shopId]);
 
   const usingPoints = method === "points" && pointsOffered;
   const maxQty = target ? Math.min(MAX_QTY, Math.max(1, target.product.available)) : 1;
@@ -384,6 +405,12 @@ export function VoucherPurchaseDialogs({
                           <span className="font-medium text-points">
                             +{pts(quote.pointsEarned ?? 0)}
                           </span>
+                        </p>
+                      ) : null}
+                      {rewardsOff ? (
+                        <p className="text-[11px] text-muted-foreground" data-testid="rewards-off-note">
+                          Reward points are turned off in this shop — this purchase earns no reward
+                          points.
                         </p>
                       ) : null}
                       <p className="flex justify-between">
