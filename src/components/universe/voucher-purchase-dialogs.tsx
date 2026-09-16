@@ -127,6 +127,22 @@ export function VoucherPurchaseDialogs({
     };
   }, [buyerId, shopId, pointsOffered]);
 
+  // Reward points can be switched off per shop; checkout says so plainly.
+  const [rewardsOff, setRewardsOff] = useState(false);
+  useEffect(() => {
+    if (!shopId) {
+      setRewardsOff(false);
+      return;
+    }
+    let active = true;
+    void fetchPointsEnabled(shopId)
+      .then((on) => active && setRewardsOff(!on))
+      .catch(() => active && setRewardsOff(false));
+    return () => {
+      active = false;
+    };
+  }, [shopId]);
+
   const usingPoints = method === "points" && pointsOffered;
   const maxQty = target ? Math.min(MAX_QTY, Math.max(1, target.product.available)) : 1;
   const unit = target?.product.price ?? 0;
