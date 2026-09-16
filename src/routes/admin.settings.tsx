@@ -1,7 +1,13 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Facebook } from "lucide-react";
 import { useEffect, useState } from "react";
-import { fetchPointsRule, setPointsRule } from "@/lib/rewards";
+import {
+  fetchPointsEnabled,
+  fetchPointsRule,
+  setPointsEnabled,
+  setPointsRule,
+} from "@/lib/rewards";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -68,6 +74,10 @@ function AdminSettings() {
   const [saving, setSaving] = useState(false);
   const [rule, setRule] = useState("10");
   const [savingRule, setSavingRule] = useState(false);
+  // Reward points on/off for THIS shop. The database is authoritative; this
+  // switch only reflects and changes the stored setting.
+  const [pointsOn, setPointsOn] = useState(true);
+  const [savingPointsOn, setSavingPointsOn] = useState(false);
   // Own-shop Facebook support page — admins may edit their own ecosystem only.
   const [fb, setFb] = useState({
     url: ecosystem?.facebookPageUrl ?? "",
