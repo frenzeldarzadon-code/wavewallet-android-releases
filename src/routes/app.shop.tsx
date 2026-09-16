@@ -715,19 +715,21 @@ export function VoucherShopView({
               </p>
             </div>
           </div>
+          </KeyboardAwareDialogBody>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setBuying(null)}>
+          <DialogFooter className="grid shrink-0 grid-cols-[auto_minmax(0,1fr)] gap-2 border-t border-border bg-background px-4 pt-3 [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))] sm:flex sm:px-6 sm:pb-6">
+            <Button className="shrink-0" variant="outline" onClick={() => setBuying(null)}>
               Cancel
             </Button>
             <Button
+              className="min-w-0"
               onClick={() => void confirm()}
               disabled={busy || !online || (buying?.method === "credits" && (charge > balance || qty > maxQty))}
             >
               {busy ? "Issuing…" : "Confirm & Generate Vouchers"}
             </Button>
           </DialogFooter>
-        </DialogContent>
+        </KeyboardAwareDialogContent>
       </Dialog>
 
       <IssuedVouchersDialog
