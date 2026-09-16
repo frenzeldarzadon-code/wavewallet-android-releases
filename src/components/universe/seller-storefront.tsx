@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui-kit";
 import { RetailStoreView } from "@/components/retail/retail-store-view";
 import { peso } from "@/lib/wavewallet";
 import { fetchCreditBalance } from "@/lib/wallet";
+import { fetchPointsEnabled } from "@/lib/rewards";
 import {
   fetchSellerStorefront,
   hasStorefront,
