@@ -186,7 +186,6 @@ export async function fetchPointsCostRuns(limit = 200): Promise<PointsCostRun[]>
 export async function runPointsCostReconciliation(dryRun: boolean): Promise<PointsCostPreview[]> {
   const { data, error } = await supabase.rpc("super_reconcile_points_cost", {
     _dry_run: dryRun,
-    _eco: undefined,
   });
   if (error) throw error;
   return (data ?? []).map((row: Record<string, unknown>) => ({
