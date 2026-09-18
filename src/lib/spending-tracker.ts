@@ -159,7 +159,11 @@ export async function fetchSpendingCategories(
     .eq("ecosystem_id", ecosystemId)
     .order("name");
   if (error) throw new Error(error.message);
-  return (data ?? []) as unknown as SpendingCategory[];
+  // Retired automatic categories stay in the database (they cannot be deleted)
+  // but are no longer part of the tracker's reporting model, so they are hidden.
+  return ((data ?? []) as unknown as SpendingCategory[]).filter(
+    (c) => !c.auto_key || !DROPPED_AUTO_KEYS.has(c.auto_key),
+  );
 }
 
 export interface AutoRow {
