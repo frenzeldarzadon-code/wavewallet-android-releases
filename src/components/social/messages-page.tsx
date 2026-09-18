@@ -297,6 +297,30 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
     }
   };
 
+  const addGroupPick = (id: string, name: string) => {
+    setGroupPicks((prev) => (prev.some((p) => p.id === id) ? prev : [...prev, { id, name }]));
+  };
+
+  const createGroup = async () => {
+    setCreatingGroup(true);
+    try {
+      const threadId = await createGroupChat(
+        groupName,
+        groupPicks.map((p) => p.id),
+      );
+      setGroupOpen(false);
+      setGroupName("");
+      setGroupPicks([]);
+      const list = await loadThreads();
+      const created = list.find((t) => t.thread_id === threadId);
+      if (created) await openThreadView(created);
+    } catch (e) {
+      toast.error("Could not create the group", { description: (e as Error).message });
+    } finally {
+      setCreatingGroup(false);
+    }
+  };
+
   if (!session.account) return null;
 
   if (active) {
@@ -499,9 +523,11 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
 
   const visible = filterThreads(threads, filter);
   const orderCount = threads.filter((t) => t.kind === "order").length;
+  const groupCount = threads.filter((t) => t.kind === "group").length;
   const filters: Array<{ id: ThreadFilter; label: string }> = [
     { id: "all", label: "All" },
     { id: "direct", label: "Private" },
+    { id: "group", label: groupCount ? `Groups · ${groupCount}` : "Groups" },
     { id: "order", label: orderCount ? `Orders · ${orderCount}` : "Orders" },
   ];
 
@@ -515,6 +541,9 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
         <div className="flex gap-2">
           <Button variant="outline" className="h-11" onClick={() => setPeopleOpen(true)}>
             <Wifi className="size-4" /> Online
+          </Button>
+          <Button variant="outline" className="h-11" onClick={() => setGroupOpen(true)}>
+            <Users className="size-4" /> Create group
           </Button>
           <Button className="h-11" onClick={() => setNewOpen(true)}>
             <UserPlus className="size-4" /> New message
@@ -553,14 +582,18 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
           title={
             filter === "order"
               ? "No order chats"
-              : filter === "direct"
-                ? "No private chats yet"
-                : "No conversations yet"
+              : filter === "group"
+                ? "No group chats yet"
+                : filter === "direct"
+                  ? "No private chats yet"
+                  : "No conversations yet"
           }
           description={
             filter === "order"
               ? "An order chat appears here automatically after you place or receive a Retail order."
-              : "Start a chat from a member's post, from Online, or with New message."
+              : filter === "group"
+                ? "Tap Create group to start a conversation with several members."
+                : "Start a chat from a member's post, from Online, or with New message."
           }
         />
       ) : (
@@ -574,9 +607,9 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
                 onClick={() => void openThreadView(t)}
               >
                 <CardContent className="flex items-center gap-3 py-3">
-                  {t.kind === "order" ? (
+                  {t.kind !== "direct" ? (
                     <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-soft text-primary">
-                      <Package className="size-4" />
+                      {t.kind === "order" ? <Package className="size-4" /> : <Users className="size-4" />}
                     </span>
                   ) : (
                     <span className="relative">
@@ -596,6 +629,8 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
                       </span>
                       {t.kind === "order" ? (
                         <StatusBadge tone="brand">Order</StatusBadge>
+                      ) : t.kind === "group" ? (
+                        <StatusBadge tone="brand">Group</StatusBadge>
                       ) : t.member_online ? (
                         <span className="text-[11px] font-medium text-success">Online</span>
                       ) : null}
@@ -611,7 +646,9 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
                           ? t.participants
                               .map((p) => `${p.name} (${roleLabel[p.role] ?? p.role})`)
                               .join(", ")
-                          : "No messages yet")}
+                          : t.kind === "group"
+                            ? t.participants.map((p) => p.name).join(", ")
+                            : "No messages yet")}
                     </p>
                   </div>
                   {t.unread > 0 ? (
@@ -635,6 +672,71 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
           setPeopleOpen(false);
           void startWith(p.id, p.full_name);
         }}
+      />
+
+      <Dialog open={groupOpen} onOpenChange={setGroupOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create a group</DialogTitle>
+            <DialogDescription>
+              Name the group and add the members who should be in it.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label htmlFor="groupName">Group name</Label>
+              <Input
+                id="groupName"
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                placeholder="Team Sagada"
+                className="h-11 text-base"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Members</Label>
+              {groupPicks.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No members added yet.</p>
+              ) : (
+                <div className="flex flex-wrap gap-1">
+                  {groupPicks.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setGroupPicks((prev) => prev.filter((x) => x.id !== p.id))}
+                      className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-medium"
+                    >
+                      {p.name}
+                      <X className="size-3" />
+                    </button>
+                  ))}
+                </div>
+              )}
+              <Button variant="outline" className="h-11" onClick={() => setGroupPickerOpen(true)}>
+                <UserPlus className="size-4" /> Add members
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGroupOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!groupName.trim() || groupPicks.length === 0 || creatingGroup}
+              onClick={() => void createGroup()}
+            >
+              {creatingGroup ? <Loader2 className="size-4 animate-spin" /> : null} Create group
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <PeopleSheet
+        open={groupPickerOpen}
+        onOpenChange={setGroupPickerOpen}
+        title="Add members"
+        description="Search anyone in the Universe by name or @handle. Tap a member to add them to the group."
+        onSelect={(p) => addGroupPick(p.id, p.full_name)}
       />
 
       <PeopleSheet
