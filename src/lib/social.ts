@@ -11,6 +11,7 @@ import {
   MAX_UPLOAD_BYTES,
   loadImage,
   optimizeImage,
+  optimizeImageContain,
   optimizedName,
   validateImageFile,
   type CropRect,
@@ -236,7 +237,8 @@ export interface DmParticipant {
   name: string;
   handle: string | null;
   avatar: string | null;
-  role: "customer" | "seller" | "delivery" | "collector";
+  /** Order-chat roles, plus group-chat `owner` / `member`. */
+  role: "customer" | "seller" | "delivery" | "collector" | "owner" | "member";
 }
 
 export interface DmThread {
@@ -251,8 +253,11 @@ export interface DmThread {
   unread: number;
   blocked: boolean;
   member_online: boolean;
-  /** `direct` = one-to-one; `order` = Retail order-linked group chat (R6). */
-  kind: "direct" | "order";
+  /**
+   * `direct` = one-to-one; `order` = Retail order-linked group chat (R6);
+   * `group` = member-created group conversation.
+   */
+  kind: "direct" | "order" | "group";
   order_id: string | null;
   title: string | null;
   participants: DmParticipant[];
@@ -704,7 +709,7 @@ export async function fetchThreads(): Promise<DmThread[]> {
     unread: Number(t["unread"] ?? 0),
     blocked: !!t["blocked"],
     member_online: !!t["member_online"],
-    kind: t["kind"] === "order" ? "order" : "direct",
+    kind: t["kind"] === "order" ? "order" : t["kind"] === "group" ? "group" : "direct",
     order_id: (t["order_id"] as string | null) ?? null,
     title: (t["title"] as string | null) ?? null,
     participants: Array.isArray(t["participants"]) ? (t["participants"] as DmParticipant[]) : [],
@@ -713,7 +718,25 @@ export async function fetchThreads(): Promise<DmThread[]> {
 
 /** Display name of a thread: the other member for DMs, the order title for order chats. */
 export const threadTitle = (t: DmThread) =>
-  t.kind === "order" ? (t.title ?? "Order chat") : (t.member_name ?? "Member");
+  t.kind === "order"
+    ? (t.title ?? "Order chat")
+    : t.kind === "group"
+      ? (t.title ?? "Group chat")
+      : (t.member_name ?? "Member");
+
+/**
+ * Creates a member group conversation and returns its thread id. The database
+ * re-checks every invited member (Universe member, not blocked) before the
+ * thread exists, so this is only a convenience wrapper.
+ */
+export async function createGroupChat(title: string, memberIds: string[]): Promise<string> {
+  const { data, error } = await supabase.rpc("dm_create_group", {
+    _title: title.trim(),
+    _member_ids: memberIds,
+  });
+  if (error) fail(error.message);
+  return data as unknown as string;
+}
 
 /** Order number / status / shop for an order chat the caller belongs to. */
 export interface OrderChatContext {
@@ -751,7 +774,7 @@ export function orderChatLabel(t: DmThread, ctx?: OrderChatContext | null): stri
   return [`Order ${ctx.order_no}`, state, ctx.shop_name].filter(Boolean).join(" · ");
 }
 
-export type ThreadFilter = "all" | "direct" | "order";
+export type ThreadFilter = "all" | "direct" | "group" | "order";
 
 export function filterThreads(threads: DmThread[], filter: ThreadFilter): DmThread[] {
   return filter === "all" ? threads : threads.filter((t) => t.kind === filter);
@@ -856,6 +879,35 @@ export async function uploadSocialImage(input: {
   if (problem) throw new Error(problem);
   const source = input.preloaded ?? (await loadImage(input.file));
   const { blob, mime } = await optimizeImage(source, SOCIAL_IMAGE_TARGET, input.crop);
+  const path = `${socialMediaFolder(input.ecosystemId)}/${input.userId}/${optimizedName(crypto.randomUUID(), mime)}`;
+  const { error } = await supabase.storage
+    .from(SOCIAL_IMAGE_BUCKET)
+    .upload(path, blob, { contentType: mime, upsert: false });
+  if (error) throw new Error(error.message);
+  return path;
+}
+
+/**
+ * Chat photo upload — the whole picture, never cropped. The browser only scales
+ * a very large image down (long edge 1600px) so the upload stays practical on
+ * mobile data; portrait, landscape and square images all keep their own shape.
+ * Files land in the same private bucket and the same `<shop|universe>/<member>/`
+ * folder the existing storage policies already guard.
+ */
+export async function uploadChatImage(input: {
+  ecosystemId: string | null | undefined;
+  userId: string;
+  file: File;
+  preloaded?: HTMLImageElement;
+}): Promise<string> {
+  const problem = validateSocialImage(input.file);
+  if (problem) throw new Error(problem);
+  const source = input.preloaded ?? (await loadImage(input.file));
+  const { blob, mime } = await optimizeImageContain(source, {
+    maxEdge: 1600,
+    quality: 0.9,
+    maxBytes: 1_500_000,
+  });
   const path = `${socialMediaFolder(input.ecosystemId)}/${input.userId}/${optimizedName(crypto.randomUUID(), mime)}`;
   const { error } = await supabase.storage
     .from(SOCIAL_IMAGE_BUCKET)

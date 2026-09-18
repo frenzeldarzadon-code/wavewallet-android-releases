@@ -170,3 +170,39 @@ export async function optimizeImage(
   }
   return { blob, mime };
 }
+
+/**
+ * Whole-image encode for chat photos: never crops. The picture keeps its own
+ * proportions and is only scaled down when it is larger than `maxEdge`, so a
+ * portrait stays portrait and a landscape stays landscape.
+ */
+export async function optimizeImageContain(
+  source: HTMLImageElement,
+  options: { maxEdge?: number; quality?: number; maxBytes?: number } = {},
+): Promise<{ blob: Blob; mime: string; width: number; height: number }> {
+  const maxEdge = options.maxEdge ?? 1600;
+  const quality = options.quality ?? 0.9;
+  const maxBytes = options.maxBytes ?? 1_500_000;
+  const sw = source.naturalWidth || source.width;
+  const sh = source.naturalHeight || source.height;
+  const scale = Math.min(1, maxEdge / Math.max(sw, sh));
+  const width = Math.max(1, Math.round(sw * scale));
+  const height = Math.max(1, Math.round(sh * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Could not process that image.");
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(source, 0, 0, sw, sh, 0, 0, width, height);
+
+  const mime = supportsWebp() ? "image/webp" : "image/jpeg";
+  let q = quality;
+  let blob = await toBlob(canvas, mime, q);
+  while (blob.size > maxBytes && q > 0.6) {
+    q -= 0.1;
+    blob = await toBlob(canvas, mime, q);
+  }
+  return { blob, mime, width, height };
+}

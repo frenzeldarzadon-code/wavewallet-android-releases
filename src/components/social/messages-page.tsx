@@ -7,6 +7,7 @@ import {
   Send,
   ShieldOff,
   UserPlus,
+  Users,
   Wifi,
   X,
 } from "lucide-react";
@@ -29,13 +30,11 @@ import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { MemberAvatar } from "@/components/member-avatar";
 import { OrderWorkspacePanel } from "@/components/social/order-workspace-panel";
 import { PeopleSheet } from "@/components/universe/people-sheet";
-import { ImageCropper } from "@/components/image-cropper";
 import { cn } from "@/lib/utils";
 import { displayHandle } from "@/lib/profile";
 import { useSession } from "@/lib/session";
-import type { CropRect } from "@/lib/image-optimize";
 import {
-  SOCIAL_IMAGE_ASPECT,
+  createGroupChat,
   fetchMessages,
   fetchOrderChatContext,
   fetchThreads,
@@ -48,7 +47,7 @@ import {
   setBlocked,
   socialImageUrl,
   threadTitle,
-  uploadSocialImage,
+  uploadChatImage,
   validateMessageBody,
   validateSocialImage,
   type DmMessage,
@@ -57,9 +56,15 @@ import {
   type ThreadFilter,
 } from "@/lib/social";
 
-/** Signed-url image inside a chat bubble. */
+/**
+ * Signed-url photo inside a chat bubble. The complete picture is always shown:
+ * it is scaled proportionally to fit the bubble width and never cropped, so a
+ * portrait stays portrait and a landscape stays landscape. Tapping it opens the
+ * same photo full screen, still uncropped.
+ */
 function MessageImage({ path }: { path: string }) {
   const [url, setUrl] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
   useEffect(() => {
     let active = true;
     void socialImageUrl(path).then((u) => active && setUrl(u));
@@ -67,14 +72,31 @@ function MessageImage({ path }: { path: string }) {
       active = false;
     };
   }, [path]);
-  if (!url) return <div className="mb-1 aspect-4/3 w-48 animate-pulse rounded-xl bg-muted" />;
+  if (!url) return <div className="mb-1 h-32 w-48 animate-pulse rounded-xl bg-muted" />;
   return (
-    <img
-      src={url}
-      alt="Attachment"
-      loading="lazy"
-      className="mb-1 aspect-4/3 w-48 rounded-xl object-cover"
-    />
+    <>
+      <button type="button" onClick={() => setOpen(true)} className="mb-1 block">
+        <img
+          src={url}
+          alt="Attachment"
+          loading="lazy"
+          className="max-h-72 w-auto max-w-full rounded-xl object-contain"
+        />
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-[96vw] p-2 sm:max-w-3xl">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Photo</DialogTitle>
+            <DialogDescription>Full picture</DialogDescription>
+          </DialogHeader>
+          <img
+            src={url}
+            alt="Attachment"
+            className="max-h-[80vh] w-full rounded-lg object-contain"
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -102,8 +124,14 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [crop, setCrop] = useState<{ image: HTMLImageElement; crop: CropRect } | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [uploadFailed, setUploadFailed] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
+  const [groupOpen, setGroupOpen] = useState(false);
+  const [groupPickerOpen, setGroupPickerOpen] = useState(false);
+  const [groupName, setGroupName] = useState("");
+  const [groupPicks, setGroupPicks] = useState<Array<{ id: string; name: string }>>([]);
+  const [creatingGroup, setCreatingGroup] = useState(false);
   const [peopleOpen, setPeopleOpen] = useState(false);
   const [filter, setFilter] = useState<ThreadFilter>("all");
   const [orderCtx, setOrderCtx] = useState<Map<string, OrderChatContext>>(new Map());
@@ -163,9 +191,13 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
   // Presence heartbeat lives app-wide in __root (src/lib/presence.ts).
 
   const pickFile = (f: File | null) => {
+    setUploadFailed(false);
+    setFilePreview((old) => {
+      if (old) URL.revokeObjectURL(old);
+      return null;
+    });
     if (!f) {
       setFile(null);
-      setCrop(null);
       return;
     }
     const problem = validateSocialImage(f);
@@ -174,41 +206,41 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
       return;
     }
     setFile(f);
+    setFilePreview(URL.createObjectURL(f));
   };
 
   const send = async () => {
     if (!active) return;
-    const hasImage = Boolean(file && crop);
+    const hasImage = Boolean(file);
     const problem = hasImage && !body.trim() ? null : validateMessageBody(body);
     if (problem) {
       toast.error(problem);
       return;
     }
     setSending(true);
+    setUploadFailed(false);
     try {
       let imagePath: string | null = null;
-      if (file && crop && session.account) {
-        imagePath = await uploadSocialImage({
+      if (file && session.account) {
+        imagePath = await uploadChatImage({
           ecosystemId: session.ecosystemDbId,
           userId: session.account.id,
           file,
-          crop: crop.crop,
-          preloaded: crop.image,
         });
       }
       const res =
-        active.kind === "order"
-          ? await sendThreadMessage(active.thread_id, body, imagePath)
-          : await sendMessage(active.member_id ?? "", body, imagePath);
+        active.kind === "direct"
+          ? await sendMessage(active.member_id ?? "", body, imagePath)
+          : await sendThreadMessage(active.thread_id, body, imagePath);
       setBody("");
-      setFile(null);
-      setCrop(null);
+      pickFile(null);
       const tid = active.thread_id || res.thread_id;
       if (!active.thread_id) setActive({ ...active, thread_id: tid });
       setMessages(await fetchMessages(tid));
       await loadThreads();
       requestAnimationFrame(() => bottom.current?.scrollIntoView({ block: "end" }));
     } catch (e) {
+      if (file) setUploadFailed(true);
       toast.error("Could not send", { description: (e as Error).message });
     } finally {
       setSending(false);
@@ -265,19 +297,46 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
     }
   };
 
+  const addGroupPick = (id: string, name: string) => {
+    setGroupPicks((prev) => (prev.some((p) => p.id === id) ? prev : [...prev, { id, name }]));
+  };
+
+  const createGroup = async () => {
+    setCreatingGroup(true);
+    try {
+      const threadId = await createGroupChat(
+        groupName,
+        groupPicks.map((p) => p.id),
+      );
+      setGroupOpen(false);
+      setGroupName("");
+      setGroupPicks([]);
+      const list = await loadThreads();
+      const created = list.find((t) => t.thread_id === threadId);
+      if (created) await openThreadView(created);
+    } catch (e) {
+      toast.error("Could not create the group", { description: (e as Error).message });
+    } finally {
+      setCreatingGroup(false);
+    }
+  };
+
   if (!session.account) return null;
 
   if (active) {
     const isOrder = active.kind === "order";
+    const isGroup = active.kind === "group";
+    // Order chats and member groups share the same multi-party presentation.
+    const isMulti = isOrder || isGroup;
     return (
       <div className="flex min-h-[70vh] flex-col gap-3">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" className="h-10" onClick={() => setActive(null)}>
             <ArrowLeft className="size-4" />
           </Button>
-          {isOrder ? (
+          {isMulti ? (
             <span className="inline-flex size-9 items-center justify-center rounded-full bg-brand-soft text-primary">
-              <Package className="size-4" />
+              {isOrder ? <Package className="size-4" /> : <Users className="size-4" />}
             </span>
           ) : (
             <MemberAvatar
@@ -292,7 +351,11 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
                 ? orderChatLabel(active, orderCtx.get(active.thread_id))
                 : threadTitle(active)}
             </p>
-            {isOrder ? (
+            {isGroup ? (
+              <p className="truncate text-xs text-muted-foreground">
+                {active.participants.length} members · group chat
+              </p>
+            ) : isOrder ? (
               <p className="truncate text-xs text-muted-foreground">
                 {orderCtx.get(active.thread_id)?.shop_name
                   ? "Order chat · everyone on this order can read this"
@@ -307,7 +370,7 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
               </p>
             ) : null}
           </div>
-          {!isOrder ? (
+          {!isMulti ? (
             <>
               <Button
                 variant="ghost"
@@ -326,11 +389,11 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
 
         {isOrder ? <OrderWorkspacePanel key={active.thread_id} threadId={active.thread_id} /> : null}
 
-        {isOrder ? (
+        {isMulti ? (
           <div className="flex flex-wrap gap-1">
             {active.participants.map((p) => (
-              <StatusBadge key={p.id} tone={p.role === "seller" ? "brand" : "muted"}>
-                {roleLabel[p.role] ?? p.role}: {p.name}
+              <StatusBadge key={p.id} tone={p.role === "seller" || p.role === "owner" ? "brand" : "muted"}>
+                {isGroup ? p.name : `${roleLabel[p.role] ?? p.role}: ${p.name}`}
               </StatusBadge>
             ))}
           </div>
@@ -341,7 +404,9 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
             <p className="py-8 text-center text-sm text-muted-foreground">
               {isOrder
                 ? "No messages yet — coordinate the delivery here."
-                : "No messages yet — say hello."}
+                : isGroup
+                  ? "No messages yet — say hello to the group."
+                  : "No messages yet — say hello."}
             </p>
           ) : (
             messages.map((m) => (
@@ -353,7 +418,7 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
                       : "max-w-[80%] rounded-2xl rounded-bl-sm bg-card px-3 py-2 text-sm shadow-[var(--shadow-card)]"
                   }
                 >
-                  {isOrder && !m.mine && m.sender_name ? (
+                  {isMulti && !m.mine && m.sender_name ? (
                     <p className="mb-0.5 text-[10px] font-semibold text-muted-foreground">
                       {m.sender_name}
                     </p>
@@ -374,10 +439,21 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
           </p>
         ) : (
           <div className="space-y-2">
-            {file ? (
-              <div className="space-y-2">
-                <ImageCropper file={file} aspect={SOCIAL_IMAGE_ASPECT} onChange={setCrop} />
-                <Button variant="ghost" size="sm" onClick={() => pickFile(null)}>
+            {file && filePreview ? (
+              <div className="space-y-2 rounded-xl border border-border p-2">
+                <img
+                  src={filePreview}
+                  alt="Selected photo"
+                  className="max-h-56 w-auto max-w-full rounded-lg object-contain"
+                />
+                {sending ? (
+                  <p className="text-xs text-muted-foreground">Uploading photo…</p>
+                ) : uploadFailed ? (
+                  <p className="text-xs text-destructive">
+                    That photo did not upload. Tap send to try again, or remove it.
+                  </p>
+                ) : null}
+                <Button variant="ghost" size="sm" disabled={sending} onClick={() => pickFile(null)}>
                   <X className="size-4" /> Remove photo
                 </Button>
               </div>
@@ -406,7 +482,7 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
               />
               <Button
                 className="h-11"
-                disabled={(!body.trim() && !crop) || sending}
+                disabled={(!body.trim() && !file) || sending}
                 onClick={() => void send()}
               >
                 {sending ? (
@@ -447,9 +523,11 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
 
   const visible = filterThreads(threads, filter);
   const orderCount = threads.filter((t) => t.kind === "order").length;
+  const groupCount = threads.filter((t) => t.kind === "group").length;
   const filters: Array<{ id: ThreadFilter; label: string }> = [
     { id: "all", label: "All" },
     { id: "direct", label: "Private" },
+    { id: "group", label: groupCount ? `Groups · ${groupCount}` : "Groups" },
     { id: "order", label: orderCount ? `Orders · ${orderCount}` : "Orders" },
   ];
 
@@ -463,6 +541,9 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
         <div className="flex gap-2">
           <Button variant="outline" className="h-11" onClick={() => setPeopleOpen(true)}>
             <Wifi className="size-4" /> Online
+          </Button>
+          <Button variant="outline" className="h-11" onClick={() => setGroupOpen(true)}>
+            <Users className="size-4" /> Create group
           </Button>
           <Button className="h-11" onClick={() => setNewOpen(true)}>
             <UserPlus className="size-4" /> New message
@@ -501,14 +582,18 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
           title={
             filter === "order"
               ? "No order chats"
-              : filter === "direct"
-                ? "No private chats yet"
-                : "No conversations yet"
+              : filter === "group"
+                ? "No group chats yet"
+                : filter === "direct"
+                  ? "No private chats yet"
+                  : "No conversations yet"
           }
           description={
             filter === "order"
               ? "An order chat appears here automatically after you place or receive a Retail order."
-              : "Start a chat from a member's post, from Online, or with New message."
+              : filter === "group"
+                ? "Tap Create group to start a conversation with several members."
+                : "Start a chat from a member's post, from Online, or with New message."
           }
         />
       ) : (
@@ -522,9 +607,9 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
                 onClick={() => void openThreadView(t)}
               >
                 <CardContent className="flex items-center gap-3 py-3">
-                  {t.kind === "order" ? (
+                  {t.kind !== "direct" ? (
                     <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-soft text-primary">
-                      <Package className="size-4" />
+                      {t.kind === "order" ? <Package className="size-4" /> : <Users className="size-4" />}
                     </span>
                   ) : (
                     <span className="relative">
@@ -544,6 +629,8 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
                       </span>
                       {t.kind === "order" ? (
                         <StatusBadge tone="brand">Order</StatusBadge>
+                      ) : t.kind === "group" ? (
+                        <StatusBadge tone="brand">Group</StatusBadge>
                       ) : t.member_online ? (
                         <span className="text-[11px] font-medium text-success">Online</span>
                       ) : null}
@@ -559,7 +646,9 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
                           ? t.participants
                               .map((p) => `${p.name} (${roleLabel[p.role] ?? p.role})`)
                               .join(", ")
-                          : "No messages yet")}
+                          : t.kind === "group"
+                            ? t.participants.map((p) => p.name).join(", ")
+                            : "No messages yet")}
                     </p>
                   </div>
                   {t.unread > 0 ? (
@@ -583,6 +672,71 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
           setPeopleOpen(false);
           void startWith(p.id, p.full_name);
         }}
+      />
+
+      <Dialog open={groupOpen} onOpenChange={setGroupOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create a group</DialogTitle>
+            <DialogDescription>
+              Name the group and add the members who should be in it.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label htmlFor="groupName">Group name</Label>
+              <Input
+                id="groupName"
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                placeholder="Team Sagada"
+                className="h-11 text-base"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Members</Label>
+              {groupPicks.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No members added yet.</p>
+              ) : (
+                <div className="flex flex-wrap gap-1">
+                  {groupPicks.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setGroupPicks((prev) => prev.filter((x) => x.id !== p.id))}
+                      className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-medium"
+                    >
+                      {p.name}
+                      <X className="size-3" />
+                    </button>
+                  ))}
+                </div>
+              )}
+              <Button variant="outline" className="h-11" onClick={() => setGroupPickerOpen(true)}>
+                <UserPlus className="size-4" /> Add members
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGroupOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!groupName.trim() || groupPicks.length === 0 || creatingGroup}
+              onClick={() => void createGroup()}
+            >
+              {creatingGroup ? <Loader2 className="size-4 animate-spin" /> : null} Create group
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <PeopleSheet
+        open={groupPickerOpen}
+        onOpenChange={setGroupPickerOpen}
+        title="Add members"
+        description="Search anyone in the Universe by name or @handle. Tap a member to add them to the group."
+        onSelect={(p) => addGroupPick(p.id, p.full_name)}
       />
 
       <PeopleSheet
