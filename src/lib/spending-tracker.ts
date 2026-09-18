@@ -183,31 +183,28 @@ export function autoCategoryName(
   const hit = categories.find((c) => c.auto_key === autoKey && c.kind === kind);
   if (hit) return hit.name;
   if (autoKey === "admin_discount") return "Admin Discount";
-  if (autoKey === "admin_self_purchase") return "Admin Self-Purchase Sales";
-  if (autoKey === "admin_purchases") return "Admin Purchases";
-  if (autoKey === "admin_platform_fee") return "Platform Fees";
-  if (autoKey === "admin_points_cost") return "Reward Points / Coin Conversion";
   if (autoKey === "admin_self_cashback") return "Admin Cashback";
-  if (autoKey === "sale_cashback") return "Reseller Cashback";
   if (autoKey === "direct") return "Direct sales";
   return fallbackMember ?? "Reseller";
 }
 
 /**
- * Automatic income: admin shop margin, admin self-purchase sales and the
- * (New Generation only) admin discount.
- * Automatic expense: only the derived admin costs the database produces
- * (`admin_platform_fee`, `admin_points_cost`). The legacy `admin_purchases`
- * face-value row from an older database function is still dropped here: the
- * self-purchase is already reported as a sale, so counting the face value as a
- * cost too would double count.
- * Stable source ids (`cb:`, `sp:`, `ad:`, `pf:`, `pt:`) de-duplicate one source
- * transaction into exactly one automatic entry.
+ * Automatic income: admin shop margin on sales to other members, the admin
+ * cashback actually earned on a self-purchase, and the (New Generation only)
+ * admin discount. A self-purchase never contributes its face value as a sale.
+ * There are no automatic expenses: platform fees and reward point costs are
+ * real financial events elsewhere, but this tracker reports the admin's actual
+ * earnings and does not restate them as deductions.
+ * Stable source ids (`cb:`, `sc:`, `ad:`) de-duplicate one source transaction
+ * into exactly one automatic entry; legacy ids (`sp:`, `pf:`, `pt:`) and their
+ * keys are no longer emitted and are dropped if they ever appear.
  */
-const AUTO_EXPENSE_KEYS = new Set([
+const AUTO_EXPENSE_KEYS = new Set<string>();
+const DROPPED_AUTO_KEYS = new Set([
+  "admin_self_purchase",
+  "admin_purchases",
   "admin_platform_fee",
   "admin_points_cost",
-  "admin_self_cashback",
   "sale_cashback",
 ]);
 
