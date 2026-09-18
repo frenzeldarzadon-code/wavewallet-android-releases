@@ -206,49 +206,174 @@ export function UniverseShell({
             </SheetTrigger>
             <SheetContent
               side="left"
-              className="flex h-[100dvh] max-h-[100dvh] w-[86vw] max-w-sm flex-col gap-0 overflow-hidden p-0 overscroll-none [&>button]:top-[max(1rem,env(safe-area-inset-top))]"
+              className="flex h-[100dvh] max-h-[100dvh] w-[92vw] max-w-sm flex-col gap-0 overflow-hidden border-r border-border bg-app p-0 overscroll-none [&>button]:right-4 [&>button]:top-[max(1rem,env(safe-area-inset-top))] [&>button]:flex [&>button]:size-11 [&>button]:items-center [&>button]:justify-center [&>button]:rounded-full [&>button]:bg-primary [&>button]:text-primary-foreground [&>button]:opacity-100 [&>button]:shadow-[var(--shadow-float)] [&>button_svg]:size-5"
             >
-              <SheetHeader className="shrink-0 border-b border-border px-5 pb-5 pt-[max(1.25rem,env(safe-area-inset-top))] text-left">
-                <SheetTitle>Universe</SheetTitle>
+              <SheetHeader className="shrink-0 px-5 pb-3 pt-[max(1.25rem,env(safe-area-inset-top))] text-left">
+                <SheetTitle className="flex items-center gap-3 pr-14">
+                  <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[var(--shadow-card)]">
+                    <Sparkles className="size-5" />
+                  </span>
+                  <span className="leading-tight">
+                    <span className="block text-[11px] font-bold uppercase tracking-wider text-primary">
+                      ONE WAVE
+                    </span>
+                    <span className="block text-xl font-bold">Universe</span>
+                  </span>
+                </SheetTitle>
               </SheetHeader>
               <nav
                 aria-label="Universe menu"
-                className="min-h-0 flex-1 touch-pan-y space-y-1 overflow-y-auto overscroll-contain px-3 pt-3 [padding-bottom:max(1rem,env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]"
+                className="min-h-0 flex-1 touch-pan-y space-y-4 overflow-y-auto overscroll-contain px-4 pt-2 [padding-bottom:max(1rem,env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]"
               >
-                {railItems.map((item) => (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    className={cn(
-                      "flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium",
-                      active(item.to)
-                        ? "bg-brand-soft text-primary"
-                        : "text-foreground hover:bg-accent",
-                    )}
+                <Link
+                  to="/universe/profile"
+                  className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-[var(--shadow-card)] transition-colors hover:bg-accent/40"
+                >
+                  <MemberAvatar path={identity.avatar} name={account.name} className="size-12" />
+                  <span className="min-w-0 flex-1 leading-tight">
+                    <span className="block truncate text-sm font-bold">{account.name}</span>
+                    <span className="mt-1 block truncate text-xs text-muted-foreground">
+                      {identity.handle ? `@${identity.handle}` : "ONE WAVE member"}
+                    </span>
+                  </span>
+                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                </Link>
+
+                <section aria-label="Primary menu items" className="grid grid-cols-2 gap-2.5">
+                  {railItems
+                    .filter(
+                      (item) =>
+                        item.to === "/universe" || item.to === "/universe/wallet",
+                    )
+                    .map((item) => (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        aria-current={active(item.to) ? "page" : undefined}
+                        className={cn(
+                          "flex min-h-28 flex-col justify-between rounded-xl border p-3.5 shadow-[var(--shadow-card)] transition-colors",
+                          active(item.to)
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-brand-soft/50",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "flex size-10 items-center justify-center rounded-lg",
+                            active(item.to)
+                              ? "bg-primary-foreground/15"
+                              : "bg-brand-soft text-primary",
+                          )}
+                        >
+                          <item.icon className="size-5" />
+                        </span>
+                        <span>
+                          <span className="block text-sm font-bold">{item.label}</span>
+                          {item.to === "/universe/wallet" ? (
+                            <span
+                              className={cn(
+                                "mt-0.5 block truncate text-xs font-semibold tabular-nums",
+                                active(item.to)
+                                  ? "text-primary-foreground/80"
+                                  : "text-success",
+                              )}
+                            >
+                              {identity.balance === null ? "…" : peso(identity.balance)}
+                            </span>
+                          ) : (
+                            <span
+                              className={cn(
+                                "mt-0.5 block text-xs",
+                                active(item.to)
+                                  ? "text-primary-foreground/80"
+                                  : "text-muted-foreground",
+                              )}
+                            >
+                              Your Universe
+                            </span>
+                          )}
+                        </span>
+                      </Link>
+                    ))}
+                </section>
+
+                <section aria-labelledby="universe-explore-menu">
+                  <p
+                    id="universe-explore-menu"
+                    className="mb-2 px-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
                   >
-                    <item.icon className="size-5" /> {item.label}
-                    {item.to === "/universe/notifications" ? (
-                      <Badge count={unread} className="static ml-auto" />
-                    ) : null}
-                    {item.to === "/universe/friends" ? (
-                      <Badge count={friendRequests} className="static ml-auto" />
-                    ) : null}
-                  </Link>
-                ))}
-                <div className="my-3 border-t border-border" />
-                {isPlatformOwner ? (
-                  <Link
-                    to="/super"
-                    className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium hover:bg-accent"
-                  >
-                    <Store className="size-5" /> Platform console
-                  </Link>
-                ) : (
-                  <ShopDashboardSwitch entry={dashboard} variant="menu" />
-                )}
+                    Explore
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {railItems
+                      .filter(
+                        (item) =>
+                          item.to !== "/universe" && item.to !== "/universe/wallet",
+                      )
+                      .map((item) => (
+                        <Link
+                          key={item.to}
+                          to={item.to}
+                          aria-current={active(item.to) ? "page" : undefined}
+                          className={cn(
+                            "flex min-h-[4.5rem] items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition-colors",
+                            active(item.to)
+                              ? "border-primary/30 bg-brand-soft font-bold text-primary"
+                              : "border-border bg-card font-medium text-foreground shadow-[var(--shadow-card)] hover:border-primary/30 hover:bg-accent/50",
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "relative flex size-9 shrink-0 items-center justify-center rounded-lg",
+                              active(item.to)
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-brand-soft text-primary",
+                            )}
+                          >
+                            <item.icon className="size-[1.125rem]" />
+                            {item.to === "/universe/notifications" ? (
+                              <Badge count={unread} className="-right-1.5 -top-1.5" />
+                            ) : null}
+                            {item.to === "/universe/friends" ? (
+                              <Badge count={friendRequests} className="-right-1.5 -top-1.5" />
+                            ) : null}
+                          </span>
+                          <span className="min-w-0 text-[13px] leading-tight">{item.label}</span>
+                        </Link>
+                      ))}
+                  </div>
+                </section>
+
+                <section
+                  aria-label="Shop Dashboard"
+                  className="rounded-xl border border-primary/20 bg-brand-soft/70 p-3 shadow-[var(--shadow-card)]"
+                >
+                  <p className="mb-2 px-1 text-[11px] font-bold uppercase tracking-wider text-primary">
+                    Shop workspace
+                  </p>
+                  {isPlatformOwner ? (
+                    <Link
+                      to="/super"
+                      className="flex min-h-14 items-center gap-3 rounded-lg border border-border bg-card px-3 text-sm font-semibold shadow-[var(--shadow-card)] hover:bg-accent"
+                    >
+                      <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                        <Store className="size-5" />
+                      </span>
+                      <span className="min-w-0 flex-1">Platform console</span>
+                      <ChevronRight className="size-4 text-muted-foreground" />
+                    </Link>
+                  ) : (
+                    <ShopDashboardSwitch
+                      entry={dashboard}
+                      variant="menu"
+                      className="min-h-14 border border-border bg-card px-3 shadow-[var(--shadow-card)] hover:bg-accent"
+                    />
+                  )}
+                </section>
+
                 <Button
                   variant="ghost"
-                  className="w-full justify-start text-destructive"
+                  className="w-full justify-start rounded-xl text-destructive hover:bg-danger-soft hover:text-destructive"
                   onClick={() => session.signOut()}
                 >
                   <LogOut className="size-5" /> Sign out
