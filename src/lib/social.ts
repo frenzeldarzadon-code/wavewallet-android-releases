@@ -764,10 +764,12 @@ export async function fetchMessages(threadId: string): Promise<DmMessage[]> {
 }
 
 export async function sendMessage(memberId: string, body: string, imagePath?: string | null) {
+  // Always pass every argument: the database keeps one dm_send signature and an
+  // omitted optional argument would make the call ambiguous again.
   const { data, error } = await supabase.rpc("dm_send", {
     _member_id: memberId,
     _body: body.trim(),
-    ...(imagePath ? { _image_path: imagePath } : {}),
+    _image_path: imagePath ?? null,
   });
   if (error) fail(error.message);
   return data as unknown as { thread_id: string; message_id: string };
