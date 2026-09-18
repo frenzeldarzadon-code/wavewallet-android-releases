@@ -11,6 +11,7 @@ import {
   MAX_UPLOAD_BYTES,
   loadImage,
   optimizeImage,
+  optimizeImageContain,
   optimizedName,
   validateImageFile,
   type CropRect,
@@ -251,8 +252,11 @@ export interface DmThread {
   unread: number;
   blocked: boolean;
   member_online: boolean;
-  /** `direct` = one-to-one; `order` = Retail order-linked group chat (R6). */
-  kind: "direct" | "order";
+  /**
+   * `direct` = one-to-one; `order` = Retail order-linked group chat (R6);
+   * `group` = member-created group conversation.
+   */
+  kind: "direct" | "order" | "group";
   order_id: string | null;
   title: string | null;
   participants: DmParticipant[];
