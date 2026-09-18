@@ -102,18 +102,34 @@ describe("Spending Tracker totals", () => {
   });
 
   it("shows the admin's derived platform fee and reward point cost as expenses", () => {
-    // A shop whose only activity is admin self-purchases: the margin income is
-    // excluded, but the coins the admin really paid still have to show up.
     const rows = automaticEntries(
       [
         autoRow({ id: "pf:sale-9", kind: "expense", auto_key: "admin_platform_fee", amount: 57.84 }),
-        autoRow({ id: "pc:led-9", kind: "expense", auto_key: "admin_points_cost", amount: 45 }),
+        autoRow({ id: "pt:led-9", kind: "expense", auto_key: "admin_points_cost", amount: 45 }),
       ],
       [],
     );
-    expect(rows.map((r) => r.categoryName)).toEqual(["Platform Fees", "Reward Points Cost"]);
+    expect(rows.map((r) => r.categoryName)).toEqual([
+      "Platform Fees",
+      "Reward Points / Coin Conversion",
+    ]);
     expect(rows.every((r) => r.editable)).toBe(false);
     expect(summarize(rows)).toEqual({ income: 0, expense: 102.84, balance: -102.84 });
+  });
+
+  it("counts an admin self-purchase as shop sales income", () => {
+    // Self-purchase sale of 2,950 with a 57.84 fee and 45.00 of reward points:
+    // the sale is income, the fee and point cost are the only expenses.
+    const rows = automaticEntries(
+      [
+        autoRow({ id: "sp:sale-1", auto_key: "admin_self_purchase", amount: 2950 }),
+        autoRow({ id: "pf:sale-1", kind: "expense", auto_key: "admin_platform_fee", amount: 57.84 }),
+        autoRow({ id: "pt:led-1", kind: "expense", auto_key: "admin_points_cost", amount: 45 }),
+      ],
+      [],
+    );
+    expect(rows[0].categoryName).toBe("Admin Self-Purchase Sales");
+    expect(summarize(rows)).toEqual({ income: 2950, expense: 102.84, balance: 2847.16 });
   });
 
   it("de-duplicates one derived admin cost into a single expense entry", () => {
