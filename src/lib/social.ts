@@ -708,7 +708,7 @@ export async function fetchThreads(): Promise<DmThread[]> {
     unread: Number(t["unread"] ?? 0),
     blocked: !!t["blocked"],
     member_online: !!t["member_online"],
-    kind: t["kind"] === "order" ? "order" : "direct",
+    kind: t["kind"] === "order" ? "order" : t["kind"] === "group" ? "group" : "direct",
     order_id: (t["order_id"] as string | null) ?? null,
     title: (t["title"] as string | null) ?? null,
     participants: Array.isArray(t["participants"]) ? (t["participants"] as DmParticipant[]) : [],
@@ -717,7 +717,25 @@ export async function fetchThreads(): Promise<DmThread[]> {
 
 /** Display name of a thread: the other member for DMs, the order title for order chats. */
 export const threadTitle = (t: DmThread) =>
-  t.kind === "order" ? (t.title ?? "Order chat") : (t.member_name ?? "Member");
+  t.kind === "order"
+    ? (t.title ?? "Order chat")
+    : t.kind === "group"
+      ? (t.title ?? "Group chat")
+      : (t.member_name ?? "Member");
+
+/**
+ * Creates a member group conversation and returns its thread id. The database
+ * re-checks every invited member (Universe member, not blocked) before the
+ * thread exists, so this is only a convenience wrapper.
+ */
+export async function createGroupChat(title: string, memberIds: string[]): Promise<string> {
+  const { data, error } = await supabase.rpc("dm_create_group", {
+    _title: title.trim(),
+    _member_ids: memberIds,
+  });
+  if (error) fail(error.message);
+  return data as unknown as string;
+}
 
 /** Order number / status / shop for an order chat the caller belongs to. */
 export interface OrderChatContext {
@@ -755,7 +773,7 @@ export function orderChatLabel(t: DmThread, ctx?: OrderChatContext | null): stri
   return [`Order ${ctx.order_no}`, state, ctx.shop_name].filter(Boolean).join(" · ");
 }
 
-export type ThreadFilter = "all" | "direct" | "order";
+export type ThreadFilter = "all" | "direct" | "group" | "order";
 
 export function filterThreads(threads: DmThread[], filter: ThreadFilter): DmThread[] {
   return filter === "all" ? threads : threads.filter((t) => t.kind === filter);
