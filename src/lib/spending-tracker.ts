@@ -184,6 +184,8 @@ export function autoCategoryName(
   if (hit) return hit.name;
   if (autoKey === "admin_discount") return "Admin Discount";
   if (autoKey === "admin_purchases") return "Admin Purchases";
+  if (autoKey === "admin_platform_fee") return "Platform Fees";
+  if (autoKey === "admin_points_cost") return "Reward Points Cost";
   if (autoKey === "direct") return "Direct sales";
   return fallbackMember ?? "Reseller";
 }
