@@ -124,8 +124,14 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [crop, setCrop] = useState<{ image: HTMLImageElement; crop: CropRect } | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [uploadFailed, setUploadFailed] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
+  const [groupOpen, setGroupOpen] = useState(false);
+  const [groupPickerOpen, setGroupPickerOpen] = useState(false);
+  const [groupName, setGroupName] = useState("");
+  const [groupPicks, setGroupPicks] = useState<Array<{ id: string; name: string }>>([]);
+  const [creatingGroup, setCreatingGroup] = useState(false);
   const [peopleOpen, setPeopleOpen] = useState(false);
   const [filter, setFilter] = useState<ThreadFilter>("all");
   const [orderCtx, setOrderCtx] = useState<Map<string, OrderChatContext>>(new Map());
@@ -185,9 +191,13 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
   // Presence heartbeat lives app-wide in __root (src/lib/presence.ts).
 
   const pickFile = (f: File | null) => {
+    setUploadFailed(false);
+    setFilePreview((old) => {
+      if (old) URL.revokeObjectURL(old);
+      return null;
+    });
     if (!f) {
       setFile(null);
-      setCrop(null);
       return;
     }
     const problem = validateSocialImage(f);
@@ -196,41 +206,41 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
       return;
     }
     setFile(f);
+    setFilePreview(URL.createObjectURL(f));
   };
 
   const send = async () => {
     if (!active) return;
-    const hasImage = Boolean(file && crop);
+    const hasImage = Boolean(file);
     const problem = hasImage && !body.trim() ? null : validateMessageBody(body);
     if (problem) {
       toast.error(problem);
       return;
     }
     setSending(true);
+    setUploadFailed(false);
     try {
       let imagePath: string | null = null;
-      if (file && crop && session.account) {
-        imagePath = await uploadSocialImage({
+      if (file && session.account) {
+        imagePath = await uploadChatImage({
           ecosystemId: session.ecosystemDbId,
           userId: session.account.id,
           file,
-          crop: crop.crop,
-          preloaded: crop.image,
         });
       }
       const res =
-        active.kind === "order"
-          ? await sendThreadMessage(active.thread_id, body, imagePath)
-          : await sendMessage(active.member_id ?? "", body, imagePath);
+        active.kind === "direct"
+          ? await sendMessage(active.member_id ?? "", body, imagePath)
+          : await sendThreadMessage(active.thread_id, body, imagePath);
       setBody("");
-      setFile(null);
-      setCrop(null);
+      pickFile(null);
       const tid = active.thread_id || res.thread_id;
       if (!active.thread_id) setActive({ ...active, thread_id: tid });
       setMessages(await fetchMessages(tid));
       await loadThreads();
       requestAnimationFrame(() => bottom.current?.scrollIntoView({ block: "end" }));
     } catch (e) {
+      if (file) setUploadFailed(true);
       toast.error("Could not send", { description: (e as Error).message });
     } finally {
       setSending(false);
@@ -396,10 +406,21 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
           </p>
         ) : (
           <div className="space-y-2">
-            {file ? (
-              <div className="space-y-2">
-                <ImageCropper file={file} aspect={SOCIAL_IMAGE_ASPECT} onChange={setCrop} />
-                <Button variant="ghost" size="sm" onClick={() => pickFile(null)}>
+            {file && filePreview ? (
+              <div className="space-y-2 rounded-xl border border-border p-2">
+                <img
+                  src={filePreview}
+                  alt="Selected photo"
+                  className="max-h-56 w-auto max-w-full rounded-lg object-contain"
+                />
+                {sending ? (
+                  <p className="text-xs text-muted-foreground">Uploading photo…</p>
+                ) : uploadFailed ? (
+                  <p className="text-xs text-destructive">
+                    That photo did not upload. Tap send to try again, or remove it.
+                  </p>
+                ) : null}
+                <Button variant="ghost" size="sm" disabled={sending} onClick={() => pickFile(null)}>
                   <X className="size-4" /> Remove photo
                 </Button>
               </div>
@@ -428,7 +449,7 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
               />
               <Button
                 className="h-11"
-                disabled={(!body.trim() && !crop) || sending}
+                disabled={(!body.trim() && !file) || sending}
                 onClick={() => void send()}
               >
                 {sending ? (
