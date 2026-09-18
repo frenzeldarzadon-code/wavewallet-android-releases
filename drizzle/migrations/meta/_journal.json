@@ -15,6 +15,13 @@
       "when": 1789736329415,
       "tag": "0001_spending_auto_points_cost_reason",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789737097744,
+      "tag": "0002_spending_sales_expense_alignment",
+      "breakpoints": true
     }
   ]
 }
