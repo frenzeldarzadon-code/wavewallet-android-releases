@@ -204,7 +204,12 @@ export function autoCategoryName(
  * Stable source ids (`cb:`, `sp:`, `ad:`, `pf:`, `pt:`) de-duplicate one source
  * transaction into exactly one automatic entry.
  */
-const AUTO_EXPENSE_KEYS = new Set(["admin_platform_fee", "admin_points_cost"]);
+const AUTO_EXPENSE_KEYS = new Set([
+  "admin_platform_fee",
+  "admin_points_cost",
+  "admin_self_cashback",
+  "sale_cashback",
+]);
 
 export function automaticEntries(
   rows: AutoRow[],
