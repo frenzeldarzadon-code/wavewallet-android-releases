@@ -301,15 +301,18 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
 
   if (active) {
     const isOrder = active.kind === "order";
+    const isGroup = active.kind === "group";
+    // Order chats and member groups share the same multi-party presentation.
+    const isMulti = isOrder || isGroup;
     return (
       <div className="flex min-h-[70vh] flex-col gap-3">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" className="h-10" onClick={() => setActive(null)}>
             <ArrowLeft className="size-4" />
           </Button>
-          {isOrder ? (
+          {isMulti ? (
             <span className="inline-flex size-9 items-center justify-center rounded-full bg-brand-soft text-primary">
-              <Package className="size-4" />
+              {isOrder ? <Package className="size-4" /> : <Users className="size-4" />}
             </span>
           ) : (
             <MemberAvatar
@@ -324,7 +327,11 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
                 ? orderChatLabel(active, orderCtx.get(active.thread_id))
                 : threadTitle(active)}
             </p>
-            {isOrder ? (
+            {isGroup ? (
+              <p className="truncate text-xs text-muted-foreground">
+                {active.participants.length} members · group chat
+              </p>
+            ) : isOrder ? (
               <p className="truncate text-xs text-muted-foreground">
                 {orderCtx.get(active.thread_id)?.shop_name
                   ? "Order chat · everyone on this order can read this"
@@ -339,7 +346,7 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
               </p>
             ) : null}
           </div>
-          {!isOrder ? (
+          {!isMulti ? (
             <>
               <Button
                 variant="ghost"
@@ -358,11 +365,11 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
 
         {isOrder ? <OrderWorkspacePanel key={active.thread_id} threadId={active.thread_id} /> : null}
 
-        {isOrder ? (
+        {isMulti ? (
           <div className="flex flex-wrap gap-1">
             {active.participants.map((p) => (
-              <StatusBadge key={p.id} tone={p.role === "seller" ? "brand" : "muted"}>
-                {roleLabel[p.role] ?? p.role}: {p.name}
+              <StatusBadge key={p.id} tone={p.role === "seller" || p.role === "owner" ? "brand" : "muted"}>
+                {isGroup ? p.name : `${roleLabel[p.role] ?? p.role}: ${p.name}`}
               </StatusBadge>
             ))}
           </div>
@@ -373,7 +380,9 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
             <p className="py-8 text-center text-sm text-muted-foreground">
               {isOrder
                 ? "No messages yet — coordinate the delivery here."
-                : "No messages yet — say hello."}
+                : isGroup
+                  ? "No messages yet — say hello to the group."
+                  : "No messages yet — say hello."}
             </p>
           ) : (
             messages.map((m) => (
@@ -385,7 +394,7 @@ export function MessagesPage({ initialThreadId }: { initialThreadId?: string | n
                       : "max-w-[80%] rounded-2xl rounded-bl-sm bg-card px-3 py-2 text-sm shadow-[var(--shadow-card)]"
                   }
                 >
-                  {isOrder && !m.mine && m.sender_name ? (
+                  {isMulti && !m.mine && m.sender_name ? (
                     <p className="mb-0.5 text-[10px] font-semibold text-muted-foreground">
                       {m.sender_name}
                     </p>
