@@ -216,6 +216,7 @@ export function automaticEntries(
   const out: SpendingEntry[] = [];
   for (const r of rows) {
     const kind: EntryKind = r.kind === "expense" ? "expense" : "income";
+    if (DROPPED_AUTO_KEYS.has(r.auto_key)) continue;
     if (kind === "expense" && !AUTO_EXPENSE_KEYS.has(r.auto_key)) continue;
     if (seen.has(r.id)) continue;
     seen.add(r.id);
