@@ -183,21 +183,23 @@ export function autoCategoryName(
   const hit = categories.find((c) => c.auto_key === autoKey && c.kind === kind);
   if (hit) return hit.name;
   if (autoKey === "admin_discount") return "Admin Discount";
+  if (autoKey === "admin_self_purchase") return "Admin Self-Purchase Sales";
   if (autoKey === "admin_purchases") return "Admin Purchases";
   if (autoKey === "admin_platform_fee") return "Platform Fees";
-  if (autoKey === "admin_points_cost") return "Reward Points Cost";
+  if (autoKey === "admin_points_cost") return "Reward Points / Coin Conversion";
   if (autoKey === "direct") return "Direct sales";
   return fallbackMember ?? "Reseller";
 }
 
 /**
- * Automatic income: admin cashback + admin discount.
+ * Automatic income: admin shop margin, admin self-purchase sales and the
+ * (New Generation only) admin discount.
  * Automatic expense: only the derived admin costs the database produces
  * (`admin_platform_fee`, `admin_points_cost`). The legacy `admin_purchases`
- * face-value row from an older database function is still dropped here, because
- * an admin self-purchase settles at a net charge and its margin income is
- * already excluded — counting the face value would double count.
- * Stable source ids (`cb:`, `ad:`, `pf:`, `pc:`) de-duplicate one source
+ * face-value row from an older database function is still dropped here: the
+ * self-purchase is already reported as a sale, so counting the face value as a
+ * cost too would double count.
+ * Stable source ids (`cb:`, `sp:`, `ad:`, `pf:`, `pt:`) de-duplicate one source
  * transaction into exactly one automatic entry.
  */
 const AUTO_EXPENSE_KEYS = new Set(["admin_platform_fee", "admin_points_cost"]);
