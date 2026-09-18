@@ -36,6 +36,13 @@
       "when": 1789738412354,
       "tag": "0004_spending_tracker_simple_admin_cashback",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789739344403,
+      "tag": "0005_earnings_history_single_admin_earning_per_sale",
+      "breakpoints": true
     }
   ]
 }
