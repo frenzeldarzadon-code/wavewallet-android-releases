@@ -769,7 +769,7 @@ export async function sendMessage(memberId: string, body: string, imagePath?: st
   const { data, error } = await supabase.rpc("dm_send", {
     _member_id: memberId,
     _body: body.trim(),
-    _image_path: imagePath ?? undefined,
+    ...(imagePath ? { _image_path: imagePath } : {}),
   });
   if (error) fail(error.message);
   return data as unknown as { thread_id: string; message_id: string };
