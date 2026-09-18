@@ -10116,6 +10116,10 @@ export type Database = {
         Args: { _event: string; _note?: string }
         Returns: Json
       }
+      dm_create_group: {
+        Args: { _member_ids: string[]; _title: string }
+        Returns: string
+      }
       dm_is_active_member: {
         Args: { _thread_id: string; _user_id: string }
         Returns: boolean
