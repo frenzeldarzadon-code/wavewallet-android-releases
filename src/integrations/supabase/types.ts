@@ -10144,12 +10144,10 @@ export type Database = {
           thread_id: string
         }[]
       }
-      dm_send:
-        | { Args: { _body: string; _member_id: string }; Returns: Json }
-        | {
-            Args: { _body: string; _image_path?: string; _member_id: string }
-            Returns: Json
-          }
+      dm_send: {
+        Args: { _body: string; _image_path?: string; _member_id: string }
+        Returns: Json
+      }
       dm_send_thread: {
         Args: { _body: string; _image_path?: string; _thread_id: string }
         Returns: Json

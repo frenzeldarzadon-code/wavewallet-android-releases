@@ -764,6 +764,8 @@ export async function fetchMessages(threadId: string): Promise<DmMessage[]> {
 }
 
 export async function sendMessage(memberId: string, body: string, imagePath?: string | null) {
+  // The database keeps a single dm_send signature, so this call can no longer
+  // be ambiguous; the photo path stays optional.
   const { data, error } = await supabase.rpc("dm_send", {
     _member_id: memberId,
     _body: body.trim(),
