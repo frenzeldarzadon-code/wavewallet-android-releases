@@ -7,6 +7,7 @@ import {
   Send,
   ShieldOff,
   UserPlus,
+  Users,
   Wifi,
   X,
 } from "lucide-react";
@@ -29,13 +30,11 @@ import { EmptyState, PageSection, StatusBadge } from "@/components/ui-kit";
 import { MemberAvatar } from "@/components/member-avatar";
 import { OrderWorkspacePanel } from "@/components/social/order-workspace-panel";
 import { PeopleSheet } from "@/components/universe/people-sheet";
-import { ImageCropper } from "@/components/image-cropper";
 import { cn } from "@/lib/utils";
 import { displayHandle } from "@/lib/profile";
 import { useSession } from "@/lib/session";
-import type { CropRect } from "@/lib/image-optimize";
 import {
-  SOCIAL_IMAGE_ASPECT,
+  createGroupChat,
   fetchMessages,
   fetchOrderChatContext,
   fetchThreads,
@@ -48,7 +47,7 @@ import {
   setBlocked,
   socialImageUrl,
   threadTitle,
-  uploadSocialImage,
+  uploadChatImage,
   validateMessageBody,
   validateSocialImage,
   type DmMessage,
@@ -57,9 +56,15 @@ import {
   type ThreadFilter,
 } from "@/lib/social";
 
-/** Signed-url image inside a chat bubble. */
+/**
+ * Signed-url photo inside a chat bubble. The complete picture is always shown:
+ * it is scaled proportionally to fit the bubble width and never cropped, so a
+ * portrait stays portrait and a landscape stays landscape. Tapping it opens the
+ * same photo full screen, still uncropped.
+ */
 function MessageImage({ path }: { path: string }) {
   const [url, setUrl] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
   useEffect(() => {
     let active = true;
     void socialImageUrl(path).then((u) => active && setUrl(u));
@@ -67,14 +72,31 @@ function MessageImage({ path }: { path: string }) {
       active = false;
     };
   }, [path]);
-  if (!url) return <div className="mb-1 aspect-4/3 w-48 animate-pulse rounded-xl bg-muted" />;
+  if (!url) return <div className="mb-1 h-32 w-48 animate-pulse rounded-xl bg-muted" />;
   return (
-    <img
-      src={url}
-      alt="Attachment"
-      loading="lazy"
-      className="mb-1 aspect-4/3 w-48 rounded-xl object-cover"
-    />
+    <>
+      <button type="button" onClick={() => setOpen(true)} className="mb-1 block">
+        <img
+          src={url}
+          alt="Attachment"
+          loading="lazy"
+          className="max-h-72 w-auto max-w-full rounded-xl object-contain"
+        />
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-[96vw] p-2 sm:max-w-3xl">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Photo</DialogTitle>
+            <DialogDescription>Full picture</DialogDescription>
+          </DialogHeader>
+          <img
+            src={url}
+            alt="Attachment"
+            className="max-h-[80vh] w-full rounded-lg object-contain"
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
