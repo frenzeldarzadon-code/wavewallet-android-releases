@@ -191,13 +191,17 @@ export function autoCategoryName(
 }
 
 /**
- * Automatic entries are INCOME ONLY (admin cashback + admin discount).
- * Expenses are manual, so any automatic expense row (a legacy
- * `admin_purchases` row from an older database function) is dropped here as a
- * second line of defence against double counting. Stable source ids
- * (`cb:<earning id>`, `ad:<sale id>`) also de-duplicate one source transaction
- * into exactly one automatic income entry.
+ * Automatic income: admin cashback + admin discount.
+ * Automatic expense: only the derived admin costs the database produces
+ * (`admin_platform_fee`, `admin_points_cost`). The legacy `admin_purchases`
+ * face-value row from an older database function is still dropped here, because
+ * an admin self-purchase settles at a net charge and its margin income is
+ * already excluded — counting the face value would double count.
+ * Stable source ids (`cb:`, `ad:`, `pf:`, `pc:`) de-duplicate one source
+ * transaction into exactly one automatic entry.
  */
+const AUTO_EXPENSE_KEYS = new Set(["admin_platform_fee", "admin_points_cost"]);
+
 export function automaticEntries(
   rows: AutoRow[],
   categories: SpendingCategory[],
@@ -205,18 +209,19 @@ export function automaticEntries(
   const seen = new Set<string>();
   const out: SpendingEntry[] = [];
   for (const r of rows) {
-    if (r.kind === "expense") continue;
+    const kind: EntryKind = r.kind === "expense" ? "expense" : "income";
+    if (kind === "expense" && !AUTO_EXPENSE_KEYS.has(r.auto_key)) continue;
     if (seen.has(r.id)) continue;
     seen.add(r.id);
     out.push({
       id: r.id,
-      kind: "income",
+      kind,
       occurredAt: r.occurred_at,
       description: r.description,
       amount: Number(r.amount ?? 0),
       source: "automatic",
       categoryKey: r.auto_key,
-      categoryName: autoCategoryName(r.auto_key, categories, "income", r.member_name),
+      categoryName: autoCategoryName(r.auto_key, categories, kind, r.member_name),
       memberId: r.member_id,
       memberName: r.member_name,
       notes: null,
