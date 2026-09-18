@@ -237,7 +237,8 @@ export interface DmParticipant {
   name: string;
   handle: string | null;
   avatar: string | null;
-  role: "customer" | "seller" | "delivery" | "collector";
+  /** Order-chat roles, plus group-chat `owner` / `member`. */
+  role: "customer" | "seller" | "delivery" | "collector" | "owner" | "member";
 }
 
 export interface DmThread {
