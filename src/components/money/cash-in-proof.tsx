@@ -45,7 +45,9 @@ export function CashInProofPicker({
 
   return (
     <div className="space-y-1.5">
-      <Label htmlFor="ci-proof">Payment screenshot (required)</Label>
+      <Label htmlFor="ci-proof" className="text-sm font-bold text-primary">
+        Upload Payment Reference
+      </Label>
       <input
         id="ci-proof"
         type="file"
@@ -95,12 +97,11 @@ export function CashInProofPicker({
       ) : (
         <Button
           type="button"
-          variant="outline"
-          className="w-full justify-start"
+          className="h-12 w-full justify-center text-sm font-bold"
           disabled={disabled}
           onClick={() => document.getElementById("ci-proof")?.click()}
         >
-          <Paperclip className="mr-2 size-4" /> Upload payment screenshot
+          <Paperclip className="mr-2 size-4" /> Upload Reference
         </Button>
       )}
       <p className="text-[11px] text-muted-foreground">

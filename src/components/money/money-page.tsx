@@ -682,34 +682,13 @@ export function MoneyPage({
         </TabsContent>
 
         <TabsContent value="in" className="mt-4 space-y-4">
-          <PageSection
-            devSlot="money-page.where-to-send-your-payment"
-            title="Where to send your payment"
-            description={
-              universe
-                ? "Platform receiving accounts. Pay to one of them, then submit your cash in request with the reference number."
-                : "Pay to one of the accounts below, then submit your cash in request with the reference number."
-            }
-          >
-            {universe ? <PlatformCashInStatus /> : null}
-            <PaymentMethodCards methods={methods} selectedId={methodId} onSelect={setMethodId} />
-          </PageSection>
-
           <Card className="shadow-[var(--shadow-card)]">
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm">
                 <ArrowDownToLine className="size-4 text-success" /> Cash in
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-                Start with your payment screenshot from any e-wallet or bank — we read the amount,
-                the sending account, the reference and the payment date and time from it. Check the
-                details, correct the reference or the date and time if needed, then submit. The
-                screenshot is supporting evidence, not proof of payment: coins are added only once a
-                real payment notification confirms it.
-              </p>
-
+            <CardContent className="space-y-4">
               {methods.length === 0 ? (
                 <EmptyState
                   title="No payment methods available"
@@ -721,6 +700,25 @@ export function MoneyPage({
                 />
               ) : (
                 <>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ci-amount">Amount to cash in (₱)</Label>
+                    <Input
+                      id="ci-amount"
+                      inputMode="decimal"
+                      value={amount}
+                      readOnly={Boolean(extract?.amountPhp)}
+                      disabled={Boolean(extract?.amountPhp)}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="0.00"
+                      className="h-12 text-lg font-semibold"
+                    />
+                    {extract?.amountPhp ? (
+                      <p className="text-[11px] text-muted-foreground">
+                        Read from your uploaded payment reference.
+                      </p>
+                    ) : null}
+                  </div>
+
                   {canUseAdminFunding ? (
                     <div className="space-y-1.5">
                       <Label>Who you paid</Label>
@@ -754,10 +752,10 @@ export function MoneyPage({
                     </div>
                   ) : null}
                   <div className="space-y-1.5">
-                    <Label htmlFor="ci-method">Payment method</Label>
+                    <Label htmlFor="ci-method">Choose Payment Method</Label>
                     <Select value={methodId} onValueChange={setMethodId}>
-                      <SelectTrigger id="ci-method">
-                        <SelectValue placeholder="Choose a method" />
+                      <SelectTrigger id="ci-method" className="h-12">
+                        <SelectValue placeholder="Select where you will send payment" />
                       </SelectTrigger>
                       <SelectContent>
                         {methods.map((m) => (
@@ -769,12 +767,36 @@ export function MoneyPage({
                     </Select>
                   </div>
 
-                  <CashInProofPicker
-                    file={proofFile}
-                    onPick={(f) => void handlePickProof(f)}
-                    disabled={busy || extracting}
-                    onError={(m) => toast.error(m)}
-                  />
+                  {selectedMethod ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-bold uppercase text-muted-foreground">
+                            Selected payment method
+                          </p>
+                          <p className="truncate text-base font-bold">{selectedMethod.name}</p>
+                        </div>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setMethodId("")}>
+                          Change
+                        </Button>
+                      </div>
+                      {universe ? <PlatformCashInStatus /> : null}
+                      <PaymentMethodCards methods={[selectedMethod]} selectedId={selectedMethod.id} />
+
+                      <div className="rounded-lg border-2 border-primary bg-brand-soft/50 p-3">
+                        <CashInProofPicker
+                          file={proofFile}
+                          onPick={(f) => void handlePickProof(f)}
+                          disabled={busy || extracting}
+                          onError={(m) => toast.error(m)}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="rounded-lg border border-dashed border-border bg-muted/40 p-3 text-center text-xs text-muted-foreground">
+                      Choose a payment method to see its account details and upload your payment reference.
+                    </p>
+                  )}
 
                   {extracting ? (
                     <p className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
@@ -786,22 +808,6 @@ export function MoneyPage({
                     <div className="space-y-3 rounded-lg border border-border p-3">
                       <p className="text-xs font-medium">Details read from your screenshot</p>
                       <div className="grid gap-3 sm:grid-cols-2">
-                        <div className="space-y-1.5">
-                          <Label htmlFor="ci-amount">Amount paid (₱)</Label>
-                          <Input
-                            id="ci-amount"
-                            inputMode="decimal"
-                            value={amount}
-                            readOnly={Boolean(extract?.amountPhp)}
-                            disabled={Boolean(extract?.amountPhp)}
-                            onChange={(e) => setAmount(e.target.value)}
-                          />
-                          <p className="text-[11px] text-muted-foreground">
-                            {extract?.amountPhp
-                              ? "Extracted evidence — not editable."
-                              : "Not readable on the screenshot. Anything you enter is unverified and this request stays in manual review."}
-                          </p>
-                        </div>
                         <div className="space-y-1.5">
                           <Label htmlFor="ci-number">
                             Account number or mobile number you paid from
@@ -879,9 +885,6 @@ export function MoneyPage({
                         </p>
                       ) : null}
                     </div>
-                  ) : null}
-                  {selectedMethod ? (
-                    <PaymentMethodCards methods={[selectedMethod]} selectedId={selectedMethod.id} />
                   ) : null}
                   <div className="space-y-1.5">
                     <Label htmlFor="ci-notes">Additional notes (optional)</Label>
