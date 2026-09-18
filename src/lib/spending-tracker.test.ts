@@ -101,7 +101,7 @@ describe("Spending Tracker totals", () => {
     expect(summarize(rows)).toEqual({ income: 50, expense: 0, balance: 50 });
   });
 
-  it("shows the admin's derived platform fee and reward point cost as expenses", () => {
+  it("ignores legacy platform fee and reward point cost rows", () => {
     const rows = automaticEntries(
       [
         autoRow({ id: "pf:sale-9", kind: "expense", auto_key: "admin_platform_fee", amount: 57.84 }),
@@ -109,34 +109,34 @@ describe("Spending Tracker totals", () => {
       ],
       [],
     );
-    expect(rows.map((r) => r.categoryName)).toEqual([
-      "Platform Fees",
-      "Reward Points / Coin Conversion",
-    ]);
-    expect(rows.every((r) => r.editable)).toBe(false);
-    expect(summarize(rows)).toEqual({ income: 0, expense: 102.84, balance: -102.84 });
+    expect(rows).toHaveLength(0);
+    expect(summarize(rows)).toEqual({ income: 0, expense: 0, balance: 0 });
   });
 
-  it("counts an admin self-purchase as shop sales income", () => {
-    // Self-purchase sale of 2,950 with a 57.84 fee and 45.00 of reward points:
-    // the sale is income, the fee and point cost are the only expenses.
+  it("reports an admin self-purchase as the admin cashback earned", () => {
+    // Self-purchase of 2,950 face value where the admin's recorded cashback is
+    // 2,892.16: only the cashback is income, with no face-value sales line and
+    // no fee or point deductions.
     const rows = automaticEntries(
       [
+        autoRow({ id: "sc:com-1", auto_key: "admin_self_cashback", amount: 2892.16 }),
         autoRow({ id: "sp:sale-1", auto_key: "admin_self_purchase", amount: 2950 }),
         autoRow({ id: "pf:sale-1", kind: "expense", auto_key: "admin_platform_fee", amount: 57.84 }),
         autoRow({ id: "pt:led-1", kind: "expense", auto_key: "admin_points_cost", amount: 45 }),
       ],
       [],
     );
-    expect(rows[0]?.categoryName).toBe("Admin Self-Purchase Sales");
-    expect(summarize(rows)).toEqual({ income: 2950, expense: 102.84, balance: 2847.16 });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.categoryName).toBe("Admin Cashback");
+    expect(rows[0]?.editable).toBe(false);
+    expect(summarize(rows)).toEqual({ income: 2892.16, expense: 0, balance: 2892.16 });
   });
 
-  it("de-duplicates one derived admin cost into a single expense entry", () => {
+  it("de-duplicates one source transaction into a single entry", () => {
     const rows = automaticEntries(
       [
-        autoRow({ id: "pf:sale-9", kind: "expense", auto_key: "admin_platform_fee", amount: 5 }),
-        autoRow({ id: "pf:sale-9", kind: "expense", auto_key: "admin_platform_fee", amount: 5 }),
+        autoRow({ id: "sc:com-9", auto_key: "admin_self_cashback", amount: 5 }),
+        autoRow({ id: "sc:com-9", auto_key: "admin_self_cashback", amount: 5 }),
       ],
       [],
     );
