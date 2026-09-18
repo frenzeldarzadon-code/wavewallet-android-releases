@@ -101,6 +101,32 @@ describe("Spending Tracker totals", () => {
     expect(summarize(rows)).toEqual({ income: 50, expense: 0, balance: 50 });
   });
 
+  it("shows the admin's derived platform fee and reward point cost as expenses", () => {
+    // A shop whose only activity is admin self-purchases: the margin income is
+    // excluded, but the coins the admin really paid still have to show up.
+    const rows = automaticEntries(
+      [
+        autoRow({ id: "pf:sale-9", kind: "expense", auto_key: "admin_platform_fee", amount: 57.84 }),
+        autoRow({ id: "pc:led-9", kind: "expense", auto_key: "admin_points_cost", amount: 45 }),
+      ],
+      [],
+    );
+    expect(rows.map((r) => r.categoryName)).toEqual(["Platform Fees", "Reward Points Cost"]);
+    expect(rows.every((r) => r.editable)).toBe(false);
+    expect(summarize(rows)).toEqual({ income: 0, expense: 102.84, balance: -102.84 });
+  });
+
+  it("de-duplicates one derived admin cost into a single expense entry", () => {
+    const rows = automaticEntries(
+      [
+        autoRow({ id: "pf:sale-9", kind: "expense", auto_key: "admin_platform_fee", amount: 5 }),
+        autoRow({ id: "pf:sale-9", kind: "expense", auto_key: "admin_platform_fee", amount: 5 }),
+      ],
+      [],
+    );
+    expect(rows).toHaveLength(1);
+  });
+
   it("never emits duplicate automatic income for one source transaction", () => {
     const rows = automaticEntries(
       [
