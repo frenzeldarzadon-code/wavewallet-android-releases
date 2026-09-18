@@ -187,6 +187,8 @@ export function autoCategoryName(
   if (autoKey === "admin_purchases") return "Admin Purchases";
   if (autoKey === "admin_platform_fee") return "Platform Fees";
   if (autoKey === "admin_points_cost") return "Reward Points / Coin Conversion";
+  if (autoKey === "admin_self_cashback") return "Admin Cashback";
+  if (autoKey === "sale_cashback") return "Reseller Cashback";
   if (autoKey === "direct") return "Direct sales";
   return fallbackMember ?? "Reseller";
 }
