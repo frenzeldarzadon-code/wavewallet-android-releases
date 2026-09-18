@@ -886,6 +886,35 @@ export async function uploadSocialImage(input: {
   return path;
 }
 
+/**
+ * Chat photo upload — the whole picture, never cropped. The browser only scales
+ * a very large image down (long edge 1600px) so the upload stays practical on
+ * mobile data; portrait, landscape and square images all keep their own shape.
+ * Files land in the same private bucket and the same `<shop|universe>/<member>/`
+ * folder the existing storage policies already guard.
+ */
+export async function uploadChatImage(input: {
+  ecosystemId: string | null | undefined;
+  userId: string;
+  file: File;
+  preloaded?: HTMLImageElement;
+}): Promise<string> {
+  const problem = validateSocialImage(input.file);
+  if (problem) throw new Error(problem);
+  const source = input.preloaded ?? (await loadImage(input.file));
+  const { blob, mime } = await optimizeImageContain(source, {
+    maxEdge: 1600,
+    quality: 0.9,
+    maxBytes: 1_500_000,
+  });
+  const path = `${socialMediaFolder(input.ecosystemId)}/${input.userId}/${optimizedName(crypto.randomUUID(), mime)}`;
+  const { error } = await supabase.storage
+    .from(SOCIAL_IMAGE_BUCKET)
+    .upload(path, blob, { contentType: mime, upsert: false });
+  if (error) throw new Error(error.message);
+  return path;
+}
+
 export async function deleteSocialImage(path?: string | null): Promise<void> {
   if (!path) return;
   await supabase.storage.from(SOCIAL_IMAGE_BUCKET).remove([path]);
