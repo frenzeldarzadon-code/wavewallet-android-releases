@@ -128,7 +128,7 @@ describe("Spending Tracker totals", () => {
       ],
       [],
     );
-    expect(rows[0].categoryName).toBe("Admin Self-Purchase Sales");
+    expect(rows[0]?.categoryName).toBe("Admin Self-Purchase Sales");
     expect(summarize(rows)).toEqual({ income: 2950, expense: 102.84, balance: 2847.16 });
   });
 
