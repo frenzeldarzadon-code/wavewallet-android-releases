@@ -9273,7 +9273,9 @@ export type Database = {
       }
     }
     Functions: {
+      accrue_all_universe_loans: { Args: never; Returns: number }
       accrue_coin_loan_interest: { Args: never; Returns: number }
+      accrue_universe_loan: { Args: { _loan_id: string }; Returns: undefined }
       acting_as: { Args: never; Returns: string }
       activate_free_subscription: {
         Args: { _ecosystem_id: string; _months?: number; _plan_id: string }
@@ -9524,6 +9526,15 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      apply_universe_loan: {
+        Args: {
+          _amount: number
+          _client_token?: string
+          _id_path: string
+          _term_months: number
+        }
+        Returns: string
       }
       archive_ecosystem: {
         Args: { _ecosystem_id: string; _reason?: string }
@@ -9908,6 +9919,7 @@ export type Database = {
         Returns: undefined
       }
       cancel_retail_order: { Args: { _order_id: string }; Returns: undefined }
+      cancel_universe_loan: { Args: { _loan_id: string }; Returns: undefined }
       cancel_withdrawal: {
         Args: { _id: string }
         Returns: {
@@ -10494,6 +10506,10 @@ export type Database = {
         Args: { _event: string; _note?: string }
         Returns: Json
       }
+      distribute_universe_loan_interest: {
+        Args: { _interest: number; _loan_id: string }
+        Returns: undefined
+      }
       dm_create_group: {
         Args: { _member_ids: string[]; _title: string }
         Returns: string
@@ -10696,6 +10712,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      fund_universe_loan: {
+        Args: { _amount: number; _loan_id: string }
+        Returns: number
       }
       generate_shop_code: { Args: never; Returns: string }
       get_signup_ecosystem: {
@@ -11630,6 +11650,7 @@ export type Database = {
         Args: { _ecosystem_id: string; _reason: string }
         Returns: Json
       }
+      pay_universe_loan: { Args: { _amount: number }; Returns: number }
       payment_account_matches: {
         Args: { _configured: string; _evidence: string }
         Returns: boolean
@@ -12077,6 +12098,7 @@ export type Database = {
         Args: { _email: string }
         Returns: undefined
       }
+      release_universe_loan: { Args: { _loan_id: string }; Returns: undefined }
       remember_payment_reference: {
         Args: {
           _cash_in: string
@@ -12606,6 +12628,10 @@ export type Database = {
       retail_wallet_for: {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: string
+      }
+      return_universe_loan_principal: {
+        Args: { _loan_id: string; _principal: number }
+        Returns: undefined
       }
       reverse_credit_transfer: {
         Args: {
@@ -13881,6 +13907,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      settle_universe_loan: { Args: { _loan_id: string }; Returns: undefined }
       shop_deletion_check: { Args: { _ecosystem_id: string }; Returns: Json }
       shop_deletion_check_unchecked: {
         Args: { _ecosystem_id: string }
@@ -15045,6 +15072,10 @@ export type Database = {
           shop_slug: string
           shop_type: string
         }[]
+      }
+      universe_loan_monthly_payment: {
+        Args: { _monthly_percent: number; _months: number; _principal: number }
+        Returns: number
       }
       universe_loan_settings: {
         Args: never
