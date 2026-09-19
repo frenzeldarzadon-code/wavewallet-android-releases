@@ -2,8 +2,9 @@
  * Coin loans — borrowing against the ONE global Universe wallet.
  *
  * Rules that matter (all re-checked in the database, never trusted from here):
- *  - Only members holding a position (admin / reseller / subreseller) in at
- *    least one shop may borrow.
+ *  - Any member may borrow. Members holding a position (admin / reseller /
+ *    subreseller) can be released automatically within their limit; customers
+ *    ALWAYS wait for a manual decision by the platform owner.
  *  - The automatic-approval ceiling is the GREATER of the configured base
  *    amount and `multiplier x free (unloaned) balance`. It is recomputed
  *    server-side at request time; the number shown here is only a preview.
@@ -249,6 +250,13 @@ export async function fetchMyCoinLoan(): Promise<CoinLoanSummary | null> {
     requestedAt: (row["requested_at"] as string | null) ?? null,
     releasedAt: (row["released_at"] as string | null) ?? null,
   };
+}
+
+/** Every loan this member has ever had — the Loan Center's loan list. */
+export async function fetchMyLoans(): Promise<MyCoinLoan[]> {
+  const { data, error } = await supabase.rpc("my_coin_loans");
+  if (error) throw error;
+  return (data ?? []) as unknown as MyCoinLoan[];
 }
 
 export async function fetchMyLoanHistory(): Promise<CoinLoanEntry[]> {
