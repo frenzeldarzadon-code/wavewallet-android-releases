@@ -534,6 +534,35 @@ function LoanDetail({
         </Card>
       </PageSection>
 
+      {(loan.borrowerRole ?? "customer") === "customer" ? (
+        <PageSection
+          title="Valid ID"
+          description="Provided by the member with this exact loan request."
+        >
+          <Card className="shadow-[var(--shadow-card)]">
+            <CardContent className="p-4 text-xs">
+              {loan.idDocumentPath ? (
+                <>
+                  <p className="text-muted-foreground">
+                    Uploaded{" "}
+                    {loan.idDocumentUploadedAt ? shortDateTime(loan.idDocumentUploadedAt) : "—"}
+                  </p>
+                  <LoanIdViewer
+                    path={loan.idDocumentPath}
+                    who={loan.fullName ?? (loan.handle ? `@${loan.handle}` : "Member")}
+                  />
+                </>
+              ) : (
+                <p className="text-destructive">
+                  No valid ID is attached to this request, so it cannot be approved until the member
+                  uploads one.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </PageSection>
+      ) : null}
+
       <PageSection title="How the amount owed is made up">
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="space-y-1.5 p-4 text-xs">
