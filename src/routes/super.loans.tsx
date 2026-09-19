@@ -19,6 +19,7 @@ import type { MemberSearchResult } from "@/lib/member-admin";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import { loanEntryLabel, loanStatusLabel } from "@/lib/coin-loans";
+import { LoanIdViewer } from "@/components/wallet/loan-id-document";
 import {
   LOAN_ENTRY_KINDS,
   borrowerName,
