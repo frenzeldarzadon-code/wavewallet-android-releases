@@ -9046,6 +9046,7 @@ export type Database = {
         Returns: {
           approval_mode: string
           auto_limit_snapshot: number
+          borrower_role: string
           created_at: string
           decided_at: string
           decided_by: string
@@ -9055,6 +9056,8 @@ export type Database = {
           full_name: string
           handle: string
           id: string
+          id_document_path: string
+          id_document_uploaded_at: string
           interest_percent: number
           outstanding: number
           principal: number
