@@ -149,35 +149,54 @@ export function CoinLoansCard() {
           {pending.length === 0 ? (
             <p className="text-xs text-muted-foreground">No loan requests waiting.</p>
           ) : (
-            pending.map((l) => (
-              <div key={l.id} className="rounded-lg border p-3 text-xs">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-medium">
-                    {l.full_name ?? "Member"} {l.handle ? `@${l.handle}` : ""}
-                  </span>
-                  <span className="tabular-nums">{peso(l.principal)}</span>
+            pending.map((l) => {
+              const isCustomer = (l.borrower_role ?? "customer") === "customer";
+              const missingId = isCustomer && !l.id_document_path;
+              const who = l.full_name ?? (l.handle ? `@${l.handle}` : "Member");
+              return (
+                <div key={l.id} className="rounded-lg border p-3 text-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-medium">
+                      {l.full_name ?? "Member"} {l.handle ? `@${l.handle}` : ""}
+                    </span>
+                    <span className="tabular-nums">{peso(l.principal)}</span>
+                  </div>
+                  <p className="mt-1 text-muted-foreground">
+                    Automatic limit {peso(l.auto_limit_snapshot)} · free balance{" "}
+                    {peso(l.free_balance_snapshot)} · first month interest{" "}
+                    {peso(l.first_month_interest)} at {l.interest_percent}% · requested{" "}
+                    {new Date(l.created_at).toLocaleString()}
+                  </p>
+                  {isCustomer ? (
+                    missingId ? (
+                      <p className="mt-2 rounded-md border border-destructive/40 bg-destructive/5 px-2 py-1.5 text-destructive">
+                        No valid ID was provided. This request cannot be approved until{" "}
+                        {who} uploads one.
+                      </p>
+                    ) : (
+                      <LoanIdViewer path={l.id_document_path} who={who} />
+                    )
+                  ) : null}
+                  <div className="mt-2 flex gap-2">
+                    <Button
+                      size="sm"
+                      disabled={busy || missingId}
+                      onClick={() => void decide(l, true)}
+                    >
+                      Approve &amp; release
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() => void decide(l, false)}
+                    >
+                      Decline
+                    </Button>
+                  </div>
                 </div>
-                <p className="mt-1 text-muted-foreground">
-                  Automatic limit {peso(l.auto_limit_snapshot)} · free balance{" "}
-                  {peso(l.free_balance_snapshot)} · first month interest{" "}
-                  {peso(l.first_month_interest)} at {l.interest_percent}% · requested{" "}
-                  {new Date(l.created_at).toLocaleString()}
-                </p>
-                <div className="mt-2 flex gap-2">
-                  <Button size="sm" disabled={busy} onClick={() => void decide(l, true)}>
-                    Approve &amp; release
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={busy}
-                    onClick={() => void decide(l, false)}
-                  >
-                    Decline
-                  </Button>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
