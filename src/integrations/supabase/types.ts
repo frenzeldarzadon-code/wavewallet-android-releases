@@ -11382,6 +11382,25 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      my_funded_universe_loans: {
+        Args: never
+        Returns: {
+          borrower_handle: string
+          borrower_name: string
+          created_at: string
+          interest_paid: number
+          loan_amount: number
+          loan_id: string
+          my_funded: number
+          my_interest_earned: number
+          my_principal_repaid: number
+          my_released_principal: number
+          principal_outstanding: number
+          released_at: string
+          status: string
+          term_months: number
+        }[]
+      }
       my_impersonation: {
         Args: never
         Returns: {
@@ -11586,6 +11605,32 @@ export type Database = {
           user_id: string
         }[]
       }
+      my_universe_loans: {
+        Args: never
+        Returns: {
+          amount: number
+          contributor_share_percent: number
+          created_at: string
+          funded_amount: number
+          id: string
+          id_document_path: string
+          interest_accrued: number
+          interest_paid: number
+          interest_percent: number
+          interest_refunded: number
+          monthly_payment: number
+          owner_share_percent: number
+          platform_fee: number
+          platform_fee_percent: number
+          principal_outstanding: number
+          principal_paid: number
+          released_amount: number
+          released_at: string
+          settled_at: string
+          status: string
+          term_months: number
+        }[]
+      }
       new_tx_id: { Args: never; Returns: string }
       normalize_handle: { Args: { _handle: string }; Returns: string }
       normalize_payment_reference: { Args: { _ref: string }; Returns: string }
@@ -11645,6 +11690,22 @@ export type Database = {
           _user: string
         }
         Returns: undefined
+      }
+      open_universe_loan_applications: {
+        Args: never
+        Returns: {
+          amount: number
+          borrower_handle: string
+          borrower_name: string
+          created_at: string
+          funded_amount: number
+          id: string
+          interest_percent: number
+          my_funded: number
+          remaining: number
+          status: string
+          term_months: number
+        }[]
       }
       override_subscription_payment: {
         Args: { _ecosystem_id: string; _reason: string }
@@ -14803,6 +14864,18 @@ export type Database = {
           status: string
         }[]
       }
+      super_loan_pool_overview: {
+        Args: never
+        Returns: {
+          contributors: number
+          outstanding_principal: number
+          owner_interest_collected: number
+          platform_fees_collected: number
+          pool_allocated: number
+          pool_available: number
+          pool_total: number
+        }[]
+      }
       super_member_accounts: {
         Args: { _user: string }
         Returns: {
@@ -14871,6 +14944,48 @@ export type Database = {
           shop_name: string
           shortfall: number
           status: string
+        }[]
+      }
+      super_universe_loan_funders: {
+        Args: { _loan_id: string }
+        Returns: {
+          amount: number
+          funder_handle: string
+          funder_id: string
+          funder_name: string
+          interest_earned: number
+          principal_repaid: number
+          released_principal: number
+        }[]
+      }
+      super_universe_loans: {
+        Args: { _status?: string }
+        Returns: {
+          amount: number
+          borrower_handle: string
+          borrower_id: string
+          borrower_name: string
+          contributor_share_percent: number
+          created_at: string
+          funded_amount: number
+          funder_count: number
+          id: string
+          id_document_path: string
+          interest_accrued: number
+          interest_paid: number
+          interest_percent: number
+          interest_refunded: number
+          owner_interest: number
+          owner_share_percent: number
+          platform_fee: number
+          platform_fee_percent: number
+          principal_outstanding: number
+          principal_paid: number
+          released_amount: number
+          released_at: string
+          settled_at: string
+          status: string
+          term_months: number
         }[]
       }
       superadmin_assign_member_to_shop: {
@@ -15076,6 +15191,29 @@ export type Database = {
       universe_loan_monthly_payment: {
         Args: { _monthly_percent: number; _months: number; _principal: number }
         Returns: number
+      }
+      universe_loan_payment_rows: {
+        Args: { _loan_id: string }
+        Returns: {
+          amount: number
+          created_at: string
+          id: string
+          interest_part: number
+          kind: string
+          note: string
+          principal_after: number
+          principal_part: number
+        }[]
+      }
+      universe_loan_schedule_rows: {
+        Args: { _loan_id: string }
+        Returns: {
+          due_date: string
+          interest_due: number
+          period_index: number
+          principal_due: number
+          total_due: number
+        }[]
       }
       universe_loan_settings: {
         Args: never
