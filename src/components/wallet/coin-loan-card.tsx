@@ -23,17 +23,22 @@ import {
   fetchMyCoinLoan,
   fetchMyLoanHistory,
   loanEntryLabel,
+  loanIdRequired,
   loanStatusLabel,
+  removeLoanIdDocument,
   requestGoesToApproval,
   releasedCoins,
   repayCoinLoan,
   requestCoinLoan,
   upfrontInterest,
-  validateLoanRequest,
+  uploadLoanIdDocument,
+  validateLoanSubmission,
   type CoinLoanEntry,
   type CoinLoanSettings,
   type CoinLoanSummary,
 } from "@/lib/coin-loans";
+import { LoanIdPicker } from "@/components/wallet/loan-id-document";
+import { supabase } from "@/integrations/supabase/client";
 
 export function CoinLoanCard({ onChanged }: { onChanged?: () => void }) {
   const online = useOnline();
@@ -41,6 +46,7 @@ export function CoinLoanCard({ onChanged }: { onChanged?: () => void }) {
   const [settings, setSettings] = useState<CoinLoanSettings | null>(null);
   const [history, setHistory] = useState<CoinLoanEntry[]>([]);
   const [amount, setAmount] = useState("");
+  const [idFile, setIdFile] = useState<File | null>(null);
   const [repay, setRepay] = useState("");
   const [busy, setBusy] = useState(false);
 
