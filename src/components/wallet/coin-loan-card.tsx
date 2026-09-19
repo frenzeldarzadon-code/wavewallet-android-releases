@@ -80,26 +80,37 @@ export function CoinLoanCard({ onChanged }: { onChanged?: () => void }) {
   const net = releasedCoins(requested, settings);
   const active = summary.status === "active";
   const pending = summary.status === "pending";
+  const needsId = loanIdRequired(summary);
 
   const submit = async () => {
-    const problem = validateLoanRequest(requested, summary);
+    const problem = validateLoanSubmission(requested, summary, Boolean(idFile));
     if (problem) {
       toast.error(problem);
       return;
     }
     setBusy(true);
+    let uploaded: string | null = null;
     try {
-      await requestCoinLoan(requested);
+      if (needsId && idFile) {
+        const { data } = await supabase.auth.getUser();
+        const uid = data.user?.id;
+        if (!uid) throw new Error("Please sign in again.");
+        uploaded = await uploadLoanIdDocument(uid, idFile);
+      }
+      await requestCoinLoan(requested, uploaded);
       toast.success(
         manual
-          ? "Request sent. The platform owner will review it."
+          ? "Request sent with your ID. The platform owner will review it."
           : `Approved. ${peso(net)} added to your wallet as loan coins.`,
       );
       setAmount("");
+      setIdFile(null);
       await load();
       notifyWalletChanged();
       onChanged?.();
     } catch (e) {
+      // Nothing was attached to a loan, so do not leave the file behind.
+      if (uploaded) await removeLoanIdDocument(uploaded).catch(() => undefined);
       toast.error(e instanceof Error ? e.message : "Could not request the loan.");
     } finally {
       setBusy(false);
