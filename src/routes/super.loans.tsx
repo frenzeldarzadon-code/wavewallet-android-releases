@@ -14,6 +14,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
+import { MemberPicker } from "@/components/member-picker";
+import type { MemberSearchResult } from "@/lib/member-admin";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import { loanEntryLabel, loanStatusLabel } from "@/lib/coin-loans";
