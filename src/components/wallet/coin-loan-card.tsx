@@ -233,25 +233,31 @@ export function CoinLoanCard({ onChanged }: { onChanged?: () => void }) {
       ) : (
         <Card className="mt-3 shadow-none">
           <CardContent className="space-y-3 py-4">
-            <div className="flex items-end gap-2">
-              <div className="flex-1 space-y-1.5">
-                <Label htmlFor="loan-amount">Amount to borrow</Label>
-                <Input
-                  id="loan-amount"
-                  inputMode="decimal"
-                  value={amount}
-                  placeholder={String(settings.baseCredits)}
-                  onChange={(e) => setAmount(e.target.value)}
-                />
-              </div>
-              <Button
-                className="h-10"
-                disabled={busy || !online || requested <= 0}
-                onClick={() => void submit()}
-              >
-                {manual ? "Send for approval" : "Borrow"}
-              </Button>
+            <div className="space-y-1.5">
+              <Label htmlFor="loan-amount">Amount to borrow</Label>
+              <Input
+                id="loan-amount"
+                inputMode="decimal"
+                value={amount}
+                placeholder={String(settings.baseCredits)}
+                onChange={(e) => setAmount(e.target.value)}
+              />
             </div>
+            {needsId ? (
+              <LoanIdPicker
+                file={idFile}
+                onPick={setIdFile}
+                disabled={busy || !online}
+                onError={(m) => toast.error(m)}
+              />
+            ) : null}
+            <Button
+              className="h-11 w-full"
+              disabled={busy || !online || requested <= 0 || (needsId && !idFile)}
+              onClick={() => void submit()}
+            >
+              {manual ? "Send for approval" : "Borrow"}
+            </Button>
             {requested > 0 ? (
               <p className="text-xs text-muted-foreground">
                 You would receive {peso(net)} now ({peso(interest)} first month interest at{" "}
