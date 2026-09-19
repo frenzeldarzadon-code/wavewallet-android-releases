@@ -499,6 +499,13 @@ function LoanDetail({
               label="Approval"
               value={loan.approvalMode === "auto" ? "Automatic" : "Approved by platform owner"}
             />
+            <Figure label="Origin" value={originLabel(loan.origin)} />
+            <Figure label="Created by" value={loan.createdByName ?? "Member"} />
+            <Figure label="Reference" value={loan.referenceNote ?? "—"} />
+            <Figure
+              label="Where loan coins can be spent"
+              value={loan.universeSpend ? "Any Universe shop" : "Own shops only"}
+            />
             <Figure label="Date borrowed" value={shortDateTime(loan.createdAt)} />
             <Figure
               label="Released"
