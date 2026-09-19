@@ -56,6 +56,7 @@ export interface CoinLoanSummary {
 
 export interface MyCoinLoan {
   id: string;
+  id_document_path?: string | null;
   principal: number;
   released_amount: number;
   first_month_interest: number;
