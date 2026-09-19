@@ -56,18 +56,16 @@ BEGIN
   ASSERT public.coin_loan_auto_limit(_res) = 1000, 'restricted coins do not raise the limit';
   UPDATE public.credit_accounts SET balance = 0, restricted_balance = 0 WHERE id = _acct;
 
-  -- 2. Only positions may borrow --------------------------------------------
+  -- 2. Customers may ask, but are never released automatically ---------------
   ASSERT public.has_loan_position(_res), 'reseller holds a position';
   ASSERT public.has_loan_position(_adm), 'admin holds a position';
   ASSERT NOT public.has_loan_position(_cust), 'plain customer does not';
   PERFORM set_config('request.jwt.claims', json_build_object('sub', _cust)::text, true);
-  BEGIN
-    PERFORM public.request_coin_loan(500);
-    RAISE EXCEPTION 'customer should not be able to borrow';
-  EXCEPTION WHEN others THEN
-    GET STACKED DIAGNOSTICS _err = MESSAGE_TEXT;
-    ASSERT _err LIKE '%admin, reseller or subreseller%', 'customer refused: ' || _err;
-  END;
+  SELECT * INTO _loan FROM public.request_coin_loan(1);
+  ASSERT _loan.status = 'pending', 'a customer request always waits, got ' || _loan.status;
+  ASSERT _loan.approval_mode = 'manual', 'a customer is never automatic';
+  ASSERT _loan.universe_spend, 'customer loan coins spend Universe-wide';
+  PERFORM public.cancel_coin_loan(_loan.id);
 
   -- 3. Automatic release with upfront interest -------------------------------
   PERFORM set_config('request.jwt.claims', json_build_object('sub', _res)::text, true);
