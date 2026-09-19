@@ -164,6 +164,27 @@ export function validateLoanRequest(
   return null;
 }
 
+/**
+ * Customers — and only customers — must attach a valid ID. Members holding a
+ * shop position keep their existing flow with no ID. The database applies the
+ * very same rule inside `request_coin_loan`, so this is only for the form.
+ */
+export function loanIdRequired(summary: Pick<CoinLoanSummary, "hasPosition">): boolean {
+  return !summary.hasPosition;
+}
+
+/** Full pre-submit check including the customer ID requirement. */
+export function validateLoanSubmission(
+  amount: number,
+  summary: Pick<CoinLoanSummary, "loansEnabled" | "status" | "hasPosition">,
+  hasId: boolean,
+): string | null {
+  const problem = validateLoanRequest(amount, summary);
+  if (problem) return problem;
+  if (loanIdRequired(summary) && !hasId) return "Attach a photo of your valid ID to continue.";
+  return null;
+}
+
 export function loanStatusLabel(status: string | null): string {
   switch (status) {
     case "pending":
