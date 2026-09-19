@@ -67,11 +67,7 @@ describe("manual approval", () => {
 });
 
 describe("request validation", () => {
-  const base = { hasPosition: true, loansEnabled: true, status: null as string | null };
-
-  it("blocks members without a position", () => {
-    expect(validateLoanRequest(500, { ...base, hasPosition: false })).toMatch(/admin, reseller/);
-  });
+  const base = { loansEnabled: true, status: null as string | null };
 
   it("blocks when loans are switched off", () => {
     expect(validateLoanRequest(500, { ...base, loansEnabled: false })).toMatch(/not available/);
