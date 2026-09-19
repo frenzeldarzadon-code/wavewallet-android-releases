@@ -71,6 +71,13 @@
       "when": 1789776360909,
       "tag": "0009_loan_center_customer_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789776947003,
+      "tag": "0010_customer_loan_id_document",
+      "breakpoints": true
     }
   ]
 }
