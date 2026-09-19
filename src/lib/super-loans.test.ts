@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   borrowerName,
   loanTone,
+  originLabel,
   owedBreakdown,
   roleLabel,
   sortTransactions,
@@ -96,5 +97,12 @@ describe("transaction sorting", () => {
     expect(sortTransactions(rows, "amount-high")[0]?.amount).toBe(90);
     expect(sortTransactions(rows, "amount-low")[0]?.amount).toBe(10);
     expect(rows[0]?.amount).toBe(50);
+  });
+});
+
+describe("loan origin", () => {
+  it("names manual platform-owner loans", () => {
+    expect(originLabel("super_admin_manual")).toBe("Added by platform owner");
+    expect(originLabel("member_request")).toBe("Member request");
   });
 });
