@@ -34,7 +34,8 @@ BEGIN
   VALUES (_cust, 'customer', _shopA), (_res, 'reseller', _shopA);
   INSERT INTO public.user_roles (user_id, role) VALUES (_owner, 'super_admin');
   UPDATE public.profiles SET ecosystem_id = _shopA, status = 'active'
-   WHERE id IN (_cust, _res, _owner);
+   WHERE id IN (_cust, _res);
+  UPDATE public.profiles SET status = 'active' WHERE id = _owner;
 
   UPDATE public.platform_settings
      SET loans_enabled = true, loan_auto_base_credits = 1000,
