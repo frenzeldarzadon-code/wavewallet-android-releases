@@ -50,6 +50,7 @@ export function LoanCenter() {
   const [loans, setLoans] = useState<MyCoinLoan[]>([]);
   const [history, setHistory] = useState<CoinLoanEntry[]>([]);
   const [amount, setAmount] = useState("");
+  const [idFile, setIdFile] = useState<File | null>(null);
   const [repay, setRepay] = useState("");
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
