@@ -6,6 +6,9 @@ import {
   requestGoesToApproval,
   upfrontInterest,
   validateLoanRequest,
+  validateLoanSubmission,
+  validateLoanIdFile,
+  loanIdRequired,
   loanStatusLabel,
 } from "@/lib/coin-loans";
 
