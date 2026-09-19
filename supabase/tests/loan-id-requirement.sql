@@ -39,7 +39,7 @@ begin
   insert into storage.objects (bucket_id, name, owner, metadata)
   values ('loan-ids', v_path, v_customer, '{}');
 
-  v_loan := (public.request_coin_loan(500, v_path))::uuid;
+  select id into v_loan from public.request_coin_loan(500, v_path);
   perform 1 from public.coin_loans
    where id = v_loan and status = 'pending' and id_document_path = v_path
      and id_document_uploaded_at is not null;
