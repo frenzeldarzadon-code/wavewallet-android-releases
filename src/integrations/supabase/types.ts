@@ -2782,6 +2782,80 @@ export type Database = {
           },
         ]
       }
+      loan_pool_accounts: {
+        Row: {
+          allocated: number
+          available: number
+          contributed: number
+          created_at: string
+          interest_earned: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allocated?: number
+          available?: number
+          contributed?: number
+          created_at?: string
+          interest_earned?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allocated?: number
+          available?: number
+          contributed?: number
+          created_at?: string
+          interest_earned?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      loan_pool_ledger: {
+        Row: {
+          allocated_after: number
+          amount: number
+          available_after: number
+          created_at: string
+          id: string
+          kind: string
+          loan_id: string | null
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          allocated_after: number
+          amount: number
+          available_after: number
+          created_at?: string
+          id?: string
+          kind: string
+          loan_id?: string | null
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          allocated_after?: number
+          amount?: number
+          available_after?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          loan_id?: string | null
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_pool_ledger_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "universe_loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       login_attempts: {
         Row: {
           attempted_at: string
@@ -4237,6 +4311,11 @@ export type Database = {
           support_message: string
           support_page_name: string
           support_page_url: string
+          universe_loan_contributor_share_percent: number
+          universe_loan_enabled: boolean
+          universe_loan_interest_percent: number
+          universe_loan_owner_share_percent: number
+          universe_loan_platform_fee_percent: number
           updated_at: string
           updated_by: string | null
           voucher_platform_fee_percent: number
@@ -4276,6 +4355,11 @@ export type Database = {
           support_message?: string
           support_page_name?: string
           support_page_url?: string
+          universe_loan_contributor_share_percent?: number
+          universe_loan_enabled?: boolean
+          universe_loan_interest_percent?: number
+          universe_loan_owner_share_percent?: number
+          universe_loan_platform_fee_percent?: number
           updated_at?: string
           updated_by?: string | null
           voucher_platform_fee_percent?: number
@@ -4315,6 +4399,11 @@ export type Database = {
           support_message?: string
           support_page_name?: string
           support_page_url?: string
+          universe_loan_contributor_share_percent?: number
+          universe_loan_enabled?: boolean
+          universe_loan_interest_percent?: number
+          universe_loan_owner_share_percent?: number
+          universe_loan_platform_fee_percent?: number
           updated_at?: string
           updated_by?: string | null
           voucher_platform_fee_percent?: number
@@ -7866,6 +7955,260 @@ export type Database = {
           },
         ]
       }
+      universe_loan_earnings: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          kind: string
+          loan_id: string
+          note: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          kind: string
+          loan_id: string
+          note?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          loan_id?: string
+          note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "universe_loan_earnings_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "universe_loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      universe_loan_fundings: {
+        Row: {
+          amount: number
+          created_at: string
+          funder_id: string
+          id: string
+          interest_earned: number
+          loan_id: string
+          principal_repaid: number
+          released_principal: number
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          funder_id: string
+          id?: string
+          interest_earned?: number
+          loan_id: string
+          principal_repaid?: number
+          released_principal?: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          funder_id?: string
+          id?: string
+          interest_earned?: number
+          loan_id?: string
+          principal_repaid?: number
+          released_principal?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "universe_loan_fundings_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "universe_loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      universe_loan_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          interest_part: number
+          kind: string
+          ledger_id: string | null
+          loan_id: string
+          note: string | null
+          principal_after: number
+          principal_part: number
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          interest_part?: number
+          kind: string
+          ledger_id?: string | null
+          loan_id: string
+          note?: string | null
+          principal_after?: number
+          principal_part?: number
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          interest_part?: number
+          kind?: string
+          ledger_id?: string | null
+          loan_id?: string
+          note?: string | null
+          principal_after?: number
+          principal_part?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "universe_loan_payments_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "universe_loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      universe_loan_schedule: {
+        Row: {
+          due_date: string
+          id: string
+          interest_due: number
+          loan_id: string
+          period_index: number
+          principal_due: number
+          total_due: number
+        }
+        Insert: {
+          due_date: string
+          id?: string
+          interest_due: number
+          loan_id: string
+          period_index: number
+          principal_due: number
+          total_due: number
+        }
+        Update: {
+          due_date?: string
+          id?: string
+          interest_due?: number
+          loan_id?: string
+          period_index?: number
+          principal_due?: number
+          total_due?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "universe_loan_schedule_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "universe_loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      universe_loans: {
+        Row: {
+          amount: number
+          borrower_id: string
+          cancelled_at: string | null
+          client_token: string | null
+          contributor_share_percent: number
+          created_at: string
+          funded_amount: number
+          id: string
+          id_document_path: string | null
+          id_document_uploaded_at: string | null
+          interest_accrued: number
+          interest_paid: number
+          interest_percent: number
+          interest_refunded: number
+          last_accrual_at: string | null
+          owner_share_percent: number
+          platform_fee: number
+          platform_fee_percent: number
+          principal_outstanding: number
+          principal_paid: number
+          released_amount: number
+          released_at: string | null
+          settled_at: string | null
+          status: string
+          term_months: number
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          borrower_id: string
+          cancelled_at?: string | null
+          client_token?: string | null
+          contributor_share_percent: number
+          created_at?: string
+          funded_amount?: number
+          id?: string
+          id_document_path?: string | null
+          id_document_uploaded_at?: string | null
+          interest_accrued?: number
+          interest_paid?: number
+          interest_percent: number
+          interest_refunded?: number
+          last_accrual_at?: string | null
+          owner_share_percent: number
+          platform_fee?: number
+          platform_fee_percent: number
+          principal_outstanding?: number
+          principal_paid?: number
+          released_amount?: number
+          released_at?: string | null
+          settled_at?: string | null
+          status?: string
+          term_months: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          borrower_id?: string
+          cancelled_at?: string | null
+          client_token?: string | null
+          contributor_share_percent?: number
+          created_at?: string
+          funded_amount?: number
+          id?: string
+          id_document_path?: string | null
+          id_document_uploaded_at?: string | null
+          interest_accrued?: number
+          interest_paid?: number
+          interest_percent?: number
+          interest_refunded?: number
+          last_accrual_at?: string | null
+          owner_share_percent?: number
+          platform_fee?: number
+          platform_fee_percent?: number
+          principal_outstanding?: number
+          principal_paid?: number
+          released_amount?: number
+          released_at?: string | null
+          settled_at?: string | null
+          status?: string
+          term_months?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       universe_product_views: {
         Row: {
           ecosystem_id: string
@@ -8930,7 +9273,9 @@ export type Database = {
       }
     }
     Functions: {
+      accrue_all_universe_loans: { Args: never; Returns: number }
       accrue_coin_loan_interest: { Args: never; Returns: number }
+      accrue_universe_loan: { Args: { _loan_id: string }; Returns: undefined }
       acting_as: { Args: never; Returns: string }
       activate_free_subscription: {
         Args: { _ecosystem_id: string; _months?: number; _plan_id: string }
@@ -9181,6 +9526,15 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      apply_universe_loan: {
+        Args: {
+          _amount: number
+          _client_token?: string
+          _id_path: string
+          _term_months: number
+        }
+        Returns: string
       }
       archive_ecosystem: {
         Args: { _ecosystem_id: string; _reason?: string }
@@ -9565,6 +9919,7 @@ export type Database = {
         Returns: undefined
       }
       cancel_retail_order: { Args: { _order_id: string }; Returns: undefined }
+      cancel_universe_loan: { Args: { _loan_id: string }; Returns: undefined }
       cancel_withdrawal: {
         Args: { _id: string }
         Returns: {
@@ -10151,6 +10506,10 @@ export type Database = {
         Args: { _event: string; _note?: string }
         Returns: Json
       }
+      distribute_universe_loan_interest: {
+        Args: { _interest: number; _loan_id: string }
+        Returns: undefined
+      }
       dm_create_group: {
         Args: { _member_ids: string[]; _title: string }
         Returns: string
@@ -10281,6 +10640,7 @@ export type Database = {
         Returns: string
       }
       ensure_global_wallet: { Args: { _user_id: string }; Returns: string }
+      ensure_loan_pool_account: { Args: { _user: string }; Returns: undefined }
       ensure_membership_wallets: {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: undefined
@@ -10352,6 +10712,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      fund_universe_loan: {
+        Args: { _amount: number; _loan_id: string }
+        Returns: number
       }
       generate_shop_code: { Args: never; Returns: string }
       get_signup_ecosystem: {
@@ -10808,6 +11172,18 @@ export type Database = {
       listener_unmatched_events: { Args: { _limit?: number }; Returns: Json }
       live_shop_name: { Args: { _name: string }; Returns: string }
       loan_borrower_role: { Args: { _user_id: string }; Returns: string }
+      loan_pool_contribute: { Args: { _amount: number }; Returns: number }
+      loan_pool_note: {
+        Args: {
+          _amount: number
+          _kind: string
+          _loan: string
+          _note: string
+          _user: string
+        }
+        Returns: undefined
+      }
+      loan_pool_withdraw: { Args: { _amount: number }; Returns: number }
       loan_requires_id: { Args: { _user: string }; Returns: boolean }
       loan_security_shop: { Args: { _user_id: string }; Returns: string }
       loan_spend_allowed_in: {
@@ -11006,6 +11382,25 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      my_funded_universe_loans: {
+        Args: never
+        Returns: {
+          borrower_handle: string
+          borrower_name: string
+          created_at: string
+          interest_paid: number
+          loan_amount: number
+          loan_id: string
+          my_funded: number
+          my_interest_earned: number
+          my_principal_repaid: number
+          my_released_principal: number
+          principal_outstanding: number
+          released_at: string
+          status: string
+          term_months: number
+        }[]
+      }
       my_impersonation: {
         Args: never
         Returns: {
@@ -11018,6 +11413,39 @@ export type Database = {
           target_name: string
           target_role: Database["public"]["Enums"]["app_role"]
         }[]
+      }
+      my_loan_pool: {
+        Args: never
+        Returns: {
+          allocated: number
+          available: number
+          contributed: number
+          interest_earned: number
+          pool_allocated: number
+          pool_available: number
+          pool_total: number
+          wallet_balance: number
+        }[]
+      }
+      my_loan_pool_history: {
+        Args: never
+        Returns: {
+          allocated_after: number
+          amount: number
+          available_after: number
+          created_at: string
+          id: string
+          kind: string
+          loan_id: string | null
+          note: string | null
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "loan_pool_ledger"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       my_membership_application: {
         Args: never
@@ -11177,6 +11605,32 @@ export type Database = {
           user_id: string
         }[]
       }
+      my_universe_loans: {
+        Args: never
+        Returns: {
+          amount: number
+          contributor_share_percent: number
+          created_at: string
+          funded_amount: number
+          id: string
+          id_document_path: string
+          interest_accrued: number
+          interest_paid: number
+          interest_percent: number
+          interest_refunded: number
+          monthly_payment: number
+          owner_share_percent: number
+          platform_fee: number
+          platform_fee_percent: number
+          principal_outstanding: number
+          principal_paid: number
+          released_amount: number
+          released_at: string
+          settled_at: string
+          status: string
+          term_months: number
+        }[]
+      }
       new_tx_id: { Args: never; Returns: string }
       normalize_handle: { Args: { _handle: string }; Returns: string }
       normalize_payment_reference: { Args: { _ref: string }; Returns: string }
@@ -11237,10 +11691,27 @@ export type Database = {
         }
         Returns: undefined
       }
+      open_universe_loan_applications: {
+        Args: never
+        Returns: {
+          amount: number
+          borrower_handle: string
+          borrower_name: string
+          created_at: string
+          funded_amount: number
+          id: string
+          interest_percent: number
+          my_funded: number
+          remaining: number
+          status: string
+          term_months: number
+        }[]
+      }
       override_subscription_payment: {
         Args: { _ecosystem_id: string; _reason: string }
         Returns: Json
       }
+      pay_universe_loan: { Args: { _amount: number }; Returns: number }
       payment_account_matches: {
         Args: { _configured: string; _evidence: string }
         Returns: boolean
@@ -11688,6 +12159,7 @@ export type Database = {
         Args: { _email: string }
         Returns: undefined
       }
+      release_universe_loan: { Args: { _loan_id: string }; Returns: undefined }
       remember_payment_reference: {
         Args: {
           _cash_in: string
@@ -12217,6 +12689,10 @@ export type Database = {
       retail_wallet_for: {
         Args: { _ecosystem_id: string; _user_id: string }
         Returns: string
+      }
+      return_universe_loan_principal: {
+        Args: { _loan_id: string; _principal: number }
+        Returns: undefined
       }
       reverse_credit_transfer: {
         Args: {
@@ -13302,6 +13778,11 @@ export type Database = {
           support_message: string
           support_page_name: string
           support_page_url: string
+          universe_loan_contributor_share_percent: number
+          universe_loan_enabled: boolean
+          universe_loan_interest_percent: number
+          universe_loan_owner_share_percent: number
+          universe_loan_platform_fee_percent: number
           updated_at: string
           updated_by: string | null
           voucher_platform_fee_percent: number
@@ -13367,6 +13848,16 @@ export type Database = {
           _target_label?: string
         }
         Returns: Json
+      }
+      set_universe_loan_settings: {
+        Args: {
+          _contributor_share: number
+          _enabled: boolean
+          _interest: number
+          _owner_share: number
+          _platform_fee: number
+        }
+        Returns: undefined
       }
       set_voucher_tracer: {
         Args: {
@@ -13477,6 +13968,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      settle_universe_loan: { Args: { _loan_id: string }; Returns: undefined }
       shop_deletion_check: { Args: { _ecosystem_id: string }; Returns: Json }
       shop_deletion_check_unchecked: {
         Args: { _ecosystem_id: string }
@@ -14372,6 +14864,18 @@ export type Database = {
           status: string
         }[]
       }
+      super_loan_pool_overview: {
+        Args: never
+        Returns: {
+          contributors: number
+          outstanding_principal: number
+          owner_interest_collected: number
+          platform_fees_collected: number
+          pool_allocated: number
+          pool_available: number
+          pool_total: number
+        }[]
+      }
       super_member_accounts: {
         Args: { _user: string }
         Returns: {
@@ -14440,6 +14944,48 @@ export type Database = {
           shop_name: string
           shortfall: number
           status: string
+        }[]
+      }
+      super_universe_loan_funders: {
+        Args: { _loan_id: string }
+        Returns: {
+          amount: number
+          funder_handle: string
+          funder_id: string
+          funder_name: string
+          interest_earned: number
+          principal_repaid: number
+          released_principal: number
+        }[]
+      }
+      super_universe_loans: {
+        Args: { _status?: string }
+        Returns: {
+          amount: number
+          borrower_handle: string
+          borrower_id: string
+          borrower_name: string
+          contributor_share_percent: number
+          created_at: string
+          funded_amount: number
+          funder_count: number
+          id: string
+          id_document_path: string
+          interest_accrued: number
+          interest_paid: number
+          interest_percent: number
+          interest_refunded: number
+          owner_interest: number
+          owner_share_percent: number
+          platform_fee: number
+          platform_fee_percent: number
+          principal_outstanding: number
+          principal_paid: number
+          released_amount: number
+          released_at: string
+          settled_at: string
+          status: string
+          term_months: number
         }[]
       }
       superadmin_assign_member_to_shop: {
@@ -14640,6 +15186,44 @@ export type Database = {
           shop_name: string
           shop_slug: string
           shop_type: string
+        }[]
+      }
+      universe_loan_monthly_payment: {
+        Args: { _monthly_percent: number; _months: number; _principal: number }
+        Returns: number
+      }
+      universe_loan_payment_rows: {
+        Args: { _loan_id: string }
+        Returns: {
+          amount: number
+          created_at: string
+          id: string
+          interest_part: number
+          kind: string
+          note: string
+          principal_after: number
+          principal_part: number
+        }[]
+      }
+      universe_loan_schedule_rows: {
+        Args: { _loan_id: string }
+        Returns: {
+          due_date: string
+          interest_due: number
+          period_index: number
+          principal_due: number
+          total_due: number
+        }[]
+      }
+      universe_loan_settings: {
+        Args: never
+        Returns: {
+          contributor_share_percent: number
+          enabled: boolean
+          interest_percent: number
+          owner_share_percent: number
+          platform_fee_percent: number
+          terms: number[]
         }[]
       }
       universe_market_pulse: {
@@ -14969,6 +15553,11 @@ export type Database = {
               support_message: string
               support_page_name: string
               support_page_url: string
+              universe_loan_contributor_share_percent: number
+              universe_loan_enabled: boolean
+              universe_loan_interest_percent: number
+              universe_loan_owner_share_percent: number
+              universe_loan_platform_fee_percent: number
               updated_at: string
               updated_by: string | null
               voucher_platform_fee_percent: number
@@ -15025,6 +15614,11 @@ export type Database = {
               support_message: string
               support_page_name: string
               support_page_url: string
+              universe_loan_contributor_share_percent: number
+              universe_loan_enabled: boolean
+              universe_loan_interest_percent: number
+              universe_loan_owner_share_percent: number
+              universe_loan_platform_fee_percent: number
               updated_at: string
               updated_by: string | null
               voucher_platform_fee_percent: number
@@ -15299,6 +15893,11 @@ export type Database = {
           support_message: string
           support_page_name: string
           support_page_url: string
+          universe_loan_contributor_share_percent: number
+          universe_loan_enabled: boolean
+          universe_loan_interest_percent: number
+          universe_loan_owner_share_percent: number
+          universe_loan_platform_fee_percent: number
           updated_at: string
           updated_by: string | null
           voucher_platform_fee_percent: number

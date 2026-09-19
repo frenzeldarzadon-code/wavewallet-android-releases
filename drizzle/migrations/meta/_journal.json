@@ -85,6 +85,34 @@
       "when": 1789776986154,
       "tag": "0011_admin_coin_loans_id_document",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789794248628,
+      "tag": "0012_loan_pool_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789794312916,
+      "tag": "0013_universe_loan_engine",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1789794350524,
+      "tag": "0014_universe_loan_read_models",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1789794462438,
+      "tag": "0015_universe_loan_idempotent_apply",
+      "breakpoints": true
     }
   ]
 }
