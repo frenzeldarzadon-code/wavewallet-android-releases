@@ -25,18 +25,23 @@ import {
   fetchMyLoanHistory,
   fetchMyLoans,
   loanEntryLabel,
+  loanIdRequired,
   loanStatusLabel,
   releasedCoins,
+  removeLoanIdDocument,
   repayCoinLoan,
   requestCoinLoan,
   requestGoesToApproval,
   upfrontInterest,
-  validateLoanRequest,
+  uploadLoanIdDocument,
+  validateLoanSubmission,
   type CoinLoanEntry,
   type CoinLoanSettings,
   type CoinLoanSummary,
   type MyCoinLoan,
 } from "@/lib/coin-loans";
+import { LoanIdPicker, LoanIdViewer } from "@/components/wallet/loan-id-document";
+import { supabase } from "@/integrations/supabase/client";
 
 export function LoanCenter() {
   const online = useOnline();
