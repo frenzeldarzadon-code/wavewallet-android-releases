@@ -112,3 +112,31 @@ describe("who gets released automatically", () => {
     expect(requestGoesToApproval(100000, { canAuto: false, autoLimit: 0 })).toBe(true);
   });
 });
+
+describe("customer valid ID requirement", () => {
+  const base = { loansEnabled: true, status: "none" as const };
+
+  it("requires an ID for a member with no shop position", () => {
+    expect(loanIdRequired({ hasPosition: false })).toBe(true);
+    expect(validateLoanSubmission(500, { ...base, hasPosition: false }, false)).toMatch(/valid ID/i);
+    expect(validateLoanSubmission(500, { ...base, hasPosition: false }, true)).toBeNull();
+  });
+
+  it("does not require an ID from admins, resellers or subresellers", () => {
+    expect(loanIdRequired({ hasPosition: true })).toBe(false);
+    expect(validateLoanSubmission(500, { ...base, hasPosition: true }, false)).toBeNull();
+  });
+
+  it("still reports the ordinary problems first", () => {
+    expect(validateLoanSubmission(0, { ...base, hasPosition: false }, true)).toMatch(/greater than zero/i);
+    expect(
+      validateLoanSubmission(500, { ...base, loansEnabled: false, hasPosition: false }, true),
+    ).toMatch(/not available/i);
+  });
+
+  it("accepts only reasonable ID photos", () => {
+    expect(validateLoanIdFile({ type: "image/jpeg", size: 1000 })).toBeNull();
+    expect(validateLoanIdFile({ type: "application/pdf", size: 1000 })).toMatch(/JPG/);
+    expect(validateLoanIdFile({ type: "image/png", size: 9 * 1024 * 1024 })).toMatch(/5 MB/);
+  });
+});
