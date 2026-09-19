@@ -291,11 +291,67 @@ export async function fetchMyLoanHistory(): Promise<CoinLoanEntry[]> {
   return (data ?? []) as unknown as CoinLoanEntry[];
 }
 
-export async function requestCoinLoan(amount: number) {
+export async function requestCoinLoan(amount: number, idPath?: string | null) {
   requireOnline();
-  const { data, error } = await supabase.rpc("request_coin_loan", { _amount: amount });
+  const { data, error } = await supabase.rpc("request_coin_loan", {
+    _amount: amount,
+    ...(idPath ? { _id_path: idPath } : {}),
+  });
   if (error) throw error;
   return data;
+}
+
+/* ------------------------------------------------------------------ */
+/* Valid ID for customer loan requests                                 */
+/*                                                                     */
+/* Files live at `{auth user id}/{uuid}.{ext}` in the PRIVATE          */
+/* `loan-ids` bucket. Storage policies let a member read only their    */
+/* own folder and the platform owner read all of them for review, so   */
+/* an ID is never publicly reachable and never appears anywhere else   */
+/* in the app. Reads always go through a short-lived signed URL.       */
+/* ------------------------------------------------------------------ */
+
+export const LOAN_ID_BUCKET = "loan-ids";
+export const MAX_LOAN_ID_BYTES = 5 * 1024 * 1024; // 5 MB
+export const LOAN_ID_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
+export function validateLoanIdFile(file: { type: string; size: number }): string | null {
+  if (!LOAN_ID_TYPES.includes((file.type || "").toLowerCase())) {
+    return "Use a JPG, PNG or WEBP photo of your ID.";
+  }
+  if (file.size > MAX_LOAN_ID_BYTES) return "That photo is larger than 5 MB. Pick a smaller one.";
+  return null;
+}
+
+export async function uploadLoanIdDocument(userId: string, file: File): Promise<string> {
+  requireOnline();
+  const problem = validateLoanIdFile(file);
+  if (problem) throw new Error(problem);
+  const ext =
+    (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+  const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage
+    .from(LOAN_ID_BUCKET)
+    .upload(path, file, { contentType: file.type, upsert: false });
+  if (error) throw new Error(error.message);
+  return path;
+}
+
+/** Only removes a file that is not yet attached to a loan (storage enforces it). */
+export async function removeLoanIdDocument(path: string): Promise<void> {
+  await supabase.storage.from(LOAN_ID_BUCKET).remove([path]);
+}
+
+const idUrlCache = new Map<string, { url: string; expires: number }>();
+
+export async function loanIdDocumentUrl(path?: string | null): Promise<string | null> {
+  if (!path) return null;
+  const hit = idUrlCache.get(path);
+  if (hit && hit.expires > Date.now()) return hit.url;
+  const { data, error } = await supabase.storage.from(LOAN_ID_BUCKET).createSignedUrl(path, 3600);
+  if (error || !data?.signedUrl) return null;
+  idUrlCache.set(path, { url: data.signedUrl, expires: Date.now() + 55 * 60 * 1000 });
+  return data.signedUrl;
 }
 
 export async function repayCoinLoan(amount: number): Promise<number> {
