@@ -2,8 +2,9 @@
  * Coin loans — borrowing against the ONE global Universe wallet.
  *
  * Rules that matter (all re-checked in the database, never trusted from here):
- *  - Only members holding a position (admin / reseller / subreseller) in at
- *    least one shop may borrow.
+ *  - Any member may borrow. Members holding a position (admin / reseller /
+ *    subreseller) can be released automatically within their limit; customers
+ *    ALWAYS wait for a manual decision by the platform owner.
  *  - The automatic-approval ceiling is the GREATER of the configured base
  *    amount and `multiplier x free (unloaned) balance`. It is recomputed
  *    server-side at request time; the number shown here is only a preview.
@@ -11,8 +12,9 @@
  *  - The first month's interest is deducted from the coins handed over, while
  *    the full principal is owed.
  *  - Released coins sit as a RESTRICTED portion of the same wallet balance.
- *    They can only buy from shops where the borrower holds a position; they can
- *    never be transferred, gifted or cashed out.
+ *    A position holder's loan coins can only buy from shops where they hold
+ *    that position; a customer's loan coins can buy from any Universe shop.
+ *    Neither can ever be transferred, gifted or cashed out.
  *  - Top-ups repay the outstanding loan first; only the excess is spendable.
  */
 import { supabase } from "@/integrations/supabase/client";
@@ -42,9 +44,33 @@ export interface CoinLoanSummary {
   restrictedBalance: number;
   balance: number;
   hasPosition: boolean;
+  /** Only position holders (admin/reseller/subreseller) can be auto-approved. */
+  canAuto: boolean;
+  /** Customer loans: the restricted coins may buy from any Universe shop. */
+  universeSpend: boolean;
+  borrowerRole: string | null;
   loansEnabled: boolean;
   requestedAt: string | null;
   releasedAt: string | null;
+}
+
+export interface MyCoinLoan {
+  id: string;
+  principal: number;
+  released_amount: number;
+  first_month_interest: number;
+  interest_percent: number;
+  accrued_interest: number;
+  outstanding: number;
+  total_owed: number;
+  status: string;
+  approval_mode: string;
+  origin: string | null;
+  reference_note: string | null;
+  universe_spend: boolean | null;
+  created_at: string;
+  released_at: string | null;
+  settled_at: string | null;
 }
 
 export interface CoinLoanEntry {
@@ -109,14 +135,25 @@ export function needsManualApproval(amount: number, autoLimit: number): boolean 
   return amount > autoLimit;
 }
 
+/**
+ * Does this request go straight through? Only members holding a shop position
+ * can ever be released automatically — customers always wait for a decision.
+ * The database enforces the same rule; this is only for wording.
+ */
+export function requestGoesToApproval(
+  amount: number,
+  summary: Pick<CoinLoanSummary, "canAuto" | "autoLimit">,
+): boolean {
+  if (!summary.canAuto) return true;
+  return needsManualApproval(amount, summary.autoLimit);
+}
+
 /** Client-side pre-check; the database repeats every one of these. */
 export function validateLoanRequest(
   amount: number,
-  summary: Pick<CoinLoanSummary, "hasPosition" | "loansEnabled" | "status">,
+  summary: Pick<CoinLoanSummary, "loansEnabled" | "status">,
 ): string | null {
   if (!summary.loansEnabled) return "Coin loans are not available right now.";
-  if (!summary.hasPosition)
-    return "Coin loans are for members who are an admin, reseller or subreseller of a shop.";
   if (summary.status === "pending") return "Your previous request is still waiting for a decision.";
   if (summary.status === "active") return "Repay your current loan before requesting another one.";
   if (!Number.isFinite(amount) || amount <= 0) return "Enter an amount greater than zero.";
@@ -207,10 +244,20 @@ export async function fetchMyCoinLoan(): Promise<CoinLoanSummary | null> {
     restrictedBalance: num(row["restricted_balance"]),
     balance: num(row["balance"]),
     hasPosition: Boolean(row["has_position"]),
+    canAuto: Boolean(row["can_auto"]),
+    universeSpend: Boolean(row["universe_spend"]),
+    borrowerRole: (row["borrower_role"] as string | null) ?? null,
     loansEnabled: Boolean(row["loans_enabled"]),
     requestedAt: (row["requested_at"] as string | null) ?? null,
     releasedAt: (row["released_at"] as string | null) ?? null,
   };
+}
+
+/** Every loan this member has ever had — the Loan Center's loan list. */
+export async function fetchMyLoans(): Promise<MyCoinLoan[]> {
+  const { data, error } = await supabase.rpc("my_coin_loans");
+  if (error) throw error;
+  return (data ?? []) as unknown as MyCoinLoan[];
 }
 
 export async function fetchMyLoanHistory(): Promise<CoinLoanEntry[]> {

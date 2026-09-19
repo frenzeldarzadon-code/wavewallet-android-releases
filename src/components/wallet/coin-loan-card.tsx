@@ -24,7 +24,7 @@ import {
   fetchMyLoanHistory,
   loanEntryLabel,
   loanStatusLabel,
-  needsManualApproval,
+  requestGoesToApproval,
   releasedCoins,
   repayCoinLoan,
   requestCoinLoan,
@@ -64,13 +64,12 @@ export function CoinLoanCard({ onChanged }: { onChanged?: () => void }) {
   }, [load]);
 
   if (!summary || !settings) return null;
-  if (!summary.hasPosition && !summary.loanId) return null;
   // Loans switched off by the platform owner: nothing to show unless this
   // member still has a loan to repay or a request awaiting a decision.
   if (!summary.loansEnabled && !summary.loanId) return null;
 
   const requested = Number(amount) || 0;
-  const manual = needsManualApproval(requested, summary.autoLimit);
+  const manual = requestGoesToApproval(requested, summary);
   const interest = upfrontInterest(requested, settings);
   const net = releasedCoins(requested, settings);
   const active = summary.status === "active";
@@ -140,7 +139,11 @@ export function CoinLoanCard({ onChanged }: { onChanged?: () => void }) {
     <PageSection
       devSlot="wallet-center.coin-loan"
       title="Coin loan"
-      description="Borrow coins against your Universe wallet. Loan coins can only buy from shops where you are an admin, reseller or subreseller."
+      description={
+        summary.universeSpend
+          ? "Borrow coins against your Universe wallet. Loan coins can buy from any Universe shop, but can never be transferred, gifted or cashed out."
+          : "Borrow coins against your Universe wallet. Loan coins can only buy from shops where you are an admin, reseller or subreseller."
+      }
     >
       <div className="grid gap-3 sm:grid-cols-3">
         <StatCard
@@ -153,7 +156,11 @@ export function CoinLoanCard({ onChanged }: { onChanged?: () => void }) {
         <StatCard
           label="Loan coins (restricted)"
           value={peso(summary.restrictedBalance)}
-          hint="Purchases in your own shops only — never transfers, gifts or cash out"
+          hint={
+            summary.universeSpend
+              ? "Spendable at any Universe shop — never transfers, gifts or cash out"
+              : "Purchases in your own shops only — never transfers, gifts or cash out"
+          }
           icon={Lock}
           tone="brand"
         />
@@ -174,8 +181,9 @@ export function CoinLoanCard({ onChanged }: { onChanged?: () => void }) {
           {loanStatusLabel(summary.status)}
         </StatusBadge>
         <span>
-          Approved instantly up to {peso(summary.autoLimit)} — the greater of{" "}
-          {peso(settings.baseCredits)} and {settings.multiplier}× your free balance.
+          {summary.canAuto
+            ? `Approved instantly up to ${peso(summary.autoLimit)} — the greater of ${peso(settings.baseCredits)} and ${settings.multiplier}× your free balance.`
+            : "Every request is reviewed by the platform owner before coins are released."}
         </span>
       </div>
 

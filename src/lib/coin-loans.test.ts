@@ -3,6 +3,7 @@ import {
   autoApprovalLimit,
   needsManualApproval,
   releasedCoins,
+  requestGoesToApproval,
   upfrontInterest,
   validateLoanRequest,
   loanStatusLabel,
@@ -67,11 +68,7 @@ describe("manual approval", () => {
 });
 
 describe("request validation", () => {
-  const base = { hasPosition: true, loansEnabled: true, status: null as string | null };
-
-  it("blocks members without a position", () => {
-    expect(validateLoanRequest(500, { ...base, hasPosition: false })).toMatch(/admin, reseller/);
-  });
+  const base = { loansEnabled: true, status: null as string | null };
 
   it("blocks when loans are switched off", () => {
     expect(validateLoanRequest(500, { ...base, loansEnabled: false })).toMatch(/not available/);
@@ -97,5 +94,21 @@ describe("labels", () => {
   it("reads in plain language", () => {
     expect(loanStatusLabel("active")).toBe("Active");
     expect(loanStatusLabel(null)).toBe("No loan");
+  });
+});
+
+describe("who gets released automatically", () => {
+  it("releases a position holder within their limit", () => {
+    expect(requestGoesToApproval(900, { canAuto: true, autoLimit: 1000 })).toBe(false);
+  });
+
+  it("sends a position holder above the limit for approval", () => {
+    expect(requestGoesToApproval(1500, { canAuto: true, autoLimit: 1000 })).toBe(true);
+  });
+
+  it("never auto-approves a customer, whatever the amount", () => {
+    expect(requestGoesToApproval(1, { canAuto: false, autoLimit: 0 })).toBe(true);
+    expect(requestGoesToApproval(1, { canAuto: false, autoLimit: 5000 })).toBe(true);
+    expect(requestGoesToApproval(100000, { canAuto: false, autoLimit: 0 })).toBe(true);
   });
 });

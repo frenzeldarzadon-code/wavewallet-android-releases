@@ -64,6 +64,13 @@
       "when": 1789774637690,
       "tag": "0008_dm_photo_only_messages",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789776360909,
+      "tag": "0009_loan_center_customer_rules",
+      "breakpoints": true
     }
   ]
 }

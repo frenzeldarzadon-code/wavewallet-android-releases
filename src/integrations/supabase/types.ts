@@ -830,7 +830,10 @@ export type Database = {
           approval_mode: string
           auto_limit_snapshot: number
           base_snapshot: number
+          borrower_role: string | null
+          client_token: string | null
           created_at: string
+          created_by: string | null
           decided_at: string | null
           decided_by: string | null
           decision_note: string | null
@@ -839,8 +842,10 @@ export type Database = {
           id: string
           interest_percent: number
           multiplier_snapshot: number
+          origin: string
           outstanding: number
           principal: number
+          reference_note: string | null
           released_amount: number
           released_at: string | null
           secured_admin_id: string | null
@@ -848,6 +853,7 @@ export type Database = {
           settled_at: string | null
           status: string
           total_owed: number
+          universe_spend: boolean
           updated_at: string
           user_id: string
         }
@@ -856,7 +862,10 @@ export type Database = {
           approval_mode: string
           auto_limit_snapshot: number
           base_snapshot: number
+          borrower_role?: string | null
+          client_token?: string | null
           created_at?: string
+          created_by?: string | null
           decided_at?: string | null
           decided_by?: string | null
           decision_note?: string | null
@@ -865,8 +874,10 @@ export type Database = {
           id?: string
           interest_percent: number
           multiplier_snapshot: number
+          origin?: string
           outstanding?: number
           principal: number
+          reference_note?: string | null
           released_amount?: number
           released_at?: string | null
           secured_admin_id?: string | null
@@ -874,6 +885,7 @@ export type Database = {
           settled_at?: string | null
           status?: string
           total_owed?: number
+          universe_spend?: boolean
           updated_at?: string
           user_id: string
         }
@@ -882,7 +894,10 @@ export type Database = {
           approval_mode?: string
           auto_limit_snapshot?: number
           base_snapshot?: number
+          borrower_role?: string | null
+          client_token?: string | null
           created_at?: string
+          created_by?: string | null
           decided_at?: string | null
           decided_by?: string | null
           decision_note?: string | null
@@ -891,8 +906,10 @@ export type Database = {
           id?: string
           interest_percent?: number
           multiplier_snapshot?: number
+          origin?: string
           outstanding?: number
           principal?: number
+          reference_note?: string | null
           released_amount?: number
           released_at?: string | null
           secured_admin_id?: string | null
@@ -900,6 +917,7 @@ export type Database = {
           settled_at?: string | null
           status?: string
           total_owed?: number
+          universe_spend?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -9434,7 +9452,10 @@ export type Database = {
           approval_mode: string
           auto_limit_snapshot: number
           base_snapshot: number
+          borrower_role: string | null
+          client_token: string | null
           created_at: string
+          created_by: string | null
           decided_at: string | null
           decided_by: string | null
           decision_note: string | null
@@ -9443,8 +9464,10 @@ export type Database = {
           id: string
           interest_percent: number
           multiplier_snapshot: number
+          origin: string
           outstanding: number
           principal: number
+          reference_note: string | null
           released_amount: number
           released_at: string | null
           secured_admin_id: string | null
@@ -9452,6 +9475,7 @@ export type Database = {
           settled_at: string | null
           status: string
           total_owed: number
+          universe_spend: boolean
           updated_at: string
           user_id: string
         }
@@ -10772,6 +10796,7 @@ export type Database = {
       }
       listener_unmatched_events: { Args: { _limit?: number }; Returns: Json }
       live_shop_name: { Args: { _name: string }; Returns: string }
+      loan_borrower_role: { Args: { _user_id: string }; Returns: string }
       loan_security_shop: { Args: { _user_id: string }; Returns: string }
       loan_spend_allowed_in: {
         Args: { _ecosystem_id: string; _user_id: string }
@@ -10907,6 +10932,8 @@ export type Database = {
           approval_mode: string
           auto_limit: number
           balance: number
+          borrower_role: string
+          can_auto: boolean
           first_month_interest: number
           free_balance: number
           has_position: boolean
@@ -10921,7 +10948,49 @@ export type Database = {
           restricted_balance: number
           status: string
           total_owed: number
+          universe_spend: boolean
         }[]
+      }
+      my_coin_loans: {
+        Args: never
+        Returns: {
+          accrued_interest: number
+          approval_mode: string
+          auto_limit_snapshot: number
+          base_snapshot: number
+          borrower_role: string | null
+          client_token: string | null
+          created_at: string
+          created_by: string | null
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          first_month_interest: number
+          free_balance_snapshot: number
+          id: string
+          interest_percent: number
+          multiplier_snapshot: number
+          origin: string
+          outstanding: number
+          principal: number
+          reference_note: string | null
+          released_amount: number
+          released_at: string | null
+          secured_admin_id: string | null
+          secured_ecosystem_id: string | null
+          settled_at: string | null
+          status: string
+          total_owed: number
+          universe_spend: boolean
+          updated_at: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "coin_loans"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       my_impersonation: {
         Args: never
@@ -11565,7 +11634,10 @@ export type Database = {
           approval_mode: string
           auto_limit_snapshot: number
           base_snapshot: number
+          borrower_role: string | null
+          client_token: string | null
           created_at: string
+          created_by: string | null
           decided_at: string | null
           decided_by: string | null
           decision_note: string | null
@@ -11574,8 +11646,10 @@ export type Database = {
           id: string
           interest_percent: number
           multiplier_snapshot: number
+          origin: string
           outstanding: number
           principal: number
+          reference_note: string | null
           released_amount: number
           released_at: string | null
           secured_admin_id: string | null
@@ -11583,6 +11657,7 @@ export type Database = {
           settled_at: string | null
           status: string
           total_owed: number
+          universe_spend: boolean
           updated_at: string
           user_id: string
         }
@@ -11725,7 +11800,10 @@ export type Database = {
           approval_mode: string
           auto_limit_snapshot: number
           base_snapshot: number
+          borrower_role: string | null
+          client_token: string | null
           created_at: string
+          created_by: string | null
           decided_at: string | null
           decided_by: string | null
           decision_note: string | null
@@ -11734,8 +11812,10 @@ export type Database = {
           id: string
           interest_percent: number
           multiplier_snapshot: number
+          origin: string
           outstanding: number
           principal: number
+          reference_note: string | null
           released_amount: number
           released_at: string | null
           secured_admin_id: string | null
@@ -11743,6 +11823,7 @@ export type Database = {
           settled_at: string | null
           status: string
           total_owed: number
+          universe_spend: boolean
           updated_at: string
           user_id: string
         }
@@ -12375,7 +12456,10 @@ export type Database = {
           approval_mode: string
           auto_limit_snapshot: number
           base_snapshot: number
+          borrower_role: string | null
+          client_token: string | null
           created_at: string
+          created_by: string | null
           decided_at: string | null
           decided_by: string | null
           decision_note: string | null
@@ -12384,8 +12468,10 @@ export type Database = {
           id: string
           interest_percent: number
           multiplier_snapshot: number
+          origin: string
           outstanding: number
           principal: number
+          reference_note: string | null
           released_amount: number
           released_at: string | null
           secured_admin_id: string | null
@@ -12393,6 +12479,7 @@ export type Database = {
           settled_at: string | null
           status: string
           total_owed: number
+          universe_spend: boolean
           updated_at: string
           user_id: string
         }
@@ -14209,7 +14296,10 @@ export type Database = {
           accrued_interest: number
           approval_mode: string
           auto_limit_snapshot: number
+          borrower_role: string
           created_at: string
+          created_by: string
+          created_by_name: string
           decided_at: string
           decided_by: string
           decision_note: string
@@ -14219,8 +14309,10 @@ export type Database = {
           handle: string
           id: string
           interest_percent: number
+          origin: string
           outstanding: number
           principal: number
+          reference_note: string
           released_amount: number
           released_at: string
           repaid: number
@@ -14228,6 +14320,7 @@ export type Database = {
           settled_at: string
           status: string
           total_owed: number
+          universe_spend: boolean
           user_id: string
         }[]
       }
@@ -14330,6 +14423,52 @@ export type Database = {
       superadmin_assign_member_to_shop: {
         Args: { _ecosystem_id: string; _user: string }
         Returns: undefined
+      }
+      superadmin_create_manual_loan: {
+        Args: {
+          _amount: number
+          _client_token?: string
+          _note?: string
+          _user_id: string
+        }
+        Returns: {
+          accrued_interest: number
+          approval_mode: string
+          auto_limit_snapshot: number
+          base_snapshot: number
+          borrower_role: string | null
+          client_token: string | null
+          created_at: string
+          created_by: string | null
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          first_month_interest: number
+          free_balance_snapshot: number
+          id: string
+          interest_percent: number
+          multiplier_snapshot: number
+          origin: string
+          outstanding: number
+          principal: number
+          reference_note: string | null
+          released_amount: number
+          released_at: string | null
+          secured_admin_id: string | null
+          secured_ecosystem_id: string | null
+          settled_at: string | null
+          status: string
+          total_owed: number
+          universe_spend: boolean
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "coin_loans"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       superadmin_delete_platform_user: {
         Args: { _override?: boolean; _reason?: string; _user: string }

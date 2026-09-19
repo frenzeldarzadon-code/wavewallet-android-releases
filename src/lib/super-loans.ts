@@ -43,6 +43,12 @@ export interface SuperLoan {
   freeBalanceSnapshot: number;
   status: string;
   approvalMode: string;
+  origin: string;
+  createdBy: string | null;
+  createdByName: string | null;
+  referenceNote: string | null;
+  borrowerRole: string | null;
+  universeSpend: boolean;
   decidedAt: string | null;
   decisionNote: string | null;
   releasedAt: string | null;
@@ -192,6 +198,12 @@ function mapLoan(row: Record<string, unknown>): SuperLoan {
     freeBalanceSnapshot: num(row["free_balance_snapshot"]),
     status: String(row["status"] ?? ""),
     approvalMode: String(row["approval_mode"] ?? ""),
+    origin: String(row["origin"] ?? "member_request"),
+    createdBy: str(row["created_by"]),
+    createdByName: str(row["created_by_name"]),
+    referenceNote: str(row["reference_note"]),
+    borrowerRole: str(row["borrower_role"]),
+    universeSpend: Boolean(row["universe_spend"]),
     decidedAt: str(row["decided_at"]),
     decisionNote: str(row["decision_note"]),
     releasedAt: str(row["released_at"]),
@@ -258,6 +270,33 @@ export async function fetchLoanTransactions(
     role: str(row["role"]),
     loanStatus: String(row["loan_status"] ?? ""),
   }));
+}
+
+/**
+ * The ONE write on this page: the platform owner books a real loan for a
+ * member. The database creates the authoritative loan record, releases the
+ * coins through the normal ledger and stores who created it. `clientToken`
+ * makes a double submit return the same loan instead of creating a second one.
+ */
+export async function createManualLoan(input: {
+  userId: string;
+  amount: number;
+  note?: string;
+  clientToken: string;
+}): Promise<void> {
+  const note = input.note?.trim();
+  const { error } = await supabase.rpc("superadmin_create_manual_loan", {
+    _user_id: input.userId,
+    _amount: input.amount,
+    _client_token: input.clientToken,
+    ...(note ? { _note: note } : {}),
+  });
+  if (error) throw error;
+}
+
+/** Plain wording for where a loan came from. */
+export function originLabel(origin: string): string {
+  return origin === "super_admin_manual" ? "Added by platform owner" : "Member request";
 }
 
 /** Newest/oldest/amount ordering for the transactions table (client-side). */
