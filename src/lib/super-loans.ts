@@ -49,6 +49,8 @@ export interface SuperLoan {
   referenceNote: string | null;
   borrowerRole: string | null;
   universeSpend: boolean;
+  idDocumentPath: string | null;
+  idDocumentUploadedAt: string | null;
   decidedAt: string | null;
   decisionNote: string | null;
   releasedAt: string | null;
