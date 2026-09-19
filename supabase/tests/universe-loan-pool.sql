@@ -37,7 +37,7 @@ begin
   perform public.ensure_global_wallet(v_borrower);
   insert into public.credit_ledger (account_id, user_id, ecosystem_id, direction, amount, reason, entry_kind, actor_id)
   select id, user_id, null, 'credit', 6000, 'test seed', 'general', user_id
-    from public.credit_accounts where user_id in (v_f1, v_f2, v_f3) and ecosystem_id is null;
+    from public.credit_accounts where user_id in (v_f1, v_f2, v_f3, v_borrower) and ecosystem_id is null;
 
   -- 1. Contributions land in the pool and leave the wallet.
   perform set_config('request.jwt.claims', json_build_object('sub', v_f1, 'role', 'authenticated')::text, true);
@@ -92,7 +92,7 @@ begin
 
   select status into v_status from public.universe_loans where id = v_loan;
   select balance into v_bal from public.credit_accounts where user_id = v_borrower and ecosystem_id is null;
-  if v_status <> 'partially_funded' or v_bal <> 0 then
+  if v_status <> 'partially_funded' or v_bal <> 6000 then
     raise exception 'FAIL: a partially funded loan released (status %, wallet %)', v_status, v_bal;
   end if;
   select available, allocated into v_avail, v_alloc from public.loan_pool_accounts where user_id = v_f1;
@@ -119,7 +119,7 @@ begin
   select status into v_status from public.universe_loans where id = v_loan;
   select balance, restricted_balance into v_bal, v_restricted
     from public.credit_accounts where user_id = v_borrower and ecosystem_id is null;
-  if v_status <> 'active' or v_bal <> 9800 or v_restricted <> 0 then
+  if v_status <> 'active' or v_bal <> 15800 or v_restricted <> 0 then
     raise exception 'FAIL: release wrong (status %, wallet %, restricted %)', v_status, v_bal, v_restricted;
   end if;
   raise notice 'PASS full funding releases 9800 unrestricted coins after the 2%% fee';
