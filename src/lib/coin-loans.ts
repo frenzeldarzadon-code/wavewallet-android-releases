@@ -98,6 +98,9 @@ export interface AdminCoinLoan {
   released_amount: number;
   status: string;
   approval_mode: string;
+  borrower_role: string | null;
+  id_document_path: string | null;
+  id_document_uploaded_at: string | null;
   decided_by: string | null;
   decided_at: string | null;
   decision_note: string | null;
