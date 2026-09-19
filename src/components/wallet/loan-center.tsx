@@ -243,18 +243,24 @@ export function LoanCenter() {
           </Card>
         ) : pending ? (
           <Card className="shadow-none">
-            <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
-              <p className="text-xs text-muted-foreground">
-                {peso(summary.principal)} is waiting for the platform owner's decision.
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={busy || !online}
-                onClick={() => void cancel()}
-              >
-                Cancel request
-              </Button>
+            <CardContent className="space-y-2 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs text-muted-foreground">
+                  {peso(summary.principal)} is waiting for the platform owner's decision.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={busy || !online}
+                  onClick={() => void cancel()}
+                >
+                  Cancel request
+                </Button>
+              </div>
+              <LoanIdViewer
+                path={loans.find((l) => l.id === summary.loanId)?.id_document_path}
+                label="View the ID you sent"
+              />
             </CardContent>
           </Card>
         ) : !summary.loansEnabled ? (
