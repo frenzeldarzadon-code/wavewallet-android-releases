@@ -376,6 +376,102 @@ function Figure({ label, value, strong }: { label: string; value: string; strong
   );
 }
 
+/**
+ * Add Manual Loan — the platform owner books a real loan for a member. The
+ * database creates the authoritative loan record and releases the coins
+ * through the normal ledger, so it shows up instantly in that member's Loan
+ * Center and in every loan report. A one-time token is sent with the request
+ * so a double tap can never create two loans.
+ */
+function ManualLoanCard({ onCreated }: { onCreated: () => void }) {
+  const [member, setMember] = useState<MemberSearchResult | null>(null);
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [token, setToken] = useState(() => crypto.randomUUID());
+
+  const value = Number(amount) || 0;
+
+  const submit = async () => {
+    if (!member) {
+      toast.error("Choose the member first.");
+      return;
+    }
+    if (value <= 0) {
+      toast.error("Enter a loan amount greater than zero.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await createManualLoan({ userId: member.id, amount: value, note, clientToken: token });
+      toast.success(`Loan of ${peso(value)} recorded for ${member.full_name}.`);
+      setMember(null);
+      setAmount("");
+      setNote("");
+      setToken(crypto.randomUUID());
+      onCreated();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <PageSection
+      title="Add a manual loan"
+      description="Records a real loan against the member's wallet using the current interest terms. It appears immediately in their Loan Center."
+    >
+      <Card className="shadow-[var(--shadow-card)]">
+        <CardContent className="space-y-3 p-4">
+          {member ? (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm">
+              <span>
+                {member.full_name}
+                {member.handle ? ` · @${member.handle}` : ""}
+              </span>
+              <Button variant="ghost" size="sm" onClick={() => setMember(null)}>
+                Change
+              </Button>
+            </div>
+          ) : (
+            <MemberPicker showEcosystem onSelect={setMember} placeholder="Search the member" />
+          )}
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="manual-loan-amount">Loan amount</Label>
+              <Input
+                id="manual-loan-amount"
+                inputMode="decimal"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="manual-loan-note">Note or reference (optional)</Label>
+              <Input
+                id="manual-loan-note"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Why this loan was granted"
+              />
+            </div>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            The current interest settings apply, exactly as for a normal loan. The first month's
+            interest is deducted from the coins released where that setting is on.
+          </p>
+          <Button disabled={busy || !member || value <= 0} onClick={() => void submit()}>
+            Create loan
+          </Button>
+        </CardContent>
+      </Card>
+    </PageSection>
+  );
+}
+
 function LoanDetail({
   loan,
   entries,
