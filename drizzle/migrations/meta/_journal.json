@@ -85,6 +85,13 @@
       "when": 1789776986154,
       "tag": "0011_admin_coin_loans_id_document",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789794248628,
+      "tag": "0012_loan_pool_foundation",
+      "breakpoints": true
     }
   ]
 }
