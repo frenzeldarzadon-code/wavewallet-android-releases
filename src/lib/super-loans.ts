@@ -284,11 +284,12 @@ export async function createManualLoan(input: {
   note?: string;
   clientToken: string;
 }): Promise<void> {
+  const note = input.note?.trim();
   const { error } = await supabase.rpc("superadmin_create_manual_loan", {
     _user_id: input.userId,
     _amount: input.amount,
-    _note: input.note?.trim() ? input.note.trim() : undefined,
     _client_token: input.clientToken,
+    ...(note ? { _note: note } : {}),
   });
   if (error) throw error;
 }
