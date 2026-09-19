@@ -24,6 +24,8 @@ import {
   fetchLoanStats,
   fetchLoanTransactions,
   fetchSuperLoans,
+  createManualLoan,
+  originLabel,
   loanTone,
   owedBreakdown,
   roleLabel,
