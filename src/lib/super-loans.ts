@@ -272,6 +272,32 @@ export async function fetchLoanTransactions(
   }));
 }
 
+/**
+ * The ONE write on this page: the platform owner books a real loan for a
+ * member. The database creates the authoritative loan record, releases the
+ * coins through the normal ledger and stores who created it. `clientToken`
+ * makes a double submit return the same loan instead of creating a second one.
+ */
+export async function createManualLoan(input: {
+  userId: string;
+  amount: number;
+  note?: string;
+  clientToken: string;
+}): Promise<void> {
+  const { error } = await supabase.rpc("superadmin_create_manual_loan", {
+    _user_id: input.userId,
+    _amount: input.amount,
+    _note: input.note?.trim() ? input.note.trim() : undefined,
+    _client_token: input.clientToken,
+  });
+  if (error) throw error;
+}
+
+/** Plain wording for where a loan came from. */
+export function originLabel(origin: string): string {
+  return origin === "super_admin_manual" ? "Added by platform owner" : "Member request";
+}
+
 /** Newest/oldest/amount ordering for the transactions table (client-side). */
 export type LoanSort = "newest" | "oldest" | "amount-high" | "amount-low";
 
