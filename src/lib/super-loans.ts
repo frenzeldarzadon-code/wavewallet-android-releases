@@ -43,6 +43,12 @@ export interface SuperLoan {
   freeBalanceSnapshot: number;
   status: string;
   approvalMode: string;
+  origin: string;
+  createdBy: string | null;
+  createdByName: string | null;
+  referenceNote: string | null;
+  borrowerRole: string | null;
+  universeSpend: boolean;
   decidedAt: string | null;
   decisionNote: string | null;
   releasedAt: string | null;

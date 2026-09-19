@@ -12,8 +12,9 @@
  *  - The first month's interest is deducted from the coins handed over, while
  *    the full principal is owed.
  *  - Released coins sit as a RESTRICTED portion of the same wallet balance.
- *    They can only buy from shops where the borrower holds a position; they can
- *    never be transferred, gifted or cashed out.
+ *    A position holder's loan coins can only buy from shops where they hold
+ *    that position; a customer's loan coins can buy from any Universe shop.
+ *    Neither can ever be transferred, gifted or cashed out.
  *  - Top-ups repay the outstanding loan first; only the excess is spendable.
  */
 import { supabase } from "@/integrations/supabase/client";
