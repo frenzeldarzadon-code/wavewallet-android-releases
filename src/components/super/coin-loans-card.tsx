@@ -20,6 +20,7 @@ import {
   type AdminCoinLoan,
   type CoinLoanSettings,
 } from "@/lib/coin-loans";
+import { LoanIdViewer } from "@/components/wallet/loan-id-document";
 
 export function CoinLoansCard() {
   const [form, setForm] = useState<CoinLoanSettings | null>(null);
