@@ -71,4 +71,33 @@ begin
   raise notice 'ALL LOAN ID TESTS PASSED';
 end $$;
 
+-- 5. A customer loan with no ID on file cannot be approved by the platform owner.
+do $$
+declare
+  v_shop uuid; v_customer uuid := gen_random_uuid(); v_owner uuid; v_loan uuid; v_msg text;
+begin
+  insert into auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, aud, role)
+  values (v_customer, 'idtest-review@example.com', '', now(), '{}', '{}', 'authenticated', 'authenticated');
+  select id into v_shop from public.ecosystems order by created_at limit 1;
+  insert into public.ecosystem_memberships (user_id, ecosystem_id, role, status)
+  values (v_customer, v_shop, 'customer', 'active');
+  select user_id into v_owner from public.user_roles where role = 'super_admin' limit 1;
+
+  insert into public.coin_loans (user_id, principal, status, approval_mode, interest_percent,
+    first_month_interest, released_amount, outstanding, origin, auto_limit_snapshot,
+    free_balance_snapshot, base_snapshot, multiplier_snapshot)
+  values (v_customer, 500, 'pending', 'manual', 2, 10, 490, 500, 'member_request', 0, 0, 1000, 3)
+  returning id into v_loan;
+
+  perform set_config('request.jwt.claims', json_build_object('sub', v_owner, 'role', 'authenticated')::text, true);
+  begin
+    perform public.review_coin_loan(v_loan, true, null);
+    raise exception 'FAIL: approved a customer loan with no ID';
+  exception when others then
+    get stacked diagnostics v_msg = message_text;
+    if v_msg like 'FAIL:%' then raise; end if;
+    raise notice 'PASS approval blocked without an ID: %', v_msg;
+  end;
+end $$;
+
 rollback;
