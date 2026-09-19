@@ -840,6 +840,8 @@ export type Database = {
           first_month_interest: number
           free_balance_snapshot: number
           id: string
+          id_document_path: string | null
+          id_document_uploaded_at: string | null
           interest_percent: number
           multiplier_snapshot: number
           origin: string
@@ -872,6 +874,8 @@ export type Database = {
           first_month_interest?: number
           free_balance_snapshot: number
           id?: string
+          id_document_path?: string | null
+          id_document_uploaded_at?: string | null
           interest_percent: number
           multiplier_snapshot: number
           origin?: string
@@ -904,6 +908,8 @@ export type Database = {
           first_month_interest?: number
           free_balance_snapshot?: number
           id?: string
+          id_document_path?: string | null
+          id_document_uploaded_at?: string | null
           interest_percent?: number
           multiplier_snapshot?: number
           origin?: string
@@ -9040,6 +9046,7 @@ export type Database = {
         Returns: {
           approval_mode: string
           auto_limit_snapshot: number
+          borrower_role: string
           created_at: string
           decided_at: string
           decided_by: string
@@ -9049,6 +9056,8 @@ export type Database = {
           full_name: string
           handle: string
           id: string
+          id_document_path: string
+          id_document_uploaded_at: string
           interest_percent: number
           outstanding: number
           principal: number
@@ -9462,6 +9471,8 @@ export type Database = {
           first_month_interest: number
           free_balance_snapshot: number
           id: string
+          id_document_path: string | null
+          id_document_uploaded_at: string | null
           interest_percent: number
           multiplier_snapshot: number
           origin: string
@@ -10797,6 +10808,7 @@ export type Database = {
       listener_unmatched_events: { Args: { _limit?: number }; Returns: Json }
       live_shop_name: { Args: { _name: string }; Returns: string }
       loan_borrower_role: { Args: { _user_id: string }; Returns: string }
+      loan_requires_id: { Args: { _user: string }; Returns: boolean }
       loan_security_shop: { Args: { _user_id: string }; Returns: string }
       loan_spend_allowed_in: {
         Args: { _ecosystem_id: string; _user_id: string }
@@ -10968,6 +10980,8 @@ export type Database = {
           first_month_interest: number
           free_balance_snapshot: number
           id: string
+          id_document_path: string | null
+          id_document_uploaded_at: string | null
           interest_percent: number
           multiplier_snapshot: number
           origin: string
@@ -11644,6 +11658,8 @@ export type Database = {
           first_month_interest: number
           free_balance_snapshot: number
           id: string
+          id_document_path: string | null
+          id_document_uploaded_at: string | null
           interest_percent: number
           multiplier_snapshot: number
           origin: string
@@ -11794,7 +11810,7 @@ export type Database = {
         }
       }
       request_coin_loan: {
-        Args: { _amount: number }
+        Args: { _amount: number; _id_path?: string }
         Returns: {
           accrued_interest: number
           approval_mode: string
@@ -11810,6 +11826,8 @@ export type Database = {
           first_month_interest: number
           free_balance_snapshot: number
           id: string
+          id_document_path: string | null
+          id_document_uploaded_at: string | null
           interest_percent: number
           multiplier_snapshot: number
           origin: string
@@ -12466,6 +12484,8 @@ export type Database = {
           first_month_interest: number
           free_balance_snapshot: number
           id: string
+          id_document_path: string | null
+          id_document_uploaded_at: string | null
           interest_percent: number
           multiplier_snapshot: number
           origin: string
@@ -14308,6 +14328,8 @@ export type Database = {
           full_name: string
           handle: string
           id: string
+          id_document_path: string
+          id_document_uploaded_at: string
           interest_percent: number
           origin: string
           outstanding: number
@@ -14446,6 +14468,8 @@ export type Database = {
           first_month_interest: number
           free_balance_snapshot: number
           id: string
+          id_document_path: string | null
+          id_document_uploaded_at: string | null
           interest_percent: number
           multiplier_snapshot: number
           origin: string

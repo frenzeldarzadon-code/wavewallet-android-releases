@@ -49,6 +49,8 @@ export interface SuperLoan {
   referenceNote: string | null;
   borrowerRole: string | null;
   universeSpend: boolean;
+  idDocumentPath: string | null;
+  idDocumentUploadedAt: string | null;
   decidedAt: string | null;
   decisionNote: string | null;
   releasedAt: string | null;
@@ -204,6 +206,8 @@ function mapLoan(row: Record<string, unknown>): SuperLoan {
     referenceNote: str(row["reference_note"]),
     borrowerRole: str(row["borrower_role"]),
     universeSpend: Boolean(row["universe_spend"]),
+    idDocumentPath: str(row["id_document_path"]),
+    idDocumentUploadedAt: str(row["id_document_uploaded_at"]),
     decidedAt: str(row["decided_at"]),
     decisionNote: str(row["decision_note"]),
     releasedAt: str(row["released_at"]),

@@ -25,18 +25,23 @@ import {
   fetchMyLoanHistory,
   fetchMyLoans,
   loanEntryLabel,
+  loanIdRequired,
   loanStatusLabel,
   releasedCoins,
+  removeLoanIdDocument,
   repayCoinLoan,
   requestCoinLoan,
   requestGoesToApproval,
   upfrontInterest,
-  validateLoanRequest,
+  uploadLoanIdDocument,
+  validateLoanSubmission,
   type CoinLoanEntry,
   type CoinLoanSettings,
   type CoinLoanSummary,
   type MyCoinLoan,
 } from "@/lib/coin-loans";
+import { LoanIdPicker, LoanIdViewer } from "@/components/wallet/loan-id-document";
+import { supabase } from "@/integrations/supabase/client";
 
 export function LoanCenter() {
   const online = useOnline();
@@ -45,6 +50,7 @@ export function LoanCenter() {
   const [loans, setLoans] = useState<MyCoinLoan[]>([]);
   const [history, setHistory] = useState<CoinLoanEntry[]>([]);
   const [amount, setAmount] = useState("");
+  const [idFile, setIdFile] = useState<File | null>(null);
   const [repay, setRepay] = useState("");
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
@@ -85,25 +91,37 @@ export function LoanCenter() {
   const pending = summary.status === "pending";
   const capacity = summary.canAuto ? Math.max(summary.autoLimit, 0) : 0;
   const repayments = history.filter((e) => e.kind === "repayment");
+  const needsId = loanIdRequired(summary);
 
   const submit = async () => {
-    const problem = validateLoanRequest(requested, summary);
+    const problem = validateLoanSubmission(requested, summary, Boolean(idFile));
     if (problem) {
       toast.error(problem);
       return;
     }
     setBusy(true);
+    let uploaded: string | null = null;
     try {
-      await requestCoinLoan(requested);
+      if (needsId && idFile) {
+        const { data } = await supabase.auth.getUser();
+        const uid = data.user?.id;
+        if (!uid) throw new Error("Please sign in again.");
+        uploaded = await uploadLoanIdDocument(uid, idFile);
+      }
+      await requestCoinLoan(requested, uploaded);
       toast.success(
         goesToApproval
-          ? "Request sent. The platform owner will review it."
+          ? "Request sent with your ID. The platform owner will review it."
           : `Approved. ${peso(net)} added to your wallet as loan coins.`,
       );
       setAmount("");
+      setIdFile(null);
       await load();
       notifyWalletChanged();
     } catch (e) {
+      // The request was refused, so the just-uploaded ID is not attached to any
+      // loan — remove it rather than leaving a stray file behind.
+      if (uploaded) await removeLoanIdDocument(uploaded).catch(() => undefined);
       toast.error(e instanceof Error ? e.message : "Could not request the loan.");
     } finally {
       setBusy(false);
@@ -225,18 +243,24 @@ export function LoanCenter() {
           </Card>
         ) : pending ? (
           <Card className="shadow-none">
-            <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
-              <p className="text-xs text-muted-foreground">
-                {peso(summary.principal)} is waiting for the platform owner's decision.
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={busy || !online}
-                onClick={() => void cancel()}
-              >
-                Cancel request
-              </Button>
+            <CardContent className="space-y-2 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs text-muted-foreground">
+                  {peso(summary.principal)} is waiting for the platform owner's decision.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={busy || !online}
+                  onClick={() => void cancel()}
+                >
+                  Cancel request
+                </Button>
+              </div>
+              <LoanIdViewer
+                path={loans.find((l) => l.id === summary.loanId)?.id_document_path ?? null}
+                label="View the ID you sent"
+              />
             </CardContent>
           </Card>
         ) : !summary.loansEnabled ? (
@@ -248,25 +272,36 @@ export function LoanCenter() {
         ) : (
           <Card className="shadow-none">
             <CardContent className="space-y-3 py-4">
-              <div className="flex items-end gap-2">
-                <div className="flex-1 space-y-1.5">
-                  <Label htmlFor="loan-amount">Amount to borrow</Label>
-                  <Input
-                    id="loan-amount"
-                    inputMode="decimal"
-                    value={amount}
-                    placeholder={String(settings.baseCredits)}
-                    onChange={(e) => setAmount(e.target.value)}
-                  />
-                </div>
-                <Button
-                  className="h-10"
-                  disabled={busy || !online || requested <= 0}
-                  onClick={() => void submit()}
-                >
-                  {goesToApproval ? "Send for approval" : "Borrow"}
-                </Button>
+              <div className="space-y-1.5">
+                <Label htmlFor="loan-amount">Amount to borrow</Label>
+                <Input
+                  id="loan-amount"
+                  inputMode="decimal"
+                  value={amount}
+                  placeholder={String(settings.baseCredits)}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
               </div>
+              {needsId ? (
+                <LoanIdPicker
+                  file={idFile}
+                  onPick={setIdFile}
+                  disabled={busy || !online}
+                  onError={(m) => toast.error(m)}
+                />
+              ) : null}
+              <Button
+                className="h-11 w-full"
+                disabled={busy || !online || requested <= 0 || (needsId && !idFile)}
+                onClick={() => void submit()}
+              >
+                {goesToApproval ? "Send for approval" : "Borrow"}
+              </Button>
+              {needsId && !idFile ? (
+                <p className="text-xs text-muted-foreground">
+                  A photo of your valid ID is required before your request can be sent.
+                </p>
+              ) : null}
               {requested > 0 ? (
                 <p className="text-xs text-muted-foreground">
                   You would receive {peso(net)} now ({peso(interest)} first month interest at{" "}

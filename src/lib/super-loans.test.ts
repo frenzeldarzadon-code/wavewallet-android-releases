@@ -12,6 +12,8 @@ import {
 const loan: SuperLoan = {
   id: "11111111-1111-1111-1111-111111111111",
   userId: "u1",
+  idDocumentPath: null,
+  idDocumentUploadedAt: null,
   fullName: "Maria Santos",
   handle: "maria",
   role: "reseller",
