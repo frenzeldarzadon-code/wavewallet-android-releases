@@ -197,6 +197,8 @@ function SuperLoansPage() {
         </div>
       </PageSection>
 
+      <ManualLoanCard onCreated={() => void loadLoans()} />
+
       <PageSection title="Borrowers">
         <div className="mb-3 flex flex-wrap items-end gap-2">
           <div className="relative min-w-[200px] flex-1">
@@ -238,7 +240,9 @@ function SuperLoansPage() {
                     <p className="text-sm font-medium">{borrowerName(l)}</p>
                     <p className="text-xs text-muted-foreground">
                       {roleLabel(l.role)}
-                      {l.handle ? ` · @${l.handle}` : ""} · borrowed {shortDateTime(l.createdAt)}
+                      {l.handle ? ` · @${l.handle}` : ""} · borrowed {shortDateTime(l.createdAt)} ·{" "}
+                      {originLabel(l.origin)}
+                      {l.referenceNote ? ` · ${l.referenceNote}` : ""}
                     </p>
                   </div>
                   <StatusBadge tone={loanTone(l.status)}>{loanStatusLabel(l.status)}</StatusBadge>
