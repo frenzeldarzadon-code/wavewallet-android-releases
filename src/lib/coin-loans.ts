@@ -42,9 +42,33 @@ export interface CoinLoanSummary {
   restrictedBalance: number;
   balance: number;
   hasPosition: boolean;
+  /** Only position holders (admin/reseller/subreseller) can be auto-approved. */
+  canAuto: boolean;
+  /** Customer loans: the restricted coins may buy from any Universe shop. */
+  universeSpend: boolean;
+  borrowerRole: string | null;
   loansEnabled: boolean;
   requestedAt: string | null;
   releasedAt: string | null;
+}
+
+export interface MyCoinLoan {
+  id: string;
+  principal: number;
+  released_amount: number;
+  first_month_interest: number;
+  interest_percent: number;
+  accrued_interest: number;
+  outstanding: number;
+  total_owed: number;
+  status: string;
+  approval_mode: string;
+  origin: string | null;
+  reference_note: string | null;
+  universe_spend: boolean | null;
+  created_at: string;
+  released_at: string | null;
+  settled_at: string | null;
 }
 
 export interface CoinLoanEntry {
@@ -109,14 +133,25 @@ export function needsManualApproval(amount: number, autoLimit: number): boolean 
   return amount > autoLimit;
 }
 
+/**
+ * Does this request go straight through? Only members holding a shop position
+ * can ever be released automatically — customers always wait for a decision.
+ * The database enforces the same rule; this is only for wording.
+ */
+export function requestGoesToApproval(
+  amount: number,
+  summary: Pick<CoinLoanSummary, "canAuto" | "autoLimit">,
+): boolean {
+  if (!summary.canAuto) return true;
+  return needsManualApproval(amount, summary.autoLimit);
+}
+
 /** Client-side pre-check; the database repeats every one of these. */
 export function validateLoanRequest(
   amount: number,
-  summary: Pick<CoinLoanSummary, "hasPosition" | "loansEnabled" | "status">,
+  summary: Pick<CoinLoanSummary, "loansEnabled" | "status">,
 ): string | null {
   if (!summary.loansEnabled) return "Coin loans are not available right now.";
-  if (!summary.hasPosition)
-    return "Coin loans are for members who are an admin, reseller or subreseller of a shop.";
   if (summary.status === "pending") return "Your previous request is still waiting for a decision.";
   if (summary.status === "active") return "Repay your current loan before requesting another one.";
   if (!Number.isFinite(amount) || amount <= 0) return "Enter an amount greater than zero.";
