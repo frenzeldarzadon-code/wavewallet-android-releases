@@ -258,7 +258,7 @@ export function LoanCenter() {
                 </Button>
               </div>
               <LoanIdViewer
-                path={loans.find((l) => l.id === summary.loanId)?.id_document_path}
+                path={loans.find((l) => l.id === summary.loanId)?.id_document_path ?? null}
                 label="View the ID you sent"
               />
             </CardContent>
