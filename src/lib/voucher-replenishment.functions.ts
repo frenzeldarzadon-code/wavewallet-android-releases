@@ -30,6 +30,8 @@ export interface ProductStockState {
   productId: string;
   available: number;
   hasCalibration: boolean;
+  /** When the background schedule last looked at this exact product. */
+  lastAutoCheck: string | null;
   lastRun: {
     status: string;
     imported: number;
