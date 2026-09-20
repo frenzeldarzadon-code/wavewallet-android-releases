@@ -541,9 +541,14 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
                 </div>
                 <p className="text-[11px] text-muted-foreground">
                   {calibration
-                    ? `Below ${LOW_STOCK_THRESHOLD} available codes → ${REPLENISH_BATCH_SIZE} are generated automatically for this exact product, using its own saved calibration.`
+                    ? `Below ${LOW_STOCK_THRESHOLD} available codes → ${REPLENISH_BATCH_SIZE} are generated automatically for this exact product, using its own saved calibration. This runs in the background every 15 minutes — you do not need this page open.`
                     : "Save this product's calibration first. Nothing is generated — automatically or by hand — until this exact product has its own saved calibration."}
                 </p>
+                {productStock?.lastAutoCheck ? (
+                  <p className="text-[11px] text-muted-foreground">
+                    Last automatic check: {new Date(productStock.lastAutoCheck).toLocaleString()}
+                  </p>
+                ) : null}
                 {productStock?.lastRun ? (
                   <p className="break-words text-[11px] text-muted-foreground">
                     Last automatic top-up: {productStock.lastRun.status}
@@ -551,6 +556,11 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
                     {new Date(productStock.lastRun.at).toLocaleString()}
                     {productStock.lastRun.error ? ` · ${productStock.lastRun.error}` : ""}
                   </p>
+                ) : null}
+                {calibration ? (
+                  <Button size="sm" variant="outline" disabled={checkingStock} onClick={checkNow}>
+                    Check stock now
+                  </Button>
                 ) : null}
                 {!calibration ? (
                   <Button
