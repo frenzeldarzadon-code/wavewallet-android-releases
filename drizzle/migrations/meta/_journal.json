@@ -120,6 +120,13 @@
       "when": 1789873917332,
       "tag": "0016_internal_job_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1789873937579,
+      "tag": "0017_calibration_last_auto_check",
+      "breakpoints": true
     }
   ]
 }

@@ -3804,6 +3804,7 @@ export type Database = {
           ecosystem_id: string
           id: string
           is_current: boolean
+          last_auto_check_at: string | null
           payload: Json
           product_id: string
           updated_at: string
@@ -3816,6 +3817,7 @@ export type Database = {
           ecosystem_id: string
           id?: string
           is_current?: boolean
+          last_auto_check_at?: string | null
           payload: Json
           product_id: string
           updated_at?: string
@@ -3828,6 +3830,7 @@ export type Database = {
           ecosystem_id?: string
           id?: string
           is_current?: boolean
+          last_auto_check_at?: string | null
           payload?: Json
           product_id?: string
           updated_at?: string
