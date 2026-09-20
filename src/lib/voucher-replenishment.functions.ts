@@ -30,6 +30,8 @@ export interface ProductStockState {
   productId: string;
   available: number;
   hasCalibration: boolean;
+  /** When the background schedule last looked at this exact product. */
+  lastAutoCheck: string | null;
   lastRun: {
     status: string;
     imported: number;
@@ -62,7 +64,7 @@ export const getVoucherStockState = createServerFn({ method: "POST" })
         .eq("ecosystem_id", data.ecosystemId),
       supabaseAdmin
         .from("omada_voucher_calibrations")
-        .select("product_id")
+        .select("product_id, last_auto_check_at")
         .eq("ecosystem_id", data.ecosystemId)
         .eq("is_current", true),
       supabaseAdmin
@@ -84,9 +86,12 @@ export const getVoucherStockState = createServerFn({ method: "POST" })
       list.push(row);
       byProduct.set(row.product_id, list);
     }
-    const calibrated = new Set(
-      ((calibrations.data ?? []) as Array<{ product_id: string }>).map((r) => r.product_id),
-    );
+    const calibrationRows = (calibrations.data ?? []) as Array<{
+      product_id: string;
+      last_auto_check_at: string | null;
+    }>;
+    const calibrated = new Set(calibrationRows.map((r) => r.product_id));
+    const checkedAt = new Map(calibrationRows.map((r) => [r.product_id, r.last_auto_check_at]));
     const latest = new Map<string, { status: string; imported: number; error: string | null; at: string }>();
     for (const run of (runs.data ?? []) as Array<{
       product_id: string;
@@ -110,6 +115,7 @@ export const getVoucherStockState = createServerFn({ method: "POST" })
         productId: p.id,
         available: availableStock(byProduct.get(p.id) ?? []),
         hasCalibration: calibrated.has(p.id),
+        lastAutoCheck: checkedAt.get(p.id) ?? null,
         lastRun: latest.get(p.id) ?? null,
       })),
     };

@@ -361,6 +361,18 @@ export async function replenishShop(
     } catch {
       /* one product never stops the sweep */
     }
+    // Stamped whether or not anything was generated, so the Generate screen can
+    // honestly show when the background check last looked at this product.
+    try {
+      await admin
+        .from("omada_voucher_calibrations")
+        .update({ last_auto_check_at: new Date((deps?.now ?? Date.now)()).toISOString() })
+        .eq("ecosystem_id", ecosystemId)
+        .eq("product_id", row.product_id)
+        .eq("is_current", true);
+    } catch {
+      /* stamping is informational only */
+    }
   }
   return results;
 }

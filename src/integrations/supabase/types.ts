@@ -2468,6 +2468,24 @@ export type Database = {
           },
         ]
       }
+      internal_job_tokens: {
+        Row: {
+          created_at: string
+          name: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          name: string
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          name?: string
+          token?: string
+        }
+        Relationships: []
+      }
       listener_devices: {
         Row: {
           app_version: string | null
@@ -3786,6 +3804,7 @@ export type Database = {
           ecosystem_id: string
           id: string
           is_current: boolean
+          last_auto_check_at: string | null
           payload: Json
           product_id: string
           updated_at: string
@@ -3798,6 +3817,7 @@ export type Database = {
           ecosystem_id: string
           id?: string
           is_current?: boolean
+          last_auto_check_at?: string | null
           payload: Json
           product_id: string
           updated_at?: string
@@ -3810,6 +3830,7 @@ export type Database = {
           ecosystem_id?: string
           id?: string
           is_current?: boolean
+          last_auto_check_at?: string | null
           payload?: Json
           product_id?: string
           updated_at?: string

@@ -13,7 +13,7 @@ import {
   LOW_STOCK_THRESHOLD,
   REPLENISH_BATCH_SIZE,
 } from "../voucher-replenishment";
-import { replenishProduct, type AdminClient } from "../voucher-replenishment.server";
+import { replenishProduct, sweepReplenishments, type AdminClient } from "../voucher-replenishment.server";
 import { defaultGenerationValues, type GenValue } from "../omada-generation";
 
 type Row = Record<string, any>;
@@ -371,5 +371,57 @@ describe("automatic replenishment", () => {
     );
     expect(result.status).toBe("skipped");
     expect(result.reason).toBe("product_deleted");
+  });
+});
+
+describe("scheduled background sweep", () => {
+  it("L: tops up every shop's calibrated products with no UI involved", async () => {
+    const tables = world({ availableA: 10, calibrateB: true });
+    tables["voucher_codes"]!.push(...codes(150, "shop-1", "prod-b"));
+    tables["omada_voucher_calibrations"]!.push({
+      id: "cal-c",
+      ecosystem_id: "shop-2",
+      product_id: "prod-c",
+      version: 1,
+      is_current: true,
+      payload: { ...calibrationPayload },
+    });
+    const admin = makeAdmin(tables);
+    const seen: Array<{ payload: Record<string, unknown>; groupName: string }> = [];
+    const summary = await sweepReplenishments(admin, { generate: fakeGenerate(seen) });
+
+    expect(summary.shops).toBe(2);
+    expect(summary.checked).toBe(3);
+    // Only the two low-stock products generate; the 150-code product does not.
+    expect(summary.replenished).toBe(2);
+    expect(seen).toHaveLength(2);
+    // Every calibrated product records that the background job looked at it.
+    for (const cal of tables["omada_voucher_calibrations"]!) {
+      expect(cal["last_auto_check_at"]).toBeTruthy();
+    }
+  });
+
+  it("M: a controller failure is logged and the next run retries without duplicating stock", async () => {
+    const tables = world({ availableA: 5 });
+    const admin = makeAdmin(tables);
+    const failing = async () => {
+      throw new Error("Omada rate limit");
+    };
+    const first = await sweepReplenishments(admin, { generate: failing as never });
+    expect(first.failed).toBe(1);
+    const run = tables["voucher_replenishment_runs"]![0]!;
+    expect(run["status"]).toBe("failed");
+    expect(run["error"]).toContain("Omada rate limit");
+    expect(tables["voucher_codes"]!.length).toBe(5);
+
+    const seen: Array<{ payload: Record<string, unknown>; groupName: string }> = [];
+    const second = await sweepReplenishments(admin, { generate: fakeGenerate(seen) });
+    expect(second.replenished).toBe(1);
+    expect(tables["voucher_codes"]!.length).toBe(5 + REPLENISH_BATCH_SIZE);
+
+    // Stock is now healthy, so a third run generates nothing more.
+    const third = await sweepReplenishments(admin, { generate: fakeGenerate(seen) });
+    expect(third.replenished).toBe(0);
+    expect(seen).toHaveLength(1);
   });
 });
