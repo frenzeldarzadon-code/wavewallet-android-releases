@@ -227,26 +227,19 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
 
   useEffect(load, [ecosystemId]);
 
-  // Selecting a product asks the server to check THAT EXACT product only.
-  // No shop-wide loop ever runs from this page: other products are never
-  // generated for as a side effect. The scheduled sweep still checks each
-  // product independently when nobody is here.
-  useEffect(() => {
+  // Automatic top-up is NOT driven by this screen. A scheduled background job
+  // checks every calibrated product on its own, whether or not anyone is here.
+  // This button only lets an admin ask for the same check right now, for THAT
+  // EXACT product — never a shop-wide loop.
+  const checkNow = () => {
     if (!ecosystemId || !productId) return;
-    let cancelled = false;
     setCheckingStock(true);
     void checkVoucherReplenishment({ data: { ecosystemId, productId } })
-      .then(() => {
-        if (!cancelled) loadStock();
-      })
+      .then(() => loadStock())
       .catch(() => undefined)
-      .finally(() => {
-        if (!cancelled) setCheckingStock(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [ecosystemId, productId]);
+      .finally(() => setCheckingStock(false));
+  };
+
 
 
   const product = useMemo(
