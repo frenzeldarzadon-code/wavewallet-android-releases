@@ -107,6 +107,7 @@ import { Route as SuperSubscriptionsRouteImport } from './routes/super.subscript
 import { Route as SuperUniverseRouteImport } from './routes/super.universe'
 import { Route as UniverseIndexRouteImport } from './routes/universe.index'
 import { Route as UniverseFriendsRouteImport } from './routes/universe.friends'
+import { Route as UniverseLoanPoolRouteImport } from './routes/universe.loan-pool'
 import { Route as UniverseLoansRouteImport } from './routes/universe.loans'
 import { Route as UniverseMembersRouteImport } from './routes/universe.members'
 import { Route as UniverseMessagesRouteImport } from './routes/universe.messages'
@@ -624,6 +625,11 @@ const UniverseFriendsRoute = UniverseFriendsRouteImport.update({
   path: '/friends',
   getParentRoute: () => UniverseRoute,
 } as any)
+const UniverseLoanPoolRoute = UniverseLoanPoolRouteImport.update({
+  id: '/loan-pool',
+  path: '/loan-pool',
+  getParentRoute: () => UniverseRoute,
+} as any)
 const UniverseLoansRoute = UniverseLoansRouteImport.update({
   id: '/loans',
   path: '/loans',
@@ -847,6 +853,7 @@ export interface FileRoutesByFullPath {
   '/super/subscriptions': typeof SuperSubscriptionsRoute
   '/super/universe': typeof SuperUniverseRoute
   '/universe/friends': typeof UniverseFriendsRoute
+  '/universe/loan-pool': typeof UniverseLoanPoolRoute
   '/universe/loans': typeof UniverseLoansRoute
   '/universe/members': typeof UniverseMembersRoute
   '/universe/messages': typeof UniverseMessagesRoute
@@ -967,6 +974,7 @@ export interface FileRoutesByTo {
   '/super/subscriptions': typeof SuperSubscriptionsRoute
   '/super/universe': typeof SuperUniverseRoute
   '/universe/friends': typeof UniverseFriendsRoute
+  '/universe/loan-pool': typeof UniverseLoanPoolRoute
   '/universe/loans': typeof UniverseLoansRoute
   '/universe/members': typeof UniverseMembersRoute
   '/universe/messages': typeof UniverseMessagesRoute
@@ -1093,6 +1101,7 @@ export interface FileRoutesById {
   '/super/subscriptions': typeof SuperSubscriptionsRoute
   '/super/universe': typeof SuperUniverseRoute
   '/universe/friends': typeof UniverseFriendsRoute
+  '/universe/loan-pool': typeof UniverseLoanPoolRoute
   '/universe/loans': typeof UniverseLoansRoute
   '/universe/members': typeof UniverseMembersRoute
   '/universe/messages': typeof UniverseMessagesRoute
@@ -1220,6 +1229,7 @@ export interface FileRouteTypes {
     | '/super/subscriptions'
     | '/super/universe'
     | '/universe/friends'
+    | '/universe/loan-pool'
     | '/universe/loans'
     | '/universe/members'
     | '/universe/messages'
@@ -1340,6 +1350,7 @@ export interface FileRouteTypes {
     | '/super/subscriptions'
     | '/super/universe'
     | '/universe/friends'
+    | '/universe/loan-pool'
     | '/universe/loans'
     | '/universe/members'
     | '/universe/messages'
@@ -1465,6 +1476,7 @@ export interface FileRouteTypes {
     | '/super/subscriptions'
     | '/super/universe'
     | '/universe/friends'
+    | '/universe/loan-pool'
     | '/universe/loans'
     | '/universe/members'
     | '/universe/messages'
@@ -2217,6 +2229,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UniverseFriendsRouteImport
       parentRoute: typeof UniverseRoute
     }
+    '/universe/loan-pool': {
+      id: '/universe/loan-pool'
+      path: '/loan-pool'
+      fullPath: '/universe/loan-pool'
+      preLoaderRoute: typeof UniverseLoanPoolRouteImport
+      parentRoute: typeof UniverseRoute
+    }
     '/universe/loans': {
       id: '/universe/loans'
       path: '/loans'
@@ -2583,6 +2602,7 @@ const SuperRouteWithChildren = SuperRoute._addFileChildren(SuperRouteChildren)
 
 interface UniverseRouteChildren {
   UniverseFriendsRoute: typeof UniverseFriendsRoute
+  UniverseLoanPoolRoute: typeof UniverseLoanPoolRoute
   UniverseLoansRoute: typeof UniverseLoansRoute
   UniverseMembersRoute: typeof UniverseMembersRoute
   UniverseMessagesRoute: typeof UniverseMessagesRoute
@@ -2604,6 +2624,7 @@ interface UniverseRouteChildren {
 
 const UniverseRouteChildren: UniverseRouteChildren = {
   UniverseFriendsRoute: UniverseFriendsRoute,
+  UniverseLoanPoolRoute: UniverseLoanPoolRoute,
   UniverseLoansRoute: UniverseLoansRoute,
   UniverseMembersRoute: UniverseMembersRoute,
   UniverseMessagesRoute: UniverseMessagesRoute,
