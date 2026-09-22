@@ -39,7 +39,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import { fetchCreditBalance } from "@/lib/wallet";
-import { fetchPlatformSettings, type PlatformSettings } from "@/lib/subscription";
+import { fetchPublicPlatformSettings, type PublicPlatformSettings } from "@/lib/subscription";
 import {
   cancelCashIn,
   cancelWithdrawal,
@@ -140,7 +140,7 @@ export function MoneyPage({
   /** Universe scope never touches a shop wallet, whatever shop is active. */
   const ecosystemDbId = universe ? null : sessionEcosystemId;
   const [settings, setSettings] = useState<MoneySettings>(MONEY_SETTINGS_FALLBACK);
-  const [platform, setPlatform] = useState<PlatformSettings | null>(null);
+  const [platform, setPlatform] = useState<PublicPlatformSettings | null>(null);
   const [balance, setBalance] = useState(0);
   const [methods, setMethods] = useState<PaymentMethod[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
@@ -184,8 +184,8 @@ export function MoneyPage({
   const load = useCallback(async () => {
     if (!userId) return;
     const [s, p, b, m, w, c, cap] = await Promise.all([
-      fetchMoneySettings(),
-      fetchPlatformSettings(),
+      fetchPublicMoneySettings(),
+      fetchPublicPlatformSettings(),
       fetchCreditBalance(userId, ecosystemDbId),
       // Only the shop's own listener-associated receiving accounts are offered to
       // payers. Platform-wide accounts are WaveWallet's own collection accounts and
