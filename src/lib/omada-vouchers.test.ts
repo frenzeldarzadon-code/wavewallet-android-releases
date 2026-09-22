@@ -109,7 +109,7 @@ describe("omada voucher calibration", () => {
         "group-A",
       );
       expect(status).toBe("deleted");
-      expect(requested).toEndWith("/voucher-groups/group-A");
+      expect(requested.endsWith("/voucher-groups/group-A")).toBe(true);
       expect(requested).not.toContain("group-B");
     } finally {
       globalThis.fetch = previous;

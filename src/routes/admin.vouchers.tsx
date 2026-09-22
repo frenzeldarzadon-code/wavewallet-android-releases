@@ -482,7 +482,7 @@ function AdminVouchers() {
                               </StatusBadge>
                               {b.generation_origin === "automatic" ? (
                                 <StatusBadge tone={b.remote_cleanup_status === "failed" || b.remote_cleanup_status === "unresolved" ? "warning" : "muted"}>
-                                  Omada: {b.remote_cleanup_status.replaceAll("_", " ")}
+                                  Omada: {(b.remote_cleanup_status ?? "not_requested").replaceAll("_", " ")}
                                 </StatusBadge>
                               ) : null}
                             </div>
