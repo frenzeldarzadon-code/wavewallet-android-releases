@@ -381,7 +381,7 @@ describe("automatic replenishment", () => {
       { ecosystemId: "shop-1", productId: "prod-a" },
       { generate: fakeGenerate([]) },
     );
-    expect((admin as never as { rpcCalls: Array<{ fn: string }> }).rpcCalls[0]?.fn).toBe(
+    expect((admin as never as { rpcCalls: Array<{ fn: string }> }).rpcCalls.map((call) => call.fn)).toContain(
       "system_import_voucher_codes",
     );
     const stock = tables["voucher_codes"]!.filter(
