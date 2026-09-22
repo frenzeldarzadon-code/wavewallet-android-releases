@@ -116,36 +116,36 @@ function makeAdmin(tables: Record<string, Row[]>) {
       if (fn === "claim_voucher_replenishment_event") {
         const a = args as Record<string, any>;
         const states = (tables["voucher_replenishment_states"] ??= []);
-        let state = states.find((r) => r.ecosystem_id === a._ecosystem_id && r.product_id === a._product_id);
-        if (a._available >= LOW_STOCK_THRESHOLD) {
+        let state = states.find((r) => r.ecosystem_id === a["_ecosystem_id"] && r.product_id === a["_product_id"]);
+        if (a["_available"] >= LOW_STOCK_THRESHOLD) {
           if (state) Object.assign(state, { low_stock_active: false, status: "ready", attempts: 0, group_id: null, group_name: null });
           return { data: [{ claimed: false, reason: "stocked", run_id: null, event_number: state?.event_number ?? 0, group_name: null }], error: null };
         }
-        if (state?.low_stock_active && state.status === "completed") return { data: [{ claimed: false, reason: "event_completed", run_id: state.run_id, event_number: state.event_number, group_name: state.group_name }], error: null };
-        if (state?.status === "running") return { data: [{ claimed: false, reason: "in_progress", run_id: state.run_id, event_number: state.event_number, group_name: state.group_name }], error: null };
-        if (state?.status === "paused") return { data: [{ claimed: false, reason: "event_paused", run_id: state.run_id, event_number: state.event_number, group_name: state.group_name }], error: null };
+        if (state?.low_stock_active && state["status"] === "completed") return { data: [{ claimed: false, reason: "event_completed", run_id: state["run_id"], event_number: state["event_number"], group_name: state["group_name"] }], error: null };
+        if (state?.status === "running") return { data: [{ claimed: false, reason: "in_progress", run_id: state["run_id"], event_number: state["event_number"], group_name: state["group_name"] }], error: null };
+        if (state?.status === "paused") return { data: [{ claimed: false, reason: "event_paused", run_id: state["run_id"], event_number: state["event_number"], group_name: state["group_name"] }], error: null };
         seq += 1;
         const runId = `run-${seq}`;
-        (tables["voucher_replenishment_runs"] ??= []).push({ id: runId, ecosystem_id: a._ecosystem_id, product_id: a._product_id, status: "running", requested_count: 500, created_at: a._now });
-        state = { ecosystem_id: a._ecosystem_id, product_id: a._product_id, event_number: (state?.event_number ?? 0) + 1, low_stock_active: true, status: "running", run_id: runId, group_name: a._group_name, group_id: null, attempts: 1 };
-        const old = states.findIndex((r) => r.ecosystem_id === a._ecosystem_id && r.product_id === a._product_id);
+        (tables["voucher_replenishment_runs"] ??= []).push({ id: runId, ecosystem_id: a["_ecosystem_id"], product_id: a["_product_id"], status: "running", requested_count: 500, created_at: a["_now"] });
+        state = { ecosystem_id: a["_ecosystem_id"], product_id: a["_product_id"], event_number: (state?.event_number ?? 0) + 1, low_stock_active: true, status: "running", run_id: runId, group_name: a["_group_name"], group_id: null, attempts: 1 };
+        const old = states.findIndex((r) => r.ecosystem_id === a["_ecosystem_id"] && r.product_id === a["_product_id"]);
         if (old >= 0) states[old] = state; else states.push(state);
-        return { data: [{ claimed: true, reason: "claimed", run_id: runId, event_number: state.event_number, group_name: state.group_name }], error: null };
+        return { data: [{ claimed: true, reason: "claimed", run_id: runId, event_number: state["event_number"], group_name: state["group_name"] }], error: null };
       }
       if (fn === "finish_voucher_replenishment_event") {
         const a = args as Record<string, any>;
-        const state = (tables["voucher_replenishment_states"] ?? []).find((r) => r.ecosystem_id === a._ecosystem_id && r.product_id === a._product_id);
-        if (state) Object.assign(state, { status: a._success ? "completed" : "paused", group_id: a._group_id, group_name: a._group_name, generated_count: a._generated, imported_count: a._imported, error: a._error });
-        const run = (tables["voucher_replenishment_runs"] ?? []).find((r) => r.id === a._run_id);
-        if (run) Object.assign(run, { status: a._success ? "completed" : "failed", generated_count: a._generated, imported_count: a._imported, error: a._error });
+        const state = (tables["voucher_replenishment_states"] ?? []).find((r) => r.ecosystem_id === a["_ecosystem_id"] && r.product_id === a["_product_id"]);
+        if (state) Object.assign(state, { status: a["_success"] ? "completed" : "paused", group_id: a["_group_id"], group_name: a["_group_name"], generated_count: a["_generated"], imported_count: a["_imported"], error: a["_error"] });
+        const run = (tables["voucher_replenishment_runs"] ?? []).find((r) => r.id === a["_run_id"]);
+        if (run) Object.assign(run, { status: a["_success"] ? "completed" : "failed", generated_count: a["_generated"], imported_count: a["_imported"], error: a["_error"] });
         return { data: null, error: null };
       }
       if (fn === "system_import_voucher_codes") {
         const a = args as { _ecosystem_id: string; _product_id: string; _codes: string[] };
-        for (const code of a._codes) {
+        for (const code of a["_codes"]) {
           (tables["voucher_codes"] ??= []).push({
-            ecosystem_id: a._ecosystem_id,
-            product_id: a._product_id,
+            ecosystem_id: a["_ecosystem_id"],
+            product_id: a["_product_id"],
             code,
             status: "unused",
             sold_to: null,
@@ -153,7 +153,7 @@ function makeAdmin(tables: Record<string, Row[]>) {
           });
         }
         return {
-          data: [{ batch_id: "import-1", imported_count: a._codes.length }],
+          data: [{ batch_id: "import-1", imported_count: a["_codes"].length }],
           error: null,
         };
       }
