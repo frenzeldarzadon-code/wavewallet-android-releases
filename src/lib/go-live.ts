@@ -24,13 +24,23 @@ export const isLegacyShop = (shop: Pick<Ecosystem, "shop_kind"> | null | undefin
 
 /** Where a Go Live payment must be sent — the platform owner's GCash. */
 export async function fetchPlatformGcash() {
-  const { data, error } = await supabase
-    .from("platform_settings")
-    .select("gcash_number, gcash_account_name, payment_instructions, currency")
-    .eq("id", 1)
-    .maybeSingle();
+  // Members cannot read the platform_settings row directly; the guarded public
+  // function exposes only the checkout-safe columns.
+  const { data, error } = await supabase.rpc("get_public_platform_settings");
   if (error) throw new Error(error.message);
-  return data ?? null;
+  const d = (data ?? null) as {
+    gcash_number: string | null;
+    gcash_account_name: string | null;
+    payment_instructions: string | null;
+    currency: string;
+  } | null;
+  if (!d) return null;
+  return {
+    gcash_number: d.gcash_number,
+    gcash_account_name: d.gcash_account_name,
+    payment_instructions: d.payment_instructions,
+    currency: d.currency,
+  };
 }
 
 /** Normalised to 639XXXXXXXXX exactly like the Cash In flow. */
