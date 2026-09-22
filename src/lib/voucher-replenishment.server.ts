@@ -37,6 +37,7 @@ export interface ReplenishDeps {
     payload: Record<string, GenValue>;
     groupName: string;
     existingGroupId?: string | null;
+    recoverExisting?: boolean;
   }) => Promise<GenerationResult>;
   now?: () => number;
 }
@@ -58,6 +59,7 @@ async function realGenerate(input: {
   payload: Record<string, GenValue>;
   groupName: string;
   existingGroupId?: string | null;
+  recoverExisting?: boolean;
 }): Promise<GenerationResult> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { openOmadaSession } = await import("./omada-api.server");
@@ -86,6 +88,30 @@ async function realGenerate(input: {
       },
       response: { recovered: true },
     };
+  }
+  if (input.recoverExisting) {
+    const caps = voucherCapabilities(null);
+    const recoveredId = await findGroupIdByName(
+      session,
+      { ...caps, listPath: caps.listPath ?? VERIFIED_CREATE_PATH },
+      input.groupName,
+      0,
+    );
+    if (recoveredId) {
+      const recovered = await fetchGroupCodes(session, recoveredId);
+      return {
+        codes: recovered.codes,
+        groupId: recoveredId,
+        groupName: recovered.groupName ?? input.groupName,
+        identity: {
+          baseUrl: session.base,
+          omadacId: session.omadacId,
+          siteId: session.siteId,
+          controllerVersion: info.controllerVersion,
+        },
+        response: { recovered: true },
+      };
+    }
   }
   const startedAt = Date.now();
   const created = await createVoucherGroupVerified(session, input.payload);
@@ -221,11 +247,11 @@ export async function replenishProduct(
   const eventState = (
     await admin
       .from("voucher_replenishment_states")
-      .select("group_id, group_name")
+      .select("group_id, group_name, attempts")
       .eq("ecosystem_id", ecosystemId)
       .eq("product_id", productId)
       .maybeSingle()
-  ).data as { group_id: string | null; group_name: string | null } | null;
+  ).data as { group_id: string | null; group_name: string | null; attempts: number } | null;
   const groupName = claim.group_name ?? eventState?.group_name ?? proposedGroupName;
   let generated: GenerationResult | null = null;
   let batchId: string | null = null;
@@ -245,6 +271,7 @@ export async function replenishProduct(
       payload,
       groupName,
       existingGroupId: eventState?.group_id ?? null,
+      recoverExisting: (eventState?.attempts ?? 1) > 1,
     });
 
     const batch = (
@@ -266,6 +293,7 @@ export async function replenishProduct(
         .select("id")
         .single()
     ).data as { id: string } | null;
+    batchId = batch?.id ?? null;
 
     let importBatchId: string | null = null;
     if (generated.codes.length > 0) {
@@ -292,7 +320,6 @@ export async function replenishProduct(
         .eq("id", batch.id);
     }
 
-    batchId = batch?.id ?? null;
     const after = await availableStockFor(admin, ecosystemId, productId);
     const finished = await admin.rpc("finish_voucher_replenishment_event", {
       _ecosystem_id: ecosystemId, _product_id: productId, _run_id: runId,
