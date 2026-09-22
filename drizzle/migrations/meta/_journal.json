@@ -169,6 +169,13 @@
       "when": 1790086791285,
       "tag": "0023_preserve_inventory_on_omada_cleanup_failure",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790118340151,
+      "tag": "0024_platform_settings_scoped_read",
+      "breakpoints": true
     }
   ]
 }

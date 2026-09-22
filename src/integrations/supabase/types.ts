@@ -10904,6 +10904,8 @@ export type Database = {
         Returns: number
       }
       generate_shop_code: { Args: never; Returns: string }
+      get_credit_purchase_settings: { Args: never; Returns: Json }
+      get_public_platform_settings: { Args: never; Returns: Json }
       get_signup_ecosystem: {
         Args: { _slug: string }
         Returns: {
