@@ -88,6 +88,27 @@ function makeAdmin(tables: Record<string, Row[]>) {
   const admin: AdminClient = {
     from: (name: string) => query(name),
     rpc: async (fn: string, args: unknown) => {
+      if (fn === "claim_voucher_replenishment_event") {
+        const a = args as Record<string, any>;
+        const states = (tables["voucher_replenishment_states"] ??= []);
+        const old = states.find((r) => r.ecosystem_id === a._ecosystem_id && r.product_id === a._product_id);
+        if (a._available >= 100) return { data: [{ claimed: false, reason: "stocked", run_id: null }], error: null };
+        if (old?.status === "running") return { data: [{ claimed: false, reason: "in_progress", run_id: old.run_id }], error: null };
+        if (old?.status === "completed") return { data: [{ claimed: false, reason: "event_completed", run_id: old.run_id }], error: null };
+        seq += 1;
+        const runId = `run-${seq}`;
+        (tables["voucher_replenishment_runs"] ??= []).push({ id: runId, ecosystem_id: a._ecosystem_id, product_id: a._product_id, status: "running" });
+        states.push({ ecosystem_id: a._ecosystem_id, product_id: a._product_id, status: "running", low_stock_active: true, run_id: runId, group_name: a._group_name, group_id: null, attempts: 1 });
+        return { data: [{ claimed: true, reason: "claimed", run_id: runId, group_name: a._group_name }], error: null };
+      }
+      if (fn === "finish_voucher_replenishment_event") {
+        const a = args as Record<string, any>;
+        const state = (tables["voucher_replenishment_states"] ?? []).find((r) => r.run_id === a._run_id);
+        if (state) Object.assign(state, { status: a._success ? "completed" : "paused", group_id: a._group_id });
+        const run = (tables["voucher_replenishment_runs"] ?? []).find((r) => r.id === a._run_id);
+        if (run) Object.assign(run, { status: a._success ? "completed" : "failed" });
+        return { data: null, error: null };
+      }
       if (fn === "system_import_voucher_codes") {
         const a = args as { _ecosystem_id: string; _product_id: string; _codes: string[] };
         for (const code of a._codes) {
@@ -144,6 +165,7 @@ function world(opts: { availableA: number; availableB: number; calibrateB?: bool
     ],
     voucher_codes: [...stock(A, opts.availableA), ...stock(B, opts.availableB)],
     voucher_replenishment_runs: [],
+    voucher_replenishment_states: [],
     omada_voucher_batches: [],
   };
   if (opts.calibrateB) {

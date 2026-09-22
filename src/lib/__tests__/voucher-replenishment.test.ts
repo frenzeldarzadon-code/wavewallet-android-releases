@@ -113,6 +113,33 @@ function makeAdmin(tables: Record<string, Row[]>) {
     from: (name: string) => query(name),
     rpc: async (fn: string, args: unknown) => {
       rpcCalls.push({ fn, args });
+      if (fn === "claim_voucher_replenishment_event") {
+        const a = args as Record<string, any>;
+        const states = (tables["voucher_replenishment_states"] ??= []);
+        let state = states.find((r) => r.ecosystem_id === a._ecosystem_id && r.product_id === a._product_id);
+        if (a._available >= LOW_STOCK_THRESHOLD) {
+          if (state) Object.assign(state, { low_stock_active: false, status: "ready", attempts: 0, group_id: null, group_name: null });
+          return { data: [{ claimed: false, reason: "stocked", run_id: null, event_number: state?.event_number ?? 0, group_name: null }], error: null };
+        }
+        if (state?.low_stock_active && state.status === "completed") return { data: [{ claimed: false, reason: "event_completed", run_id: state.run_id, event_number: state.event_number, group_name: state.group_name }], error: null };
+        if (state?.status === "running") return { data: [{ claimed: false, reason: "in_progress", run_id: state.run_id, event_number: state.event_number, group_name: state.group_name }], error: null };
+        if (state?.status === "paused") return { data: [{ claimed: false, reason: "event_paused", run_id: state.run_id, event_number: state.event_number, group_name: state.group_name }], error: null };
+        seq += 1;
+        const runId = `run-${seq}`;
+        (tables["voucher_replenishment_runs"] ??= []).push({ id: runId, ecosystem_id: a._ecosystem_id, product_id: a._product_id, status: "running", requested_count: 500, created_at: a._now });
+        state = { ecosystem_id: a._ecosystem_id, product_id: a._product_id, event_number: (state?.event_number ?? 0) + 1, low_stock_active: true, status: "running", run_id: runId, group_name: a._group_name, group_id: null, attempts: 1 };
+        const old = states.findIndex((r) => r.ecosystem_id === a._ecosystem_id && r.product_id === a._product_id);
+        if (old >= 0) states[old] = state; else states.push(state);
+        return { data: [{ claimed: true, reason: "claimed", run_id: runId, event_number: state.event_number, group_name: state.group_name }], error: null };
+      }
+      if (fn === "finish_voucher_replenishment_event") {
+        const a = args as Record<string, any>;
+        const state = (tables["voucher_replenishment_states"] ?? []).find((r) => r.ecosystem_id === a._ecosystem_id && r.product_id === a._product_id);
+        if (state) Object.assign(state, { status: a._success ? "completed" : "paused", group_id: a._group_id, group_name: a._group_name, generated_count: a._generated, imported_count: a._imported, error: a._error });
+        const run = (tables["voucher_replenishment_runs"] ?? []).find((r) => r.id === a._run_id);
+        if (run) Object.assign(run, { status: a._success ? "completed" : "failed", generated_count: a._generated, imported_count: a._imported, error: a._error });
+        return { data: null, error: null };
+      }
       if (fn === "system_import_voucher_codes") {
         const a = args as { _ecosystem_id: string; _product_id: string; _codes: string[] };
         for (const code of a._codes) {
@@ -165,6 +192,7 @@ function world(options: { availableA?: number; calibrateA?: boolean; calibrateB?
     omada_voucher_calibrations: [],
     voucher_codes: codes(options.availableA ?? 0, "shop-1", "prod-a"),
     voucher_replenishment_runs: [],
+    voucher_replenishment_states: [],
     omada_voucher_batches: [],
     voucher_imports: [],
   };
@@ -401,7 +429,7 @@ describe("scheduled background sweep", () => {
     }
   });
 
-  it("M: a controller failure is logged and the next run retries without duplicating stock", async () => {
+  it("M: a controller failure is paused and later sweeps do not create duplicate groups", async () => {
     const tables = world({ availableA: 5 });
     const admin = makeAdmin(tables);
     const failing = async () => {
@@ -416,12 +444,28 @@ describe("scheduled background sweep", () => {
 
     const seen: Array<{ payload: Record<string, unknown>; groupName: string }> = [];
     const second = await sweepReplenishments(admin, { generate: fakeGenerate(seen) });
-    expect(second.replenished).toBe(1);
-    expect(tables["voucher_codes"]!.length).toBe(5 + REPLENISH_BATCH_SIZE);
+    expect(second.replenished).toBe(0);
+    expect(tables["voucher_codes"]!.length).toBe(5);
+    expect(seen).toHaveLength(0);
+  });
 
-    // Stock is now healthy, so a third run generates nothing more.
-    const third = await sweepReplenishments(admin, { generate: fakeGenerate(seen) });
-    expect(third.replenished).toBe(0);
+  it("N: a completed event stays latched until stock recovers, then a later low crossing gets one new batch", async () => {
+    const tables = world({ availableA: 99 });
+    const admin = makeAdmin(tables);
+    const seen: Array<{ payload: Record<string, unknown>; groupName: string }> = [];
+    await sweepReplenishments(admin, { generate: fakeGenerate(seen) });
+    expect(tables["voucher_codes"]).toHaveLength(599);
+
+    tables["voucher_codes"]!.splice(0, 500);
+    const stillSameEvent = await sweepReplenishments(admin, { generate: fakeGenerate(seen) });
+    expect(stillSameEvent.replenished).toBe(0);
     expect(seen).toHaveLength(1);
+
+    tables["voucher_codes"]!.push(...codes(1, "shop-1", "prod-a", { code: "rearm" }));
+    await sweepReplenishments(admin, { generate: fakeGenerate(seen) });
+    tables["voucher_codes"]!.splice(0, 1);
+    const nextEvent = await sweepReplenishments(admin, { generate: fakeGenerate(seen) });
+    expect(nextEvent.replenished).toBe(1);
+    expect(seen).toHaveLength(2);
   });
 });
