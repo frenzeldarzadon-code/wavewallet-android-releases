@@ -15,7 +15,7 @@ DECLARE
   _import_a uuid; _import_b uuid; _import_manual uuid;
   _batch_a uuid; _batch_b uuid;
   _token uuid;
-  _n int; _status text; _error text;
+  _n int; _status text; _error text; _ok boolean;
 BEGIN
   SELECT ecosystem_id INTO _eco FROM public.profiles WHERE id = _admin;
   SELECT id INTO _product FROM public.voucher_products WHERE ecosystem_id = _eco AND NOT archived LIMIT 1;
