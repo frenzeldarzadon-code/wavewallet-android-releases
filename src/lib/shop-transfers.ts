@@ -86,12 +86,11 @@ export async function fetchMyShopWallets(): Promise<ShopWallet[]> {
 
 /** Current platform fee for moving credits between two of your own shops. */
 export async function fetchShopTransferFee(): Promise<number> {
-  const { data } = await supabase
-    .from("platform_settings")
-    .select("shop_transfer_fee_credits")
-    .eq("id", 1)
-    .maybeSingle();
-  const fee = Number((data as { shop_transfer_fee_credits?: number } | null)?.shop_transfer_fee_credits);
+  // Read via the guarded public function — the row itself is platform-owner only.
+  const { data } = await supabase.rpc("get_public_platform_settings");
+  const fee = Number(
+    (data as { shop_transfer_fee_credits?: number } | null)?.shop_transfer_fee_credits,
+  );
   return Number.isFinite(fee) ? fee : DEFAULT_SHOP_TRANSFER_FEE;
 }
 

@@ -41,6 +41,23 @@ export async function fetchPlatformSettings(): Promise<PlatformSettings | null> 
   return data ?? null;
 }
 
+/** The support-contact subset any signed-in member may read. */
+export interface PublicPlatformSettings {
+  support_page_name: string | null;
+  support_page_url: string | null;
+  support_message: string | null;
+  currency: string;
+}
+
+/**
+ * Members cannot read the platform_settings row directly (platform owner only);
+ * this guarded function exposes only the checkout-safe columns.
+ */
+export async function fetchPublicPlatformSettings(): Promise<PublicPlatformSettings | null> {
+  const { data } = await supabase.rpc("get_public_platform_settings");
+  return (data as PublicPlatformSettings | null) ?? null;
+}
+
 /** Objects are `{ecosystem_id}/{uuid}.{ext}` so storage RLS scopes them to one tenant. */
 export async function uploadProof(ecosystemId: string, file: File): Promise<string> {
   const problem = validateProof(file);

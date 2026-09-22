@@ -282,6 +282,30 @@ export async function fetchMoneySettings(): Promise<MoneySettings> {
   };
 }
 
+/**
+ * Member-facing quote inputs. Ordinary members cannot read the platform_settings
+ * row (platform owner only), so this goes through the guarded public function
+ * that exposes just the checkout rates — never the cashback/commission or loan
+ * configuration.
+ */
+export async function fetchPublicMoneySettings(): Promise<MoneySettings> {
+  const { data } = await supabase.rpc("get_public_platform_settings");
+  const d = (data ?? null) as Record<string, number | string | null> | null;
+  if (!d) return MONEY_SETTINGS_FALLBACK;
+  return {
+    creditsPerUnit: Number(d.cash_out_credits_per_unit),
+    phpPerUnit: Number(d.cash_out_php_per_unit),
+    feePercent: Number(d.withdrawal_fee_percent),
+    cashInFeePercent: Number(d.cash_in_fee_percent ?? 0),
+    // Not exposed to members; only the platform owner edits these.
+    cashbackReseller: 0,
+    cashbackSubreseller: 0,
+    shopTransferFee: Number(d.shop_transfer_fee_credits ?? 5),
+    retailFeePercent: 0,
+    voucherFeePercent: 0,
+  };
+}
+
 export async function saveMoneySettings(s: MoneySettings): Promise<void> {
   const { error } = await supabase.rpc(
     "set_platform_money_settings",

@@ -154,13 +154,9 @@ export async function deleteCreditPackage(id: string): Promise<void> {
 /* ------------------------------------------------------------------ settings */
 
 export async function fetchCreditPurchaseSettings(): Promise<CreditPurchaseSettings | null> {
-  const { data, error } = await supabase
-    .from("platform_settings")
-    .select(
-      "admin_credit_discount_percent, admin_voucher_discount_percent, credit_release_mode, default_admin_sale_commission_percent, currency, support_page_name, support_page_url, support_message, gcash_number, gcash_account_name, payment_instructions",
-    )
-    .eq("id", 1)
-    .maybeSingle();
+  // Guarded server-side: shop admins and the platform owner only. The
+  // platform_settings row itself is no longer readable by ordinary members.
+  const { data, error } = await supabase.rpc("get_credit_purchase_settings");
   if (error) throw new Error(error.message);
   return (data as CreditPurchaseSettings | null) ?? null;
 }
