@@ -54,7 +54,10 @@ export function LoanPoolCenter() {
 
   const move = async (direction: "contribute" | "withdraw") => {
     const amount = Number(moveAmount) || 0;
-    if (amount <= 0) return toast.error("Enter an amount greater than zero.");
+    if (amount <= 0) {
+      toast.error("Enter an amount greater than zero.");
+      return;
+    }
     setBusy(direction);
     try {
       const moved = direction === "contribute"
@@ -71,7 +74,10 @@ export function LoanPoolCenter() {
 
   const fund = async (loan: OpenUniverseLoan) => {
     const amount = Number(fundAmounts[loan.id]) || 0;
-    if (amount <= 0) return toast.error("Enter the amount you want to fund.");
+    if (amount <= 0) {
+      toast.error("Enter the amount you want to fund.");
+      return;
+    }
     setBusy(loan.id);
     try {
       const committed = await fundUniverseLoan(loan.id, amount);
@@ -119,7 +125,7 @@ export function LoanPoolCenter() {
             const percent = loan.amount > 0 ? Math.min(100, (loan.fundedAmount / loan.amount) * 100) : 0;
             return <Card key={loan.id} className="shadow-[var(--shadow-card)]"><CardContent className="space-y-3 p-4">
               <div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{loan.borrowerName}</p><p className="text-xs text-muted-foreground">{loan.borrowerHandle ? `@${loan.borrowerHandle} · ` : ""}{loan.termMonths} months · {loan.interestPercent}% monthly</p></div><StatusBadge tone={universeLoanTone(loan.status)}>{universeLoanStatusLabel(loan.status)}</StatusBadge></div>
-              <div><div className="mb-1 flex justify-between text-xs"><span>{peso(loan.fundedAmount)} funded</span><span>{peso(loan.remaining)} needed</span></div><div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${percent}%` }} /></div></div>
+              <div><div className="mb-1 flex justify-between text-xs"><span>{peso(loan.fundedAmount)} funded</span><span>{peso(loan.remaining)} needed</span></div><progress className="h-2 w-full accent-primary" max={100} value={percent} aria-label={`${Math.round(percent)}% funded`} /></div>
               {loan.myFunded > 0 ? <p className="text-xs text-success">You have funded {peso(loan.myFunded)}.</p> : null}
               <div className="flex gap-2"><Input aria-label={`Amount to fund for ${loan.borrowerName}`} inputMode="decimal" placeholder={String(Math.min(loan.remaining, summary.available))} value={fundAmounts[loan.id] ?? ""} onChange={(event) => setFundAmounts((values) => ({ ...values, [loan.id]: event.target.value }))} /><Button disabled={busy !== null || summary.available <= 0} onClick={() => void fund(loan)}>Fund</Button></div>
             </CardContent></Card>;
