@@ -16,7 +16,7 @@ import {
 import { replenishProduct, sweepReplenishments, type AdminClient } from "../voucher-replenishment.server";
 import { defaultGenerationValues, type GenValue } from "../omada-generation";
 
-type Row = Record<string, any>;
+type Row = any;
 
 /** Tiny in-memory stand-in for the service-role client this job uses. */
 function makeAdmin(tables: Record<string, Row[]>) {
