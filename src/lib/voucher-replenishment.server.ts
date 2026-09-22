@@ -214,7 +214,8 @@ export async function replenishProduct(
     claimed: boolean; reason: ReplenishSkipReason | "claimed"; run_id: string | null; group_name: string | null;
   }> | null)?.[0];
   if (!claim?.claimed || !claim.run_id) {
-    return skip(ecosystemId, productId, claim?.reason ?? "in_progress", available);
+    const reason = claim?.reason === "claimed" ? "in_progress" : (claim?.reason ?? "in_progress");
+    return skip(ecosystemId, productId, reason, available);
   }
   const runId = claim.run_id;
   const eventState = (

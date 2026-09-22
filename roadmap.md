@@ -10,3 +10,10 @@
 - [x] UI: Loan Pool tab, Universe Loans area, Super Admin settings + oversight (no approve button)
 - [x] Tests: partial/full funding, multiple + concurrent funders, payment, early payoff refund, settings snapshots
 - [x] Shop Loans untouched
+
+## Voucher auto replenishment
+- [x] Confirm scheduler and UI trigger paths
+- [x] Add one durable event per low-stock crossing
+- [x] Add atomic claim, pause, recovery, and rearm rules
+- [x] Keep manual voucher generation separate
+- [ ] Verify stock, concurrency, retry, manual-generation, full tests, and type checking
