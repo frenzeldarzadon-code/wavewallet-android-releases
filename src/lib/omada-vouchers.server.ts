@@ -601,6 +601,35 @@ export async function fetchGroupCodes(
   return { codes, groupName, total: total || codes.length };
 }
 
+/**
+ * Reads back the full voucher rows of one exact group, including each row's
+ * controller-side status. Used to prove a group is entirely unused before any
+ * destructive cleanup touches it.
+ */
+export async function fetchGroupRows(
+  session: OmadaSession,
+  groupId: string,
+): Promise<{ rows: Array<Record<string, unknown>>; groupName: string | null; total: number }> {
+  const pageSize = 100;
+  const all: Array<Record<string, unknown>> = [];
+  let groupName: string | null = null;
+  let total = 0;
+  for (let page = 1; page <= 100; page += 1) {
+    const result = (await call(
+      session,
+      `${resolvePath(session, VERIFIED_GROUP_DETAIL_PATH, { groupId })}?page=${page}&pageSize=${pageSize}`,
+    )) as Record<string, unknown> | null;
+    if (!result) break;
+    if (groupName === null && typeof result["name"] === "string") groupName = result["name"];
+    total = Number(result["totalCount"] ?? result["totalRows"] ?? total);
+    const rows = Array.isArray(result["data"]) ? (result["data"] as Array<Record<string, unknown>>) : [];
+    all.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return { rows: all, groupName, total: total || all.length };
+}
+
+
 /** Deletes one exact stored group id. A missing group is an idempotent success. */
 export async function deleteVoucherGroupExact(
   session: OmadaSession,
@@ -608,10 +637,10 @@ export async function deleteVoucherGroupExact(
   groupId: string,
 ): Promise<"deleted" | "already_absent"> {
   if (!groupId.trim()) throw new OmadaError("An exact Omada voucher group id is required.", "api");
-  if (!caps.deletePath) {
-    throw new OmadaError("This controller does not advertise voucher-group deletion.", "api");
-  }
-  const path = resolvePath(session, caps.deletePath, {
+  // Controllers that publish no Swagger document still serve the official
+  // Open API voucher-group route, the same verified path used for reads.
+  const deletePath = caps.deletePath ?? VERIFIED_GROUP_DETAIL_PATH;
+  const path = resolvePath(session, deletePath, {
     groupId,
     id: groupId,
     voucherGroupId: groupId,
