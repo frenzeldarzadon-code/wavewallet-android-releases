@@ -293,14 +293,14 @@ export async function fetchPublicMoneySettings(): Promise<MoneySettings> {
   const d = (data ?? null) as Record<string, number | string | null> | null;
   if (!d) return MONEY_SETTINGS_FALLBACK;
   return {
-    creditsPerUnit: Number(d.cash_out_credits_per_unit),
-    phpPerUnit: Number(d.cash_out_php_per_unit),
-    feePercent: Number(d.withdrawal_fee_percent),
-    cashInFeePercent: Number(d.cash_in_fee_percent ?? 0),
+    creditsPerUnit: Number(d["cash_out_credits_per_unit"]),
+    phpPerUnit: Number(d["cash_out_php_per_unit"]),
+    feePercent: Number(d["withdrawal_fee_percent"]),
+    cashInFeePercent: Number(d["cash_in_fee_percent"] ?? 0),
     // Not exposed to members; only the platform owner edits these.
     cashbackReseller: 0,
     cashbackSubreseller: 0,
-    shopTransferFee: Number(d.shop_transfer_fee_credits ?? 5),
+    shopTransferFee: Number(d["shop_transfer_fee_credits"] ?? 5),
     retailFeePercent: 0,
     voucherFeePercent: 0,
   };
