@@ -19,4 +19,4 @@
 - [x] Add one durable event per low-stock crossing
 - [x] Add atomic claim, pause, recovery, and rearm rules
 - [x] Keep manual voucher generation separate
-- [ ] Verify stock, concurrency, retry, manual-generation, full tests, and type checking
+- [x] Verify stock, concurrency, retry, manual-generation, full tests, and type checking
