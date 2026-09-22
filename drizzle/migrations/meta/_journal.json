@@ -134,6 +134,13 @@
       "when": 1790085227546,
       "tag": "0018_voucher_replenishment_event_latch",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790085944736,
+      "tag": "0019_safe_automatic_voucher_batch_cleanup",
+      "breakpoints": true
     }
   ]
 }
