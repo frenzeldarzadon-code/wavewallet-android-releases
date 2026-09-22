@@ -993,13 +993,16 @@ export const deleteUploadedVoucherBatch = createServerFn({ method: "POST" })
       claim.generation_origin === "automatic" ? "unresolved" : "not_requested";
     let message: string | null = null;
     if (claim.should_delete_remote) {
+      if (!claim.group_id) {
+        throw new Error("The exact stored Omada group link is missing; no deletion was performed.");
+      }
       try {
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { openOmadaSession } = await import("./omada-api.server");
         const { loadOmadaSpec, voucherCapabilities, deleteVoucherGroupExact } = await import("./omada-vouchers.server");
         const session = await openOmadaSession(supabaseAdmin as never, claim.ecosystem_id);
         const caps = voucherCapabilities(await loadOmadaSpec(session));
-        remoteStatus = await deleteVoucherGroupExact(session, caps, claim.group_id!);
+        remoteStatus = await deleteVoucherGroupExact(session, caps, claim.group_id);
       } catch (error) {
         remoteStatus = "failed";
         message = error instanceof Error ? error.message : String(error);

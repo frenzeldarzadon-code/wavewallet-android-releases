@@ -191,8 +191,8 @@ function AdminVouchers() {
         const outcome = await deleteUploadedVoucherBatch({ data: { batchId: pendingDelete.batch.batch_id } });
         const n = outcome.deletedCount;
         if (outcome.remoteStatus === "failed" || outcome.remoteStatus === "unresolved") {
-          toast.warning(`Local batch deleted — Omada cleanup ${outcome.remoteStatus}`, {
-            description: outcome.message ?? "No unrelated Omada group was touched.",
+          toast.warning(`Deletion paused — Omada cleanup ${outcome.remoteStatus}`, {
+            description: outcome.message ?? "Local vouchers were kept and no unrelated Omada group was touched.",
           });
         } else {
           const remote = outcome.origin === "automatic"
