@@ -39,6 +39,8 @@ export type ReplenishSkipReason =
   | "no_calibration"
   | "stocked"
   | "in_progress"
+  | "event_completed"
+  | "event_paused"
   | "product_deleted";
 
 export interface ReplenishDecision {

@@ -2,7 +2,8 @@
  * Admin-facing entry points for automatic Voucher Shop stock replenishment.
  *
  * Everything is scoped to one shop and re-authorised on the server; the browser
- * only ever asks "how is this shop's stock doing" or "check it now".
+ * only asks how this shop's stock is doing. Automatic checks belong to the
+ * scheduled server process, never to a page lifecycle or button.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -121,37 +122,3 @@ export const getVoucherStockState = createServerFn({ method: "POST" })
     };
   });
 
-/**
- * Admin: check ONE exact Voucher Shop product of this shop and top it up when
- * it is below the threshold. A product id is mandatory: no caller may ever
- * trigger a shop-wide loop that would generate for unrelated products.
- */
-export const checkVoucherReplenishment = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: { ecosystemId: string; productId: string }) => {
-    if (!data?.ecosystemId) throw new Error("A shop is required.");
-    if (!data?.productId) throw new Error("A voucher product is required.");
-    return data;
-  })
-  .handler(async ({ data, context }) => {
-    await assertShopAdmin(context as unknown as AuthContext, data.ecosystemId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { replenishProduct } = await import("./voucher-replenishment.server");
-    const r = await replenishProduct(supabaseAdmin as never, {
-      ecosystemId: data.ecosystemId,
-      productId: data.productId,
-      trigger: "admin",
-    });
-    return {
-      results: [
-        {
-          productId: r.productId,
-          status: r.status,
-          reason: r.reason,
-          available: r.available,
-          imported: r.imported,
-          error: r.error,
-        },
-      ],
-    };
-  });
