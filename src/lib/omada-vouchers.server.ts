@@ -608,10 +608,10 @@ export async function deleteVoucherGroupExact(
   groupId: string,
 ): Promise<"deleted" | "already_absent"> {
   if (!groupId.trim()) throw new OmadaError("An exact Omada voucher group id is required.", "api");
-  if (!caps.deletePath) {
-    throw new OmadaError("This controller does not advertise voucher-group deletion.", "api");
-  }
-  const path = resolvePath(session, caps.deletePath, {
+  // Controllers that publish no Swagger document still serve the official
+  // Open API voucher-group route, the same verified path used for reads.
+  const deletePath = caps.deletePath ?? VERIFIED_GROUP_DETAIL_PATH;
+  const path = resolvePath(session, deletePath, {
     groupId,
     id: groupId,
     voucherGroupId: groupId,
