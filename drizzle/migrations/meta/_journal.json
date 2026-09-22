@@ -148,6 +148,13 @@
       "when": 1790085981112,
       "tag": "0020_harden_automatic_voucher_cleanup_retry",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1790086193913,
+      "tag": "0021_lock_voucher_codes_during_remote_cleanup",
+      "breakpoints": true
     }
   ]
 }
