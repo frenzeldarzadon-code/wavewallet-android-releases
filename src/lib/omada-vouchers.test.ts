@@ -4,7 +4,7 @@
  * Omada field list.
  */
 import { describe, expect, it } from "vitest";
-import { resolvePath, voucherCapabilities, validateAgainstSpec } from "./omada-vouchers.server";
+import { deleteVoucherGroupExact, resolvePath, voucherCapabilities, validateAgainstSpec } from "./omada-vouchers.server";
 
 const spec = {
   paths: {
@@ -92,5 +92,41 @@ describe("omada voucher calibration", () => {
     expect(validateAgainstSpec(caps.fields, { name: "x", amount: 1, durationType: 7 })).toContain(
       "durationType must be one of 0, 1.",
     );
+  });
+
+  it("deletes only the exact supplied group id", async () => {
+    const previous = globalThis.fetch;
+    let requested = "";
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      requested = String(input);
+      expect(init?.method).toBe("DELETE");
+      return new Response(JSON.stringify({ errorCode: 0, result: {} }), { status: 200 });
+    }) as typeof fetch;
+    try {
+      const status = await deleteVoucherGroupExact(
+        { ecosystemId: "shop", base: "https://controller", omadacId: "controller-id", siteId: "site-id", token: "secret" },
+        voucherCapabilities(spec as never),
+        "group-A",
+      );
+      expect(status).toBe("deleted");
+      expect(requested).toEndWith("/voucher-groups/group-A");
+      expect(requested).not.toContain("group-B");
+    } finally {
+      globalThis.fetch = previous;
+    }
+  });
+
+  it("treats an already absent exact group as complete", async () => {
+    const previous = globalThis.fetch;
+    globalThis.fetch = (async () => new Response(JSON.stringify({ errorCode: -1605, msg: "not found" }), { status: 404 })) as typeof fetch;
+    try {
+      await expect(deleteVoucherGroupExact(
+        { ecosystemId: "shop", base: "https://controller", omadacId: "controller-id", siteId: "site-id", token: "secret" },
+        voucherCapabilities(spec as never),
+        "gone-group",
+      )).resolves.toBe("already_absent");
+    } finally {
+      globalThis.fetch = previous;
+    }
   });
 });

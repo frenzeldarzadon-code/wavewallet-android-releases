@@ -24,12 +24,12 @@ export interface VoucherBatch {
   unused_count: number;
   sold_count: number;
   deletable: boolean;
-  generation_origin: "manual" | "automatic";
-  remote_link_status: "not_applicable" | "exact" | "unresolved";
-  remote_cleanup_status: "not_requested" | "running" | "deleted" | "already_absent" | "failed" | "unresolved";
-  remote_cleanup_error: string | null;
-  omada_group_id: string | null;
-  omada_group_name: string | null;
+  generation_origin?: "manual" | "automatic";
+  remote_link_status?: "not_applicable" | "exact" | "unresolved";
+  remote_cleanup_status?: "not_requested" | "running" | "deleted" | "already_absent" | "failed" | "unresolved";
+  remote_cleanup_error?: string | null;
+  omada_group_id?: string | null;
+  omada_group_name?: string | null;
 }
 
 /** A code may be deleted only while it is completely unused. */

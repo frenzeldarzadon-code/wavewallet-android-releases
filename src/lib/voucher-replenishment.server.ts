@@ -289,6 +289,8 @@ export async function replenishProduct(
           extracted_count: generated.codes.length,
           request: payload,
           response: generated.response ?? {},
+          generation_origin: "automatic",
+          remote_link_status: generated.groupId ? "exact" : "unresolved",
         })
         .select("id")
         .single()

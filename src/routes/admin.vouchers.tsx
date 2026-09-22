@@ -26,7 +26,6 @@ import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
   deleteUnusedVoucherBatch,
-  deleteVoucherBatch,
   deleteVoucherCode,
   fetchInventoryCounts,
   fetchProducts,
@@ -497,7 +496,16 @@ function AdminVouchers() {
                             {b.sold_count}
                           </TableCell>
                           <TableCell className="text-right">
-                            {canDeleteUnusedCodes(b) ? (
+                            {b.generation_origin === "automatic" && b.remote_cleanup_status === "failed" ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-destructive"
+                                onClick={() => setPendingDelete({ kind: "batch", batch: b })}
+                              >
+                                <Trash2 className="size-4" /> Retry Omada cleanup
+                              </Button>
+                            ) : canDeleteUnusedCodes(b) ? (
                               <Button
                                 size="sm"
                                 variant="ghost"
