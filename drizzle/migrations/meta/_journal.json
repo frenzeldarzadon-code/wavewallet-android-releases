@@ -127,6 +127,13 @@
       "when": 1789873937579,
       "tag": "0017_calibration_last_auto_check",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790085227546,
+      "tag": "0018_voucher_replenishment_event_latch",
+      "breakpoints": true
     }
   ]
 }
