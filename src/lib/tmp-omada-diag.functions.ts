@@ -47,7 +47,7 @@ export const tmpOmadaGroupStatus = createServerFn({ method: "POST" })
     const { openOmadaSession } = await import("./omada-api.server");
     const { fetchGroupRows } = await import("./omada-vouchers.server");
     const session = await openOmadaSession(supabaseAdmin as never, data.ecosystemId);
-    const out: Record<string, unknown> = {};
+    const out: Record<string, string> = {};
     for (const gid of data.groupIds) {
       try {
         const rows = await fetchGroupRows(session, gid);
@@ -56,9 +56,9 @@ export const tmpOmadaGroupStatus = createServerFn({ method: "POST" })
           const k = String((r as Record<string, unknown>)["status"] ?? "?");
           counts[k] = (counts[k] ?? 0) + 1;
         }
-        out[gid] = { total: rows.total, fetched: rows.rows.length, statusCounts: counts, name: rows.groupName };
+        out[gid] = JSON.stringify({ total: rows.total, fetched: rows.rows.length, statusCounts: counts, name: rows.groupName });
       } catch (e) {
-        out[gid] = { error: e instanceof Error ? e.message : String(e) };
+        out[gid] = JSON.stringify({ error: e instanceof Error ? e.message : String(e) });
       }
     }
     return out;
