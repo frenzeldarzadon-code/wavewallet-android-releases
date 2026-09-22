@@ -162,6 +162,13 @@
       "when": 1790086614619,
       "tag": "0022_qualify_voucher_cleanup_status",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1790086791285,
+      "tag": "0023_preserve_inventory_on_omada_cleanup_failure",
+      "breakpoints": true
     }
   ]
 }
