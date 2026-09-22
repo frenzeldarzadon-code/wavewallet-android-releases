@@ -129,4 +129,23 @@ describe("omada voucher calibration", () => {
       globalThis.fetch = previous;
     }
   });
+
+  it("refuses remote deletion when the controller does not advertise it", async () => {
+    const previous = globalThis.fetch;
+    let called = false;
+    globalThis.fetch = (async () => {
+      called = true;
+      return new Response();
+    }) as typeof fetch;
+    try {
+      await expect(deleteVoucherGroupExact(
+        { ecosystemId: "shop", base: "https://controller", omadacId: "controller-id", siteId: "site-id", token: "secret" },
+        voucherCapabilities(null),
+        "group-A",
+      )).rejects.toThrow("does not advertise");
+      expect(called).toBe(false);
+    } finally {
+      globalThis.fetch = previous;
+    }
+  });
 });
