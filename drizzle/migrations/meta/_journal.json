@@ -134,6 +134,27 @@
       "when": 1790085227546,
       "tag": "0018_voucher_replenishment_event_latch",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790085944736,
+      "tag": "0019_safe_automatic_voucher_batch_cleanup",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1790085981112,
+      "tag": "0020_harden_automatic_voucher_cleanup_retry",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1790086193913,
+      "tag": "0021_lock_voucher_codes_during_remote_cleanup",
+      "breakpoints": true
     }
   ]
 }

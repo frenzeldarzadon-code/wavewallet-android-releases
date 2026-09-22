@@ -12,6 +12,8 @@
 - [x] Shop Loans untouched
 
 ## Voucher auto replenishment
+
+- [x] Safely delete the exact linked Omada group only for whole automatic-batch deletion, with durable retry/audit status
 - [x] Confirm scheduler and UI trigger paths
 - [x] Add one durable event per low-stock crossing
 - [x] Add atomic claim, pause, recovery, and rearm rules

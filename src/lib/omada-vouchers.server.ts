@@ -600,3 +600,51 @@ export async function fetchGroupCodes(
   }
   return { codes, groupName, total: total || codes.length };
 }
+
+/** Deletes one exact stored group id. A missing group is an idempotent success. */
+export async function deleteVoucherGroupExact(
+  session: OmadaSession,
+  caps: OmadaVoucherCapabilities,
+  groupId: string,
+): Promise<"deleted" | "already_absent"> {
+  if (!groupId.trim()) throw new OmadaError("An exact Omada voucher group id is required.", "api");
+  if (!caps.deletePath) {
+    throw new OmadaError("This controller does not advertise voucher-group deletion.", "api");
+  }
+  const path = resolvePath(session, caps.deletePath, {
+    groupId,
+    id: groupId,
+    voucherGroupId: groupId,
+  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(`${session.base}${path}`, {
+      method: "DELETE",
+      headers: { Authorization: `AccessToken=${session.token}`, "content-type": "application/json" },
+      signal: controller.signal,
+    });
+    const text = await res.text();
+    let body: unknown = text;
+    try { body = JSON.parse(text); } catch { /* retain controller text */ }
+    const parsed = omadaEnvelope(body);
+    if (res.status === 404 || parsed.code === -1605 || /not found|does not exist/i.test(parsed.msg)) {
+      return "already_absent";
+    }
+    if (!res.ok || (parsed.code !== null && parsed.code !== 0)) {
+      throw new OmadaError(
+        `Omada refused the exact group deletion: ${parsed.msg || `HTTP ${res.status}`}`,
+        res.status === 401 || res.status === 403 ? "auth" : "api",
+      );
+    }
+    return "deleted";
+  } catch (error) {
+    if (error instanceof OmadaError) throw error;
+    throw new OmadaError(
+      `Controller not reachable: ${error instanceof Error ? error.message : String(error)}`,
+      "unreachable",
+    );
+  } finally {
+    clearTimeout(timer);
+  }
+}

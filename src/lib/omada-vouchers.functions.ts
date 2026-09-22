@@ -952,6 +952,76 @@ export interface ImportOutcome {
   importId: string | null;
 }
 
+export interface VoucherBatchCleanupOutcome {
+  deletedCount: number;
+  origin: "manual" | "automatic";
+  remoteStatus: "not_requested" | "deleted" | "already_absent" | "failed" | "unresolved";
+  message: string | null;
+}
+
+/**
+ * Admin: coordinates exact remote cleanup for a whole automatic batch, then
+ * performs the existing guarded local deletion. Manual and partial cleanup
+ * paths never call Omada.
+ */
+export const deleteUploadedVoucherBatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { batchId: string }) => {
+    if (!data?.batchId) throw new Error("An upload batch is required.");
+    return data;
+  })
+  .handler(async ({ data, context }): Promise<VoucherBatchCleanupOutcome> => {
+    const ctx = context as unknown as AuthContext;
+    const prepared = await ctx.supabase.rpc("prepare_voucher_batch_cleanup", {
+      _import_id: data.batchId,
+    });
+    if (prepared.error) throw new Error(prepared.error.message);
+    const claim = (prepared.data as Array<{
+      cleanup_token: string | null;
+      ecosystem_id: string;
+      generation_origin: "manual" | "automatic";
+      remote_cleanup_status: string;
+      group_id: string | null;
+      should_delete_remote: boolean;
+    }> | null)?.[0];
+    if (!claim) throw new Error("The voucher batch cleanup could not be prepared.");
+    if (claim.remote_cleanup_status === "running" && !claim.cleanup_token) {
+      throw new Error("This automatic batch cleanup is already running. Try again shortly.");
+    }
+
+    let remoteStatus: VoucherBatchCleanupOutcome["remoteStatus"] =
+      claim.generation_origin === "automatic" ? "unresolved" : "not_requested";
+    let message: string | null = null;
+    if (claim.should_delete_remote) {
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { openOmadaSession } = await import("./omada-api.server");
+        const { loadOmadaSpec, voucherCapabilities, deleteVoucherGroupExact } = await import("./omada-vouchers.server");
+        const session = await openOmadaSession(supabaseAdmin as never, claim.ecosystem_id);
+        const caps = voucherCapabilities(await loadOmadaSpec(session));
+        remoteStatus = await deleteVoucherGroupExact(session, caps, claim.group_id!);
+      } catch (error) {
+        remoteStatus = "failed";
+        message = error instanceof Error ? error.message : String(error);
+      }
+    } else if (claim.generation_origin === "automatic") {
+      remoteStatus = claim.remote_cleanup_status as VoucherBatchCleanupOutcome["remoteStatus"];
+      if (remoteStatus === "unresolved") {
+        message = "No exact stored Omada group relationship was available; no remote group was deleted.";
+      }
+    }
+
+    const finished = await ctx.supabase.rpc("finish_voucher_batch_cleanup", {
+      _import_id: data.batchId,
+      _cleanup_token: claim.cleanup_token,
+      _remote_status: remoteStatus,
+      _remote_error: message,
+    });
+    if (finished.error) throw new Error(finished.error.message);
+    const result = (finished.data as Array<{ deleted_count: number }> | null)?.[0];
+    return { deletedCount: result?.deleted_count ?? 0, origin: claim.generation_origin, remoteStatus, message };
+  });
+
 /**
  * Admin: import the codes the admin confirmed in the preview into THIS shop's
  * inventory. Duplicates are skipped, never overwritten, and the resulting

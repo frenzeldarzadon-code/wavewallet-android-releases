@@ -26,7 +26,6 @@ import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import {
   deleteUnusedVoucherBatch,
-  deleteVoucherBatch,
   deleteVoucherCode,
   fetchInventoryCounts,
   fetchProducts,
@@ -42,6 +41,7 @@ import {
   type SaleRow,
   type VoucherProductRow,
 } from "@/lib/wallet";
+import { deleteUploadedVoucherBatch } from "@/lib/omada-vouchers.functions";
 import { toast } from "sonner";
 import {
   batchDeleteBlockReason,
@@ -188,8 +188,18 @@ function AdminVouchers() {
         const n = await deleteUnusedVoucherBatch(pendingDelete.batch.batch_id);
         toast.success(`Cleaned up — ${n} unused code${n === 1 ? "" : "s"} removed`);
       } else {
-        const n = await deleteVoucherBatch(pendingDelete.batch.batch_id);
-        toast.success(`Batch deleted — ${n} unused code${n === 1 ? "" : "s"} removed`);
+        const outcome = await deleteUploadedVoucherBatch({ data: { batchId: pendingDelete.batch.batch_id } });
+        const n = outcome.deletedCount;
+        if (outcome.remoteStatus === "failed" || outcome.remoteStatus === "unresolved") {
+          toast.warning(`Local batch deleted — Omada cleanup ${outcome.remoteStatus}`, {
+            description: outcome.message ?? "No unrelated Omada group was touched.",
+          });
+        } else {
+          const remote = outcome.origin === "automatic"
+            ? outcome.remoteStatus === "already_absent" ? " Exact Omada group was already absent." : " Exact Omada group deleted."
+            : " Manual Omada groups were not touched.";
+          toast.success(`Batch deleted — ${n} unused code${n === 1 ? "" : "s"} removed.${remote}`);
+        }
       }
       setPendingDelete(null);
       await load();
@@ -466,6 +476,16 @@ function AdminVouchers() {
                           <TableCell className="text-xs">
                             {shortDateTime(b.created_at)}
                             <span className="ml-1 text-muted-foreground">· {b.actor_name}</span>
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              <StatusBadge tone={b.generation_origin === "automatic" ? "brand" : "muted"}>
+                                {b.generation_origin === "automatic" ? "Automatic" : "Manual"}
+                              </StatusBadge>
+                              {b.generation_origin === "automatic" ? (
+                                <StatusBadge tone={b.remote_cleanup_status === "failed" || b.remote_cleanup_status === "unresolved" ? "warning" : "muted"}>
+                                  Omada: {(b.remote_cleanup_status ?? "not_requested").replaceAll("_", " ")}
+                                </StatusBadge>
+                              ) : null}
+                            </div>
                           </TableCell>
                           <TableCell className="text-xs">{b.product_name || "—"}</TableCell>
                           <TableCell className="text-right text-xs">{b.total_codes}</TableCell>
@@ -476,12 +496,21 @@ function AdminVouchers() {
                             {b.sold_count}
                           </TableCell>
                           <TableCell className="text-right">
-                            {canDeleteUnusedCodes(b) ? (
+                            {b.generation_origin === "automatic" && b.remote_cleanup_status === "failed" ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-destructive"
+                                onClick={() => setPendingDelete({ kind: "batch", batch: b })}
+                              >
+                                <Trash2 className="size-4" /> Retry Omada cleanup
+                              </Button>
+                            ) : canDeleteUnusedCodes(b) ? (
                               <Button
                                 size="sm"
                                 variant="ghost"
                                 className="text-destructive"
-                                title="Deletes only the unused codes. Sold codes and Omada vouchers are never touched."
+                                title="Deletes only unused local records. Omada vouchers are never touched by partial cleanup."
                                 onClick={() => setPendingDelete({ kind: "unused", batch: b })}
                               >
                                 <Trash2 className="size-4" /> Delete unused vouchers
@@ -678,7 +707,13 @@ function AdminVouchers() {
             <DialogDescription>
               {pendingDelete?.kind === "unused"
                 ? "Only the unused WaveWallet voucher records in this batch will be deleted. Sold codes, sales, balances, commissions, points and audit history stay untouched. Vouchers on the Omada controller are NOT deleted or changed."
-                : "This permanently removes unused inventory. Sold codes, sales, balances, commissions, points and audit history are never touched."}
+                : pendingDelete?.kind === "batch" && pendingDelete.batch.generation_origin === "automatic"
+                  ? pendingDelete.batch.remote_link_status === "exact"
+                    ? "This automatic batch is linked to one exact stored Omada group. Deletion will remove only that exact group, then remove the unused local inventory."
+                    : "This automatic batch has no safely proven Omada group link. Local deletion may proceed, but no Omada group will be guessed or deleted."
+                  : pendingDelete?.kind === "batch"
+                    ? "This is a manual batch. Local unused inventory will be removed; Omada groups will NOT be deleted by this feature."
+                    : "This permanently removes one unused inventory code. Omada groups are never touched."}
             </DialogDescription>
           </DialogHeader>
           {pendingDelete ? (
@@ -725,6 +760,12 @@ function AdminVouchers() {
                 <div className="flex justify-between gap-3">
                   <dt className="text-muted-foreground">Code</dt>
                   <dd className="font-mono">{pendingDelete.code.code}</dd>
+                </div>
+              ) : null}
+              {pendingDelete.kind === "batch" ? (
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">Batch origin</dt>
+                  <dd className="font-medium capitalize">{pendingDelete.batch.generation_origin}</dd>
                 </div>
               ) : null}
             </dl>

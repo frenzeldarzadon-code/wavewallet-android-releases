@@ -3710,12 +3710,21 @@ export type Database = {
           created_by: string | null
           ecosystem_id: string
           extracted_count: number
+          generation_origin: string
           group_id: string | null
           group_name: string
           id: string
           import_id: string | null
           imported_count: number
           product_id: string | null
+          remote_cleanup_attempts: number
+          remote_cleanup_claim_token: string | null
+          remote_cleanup_claimed_at: string | null
+          remote_cleanup_completed_at: string | null
+          remote_cleanup_error: string | null
+          remote_cleanup_status: string
+          remote_cleanup_updated_at: string
+          remote_link_status: string
           request: Json
           response: Json | null
           updated_at: string
@@ -3729,12 +3738,21 @@ export type Database = {
           created_by?: string | null
           ecosystem_id: string
           extracted_count?: number
+          generation_origin?: string
           group_id?: string | null
           group_name: string
           id?: string
           import_id?: string | null
           imported_count?: number
           product_id?: string | null
+          remote_cleanup_attempts?: number
+          remote_cleanup_claim_token?: string | null
+          remote_cleanup_claimed_at?: string | null
+          remote_cleanup_completed_at?: string | null
+          remote_cleanup_error?: string | null
+          remote_cleanup_status?: string
+          remote_cleanup_updated_at?: string
+          remote_link_status?: string
           request?: Json
           response?: Json | null
           updated_at?: string
@@ -3748,12 +3766,21 @@ export type Database = {
           created_by?: string | null
           ecosystem_id?: string
           extracted_count?: number
+          generation_origin?: string
           group_id?: string | null
           group_name?: string
           id?: string
           import_id?: string | null
           imported_count?: number
           product_id?: string | null
+          remote_cleanup_attempts?: number
+          remote_cleanup_claim_token?: string | null
+          remote_cleanup_claimed_at?: string | null
+          remote_cleanup_completed_at?: string | null
+          remote_cleanup_error?: string | null
+          remote_cleanup_status?: string
+          remote_cleanup_updated_at?: string
+          remote_link_status?: string
           request?: Json
           response?: Json | null
           updated_at?: string
@@ -10804,6 +10831,19 @@ export type Database = {
         }
         Returns: undefined
       }
+      finish_voucher_batch_cleanup: {
+        Args: {
+          _cleanup_token: string
+          _import_id: string
+          _remote_error?: string
+          _remote_status: string
+        }
+        Returns: {
+          deleted_count: number
+          remote_cleanup_error: string
+          remote_cleanup_status: string
+        }[]
+      }
       finish_voucher_replenishment_event: {
         Args: {
           _available_after: number
@@ -11201,6 +11241,27 @@ export type Database = {
           deletable: boolean
           product_id: string
           product_name: string
+          sold_count: number
+          source: string
+          total_codes: number
+          unused_count: number
+        }[]
+      }
+      list_voucher_batches_with_cleanup: {
+        Args: { _ecosystem_id: string }
+        Returns: {
+          actor_name: string
+          batch_id: string
+          created_at: string
+          deletable: boolean
+          generation_origin: string
+          omada_group_id: string
+          omada_group_name: string
+          product_id: string
+          product_name: string
+          remote_cleanup_error: string
+          remote_cleanup_status: string
+          remote_link_status: string
           sold_count: number
           source: string
           total_codes: number
@@ -11953,6 +12014,20 @@ export type Database = {
           ecosystem_id: string
           entry_id: string
           points: number
+        }[]
+      }
+      prepare_voucher_batch_cleanup: {
+        Args: { _import_id: string }
+        Returns: {
+          cleanup_token: string
+          ecosystem_id: string
+          generation_origin: string
+          group_id: string
+          group_name: string
+          omada_batch_id: string
+          remote_cleanup_status: string
+          remote_link_status: string
+          should_delete_remote: boolean
         }[]
       }
       presence_online_window: { Args: never; Returns: string }

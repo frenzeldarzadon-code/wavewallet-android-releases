@@ -686,7 +686,7 @@ export type { VoucherBatch } from "@/lib/voucher-inventory";
 
 /** Upload batches with per-batch eligibility for deletion. */
 export async function fetchVoucherBatches(ecosystemId: string) {
-  const { data, error } = await supabase.rpc("list_voucher_batches", {
+  const { data, error } = await supabase.rpc("list_voucher_batches_with_cleanup", {
     _ecosystem_id: ecosystemId,
   });
   if (error) throw new Error(error.message);
