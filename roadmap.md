@@ -20,3 +20,4 @@
 - [x] Add atomic claim, pause, recovery, and rearm rules
 - [x] Keep manual voucher generation separate
 - [x] Verify stock, concurrency, retry, manual-generation, full tests, and type checking
+- [x] One-time excess-stock cleanup: 78 fully unsold automatic batches deleted locally and on the controller (PHP50 20,304 -> 804; PHP20 20,452 -> 952)
