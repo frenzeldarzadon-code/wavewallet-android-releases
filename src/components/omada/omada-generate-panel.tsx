@@ -53,7 +53,6 @@ import {
   type VoucherGenerationSetup,
 } from "@/lib/omada-vouchers.functions";
 import {
-  checkVoucherReplenishment,
   getVoucherStockState,
   type ProductStockState,
 } from "@/lib/voucher-replenishment.functions";
@@ -205,7 +204,6 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
     Array<{ id: string; group_name: string; amount: number; created_at: string; group_id: string | null }>
   >([]);
   const [stock, setStock] = useState<Record<string, ProductStockState>>({});
-  const [checkingStock, setCheckingStock] = useState(false);
 
   const loadStock = () => {
     if (!ecosystemId) return;
@@ -226,19 +224,6 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
   };
 
   useEffect(load, [ecosystemId]);
-
-  // Automatic top-up is NOT driven by this screen. A scheduled background job
-  // checks every calibrated product on its own, whether or not anyone is here.
-  // This button only lets an admin ask for the same check right now, for THAT
-  // EXACT product — never a shop-wide loop.
-  const checkNow = () => {
-    if (!ecosystemId || !productId) return;
-    setCheckingStock(true);
-    void checkVoucherReplenishment({ data: { ecosystemId, productId } })
-      .then(() => loadStock())
-      .catch(() => undefined)
-      .finally(() => setCheckingStock(false));
-  };
 
 
 
@@ -537,7 +522,6 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
                   {calibration ? (
                     <StatusBadge tone="success">Auto top-up on</StatusBadge>
                   ) : null}
-                  {checkingStock ? <span>Checking stock…</span> : null}
                 </div>
                 <p className="text-[11px] text-muted-foreground">
                   {calibration
@@ -556,11 +540,6 @@ export function OmadaGeneratePanel({ ecosystemId }: { ecosystemId: string | null
                     {new Date(productStock.lastRun.at).toLocaleString()}
                     {productStock.lastRun.error ? ` · ${productStock.lastRun.error}` : ""}
                   </p>
-                ) : null}
-                {calibration ? (
-                  <Button size="sm" variant="outline" disabled={checkingStock} onClick={checkNow}>
-                    Check stock now
-                  </Button>
                 ) : null}
                 {!calibration ? (
                   <Button

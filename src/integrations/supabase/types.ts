@@ -8892,6 +8892,95 @@ export type Database = {
           },
         ]
       }
+      voucher_replenishment_states: {
+        Row: {
+          attempts: number
+          completed_at: string | null
+          ecosystem_id: string
+          error: string | null
+          event_number: number
+          generated_count: number
+          group_id: string | null
+          group_name: string | null
+          imported_count: number
+          low_stock_active: boolean
+          observed_available: number
+          opened_at: string | null
+          product_id: string
+          retry_after: string | null
+          run_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          completed_at?: string | null
+          ecosystem_id: string
+          error?: string | null
+          event_number?: number
+          generated_count?: number
+          group_id?: string | null
+          group_name?: string | null
+          imported_count?: number
+          low_stock_active?: boolean
+          observed_available?: number
+          opened_at?: string | null
+          product_id: string
+          retry_after?: string | null
+          run_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          completed_at?: string | null
+          ecosystem_id?: string
+          error?: string | null
+          event_number?: number
+          generated_count?: number
+          group_id?: string | null
+          group_name?: string | null
+          imported_count?: number
+          low_stock_active?: boolean
+          observed_available?: number
+          opened_at?: string | null
+          product_id?: string
+          retry_after?: string | null
+          run_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_replenishment_states_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "discoverable_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_replenishment_states_ecosystem_id_fkey"
+            columns: ["ecosystem_id"]
+            isOneToOne: false
+            referencedRelation: "ecosystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_replenishment_states_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_replenishment_states_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_replenishment_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voucher_sales: {
         Row: {
           buyer_charge: number | null
@@ -10134,6 +10223,25 @@ export type Database = {
         Args: { _email: string; _source: string }
         Returns: string
       }
+      claim_voucher_replenishment_event: {
+        Args: {
+          _available: number
+          _calibration_id: string
+          _calibration_version: number
+          _ecosystem_id: string
+          _group_name: string
+          _now?: string
+          _product_id: string
+          _trigger_source: string
+        }
+        Returns: {
+          claimed: boolean
+          event_number: number
+          group_name: string
+          reason: string
+          run_id: string
+        }[]
+      }
       clear_login_username: { Args: { _target: string }; Returns: boolean }
       coin_loan_auto_limit: { Args: { _user_id: string }; Returns: number }
       coin_loan_settings: {
@@ -10693,6 +10801,23 @@ export type Database = {
           _device_gone?: boolean
           _reason?: string
           _status: string
+        }
+        Returns: undefined
+      }
+      finish_voucher_replenishment_event: {
+        Args: {
+          _available_after: number
+          _batch_id: string
+          _ecosystem_id: string
+          _error: string
+          _generated: number
+          _group_id: string
+          _group_name: string
+          _imported: number
+          _now?: string
+          _product_id: string
+          _run_id: string
+          _success: boolean
         }
         Returns: undefined
       }

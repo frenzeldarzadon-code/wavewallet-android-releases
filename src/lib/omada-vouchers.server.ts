@@ -562,7 +562,7 @@ export async function findGroupIdByName(
   const wanted = name.trim().toLowerCase();
   const matches = groups
     .filter((g) => String(g["name"] ?? "").trim().toLowerCase() === wanted)
-    .filter((g) => Number(g["createdTime"] ?? 0) >= createdSinceMs - 120_000)
+    .filter((g) => createdSinceMs <= 0 || Number(g["createdTime"] ?? 0) >= createdSinceMs - 120_000)
     .sort((a, b) => Number(b["createdTime"] ?? 0) - Number(a["createdTime"] ?? 0));
   const hit = matches[0];
   return hit ? (String(hit["id"] ?? "") || null) : null;

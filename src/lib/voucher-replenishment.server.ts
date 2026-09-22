@@ -10,8 +10,6 @@
  */
 import {
   availableStock,
-  decideReplenishment,
-  isStaleRun,
   replenishmentPayload,
   REPLENISH_BATCH_SIZE,
   type ReplenishSkipReason,
@@ -38,6 +36,8 @@ export interface ReplenishDeps {
     ecosystemId: string;
     payload: Record<string, GenValue>;
     groupName: string;
+    existingGroupId?: string | null;
+    recoverExisting?: boolean;
   }) => Promise<GenerationResult>;
   now?: () => number;
 }
@@ -58,6 +58,8 @@ async function realGenerate(input: {
   ecosystemId: string;
   payload: Record<string, GenValue>;
   groupName: string;
+  existingGroupId?: string | null;
+  recoverExisting?: boolean;
 }): Promise<GenerationResult> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { openOmadaSession } = await import("./omada-api.server");
@@ -72,6 +74,45 @@ async function realGenerate(input: {
 
   const session = await openOmadaSession(supabaseAdmin as never, input.ecosystemId);
   const info = await readControllerInfo(session);
+  if (input.existingGroupId) {
+    const recovered = await fetchGroupCodes(session, input.existingGroupId);
+    return {
+      codes: recovered.codes,
+      groupId: input.existingGroupId,
+      groupName: recovered.groupName ?? input.groupName,
+      identity: {
+        baseUrl: session.base,
+        omadacId: session.omadacId,
+        siteId: session.siteId,
+        controllerVersion: info.controllerVersion,
+      },
+      response: { recovered: true },
+    };
+  }
+  if (input.recoverExisting) {
+    const caps = voucherCapabilities(null);
+    const recoveredId = await findGroupIdByName(
+      session,
+      { ...caps, listPath: caps.listPath ?? VERIFIED_CREATE_PATH },
+      input.groupName,
+      0,
+    );
+    if (recoveredId) {
+      const recovered = await fetchGroupCodes(session, recoveredId);
+      return {
+        codes: recovered.codes,
+        groupId: recoveredId,
+        groupName: recovered.groupName ?? input.groupName,
+        identity: {
+          baseUrl: session.base,
+          omadacId: session.omadacId,
+          siteId: session.siteId,
+          controllerVersion: info.controllerVersion,
+        },
+        response: { recovered: true },
+      };
+    }
+  }
   const startedAt = Date.now();
   const created = await createVoucherGroupVerified(session, input.payload);
   const groupName = created.name;
@@ -175,81 +216,63 @@ export async function replenishProduct(
   ).data as { id: string; version: number; payload: Record<string, GenValue> } | null;
 
   const available = await availableStockFor(admin, ecosystemId, productId);
+  if (!calibration) return skip(ecosystemId, productId, "no_calibration", available);
 
-  // Release abandoned runs so a crashed attempt cannot block the product.
-  const active = (
+  const existingNames = ((
     await admin
-      .from("voucher_replenishment_runs")
-      .select("id, created_at, status")
+      .from("omada_voucher_batches")
+      .select("group_name")
+      .eq("ecosystem_id", ecosystemId)
+  ).data as Array<{ group_name: string }> | null) ?? [];
+  const proposedGroupName = defaultGroupName(product.name, existingNames.map((r) => r.group_name));
+  const claimed = await admin.rpc("claim_voucher_replenishment_event", {
+    _ecosystem_id: ecosystemId,
+    _product_id: productId,
+    _calibration_id: calibration.id,
+    _calibration_version: calibration.version,
+    _available: available,
+    _trigger_source: input.trigger ?? "sweep",
+    _group_name: proposedGroupName,
+    _now: new Date(now()).toISOString(),
+  });
+  if (claimed.error) throw new Error(claimed.error.message);
+  const claim = (claimed.data as Array<{
+    claimed: boolean; reason: ReplenishSkipReason | "claimed"; run_id: string | null; group_name: string | null;
+  }> | null)?.[0];
+  if (!claim?.claimed || !claim.run_id) {
+    const reason = claim?.reason === "claimed" ? "in_progress" : (claim?.reason ?? "in_progress");
+    return skip(ecosystemId, productId, reason, available);
+  }
+  const runId = claim.run_id;
+  const eventState = (
+    await admin
+      .from("voucher_replenishment_states")
+      .select("group_id, group_name, attempts")
       .eq("ecosystem_id", ecosystemId)
       .eq("product_id", productId)
-      .in("status", ["queued", "running"])
-  ).data as Array<{ id: string; created_at: string }> | null;
-  let runInProgress = false;
-  for (const run of active ?? []) {
-    if (isStaleRun(run.created_at, now())) {
-      await admin
-        .from("voucher_replenishment_runs")
-        .update({
-          status: "failed",
-          error: "Abandoned run released automatically.",
-          finished_at: new Date(now()).toISOString(),
-        })
-        .eq("id", run.id);
-    } else {
-      runInProgress = true;
-    }
-  }
-
-  const decision = decideReplenishment({
-    available,
-    hasCalibration: Boolean(calibration),
-    runInProgress,
-  });
-  if (!decision.replenish) {
-    return skip(ecosystemId, productId, decision.reason as ReplenishSkipReason, available);
-  }
-
-  // Claim: the partial unique index rejects a second active run outright.
-  const claim = await admin
-    .from("voucher_replenishment_runs")
-    .insert({
-      ecosystem_id: ecosystemId,
-      product_id: productId,
-      calibration_id: calibration?.id ?? null,
-      calibration_version: calibration?.version ?? null,
-      status: "running",
-      trigger_source: input.trigger ?? "sweep",
-      available_before: available,
-      requested_count: decision.amount,
-    })
-    .select("id")
-    .single();
-  if (claim.error || !claim.data) {
-    return skip(ecosystemId, productId, "in_progress", available);
-  }
-  const runId = (claim.data as { id: string }).id;
+      .maybeSingle()
+  ).data as { group_id: string | null; group_name: string | null; attempts: number } | null;
+  const groupName = claim.group_name ?? eventState?.group_name ?? proposedGroupName;
+  let generated: GenerationResult | null = null;
+  let batchId: string | null = null;
+  let imported = 0;
 
   try {
-    const existingNames = ((
-      await admin
-        .from("omada_voucher_batches")
-        .select("group_name")
-        .eq("ecosystem_id", ecosystemId)
-    ).data as Array<{ group_name: string }> | null) ?? [];
-    const groupName = defaultGroupName(
-      product.name,
-      existingNames.map((r) => r.group_name),
-    );
     const payload = replenishmentPayload(
-      (calibration?.payload ?? {}) as Record<string, GenValue>,
+      calibration.payload,
       groupName,
-      decision.amount || REPLENISH_BATCH_SIZE,
+      REPLENISH_BATCH_SIZE,
     );
     const problems = validateGenerationPayload(payload);
     if (problems.length > 0) throw new Error(problems.join(" "));
 
-    const generated = await deps.generate({ ecosystemId, payload, groupName });
+    generated = await deps.generate({
+      ecosystemId,
+      payload,
+      groupName,
+      existingGroupId: eventState?.group_id ?? null,
+      recoverExisting: (eventState?.attempts ?? 1) > 1,
+    });
 
     const batch = (
       await admin
@@ -270,8 +293,8 @@ export async function replenishProduct(
         .select("id")
         .single()
     ).data as { id: string } | null;
+    batchId = batch?.id ?? null;
 
-    let imported = 0;
     let importBatchId: string | null = null;
     if (generated.codes.length > 0) {
       const { data, error } = await admin.rpc("system_import_voucher_codes", {
@@ -286,6 +309,10 @@ export async function replenishProduct(
       importBatchId = row?.batch_id ?? null;
     }
 
+    if (generated.codes.length !== REPLENISH_BATCH_SIZE) {
+      throw new Error(`Omada returned ${generated.codes.length} of ${REPLENISH_BATCH_SIZE} expected vouchers; event paused for safe recovery.`);
+    }
+
     if (batch?.id && importBatchId) {
       await admin
         .from("omada_voucher_batches")
@@ -293,16 +320,14 @@ export async function replenishProduct(
         .eq("id", batch.id);
     }
 
-    await admin
-      .from("voucher_replenishment_runs")
-      .update({
-        status: "completed",
-        generated_count: generated.codes.length,
-        imported_count: imported,
-        batch_id: batch?.id ?? null,
-        finished_at: new Date(now()).toISOString(),
-      })
-      .eq("id", runId);
+    const after = await availableStockFor(admin, ecosystemId, productId);
+    const finished = await admin.rpc("finish_voucher_replenishment_event", {
+      _ecosystem_id: ecosystemId, _product_id: productId, _run_id: runId,
+      _success: true, _group_id: generated.groupId, _group_name: generated.groupName,
+      _generated: generated.codes.length, _imported: imported, _available_after: after,
+      _batch_id: batchId, _error: null, _now: new Date(now()).toISOString(),
+    });
+    if (finished.error) throw new Error(finished.error.message);
 
     return {
       ecosystemId,
@@ -310,24 +335,28 @@ export async function replenishProduct(
       status: "completed",
       reason: "low_stock",
       available,
-      requested: decision.amount,
+      requested: REPLENISH_BATCH_SIZE,
       imported,
       runId,
       error: null,
     };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    await admin
-      .from("voucher_replenishment_runs")
-      .update({ status: "failed", error: message, finished_at: new Date(now()).toISOString() })
-      .eq("id", runId);
+    await admin.rpc("finish_voucher_replenishment_event", {
+      _ecosystem_id: ecosystemId, _product_id: productId, _run_id: runId,
+      _success: false, _group_id: generated?.groupId ?? eventState?.group_id ?? null,
+      _group_name: generated?.groupName ?? groupName,
+      _generated: generated?.codes.length ?? 0, _imported: imported,
+      _available_after: await availableStockFor(admin, ecosystemId, productId),
+      _batch_id: batchId, _error: message, _now: new Date(now()).toISOString(),
+    });
     return {
       ecosystemId,
       productId,
       status: "failed",
       reason: "low_stock",
       available,
-      requested: decision.amount,
+      requested: REPLENISH_BATCH_SIZE,
       imported: 0,
       runId,
       error: message,
