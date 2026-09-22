@@ -9,7 +9,7 @@ describe("Universe Loan previews", () => {
     expect(rows[0]?.interest).toBe(200);
     expect(rows[1]?.interest).toBeLessThan(200);
     expect(rows[2]?.balance).toBe(0);
-    expect(totalScheduledInterest(rows)).toBeCloseTo(402.65, 2);
+    expect(totalScheduledInterest(rows)).toBe(402.64);
   });
 
   it("uses clear lifecycle labels", () => {

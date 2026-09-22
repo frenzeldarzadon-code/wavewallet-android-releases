@@ -75,8 +75,14 @@ export function UniverseLoanCenter() {
   const hasOpenLoan = loans.some((loan) => ["pending_funding", "partially_funded", "fully_funded", "active"].includes(loan.status));
 
   const apply = async () => {
-    if (requested <= 0) return toast.error("Enter an amount greater than zero.");
-    if (!idFile) return toast.error("Attach a photo of your valid ID to continue.");
+    if (requested <= 0) {
+      toast.error("Enter an amount greater than zero.");
+      return;
+    }
+    if (!idFile) {
+      toast.error("Attach a photo of your valid ID to continue.");
+      return;
+    }
     setBusy(true);
     let uploaded: string | null = null;
     try {
@@ -101,7 +107,10 @@ export function UniverseLoanCenter() {
   };
 
   const pay = async (value: number, early = false) => {
-    if (value <= 0) return toast.error("Enter an amount greater than zero.");
+    if (value <= 0) {
+      toast.error("Enter an amount greater than zero.");
+      return;
+    }
     setBusy(true);
     try {
       const paid = await payUniverseLoan(value);

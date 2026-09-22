@@ -10,6 +10,7 @@ import { RetentionPolicyCard } from "@/components/retention-policy-card";
 import { CreditSupplyCard } from "@/components/super/credit-supply-card";
 import { MoneySettingsCard } from "@/components/super/money-settings-card";
 import { CoinLoansCard } from "@/components/super/coin-loans-card";
+import { UniverseLoanSettingsCard } from "@/components/super/universe-loan-settings-card";
 import { CashInAutoCard } from "@/components/super/cash-in-auto-card";
 import { ListenerDevicesCard } from "@/components/super/listener-devices-card";
 import { ListenerDeviceScreenButton } from "@/components/money/listener-device-screen-button";
@@ -190,6 +191,7 @@ function SuperSettings() {
 
       <MoneySettingsCard />
       <CoinLoansCard />
+      <UniverseLoanSettingsCard />
       <CashInAutoCard />
       <ReceivingAccountsCard
         ecosystemId={null}
