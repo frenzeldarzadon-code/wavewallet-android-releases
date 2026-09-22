@@ -44,7 +44,7 @@ import {
   cancelCashIn,
   cancelWithdrawal,
   creditsAfterFee,
-  fetchMoneySettings,
+  fetchPublicMoneySettings,
   fetchMyCashIns,
   fetchMyWithdrawals,
   fetchPaymentMethods,
