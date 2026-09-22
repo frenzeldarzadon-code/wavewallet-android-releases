@@ -16,9 +16,18 @@ export function UniverseLoanSettingsCard() {
 
   const set = <K extends keyof UniverseLoanSettings>(key: K, value: UniverseLoanSettings[K]) => setForm((current) => current ? { ...current, [key]: value } : current);
   const save = async () => {
-    if (form.interestPercent < 0 || form.interestPercent > 20) return toast.error("Monthly interest must be between 0% and 20%.");
-    if (form.platformFeePercent < 0 || form.platformFeePercent > 50) return toast.error("Platform fee must be between 0% and 50%.");
-    if (Math.round((form.ownerSharePercent + form.contributorSharePercent) * 100) / 100 !== 100) return toast.error("Owner and contributor shares must total 100%.");
+    if (form.interestPercent < 0 || form.interestPercent > 20) {
+      toast.error("Monthly interest must be between 0% and 20%.");
+      return;
+    }
+    if (form.platformFeePercent < 0 || form.platformFeePercent > 50) {
+      toast.error("Platform fee must be between 0% and 50%.");
+      return;
+    }
+    if (Math.round((form.ownerSharePercent + form.contributorSharePercent) * 100) / 100 !== 100) {
+      toast.error("Owner and contributor shares must total 100%.");
+      return;
+    }
     setBusy(true);
     try { await saveUniverseLoanSettings(form); toast.success("Universe Loan settings saved. Active loans keep their snapshots."); await load(); }
     catch (error) { toast.error((error as Error).message); }

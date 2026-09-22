@@ -109,6 +109,10 @@ describe("role sidebar visibility", () => {
     expect(paths).not.toContain("/super/subscriptions");
   });
 
+  it("keeps Loan Pool oversight in the Super Admin loans destination", () => {
+    expect(navPaths(superAdminNav())).toContain("/super/loans");
+  });
+
   it("resolves the sidebar for every role", () => {
     expect(navPaths(navForRole("customer"))).toContain("/app");
     expect(navPaths(navForRole("subreseller"))).toContain("/reseller/wallet");

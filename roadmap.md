@@ -7,6 +7,6 @@
 - [x] Reducing-balance interest; early payment recalculates remaining interest automatically
 - [x] Excess interest refunded to borrower; lender/owner interest earnings reversed accordingly
 - [x] Released coins are normal unrestricted Universe coins
-- [ ] UI: Loan Pool tab, Universe Loans area, Super Admin settings + oversight (no approve button)
+- [x] UI: Loan Pool tab, Universe Loans area, Super Admin settings + oversight (no approve button)
 - [x] Tests: partial/full funding, multiple + concurrent funders, payment, early payoff refund, settings snapshots
 - [x] Shop Loans untouched

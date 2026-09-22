@@ -20,6 +20,8 @@ import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import { loanEntryLabel, loanStatusLabel } from "@/lib/coin-loans";
 import { LoanIdViewer } from "@/components/wallet/loan-id-document";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UniverseLoanOversight } from "@/components/super/universe-loan-oversight";
 import {
   LOAN_ENTRY_KINDS,
   borrowerName,
@@ -63,13 +65,13 @@ export const Route = createFileRoute("/super/loans")({
       {
         name: "description",
         content:
-          "Monitor every coin loan on the platform: who borrowed, how much is still owed, and the full transaction history behind each balance.",
+          "Monitor peer-funded Universe Loans and existing Shop Loans, including balances, schedules, funders and transaction history.",
       },
       { property: "og:title", content: "Loans — ONE WAVE Super Admin" },
       {
         property: "og:description",
         content:
-          "Monitor every coin loan on the platform: who borrowed, how much is still owed, and the full transaction history behind each balance.",
+          "Monitor Universe Loan Pool funding and existing Shop Loan balances and transactions.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -79,6 +81,19 @@ export const Route = createFileRoute("/super/loans")({
 });
 
 function SuperLoansPage() {
+  return (
+    <Tabs defaultValue="universe">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="universe">Universe Loans</TabsTrigger>
+        <TabsTrigger value="shop">Shop Loans</TabsTrigger>
+      </TabsList>
+      <TabsContent value="universe"><UniverseLoanOversight /></TabsContent>
+      <TabsContent value="shop"><ShopLoansPage /></TabsContent>
+    </Tabs>
+  );
+}
+
+function ShopLoansPage() {
   useSession("super_admin");
 
   const [stats, setStats] = useState<LoanStats | null>(null);
