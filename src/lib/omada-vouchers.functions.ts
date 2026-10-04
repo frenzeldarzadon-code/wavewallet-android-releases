@@ -414,7 +414,21 @@ export interface OmadaBatchStatuses {
   configured: boolean;
   /** Code (upper-case) → Omada state. Codes the controller does not know are absent. */
   statuses: Record<string, VoucherState>;
+  /** Code → ISO first-use time the controller reported (reporting only). */
+  usedAt?: Record<string, string>;
   error: string | null;
+}
+
+/** Controller startTime (epoch s/ms or text) → ISO, or null when not started. */
+function startIso(raw: unknown): string | null {
+  const n = typeof raw === "number" ? raw : typeof raw === "string" && /^\d+$/.test(raw) ? Number(raw) : null;
+  if (n !== null) {
+    if (n <= 0 || n > 4.1e12) return null;
+    return new Date(n < 1e12 ? n * 1000 : n).toISOString();
+  }
+  if (typeof raw !== "string" || !raw.trim()) return null;
+  const t = Date.parse(raw);
+  return Number.isNaN(t) ? null : new Date(t).toISOString();
 }
 
 /**
@@ -468,6 +482,7 @@ export const lookupOmadaVoucherStatuses = createServerFn({ method: "POST" })
 
     const wanted = new Set(data.codes);
     const statuses: Record<string, VoucherState> = {};
+    const usedAt: Record<string, string> = {};
     try {
       const session = await openOmadaSession(supabaseAdmin as never, data.ecosystemId);
       const caps = voucherCapabilities(await loadOmadaSpec(session));
@@ -491,6 +506,10 @@ export const lookupOmadaVoucherStatuses = createServerFn({ method: "POST" })
             if (!wanted.has(code)) continue;
             const state = voucherState(row["status"] ?? row["state"]);
             if (state) statuses[code] = state;
+            if (state && state !== "unused") {
+              const at = startIso(row["startTime"] ?? row["beginTime"] ?? row["inUseTime"]);
+              if (at) usedAt[code] = at;
+            }
             wanted.delete(code);
           }
           if (
@@ -519,7 +538,17 @@ export const lookupOmadaVoucherStatuses = createServerFn({ method: "POST" })
         }
       }
       rememberStatuses(data.ecosystemId, statuses);
-      return { configured: true, statuses, error: null };
+      // Remember first-use times once, so reporting still knows them after the
+      // controller purges an expired voucher. Never touches status or money.
+      for (const [code, at] of Object.entries(usedAt)) {
+        await supabaseAdmin
+          .from("voucher_codes")
+          .update({ first_used_at: at })
+          .eq("ecosystem_id", data.ecosystemId)
+          .eq("code", code)
+          .is("first_used_at", null);
+      }
+      return { configured: true, statuses, usedAt, error: null };
 
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
