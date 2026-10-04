@@ -12,7 +12,7 @@
  * The wallet balance and the earnings figures are deliberately shown apart: a
  * balance is what is currently held, earnings are what was allocated.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -67,8 +67,11 @@ export function AdminEarningsPanel({
   const [actual, setActual] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const reqRef = useRef(0);
   const load = useCallback(async () => {
     if (!ecosystemId) return;
+    const req = ++reqRef.current;
+    setActual(null);
     const from = lifetimeFrom();
     try {
       const [rows, expenses, walletBalance] = await Promise.all([
@@ -82,10 +85,11 @@ export function AdminEarningsPanel({
       const net = adminNetEarnings(rows, expenses);
       void fetchSaleUsage(rows)
         .then(({ sales, statuses }) => {
+          if (req !== reqRef.current) return;
           const used = actualPeriodTotals(rows, sales, statuses, ["admin_shop_margin"]).total;
           setActual(net.expenses.total !== 0 ? used - net.expenses.total : used);
         })
-        .catch(() => setActual(null));
+        .catch(() => req === reqRef.current && setActual(null));
     } catch {
       setTotals(EMPTY);
     } finally {
