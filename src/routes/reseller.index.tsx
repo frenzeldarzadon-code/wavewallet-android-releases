@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, PageSection, StatCard } from "@/components/ui-kit";
 import { DevSlot } from "@/components/dev/dev-slot";
 import { SellerEarningsPanel } from "@/components/seller-earnings-panel";
+import { SalesAttributionPanel } from "@/components/sales-attribution-panel";
 import { FacebookSupportCard } from "@/components/facebook-support-card";
 import { useSession } from "@/lib/session";
 import { peso, shortDateTime } from "@/lib/wavewallet";
@@ -99,6 +100,8 @@ function ResellerDashboard() {
       </DevSlot>
 
       <SellerEarningsPanel recipientId={account.id} ecosystemId={ecosystemDbId} showBalance={false} />
+
+      <SalesAttributionPanel ecosystemId={ecosystemDbId} hasNetwork={account.role !== "subreseller"} />
 
       <DevSlot name="dashboard.wallet-activity">
       <PageSection title="Wallet activity">

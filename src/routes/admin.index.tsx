@@ -7,6 +7,7 @@ import { PageSection, StatCard } from "@/components/ui-kit";
 import { useSession } from "@/lib/session";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminEarningsPanel } from "@/components/admin-earnings-panel";
+import { SalesAttributionPanel } from "@/components/sales-attribution-panel";
 import { peso, shortDateTime } from "@/lib/wavewallet";
 import { useShopStatus } from "@/lib/shop-status";
 import { reviewCountdown } from "@/lib/review-demo";
@@ -178,6 +179,7 @@ function AdminDashboard() {
 
       <DevSlot name="dashboard.earnings">
         <AdminEarningsPanel ecosystemId={ecosystemDbId} adminId={account?.id ?? null} />
+        <SalesAttributionPanel ecosystemId={ecosystemDbId} hasNetwork />
       </DevSlot>
 
       <DevSlot name="dashboard.sales">
