@@ -77,7 +77,7 @@ export function AdminEarningsPanel({
     try {
       const [rows, expenses, walletBalance] = await Promise.all([
         fetchEarnings({ ecosystemId, from, to: new Date() }),
-        fetchExpenses({ scope: "ecosystem", ecosystemId, from }),
+        fetchExpenses({ scope: "ecosystem", ecosystemId, from, to: new Date(), limit: 5000 }),
         adminId ? fetchCreditBalance(adminId, ecosystemId) : Promise.resolve(null),
       ]);
       setTotals(adminNetEarnings(rows, expenses));
