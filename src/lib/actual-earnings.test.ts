@@ -42,3 +42,45 @@ describe("actual earnings", () => {
     expect(actualPeriodTotals(rows, sales, { A: "in_use" }).total).toBe(4);
   });
 });
+
+import { actualNetPeriodTotals, signedPeso } from "@/lib/actual-earnings";
+import { expensePeriodTotals } from "@/lib/expenses";
+import { subtractPeriods } from "@/lib/earnings";
+
+describe("actual net of expenses", () => {
+  const exp = (amount: number, at = now) =>
+    ({ id: "x", spent_at: at, amount } as unknown as Parameters<typeof expensePeriodTotals>[0][number]);
+  it("C2) ₱50 used earnings − ₱10 expenses = ₱40, expense deducted once", () => {
+    const rows = [row("1", "s1", 50)];
+    const sales = new Map<string, SaleUsage>([["s1", { buyerRole: "admin", codes }]]);
+    const st = Object.fromEntries(codes.map((c) => [c, "in_use" as const]));
+    const e = expensePeriodTotals([exp(10)]);
+    expect(actualNetPeriodTotals(rows, sales, st, undefined, e).total).toBe(40);
+  });
+  it("F) the same period buckets apply to both metrics", () => {
+    const old = new Date(Date.now() - 400 * 864e5).toISOString();
+    const rows = [row("1", "s1", 50), { ...row("2", "s2", 30), occurred_at: old }];
+    const sales = new Map<string, SaleUsage>([
+      ["s1", { buyerRole: "admin", codes: ["A"] }],
+      ["s2", { buyerRole: "admin", codes: ["B"] }],
+    ]);
+    const e = expensePeriodTotals([exp(5), exp(7, old)]);
+    const a = actualNetPeriodTotals(rows, sales, { A: "in_use", B: "in_use" }, undefined, e);
+    const p = subtractPeriods(periodTotals(rows), e);
+    expect(a).toEqual(p); // everything used → identical in every period
+    expect(a.today).toBe(45);
+  });
+  it("G) Actual never exceeds Projected on the same basis, even with losses", () => {
+    const rows = [row("1", "s1", 100)];
+    const sales = new Map<string, SaleUsage>([["s1", { buyerRole: "reseller", codes }]]);
+    const st = { A: "in_use", B: "unused", C: "unused", D: "unused", E: "unused" } as const;
+    const e = expensePeriodTotals([exp(500)]);
+    const a = actualNetPeriodTotals(rows, sales, st, undefined, e).total; // 20 − 500
+    const p = subtractPeriods(periodTotals(rows), e).total; // 100 − 500
+    expect(a).toBe(-480);
+    expect(p).toBe(-400);
+    expect(a).toBeLessThanOrEqual(p);
+    expect(signedPeso(a)).toBe("−₱480.00");
+    expect(signedPeso(p)).toBe("−₱400.00");
+  });
+});
