@@ -12,6 +12,8 @@
  * Each sale is returned exactly once, tagged "own" or "network".
  */
 import { supabase } from "@/integrations/supabase/client";
+import { lookupOmadaVoucherStatuses } from "@/lib/omada-vouchers.functions";
+import type { VoucherState } from "@/lib/omada-voucher-view";
 
 export interface AttributedSale {
   sale_id: string;
@@ -104,8 +106,6 @@ export async function fetchSalesAttribution(ecosystemId: string): Promise<Attrib
 //    counts here). Each used code is worth sale_amount ÷ quantity, so a sale is
 //    never counted for more than its own value and never twice.
 // ---------------------------------------------------------------------------
-import { lookupOmadaVoucherStatuses } from "@/lib/omada-vouchers.functions";
-import type { VoucherState } from "@/lib/omada-voucher-view";
 
 export interface SaleCode {
   sale_id: string;
