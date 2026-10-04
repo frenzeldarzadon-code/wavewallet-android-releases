@@ -8514,6 +8514,7 @@ export type Database = {
           code: string
           created_at: string
           ecosystem_id: string
+          first_used_at: string | null
           id: string
           import_id: string | null
           product_id: string
@@ -8526,6 +8527,7 @@ export type Database = {
           code: string
           created_at?: string
           ecosystem_id: string
+          first_used_at?: string | null
           id?: string
           import_id?: string | null
           product_id: string
@@ -8538,6 +8540,7 @@ export type Database = {
           code?: string
           created_at?: string
           ecosystem_id?: string
+          first_used_at?: string | null
           id?: string
           import_id?: string | null
           product_id?: string
@@ -16395,6 +16398,14 @@ export type Database = {
           sale_amount: number
           sale_id: string
           scope: string
+        }[]
+      }
+      voucher_sales_attribution_codes: {
+        Args: { _ecosystem: string }
+        Returns: {
+          code: string
+          first_used_at: string
+          sale_id: string
         }[]
       }
       voucher_seller_cut: {
