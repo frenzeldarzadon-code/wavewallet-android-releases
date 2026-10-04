@@ -55,15 +55,40 @@ function VoucherCard({
 }) {
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(card.code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Could not copy the code.");
+    }
+  };
 
   return (
     <Card className={highlight ? "border-primary shadow-sm" : undefined}>
       <CardHeader className="gap-2 pb-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="text-base tracking-wide">Voucher {card.masked}</CardTitle>
-          <Badge variant="outline" className={tone[card.state]}>
-            {card.statusLabel}
-          </Badge>
+          <CardTitle className="font-mono text-base font-bold tracking-widest">
+            {card.code}
+          </CardTitle>
+          <div className="flex items-center gap-1.5">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              aria-label={`Copy voucher code ${card.code}`}
+              onClick={() => void copyCode()}
+            >
+              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+            </Button>
+            <Badge variant="outline" className={tone[card.state]}>
+              {card.statusLabel}
+            </Badge>
+          </div>
         </div>
         {card.productName ? <CardDescription>{card.productName}</CardDescription> : null}
       </CardHeader>
