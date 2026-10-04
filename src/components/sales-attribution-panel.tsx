@@ -32,7 +32,7 @@ export function SalesAttributionPanel({
   const fig = (f?: { amount: number; vouchers: number; sales: number }) =>
     f ? peso(f.amount) : "—";
   const hint = (f?: { vouchers: number; sales: number }) =>
-    f ? `${f.vouchers} vouchers · ${f.sales} purchases` : undefined;
+    f ? `${f.vouchers} vouchers · ${f.sales} purchases` : "Loading…";
 
   return (
     <PageSection
