@@ -95,3 +95,121 @@ export async function fetchSalesAttribution(ecosystemId: string): Promise<Attrib
   }
   return out;
 }
+
+// ---------------------------------------------------------------------------
+// Projected vs Actual sales for a date range (reporting only).
+//  - Projected: attributed sales whose SALE date is inside the range.
+//  - Actual: the same attributed sales, counting only codes whose FIRST-USE
+//    time is inside the range (a voucher sold earlier but used in the range
+//    counts here). Each used code is worth sale_amount ÷ quantity, so a sale is
+//    never counted for more than its own value and never twice.
+// ---------------------------------------------------------------------------
+import { lookupOmadaVoucherStatuses } from "@/lib/omada-vouchers.functions";
+import type { VoucherState } from "@/lib/omada-voucher-view";
+
+export interface SaleCode {
+  sale_id: string;
+  code: string;
+  first_used_at: string | null;
+}
+
+export interface DateRange {
+  start: Date;
+  end: Date;
+}
+
+export interface RangedSales {
+  projected: SalesAttribution;
+  actual: SalesAttribution;
+  /** Used codes whose first-use time is unknown, so they can't be placed in a period. */
+  usedUndated: number;
+}
+
+const inRange = (iso: string, r: DateRange) => {
+  const t = Date.parse(iso);
+  return t >= r.start.getTime() && t <= r.end.getTime();
+};
+
+export function rangedSales(
+  rows: AttributedSale[],
+  codes: SaleCode[],
+  statuses: Record<string, VoucherState | null>,
+  usedAt: Record<string, string>,
+  range: DateRange,
+): RangedSales {
+  const bySale = new Map<string, SaleCode[]>();
+  for (const c of codes) {
+    const list = bySale.get(c.sale_id) ?? [];
+    if (!list.some((x) => x.code === c.code)) list.push(c);
+    bySale.set(c.sale_id, list);
+  }
+  const projectedRows = rows.filter((r) => inRange(r.occurred_at, range));
+  const actualRows: AttributedSale[] = [];
+  let usedUndated = 0;
+  const seen = new Set<string>();
+  for (const r of rows) {
+    if (seen.has(r.sale_id)) continue;
+    seen.add(r.sale_id);
+    const list = bySale.get(r.sale_id) ?? [];
+    const qty = Number(r.quantity) || list.length;
+    if (!qty) continue;
+    let used = 0;
+    for (const c of list) {
+      const st = statuses[c.code];
+      if (st !== "in_use" && st !== "expired") continue;
+      const at = usedAt[c.code] ?? c.first_used_at;
+      if (!at) {
+        usedUndated += 1;
+        continue;
+      }
+      if (inRange(at, range)) used += 1;
+    }
+    if (used === 0) continue;
+    actualRows.push({
+      ...r,
+      quantity: used,
+      sale_amount: ((Number(r.sale_amount) || 0) * used) / qty,
+    });
+  }
+  return {
+    projected: summariseAttribution(projectedRows),
+    actual: summariseAttribution(actualRows),
+    usedUndated,
+  };
+}
+
+export async function fetchAttributedCodes(ecosystemId: string): Promise<SaleCode[]> {
+  const out: SaleCode[] = [];
+  const page = 1000;
+  for (let from = 0; ; from += page) {
+    const { data, error } = await supabase
+      .rpc("voucher_sales_attribution_codes", { _ecosystem: ecosystemId })
+      .range(from, from + page - 1);
+    if (error) throw error;
+    out.push(...((data ?? []) as SaleCode[]));
+    if (!data || data.length < page) break;
+  }
+  return out;
+}
+
+/** Current state + first-use time for codes, via the existing controller lookup. */
+export async function fetchCodeUsage(
+  ecosystemId: string,
+  codes: string[],
+): Promise<{ statuses: Record<string, VoucherState | null>; usedAt: Record<string, string> }> {
+  const statuses: Record<string, VoucherState | null> = {};
+  const usedAt: Record<string, string> = {};
+  const unique = Array.from(new Set(codes));
+  for (let i = 0; i < unique.length; i += 500) {
+    try {
+      const res = await lookupOmadaVoucherStatuses({
+        data: { ecosystemId, codes: unique.slice(i, i + 500) },
+      });
+      Object.assign(statuses, res.statuses);
+      Object.assign(usedAt, res.usedAt ?? {});
+    } catch {
+      // Unknown status never counts as used.
+    }
+  }
+  return { statuses, usedAt };
+}
