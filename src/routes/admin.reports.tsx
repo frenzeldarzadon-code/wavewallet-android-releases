@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { ReportRangePicker } from "@/components/report-range";
+import { SalesAttributionPanel } from "@/components/sales-attribution-panel";
 import { EarningsHistory } from "@/components/earnings-history";
 import { useSession } from "@/lib/session";
 import { AdminEarningsPanel } from "@/components/admin-earnings-panel";
@@ -241,6 +242,8 @@ function AdminReports() {
       </PageSection>
 
       <AdminEarningsPanel ecosystemId={ecosystemDbId} showLink={false} />
+
+      <SalesAttributionPanel ecosystemId={ecosystemDbId} hasNetwork range={resolved} rangeLabel={resolved.label} />
 
       <ExpensesCard
         key={expenseVersion}

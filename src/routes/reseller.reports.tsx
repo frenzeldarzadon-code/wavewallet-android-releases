@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState, PageSection, StatCard, StatusBadge } from "@/components/ui-kit";
 import { ReportRangePicker } from "@/components/report-range";
+import { SalesAttributionPanel } from "@/components/sales-attribution-panel";
 import { useSession } from "@/lib/session";
 import { peso, roleLabel, shortDateTime } from "@/lib/wavewallet";
 import {
@@ -46,7 +47,7 @@ export const Route = createFileRoute("/reseller/reports")({
 });
 
 function ResellerReports() {
-  const { account, ecosystem } = useSession("reseller");
+  const { account, ecosystem, ecosystemDbId } = useSession("reseller");
   const [range, setRange] = useState("monthly");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -163,6 +164,13 @@ function ResellerReports() {
           busy={loading}
         />
       </PageSection>
+
+      <SalesAttributionPanel
+        ecosystemId={ecosystemDbId}
+        hasNetwork={account?.role !== "subreseller"}
+        range={resolved}
+        rangeLabel={resolved.label}
+      />
 
       <PageSection>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
