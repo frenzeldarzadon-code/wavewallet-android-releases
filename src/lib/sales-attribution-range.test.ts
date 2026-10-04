@@ -47,7 +47,7 @@ describe("projected vs actual sales by range", () => {
     expect(r.actual.network.amount).toBe(40);
     expect(r.actual.byGenerator.map((g) => g.id).sort()).toEqual(["res", "sub"]);
     // Subreseller view: the database returns only their own rows.
-    const sub = rangedSales([{ ...rows[2]!, scope: "own" as const }], [codes[2]], st, {}, oct);
+    const sub = rangedSales([{ ...rows[2]!, scope: "own" as const }], [codes[2]!], st, {}, oct);
     expect(sub.actual.own.amount).toBe(20);
     expect(sub.actual.network.amount).toBe(0);
   });
