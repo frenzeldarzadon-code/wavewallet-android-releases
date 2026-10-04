@@ -16384,6 +16384,19 @@ export type Database = {
         Args: { _fee_percent: number; _seller_cut: number }
         Returns: number
       }
+      voucher_sales_attribution: {
+        Args: { _ecosystem: string; _from?: string }
+        Returns: {
+          generator_id: string
+          generator_name: string
+          generator_role: string
+          occurred_at: string
+          quantity: number
+          sale_amount: number
+          sale_id: string
+          scope: string
+        }[]
+      }
       voucher_seller_cut: {
         Args: { _customer_price: number; _fee_percent: number }
         Returns: number
