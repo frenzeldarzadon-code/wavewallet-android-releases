@@ -209,8 +209,32 @@ export async function deleteExpense(id: string): Promise<void> {
 }
 
 /** Today / month / quarter / year expense totals in the reporting timezone. */
-export function expensePeriodTotals(rows: ExpenseRow[]): PeriodTotals {
-  return periodTotalsOf(rows, (r) => r.spent_at, (r) => r.amount);
+/**
+ * Only expenses actually charged by `now`. Recurring schedules pre-create
+ * future occurrences; each row is one occurrence, so a future-dated row is
+ * excluded until its own charged date arrives and nothing is counted twice.
+ */
+export function chargedExpenses<T extends { spent_at: string }>(rows: T[], now: Date = new Date()): T[] {
+  const cut = now.getTime();
+  return rows.filter((r) => Date.parse(r.spent_at) <= cut);
+}
+
+/** Charged expenses whose spent date falls inside [start, end]. */
+export function expensesInRange<T extends { spent_at: string }>(
+  rows: T[],
+  range: { start: Date; end: Date },
+  now: Date = new Date(),
+): T[] {
+  const s = range.start.getTime();
+  const e = Math.min(range.end.getTime(), now.getTime());
+  return rows.filter((r) => {
+    const t = Date.parse(r.spent_at);
+    return t >= s && t <= e;
+  });
+}
+
+export function expensePeriodTotals(rows: ExpenseRow[], now: Date = new Date()): PeriodTotals {
+  return periodTotalsOf(chargedExpenses(rows, now), (r) => r.spent_at, (r) => r.amount);
 }
 
 export const totalExpenses = (rows: ExpenseRow[]) => rows.reduce((s, r) => s + r.amount, 0);

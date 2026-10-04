@@ -48,7 +48,7 @@ export function SuperEarningsPanel({ showLink = true }: { showLink?: boolean }) 
     try {
       const [fees, expenses, transfers, cashIns] = await Promise.all([
         fetchCashOutFees({ from }),
-        fetchExpenses({ scope: "platform", from }),
+        fetchExpenses({ scope: "platform", from, to: new Date(), limit: 5000 }),
         fetchShopTransferFees({ from }),
         fetchCashInFees({ from }).catch(() => []),
       ]);
