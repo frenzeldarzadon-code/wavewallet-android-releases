@@ -18,6 +18,8 @@ import { fetchEarnings, lifetimeFrom, EMPTY_PERIOD_TOTALS } from "@/lib/earnings
 import { sellerEarnings, type SellerEarnings } from "@/lib/role-earnings";
 import { fetchCreditBalance } from "@/lib/wallet";
 import { peso } from "@/lib/wavewallet";
+import { actualPeriodTotals, fetchSaleUsage } from "@/lib/actual-earnings";
+import { CASHBACK_EARNING_TYPES, DISCOUNT_EARNING_TYPES } from "@/lib/role-earnings";
 
 const EMPTY: SellerEarnings = {
   cashback: EMPTY_PERIOD_TOTALS,
@@ -37,6 +39,7 @@ export function SellerEarningsPanel({
   const [totals, setTotals] = useState<SellerEarnings>(EMPTY);
   const [balance, setBalance] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [actual, setActual] = useState<number | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -49,6 +52,17 @@ export function SellerEarningsPanel({
         if (!live) return;
         setTotals(sellerEarnings(rows));
         setBalance(walletBalance);
+        void fetchSaleUsage(rows)
+          .then(({ sales, statuses }) => {
+            if (live)
+              setActual(
+                actualPeriodTotals(rows, sales, statuses, [
+                  ...CASHBACK_EARNING_TYPES,
+                  ...DISCOUNT_EARNING_TYPES,
+                ]).total,
+              );
+          })
+          .catch(() => live && setActual(null));
       })
       .catch(() => {
         if (live) setTotals(EMPTY);
@@ -77,10 +91,16 @@ export function SellerEarningsPanel({
           />
         ) : null}
         <StatCard
-          label="Total earnings"
+          label="Projected total earnings"
           value={loading ? "—" : peso(totals.total.total)}
           tone="positive"
-          hint="Lifetime cashback + discount savings"
+          hint="Current earnings structure: lifetime cashback + discount on all sold vouchers"
+        />
+        <StatCard
+          label="Actual total earnings"
+          value={actual === null ? "—" : peso(actual)}
+          tone="brand"
+          hint="Same structure, only vouchers bought by admin/resellers/subresellers that were actually used"
         />
       </div>
 

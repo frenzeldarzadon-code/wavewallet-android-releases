@@ -23,6 +23,7 @@ import { fetchExpenses } from "@/lib/expenses";
 import { adminNetEarnings, type NetEarnings } from "@/lib/role-earnings";
 import { fetchCreditBalance } from "@/lib/wallet";
 import { peso } from "@/lib/wavewallet";
+import { actualPeriodTotals, fetchSaleUsage } from "@/lib/actual-earnings";
 
 const EMPTY: NetEarnings = {
   earnings: EMPTY_PERIOD_TOTALS,
@@ -63,6 +64,7 @@ export function AdminEarningsPanel({
     retained: 0,
   });
   const [balance, setBalance] = useState<number | null>(null);
+  const [actual, setActual] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -77,6 +79,13 @@ export function AdminEarningsPanel({
       setTotals(adminNetEarnings(rows, expenses));
       setBreakdown(breakdownOf(rows));
       setBalance(walletBalance);
+      const net = adminNetEarnings(rows, expenses);
+      void fetchSaleUsage(rows)
+        .then(({ sales, statuses }) => {
+          const used = actualPeriodTotals(rows, sales, statuses, ["admin_shop_margin"]).total;
+          setActual(net.expenses.total !== 0 ? used - net.expenses.total : used);
+        })
+        .catch(() => setActual(null));
     } catch {
       setTotals(EMPTY);
     } finally {
@@ -104,12 +113,20 @@ export function AdminEarningsPanel({
           hint="Coins held in your wallet for this shop"
         />
         <StatCard
-          label="Total earnings"
+          label="Projected total earnings"
           value={loading ? "—" : peso(hasExpenses ? totals.net.total : totals.earnings.total)}
           tone="positive"
           hint={
-            hasExpenses ? "Lifetime net of recorded expenses" : "Lifetime retained share of purchases"
+            hasExpenses
+              ? "Current earnings structure, all sold vouchers, net of expenses"
+              : "Current earnings structure, all sold vouchers"
           }
+        />
+        <StatCard
+          label="Actual total earnings"
+          value={actual === null ? "—" : peso(actual)}
+          tone="brand"
+          hint="Same structure, only vouchers bought by admin/resellers/subresellers that were actually used"
         />
       </div>
 
