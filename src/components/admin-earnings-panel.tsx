@@ -86,7 +86,6 @@ export function AdminEarningsPanel({
       void fetchSaleUsage(rows)
         .then(({ sales, statuses }) => {
           if (req !== reqRef.current) return;
-          console.log("ACTDBG", JSON.stringify({ e: net.earnings.total, n: net.net.total, x: net.expenses.total, rows: rows.length, sales: sales.size }));
           const used = actualPeriodTotals(rows, sales, statuses, ["admin_shop_margin"]).total;
           // Deduct exactly what Projected deducts, so both cards use one formula.
           setActual(net.expenses.total !== 0 ? used - (net.earnings.total - net.net.total) : used);
