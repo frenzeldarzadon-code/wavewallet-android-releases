@@ -87,7 +87,8 @@ export function AdminEarningsPanel({
         .then(({ sales, statuses }) => {
           if (req !== reqRef.current) return;
           const used = actualPeriodTotals(rows, sales, statuses, ["admin_shop_margin"]).total;
-          setActual(net.expenses.total !== 0 ? used - net.expenses.total : used);
+          // Deduct exactly what Projected deducts, so both cards use one formula.
+          setActual(net.expenses.total !== 0 ? used - (net.earnings.total - net.net.total) : used);
         })
         .catch(() => req === reqRef.current && setActual(null));
     } catch {
