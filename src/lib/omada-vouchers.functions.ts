@@ -540,13 +540,32 @@ export const lookupOmadaVoucherStatuses = createServerFn({ method: "POST" })
       rememberStatuses(data.ecosystemId, statuses);
       // Remember first-use times once, so reporting still knows them after the
       // controller purges an expired voucher. Never touches status or money.
-      for (const [code, at] of Object.entries(usedAt)) {
-        await supabaseAdmin
-          .from("voucher_codes")
-          .update({ first_used_at: at })
-          .eq("ecosystem_id", data.ecosystemId)
-          .eq("code", code)
-          .is("first_used_at", null);
+      try {
+        const pending = Object.entries(usedAt);
+        if (pending.length > 0) {
+          const { data: known } = await supabaseAdmin
+            .from("voucher_codes")
+            .select("code")
+            .eq("ecosystem_id", data.ecosystemId)
+            .not("first_used_at", "is", null)
+            .in("code", pending.map(([c]) => c));
+          const have = new Set((known ?? []).map((r) => String(r.code).toUpperCase()));
+          const todo = pending.filter(([c]) => !have.has(c));
+          for (let i = 0; i < todo.length; i += 25) {
+            await Promise.all(
+              todo.slice(i, i + 25).map(([code, at]) =>
+                supabaseAdmin
+                  .from("voucher_codes")
+                  .update({ first_used_at: at })
+                  .eq("ecosystem_id", data.ecosystemId)
+                  .eq("code", code)
+                  .is("first_used_at", null),
+              ),
+            );
+          }
+        }
+      } catch {
+        // Best effort: reporting metadata only.
       }
       return { configured: true, statuses, usedAt, error: null };
 
