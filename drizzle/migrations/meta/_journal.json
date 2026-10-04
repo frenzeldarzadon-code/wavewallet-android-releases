@@ -176,6 +176,13 @@
       "when": 1790118340151,
       "tag": "0024_platform_settings_scoped_read",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791124225208,
+      "tag": "0025_migration",
+      "breakpoints": true
     }
   ]
 }
