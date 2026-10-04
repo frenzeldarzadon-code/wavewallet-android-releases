@@ -13,7 +13,7 @@
  * already contributes to Projected. Cashback is never added a second time.
  */
 import { supabase } from "@/integrations/supabase/client";
-import { periodTotalsOf, type EarningRow, type EarningType, type PeriodTotals } from "@/lib/earnings";
+import { periodTotalsOf, subtractPeriods, type EarningRow, type EarningType, type PeriodTotals } from "@/lib/earnings";
 import { lookupOmadaVoucherStatuses } from "@/lib/omada-vouchers.functions";
 import type { VoucherState } from "@/lib/omada-voucher-view";
 
@@ -120,4 +120,26 @@ export async function fetchSaleUsage(rows: EarningRow[]): Promise<{
     }
   }
   return { sales, statuses };
+}
+
+/**
+ * Actual Total Earnings per period = used-voucher share of the SAME earning
+ * rows Projected uses, less the SAME recorded expenses Projected deducts.
+ * Expenses are passed in once (already period-bucketed), so they are never
+ * deducted twice. Never clamped: a loss stays a loss.
+ */
+export function actualNetPeriodTotals(
+  rows: EarningRow[],
+  sales: Map<string, SaleUsage>,
+  statuses: Record<string, VoucherState | null>,
+  types: EarningType[] | undefined,
+  expenses: PeriodTotals,
+): PeriodTotals {
+  return subtractPeriods(actualPeriodTotals(rows, sales, statuses, types), expenses);
+}
+
+/** Money with its sign kept, so a loss never reads as a profit. */
+export function signedPeso(n: number): string {
+  const abs = `₱${Math.abs(n).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return n < -0.004 ? `−${abs}` : abs;
 }
