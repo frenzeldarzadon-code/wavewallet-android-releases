@@ -9,7 +9,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Plus, RefreshCw, WifiOff } from "lucide-react";
+import { Check, Copy, Loader2, Plus, RefreshCw, WifiOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
