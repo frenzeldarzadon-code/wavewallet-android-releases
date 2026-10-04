@@ -12,7 +12,7 @@
  * The wallet balance and the earnings figures are deliberately shown apart: a
  * balance is what is currently held, earnings are what was allocated.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import { fetchExpenses } from "@/lib/expenses";
 import { adminNetEarnings, type NetEarnings } from "@/lib/role-earnings";
 import { fetchCreditBalance } from "@/lib/wallet";
 import { peso } from "@/lib/wavewallet";
+import { actualPeriodTotals, fetchSaleUsage } from "@/lib/actual-earnings";
 
 const EMPTY: NetEarnings = {
   earnings: EMPTY_PERIOD_TOTALS,
@@ -63,10 +64,14 @@ export function AdminEarningsPanel({
     retained: 0,
   });
   const [balance, setBalance] = useState<number | null>(null);
+  const [actual, setActual] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const reqRef = useRef(0);
   const load = useCallback(async () => {
     if (!ecosystemId) return;
+    const req = ++reqRef.current;
+    setActual(null);
     const from = lifetimeFrom();
     try {
       const [rows, expenses, walletBalance] = await Promise.all([
@@ -77,6 +82,15 @@ export function AdminEarningsPanel({
       setTotals(adminNetEarnings(rows, expenses));
       setBreakdown(breakdownOf(rows));
       setBalance(walletBalance);
+      const net = adminNetEarnings(rows, expenses);
+      void fetchSaleUsage(rows)
+        .then(({ sales, statuses }) => {
+          if (req !== reqRef.current) return;
+          const used = actualPeriodTotals(rows, sales, statuses, ["admin_shop_margin"]).total;
+          // Deduct exactly what Projected deducts, so both cards use one formula.
+          setActual(net.expenses.total !== 0 ? used - (net.earnings.total - net.net.total) : used);
+        })
+        .catch(() => req === reqRef.current && setActual(null));
     } catch {
       setTotals(EMPTY);
     } finally {
@@ -104,12 +118,20 @@ export function AdminEarningsPanel({
           hint="Coins held in your wallet for this shop"
         />
         <StatCard
-          label="Total earnings"
+          label="Projected total earnings"
           value={loading ? "—" : peso(hasExpenses ? totals.net.total : totals.earnings.total)}
           tone="positive"
           hint={
-            hasExpenses ? "Lifetime net of recorded expenses" : "Lifetime retained share of purchases"
+            hasExpenses
+              ? "Current earnings structure, all sold vouchers, net of expenses"
+              : "Current earnings structure, all sold vouchers"
           }
+        />
+        <StatCard
+          label="Actual total earnings"
+          value={actual === null ? "—" : peso(actual)}
+          tone="brand"
+          hint="Same structure, only vouchers bought by admin/resellers/subresellers that were actually used"
         />
       </div>
 
