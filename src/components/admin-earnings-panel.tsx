@@ -23,7 +23,8 @@ import { fetchExpenses } from "@/lib/expenses";
 import { adminNetEarnings, type NetEarnings } from "@/lib/role-earnings";
 import { fetchCreditBalance } from "@/lib/wallet";
 import { peso } from "@/lib/wavewallet";
-import { actualPeriodTotals, fetchSaleUsage } from "@/lib/actual-earnings";
+import { actualNetPeriodTotals, fetchSaleUsage, signedPeso } from "@/lib/actual-earnings";
+import type { PeriodTotals } from "@/lib/earnings";
 
 const EMPTY: NetEarnings = {
   earnings: EMPTY_PERIOD_TOTALS,
@@ -64,7 +65,7 @@ export function AdminEarningsPanel({
     retained: 0,
   });
   const [balance, setBalance] = useState<number | null>(null);
-  const [actual, setActual] = useState<number | null>(null);
+  const [actual, setActual] = useState<PeriodTotals | null>(null);
   const [loading, setLoading] = useState(true);
 
   const reqRef = useRef(0);
@@ -86,9 +87,10 @@ export function AdminEarningsPanel({
       void fetchSaleUsage(rows)
         .then(({ sales, statuses }) => {
           if (req !== reqRef.current) return;
-          const used = actualPeriodTotals(rows, sales, statuses, ["admin_shop_margin"]).total;
-          // Deduct exactly what Projected deducts, so both cards use one formula.
-          setActual(net.expenses.total !== 0 ? used - (net.earnings.total - net.net.total) : used);
+          // Same earning rows + same expenses as Projected; only unused codes drop out.
+          setActual(
+            actualNetPeriodTotals(rows, sales, statuses, ["admin_shop_margin"], net.expenses),
+          );
         })
         .catch(() => req === reqRef.current && setActual(null));
     } catch {
@@ -119,19 +121,19 @@ export function AdminEarningsPanel({
         />
         <StatCard
           label="Projected total earnings"
-          value={loading ? "—" : peso(hasExpenses ? totals.net.total : totals.earnings.total)}
+          value={loading ? "—" : signedPeso(hasExpenses ? totals.net.total : totals.earnings.total)}
           tone="positive"
           hint={
             hasExpenses
-              ? "Current earnings structure, all sold vouchers, net of expenses"
-              : "Current earnings structure, all sold vouchers"
+              ? "Potential earnings from all sold vouchers (used + unused), net of recorded expenses"
+              : "Potential earnings from all sold vouchers (used + unused)"
           }
         />
         <StatCard
           label="Actual total earnings"
-          value={actual === null ? "—" : peso(actual)}
+          value={actual === null ? "—" : signedPeso(actual.total)}
           tone="brand"
-          hint="Same structure, only vouchers bought by admin/resellers/subresellers that were actually used"
+          hint="Realized earnings from used vouchers only (same earnings structure), net of recorded expenses"
         />
       </div>
 
@@ -159,6 +161,16 @@ export function AdminEarningsPanel({
               tone: "brand",
               emphasis: true,
             },
+            ...(actual
+              ? [
+                  {
+                    label: "Actual earnings",
+                    hint: "Used vouchers only, less the same expenses",
+                    totals: actual,
+                    tone: "brand" as const,
+                  },
+                ]
+              : []),
           ]}
         />
       </div>

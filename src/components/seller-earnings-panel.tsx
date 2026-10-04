@@ -18,7 +18,7 @@ import { fetchEarnings, lifetimeFrom, EMPTY_PERIOD_TOTALS } from "@/lib/earnings
 import { sellerEarnings, type SellerEarnings } from "@/lib/role-earnings";
 import { fetchCreditBalance } from "@/lib/wallet";
 import { peso } from "@/lib/wavewallet";
-import { actualPeriodTotals, fetchSaleUsage } from "@/lib/actual-earnings";
+import { actualPeriodTotals, fetchSaleUsage, signedPeso } from "@/lib/actual-earnings";
 import { CASHBACK_EARNING_TYPES, DISCOUNT_EARNING_TYPES } from "@/lib/role-earnings";
 
 const EMPTY: SellerEarnings = {
@@ -92,15 +92,15 @@ export function SellerEarningsPanel({
         ) : null}
         <StatCard
           label="Projected total earnings"
-          value={loading ? "—" : peso(totals.total.total)}
+          value={loading ? "—" : signedPeso(totals.total.total)}
           tone="positive"
-          hint="Current earnings structure: lifetime cashback + discount on all sold vouchers"
+          hint="Potential earnings: cashback + discount on all sold vouchers (used + unused)"
         />
         <StatCard
           label="Actual total earnings"
-          value={actual === null ? "—" : peso(actual)}
+          value={actual === null ? "—" : signedPeso(actual)}
           tone="brand"
-          hint="Same structure, only vouchers bought by admin/resellers/subresellers that were actually used"
+          hint="Realized earnings from used vouchers only, same cashback + discount structure (no member expenses are recorded)"
         />
       </div>
 
