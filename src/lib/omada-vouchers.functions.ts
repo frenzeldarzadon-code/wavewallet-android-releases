@@ -433,7 +433,7 @@ export const lookupOmadaVoucherStatuses = createServerFn({ method: "POST" })
       .map((c) => String(c ?? "").trim().toUpperCase())
       .filter((c) => /^[A-Za-z0-9-]{4,64}$/.test(c));
     if (codes.length === 0) throw new Error("No voucher codes to check.");
-    return { ecosystemId: data.ecosystemId, codes: codes.slice(0, 200) };
+    return { ecosystemId: data.ecosystemId, codes: Array.from(new Set(codes)).slice(0, 500) };
   })
   .handler(async ({ data, context }): Promise<OmadaBatchStatuses> => {
     // Read-only status: shop members see any code; a Universe buyer who is not
@@ -500,6 +500,22 @@ export const lookupOmadaVoucherStatuses = createServerFn({ method: "POST" })
             page * pageSize >= total
           )
             break;
+        }
+      }
+      // The full controller walk finished. A code this shop SOLD that the
+      // controller no longer lists has been purged by Omada after expiring
+      // (unsold automatic batches are the only groups the app ever deletes),
+      // so it is reported as expired instead of "unavailable".
+      if (wanted.size > 0) {
+        const { data: soldRows } = await supabaseAdmin
+          .from("voucher_codes")
+          .select("code")
+          .eq("ecosystem_id", data.ecosystemId)
+          .not("sold_to", "is", null)
+          .in("code", Array.from(wanted));
+        for (const r of soldRows ?? []) {
+          const code = String(r.code).toUpperCase();
+          if (wanted.has(code)) statuses[code] = "expired";
         }
       }
       rememberStatuses(data.ecosystemId, statuses);

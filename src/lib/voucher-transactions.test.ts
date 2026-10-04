@@ -36,7 +36,7 @@ describe("voucher transaction grouping", () => {
   });
 
   it("reports codes Omada could not answer for separately", () => {
-    expect(statusSummary(["A", "B"], { A: "unused" })).toBe("1 Unused · 1 status unavailable");
+    expect(statusSummary(["A", "B"], { A: "unused" })).toBe("1 Unused · 1 checking");
     expect(codeStatusLabel("b", { B: "expired" })).toBe("Expired");
     expect(codeStatusLabel("z", {})).toBeNull();
   });

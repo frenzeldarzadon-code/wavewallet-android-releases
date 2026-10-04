@@ -58,7 +58,7 @@ export function statusSummary(codes: string[], statuses: CodeStatusMap): string 
   }
   const parts = SUMMARY_ORDER.filter((s) => counts.get(s))
     .map((s) => `${counts.get(s)} ${OMADA_STATUS_LABEL[s]}`);
-  if (unknown > 0) parts.push(`${unknown} status unavailable`);
+  if (unknown > 0) parts.push(`${unknown} checking`);
   return parts.length > 0 ? parts.join(" · ") : null;
 }
 
