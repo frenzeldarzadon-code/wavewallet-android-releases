@@ -115,6 +115,14 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
   /** Why no status is shown (controller unreachable / not connected). */
   const [statusNote, setStatusNote] = useState<string | null>(null);
   const [omadaConfigured, setOmadaConfigured] = useState(false);
+  /** Bumped every minute while visible so statuses follow state changes. */
+  const [statusTick, setStatusTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") setStatusTick((t) => t + 1);
+    }, 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   const userId = account?.id ?? null;
   const scopeId = ecosystemId === undefined ? ecosystemDbId : ecosystemId;
@@ -228,7 +236,7 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
       byShop.set(shop, list);
     }
     const groups = Array.from(byShop.entries())
-      .map(([shop, codes]) => [shop, Array.from(new Set(codes)).slice(0, 200)] as const)
+      .map(([shop, codes]) => [shop, Array.from(new Set(codes))] as const)
       .filter(([, codes]) => codes.length > 0);
     if (groups.length === 0) {
       setStatuses({});
@@ -241,10 +249,24 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
     setStatusNote(null);
     void (async () => {
       try {
+        // Every code is looked up individually, in bulk chunks of 500 per
+        // shop (one controller walk per chunk, never one request per code).
+        const CHUNK = 500;
         const results = await Promise.all(
-          groups.map(([ecosystemId, codes]) =>
-            lookupOmadaVoucherStatuses({ data: { ecosystemId, codes } }),
-          ),
+          groups.map(async ([ecosystemId, codes]) => {
+            const merged: Record<string, string> = {};
+            let configured = false;
+            let error: string | null = null;
+            for (let i = 0; i < codes.length; i += CHUNK) {
+              const res = await lookupOmadaVoucherStatuses({
+                data: { ecosystemId, codes: codes.slice(i, i + CHUNK) },
+              });
+              Object.assign(merged, res.statuses);
+              configured = configured || res.configured;
+              error = error ?? res.error;
+            }
+            return { statuses: merged as Record<string, NonNullable<CodeStatusMap[string]>>, configured, error };
+          }),
         );
         if (cancelled) return;
         const map: CodeStatusMap = {};
@@ -275,7 +297,7 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
     return () => {
       cancelled = true;
     };
-  }, [purchases, scopeId]);
+  }, [purchases, scopeId, statusTick]);
 
 
 
@@ -430,10 +452,14 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
                                 <StatusBadge tone={label === "Unused" ? "success" : "muted"}>
                                   {label}
                                 </StatusBadge>
-                              ) : statusBusy ? null : (
+                              ) : statusBusy ? (
+                                <StatusBadge tone="muted">Checking…</StatusBadge>
+                              ) : statusNote ? (
                                 <StatusBadge tone="muted">
-                                  {omadaConfigured ? "Status unavailable" : "No status"}
+                                  {omadaConfigured ? "Couldn't check — retrying" : "No controller"}
                                 </StatusBadge>
+                              ) : (
+                                <StatusBadge tone="muted">Checking…</StatusBadge>
                               )}
                             </div>
                           );

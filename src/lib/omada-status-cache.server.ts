@@ -51,7 +51,12 @@ export function rememberStatuses(
 ): void {
   const entries = Object.entries(states) as [string, VoucherState][];
   if (entries.length === 0) return;
-  byShop.set(ecosystemId, { at: Date.now(), states: new Map(entries) });
+  // Merge into a still-fresh snapshot so chunked lookups of one large history
+  // don't evict each other; a stale snapshot is replaced outright.
+  const prev = byShop.get(ecosystemId);
+  const base = prev && Date.now() - prev.at <= TTL_MS ? prev.states : new Map<string, VoucherState>();
+  for (const [code, state] of entries) base.set(code, state);
+  byShop.set(ecosystemId, { at: prev && base === prev.states ? prev.at : Date.now(), states: base });
 }
 
 /** Drops a shop's snapshot after generation/import so new codes are read live. */
