@@ -1,5 +1,9 @@
 # Roadmap
 
+## Temporary loan visibility
+- [ ] Hide all loan navigation, embedded displays, and dedicated routes using one reversible UI flag
+- [ ] Audit shared history/notifications and verify non-loan screens and direct URL redirects
+
 ## Universe Loan Pool
 - [x] Settings: Universe loan interest rate, terms, interest split (50/50 default), platform fee (2% default)
 - [x] Schema: loan pool accounts/ledger, universe_loans, schedule, fundings, payments

@@ -7,6 +7,18 @@
  */
 export const SOCIAL_ENABLED = true;
 
+/** Presentation only: loan implementation, permissions and records stay intact. */
+export const LOANS_VISIBLE = false;
+
+export function isLoanPath(path: string): boolean {
+  return ["/universe/loans", "/universe/loan-pool", "/super/loans"]
+    .some((base) => path === base || path.startsWith(`${base}/`));
+}
+
+export function isFeaturePathVisible(path: string): boolean {
+  return LOANS_VISIBLE || !isLoanPath(path);
+}
+
 /** Canonical Universe destinations. */
 export const UNIVERSE_PATHS = {
   feed: "/universe",

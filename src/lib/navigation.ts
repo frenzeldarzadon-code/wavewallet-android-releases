@@ -50,7 +50,7 @@ import {
   Wallet,
   Wifi,
 } from "lucide-react";
-import { RETAIL_VISIBLE, SOCIAL_ENABLED } from "@/lib/features";
+import { LOANS_VISIBLE, RETAIL_VISIBLE, SOCIAL_ENABLED } from "@/lib/features";
 import {
   showsRetailTools,
   showsVoucherTools,
@@ -423,7 +423,7 @@ export function superAdminNav(): Nav {
       label: "Money",
       items: [
         { to: "/super/credits", label: "Coin management", icon: Coins },
-        { to: "/super/loans", label: "Loans", icon: HandCoins },
+        ...(LOANS_VISIBLE ? [{ to: "/super/loans" as const, label: "Loans", icon: HandCoins }] : []),
         { to: "/super/points-cost", label: "Points cost", icon: Sparkles },
       ],
     },

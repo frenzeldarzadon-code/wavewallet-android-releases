@@ -51,6 +51,7 @@ import { WALLET_CHANGED_EVENT } from "@/lib/wallet-events";
 import { useVisiblePoll } from "@/hooks/use-visible-poll";
 import { useRefreshPushRegistration } from "@/hooks/use-push-setup";
 import { PushNudge } from "@/components/universe/push-nudge";
+import { isFeaturePathVisible } from "@/lib/features";
 
 /** Full navigation (desktop rail). */
 const railItems = [
@@ -69,6 +70,8 @@ const railItems = [
   { to: "/universe/rewards", label: "Reward Shops", icon: Gift },
   { to: "/universe/profile", label: "Profile", icon: User },
 ] as const;
+
+const visibleRailItems = railItems.filter((item) => isFeaturePathVisible(item.to));
 
 /** Five-slot bottom bar on phones; the rest is reachable from Home and Search. */
 const barItems = [
@@ -585,7 +588,7 @@ export function UniverseShell({
                 { to: "/universe/members", label: "Members near you", icon: Users },
                 { to: "/universe/messages", label: "Direct messages", icon: Mail },
                 { to: "/universe/notifications", label: "Alerts", icon: Bell },
-              ].map((l) => (
+              ].filter((item) => isFeaturePathVisible(item.to)).map((l) => (
                 <li key={l.to}>
                   <Link
                     to={l.to}
