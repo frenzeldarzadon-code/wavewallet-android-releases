@@ -247,7 +247,7 @@ export function UniverseShell({
                 </Link>
 
                 <section aria-label="Primary menu items" className="grid grid-cols-2 gap-2.5">
-                  {railItems
+                  {visibleRailItems
                     .filter(
                       (item) =>
                         item.to === "/universe" || item.to === "/universe/wallet",
@@ -312,7 +312,7 @@ export function UniverseShell({
                     Explore
                   </p>
                   <div className="grid grid-cols-2 gap-2">
-                    {railItems
+                    {visibleRailItems
                       .filter(
                         (item) =>
                           item.to !== "/universe" && item.to !== "/universe/wallet",
@@ -427,7 +427,7 @@ export function UniverseShell({
           </Link>
 
           <nav aria-label="Universe navigation" className="flex flex-col gap-0.5">
-            {railItems.map((item) => (
+            {visibleRailItems.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
