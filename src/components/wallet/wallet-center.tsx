@@ -84,6 +84,7 @@ import {
   type WalletShop,
 } from "@/lib/wallet-center";
 import { pts } from "@/lib/points";
+import { LOANS_VISIBLE } from "@/lib/features";
 
 export interface WalletCenterProps {
   /** Route prefix for the quick links. */
@@ -353,12 +354,12 @@ export function WalletCenter({
               </p>
             </CardContent>
           </Card>
-          <CoinLoanCard
+          {LOANS_VISIBLE ? <CoinLoanCard
             onChanged={() => {
               setHistoryKey((k) => k + 1);
               void loadShops();
             }}
-          />
+          /> : null}
           <UniverseSendCoinsSheet
             open={sendOpen}
             onOpenChange={setSendOpen}

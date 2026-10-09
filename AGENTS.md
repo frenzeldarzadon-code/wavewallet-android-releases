@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Gate loan presentation and dedicated-page navigation through the shared UI feature flag; never use it to alter loan services or accounting, so visibility is reversible without backend changes.

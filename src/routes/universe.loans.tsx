@@ -1,10 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { LOANS_VISIBLE } from "@/lib/features";
 import { UniverseShell } from "@/components/universe/universe-shell";
 import { LoanCenter } from "@/components/wallet/loan-center";
 import { UniverseLoanCenter } from "@/components/wallet/universe-loan-center";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/universe/loans")({
+  beforeLoad: () => { if (!LOANS_VISIBLE) throw redirect({ to: "/universe/wallet", replace: true }); },
   head: () => ({
     meta: [
       { title: "Loan Center — ONE WAVE Universe" },

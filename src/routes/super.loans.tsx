@@ -5,7 +5,8 @@
  * declining a pending request still happens with the existing control on the
  * Platform settings page.
  */
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { LOANS_VISIBLE } from "@/lib/features";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, Coins, HandCoins, PiggyBank, Search, TrendingUp, Users } from "lucide-react";
@@ -59,6 +60,7 @@ const SORTS: { value: LoanSort; label: string }[] = [
 ];
 
 export const Route = createFileRoute("/super/loans")({
+  beforeLoad: () => { if (!LOANS_VISIBLE) throw redirect({ to: "/super", replace: true }); },
   head: () => ({
     meta: [
       { title: "Loans — ONE WAVE Super Admin" },

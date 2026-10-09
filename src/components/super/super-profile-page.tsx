@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { isLoanDisplayVisible } from "@/lib/features";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -143,7 +144,7 @@ export function SuperProfilePage() {
       setProfile(p);
       setRows((overview.data as EcosystemOverviewRow[] | null) ?? []);
       setStatsLoaded(!overview.error);
-      setAudit((events.data as AuditRow[] | null) ?? []);
+      setAudit(((events.data as AuditRow[] | null) ?? []).filter((event) => isLoanDisplayVisible(event.action, event.target)));
       const u = user.data.user;
       setAuth(
         u

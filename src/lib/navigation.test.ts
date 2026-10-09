@@ -109,8 +109,10 @@ describe("role sidebar visibility", () => {
     expect(paths).not.toContain("/super/subscriptions");
   });
 
-  it("keeps Loan Pool oversight in the Super Admin loans destination", () => {
-    expect(navPaths(superAdminNav())).toContain("/super/loans");
+  it("hides loan destinations for every role during the compliance restriction", () => {
+    for (const role of ["customer", "subreseller", "reseller", "admin", "super_admin"] as const) {
+      expect(navPaths(navForRole(role)).filter((path) => path.includes("loan"))).toEqual([]);
+    }
   });
 
   it("resolves the sidebar for every role", () => {

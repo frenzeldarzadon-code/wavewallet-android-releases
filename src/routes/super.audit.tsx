@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageSection, StatusBadge } from "@/components/ui-kit";
 import { auditEvents, ecosystems, shortDateTime } from "@/lib/wavewallet";
+import { isLoanDisplayVisible } from "@/lib/features";
 
 export const Route = createFileRoute("/super/audit")({
   head: () => ({
@@ -10,6 +11,8 @@ export const Route = createFileRoute("/super/audit")({
       { name: "description", content: "Immutable log of Super Admin shop access and platform-level changes." },
       { property: "og:title", content: "Audit Trail — ONE WAVE Super Admin" },
       { property: "og:description", content: "Immutable log of Super Admin shop access and platform-level changes." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: SuperAudit,
@@ -23,7 +26,7 @@ function SuperAudit() {
     >
       <Card className="shadow-[var(--shadow-card)]">
         <CardContent className="divide-y divide-border px-0 py-0">
-          {auditEvents.map((e) => {
+          {auditEvents.filter((event) => isLoanDisplayVisible(event.action, event.target)).map((e) => {
             const eco = ecosystems.find((x) => x.id === e.ecosystemId);
             return (
               <div key={e.id} className="flex flex-wrap items-start justify-between gap-2 px-4 py-3">

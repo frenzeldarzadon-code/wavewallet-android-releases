@@ -51,6 +51,7 @@ import { WALLET_CHANGED_EVENT } from "@/lib/wallet-events";
 import { useVisiblePoll } from "@/hooks/use-visible-poll";
 import { useRefreshPushRegistration } from "@/hooks/use-push-setup";
 import { PushNudge } from "@/components/universe/push-nudge";
+import { isFeaturePathVisible, isLoanDisplayVisible } from "@/lib/features";
 
 /** Full navigation (desktop rail). */
 const railItems = [
@@ -69,6 +70,8 @@ const railItems = [
   { to: "/universe/rewards", label: "Reward Shops", icon: Gift },
   { to: "/universe/profile", label: "Profile", icon: User },
 ] as const;
+
+const visibleRailItems = railItems.filter((item) => isFeaturePathVisible(item.to));
 
 /** Five-slot bottom bar on phones; the rest is reachable from Home and Search. */
 const barItems = [
@@ -106,7 +109,7 @@ function useUnread() {
   const [count, setCount] = useState(0);
   useVisiblePoll(() => {
     void fetchNotifications(20)
-      .then((rows) => setCount(unreadCount(rows)))
+      .then((rows) => setCount(unreadCount(rows.filter((item) => isLoanDisplayVisible(item.kind, item.title, item.body, item.link)))))
       .catch(() => undefined);
   }, 60_000);
   return count;
@@ -244,7 +247,7 @@ export function UniverseShell({
                 </Link>
 
                 <section aria-label="Primary menu items" className="grid grid-cols-2 gap-2.5">
-                  {railItems
+                  {visibleRailItems
                     .filter(
                       (item) =>
                         item.to === "/universe" || item.to === "/universe/wallet",
@@ -309,7 +312,7 @@ export function UniverseShell({
                     Explore
                   </p>
                   <div className="grid grid-cols-2 gap-2">
-                    {railItems
+                    {visibleRailItems
                       .filter(
                         (item) =>
                           item.to !== "/universe" && item.to !== "/universe/wallet",
@@ -424,7 +427,7 @@ export function UniverseShell({
           </Link>
 
           <nav aria-label="Universe navigation" className="flex flex-col gap-0.5">
-            {railItems.map((item) => (
+            {visibleRailItems.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
@@ -585,7 +588,7 @@ export function UniverseShell({
                 { to: "/universe/members", label: "Members near you", icon: Users },
                 { to: "/universe/messages", label: "Direct messages", icon: Mail },
                 { to: "/universe/notifications", label: "Alerts", icon: Bell },
-              ].map((l) => (
+              ].filter((item) => isFeaturePathVisible(item.to)).map((l) => (
                 <li key={l.to}>
                   <Link
                     to={l.to}

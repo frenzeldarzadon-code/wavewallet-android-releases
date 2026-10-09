@@ -15,6 +15,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { isLoanDisplayVisible } from "@/lib/features";
 import { useVisiblePoll } from "@/hooks/use-visible-poll";
 import { fetchNotifications, markRead, notificationLink, type Notification } from "@/lib/notifications";
 
@@ -33,7 +34,7 @@ export function NotificationBell({ className }: { className?: string }) {
 
   const load = useCallback(() => {
     void fetchNotifications(15)
-      .then(setRows)
+      .then((items) => setRows(items.filter((item) => isLoanDisplayVisible(item.kind, item.title, item.body, item.link))))
       .catch(() => undefined);
   }, []);
 

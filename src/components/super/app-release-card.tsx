@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { PageSection } from "@/components/ui-kit";
+import { isLoanDisplayVisible } from "@/lib/features";
 import {
   fetchAppRelease,
   formatFileSize,
@@ -161,7 +162,7 @@ export function AppReleaseCard() {
               onChange={(e) => set("sha256", e.target.value)}
             />
           </div>
-          <div className="space-y-1.5 sm:col-span-2">
+          {isLoanDisplayVisible(form.notes) ? <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="apkNotes">What&apos;s new (optional)</Label>
             <Textarea
               id="apkNotes"
@@ -169,7 +170,7 @@ export function AppReleaseCard() {
               value={form.notes}
               onChange={(e) => set("notes", e.target.value)}
             />
-          </div>
+          </div> : null}
           <div className="flex items-center justify-between gap-4 rounded-lg border px-3 py-2 sm:col-span-2">
             <div>
               <Label htmlFor="apkEnabled" className="text-sm font-medium">

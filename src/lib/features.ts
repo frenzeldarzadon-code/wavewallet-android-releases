@@ -7,6 +7,25 @@
  */
 export const SOCIAL_ENABLED = true;
 
+/** Presentation only: loan implementation, permissions and records stay intact. */
+export const LOANS_VISIBLE = false;
+
+export function isLoanPath(path: string): boolean {
+  return ["/universe/loans", "/universe/loan-pool", "/super/loans"]
+    .some((base) => path === base || path.startsWith(`${base}/`));
+}
+
+export function isFeaturePathVisible(path: string): boolean {
+  return LOANS_VISIBLE || !isLoanPath(path);
+}
+
+/** Only for system-generated display rows/copy, never financial inputs or user content. */
+export function isLoanDisplayVisible(...values: (string | null | undefined)[]): boolean {
+  return LOANS_VISIBLE || !values.some((value) =>
+    value && /(?:^|[\s_\/.-])loans?(?:$|[\s_\/?.-])|\brepayment\b/i.test(value),
+  );
+}
+
 /** Canonical Universe destinations. */
 export const UNIVERSE_PATHS = {
   feed: "/universe",

@@ -21,6 +21,7 @@ import {
   type UpdateState,
 } from "@/lib/app-update";
 import { WEB_BUILD_ID, WEB_VERSION } from "@/lib/update-manifest";
+import { isLoanDisplayVisible } from "@/lib/features";
 
 function timeLabel(at: number | null) {
   if (!at) return "not yet";
@@ -107,7 +108,7 @@ export function UpdateCenterCard({ className }: { className?: string }) {
           </div>
         </dl>
 
-        {state?.notes && (state.webUpdateAvailable || state.androidUpdateAvailable) ? (
+        {state?.notes && isLoanDisplayVisible(state.notes) && (state.webUpdateAvailable || state.androidUpdateAvailable) ? (
           <p className="rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground">{state.notes}</p>
         ) : null}
 
