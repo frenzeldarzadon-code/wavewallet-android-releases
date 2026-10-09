@@ -30,6 +30,7 @@ import {
   type AppRelease,
 } from "@/lib/app-release";
 import logo from "@/assets/wavewallet-logo.webp";
+import { isLoanDisplayVisible } from "@/lib/features";
 
 const SITE = "https://wallet.sagadawave.com";
 const URL = `${SITE}/download`;
@@ -132,7 +133,7 @@ function DownloadPage() {
               <Chip>Official APK</Chip>
             </div>
 
-            {release?.android_release_notes ? (
+            {release?.android_release_notes && isLoanDisplayVisible(release.android_release_notes) ? (
               <p className="text-sm leading-relaxed text-muted-foreground">
                 {release.android_release_notes}
               </p>

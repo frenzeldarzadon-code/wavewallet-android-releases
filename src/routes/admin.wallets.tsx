@@ -50,6 +50,7 @@ import {
 } from "@/lib/transfer-reversal";
 import { toast } from "sonner";
 import { pts } from "@/lib/points";
+import { isLoanDisplayVisible } from "@/lib/features";
 import { activeMembers, fetchShopMembers } from "@/lib/shop-members";
 
 export const Route = createFileRoute("/admin/wallets")({
@@ -156,7 +157,7 @@ function AdminWallets() {
     );
 
     setLedger(
-      ((entries ?? []) as unknown as CreditEntry[]).map(normalizeEntry),
+      ((entries ?? []) as unknown as CreditEntry[]).map(normalizeEntry).filter((entry) => isLoanDisplayVisible(entry.entry_kind, entry.reason)),
     );
     setReversals(await fetchReversalHistory(ecosystemDbId));
     setLoading(false);

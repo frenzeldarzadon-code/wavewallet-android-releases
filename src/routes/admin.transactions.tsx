@@ -42,6 +42,7 @@ import {
   type ReversalInfo,
 } from "@/lib/transfer-reversal";
 import { toast } from "sonner";
+import { isLoanDisplayVisible } from "@/lib/features";
 
 export const Route = createFileRoute("/admin/transactions")({
   head: () => ({
@@ -111,7 +112,7 @@ function AdminTransactions() {
   );
 
   const visible = useMemo(
-    () => filterFeed(rows, filter, query, nameFor),
+    () => filterFeed(rows.filter((row) => isLoanDisplayVisible(row.entry?.entry_kind, row.title, row.detail)), filter, query, nameFor),
     [rows, filter, query, nameFor],
   );
 

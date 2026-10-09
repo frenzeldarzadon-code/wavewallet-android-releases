@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Download, Printer, Share2 } from "lucide-react";
 import { toast } from "sonner";
+import { isLoanDisplayVisible } from "@/lib/features";
 import {
   downloadBlob,
   renderVoucherImage,
@@ -155,7 +156,7 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
 
   // Presentation-only grouping: one voucher purchase renders as one row, with
   // the viewer's own cashback summarised inside it. No amounts are recomputed.
-  const rows = useMemo(() => buildCoinHistory(entries, sources), [entries, sources]);
+  const rows = useMemo(() => buildCoinHistory(entries.filter((entry) => isLoanDisplayVisible(entry.entry_kind, entry.reason)), sources), [entries, sources]);
   const visibleRows = useMemo(() => filterCoinHistory(rows, direction), [rows, direction]);
 
   // Presentation only: re-renders the image for a voucher already issued.
@@ -355,7 +356,7 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
       {loading ? (
         <EmptyState title="Loading history…" />
       ) : filter === "sources" ? (
-        lots.length === 0 ? (
+        lots.filter((lot) => isLoanDisplayVisible(lot.source_kind)).length === 0 ? (
           <EmptyState
             title="No coins received yet"
             description="Coins you receive are tracked by source and spent oldest-first."
@@ -363,7 +364,7 @@ export function HistoryPage({ ecosystemId, shopName, shopOptions, onShopChange }
         ) : (
           <Card className="shadow-[var(--shadow-card)]">
             <CardContent className="divide-y divide-border px-0 py-0">
-              {lots.map((lot) => (
+              {lots.filter((lot) => isLoanDisplayVisible(lot.source_kind)).map((lot) => (
                 <div key={lot.id} className="flex items-start justify-between gap-3 px-4 py-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{creditSourceLabel(lot)}</p>

@@ -51,7 +51,7 @@ import { WALLET_CHANGED_EVENT } from "@/lib/wallet-events";
 import { useVisiblePoll } from "@/hooks/use-visible-poll";
 import { useRefreshPushRegistration } from "@/hooks/use-push-setup";
 import { PushNudge } from "@/components/universe/push-nudge";
-import { isFeaturePathVisible } from "@/lib/features";
+import { isFeaturePathVisible, isLoanDisplayVisible } from "@/lib/features";
 
 /** Full navigation (desktop rail). */
 const railItems = [
@@ -109,7 +109,7 @@ function useUnread() {
   const [count, setCount] = useState(0);
   useVisiblePoll(() => {
     void fetchNotifications(20)
-      .then((rows) => setCount(unreadCount(rows)))
+      .then((rows) => setCount(unreadCount(rows.filter((item) => isLoanDisplayVisible(item.kind, item.title, item.body, item.link)))))
       .catch(() => undefined);
   }, 60_000);
   return count;

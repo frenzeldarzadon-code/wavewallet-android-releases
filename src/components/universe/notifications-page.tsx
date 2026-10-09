@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
+import { isLoanDisplayVisible } from "@/lib/features";
 import { usePushSetup } from "@/hooks/use-push-setup";
 import {
   NOTIFICATION_CATEGORIES,
@@ -73,7 +74,7 @@ export function NotificationsPage() {
     void Promise.all([fetchNotifications(), fetchPreferences(), fetchPushDevices()])
       .then(([n, p, d]) => {
         if (!active) return;
-        setRows(n);
+        setRows(n.filter((item) => isLoanDisplayVisible(item.kind, item.title, item.body, item.link)));
         setPrefs(p);
         setDevices(d);
       })
@@ -263,7 +264,7 @@ export function NotificationsPage() {
           <CardDescription>Switch off anything you would rather not hear about.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 pb-5">
-          {NOTIFICATION_CATEGORIES.map((c) => {
+          {NOTIFICATION_CATEGORIES.filter((item) => isLoanDisplayVisible(item.kind, item.label)).map((c) => {
             const enabled = !prefs.disabledKinds.includes(c.kind);
             return (
               <div key={c.kind} className="flex items-center justify-between gap-3">
