@@ -136,10 +136,10 @@ describe("password change", () => {
   it("changes only the password and keeps usage, cap, expiry and status", () => {
     const cur = user();
     const body = buildPasswordBody(cur, "newpass1");
-    expect(body.password).toBe("newpass1");
-    expect(body.trafficLimit).toBe(cur.trafficLimit);
-    expect(body.expirationTime).toBe(cur.expirationTime);
-    expect(body.enable).toBe(true);
+    expect(body["password"]).toBe("newpass1");
+    expect(body["trafficLimit"]).toBe(cur.trafficLimit);
+    expect(body["expirationTime"]).toBe(cur.expirationTime);
+    expect(body["enable"]).toBe(true);
     expect("trafficUsed" in body).toBe(false);
     expect(() => assertSafeLocalUserRequest("POST", "/hotspot/localusers/abc123", body, cur)).not.toThrow();
   });
