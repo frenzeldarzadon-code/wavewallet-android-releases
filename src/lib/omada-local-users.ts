@@ -10,8 +10,11 @@
  * Units observed on a live record: `trafficLimit` is MB (MiB), `trafficUsed`
  * is bytes, `expirationTime` is epoch milliseconds, rate limits are Kbps.
  *
- * SAFETY BOUNDARY: ONE WAVE only lists, creates, raises a data cap, or moves an
- * expiry LATER. It never deletes, disables, unauthorizes, disconnects, or
+ * Verified live: the list returns each user's plaintext `password`; the same
+ * update call replaces it (re-read afterwards to confirm).
+ *
+ * SAFETY BOUNDARY: ONE WAVE only lists, creates, raises a data cap, changes a
+ * password, or moves an expiry LATER. It never deletes, disables, unauthorizes, disconnects, or
  * resets usage. Omada stays the authority for every login and access decision.
  */
 
@@ -134,6 +137,19 @@ export function buildExpiryBody(current: LocalUserRow, change: ExpiryChange, now
   return { ...preserved(current), expirationTime: nextExpiry(num(current["expirationTime"]), change, now) };
 }
 
+/** Validate a local-user password (same rule as create). */
+export function assertPassword(pw: string): void {
+  if (typeof pw !== "string" || pw.length < 1 || pw.length > 32) throw new Error("Password: 1–32 characters.");
+  if (/\s/.test(pw)) throw new Error("Password can't contain spaces.");
+}
+
+/** Replace only the password; every other field is resent exactly as Omada holds it. */
+export function buildPasswordBody(current: LocalUserRow, password: string): LocalUserRow {
+  assertPassword(password);
+  if (current["password"] === password) throw new Error("That's already this user's password.");
+  return { ...preserved(current), password };
+}
+
 export interface NewLocalUser {
   userName: string;
   password: string;
@@ -151,7 +167,7 @@ export function buildCreateBody(input: NewLocalUser, now = Date.now()): LocalUse
   if (!/^[A-Za-z0-9._@-]{1,32}$/.test(userName)) {
     throw new Error("Username: 1–32 letters, numbers, dot, dash, underscore or @.");
   }
-  if (input.password.length < 1 || input.password.length > 32) throw new Error("Password: 1–32 characters.");
+  assertPassword(input.password);
   if (!input.portals.length) throw new Error("Pick at least one portal.");
   if (!Number.isFinite(input.expiresAt) || input.expiresAt <= now) throw new Error("Expiry must be in the future.");
   const quota = input.quotaGb ?? null;
@@ -215,7 +231,7 @@ export function assertSafeLocalUserRequest(
     // Access status and every non-target field must match what Omada holds now.
     if (body["enable"] !== current["enable"]) throw new Error("Blocked: ONE WAVE never enables or disables users.");
     for (const [k, v] of Object.entries(current)) {
-      if (READ_ONLY_KEYS.has(k) || k === "trafficLimit" || k === "expirationTime") continue;
+      if (READ_ONLY_KEYS.has(k) || k === "trafficLimit" || k === "expirationTime" || k === "password") continue;
       if (JSON.stringify(body[k]) !== JSON.stringify(v)) throw new Error(`Blocked: "${k}" would change.`);
     }
     const oldLimit = num(current["trafficLimit"]);

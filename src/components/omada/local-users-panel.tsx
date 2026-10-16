@@ -15,6 +15,7 @@ import {
   createOmadaLocalUser,
   listOmadaLocalUsers,
   setOmadaLocalUserExpiry,
+  setOmadaLocalUserPassword,
   type LocalUsersResult,
 } from "@/lib/omada-local-users.functions";
 import type { LocalUserView } from "@/lib/omada-local-users";
@@ -113,7 +114,14 @@ export function LocalUsersPanel({ ecosystemId }: { ecosystemId: string | null })
                       {u.expired ? <Badge variant="destructive">Expired</Badge> : null}
                     </span>
                   </div>
-                  <PasswordLine password={u.password} />
+                  <PasswordLine
+                    key={`${u.id}-${u.password ?? ""}`}
+                    ecosystemId={ecosystemId}
+                    user={u}
+                    onChanged={(next) =>
+                      setData((d) => (d ? { ...d, users: d.users.map((x) => (x.id === next.id ? next : x)) } : d))
+                    }
+                  />
                   <dl className="mt-1 grid grid-cols-2 gap-x-3 text-xs text-muted-foreground">
                     <dt>Data</dt>
                     <dd className="text-right tabular-nums">
@@ -402,23 +410,55 @@ function CopyBtn({ value, label }: { value: string; label: string }) {
   );
 }
 
-function PasswordLine({ password }: { password: string | null }) {
-  const [shown, setShown] = useState(false);
-  if (password === null) {
-    return (
-      <p className="mt-1 text-xs text-muted-foreground">
-        Password not available from Omada. Changing it isn't offered — ONE WAVE never edits existing passwords.
-      </p>
-    );
-  }
+function PasswordLine({
+  ecosystemId,
+  user,
+  onChanged,
+}: {
+  ecosystemId: string;
+  user: LocalUserView;
+  onChanged: (u: LocalUserView) => void;
+}) {
+  const [value, setValue] = useState(user.password ?? "");
+  const [busy, setBusy] = useState(false);
+  const changed = value.length > 0 && value !== (user.password ?? "");
+  const save = async () => {
+    setBusy(true);
+    try {
+      const r = await setOmadaLocalUserPassword({ data: { ecosystemId, userId: user.id, password: value } });
+      onChanged(r.user);
+      if (r.ok) toast.success("Password saved on Omada.");
+      else toast.error("Omada didn't save the new password. Nothing else was touched.");
+    } catch (e) {
+      toast.error(err(e));
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
-    <div className="mt-1 flex items-center gap-1 text-xs">
-      <span className="text-muted-foreground">Password:</span>
-      <span className="font-mono">{shown ? password : "Hidden"}</span>
-      <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setShown((v) => !v)}>
-        {shown ? "Hide" : "Show"}
-      </Button>
-      <CopyBtn value={password} label="password" />
+    <div className="mt-1 space-y-0.5">
+      <div className="flex items-center gap-1">
+        <Label htmlFor={`pw-${user.id}`} className="shrink-0 text-xs text-muted-foreground">Password</Label>
+        <Input
+          id={`pw-${user.id}`}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder={user.password === null ? "Enter a new password" : ""}
+          autoComplete="off"
+          spellCheck={false}
+          className="h-8 font-mono text-xs"
+        />
+        {changed ? (
+          <Button type="button" size="sm" className="h-8 px-3 text-xs" disabled={busy} onClick={() => void save()}>
+            {busy ? "Saving…" : "Save"}
+          </Button>
+        ) : user.password ? (
+          <CopyBtn value={user.password} label="password" />
+        ) : null}
+      </div>
+      {user.password === null ? (
+        <p className="text-xs text-muted-foreground">Omada didn't send the current password. You can set a new one.</p>
+      ) : null}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import {
   buildAddQuotaBody,
   buildCreateBody,
   buildExpiryBody,
+  buildPasswordBody,
   nextExpiry,
   toLocalUserView,
   DAY_MS,
@@ -128,5 +129,29 @@ describe("password visibility", () => {
     expect(viewFor({ id: "a", password: "pw1" }).password).toBe("pw1");
     expect(viewFor({ id: "a" }).password).toBeNull();
     expect(viewFor({ id: "a", password: "" }).password).toBeNull();
+  });
+});
+
+describe("password change", () => {
+  it("changes only the password and keeps usage, cap, expiry and status", () => {
+    const cur = user();
+    const body = buildPasswordBody(cur, "newpass1");
+    expect(body["password"]).toBe("newpass1");
+    expect(body["trafficLimit"]).toBe(cur.trafficLimit);
+    expect(body["expirationTime"]).toBe(cur.expirationTime);
+    expect(body["enable"]).toBe(true);
+    expect("trafficUsed" in body).toBe(false);
+    expect(() => assertSafeLocalUserRequest("POST", "/hotspot/localusers/abc123", body, cur)).not.toThrow();
+  });
+  it("rejects empty, too long, spaced or unchanged passwords", () => {
+    expect(() => buildPasswordBody(user(), "")).toThrow();
+    expect(() => buildPasswordBody(user(), "x".repeat(33))).toThrow();
+    expect(() => buildPasswordBody(user(), "a b")).toThrow();
+    expect(() => buildPasswordBody(user(), "secret")).toThrow();
+  });
+  it("still blocks disabling a user while changing the password", () => {
+    const cur = user();
+    const body = { ...buildPasswordBody(cur, "newpass1"), enable: false };
+    expect(() => assertSafeLocalUserRequest("POST", "/hotspot/localusers/abc123", body, cur)).toThrow();
   });
 });
