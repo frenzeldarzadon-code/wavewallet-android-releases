@@ -53,11 +53,13 @@ export interface LocalUserView {
   downKbps: number | null;
   upKbps: number | null;
   portalCount: number;
+  /** Plaintext password only when Omada itself returns one; null = not available. Never stored or logged. */
+  password: string | null;
 }
 
 const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
 
-/** Browser view of one controller row. The password is never included. */
+/** Admin-only view of one controller row. `password` is passed through only if Omada returns it. */
 export function toLocalUserView(row: LocalUserRow, now = Date.now()): LocalUserView {
   const limited = row["trafficLimitEnable"] === true;
   const limitMb = num(row["trafficLimit"]);
@@ -81,6 +83,7 @@ export function toLocalUserView(row: LocalUserRow, now = Date.now()): LocalUserV
     downKbps: rate?.["downLimitEnable"] === true ? num(rate["downLimit"]) : null,
     upKbps: rate?.["upLimitEnable"] === true ? num(rate["upLimit"]) : null,
     portalCount: Array.isArray(row["portals"]) ? (row["portals"] as unknown[]).length : 0,
+    password: typeof row["password"] === "string" && row["password"].length > 0 ? row["password"] : null,
   };
 }
 
