@@ -118,7 +118,7 @@ export function LocalUsersPanel({ ecosystemId }: { ecosystemId: string | null })
                     <dt>Data</dt>
                     <dd className="text-right tabular-nums">
                       {u.limited && u.limitBytes !== null
-                        ? `${formatData(u.remainingBytes ?? 0)} left of ${formatData(u.limitBytes)}`
+                        ? `${u.remainingBytes ? formatData(u.remainingBytes) : "0 GB"} left of ${formatData(u.limitBytes)}`
                         : "Unlimited"}
                     </dd>
                     <dt>Expires</dt>
