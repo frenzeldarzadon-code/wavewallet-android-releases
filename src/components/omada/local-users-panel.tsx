@@ -103,17 +103,17 @@ export function LocalUsersPanel({ ecosystemId }: { ecosystemId: string | null })
             <ul className="space-y-2">
               {users.map((u) => (
                 <li key={u.id} className="rounded-xl border border-border p-3 text-sm">
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-between gap-2 text-left"
-                    onClick={() => setOpen(open === u.id ? null : u.id)}
-                  >
-                    <span className="truncate font-medium">{u.userName}</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex min-w-0 items-center gap-1">
+                      <span className="truncate font-medium">{u.userName}</span>
+                      <CopyBtn value={u.userName} label="username" />
+                    </span>
                     <span className="flex shrink-0 gap-1">
                       {!u.enabled ? <Badge variant="secondary">Disabled on Omada</Badge> : null}
                       {u.expired ? <Badge variant="destructive">Expired</Badge> : null}
                     </span>
-                  </button>
+                  </div>
+                  <PasswordLine password={u.password} />
                   <dl className="mt-1 grid grid-cols-2 gap-x-3 text-xs text-muted-foreground">
                     <dt>Data</dt>
                     <dd className="text-right tabular-nums">
@@ -132,15 +132,15 @@ export function LocalUsersPanel({ ecosystemId }: { ecosystemId: string | null })
                       </>
                     ) : null}
                   </dl>
-                  {open === u.id ? (
-                    <UserActions
-                      ecosystemId={ecosystemId}
-                      user={u}
-                      onChanged={(next) =>
-                        setData((d) => (d ? { ...d, users: d.users.map((x) => (x.id === next.id ? next : x)) } : d))
-                      }
-                    />
-                  ) : null}
+                  <UserActions
+                    ecosystemId={ecosystemId}
+                    user={u}
+                    showMore={open === u.id}
+                    onToggleMore={() => setOpen(open === u.id ? null : u.id)}
+                    onChanged={(next) =>
+                      setData((d) => (d ? { ...d, users: d.users.map((x) => (x.id === next.id ? next : x)) } : d))
+                    }
+                  />
                 </li>
               ))}
             </ul>
@@ -154,10 +154,14 @@ export function LocalUsersPanel({ ecosystemId }: { ecosystemId: string | null })
 function UserActions({
   ecosystemId,
   user,
+  showMore,
+  onToggleMore,
   onChanged,
 }: {
   ecosystemId: string;
   user: LocalUserView;
+  showMore: boolean;
+  onToggleMore: () => void;
   onChanged: (u: LocalUserView) => void;
 }) {
   const [gb, setGb] = useState("");
@@ -182,10 +186,10 @@ function UserActions({
 
   const gbNum = Number(gb);
   return (
-    <div className="mt-3 space-y-3 border-t border-border pt-3">
+    <div className="mt-2 space-y-2 border-t border-border pt-2">
       {user.limited ? (
         <div className="space-y-1">
-          <Label htmlFor={`gb-${user.id}`}>Add data (GB)</Label>
+          <Label htmlFor={`gb-${user.id}`} className="text-xs">Add data (GB)</Label>
           <div className="flex gap-2">
             <Input id={`gb-${user.id}`} inputMode="decimal" value={gb} onChange={(e) => setGb(e.target.value)} placeholder="e.g. 5" />
             <Button
@@ -207,7 +211,7 @@ function UserActions({
         <p className="text-xs text-muted-foreground">Unlimited data on Omada — no cap to add to.</p>
       )}
       <div className="space-y-1">
-        <Label htmlFor={`days-${user.id}`}>Extend expiry by days</Label>
+        <Label htmlFor={`days-${user.id}`} className="text-xs">Extend expiry by days</Label>
         <div className="flex gap-2">
           <Input id={`days-${user.id}`} inputMode="numeric" value={days} onChange={(e) => setDays(e.target.value)} placeholder="e.g. 30" />
           <Button
@@ -223,8 +227,12 @@ function UserActions({
           </Button>
         </div>
       </div>
+      <button type="button" className="text-xs text-primary underline" onClick={onToggleMore}>
+        {showMore ? "Hide date picker" : "Set an exact later expiry date"}
+      </button>
+      {showMore ? (
       <div className="space-y-1">
-        <Label htmlFor={`date-${user.id}`}>Or set a later expiry date</Label>
+        <Label htmlFor={`date-${user.id}`} className="text-xs">Later expiry date</Label>
         <div className="flex gap-2">
           <Input
             id={`date-${user.id}`}
@@ -249,6 +257,7 @@ function UserActions({
           </Button>
         </div>
       </div>
+      ) : null}
     </div>
   );
 }
@@ -271,6 +280,14 @@ function CreateForm({
   const [up, setUp] = useState("");
   const [picked, setPicked] = useState<string[]>(portals.length === 1 ? [portals[0]!.id] : []);
   const [busy, setBusy] = useState(false);
+  const [created, setCreated] = useState<{ userName: string; password: string } | null>(null);
+
+  const generate = () => {
+    const chars = "abcdefghjkmnpqrstuvwxyz23456789";
+    const buf = new Uint32Array(8);
+    crypto.getRandomValues(buf);
+    setPassword(Array.from(buf, (n) => chars[n % chars.length]).join(""));
+  };
 
   const submit = async () => {
     setBusy(true);
@@ -290,8 +307,9 @@ function CreateForm({
           },
         },
       });
-      toast.success(`Created ${userName}. Share the password with them now — it isn't shown again.`);
-      onDone();
+      toast.success(`Created ${userName}.`);
+      setCreated({ userName: userName.trim(), password });
+      setPassword("");
     } catch (e) {
       toast.error(err(e));
     } finally {
@@ -299,11 +317,37 @@ function CreateForm({
     }
   };
 
+  if (created) {
+    return (
+      <div className="space-y-2 rounded-xl border border-border p-3 text-sm">
+        <p className="font-medium">User created — share these now</p>
+        <div className="flex items-center justify-between gap-2 rounded-lg bg-muted p-2">
+          <span>Username: <span className="font-mono">{created.userName}</span></span>
+          <CopyBtn value={created.userName} label="username" />
+        </div>
+        <div className="flex items-center justify-between gap-2 rounded-lg bg-muted p-2">
+          <span>Password: <span className="font-mono">{created.password}</span></span>
+          <CopyBtn value={created.password} label="password" />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          ONE WAVE doesn't save this password. Later it shows only if Omada itself returns it in the list.
+        </p>
+        <Button onClick={onDone}>Done</Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2 rounded-xl border border-border p-3">
       <div className="grid gap-2 sm:grid-cols-2">
         <div><Label>Username</Label><Input value={userName} onChange={(e) => setUserName(e.target.value)} /></div>
-        <div><Label>Password</Label><Input value={password} onChange={(e) => setPassword(e.target.value)} /></div>
+        <div>
+          <Label>Password</Label>
+          <div className="flex gap-2">
+            <Input value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="off" />
+            <Button type="button" variant="outline" onClick={generate}>Generate</Button>
+          </div>
+        </div>
         <div><Label>Valid for (days)</Label><Input inputMode="numeric" value={days} onChange={(e) => setDays(e.target.value)} /></div>
         <div><Label>Data cap (GB, empty = unlimited)</Label><Input inputMode="decimal" value={gb} onChange={(e) => setGb(e.target.value)} /></div>
         <div><Label>Devices at once</Label><Input inputMode="numeric" value={devices} onChange={(e) => setDevices(e.target.value)} /></div>
@@ -335,6 +379,46 @@ function CreateForm({
       <Button disabled={busy || !userName || !password || picked.length === 0} onClick={() => void submit()}>
         {busy ? "Creating…" : "Create user"}
       </Button>
+    </div>
+  );
+}
+
+function CopyBtn({ value, label }: { value: string; label: string }) {
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant="ghost"
+      className="h-7 px-2 text-xs"
+      onClick={() =>
+        void navigator.clipboard.writeText(value).then(
+          () => toast.success(`Copied ${label}.`),
+          () => toast.error("Couldn't copy."),
+        )
+      }
+    >
+      Copy
+    </Button>
+  );
+}
+
+function PasswordLine({ password }: { password: string | null }) {
+  const [shown, setShown] = useState(false);
+  if (password === null) {
+    return (
+      <p className="mt-1 text-xs text-muted-foreground">
+        Password not available from Omada. Changing it isn't offered — ONE WAVE never edits existing passwords.
+      </p>
+    );
+  }
+  return (
+    <div className="mt-1 flex items-center gap-1 text-xs">
+      <span className="text-muted-foreground">Password:</span>
+      <span className="font-mono">{shown ? password : "Hidden"}</span>
+      <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setShown((v) => !v)}>
+        {shown ? "Hide" : "Show"}
+      </Button>
+      <CopyBtn value={password} label="password" />
     </div>
   );
 }
