@@ -25,3 +25,10 @@
 - [x] Keep manual voucher generation separate
 - [x] Verify stock, concurrency, retry, manual-generation, full tests, and type checking
 - [x] One-time excess-stock cleanup: 78 fully unsold automatic batches deleted locally and on the controller (PHP50 20,304 -> 804; PHP20 20,452 -> 952)
+
+## Omada local users
+
+- [x] Verify the controller's local-user operations read-only (list, create, full-object update; no PUT/PATCH)
+- [x] Local users tab: list/search, add user, add GB (cap only grows), extend/set later expiry
+- [x] Safety gate: no delete/disable/unauthorize/disconnect/usage reset; shop-admin only; audit log
+- [x] Tests for quota, expiry, authorization, forbidden operations

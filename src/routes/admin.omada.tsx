@@ -16,6 +16,7 @@ import { TracerConflictsPanel } from "@/components/omada/tracer-conflicts-panel"
 import { AntennaStatusPanel } from "@/components/omada/antenna-status-panel";
 import { PortalMappingPanel } from "@/components/omada/portal-mapping-panel";
 import { PortalTemplateWizard } from "@/components/omada/portal-template-wizard";
+import { LocalUsersPanel } from "@/components/omada/local-users-panel";
 import { useSession } from "@/lib/session";
 
 export const Route = createFileRoute("/admin/omada")({
@@ -39,14 +40,15 @@ export const Route = createFileRoute("/admin/omada")({
   }),
   validateSearch: (
     search: Record<string, unknown>,
-  ): { code?: string | undefined; tab?: "connection" | "devices" | "generate" | "status" | "portal" | undefined } => ({
+  ): { code?: string | undefined; tab?: "connection" | "devices" | "generate" | "status" | "portal" | "local-users" | undefined } => ({
     code: typeof search["code"] === "string" && search["code"] ? search["code"] : undefined,
     tab:
       search["tab"] === "connection" ||
       search["tab"] === "devices" ||
       search["tab"] === "generate" ||
       search["tab"] === "status" ||
-      search["tab"] === "portal"
+      search["tab"] === "portal" ||
+      search["tab"] === "local-users"
         ? search["tab"]
         : undefined,
   }),
@@ -80,6 +82,9 @@ function AdminOmada() {
           <TabsTrigger value="portal" className="h-9 flex-auto px-3 text-xs sm:text-sm">
             Portal
           </TabsTrigger>
+          <TabsTrigger value="local-users" className="h-9 flex-auto px-3 text-xs sm:text-sm">
+            Local users
+          </TabsTrigger>
         </TabsList>
 
 
@@ -104,6 +109,10 @@ function AdminOmada() {
         <TabsContent value="portal" className="mt-4 space-y-4">
           <PortalMappingPanel ecosystemId={ecosystemDbId} shopName={ecosystem?.name ?? null} />
           <PortalTemplateWizard ecosystemId={ecosystemDbId} />
+        </TabsContent>
+
+        <TabsContent value="local-users" className="mt-4">
+          <LocalUsersPanel ecosystemId={ecosystemDbId} />
         </TabsContent>
       </Tabs>
     </PageSection>

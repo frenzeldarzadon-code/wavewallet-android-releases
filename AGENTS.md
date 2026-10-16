@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Gate loan presentation and dedicated-page navigation through the shared UI feature flag; never use it to alter loan services or accounting, so visibility is reversible without backend changes.
+- Route every Omada local-user request through assertSafeLocalUserRequest in src/lib/omada-local-users.ts; updates resend the freshly read full record, so ONE WAVE can never disable, delete, disconnect or reset usage.
