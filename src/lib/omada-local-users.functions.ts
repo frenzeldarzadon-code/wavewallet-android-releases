@@ -9,6 +9,7 @@ import {
   buildAddQuotaBody,
   buildCreateBody,
   buildExpiryBody,
+  buildPasswordBody,
   toLocalUserView,
   type ExpiryChange,
   type LocalUserView,
@@ -156,6 +157,29 @@ export const setOmadaLocalUserExpiry = createServerFn({ method: "POST" })
       expiration_before: current["expirationTime"],
       expiration_after: after["expirationTime"],
       applied,
+    });
+    return { ok: applied, user: toLocalUserView(after) };
+  });
+
+export const setOmadaLocalUserPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { ecosystemId: string; userId: string; password: string }) => {
+    if (!d?.ecosystemId || !d.userId || typeof d.password !== "string") throw new Error("A shop, user and password are required.");
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    const { ctx, session, supabaseAdmin } = await open(context, data.ecosystemId);
+    const { readLocalUser, updateLocalUser } = await import("./omada-local-users.server");
+    const current = await readLocalUser(session, data.userId);
+    const body = buildPasswordBody(current, data.password);
+    await updateLocalUser(session, current, body);
+    const after = await readLocalUser(session, data.userId);
+    const applied = after["password"] === data.password;
+    // Never record the password itself.
+    await audit(supabaseAdmin as never, data.ecosystemId, ctx.userId, "Changed Omada local user password", String(current["userName"] ?? ""), {
+      user_id: data.userId,
+      applied,
+      enabled_unchanged: after["enable"] === current["enable"],
     });
     return { ok: applied, user: toLocalUserView(after) };
   });
