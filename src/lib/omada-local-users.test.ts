@@ -121,3 +121,12 @@ describe("authorization", () => {
     await expect(authorizeShopAdmin(rpc(false, true), "u", "")).rejects.toThrow();
   });
 });
+
+import { toLocalUserView as viewFor } from "./omada-local-users";
+describe("password visibility", () => {
+  it("shows the password only when Omada returns one", () => {
+    expect(viewFor({ id: "a", password: "pw1" }).password).toBe("pw1");
+    expect(viewFor({ id: "a" }).password).toBeNull();
+    expect(viewFor({ id: "a", password: "" }).password).toBeNull();
+  });
+});
